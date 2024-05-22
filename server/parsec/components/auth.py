@@ -91,8 +91,12 @@ class AuthenticatedToken:
     @staticmethod
     def generate_raw(device_id: DeviceID, timestamp: DateTime, key: SigningKey) -> bytes:
         raw_device_id = device_id.hex.encode("ascii")
-        raw_timestamp = str(int(timestamp.timestamp())).encode("ascii")
-        header_and_payload = b"%s.%s.%s" % (AuthenticatedToken.HEADER, raw_device_id, raw_timestamp)
+        raw_timestamp_us = str(timestamp.as_timestamp_seconds()).encode("ascii")
+        header_and_payload = b"%s.%s.%s" % (
+            AuthenticatedToken.HEADER,
+            raw_device_id,
+            raw_timestamp_us,
+        )
         signature = key.sign_only_signature(header_and_payload)
         raw_signature = urlsafe_b64encode(signature)
         return b"%s.%s" % (header_and_payload, raw_signature)
@@ -101,12 +105,12 @@ class AuthenticatedToken:
     def from_raw(cls, raw: bytes) -> "AuthenticatedToken":
         try:
             header_and_payload, raw_signature = raw.rsplit(b".", 1)
-            header, raw_device_id, raw_timestamp = header_and_payload.split(b".")
+            header, raw_device_id, raw_timestamp_us = header_and_payload.split(b".")
             if header != cls.HEADER:
                 raise ValueError
             signature = urlsafe_b64decode(raw_signature)
             device_id = DeviceID.from_hex(raw_device_id.decode("ascii"))
-            timestamp = DateTime.from_timestamp(int(raw_timestamp))
+            timestamp = DateTime.from_timestamp_seconds(int(raw_timestamp_us))
         except ValueError:
             raise ValueError("Invalid token format")
 

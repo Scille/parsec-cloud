@@ -1,11 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use pyo3::{
-    exceptions::{PyAttributeError, PyValueError},
-    prelude::*,
-    types::PyType,
-    PyResult,
-};
+use pyo3::{exceptions::PyValueError, prelude::*, types::PyType, PyResult};
 
 crate::binding_utils::gen_py_wrapper_class!(
     DateTime,
@@ -40,8 +35,7 @@ impl DateTime {
             second,
             microsecond,
         )
-        .single()
-        .ok_or_else(|| PyAttributeError::new_err("Invalid attributes"))
+        .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(Self)
     }
 
@@ -85,15 +79,26 @@ impl DateTime {
         Ok(Self(chrono::Utc::now().into()))
     }
 
-    fn timestamp(&self) -> PyResult<f64> {
-        Ok(self.0.get_f64_with_us_precision())
+    fn as_timestamp_micros(&self) -> PyResult<i64> {
+        Ok(self.0.as_timestamp_micros())
     }
 
     #[classmethod]
-    fn from_timestamp(_cls: &PyType, ts: f64) -> PyResult<Self> {
-        Ok(Self(libparsec_types::DateTime::from_f64_with_us_precision(
-            ts,
-        )))
+    fn from_timestamp_micros(_cls: &PyType, ts: i64) -> PyResult<Self> {
+        libparsec_types::DateTime::from_timestamp_micros(ts)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(format!("Invalid datetime `{}`: {}", ts, e)))
+    }
+
+    fn as_timestamp_seconds(&self) -> PyResult<i64> {
+        Ok(self.0.as_timestamp_seconds())
+    }
+
+    #[classmethod]
+    fn from_timestamp_seconds(_cls: &PyType, ts: i64) -> PyResult<Self> {
+        libparsec_types::DateTime::from_timestamp_seconds(ts)
+            .map(Self)
+            .map_err(|e| PyValueError::new_err(format!("Invalid datetime `{}`: {}", ts, e)))
     }
 
     #[classmethod]

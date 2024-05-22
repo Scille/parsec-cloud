@@ -1,14 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use chrono::Timelike;
-
 use libparsec_tests_lite::prelude::*;
 
 use super::*;
 
 #[test]
 fn datetime_deserialize_has_microsecond_precision() {
-    let serialized = &hex!("d70141d86ad584cd5d4f")[..];
+    let serialized = &hex!("d7010005d250a2269a74")[..];
     let expected_timestamp_nanos = 1638618643208820000;
 
     let dt: DateTime = rmp_serde::from_slice(serialized).unwrap();
@@ -33,6 +31,83 @@ fn datetime_parse_has_microsecond_precision() {
     p_assert_eq!(dt1.0.nanosecond() % 1000, 0);
     p_assert_eq!(dt2.0.nanosecond() % 1000, 0);
     p_assert_eq!(dt3.0.nanosecond() % 1000, 0);
+}
+
+#[test]
+fn datetime_as_timestamp() {
+    let dt = DateTime::from_rfc3339("2021-12-04T11:50:43.208821Z").unwrap();
+
+    let ts_us = dt.as_timestamp_micros();
+    p_assert_eq!(ts_us, 1638618643208821,);
+    p_assert_eq!(DateTime::from_timestamp_micros(ts_us).unwrap(), dt);
+
+    let ts_us = dt.as_timestamp_seconds();
+    p_assert_eq!(ts_us, 1638618643);
+
+    p_assert_eq!(
+        DateTime::from_timestamp_seconds(ts_us).unwrap(),
+        DateTime::from_rfc3339("2021-12-04T11:50:43Z").unwrap()
+    );
+}
+
+#[test]
+fn datetime_out_of_bound() {
+    // Actual min and max bounds are cumbersome to compute for `chrono::Datetime`
+    // (on which our `DateTime` is based). This is because `chrono::Datetime` split
+    // the timestamp in days/seconds/nanoseconds which involves division with weird
+    // constants.
+    // So instead we check our `DateTime` can represent good enough min & max bounds.
+
+    let good_enough_max = "9999-01-01T00:00:00.0Z";
+    let good_enough_min = "1000-01-01T00:00:00.0Z";
+
+    p_assert_eq!(
+        good_enough_max
+            .parse::<DateTime>()
+            .unwrap()
+            .as_timestamp_micros(),
+        253370764800000000
+    );
+
+    p_assert_eq!(
+        good_enough_min
+            .parse::<DateTime>()
+            .unwrap()
+            .as_timestamp_micros(),
+        -30610224000000000
+    );
+
+    // Test out of bound for `DateTime::from_ymd_hms_us`
+
+    p_assert_matches!(
+        DateTime::from_ymd_hms_us(1_000_000, 1, 1, 0, 0, 0, 0).unwrap_err(),
+        DatetimeFromTimestampMicrosError::OutOfRange
+    );
+    p_assert_matches!(
+        DateTime::from_ymd_hms_us(-1_000_000, 1, 1, 0, 0, 0, 0).unwrap_err(),
+        DatetimeFromTimestampMicrosError::OutOfRange
+    );
+
+    // Test out of bound for deserialization
+
+    // 0x8000000000000000 is min bound for i64
+    let serialized = &hex!("d7018000000000000000")[..];
+    p_assert_matches!(
+        rmp_serde::from_slice::<DateTime>(serialized).unwrap_err(),
+        rmp_serde::decode::Error::Syntax(msg) if msg == "out-of-range datetime",
+    );
+
+    // 0X7FFFFFFFFFFFFFFF is max bound for i64
+    let serialized = &hex!("d7017fffffffffffffff")[..];
+    p_assert_matches!(
+        rmp_serde::from_slice::<DateTime>(serialized).unwrap_err(),
+        rmp_serde::decode::Error::Syntax(msg) if msg == "out-of-range datetime",
+    );
+
+    // Note we don't need to test out-of-bound for RFC3339, since this format
+    // is limited to 4 digit year (hence year is within a 1000-9999 range, which
+    // in within the range of our `DateTime`).
+    // (see https://www.rfc-editor.org/rfc/rfc3339#section-5.6)
 }
 
 #[test]
@@ -151,9 +226,9 @@ fn arithmetic() {
     p_assert_eq!(dt.to_rfc3339(), "2000-01-02T12:30:45.123456Z");
     p_assert_eq!(DateTime::from_rfc3339(&dt.to_rfc3339()).unwrap(), dt);
 
-    p_assert_eq!(dt.get_f64_with_us_precision(), 946816245.123456);
+    p_assert_eq!(dt.as_timestamp_micros(), 946816245123456);
     p_assert_eq!(
-        DateTime::from_f64_with_us_precision(dt.get_f64_with_us_precision()),
+        DateTime::from_timestamp_micros(dt.as_timestamp_micros()).unwrap(),
         dt
     );
 }

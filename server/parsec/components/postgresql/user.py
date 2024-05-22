@@ -575,7 +575,7 @@ class PGUserComponent(BaseUserComponent):
             *_q_check_common_topic(organization_id=organization_id.str)
         )
         if common_timestamp is None:
-            common_timestamp = DateTime.from_timestamp(0)
+            common_timestamp = DateTime.from_timestamp_micros(0)
         d_row = await conn.fetchrow(
             *_q_get_device(organization_id=organization_id.str, device_id=device_id)
         )
@@ -605,7 +605,7 @@ class PGUserComponent(BaseUserComponent):
             *_q_check_common_topic(organization_id=organization_id.str)
         )
         if common_timestamp is None:
-            common_timestamp = DateTime.from_timestamp(0)
+            common_timestamp = DateTime.from_timestamp_micros(0)
         u_row = await conn.fetchrow(
             *_q_get_user(organization_id=organization_id.str, user_id=user_id)
         )
@@ -620,7 +620,7 @@ class PGUserComponent(BaseUserComponent):
     ) -> DateTime:
         value = await conn.fetchval(*_q_lock_common_topic(organization_id=organization_id.str))
         if value is None:
-            return DateTime.from_timestamp(0)
+            return DateTime.from_timestamp_micros(0)
         return value
 
     @override

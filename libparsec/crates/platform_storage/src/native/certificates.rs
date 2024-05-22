@@ -247,7 +247,7 @@ fn build_get_certificate_query<'a: 'b, 'b>(
 
     if let UpTo::Timestamp(up_to) = up_to {
         builder.push(" AND certificate_timestamp <= ");
-        builder.push_bind(up_to.get_f64_with_us_precision());
+        builder.push_bind(up_to.as_timestamp_micros());
     }
 
     builder
@@ -290,17 +290,18 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
         if let Some(row) = maybe_row {
-            let certificate_timestamp = row
-                .try_get::<f64, _>(0)
-                .map_err(|err| GetCertificateError::Internal(err.into()))?;
+            let certificate_timestamp = {
+                let ts = row
+                    .try_get::<i64, _>(0)
+                    .map_err(|err| GetCertificateError::Internal(err.into()))?;
+                DateTime::from_timestamp_micros(ts)
+                    .map_err(|err| GetCertificateError::Internal(err.into()))?
+            };
             let certificate = row
                 .try_get::<Vec<u8>, _>(1)
                 .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
-            return Ok((
-                DateTime::from_f64_with_us_precision(certificate_timestamp),
-                certificate,
-            ));
+            return Ok((certificate_timestamp, certificate));
         }
 
         let up_to = if let UpTo::Timestamp(up_to) = up_to {
@@ -320,10 +321,13 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         // Step 3: determine if the result is an actual success or a ExistButTooRecent error
         if let Some(row) = maybe_row {
-            let certificate_timestamp = row
-                .try_get::<f64, _>(0)
-                .map(DateTime::from_f64_with_us_precision)
-                .map_err(|err| GetCertificateError::Internal(err.into()))?;
+            let certificate_timestamp = {
+                let ts = row
+                    .try_get::<i64, _>(0)
+                    .map_err(|err| GetCertificateError::Internal(err.into()))?;
+                DateTime::from_timestamp_micros(ts)
+                    .map_err(|err| GetCertificateError::Internal(err.into()))?
+            };
             if certificate_timestamp > up_to {
                 Err(GetCertificateError::ExistButTooRecent {
                     certificate_timestamp,
@@ -381,9 +385,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         let mut items = Vec::with_capacity(rows.len());
         for row in rows {
-            let raw_timestamp = row.try_get::<f64, _>(0)?;
+            let raw_timestamp = row.try_get::<i64, _>(0)?;
             let certificate = row.try_get::<Vec<u8>, _>(1)?;
-            let timestamp = DateTime::from_f64_with_us_precision(raw_timestamp);
+            let timestamp = DateTime::from_timestamp_micros(raw_timestamp)?;
             items.push((timestamp, certificate))
         }
         Ok(items)
@@ -425,7 +429,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             ) \
             ",
         )
-        .bind(timestamp.get_f64_with_us_precision())
+        .bind(timestamp.as_timestamp_micros())
         .bind(&encrypted)
         .bind(certificate_type);
 
@@ -464,8 +468,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .fetch_optional(&mut *self.transaction)
             .await?;
         let common_last_timestamp = if let Some(row) = maybe_row {
-            let raw_dt = row.try_get::<f64, _>(0)?;
-            Some(DateTime::from_f64_with_us_precision(raw_dt))
+            let raw_dt = row.try_get::<i64, _>(0)?;
+            Some(DateTime::from_timestamp_micros(raw_dt)?)
         } else {
             None
         };
@@ -485,8 +489,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .fetch_optional(&mut *self.transaction)
             .await?;
         let sequester_last_timestamp = if let Some(row) = maybe_row {
-            let raw_dt = row.try_get::<f64, _>(0)?;
-            Some(DateTime::from_f64_with_us_precision(raw_dt))
+            let raw_dt = row.try_get::<i64, _>(0)?;
+            Some(DateTime::from_timestamp_micros(raw_dt)?)
         } else {
             None
         };
@@ -510,8 +514,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .await?;
         let mut per_realm_last_timestamps = HashMap::with_capacity(rows.len());
         for row in rows {
-            let raw_dt = row.try_get::<f64, _>(0)?;
-            let timestamp = DateTime::from_f64_with_us_precision(raw_dt);
+            let raw_dt = row.try_get::<i64, _>(0)?;
+            let timestamp = DateTime::from_timestamp_micros(raw_dt)?;
             let raw_realm_id = row.try_get::<&[u8], _>(1)?;
             let realm_id = VlobID::try_from(raw_realm_id).map_err(|err| anyhow::anyhow!(err))?;
             per_realm_last_timestamps.insert(realm_id, timestamp);
@@ -532,8 +536,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .fetch_optional(&mut *self.transaction)
             .await?;
         let shamir_recovery_last_timestamp = if let Some(row) = maybe_row {
-            let raw_dt = row.try_get::<f64, _>(0)?;
-            Some(DateTime::from_f64_with_us_precision(raw_dt))
+            let raw_dt = row.try_get::<i64, _>(0)?;
+            Some(DateTime::from_timestamp_micros(raw_dt)?)
         } else {
             None
         };
@@ -563,8 +567,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let mut output = "[\n".to_owned();
         for row in rows {
             let timestamp = {
-                let raw_dt = row.try_get::<f64, _>(0)?;
-                DateTime::from_f64_with_us_precision(raw_dt)
+                let raw_dt = row.try_get::<i64, _>(0)?;
+                DateTime::from_timestamp_micros(raw_dt)
             };
             let type_ = row.try_get::<&str, _>(1)?;
             let filter1 = row.try_get::<&str, _>(2)?;

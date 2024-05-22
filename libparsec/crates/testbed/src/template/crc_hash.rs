@@ -186,7 +186,7 @@ impl_crc_hash_for_token_based!(InvitationToken);
 impl CrcHash for DateTime {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"DateTime");
-        hasher.update(&self.get_f64_with_us_precision().to_le_bytes());
+        hasher.update(&self.as_timestamp_micros().to_le_bytes());
     }
 }
 

@@ -36,6 +36,9 @@ pub struct AuthenticatedCmds {
     device: Arc<LocalDevice>,
     #[cfg(feature = "test-with-testbed")]
     send_hook: SendHookConfig,
+    /// Create a sub time provider so that we can send request (hence the timestamp in
+    /// authentication header is not mocked) containing manifests with different timestamps.
+    pub time_provider: TimeProvider,
 }
 
 impl AuthenticatedCmds {
@@ -61,6 +64,7 @@ impl AuthenticatedCmds {
         Self {
             client,
             url,
+            time_provider: device.time_provider.new_child(),
             device,
             #[cfg(feature = "test-with-testbed")]
             send_hook,
@@ -109,10 +113,13 @@ impl AuthenticatedCmds {
             HeaderValue::from_str(&request_body.len().to_string())
                 .expect("numeric value always valid"),
         );
-        let authorization_header_value = HeaderValue::from_str(
-            &generate_authorization_header_value(&self.device.device_id, &self.device.signing_key),
-        )
-        .expect("always valid");
+        let authorization_header_value =
+            HeaderValue::from_str(&generate_authorization_header_value(
+                self.device.device_id,
+                &self.device.signing_key,
+                self.time_provider.now(),
+            ))
+            .expect("always valid");
         content_headers.insert(AUTHORIZATION, authorization_header_value);
 
         let request_builder = self
@@ -179,10 +186,13 @@ impl AuthenticatedCmds {
         content_headers.insert(CONTENT_LENGTH, HeaderValue::from_static("0"));
         content_headers.insert(ACCEPT, HeaderValue::from_static(EVENT_STREAM_CONTENT_TYPE));
 
-        let authorization_header_value = HeaderValue::from_str(
-            &generate_authorization_header_value(&self.device.device_id, &self.device.signing_key),
-        )
-        .expect("always valid");
+        let authorization_header_value =
+            HeaderValue::from_str(&generate_authorization_header_value(
+                self.device.device_id,
+                &self.device.signing_key,
+                self.time_provider.now(),
+            ))
+            .expect("always valid");
         content_headers.insert(AUTHORIZATION, authorization_header_value);
 
         if let Some(last_event_id) = last_event_id {
@@ -265,11 +275,12 @@ impl AuthenticatedCmds {
 ///     <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>`))
 /// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
 fn generate_authorization_header_value(
-    author: &DeviceID,
+    author: DeviceID,
     author_signing_key: &SigningKey,
+    now: DateTime,
 ) -> String {
     let author_id_hex = author.hex();
-    let timestamp = chrono::Utc::now().timestamp().to_string();
+    let timestamp = now.as_timestamp_seconds().to_string();
     let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp);
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);

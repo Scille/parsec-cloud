@@ -69,7 +69,7 @@ pub fn rep_ok() {
                             .unwrap(),
                         submit_payload: hex!("3c64756d6d793e").as_ref().into(),
                         submit_payload_signature: hex!("3c7369676e61747572653e").as_ref().into(),
-                        submitted_on: DateTime::from_f64_with_us_precision(1668594983.390001f64),
+                        submitted_on: DateTime::from_timestamp_micros(1668594983390001).unwrap(),
                         submitter_der_x509_certificate: hex!("3c78353039206365727469663e")
                             .as_ref()
                             .into(),

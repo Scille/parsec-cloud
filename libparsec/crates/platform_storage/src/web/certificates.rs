@@ -65,7 +65,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let certifs = if let UpTo::Timestamp(up_to) = up_to {
             certifs
                 .into_iter()
-                .filter(|certif| certif.certificate_timestamp <= up_to.get_f64_with_us_precision())
+                .filter(|certif| certif.certificate_timestamp <= up_to.as_timestamp_micros())
                 .collect()
         } else {
             certifs
@@ -76,10 +76,11 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
                 .partial_cmp(&y.certificate_timestamp)
                 .expect("Timestamp should not be undefined")
         }) {
-            return Ok((
-                DateTime::from_f64_with_us_precision(certif.certificate_timestamp),
-                certif.certificate.to_vec(),
-            ));
+            let certificate_timestamp =
+                DateTime::from_timestamp_micros(certif.certificate_timestamp)
+                    .map_err(|err| GetCertificateError::Internal(err.into()))?;
+
+            return Ok((certificate_timestamp, certif.certificate.to_vec()));
         }
 
         let UpTo::Timestamp(up_to) = up_to else {
@@ -88,7 +89,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         // Determine if the result is an actual success or a ExistButTooRecent error
         if let Some((certif_timestamp, certif)) = maybe_certif_timestamp {
-            let certificate_timestamp = DateTime::from_f64_with_us_precision(certif_timestamp);
+            let certificate_timestamp = DateTime::from_timestamp_micros(certif_timestamp)
+                .map_err(|err| GetCertificateError::Internal(err.into()))?;
 
             if certificate_timestamp > up_to {
                 return Err(GetCertificateError::ExistButTooRecent {
@@ -113,7 +115,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let mut certifs = if let UpTo::Timestamp(up_to) = up_to {
             certifs
                 .into_iter()
-                .filter(|certif| certif.certificate_timestamp <= up_to.get_f64_with_us_precision())
+                .filter(|certif| certif.certificate_timestamp <= up_to.as_timestamp_micros())
                 .collect()
         } else {
             certifs
@@ -128,17 +130,13 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let offset = offset.unwrap_or_default() as usize;
         let limit = limit.unwrap_or(certifs.len() as u32) as usize;
 
-        Ok(certifs
-            .into_iter()
-            .skip(offset)
-            .take(limit)
-            .map(|x| {
-                (
-                    DateTime::from_f64_with_us_precision(x.certificate_timestamp),
-                    x.certificate.to_vec(),
-                )
-            })
-            .collect())
+        let mut res = vec![];
+        for certif in certifs.into_iter().skip(offset).take(limit) {
+            let dt = DateTime::from_timestamp_micros(certif.certificate_timestamp)?;
+            res.push((dt, certif.certificate.to_vec()));
+        }
+
+        Ok(res)
     }
 
     pub async fn forget_all_certificates(&mut self) -> anyhow::Result<()> {
@@ -167,7 +165,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
 
         Certificate::insert(
             &Certificate {
-                certificate_timestamp: timestamp.get_f64_with_us_precision(),
+                certificate_timestamp: timestamp.as_timestamp_micros(),
                 certificate: encrypted.into(),
                 certificate_type: certificate_type.into(),
                 filter1,
@@ -181,82 +179,92 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
         let mut common_last_timestamp = None;
         let mut sequester_last_timestamp = None;
-        let mut realm_certifs = Vec::new();
+        let mut per_realm_last_timestamps = HashMap::new();
         let mut shamir_recovery_last_timestamp = None;
 
         for ty in COMMON_CERTIFICATES {
-            common_last_timestamp = Certificate::get_values(
+            let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
             )
-            .await?
-            .into_iter()
-            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
-            .chain(common_last_timestamp)
-            .max_by(|x, y| x.cmp(y));
+            .await?;
+            for certif in certifs {
+                let timestamp = DateTime::from_timestamp_micros(certif.certificate_timestamp)?;
+                match common_last_timestamp {
+                    None => common_last_timestamp = Some(timestamp),
+                    Some(last_timestamp) => {
+                        common_last_timestamp = Some(std::cmp::max(last_timestamp, timestamp))
+                    }
+                }
+            }
         }
 
         for ty in SEQUESTER_CERTIFICATES {
-            sequester_last_timestamp = Certificate::get_values(
+            let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
             )
-            .await?
-            .into_iter()
-            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
-            .chain(sequester_last_timestamp)
-            .max_by(|x, y| x.cmp(y));
+            .await?;
+            for certif in certifs {
+                let timestamp = DateTime::from_timestamp_micros(certif.certificate_timestamp)?;
+                match sequester_last_timestamp {
+                    None => sequester_last_timestamp = Some(timestamp),
+                    Some(last_timestamp) => {
+                        sequester_last_timestamp = Some(std::cmp::max(last_timestamp, timestamp))
+                    }
+                }
+            }
         }
 
         for ty in REALM_CERTIFICATES {
-            realm_certifs.extend(
-                Certificate::get_values(
-                    &self.transaction,
-                    CertificateFilter(GetCertificateQuery::NoFilter {
-                        certificate_type: ty,
-                    }),
-                )
-                .await?
-                .into_iter()
-                .map(|certif| {
-                    (
-                        certif.filter1,
-                        DateTime::from_f64_with_us_precision(certif.certificate_timestamp),
-                    )
-                }),
-            );
-        }
-
-        realm_certifs.sort_by(|x, y| x.1.cmp(&y.1));
-
-        let per_realm_last_timestamps = realm_certifs
-            .into_iter()
-            .map(|x| {
-                x.0.ok_or(anyhow::anyhow!("Missing realm id"))
-                    .and_then(|id| {
-                        VlobID::try_from(&*id)
-                            .map(|id| (id, x.1))
-                            .map_err(|e| anyhow::anyhow!(e))
-                    })
-            })
-            .collect::<Result<HashMap<_, _>, _>>()?;
-
-        for ty in SHAMIR_RECOVERY_CERTIFICATES {
-            shamir_recovery_last_timestamp = Certificate::get_values(
+            let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
                     certificate_type: ty,
                 }),
             )
-            .await?
-            .into_iter()
-            .map(|certif| DateTime::from_f64_with_us_precision(certif.certificate_timestamp))
-            .chain(shamir_recovery_last_timestamp)
-            .max_by(|x, y| x.cmp(y));
+            .await?;
+            for certif in certifs {
+                let vlob_id = match &certif.filter1 {
+                    Some(filter1) => {
+                        VlobID::try_from(filter1.as_ref()).map_err(|e| anyhow::anyhow!(e))?
+                    }
+                    None => return Err(anyhow::anyhow!("Missing realm ID as filter1")),
+                };
+                let timestamp = DateTime::from_timestamp_micros(certif.certificate_timestamp)?;
+                match per_realm_last_timestamps.entry(vlob_id) {
+                    std::collections::hash_map::Entry::Vacant(entry) => {
+                        entry.insert(timestamp);
+                    }
+                    std::collections::hash_map::Entry::Occupied(mut entry) => {
+                        *entry.get_mut() = std::cmp::max(*entry.get(), timestamp);
+                    }
+                }
+            }
+        }
+
+        for ty in SHAMIR_RECOVERY_CERTIFICATES {
+            let certifs = Certificate::get_values(
+                &self.transaction,
+                CertificateFilter(GetCertificateQuery::NoFilter {
+                    certificate_type: ty,
+                }),
+            )
+            .await?;
+            for certif in certifs {
+                let timestamp = DateTime::from_timestamp_micros(certif.certificate_timestamp)?;
+                match shamir_recovery_last_timestamp {
+                    None => shamir_recovery_last_timestamp = Some(timestamp),
+                    Some(last_timestamp) => {
+                        shamir_recovery_last_timestamp =
+                            Some(std::cmp::max(last_timestamp, timestamp))
+                    }
+                }
+            }
         }
 
         Ok(PerTopicLastTimestamps {

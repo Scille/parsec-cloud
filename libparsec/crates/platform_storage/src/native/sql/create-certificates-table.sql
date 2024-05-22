@@ -1,7 +1,7 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 CREATE TABLE IF NOT EXISTS certificates (
-    certificate_timestamp REAL NOT NULL,  -- UNIX timestamp with microsecond precision
+    certificate_timestamp INTEGER NOT NULL,  -- UNIX timestamp with microsecond precision
     certificate BLOB NOT NULL,
     -- We want to have a way to retrieve a singe certificate without having to iterate,
     -- decrypt and deserialize all of them.

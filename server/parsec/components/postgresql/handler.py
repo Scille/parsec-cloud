@@ -162,9 +162,9 @@ def retry_on_unique_violation(
 async def handle_datetime(conn: AsyncpgConnection) -> None:
     await conn.set_type_codec(
         "timestamptz",
-        encoder=lambda x: (int(x.timestamp() * 1000000) - MICRO_SECONDS_BETWEEN_1970_AND_2000,),
-        decoder=lambda x: DateTime.from_timestamp(
-            (x[0] + MICRO_SECONDS_BETWEEN_1970_AND_2000) / 1000000
+        encoder=lambda x: (x.as_timestamp_micros() - MICRO_SECONDS_BETWEEN_1970_AND_2000,),
+        decoder=lambda x: DateTime.from_timestamp_micros(
+            x[0] + MICRO_SECONDS_BETWEEN_1970_AND_2000
         ),
         schema="pg_catalog",
         format="tuple",

@@ -1052,7 +1052,8 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
         {
             let v = js_val.dyn_into::<Number>()?.value_of();
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
             };
             let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
             v
@@ -1104,7 +1105,7 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok(dt.get_f64_with_us_precision())
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
@@ -2023,7 +2024,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
         {
             let v = js_val.dyn_into::<Number>()?.value_of();
             let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
             };
             let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
             v
@@ -2058,7 +2060,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
             Some({
                 let v = js_val.dyn_into::<Number>()?.value_of();
                 let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                    Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                    libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                        .map_err(|_| "Out-of-bound datetime")
                 };
                 let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                 v
@@ -2116,7 +2119,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Reflect::set(&js_obj, &"currentProfile".into(), &js_current_profile)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-            Ok(dt.get_f64_with_us_precision())
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
         };
         let v = match custom_to_rs_f64(rs_obj.created_on) {
             Ok(ok) => ok,
@@ -2141,7 +2144,7 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     let js_revoked_on = match rs_obj.revoked_on {
         Some(val) => {
             let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                Ok(dt.get_f64_with_us_precision())
+                Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
             };
             let v = match custom_to_rs_f64(val) {
                 Ok(ok) => ok,
@@ -2458,7 +2461,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
@@ -2469,7 +2472,7 @@ fn variant_bootstrap_organization_error_rs_to_js(
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
@@ -2838,7 +2841,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -2849,7 +2853,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -2954,7 +2959,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
@@ -2965,7 +2970,7 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
@@ -3315,7 +3320,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
@@ -3326,7 +3331,7 @@ fn variant_client_rename_workspace_error_rs_to_js(
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
@@ -3533,7 +3538,7 @@ fn variant_client_share_workspace_error_rs_to_js(
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
@@ -3544,7 +3549,7 @@ fn variant_client_share_workspace_error_rs_to_js(
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
@@ -3969,7 +3974,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -3980,7 +3986,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -4097,7 +4104,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -4108,7 +4116,8 @@ fn variant_entry_stat_js_to_rs(obj: JsValue) -> Result<libparsec::EntryStat, JsV
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -4208,7 +4217,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
@@ -4219,7 +4228,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"created".into(), &js_created)?;
             let js_updated = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
@@ -4284,7 +4293,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"parent".into(), &js_parent)?;
             let js_created = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(created) {
                     Ok(ok) => ok,
@@ -4295,7 +4304,7 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
             Reflect::set(&js_obj, &"created".into(), &js_created)?;
             let js_updated = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(updated) {
                     Ok(ok) => ok,
@@ -4416,7 +4425,7 @@ fn variant_greet_in_progress_error_rs_to_js(
             )?;
             let js_server_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(server_timestamp) {
                     Ok(ok) => ok,
@@ -4427,7 +4436,7 @@ fn variant_greet_in_progress_error_rs_to_js(
             Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
             let js_client_timestamp = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(client_timestamp) {
                     Ok(ok) => ok,
@@ -4514,7 +4523,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -4576,7 +4586,8 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 {
                     let v = js_val.dyn_into::<Number>()?.value_of();
                     let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
-                        Ok(libparsec::DateTime::from_f64_with_us_precision(n))
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
                     };
                     let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
                     v
@@ -4653,7 +4664,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,
@@ -4698,7 +4709,7 @@ fn variant_invite_list_item_rs_to_js(
             Reflect::set(&js_obj, &"token".into(), &js_token)?;
             let js_created_on = {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok(dt.get_f64_with_us_precision())
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
                 };
                 let v = match custom_to_rs_f64(created_on) {
                     Ok(ok) => ok,

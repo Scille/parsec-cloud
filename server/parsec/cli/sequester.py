@@ -809,7 +809,7 @@ def extract_realm_export(
         # Convert filter_date from click.Datetime to parsec.Datetime
         date: DateTime
         if filter_date:
-            date = DateTime.from_timestamp(filter_date.timestamp())
+            date = DateTime.from_timestamp_micros(int(filter_date.timestamp() * 1_000_000))
         else:
             date = DateTime.now()
         ret = 0

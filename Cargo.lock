@@ -1959,7 +1959,6 @@ name = "libparsec_client_connection"
 version = "3.0.0-b.6+dev"
 dependencies = [
  "bytes",
- "chrono",
  "data-encoding",
  "eventsource-stream",
  "futures",

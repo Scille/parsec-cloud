@@ -116,7 +116,7 @@ impl CertificateFilter<'_> {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(super) struct Certificate {
-    pub certificate_timestamp: Float,
+    pub certificate_timestamp: i64,
     pub certificate: Bytes,
     pub certificate_type: String,
     pub filter1: Option<Bytes>,
@@ -339,7 +339,7 @@ pub(super) struct Chunk {
     pub chunk_id: Bytes,
     pub size: IndexInt,
     pub offline: bool,
-    pub accessed_on: Option<Float>,
+    pub accessed_on: Option<i64>,
     pub data: Bytes,
     // IndexedDB cannot index on boolean, so we have to deal with
     pub is_block: u8,
