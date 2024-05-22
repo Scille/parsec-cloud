@@ -120,6 +120,7 @@ pub(crate) fn handle_sse_error(error: EventStreamError<reqwest::Error>) -> Conne
     }
 }
 
+// TODO: This custom error is always converted into `ConnectionError`, remove it ?
 #[derive(Debug, thiserror::Error)]
 pub enum SSEConnectionError {
     #[error(transparent)]
@@ -137,13 +138,20 @@ impl From<SSEConnectionError> for ConnectionError {
             SSEConnectionError::InvalidContentType(_) => ConnectionError::BadContent,
             // All statuses except 200
             SSEConnectionError::InvalidStatusCode(code) => match code.as_u16() {
+                401 => ConnectionError::MissingAuthenticationInfo,
+                403 => ConnectionError::BadAuthenticationInfo,
+                404 => ConnectionError::OrganizationNotFound,
+                406 => ConnectionError::BadAcceptType,
+                // No 410: no invitation here
                 415 => ConnectionError::BadContent,
                 // TODO: cannot  access the response headers here...
-                // 422 => crate::error::unsupported_api_version_from_headers(
+                // 422 => Err(crate::error::unsupported_api_version_from_headers(
                 //     resp.headers(),
                 // )),
                 460 => ConnectionError::ExpiredOrganization,
                 461 => ConnectionError::RevokedUser,
+                462 => ConnectionError::FrozenUser,
+                498 => ConnectionError::AuthenticationTokenExpired,
                 // We typically use HTTP 503 in the tests to simulate server offline,
                 // so it should behave just like if we were not able to connect
                 503 => ConnectionError::NoResponse(None),

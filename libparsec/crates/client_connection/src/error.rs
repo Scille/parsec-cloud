@@ -11,6 +11,26 @@ pub type ConnectionResult<T> = core::result::Result<T, ConnectionError>;
 /// hence dealing with the `status` field of the response message is left to the caller
 #[derive(Debug, Error)]
 pub enum ConnectionError {
+    /// Missing authentication info
+    #[error("Missing authentication info")]
+    MissingAuthenticationInfo,
+
+    /// Bad authentication info
+    #[error("Bad authentication info")]
+    BadAuthenticationInfo,
+
+    /// Organization not found
+    #[error("Organization not found")]
+    OrganizationNotFound,
+
+    /// Bad accept type
+    #[error("Bad accept type")]
+    BadAcceptType,
+
+    /// Invitation already used or deleted
+    #[error("Invitation already used or deleted")]
+    InvitationAlreadyUsedOrDeleted,
+
     /// Any invalid content
     #[error("Invalid content")]
     BadContent,
@@ -48,8 +68,16 @@ pub enum ConnectionError {
     NoResponse(Option<reqwest::Error>),
 
     /// The user has beed revoked
-    #[error("Device has been revoked")]
+    #[error("User has been revoked")]
     RevokedUser,
+
+    /// The user has beed frozen (i.e. similar to revoked, but can be unfrozen)
+    #[error("User has been frozen")]
+    FrozenUser,
+
+    /// The authentication token has expired
+    #[error("Authentication token has expired")]
+    AuthenticationTokenExpired,
 
     /// Failed to serialize the request
     #[error("{0}")]

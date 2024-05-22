@@ -131,12 +131,19 @@ impl AuthenticatedCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
+            401 => Err(ConnectionError::MissingAuthenticationInfo),
+            403 => Err(ConnectionError::BadAuthenticationInfo),
+            404 => Err(ConnectionError::OrganizationNotFound),
+            406 => Err(ConnectionError::BadAcceptType),
+            // No 410: no invitation here
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
             461 => Err(ConnectionError::RevokedUser),
+            462 => Err(ConnectionError::FrozenUser),
+            498 => Err(ConnectionError::AuthenticationTokenExpired),
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
             503 => Err(ConnectionError::NoResponse(None)),
@@ -200,7 +207,7 @@ impl AuthenticatedCmds {
     pub async fn start_sse<T>(
         &self,
         last_event_id: Option<String>,
-    ) -> Result<SSEStream<T>, SSEConnectionError>
+    ) -> Result<SSEStream<T>, ConnectionError>
     where
         T: ProtocolRequest<API_LATEST_MAJOR_VERSION> + Debug + 'static,
     {
@@ -220,7 +227,7 @@ impl AuthenticatedCmds {
 
         match response.status() {
             StatusCode::OK => {}
-            status => return Err(SSEConnectionError::InvalidStatusCode(status)),
+            status => return Err(SSEConnectionError::InvalidStatusCode(status).into()),
         }
 
         let content_type = response
@@ -233,7 +240,7 @@ impl AuthenticatedCmds {
             .map(|e| e.split(';').next().expect("first item always exists"))?;
 
         if mime_type != EVENT_STREAM_CONTENT_TYPE {
-            return Err(SSEConnectionError::InvalidContentType(content_type.clone()));
+            return Err(SSEConnectionError::InvalidContentType(content_type.clone()).into());
         }
 
         let mut sse_stream = response.bytes_stream().eventsource();

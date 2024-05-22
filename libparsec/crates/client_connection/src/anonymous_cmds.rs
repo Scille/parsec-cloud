@@ -108,12 +108,18 @@ impl AnonymousCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
+            // No 401: no authentication here
+            // No 403: no authentication here
+            404 => Err(ConnectionError::OrganizationNotFound),
+            406 => Err(ConnectionError::BadAcceptType),
+            // No 410: no invitation here
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
-            461 => Err(ConnectionError::RevokedUser),
+            // No 461&462: no user here
+            // No 498: no authentication here
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
             503 => Err(ConnectionError::NoResponse(None)),

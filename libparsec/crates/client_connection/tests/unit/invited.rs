@@ -140,13 +140,5 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
             ping: "foo".to_owned(),
         })
         .await;
-    assert!(
-        matches!(
-            rep,
-            Err(ConnectionError::InvalidResponseStatus(
-                StatusCode::FORBIDDEN
-            ))
-        ),
-        r#"expected `InvitationNotFound`, but got {rep:?}"#
-    );
+    p_assert_matches!(rep, Err(ConnectionError::BadAuthenticationInfo));
 }
