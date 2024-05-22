@@ -219,4 +219,19 @@ export const expect = baseExpect.extend({
       pass: true,
     };
   },
+
+  async toBeMyProfilePage(page: Page): Promise<AssertReturnType> {
+    try {
+      await expect(page).toHaveURL(/\/\d+\/myProfile\??.*$/);
+    } catch (error: any) {
+      return {
+        message: () => `Page is not users page (url is '${error.matcherResult.actual}')`,
+        pass: false,
+      };
+    }
+    return {
+      message: () => '',
+      pass: true,
+    };
+  },
 });

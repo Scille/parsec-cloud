@@ -7,6 +7,7 @@
       <div class="devices-header">
         <ion-button
           class="devices-header-button"
+          id="add-device-button"
           fill="clear"
           @click="onAddDeviceClick()"
         >
@@ -25,6 +26,7 @@
         </ion-text>
         <ion-list
           class="devices-list"
+          id="devices-list"
           v-if="devices.length > 0"
         >
           <ion-item

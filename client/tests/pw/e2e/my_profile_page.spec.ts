@@ -1,0 +1,53 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+
+import { expect } from '@tests/pw/helpers/assertions';
+import { msTest } from '@tests/pw/helpers/fixtures';
+import { fillIonInput } from '@tests/pw/helpers/utils';
+
+msTest('Check devices list', async ({ myProfilePage }) => {
+  await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add');
+  const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
+  await expect(devices.locator('.device-name')).toHaveText(['Web', 'Web', 'Recovery Device']);
+  await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today', 'Joined: Today']);
+  await expect(devices.nth(0).locator('.badge')).toBeVisible();
+  await expect(devices.nth(1).locator('.badge')).toBeHidden();
+  await expect(devices.nth(2).locator('.badge')).toBeHidden();
+});
+
+msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
+  // Currently the restore-password section is hidden
+  const restorePassword = myProfilePage.locator('.restore-password');
+  await expect(restorePassword).toBeHidden();
+});
+
+msTest('Open authentication section', async ({ myProfilePage }) => {
+  await myProfilePage.locator('ion-radio').nth(1).click();
+  await expect(myProfilePage.locator('.user-info').locator('.title')).toHaveText('Password');
+  await expect(myProfilePage.locator('ion-input')).toHaveTheClass('input-disabled');
+  await expect(myProfilePage.locator('#change-password-button')).toBeVisible();
+});
+
+msTest('Change password', async ({ home, myProfilePage }) => {
+  await myProfilePage.locator('ion-radio').nth(1).click();
+  await myProfilePage.locator('.user-info').locator('#change-password-button').click();
+  const changePasswordModal = home.locator('.change-password-modal');
+  await expect(changePasswordModal).toBeVisible();
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
+  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toHaveDisabledAttribute();
+  await fillIonInput(changePasswordModal.locator('.input-container').locator('ion-input').nth(0), 'P@ssw0rd.');
+  await expect(changePasswordModal.locator('#next-button')).not.toHaveDisabledAttribute();
+  await changePasswordModal.locator('#next-button').click();
+
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Choose a new password');
+  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+  const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
+  await fillIonInput(passwordInputs.nth(1), 'New-P@ssw0rd.6786?6786');
+  await fillIonInput(passwordInputs.nth(2), 'New-P@ssw0rd');
+  await expect(changePasswordModal.locator('.inputs-container-item').nth(1).getByText('Do not match')).toBeVisible();
+  await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
+  await fillIonInput(passwordInputs.nth(2), 'New-P@ssw0rd.6786?6786');
+  await expect(changePasswordModal.locator('#next-button')).not.toHaveDisabledAttribute();
+  await changePasswordModal.locator('#next-button').click();
+  await expect(changePasswordModal).toBeHidden();
+  await expect(myProfilePage).toShowToast('Password has been updated. You can log in with your new password.', 'Success');
+});
