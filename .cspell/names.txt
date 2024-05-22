@@ -28,13 +28,15 @@ Goku
 Hundt
 Kryza
 Leblond
-Minimalorg
+lhotari
+luchihoratiu
 mailhog
 Malloryy
 Manraj
 Mcalice
 Megaforce
 michu
+Minimalorg
 MINIO
 Moiron
 murcielago
@@ -52,6 +54,7 @@ scalingo
 Scille
 softprops
 titeuf
+Upterm
 vxgmichel
 werkzeug
 yzhang
