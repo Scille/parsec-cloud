@@ -65,7 +65,15 @@ describe('Workspace role', () => {
     ],
     // user is outsider, can be reader or contributor
     [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
-    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Contributor, true, ''],
+    [
+      UserProfile.Outsider,
+      WorkspaceRole.Contributor,
+      UserProfile.Admin,
+      WorkspaceRole.Owner,
+      WorkspaceRole.Contributor,
+      false,
+      'Current role of this user',
+    ],
     // ... but cannot be manager or owner
     [
       UserProfile.Outsider,
@@ -135,7 +143,7 @@ describe('Workspace role', () => {
     [UserProfile.Standard, WorkspaceRole.Contributor, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
     // manager back to reader
     [UserProfile.Standard, WorkspaceRole.Manager, UserProfile.Standard, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
-  ])('test workspace role can change', async (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
+  ])('test workspace role can change (%#)', (userProfile, currentUserRole, clientProfile, clientRole, targetRole, expected, reason) => {
     expect(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).authorized).to.equal(expected);
     expect(I18n.translate(canChangeRole(clientProfile, userProfile, clientRole, currentUserRole, targetRole).reason)).to.equal(reason);
   });
