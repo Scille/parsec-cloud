@@ -15,6 +15,7 @@
         slot="icon-only"
         @click="cancelModal()"
         class="closeBtn"
+        v-show="pageStep !== GreetUserStep.Summary"
       >
         <ion-icon
           :icon="close"
