@@ -168,7 +168,7 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
       - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin v4.3.3
         with:
@@ -280,7 +280,7 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}-${{ matrix.extension }}.spdx.json .
 
       - name: Debug dist folder
         if: runner.debug || false
