@@ -32,7 +32,9 @@
             "ownerImmunity": "Cannot change the role of an Owner",
             "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
             "managerCannotPromoteToManager": "Managers cannot promote to Manager",
-            "managerCannotPromoteToOwner": "Managers cannot promote to Owner"
+            "managerCannotPromoteToOwner": "Managers cannot promote to Owner",
+            "sameRole": "Current role of this user",
+            "alreadyNotShared": "Already not shared with this user"
         },
         "reader": {
             "label": "Reader",

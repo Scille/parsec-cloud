@@ -14,6 +14,7 @@ export const msTest = base.extend<{
   userJoinModal: Locator;
   createOrgModal: Locator;
   userGreetModal: Locator;
+  workspaceSharingModal: Locator;
 }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
@@ -98,6 +99,13 @@ export const msTest = base.extend<{
     await expect(greetButton).toHaveText('Greet');
     await greetButton.click();
     const modal = connected.locator('.greet-organization-modal');
+    await use(modal);
+  },
+
+  workspaceSharingModal: async ({ connected }, use) => {
+    await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1).locator('.shared-group').click();
+    const modal = connected.locator('.workspace-sharing-modal');
+    await expect(modal).toBeVisible();
     await use(modal);
   },
 });

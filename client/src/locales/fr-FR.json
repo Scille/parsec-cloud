@@ -32,7 +32,9 @@
             "ownerImmunity": "Impossible de changer le rôle d'un Propriétaire",
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
-            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire"
+            "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
+            "sameRole": "Rôle actuel de l'utilisateur",
+            "alreadyNotShared": "Déjà non partagé avec cet utilisateur"
         },
         "reader": {
             "label": "Lecteur",
