@@ -36,7 +36,7 @@ const routes: Array<RouteRecordRaw> = [
   },
   {
     // ConnectedLayout ensure that every children components are provided
-    // with an importManager, informationManager and eventDistributor
+    // with a fileOperationManager, informationManager and eventDistributor
     // that correspond with the current ConnectionHandle.
     path: '/connected',
     component: () => import('@/views/layouts/ConnectedLayout.vue'),
@@ -50,8 +50,8 @@ const routes: Array<RouteRecordRaw> = [
             component: () => import('@/views/header/HeaderPage.vue'),
             children: [
               {
-                path: '/imports',
-                component: () => import('@/views/layouts/ImportLayout.vue'),
+                path: '/fileOp',
+                component: () => import('@/views/layouts/FileOperationLayout.vue'),
                 children: [
                   {
                     path: `/:handle(\\d+)/${Routes.Workspaces}`,

@@ -2,7 +2,7 @@
 
 <template>
   <div
-    v-if="menu.isVisible() || isImportManagerActive"
+    v-if="menu.isVisible() || isFileOperationManagerActive"
     class="upload-menu"
     :class="menu.isMinimized() ? 'minimize' : ''"
   >
@@ -15,7 +15,7 @@
           @click="toggleMenu()"
         />
         <ion-icon
-          v-if="!isImportManagerActive"
+          v-if="!isFileOperationManagerActive"
           class="menu-header-icons__item"
           :icon="close"
           @click="menu.hide()"
@@ -30,7 +30,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.inProgress') }}</ion-text>
-          <span class="text-counter">{{ importingItems.length > 99 ? '+99' : importingItems.length }}</span>
+          <span class="text-counter">{{ inProgressItems.length > 99 ? '+99' : inProgressItems.length }}</span>
         </div>
       </ion-item>
 
@@ -59,17 +59,18 @@
 
     <ion-list class="upload-menu-list">
       <template v-if="currentTab === Tabs.InProgress">
-        <file-upload-item
-          v-for="item in importingItems"
+        <component
+          v-for="item in inProgressItems"
+          :is="getFileOperationComponent(item)"
           :key="item.data.id"
           :progress="item.progress"
           :state="item.state"
-          :import-data="item.data"
-          @import-cancel="cancelImport"
+          :operation-data="item.data"
+          @cancel="cancelOperation"
         />
         <div
           class="upload-menu-list__empty"
-          v-if="importingItems.length === 0"
+          v-if="inProgressItems.length === 0"
         >
           <ms-image :image="NoImportInProgress" />
           <ion-text class="body-lg">
@@ -78,14 +79,15 @@
         </div>
       </template>
       <template v-if="currentTab === Tabs.Done">
-        <file-upload-item
+        <component
           v-for="item in doneItems"
+          :is="getFileOperationComponent(item)"
           :key="item.data.id"
           :progress="item.progress"
           :state="item.state"
-          :import-data="item.data"
-          @import-cancel="cancelImport"
-          @file-click="onImportFinishedClick"
+          :operation-data="item.data"
+          @cancel="cancelOperation"
+          @click="onOperationFinishedClick"
         />
         <div
           class="upload-menu-list__empty"
@@ -98,13 +100,14 @@
         </div>
       </template>
       <template v-if="currentTab === Tabs.Error">
-        <file-upload-item
+        <component
           v-for="item in errorItems"
+          :is="getFileOperationComponent(item)"
           :key="item.data.id"
           :progress="item.progress"
           :state="item.state"
-          :import-data="item.data"
-          @import-cancel="cancelImport"
+          :operation-data="item.data"
+          @cancel="cancelOperation"
         />
         <div
           class="upload-menu-list__empty"
@@ -122,26 +125,36 @@
 
 <script setup lang="ts">
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
-import { FileUploadItem } from '@/components/files';
+import { FileUploadItem, FileCopyItem, FileMoveItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
-import { FileProgressStateData, ImportData, ImportManager, ImportManagerKey, ImportState, StateData } from '@/services/importManager';
+import {
+  OperationProgressStateData,
+  ImportData,
+  FileOperationManager,
+  FileOperationManagerKey,
+  FileOperationData,
+  FileOperationState,
+  StateData,
+  FileOperationDataType,
+} from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import type { Component } from 'vue';
 
-interface ImportItem {
-  data: ImportData;
-  state: ImportState;
+interface OperationItem {
+  data: FileOperationData;
+  state: FileOperationState;
   progress: number;
 }
 
 const menu = useUploadMenu();
 
-const importManager: ImportManager = inject(ImportManagerKey)!;
-const imports: Ref<Array<ImportItem>> = ref([]);
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const imports: Ref<Array<OperationItem>> = ref([]);
 let dbId: string;
-const isImportManagerActive = ref(false);
+const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
 
 enum Tabs {
@@ -152,16 +165,18 @@ enum Tabs {
 
 const currentTab = ref(Tabs.InProgress);
 
-const importingItems = computed(() => {
-  return imports.value.filter((importItem) => [ImportState.FileProgress, ImportState.FileAdded].includes(importItem.state));
+const inProgressItems = computed(() => {
+  return imports.value.filter((importItem) =>
+    [FileOperationState.OperationProgress, FileOperationState.FileAdded].includes(importItem.state),
+  );
 });
 
 const doneItems = computed(() => {
-  return imports.value.filter((importItem) => [ImportState.FileImported, ImportState.Cancelled].includes(importItem.state));
+  return imports.value.filter((importItem) => [FileOperationState.FileImported, FileOperationState.Cancelled].includes(importItem.state));
 });
 
 const errorItems = computed(() => {
-  return imports.value.filter((importItem) => importItem.state === ImportState.CreateFailed);
+  return imports.value.filter((importItem) => importItem.state === FileOperationState.CreateFailed);
 });
 
 function toggleMenu(): void {
@@ -173,14 +188,25 @@ function toggleMenu(): void {
 }
 
 onMounted(async () => {
-  dbId = await importManager.registerCallback(onImportEvent);
+  dbId = await fileOperationManager.registerCallback(onFileOperationEvent);
 });
 
 onUnmounted(async () => {
-  await importManager.removeCallback(dbId);
+  await fileOperationManager.removeCallback(dbId);
 });
 
-function updateImportState(id: string, state: ImportState, progress?: number): void {
+function getFileOperationComponent(item: OperationItem): Component | undefined {
+  switch (item.data.getDataType()) {
+    case FileOperationDataType.Import:
+      return FileUploadItem;
+    case FileOperationDataType.Copy:
+      return FileCopyItem;
+    case FileOperationDataType.Move:
+      return FileMoveItem;
+  }
+}
+
+function updateImportState(id: string, state: FileOperationState, progress?: number): void {
   const importItem = imports.value.find((importItem) => importItem.data.id === id);
   if (importItem) {
     importItem.state = state;
@@ -190,33 +216,39 @@ function updateImportState(id: string, state: ImportState, progress?: number): v
   }
 }
 
-async function onImportFinishedClick(importData: ImportData, state: ImportState): Promise<void> {
-  if (state !== ImportState.FileImported) {
+async function onOperationFinishedClick(operationData: FileOperationData, state: FileOperationState): Promise<void> {
+  if (state !== FileOperationState.FileImported) {
     return;
   }
-  await navigateToWorkspace(importData.workspaceHandle, importData.path, importData.file.name);
+  if (operationData.getDataType() === FileOperationDataType.Import) {
+    await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
+  }
   menu.minimize();
 }
 
-async function cancelImport(importId: string): Promise<void> {
-  await importManager.cancelImport(importId);
+async function cancelOperation(importId: string): Promise<void> {
+  await fileOperationManager.cancelImport(importId);
 }
 
-async function onImportEvent(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
+async function onFileOperationEvent(
+  state: FileOperationState,
+  fileOperationData?: FileOperationData,
+  stateData?: StateData,
+): Promise<void> {
   switch (state) {
-    case ImportState.ImportAllStarted:
-      isImportManagerActive.value = true;
+    case FileOperationState.OperationAllStarted:
+      isFileOperationManagerActive.value = true;
       currentTab.value = Tabs.InProgress;
       menu.show();
       menu.expand();
       break;
-    case ImportState.ImportAllFinished:
-      isImportManagerActive.value = false;
+    case FileOperationState.OperationAllFinished:
+      isFileOperationManagerActive.value = false;
       currentTab.value = Tabs.Done;
       break;
-    case ImportState.FileAdded:
+    case FileOperationState.FileAdded:
       imports.value.push({
-        data: importData as ImportData,
+        data: fileOperationData as FileOperationData,
         state: state,
         progress: 0,
       });
@@ -224,17 +256,17 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
         uploadMenuList.value.$el.scrollTo({ top: 0, behavior: 'smooth' });
       }
       break;
-    case ImportState.FileProgress:
-      updateImportState((importData as ImportData).id, state, (stateData as FileProgressStateData).progress);
+    case FileOperationState.OperationProgress:
+      updateImportState((fileOperationData as FileOperationData).id, state, (stateData as OperationProgressStateData).progress);
       break;
-    case ImportState.FileImported:
-      updateImportState((importData as ImportData).id, state, 100);
+    case FileOperationState.FileImported:
+      updateImportState((fileOperationData as FileOperationData).id, state, 100);
       break;
-    case ImportState.CreateFailed:
-      updateImportState((importData as ImportData).id, state, -1);
+    case FileOperationState.CreateFailed:
+      updateImportState((fileOperationData as FileOperationData).id, state, -1);
       break;
-    case ImportState.Cancelled:
-      updateImportState((importData as ImportData).id, state);
+    case FileOperationState.Cancelled:
+      updateImportState((fileOperationData as FileOperationData).id, state);
   }
 }
 </script>
@@ -372,3 +404,4 @@ async function onImportEvent(state: ImportState, importData?: ImportData, stateD
   }
 }
 </style>
+@/services/fileOperationManager

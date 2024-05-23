@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { needsMocks } from '@/parsec/environment';
+import { wait } from '@/parsec/internals';
 import { Path } from '@/parsec/path';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import {
@@ -378,6 +379,7 @@ export async function writeFile(
   if (clientHandle && !needsMocks()) {
     return await libparsec.fdWrite(workspaceHandle, fd, offset, data);
   } else {
-    return { ok: true, value: 1337 };
+    await wait(100);
+    return { ok: true, value: data.length };
   }
 }

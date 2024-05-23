@@ -61,7 +61,7 @@ import { formatFileSize, getFileIcon } from '@/common/file';
 import { MsImage } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, getClientInfo } from '@/parsec';
-import { ImportData } from '@/services/importManager';
+import { ImportData } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudOffline } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
