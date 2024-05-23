@@ -135,6 +135,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.user_revoke.Rep.load(raw_rep)
 
+    async def invite_conduit_exchange(
+        self, token: InvitationToken, step: int, greeter_payload: bytes, last: bool
+    ) -> authenticated_cmds.latest.invite_conduit_exchange.Rep:
+        req = authenticated_cmds.latest.invite_conduit_exchange.Req(
+            token=token, step=step, greeter_payload=greeter_payload, last=last
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_conduit_exchange.Rep.load(raw_rep)
+
     async def invite_new_user(
         self, claimer_email: str, send_email: bool
     ) -> authenticated_cmds.latest.invite_new_user.Rep:
@@ -438,6 +447,15 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.invite_3a_claimer_signify_trust.Req()
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.invite_3a_claimer_signify_trust.Rep.load(raw_rep)
+
+    async def invite_conduit_exchange(
+        self, token: InvitationToken, step: int, claimer_payload: bytes
+    ) -> invited_cmds.latest.invite_conduit_exchange.Rep:
+        req = invited_cmds.latest.invite_conduit_exchange.Req(
+            token=token, step=step, claimer_payload=claimer_payload
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_conduit_exchange.Rep.load(raw_rep)
 
     async def ping(self, ping: str) -> invited_cmds.latest.ping.Rep:
         req = invited_cmds.latest.ping.Req(ping=ping)

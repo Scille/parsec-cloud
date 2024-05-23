@@ -221,6 +221,42 @@ class MemoryInvitationDeletedReason(Enum):
 
 
 @dataclass(slots=True)
+class MemoryConduit:
+    claimer_steps: list[bytes] = field(default_factory=list)
+    greeter_steps: list[tuple[bytes, bool]] = field(default_factory=list)
+
+    def reset(self) -> None:
+        self.claimer_steps.clear()
+        self.greeter_steps.clear()
+
+    def current_step(self) -> int:
+        return min(len(self.claimer_steps), len(self.greeter_steps))
+
+    def is_step_done(self, step: int) -> bool:
+        return step < len(self.claimer_steps) and step < len(self.greeter_steps)
+
+    def get_claimer_step(self, step: int) -> bytes | None:
+        try:
+            return self.claimer_steps[step]
+        except IndexError:
+            return None
+
+    def get_greeter_step(self, step: int) -> tuple[bytes, bool] | None:
+        try:
+            return self.greeter_steps[step]
+        except IndexError:
+            return None
+
+    def set_claimer_step(self, step: int, claimer_payload: bytes) -> None:
+        assert len(self.claimer_steps) == step
+        self.claimer_steps.append(claimer_payload)
+
+    def set_greeter_step(self, step: int, greeter_args: tuple[bytes, bool]) -> None:
+        assert len(self.greeter_steps) == step
+        self.greeter_steps.append(greeter_args)
+
+
+@dataclass(slots=True)
 class MemoryInvitation:
     token: InvitationToken
     type: InvitationType
@@ -230,6 +266,7 @@ class MemoryInvitation:
     created_on: DateTime
     deleted_on: DateTime | None = None
     deleted_reason: MemoryInvitationDeletedReason | None = None
+    conduit: MemoryConduit = field(default_factory=MemoryConduit)
     conduit_state: ConduitState = ConduitState.STATE_1_WAIT_PEERS
     conduit_is_last_exchange: bool = False
     conduit_greeter_payload: bytes | None = field(default=None, repr=False)

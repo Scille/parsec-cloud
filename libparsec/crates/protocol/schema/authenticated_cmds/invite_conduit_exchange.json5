@@ -1,0 +1,68 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_conduit_exchange",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    // If step n with n > 0, the exchange must have been done for step n.
+                    // If step is 0, the conduit is reset on server side if it was != 0
+                    "name": "step",
+                    "type": "Integer"
+                },
+                {
+                    "name": "greeter_payload",
+                    "type": "Bytes"
+                },
+                {
+                    // The current step is the last valid one:
+                    // - Once this step is done, the invitation will be marked as
+                    //   finished (i.e. no more enrollement will be possible with it).
+                    // - The claimer is notified of the last step when doing conduit exchange.
+                    // - Any further step 0 will be rejected by the server with a
+                    //   `invitation_deleted` status.
+                    // - The claimer is still able to reset the conduit by doing a step == 0.
+                    "name": "last",
+                    "type": "Boolean"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "claimer_payload",
+                        "type": "Bytes"
+                    }
+                ]
+            },
+            {
+                // Claimer hasn't done a conduit exchange for this step yet
+                "status": "claimer_payload_not_ready"
+            },
+            {
+                // We have already done a conduit exchange for this step with a
+                // different payload, hence idempotency is broken !
+                "status": "greeter_payload_mismatch"
+            },
+            {
+                // The provided step is not available given previous step hasn't
+                // been completed yet (i.e. both peers hasn't provided a payload).
+                "status": "bad_step"
+            },
+            {
+                "status": "invitation_not_found"
+            },
+            {
+                "status": "invitation_deleted"
+            }
+        ]
+    }
+]

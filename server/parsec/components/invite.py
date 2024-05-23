@@ -225,6 +225,26 @@ async def send_email(
     return await anyio.to_thread.run_sync(_send_email, email_config, to_addr, message)
 
 
+class ClaimerConduitExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    CLAIMER_PAYLOAD_MISMATCH = auto()
+    BAD_STEP = auto()
+
+
+class GreeterConduitExchangeBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    GREETER_PAYLOAD_MISMATCH = auto()
+    BAD_STEP = auto()
+
+
 class InviteConduitExchangeBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
@@ -379,6 +399,26 @@ class BaseInviteComponent:
     #
     # Public methods
     #
+
+    async def claimer_conduit_exchange(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        claimer_payload: bytes,
+    ) -> tuple[bytes, bool] | None | ClaimerConduitExchangeBadOutcome:
+        raise NotImplementedError
+
+    async def greeter_conduit_exchange(
+        self,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        token: InvitationToken,
+        step: int,
+        last: bool,
+        greeter_payload: bytes,
+    ) -> bytes | None | GreeterConduitExchangeBadOutcome:
+        raise NotImplementedError
 
     async def conduit_exchange(
         self,
@@ -733,6 +773,74 @@ class BaseInviteComponent:
                 return client_ctx.invitation_invalid_abort()
             case InviteAsInvitedInfoBadOutcome.INVITATION_DELETED:
                 return client_ctx.invitation_invalid_abort()
+
+    @api
+    async def api_invited_invite_conduit_exchange(
+        self, client_ctx: InvitedClientContext, req: invited_cmds.latest.invite_conduit_exchange.Req
+    ) -> invited_cmds.latest.invite_conduit_exchange.Rep:
+        outcome = await self.claimer_conduit_exchange(
+            organization_id=client_ctx.organization_id,
+            token=client_ctx.token,
+            step=req.step,
+            claimer_payload=req.claimer_payload,
+        )
+        match outcome:
+            case (greeter_payload, last):
+                return invited_cmds.latest.invite_conduit_exchange.RepOk(
+                    greeter_payload=greeter_payload, last=last
+                )
+            case None:
+                return invited_cmds.latest.invite_conduit_exchange.RepGreeterPayloadNotReady()
+            case ClaimerConduitExchangeBadOutcome.BAD_STEP:
+                return invited_cmds.latest.invite_conduit_exchange.RepBadStep()
+            case ClaimerConduitExchangeBadOutcome.CLAIMER_PAYLOAD_MISMATCH:
+                return invited_cmds.latest.invite_conduit_exchange.RepClaimerPayloadMismatch()
+            case ClaimerConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case ClaimerConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case ClaimerConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
+                client_ctx.invitation_invalid_abort()
+            case ClaimerConduitExchangeBadOutcome.INVITATION_DELETED:
+                client_ctx.invitation_invalid_abort()
+
+    @api
+    async def api_authenticated_invite_conduit_exchange(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_conduit_exchange.Req,
+    ) -> authenticated_cmds.latest.invite_conduit_exchange.Rep:
+        outcome = await self.greeter_conduit_exchange(
+            organization_id=client_ctx.organization_id,
+            greeter=client_ctx.user_id,
+            token=req.token,
+            step=req.step,
+            last=req.last,
+            greeter_payload=req.greeter_payload,
+        )
+        match outcome:
+            case bytes() | bytearray() | memoryview() as claimer_payload:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepOk(
+                    claimer_payload=claimer_payload,
+                )
+            case None:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepClaimerPayloadNotReady()
+            case GreeterConduitExchangeBadOutcome.BAD_STEP:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepBadStep()
+            case GreeterConduitExchangeBadOutcome.GREETER_PAYLOAD_MISMATCH:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepGreeterPayloadMismatch()
+            case GreeterConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepInvitationNotFound()
+            case GreeterConduitExchangeBadOutcome.INVITATION_DELETED:
+                return authenticated_cmds.latest.invite_conduit_exchange.RepInvitationDeleted()
+            case GreeterConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case GreeterConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case GreeterConduitExchangeBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case GreeterConduitExchangeBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
 
     @api
     async def api_invite_1_claimer_wait_peer(

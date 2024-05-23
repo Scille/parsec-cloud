@@ -16,9 +16,11 @@ from parsec._parsec import (
 from parsec.components.invite import (
     NEXT_CONDUIT_STATE,
     BaseInviteComponent,
+    ClaimerConduitExchangeBadOutcome,
     ConduitListenCtx,
     ConduitState,
     DeviceInvitation,
+    GreeterConduitExchangeBadOutcome,
     Invitation,
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
@@ -87,6 +89,122 @@ class MemoryInviteComponent(BaseInviteComponent):
                 status=InvitationStatus.IDLE,
             )
         )
+
+    @override
+    async def claimer_conduit_exchange(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        step: int,
+        claimer_payload: bytes,
+    ) -> tuple[bytes, bool] | None | ClaimerConduitExchangeBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return ClaimerConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return ClaimerConduitExchangeBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return ClaimerConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_deleted:
+            return ClaimerConduitExchangeBadOutcome.INVITATION_DELETED
+
+        # Step 0 is a special case since it can reset the conduit
+        if step == 0:
+            claimer_already_present_payload = invitation.conduit.get_claimer_step(step)
+            claimer_payload_has_changed = (
+                claimer_already_present_payload is not None
+                and claimer_already_present_payload != claimer_payload
+            )
+            if invitation.conduit.current_step() != 0 or claimer_payload_has_changed:
+                invitation.conduit.reset()
+
+            invitation.conduit.set_claimer_step(step, claimer_payload)
+        else:
+            # Note it is possible to specify a step that is not the current one,
+            # this is useful given the client may desynchronize due to poor network.
+            if not invitation.conduit.is_step_done(step - 1):
+                return ClaimerConduitExchangeBadOutcome.BAD_STEP
+
+            claimer_already_present_payload = invitation.conduit.get_claimer_step(step)
+            if claimer_already_present_payload is None:
+                invitation.conduit.set_claimer_step(step, claimer_payload)
+            elif claimer_already_present_payload != claimer_payload:
+                # Cannot go idempotent if the payload has changed
+                return ClaimerConduitExchangeBadOutcome.CLAIMER_PAYLOAD_MISMATCH
+
+        match invitation.conduit.get_greeter_step(step):
+            case (greeter_payload, last):
+                if last and invitation.conduit.is_step_done(step):
+                    invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED
+                return (greeter_payload, last)
+
+            case None:
+                return None
+
+    @override
+    async def greeter_conduit_exchange(
+        self,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        token: InvitationToken,
+        step: int,
+        last: bool,
+        greeter_payload: bytes,
+    ) -> bytes | None | GreeterConduitExchangeBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return GreeterConduitExchangeBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return GreeterConduitExchangeBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            greeter_user = org.users[greeter]
+        except KeyError:
+            return GreeterConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
+        if greeter_user.is_revoked:
+            return GreeterConduitExchangeBadOutcome.AUTHOR_REVOKED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return GreeterConduitExchangeBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_deleted:
+            return GreeterConduitExchangeBadOutcome.INVITATION_DELETED
+
+        greeter_args = (greeter_payload, last)
+        # Step 0 is a special case since it can reset the conduit
+        if step == 0:
+            greeter_already_present_args = invitation.conduit.get_greeter_step(step)
+            greeter_payload_has_changed = (
+                greeter_already_present_args is not None
+                and greeter_already_present_args != greeter_args
+            )
+            if invitation.conduit.current_step() != 0 or greeter_payload_has_changed:
+                invitation.conduit.reset()
+
+            invitation.conduit.set_greeter_step(step, greeter_args)
+        else:
+            # Note it is possible to specify a step that is not the current one,
+            # this is useful given the client may desynchronize due to poor network.
+            if not invitation.conduit.is_step_done(step - 1):
+                return GreeterConduitExchangeBadOutcome.BAD_STEP
+
+            greeter_already_present_payload = invitation.conduit.get_greeter_step(step)
+            if greeter_already_present_payload is None:
+                invitation.conduit.set_greeter_step(step, greeter_args)
+            elif greeter_already_present_payload != greeter_args:
+                # Cannot go idempotent if the payload has changed
+                return GreeterConduitExchangeBadOutcome.GREETER_PAYLOAD_MISMATCH
+
+        if last and invitation.conduit.is_step_done(step):
+            invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED
+
+        return invitation.conduit.get_claimer_step(step)
 
     @override
     async def _conduit_talk(

@@ -1,0 +1,58 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_conduit_exchange",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    // If step n with n > 0, the exchange must have been done for step n.
+                    // If step is 0, the conduit is reset on server side if it was != 0
+                    "name": "step",
+                    "type": "Integer"
+                },
+                {
+                    "name": "claimer_payload",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_payload",
+                        "type": "Bytes"
+                    },
+                    {
+                        // The current step was the last valid one.
+                        // Hence the invitation is now finished and we can no longer
+                        // use the invitation token for requesting the server.
+                        "name": "last",
+                        "type": "Boolean"
+                    }
+                ]
+            },
+            {
+                // Greeter hasn't done a conduit exchange for this step yet
+                "status": "greeter_payload_not_ready"
+            },
+            {
+                // We have already done a conduit exchange for this step with a
+                // different payload, hence idempotency is broken !
+                "status": "claimer_payload_mismatch"
+            },
+            {
+                // The provided step is not available given previous step hasn't
+                // been completed yet (i.e. both peers hasn't provided a payload).
+                "status": "bad_step"
+            }
+        ]
+    }
+]
