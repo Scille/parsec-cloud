@@ -162,7 +162,8 @@ impl<'a> SyncUpdater<'a> {
         manifest: ArcLocalChildManifest,
     ) -> Result<(), UpdateManifestForSyncError> {
         // Sanity check to ensure the caller is not buggy
-        if cfg!(debug_assertions) {
+        #[cfg(debug_assertions)]
+        {
             match &self.original_manifest {
                 Some(original_manifest) => match (original_manifest, &manifest) {
                     (ArcLocalChildManifest::File(om), ArcLocalChildManifest::File(m)) => {
@@ -226,7 +227,8 @@ impl<'a> SyncUpdater<'a> {
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> Result<(), UpdateManifestForSyncError> {
         // Sanity check to detect obvious consistency bug in the caller
-        if cfg!(debug_assertions) {
+        #[cfg(debug_assertions)]
+        {
             match &self.original_manifest {
                 Some(ArcLocalChildManifest::File(om)) => {
                     assert_eq!(om.base, manifest.base);
@@ -439,7 +441,8 @@ impl<'a> SyncConflictUpdater<'a> {
         conflicting_new_child_manifest: ArcLocalChildManifest,
     ) -> Result<(), UpdateManifestForSyncError> {
         // Sanity check to detect obvious consistency bug in the caller
-        if cfg!(debug_assertions) {
+        #[cfg(debug_assertions)]
+        {
             assert_ne!(
                 conflicting_new_child_manifest.id(),
                 self.original_child_manifest.id()
