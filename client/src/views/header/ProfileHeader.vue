@@ -39,7 +39,7 @@ import { UserProfile, logout as parsecLogout } from '@/parsec';
 import { Routes, getConnectionHandle, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
-import { ImportManager, ImportManagerKey } from '@/services/importManager';
+import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Answer, askQuestion, I18n } from 'megashark-lib';
@@ -53,7 +53,7 @@ const isOnline = ref(true);
 const isPopoverOpen = ref(false);
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
-const importManager: ImportManager = inject(ImportManagerKey)!;
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
@@ -113,7 +113,7 @@ async function openPopover(event: Event): Promise<void> {
   if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
       'HomePage.topbar.logoutConfirmTitle',
-      importManager.isImporting() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
+      fileOperationManager.isImporting() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
       {
         yesText: 'HomePage.topbar.logoutYes',
         noText: 'HomePage.topbar.logoutNo',

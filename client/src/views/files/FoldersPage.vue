@@ -218,14 +218,15 @@ import { Path, entryStat, WorkspaceCreateFolderErrorTag } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
-  FileProgressStateData,
+  OperationProgressStateData,
   FolderCreatedStateData,
   ImportData,
-  ImportManager,
-  ImportManagerKey,
-  ImportState,
+  FileOperationData,
+  FileOperationManager,
+  FileOperationManagerKey,
+  FileOperationState,
   StateData,
-} from '@/services/importManager';
+} from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
@@ -275,7 +276,7 @@ const routeWatchCancel = watchRoute(async () => {
   await listFolder();
 });
 
-const importManager: ImportManager = inject(ImportManagerKey)!;
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -400,7 +401,7 @@ onMounted(async () => {
       workspaceInfo.value = infoResult.value;
     }
   }
-  callbackId = await importManager.registerCallback(onFileImportState);
+  callbackId = await fileOperationManager.registerCallback(onFileImportState);
   currentPath.value = getDocumentPath();
   await listFolder();
 });
@@ -410,7 +411,7 @@ onUnmounted(async () => {
     hotkeyManager.unregister(hotkeys);
   }
   if (callbackId) {
-    importManager.removeCallback(callbackId);
+    fileOperationManager.removeCallback(callbackId);
   }
   routeWatchCancel();
   if (eventCbId) {
@@ -427,24 +428,28 @@ function onSortChange(event: MsSorterChangeEvent): void {
   files.value.sort(event.option.key, event.sortByAsc);
 }
 
-async function onFileImportState(state: ImportState, importData?: ImportData, stateData?: StateData): Promise<void> {
-  if (state === ImportState.FileAdded && importData) {
-    fileImports.value.push({ data: importData, progress: 0 });
-  } else if (state === ImportState.FileProgress && importData) {
-    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
+async function onFileImportState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
+  if (state === FileOperationState.FileAdded && operationData) {
+    fileImports.value.push({ data: operationData as ImportData, progress: 0 });
+  } else if (state === FileOperationState.OperationProgress && operationData) {
+    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
     if (index !== -1) {
-      fileImports.value[index].progress = (stateData as FileProgressStateData).progress;
+      fileImports.value[index].progress = (stateData as OperationProgressStateData).progress;
     }
-  } else if ([ImportState.Cancelled, ImportState.CreateFailed, ImportState.WriteError].includes(state) && importData) {
-    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
-    if (index !== -1) {
-      fileImports.value.splice(index, 1);
-    }
-  } else if (state === ImportState.FileImported && importData) {
-    const index = fileImports.value.findIndex((item) => item.data.id === importData.id);
+  } else if (
+    [FileOperationState.Cancelled, FileOperationState.CreateFailed, FileOperationState.WriteError].includes(state) &&
+    operationData
+  ) {
+    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
     if (index !== -1) {
       fileImports.value.splice(index, 1);
     }
+  } else if (state === FileOperationState.FileImported && operationData) {
+    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
+    if (index !== -1) {
+      fileImports.value.splice(index, 1);
+    }
+    const importData = operationData as ImportData;
     if (importData.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(importData.path, currentPath.value)) {
       const importedFilePath = await parsec.Path.join(importData.path, importData.file.name);
       const statResult = await parsec.entryStat(importData.workspaceHandle, importedFilePath);
@@ -462,7 +467,7 @@ async function onFileImportState(state: ImportState, importData?: ImportData, st
         }
       }
     }
-  } else if (state === ImportState.FolderCreated) {
+  } else if (state === FileOperationState.FolderCreated) {
     const folderData = stateData as FolderCreatedStateData;
     if (folderData.workspaceHandle === workspaceInfo.value?.handle) {
       const parent = await parsec.Path.parent(folderData.path);
@@ -522,7 +527,7 @@ async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
     }
   }
   for (const imp of imports) {
-    await importManager.importFile(workspaceInfo.value.handle, workspaceInfo.value.id, imp.file, imp.path);
+    await fileOperationManager.importFile(workspaceInfo.value.handle, workspaceInfo.value.id, imp.file, imp.path);
   }
 }
 

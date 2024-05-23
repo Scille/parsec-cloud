@@ -13,7 +13,7 @@
 import { needsMocks } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { EventDistributor, EventDistributorKey } from '@/services/eventDistributor';
-import { ImportManagerKey } from '@/services/importManager';
+import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { InformationManagerKey } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { IonContent, IonPage, IonRouterOutlet } from '@ionic/vue';
@@ -33,7 +33,7 @@ onMounted(async () => {
   }
   const inj = injectionProvider.getInjections(handle);
   // Provide the injections to children
-  provide(ImportManagerKey, inj.importManager);
+  provide(FileOperationManagerKey, inj.fileOperationManager);
   provide(InformationManagerKey, inj.informationManager);
   provide(EventDistributorKey, inj.eventDistributor);
   initialized.value = true;

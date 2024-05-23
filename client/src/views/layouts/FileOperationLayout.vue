@@ -4,12 +4,12 @@
   <ion-page>
     <ion-content>
       <ion-router-outlet />
-      <file-upload-menu />
+      <file-operation-menu />
     </ion-content>
   </ion-page>
 </template>
 
 <script lang="ts" setup>
-import FileUploadMenu from '@/views/files/FileUploadMenu.vue';
+import FileOperationMenu from '@/views/files/FileOperationMenu.vue';
 import { IonContent, IonPage, IonRouterOutlet } from '@ionic/vue';
 </script>

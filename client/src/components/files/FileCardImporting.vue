@@ -23,7 +23,7 @@
 </template>
 
 <script setup lang="ts">
-import { ImportData } from '@/services/importManager';
+import { ImportData } from '@/services/fileOperationManager';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { document } from 'ionicons/icons';
 import { MsSpinner } from 'megashark-lib';

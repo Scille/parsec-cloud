@@ -2,6 +2,7 @@
 
 import FileCard from '@/components/files/FileCard.vue';
 import FileCardImporting from '@/components/files/FileCardImporting.vue';
+import FileCopyItem from '@/components/files/FileCopyItem.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import FileGridDisplay from '@/components/files/FileGridDisplay.vue';
 import FileImportPopover from '@/components/files/FileImportPopover.vue';
@@ -9,6 +10,7 @@ import FileInputs from '@/components/files/FileInputs.vue';
 import FileListDisplay from '@/components/files/FileListDisplay.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
+import FileMoveItem from '@/components/files/FileMoveItem.vue';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
 
 export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
@@ -18,6 +20,7 @@ export type { FileImportTuple, FolderSelectionOptions } from '@/components/files
 export {
   FileCard,
   FileCardImporting,
+  FileCopyItem,
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,
@@ -25,5 +28,6 @@ export {
   FileListDisplay,
   FileListItem,
   FileListItemImporting,
+  FileMoveItem,
   FileUploadItem,
 };

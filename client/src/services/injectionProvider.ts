@@ -2,11 +2,11 @@
 
 import { ConnectionHandle, needsMocks } from '@/parsec';
 import { EventData, EventDistributor, Events } from '@/services/eventDistributor';
-import { ImportManager } from '@/services/importManager';
+import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationManager } from '@/services/informationManager';
 
 interface Injections {
-  importManager: ImportManager;
+  fileOperationManager: FileOperationManager;
   eventDistributor: EventDistributor;
   informationManager: InformationManager;
 }
@@ -20,7 +20,7 @@ export class InjectionProvider {
   constructor() {
     this.injections = new Map();
     this.default = {
-      importManager: new ImportManager(),
+      fileOperationManager: new FileOperationManager(),
       eventDistributor: new EventDistributor(),
       informationManager: new InformationManager(),
     };
@@ -34,7 +34,7 @@ export class InjectionProvider {
       return;
     }
     this.injections.set(handle, {
-      importManager: new ImportManager(),
+      fileOperationManager: new FileOperationManager(),
       eventDistributor: eventDistributor,
       informationManager: new InformationManager(handle),
     });
@@ -78,7 +78,7 @@ export class InjectionProvider {
     if (!inj) {
       return;
     }
-    await inj.importManager.stop();
+    await inj.fileOperationManager.stop();
     this.injections.delete(handle);
   }
 

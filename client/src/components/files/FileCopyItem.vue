@@ -18,17 +18,15 @@
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image
-            :image="getFileIcon(fileCache.name)"
+            :image="getFileIcon('')"
             class="file-icon"
           />
         </div>
       </div>
       <div class="element-details">
-        <ion-text class="element-details__name body">
-          {{ shortenFileName(fileCache.name) }}
-        </ion-text>
+        <ion-text class="element-details__name body">{{ shortenFileName('') }} </ion-text>
         <ion-label class="element-details__size body-sm">
-          <span class="default-state">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
+          <span class="default-state">{{ formatFileSize(1337) }}</span>
           <span
             class="default-state"
             v-if="workspaceInfo"
@@ -128,20 +126,16 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
-import { ImportData, FileOperationState } from '@/services/fileOperationManager';
+import { CopyData, FileOperationState } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
-  operationData: ImportData;
+  operationData: CopyData;
   progress: number;
   state: FileOperationState;
 }>();
-
-// Props get refreshed for every event but the file name or size
-// will never change, so we cache them.
-const fileCache = structuredClone(props.operationData.file);
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 
@@ -158,7 +152,7 @@ onMounted(async () => {
 
 defineEmits<{
   (event: 'cancel', id: string): void;
-  (event: 'click', operationData: ImportData, state: FileOperationState): void;
+  (event: 'click', operationData: CopyData, state: FileOperationState): void;
 }>();
 </script>
 

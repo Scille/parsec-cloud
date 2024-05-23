@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryID, EntryStatFile, EntryStatFolder } from '@/parsec';
-import { ImportData } from '@/services/importManager';
+import { ImportData } from '@/services/fileOperationManager';
 
 export enum SortProperty {
   Name,
