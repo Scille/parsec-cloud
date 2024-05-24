@@ -97,12 +97,15 @@ jobs:
 
           # AppImage
           cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
+          cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/latest-linux-*.yml release-files
 
           # DMG
           cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/Parsec-v3_${{ needs.version.outputs.full }}_mac_*.dmg{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/latest-mac-*.yml release-files
 
           # EXE
           cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/latest-win-*.yml release-files
         env:
           # TODO: Current version of cp don't support `--update` with argument,
           # recent version (coreutils-9.5) allows for `none-fail` that make `cp` fail if it would have overwritten a file.
@@ -201,6 +204,8 @@ jobs:
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec-v3_${{ needs.version.outputs.full }}_mac_*.dmg*
+            release-files/latest-*.yml
+            release-files/latest-*.yml.sha256
             release-files/Parsec-SBOM-*.spdx.json
             release-files/Parsec-SBOM-*.spdx.json.sha256
             release-files/version
