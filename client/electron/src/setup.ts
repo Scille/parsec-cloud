@@ -142,7 +142,11 @@ export class ElectronCapacitorApp {
   }
 
   updateApp(): void {
-    console.log('In electron update app. Sadly does nothing for now :(');
+    if (this.updater && this.updater.isUpdateDownloaded()) {
+      this.updater.quitAndInstall();
+    } else {
+      console.warn('Update app has been called but no update has been downloaded');
+    }
   }
 
   /**

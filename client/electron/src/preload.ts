@@ -32,5 +32,8 @@ process.once('loaded', () => {
     updateApp: () => {
       ipcRenderer.send(PageToWindowChannel.UpdateApp);
     },
+    prepareUpdate: () => {
+      ipcRenderer.send(PageToWindowChannel.PrepareUpdate);
+    },
   });
 });

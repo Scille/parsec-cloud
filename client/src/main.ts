@@ -236,6 +236,10 @@ async function setupApp(): Promise<void> {
         );
       }
     });
+    window.electronAPI.receive('parsec-clean-up-before-update', async () => {
+      await cleanBeforeQuitting(injectionProvider);
+      window.electronAPI.updateApp();
+    });
   } else {
     window.electronAPI = {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -266,9 +270,11 @@ async function setupApp(): Promise<void> {
           );
         }
       },
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
       updateApp: (): void => {
         console.log('Not available.');
+      },
+      prepareUpdate: (): void => {
+        console.log('Not available');
       },
     };
   }
@@ -373,6 +379,7 @@ declare global {
       sendMountpointFolder: (path: string) => void;
       getUpdateAvailability: () => void;
       updateApp: () => void;
+      prepareUpdate: () => void;
     };
   }
 }

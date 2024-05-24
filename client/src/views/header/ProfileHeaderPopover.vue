@@ -12,7 +12,7 @@
       <div
         button
         class="main-list__item update-item"
-        @click="update"
+        @click="onOptionClick(ProfilePopoverOption.Update)"
         v-show="updateAvailability.updateAvailable"
       >
         <ion-text class="update-item-text subtitles-normal">
@@ -84,6 +84,7 @@ export enum ProfilePopoverOption {
   LogOut = 2,
   App = 3,
   MyProfile = 4,
+  Update = 5,
 }
 </script>
 
@@ -106,10 +107,6 @@ async function onOptionClick(option: ProfilePopoverOption): Promise<void> {
   await popoverController.dismiss({
     option: option,
   });
-}
-
-async function update(): Promise<void> {
-  window.electronAPI.updateApp();
 }
 </script>
 

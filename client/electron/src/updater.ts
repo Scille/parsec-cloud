@@ -200,6 +200,18 @@ export default class AppUpdater {
     }
   }
 
+  quitAndInstall(): void {
+    if (!this.isUpdateDownloaded()) {
+      console.log('quitAndInstall() called when update has not been downloaded.');
+      return;
+    }
+    this.updater.quitAndInstall();
+  }
+
+  isUpdateDownloaded(): boolean {
+    return this.state === UpdaterState.UpdateDownloaded;
+  }
+
   emit<U extends UpdaterState>(event: U, ...args: Parameters<ListenerSignature[U]>): void {
     this.listeners[event].forEach((listener) => (listener as (...args: Parameters<ListenerSignature[U]>) => void)(...args));
   }

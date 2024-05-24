@@ -108,6 +108,10 @@
             "logoutYes": "Se déconnecter",
             "logoutNo": "Rester connecté(e)",
             "logoutFailed": "Une erreur est survenue lors de la déconnexion.",
+            "updateConfirmTitle": "Mettre à jour Parsec",
+            "updateConfirmQuestion": "Vous serez déconnecté(e) et l'application sera fermée. Assurez vous de ne pas avoir d'opérations en cours. Souhaitez-vous continuer ?",
+            "updateYes": "Mettre à jour Parsec",
+            "updateNo": "Plus tard",
             "updateAvailable": "Mise à jour disponible",
             "newVersionAvailable": "Nouvelle version disponible"
         },

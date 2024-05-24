@@ -110,7 +110,16 @@ async function openPopover(event: Event): Promise<void> {
   if (data === undefined) {
     return;
   }
-  if (data.option === ProfilePopoverOption.LogOut) {
+  if (data.option === ProfilePopoverOption.Update) {
+    const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
+      yesText: 'HomePage.topbar.updateYes',
+      noText: 'HomePage.topbar.updateNo',
+    });
+    if (answer === Answer.Yes) {
+      await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+      window.electronAPI.prepareUpdate();
+    }
+  } else if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
       'HomePage.topbar.logoutConfirmTitle',
       importManager.isImporting() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
