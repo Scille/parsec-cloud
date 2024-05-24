@@ -87,13 +87,21 @@ jobs:
       - name: Copy artifacts to the release folder
         run: |
           set -ex
+          # Python Wheels
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
 
+          # Snapcraft
           cp ${CP_ARGS} artifacts/Linux-X64-electron-app-snap/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.snap release-files
+
+          # AppImage
           cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/Parsec-v3_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
+
+          # DMG
           cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/Parsec-v3_${{ needs.version.outputs.full }}_mac_*.dmg{,.blockmap} release-files
+
+          # EXE
           cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec-v3_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
         env:
           # TODO: Current version of cp don't support `--update` with argument,
