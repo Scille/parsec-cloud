@@ -11,7 +11,7 @@
     }"
     :confirm-button="{
       label: 'TextInputModal.moveHere',
-      disabled: selectedPath === startingPath,
+      disabled: allowStartingPath ? false : selectedPath === startingPath,
       onClick: confirm,
     }"
   >
@@ -51,19 +51,19 @@
         <ion-item
           class="file-list-item"
           v-for="entry in currentEntries"
-          :key="entry.id"
-          :disabled="entry.isFile()"
-          @click="enterFolder(entry)"
+          :key="entry[0].id"
+          :disabled="entry[1]"
+          @click="enterFolder(entry[0])"
         >
           <div class="file-name">
             <div class="file-name__icons">
               <ms-image
-                :image="entry.isFile() ? getFileIcon(entry.name) : Folder"
+                :image="entry[0].isFile() ? getFileIcon(entry[0].name) : Folder"
                 class="file-icon"
               />
             </div>
             <ion-label class="file-name__label cell">
-              {{ entry.name }}
+              {{ entry[0].name }}
             </ion-label>
           </div>
         </ion-item>
@@ -86,7 +86,7 @@ import { Ref, onMounted, ref } from 'vue';
 const props = defineProps<FolderSelectionOptions>();
 const selectedPath: Ref<FsPath> = ref(props.startingPath);
 const headerPath: Ref<RouterPathNode[]> = ref([]);
-const currentEntries: Ref<EntryStat[]> = ref([]);
+const currentEntries: Ref<[EntryStat, boolean][]> = ref([]);
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 const backStack: FsPath[] = [];
 const forwardStack: FsPath[] = [];
@@ -108,9 +108,13 @@ async function update(): Promise<void> {
 
   const result = await statFolderChildren(workspaceHandle, selectedPath.value);
   if (result.ok) {
-    currentEntries.value = result.value;
+    const newEntries: [EntryStat, boolean][] = [];
+    for (const entry of result.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()))) {
+      const isDisabled = await isEntryDisabled(entry);
+      newEntries.push([entry, isDisabled]);
+    }
+    currentEntries.value = newEntries;
   }
-  currentEntries.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()));
 
   let path = '/';
   headerPath.value = [];
@@ -131,6 +135,18 @@ async function update(): Promise<void> {
     });
     id += 1;
   }
+}
+
+async function isEntryDisabled(entry: EntryStat): Promise<boolean> {
+  if (entry.isFile()) {
+    return true;
+  }
+  for (const excludePath of props.excludePaths || []) {
+    if (entry.path.startsWith(excludePath)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 async function forward(): Promise<void> {

@@ -15,6 +15,7 @@
           :image="getFileIcon(data.file.name)"
           class="file-icon"
         />
+
         <ion-label class="file-name__label cell">
           {{ data.file.name }}
         </ion-label>

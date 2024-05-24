@@ -19,15 +19,15 @@ async function parent(path: FsPath): Promise<FsPath> {
   return await libparsec.pathParent(path);
 }
 
-async function filename(path: FsPath): Promise<FsPath | null> {
+async function filename(path: FsPath): Promise<EntryName | null> {
   return await libparsec.pathFilename(path);
 }
 
-function getFileExtension(path: FsPath): string {
-  while (path.startsWith('.')) {
-    path = path.slice(1);
+function getFileExtension(filename: EntryName): string {
+  while (filename.startsWith('.')) {
+    filename = filename.slice(1);
   }
-  const pathComponents = path.split('.');
+  const pathComponents = filename.split('.');
   if (pathComponents.length === 1 || pathComponents.length === 0) {
     return '';
   }
@@ -38,6 +38,15 @@ function areSame(pathA: FsPath, pathB: FsPath): boolean {
   return pathA === pathB;
 }
 
+function filenameWithoutExtension(filename: EntryName): EntryName {
+  const ext = getFileExtension(filename);
+
+  if (ext.length) {
+    return filename.substring(0, filename.length - ext.length - 1);
+  }
+  return filename;
+}
+
 export const Path = {
   parse,
   join,
@@ -46,4 +55,5 @@ export const Path = {
   filename,
   getFileExtension,
   areSame,
+  filenameWithoutExtension,
 };

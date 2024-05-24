@@ -59,10 +59,10 @@
             @files-added="onFilesAdded"
           />
           <file-list-item-importing
-            v-for="fileImport in importing"
-            :key="fileImport.data.id"
-            :data="fileImport.data"
-            :progress="fileImport.progress"
+            v-for="imp in importsInProgress"
+            :key="imp.data.id"
+            :data="imp.data as ImportData"
+            :progress="imp.progress"
           />
         </div>
       </ion-list>
@@ -74,15 +74,16 @@
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemImporting from '@/components/files/FileListItemImporting.vue';
-import { EntryCollection, EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
+import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
 import { computed, ref } from 'vue';
 import { MsCheckbox } from 'megashark-lib';
+import { FileOperationDataType, ImportData } from '@/services/fileOperationManager';
 
 const props = defineProps<{
-  importing: Array<FileImportProgress>;
+  operationsInProgress: Array<FileOperationProgress>;
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
   currentPath: FsPath;
@@ -103,6 +104,10 @@ const allSelected = computed(() => {
 
 const someSelected = computed(() => {
   return props.files.selectedCount() + props.folders.selectedCount() > 0;
+});
+
+const importsInProgress = computed(() => {
+  return props.operationsInProgress.filter((op) => op.data.getDataType() === FileOperationDataType.Import);
 });
 
 async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}

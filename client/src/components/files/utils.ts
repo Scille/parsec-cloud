@@ -4,6 +4,7 @@ import FolderSelectionModal from '@/components/files/FolderSelectionModal.vue';
 import { FsPath, Path, WorkspaceHandle } from '@/parsec';
 import { modalController } from '@ionic/vue';
 import { MsModalResult, Translatable } from 'megashark-lib';
+
 export interface FileImportTuple {
   file: File;
   path: string;
@@ -14,6 +15,8 @@ export interface FolderSelectionOptions {
   subtitle?: Translatable;
   startingPath: FsPath;
   workspaceHandle: WorkspaceHandle;
+  allowStartingPath?: boolean;
+  excludePaths?: Array<FsPath>;
 }
 
 export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<FileImportTuple[]> {

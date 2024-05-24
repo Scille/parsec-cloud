@@ -109,7 +109,7 @@
           {{ $msTranslate('FoldersPage.ImportFile.failed') }}
         </ion-text>
         <ms-information-tooltip
-          :text="'FoldersPage.ImportFile.failedDetails'"
+          text="FoldersPage.ImportFile.failedDetails"
           class="information-icon"
           slot="end"
         />

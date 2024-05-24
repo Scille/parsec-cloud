@@ -50,11 +50,19 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(6);
-    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Rename', 'Delete', 'Details', 'Collaboration', 'Copy link']);
+    await expect(popover.getByRole('listitem')).toHaveCount(7);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Manage file',
+      'Rename',
+      'Move to',
+      'Delete',
+      'Details',
+      'Collaboration',
+      'Copy link',
+    ]);
   });
 
-  msTest(`Copy document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents, context }) => {
+  msTest(`Get document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents, context }) => {
     if (gridMode) {
       await toggleViewMode(documents);
     }
@@ -72,7 +80,7 @@ for (const gridMode of [false, true]) {
     expect(filePath).toMatch(/parsec3:\/\/[a-z.]+(:\d+)?\/[a-zA-Z0-9_]+\?.+/);
   });
 
-  msTest(`Rename document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+  msTest(`Rename document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     if (gridMode) {
       await toggleViewMode(documents);
     }
@@ -87,12 +95,10 @@ for (const gridMode of [false, true]) {
     }
   });
 
-  msTest(`Delete document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+  msTest(`Delete document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     if (gridMode) {
       await toggleViewMode(documents);
     }
-    await clickAction(await openPopover(documents), 'Delete');
-
     let fileName;
     if (gridMode) {
       fileName = await documents
@@ -110,6 +116,8 @@ for (const gridMode of [false, true]) {
         .locator('.file-name__label')
         .textContent();
     }
+
+    await clickAction(await openPopover(documents), 'Delete');
 
     await answerQuestion(documents, true, {
       expectedTitleText: 'Delete one file',
@@ -136,5 +144,23 @@ for (const gridMode of [false, true]) {
     await expect(popover.getByRole('group')).toHaveCount(2);
     await expect(popover.getByRole('listitem')).toHaveCount(4);
     await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Details', 'Collaboration', 'Copy link']);
+  });
+
+  msTest(`Move document in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    if (gridMode) {
+      await toggleViewMode(documents);
+    }
+    await expect(documents.locator('.folder-selection-modal')).toBeHidden();
+    await clickAction(await openPopover(documents), 'Move to');
+    const modal = documents.locator('.folder-selection-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.ms-modal-header__title')).toHaveText('Move one item');
+    const okButton = modal.locator('#next-button');
+    await expect(okButton).toHaveText('Move here');
+    await expect(okButton).toHaveDisabledAttribute();
+    await modal.locator('.folder-container').getByRole('listitem').nth(0).click();
+    await expect(okButton).not.toHaveDisabledAttribute();
+    await okButton.click();
+    await expect(modal).toBeHidden();
   });
 }

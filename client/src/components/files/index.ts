@@ -14,7 +14,7 @@ import FileMoveItem from '@/components/files/FileMoveItem.vue';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
 
 export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
-export type { EntryModel, FileImportProgress, FileModel, FolderModel } from '@/components/files/types';
+export type { EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
 export { getFilesFromDrop, selectFolder } from '@/components/files/utils';
 export type { FileImportTuple, FolderSelectionOptions } from '@/components/files/utils';
 export {
