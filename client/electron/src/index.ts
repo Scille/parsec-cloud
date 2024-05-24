@@ -136,3 +136,9 @@ ipcMain.on(PageToWindowChannel.UpdateApp, async () => {
 ipcMain.on(PageToWindowChannel.UpdateAvailabilityRequest, async () => {
   myCapacitorApp.checkForUpdates();
 });
+
+ipcMain.on(PageToWindowChannel.PrepareUpdate, async () => {
+  if (myCapacitorApp.updater && myCapacitorApp.updater.isUpdateDownloaded()) {
+    myCapacitorApp.sendEvent(WindowToPageChannel.CleanUpBeforeUpdate);
+  }
+});

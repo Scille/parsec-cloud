@@ -7,6 +7,7 @@ export enum PageToWindowChannel {
   MountpointUpdate = 'parsec-mountpoint-update',
   UpdateAvailabilityRequest = 'parsec-update-availability-request',
   UpdateApp = 'parsec-update-app',
+  PrepareUpdate = 'parsec-prepare-update',
 }
 
 export enum WindowToPageChannel {
@@ -14,4 +15,5 @@ export enum WindowToPageChannel {
   UpdateAvailability = 'parsec-update-availability',
   OpenLink = 'parsec-open-link',
   CloseRequest = 'parsec-close-request',
+  CleanUpBeforeUpdate = 'parsec-clean-up-before-update',
 }

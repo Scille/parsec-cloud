@@ -108,6 +108,10 @@
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
             "logoutFailed": "An error occured while logging out.",
+            "updateConfirmTitle": "Update Parsec",
+            "updateConfirmQuestion": "You will be logged out and the application will close. Make sure to save your work before. Do you want to continue?",
+            "updateYes": "Update Parsec",
+            "updateNo": "Later",
             "updateAvailable": "Update available",
             "newVersionAvailable": "New version available"
         },

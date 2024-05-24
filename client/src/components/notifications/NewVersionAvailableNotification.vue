@@ -33,12 +33,13 @@
 </template>
 
 <script setup lang="ts">
-import { formatTimeSince } from 'megashark-lib';
+import { Answer, askQuestion, formatTimeSince } from 'megashark-lib';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
 import { Notification } from '@/services/notificationManager';
 import { NewVersionAvailableData } from '@/services/informationManager';
-import { IonIcon, IonText } from '@ionic/vue';
+import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { arrowForward, sparkles } from 'ionicons/icons';
+import { navigateTo, Routes } from '@/router';
 
 const props = defineProps<{
   notification: Notification;
@@ -47,7 +48,15 @@ const props = defineProps<{
 const data: NewVersionAvailableData = props.notification.getData<NewVersionAvailableData>();
 
 async function update(): Promise<void> {
-  window.electronAPI.updateApp();
+  await popoverController.dismiss();
+  const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
+    yesText: 'HomePage.topbar.updateYes',
+    noText: 'HomePage.topbar.updateNo',
+  });
+  if (answer === Answer.Yes) {
+    await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+    window.electronAPI.prepareUpdate();
+  }
 }
 </script>
 
