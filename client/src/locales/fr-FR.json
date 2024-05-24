@@ -425,9 +425,6 @@
             "listFailed": "Le contenu du dossier `{path}` n'a pas pu être listé.",
             "deleteMultipleAllFailed": "Aucun élément n'a pu être supprimé.",
             "deleteMultipleSomeFailed": "Certains éléments n'ont pas pu être supprimés.",
-            "moveOneFailed": "Le fichier `{name}` n'a pas pu être déplacé.",
-            "moveMultipleAllFailed": "Aucun élément n'a pu être déplacé.",
-            "moveMultipleSomeFailed": "Certains éléments n'ont pas pu être déplacés.",
             "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
             "copyMultipleAllFailed": "Aucun élément n'a pu être copié.",
             "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés."
@@ -461,7 +458,10 @@
         "deleteMultipleNo": "Conserver les éléments",
         "copySelectFolderTitle": "Copier un élément | Copier {count} éléments",
         "moveSelectFolderTitle": "Déplacer un élément | Déplacer {count} éléments",
-        "moveSuccess": "L'élément a été déplacé dans le dossier choisi. | Tous les éléments ont été déplacés dans le dossier choisi.",
+        "moveAlreadyExistTitle": "Remplacer ou ignorer l'élément | Remplacer ou ignorer les éléments",
+        "moveAlreadyExistQuestion": "Un élément nommé `{file}` existe déjà dans le dossier de destination. Que souhaitez-vous faire ? | Plusieurs éléments du même nom existent déjà dans le dossier de destination. Que souhaitez-vous faire ?",
+        "moveAlreadyExistSkip": "Ignorer | Tout ignorer",
+        "moveAlreadyExistReplace": "Remplacer | Tout remplacer",
         "copySuccess": "L'élément a été copié dans le dossier choisi. | Tous les éléments ont été copiés dans le dossier choisi.",
         "open": {
             "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",

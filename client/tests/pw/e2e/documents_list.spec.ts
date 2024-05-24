@@ -85,8 +85,8 @@ msTest('Select all documents', async ({ documents }) => {
   }
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(1);
-  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText('Delete');
+  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveCount(2);
+  await expect(actionBar.locator('.ms-action-bar-button:visible')).toHaveText(['Move to', 'Delete']);
   await expect(actionBar.locator('.counter')).toHaveText(/\d+ selected items/, { useInnerText: true });
 
   await entries.nth(1).locator('ion-checkbox').click();
@@ -113,7 +113,7 @@ msTest('Delete all documents', async ({ documents }) => {
   await globalCheckbox.click();
 
   const actionBar = documents.locator('#folders-ms-action-bar');
-  await actionBar.locator('.ms-action-bar-button:visible').click();
+  await actionBar.locator('.ms-action-bar-button:visible').nth(1).click();
   await answerQuestion(documents, true, {
     expectedTitleText: 'Delete multiple items',
     expectedQuestionText: /Are you sure you want to delete these \d+ items\?/,

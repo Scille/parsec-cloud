@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { EntryID, EntryStatFile, EntryStatFolder } from '@/parsec';
-import { ImportData } from '@/services/fileOperationManager';
+import { FileOperationData } from '@/services/fileOperationManager';
 
 export enum SortProperty {
   Name,
@@ -14,8 +14,8 @@ export enum ImportType {
   Folder,
 }
 
-export interface FileImportProgress {
-  data: ImportData;
+export interface FileOperationProgress {
+  data: FileOperationData;
   progress: number;
 }
 
@@ -112,7 +112,6 @@ export class EntryCollection<Model extends EntryModel> {
         existing.needSync = entry.needSync;
         existing.tag = entry.tag;
         existing.updated = entry.updated;
-        existing.isSelected = entry.isSelected;
         updated.push(existing.id);
       } else {
         // entry is not yet listed, mark it as to be added

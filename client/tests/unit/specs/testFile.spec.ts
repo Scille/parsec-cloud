@@ -141,4 +141,16 @@ describe('File', () => {
       shortenFileName('a_very_large_file_name_created_on_20240122_by_max.doc', { maxLength: 10, prefixLength: 10, suffixLength: 0 }),
     ).to.equal('a_very...');
   });
+
+  it.each([
+    ['test.mp3', 'test'],
+    ['file.tar.gz', 'file.tar'],
+    ['test.MP4', 'test'],
+    ['.config', '.config'],
+    ['', ''],
+    ['.config.cfg', '.config'],
+    ['a.long.file.name.txt', 'a.long.file.name'],
+  ])('Test filename without extension', async (filename, expected) => {
+    expect(Path.filenameWithoutExtension(filename)).to.equal(expected);
+  });
 });

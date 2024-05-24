@@ -24,14 +24,15 @@
         </div>
       </div>
       <div class="element-details">
-        <ion-text class="element-details__name body">{{ shortenFileName('') }} </ion-text>
+        <ion-text class="element-details__name body">
+          MOVE {{ shortenFileName(entryName, { maxLength: 32, prefixLength: 26, suffixLength: 5 }) }}
+        </ion-text>
         <ion-label class="element-details__size body-sm">
-          <span class="default-state">{{ formatFileSize(1337) }}</span>
           <span
             class="default-state"
             v-if="workspaceInfo"
           >
-            &bull; {{ workspaceInfo.currentName }}
+            {{ workspaceInfo.currentName }}
           </span>
           <span
             class="hover-state"
@@ -123,9 +124,9 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
+import { getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
-import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
+import { StartedWorkspaceInfo, getWorkspaceInfo, Path, EntryName } from '@/parsec';
 import { MoveData, FileOperationState } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
@@ -138,6 +139,7 @@ const props = defineProps<{
 }>();
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const entryName: Ref<EntryName> = ref('');
 
 defineExpose({
   props,
@@ -148,6 +150,7 @@ onMounted(async () => {
   if (result.ok) {
     workspaceInfo.value = result.value;
   }
+  entryName.value = (await Path.filename(props.operationData.dstPath)) ?? '';
 });
 
 defineEmits<{

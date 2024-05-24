@@ -36,9 +36,7 @@ import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
 export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.workspaceCreateFile(workspaceHandle, path);
   } else {
     return { ok: true, value: '42' };
@@ -46,9 +44,7 @@ export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath)
 }
 
 export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFolderError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.workspaceCreateFolderAll(workspaceHandle, path);
   } else {
     return { ok: false, error: { tag: WorkspaceCreateFolderErrorTag.EntryExists, error: 'already exists' } };
@@ -56,9 +52,7 @@ export async function createFolder(workspaceHandle: WorkspaceHandle, path: FsPat
 }
 
 export async function deleteFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.workspaceRemoveFile(workspaceHandle, path);
   } else {
     return { ok: true, value: null };
@@ -66,9 +60,7 @@ export async function deleteFile(workspaceHandle: WorkspaceHandle, path: FsPath)
 }
 
 export async function deleteFolder(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<null, WorkspaceRemoveEntryError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.workspaceRemoveFolderAll(workspaceHandle, path);
   } else {
     return { ok: true, value: null };
@@ -80,10 +72,9 @@ export async function rename(
   path: FsPath,
   newName: EntryName,
 ): Promise<Result<null, WorkspaceMoveEntryError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
-    return await libparsec.workspaceMoveEntry(workspaceHandle, path, newName, { tag: MoveEntryModeTag.NoReplace });
+  if (!needsMocks()) {
+    const newPath = await Path.join(await Path.parent(path), newName);
+    return await libparsec.workspaceMoveEntry(workspaceHandle, path, newPath, { tag: MoveEntryModeTag.NoReplace });
   } else {
     return { ok: true, value: null };
   }
@@ -275,20 +266,19 @@ export async function statFolderChildren(
   };
 }
 
-export enum MoveErrorTag {
-  Internal = 'Internal',
-}
-
-export interface MoveError {
-  tag: MoveErrorTag.Internal;
-}
-
-export async function moveEntry(_source: FsPath, _destination: FsPath): Promise<Result<null, MoveError>> {
-  const clientHandle = getParsecHandle();
-  const workspaceHandle = getWorkspaceHandle();
-
-  if (clientHandle && workspaceHandle && !needsMocks()) {
-    return { ok: true, value: null };
+export async function moveEntry(
+  workspaceHandle: WorkspaceHandle,
+  source: FsPath,
+  destination: FsPath,
+  forceReplace = false,
+): Promise<Result<null, WorkspaceMoveEntryError>> {
+  if (workspaceHandle && !needsMocks()) {
+    return libparsec.workspaceMoveEntry(
+      workspaceHandle,
+      source,
+      destination,
+      forceReplace ? { tag: MoveEntryModeTag.CanReplace } : { tag: MoveEntryModeTag.NoReplace },
+    );
   } else {
     return { ok: true, value: null };
   }
@@ -326,8 +316,6 @@ export async function openFile(
   path: FsPath,
   options: OpenOptions,
 ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>> {
-  const clientHandle = getParsecHandle();
-
   const parsecOptions = {
     read: options.read ? true : false,
     write: options.write ? true : false,
@@ -337,7 +325,7 @@ export async function openFile(
     createNew: options.createNew ? true : false,
   };
 
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceOpenFile(workspaceHandle, path, parsecOptions);
   } else {
     return { ok: true, value: 42 };
@@ -345,9 +333,7 @@ export async function openFile(
 }
 
 export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescriptor): Promise<Result<null, WorkspaceFdCloseError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.fdClose(workspaceHandle, fd);
   } else {
     return { ok: true, value: null };
@@ -359,9 +345,7 @@ export async function resizeFile(
   fd: FileDescriptor,
   length: number,
 ): Promise<Result<null, WorkspaceFdResizeError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && workspaceHandle && !needsMocks()) {
+  if (workspaceHandle && !needsMocks()) {
     return await libparsec.fdResize(workspaceHandle, fd, length, true);
   } else {
     return { ok: true, value: null };
@@ -374,9 +358,7 @@ export async function writeFile(
   offset: number,
   data: Uint8Array,
 ): Promise<Result<number, WorkspaceFdWriteError>> {
-  const clientHandle = getParsecHandle();
-
-  if (clientHandle && !needsMocks()) {
+  if (!needsMocks()) {
     return await libparsec.fdWrite(workspaceHandle, fd, offset, data);
   } else {
     await wait(100);

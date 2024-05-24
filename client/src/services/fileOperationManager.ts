@@ -7,10 +7,12 @@ import {
   WorkspaceFdWriteErrorTag,
   WorkspaceHandle,
   WorkspaceID,
+  WorkspaceMoveEntryErrorTag,
   WorkspaceOpenFileErrorTag,
   closeFile,
   createFolder,
   deleteFile,
+  moveEntry,
   openFile,
   resizeFile,
   writeFile,
@@ -28,11 +30,15 @@ enum FileOperationState {
   OperationProgress,
   FileImported,
   FileAdded,
+  MoveAdded,
   ImportStarted,
+  MoveStarted,
   CreateFailed,
+  MoveFailed,
   WriteError,
   Cancelled,
   FolderCreated,
+  EntryMoved,
 }
 
 export interface OperationProgressStateData {
@@ -52,7 +58,16 @@ export interface FolderCreatedStateData {
   workspaceHandle: WorkspaceHandle;
 }
 
-export type StateData = OperationProgressStateData | CreateFailedStateData | WriteErrorStateData | FolderCreatedStateData;
+export interface MoveFailedStateData {
+  error: WorkspaceMoveEntryErrorTag;
+}
+
+export type StateData =
+  | OperationProgressStateData
+  | CreateFailedStateData
+  | WriteErrorStateData
+  | FolderCreatedStateData
+  | MoveFailedStateData;
 
 type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
 type FileOperationID = string;
@@ -117,11 +132,13 @@ class CopyData extends FileOperationData {
 class MoveData extends FileOperationData {
   srcPath: FsPath;
   dstPath: FsPath;
+  forceReplace: boolean;
 
-  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath) {
+  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath, forceReplace: boolean) {
     super(workspaceHandle, workspaceId);
     this.srcPath = srcPath;
     this.dstPath = dstPath;
+    this.forceReplace = forceReplace;
   }
 
   getDataType(): FileOperationDataType {
@@ -134,13 +151,13 @@ class FileOperationManager {
   private callbacks: Array<[string, FileOperationCallback]>;
   private cancelList: Array<FileOperationID>;
   private running: boolean;
-  private importJobs: Array<[FileOperationID, Promise<void>]>;
+  private operationJobs: Array<[FileOperationID, Promise<void>]>;
 
   constructor() {
     this.fileOperationData = [];
     this.callbacks = [];
     this.cancelList = [];
-    this.importJobs = [];
+    this.operationJobs = [];
     this.running = false;
     this.start();
   }
@@ -150,7 +167,7 @@ class FileOperationManager {
   }
 
   isImporting(): boolean {
-    return this.importJobs.length + this.fileOperationData.length > 0;
+    return this.operationJobs.length + this.fileOperationData.length > 0;
   }
 
   async importFile(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, file: File, path: FsPath): Promise<void> {
@@ -164,12 +181,18 @@ class FileOperationManager {
     this.fileOperationData.unshift(newData);
   }
 
-  async moveEntry(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, srcPath: FsPath, dstPath: FsPath): Promise<void> {
+  async moveEntry(
+    workspaceHandle: WorkspaceHandle,
+    workspaceId: WorkspaceID,
+    srcPath: FsPath,
+    dstPath: FsPath,
+    forceReplace = false,
+  ): Promise<void> {
     if (!this.isRunning) {
       this.start();
     }
-    const newData = new MoveData(workspaceHandle, workspaceId, srcPath, dstPath);
-    await this.sendState(FileOperationState.FileAdded, newData);
+    const newData = new MoveData(workspaceHandle, workspaceId, srcPath, dstPath, forceReplace);
+    await this.sendState(FileOperationState.MoveAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -182,18 +205,18 @@ class FileOperationManager {
     this.fileOperationData.unshift(newData);
   }
 
-  async cancelImport(id: FileOperationID): Promise<void> {
+  async cancelOperation(id: FileOperationID): Promise<void> {
     if (!this.cancelList.find((item) => item === id)) {
       this.cancelList.push(id);
     }
   }
 
   async cancelAll(): Promise<void> {
-    for (const elem of this.importJobs) {
-      await this.cancelImport(elem[0]);
+    for (const elem of this.operationJobs) {
+      await this.cancelOperation(elem[0]);
     }
     for (const elem of this.fileOperationData) {
-      await this.cancelImport(elem.id);
+      await this.cancelOperation(elem.id);
     }
   }
 
@@ -210,6 +233,39 @@ class FileOperationManager {
   private async sendState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
     for (const elem of this.callbacks) {
       await elem[1](state, operationData, stateData);
+    }
+  }
+
+  private async doMove(data: MoveData): Promise<void> {
+    await this.sendState(FileOperationState.MoveStarted, data);
+
+    let moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, data.forceReplace);
+    if (!moveResult.ok) {
+      let i = 1;
+      // If an entry with the same name already exists, we try appending a number at the end of the file.
+      // We only try until we reach 9.
+      while (!moveResult.ok && moveResult.error.tag === WorkspaceMoveEntryErrorTag.DestinationExists && i < 10) {
+        const filename = (await Path.filename(data.srcPath)) || '';
+        const ext = Path.getFileExtension(data.srcPath);
+        let newFilename = '';
+        if (ext.length) {
+          newFilename = `${Path.filenameWithoutExtension(filename)} (${i}).${ext}`;
+        } else {
+          newFilename = `${Path.filenameWithoutExtension(filename)} (${i})`;
+        }
+        const dstPath = await Path.join(await Path.parent(data.dstPath), newFilename);
+        moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, false);
+        if (moveResult.ok) {
+          data.dstPath = dstPath;
+          this.sendState(FileOperationState.EntryMoved, data);
+        }
+        i++;
+      }
+      if (!moveResult.ok) {
+        this.sendState(FileOperationState.MoveFailed, data, { error: moveResult.error.tag });
+      }
+    } else {
+      this.sendState(FileOperationState.EntryMoved, data);
     }
   }
 
@@ -300,7 +356,7 @@ class FileOperationManager {
 
   async stop(): Promise<void> {
     await this.cancelAll();
-    while (this.importJobs.length > 0) {
+    while (this.operationJobs.length > 0) {
       await wait(100);
     }
     this.running = false;
@@ -319,7 +375,7 @@ class FileOperationManager {
         break;
       }
 
-      if (this.importJobs.length >= MAX_SIMULTANEOUS_IMPORT_JOBS) {
+      if (this.operationJobs.length >= MAX_SIMULTANEOUS_IMPORT_JOBS) {
         // Remove the files that have been cancelled but have not yet
         // started their import
         for (const cancelId of this.cancelList.slice()) {
@@ -356,14 +412,22 @@ class FileOperationManager {
           await this.sendState(FileOperationState.Cancelled, elem as ImportData);
           continue;
         }
-        const job = this.doImport(elem as ImportData);
-        this.importJobs.push([elem.id, job]);
+        let job: Promise<void>;
+        if (elem.getDataType() === FileOperationDataType.Import) {
+          job = this.doImport(elem as ImportData);
+        } else if (elem.getDataType() === FileOperationDataType.Move) {
+          job = this.doMove(elem as MoveData);
+        } else {
+          console.warn(`Unhandled file operation '${elem.getDataType()}'`);
+          continue;
+        }
+        this.operationJobs.push([elem.id, job]);
         job.then(async () => {
-          const index = this.importJobs.findIndex((item) => item[1] === job);
+          const index = this.operationJobs.findIndex((item) => item[1] === job);
           if (index !== -1) {
-            this.importJobs.splice(index, 1);
+            this.operationJobs.splice(index, 1);
           }
-          if (this.importJobs.length === 0 && this.fileOperationData.length === 0) {
+          if (this.operationJobs.length === 0 && this.fileOperationData.length === 0) {
             await this.sendState(FileOperationState.OperationAllFinished);
             importStarted = false;
           }

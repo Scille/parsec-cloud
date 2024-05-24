@@ -152,7 +152,7 @@ interface OperationItem {
 const menu = useUploadMenu();
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const imports: Ref<Array<OperationItem>> = ref([]);
+const fileOperations: Ref<Array<OperationItem>> = ref([]);
 let dbId: string;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
@@ -166,17 +166,19 @@ enum Tabs {
 const currentTab = ref(Tabs.InProgress);
 
 const inProgressItems = computed(() => {
-  return imports.value.filter((importItem) =>
-    [FileOperationState.OperationProgress, FileOperationState.FileAdded].includes(importItem.state),
+  return fileOperations.value.filter((op) =>
+    [FileOperationState.OperationProgress, FileOperationState.FileAdded, FileOperationState.MoveAdded].includes(op.state),
   );
 });
 
 const doneItems = computed(() => {
-  return imports.value.filter((importItem) => [FileOperationState.FileImported, FileOperationState.Cancelled].includes(importItem.state));
+  return fileOperations.value.filter((op) =>
+    [FileOperationState.FileImported, FileOperationState.Cancelled, FileOperationState.EntryMoved].includes(op.state),
+  );
 });
 
 const errorItems = computed(() => {
-  return imports.value.filter((importItem) => importItem.state === FileOperationState.CreateFailed);
+  return fileOperations.value.filter((op) => [FileOperationState.CreateFailed, FileOperationState.MoveFailed].includes(op.state));
 });
 
 function toggleMenu(): void {
@@ -207,11 +209,11 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
 }
 
 function updateImportState(id: string, state: FileOperationState, progress?: number): void {
-  const importItem = imports.value.find((importItem) => importItem.data.id === id);
-  if (importItem) {
-    importItem.state = state;
+  const operation = fileOperations.value.find((op) => op.data.id === id);
+  if (operation) {
+    operation.state = state;
     if (progress !== undefined) {
-      importItem.progress = progress;
+      operation.progress = progress;
     }
   }
 }
@@ -227,7 +229,7 @@ async function onOperationFinishedClick(operationData: FileOperationData, state:
 }
 
 async function cancelOperation(importId: string): Promise<void> {
-  await fileOperationManager.cancelImport(importId);
+  await fileOperationManager.cancelOperation(importId);
 }
 
 async function onFileOperationEvent(
@@ -247,7 +249,8 @@ async function onFileOperationEvent(
       currentTab.value = Tabs.Done;
       break;
     case FileOperationState.FileAdded:
-      imports.value.push({
+    case FileOperationState.MoveAdded:
+      fileOperations.value.push({
         data: fileOperationData as FileOperationData,
         state: state,
         progress: 0,
@@ -260,9 +263,11 @@ async function onFileOperationEvent(
       updateImportState((fileOperationData as FileOperationData).id, state, (stateData as OperationProgressStateData).progress);
       break;
     case FileOperationState.FileImported:
+    case FileOperationState.EntryMoved:
       updateImportState((fileOperationData as FileOperationData).id, state, 100);
       break;
     case FileOperationState.CreateFailed:
+    case FileOperationState.MoveFailed:
       updateImportState((fileOperationData as FileOperationData).id, state, -1);
       break;
     case FileOperationState.Cancelled:
@@ -404,4 +409,3 @@ async function onFileOperationEvent(
   }
 }
 </style>
-@/services/fileOperationManager

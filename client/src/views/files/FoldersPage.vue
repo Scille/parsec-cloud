@@ -33,7 +33,7 @@
           />
           <ms-action-bar-button
             id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
@@ -68,7 +68,7 @@
         <div v-else>
           <ms-action-bar-button
             id="button-moveto"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMoveTo'"
             :icon="arrowRedo"
             @click="moveEntriesTo(getSelectedEntries())"
@@ -131,7 +131,7 @@
           @files-added="startImportFiles"
         />
         <div
-          v-if="folders.entriesCount() + files.entriesCount() + fileImportsCurrentDir.length === 0"
+          v-if="folders.entriesCount() + files.entriesCount() + (fileOperationsCurrentDir ? fileOperationsCurrentDir.length : 0) === 0"
           class="no-files body-lg"
         >
           <file-drop-zone
@@ -153,7 +153,7 @@
             <file-list-display
               :files="files"
               :folders="folders"
-              :importing="fileImportsCurrentDir"
+              :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
@@ -164,7 +164,7 @@
             <file-grid-display
               :files="files"
               :folders="folders"
-              :importing="fileImportsCurrentDir"
+              :operations-in-progress="fileOperationsCurrentDir"
               :current-path="currentPath"
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
@@ -196,6 +196,7 @@ import {
   MsSorterChangeEvent,
   Translatable,
   Clipboard,
+  asyncComputed,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -204,7 +205,7 @@ import {
   FileDropZone,
   FileGridDisplay,
   FileImportPopover,
-  FileImportProgress,
+  FileOperationProgress,
   FileImportTuple,
   FileInputs,
   FileListDisplay,
@@ -214,18 +215,20 @@ import {
   SortProperty,
   selectFolder,
 } from '@/components/files';
-import { Path, entryStat, WorkspaceCreateFolderErrorTag } from '@/parsec';
+import { Path, entryStat, WorkspaceCreateFolderErrorTag, EntryStat, FsPath } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
   OperationProgressStateData,
   FolderCreatedStateData,
   ImportData,
+  MoveData,
   FileOperationData,
   FileOperationManager,
   FileOperationManagerKey,
   FileOperationState,
   StateData,
+  FileOperationDataType,
 } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -284,7 +287,7 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
-const fileImports: Ref<Array<FileImportProgress>> = ref([]);
+const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
 const currentPath = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
@@ -401,7 +404,7 @@ onMounted(async () => {
       workspaceInfo.value = infoResult.value;
     }
   }
-  callbackId = await fileOperationManager.registerCallback(onFileImportState);
+  callbackId = await fileOperationManager.registerCallback(onFileOperationState);
   currentPath.value = getDocumentPath();
   await listFolder();
 });
@@ -428,26 +431,30 @@ function onSortChange(event: MsSorterChangeEvent): void {
   files.value.sort(event.option.key, event.sortByAsc);
 }
 
-async function onFileImportState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
+async function onFileOperationState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
   if (state === FileOperationState.FileAdded && operationData) {
-    fileImports.value.push({ data: operationData as ImportData, progress: 0 });
+    fileOperations.value.push({ data: operationData, progress: 0 });
+  } else if (state === FileOperationState.MoveAdded && operationData) {
+    fileOperations.value.push({ data: operationData, progress: 0 });
   } else if (state === FileOperationState.OperationProgress && operationData) {
-    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
-    if (index !== -1) {
-      fileImports.value[index].progress = (stateData as OperationProgressStateData).progress;
+    const op = fileOperations.value.find((item) => item.data.id === operationData.id);
+    if (op) {
+      op.progress = (stateData as OperationProgressStateData).progress;
     }
   } else if (
-    [FileOperationState.Cancelled, FileOperationState.CreateFailed, FileOperationState.WriteError].includes(state) &&
+    [FileOperationState.Cancelled, FileOperationState.CreateFailed, FileOperationState.WriteError, FileOperationState.MoveFailed].includes(
+      state,
+    ) &&
     operationData
   ) {
-    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
+    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
     if (index !== -1) {
-      fileImports.value.splice(index, 1);
+      fileOperations.value.splice(index, 1);
     }
   } else if (state === FileOperationState.FileImported && operationData) {
-    const index = fileImports.value.findIndex((item) => item.data.id === operationData.id);
+    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
     if (index !== -1) {
-      fileImports.value.splice(index, 1);
+      fileOperations.value.splice(index, 1);
     }
     const importData = operationData as ImportData;
     if (importData.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(importData.path, currentPath.value)) {
@@ -466,6 +473,20 @@ async function onFileImportState(state: FileOperationState, operationData?: File
           existing.isSelected = false;
         }
       }
+    }
+  } else if (state === FileOperationState.EntryMoved && operationData) {
+    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
+    if (index !== -1) {
+      fileOperations.value.splice(index, 1);
+    }
+    const moveData = operationData as MoveData;
+    const dstPathParent = await Path.parent(moveData.dstPath);
+    const srcPathParent = await Path.parent(moveData.srcPath);
+    if (
+      moveData.workspaceHandle === workspaceInfo.value?.handle &&
+      (Path.areSame(dstPathParent, currentPath.value) || Path.areSame(srcPathParent, currentPath.value))
+    ) {
+      await listFolder();
     }
   } else if (state === FileOperationState.FolderCreated) {
     const folderData = stateData as FolderCreatedStateData;
@@ -531,10 +552,21 @@ async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
   }
 }
 
-const fileImportsCurrentDir = computed(() => {
-  return fileImports.value.filter(
-    (item) => parsec.Path.areSame(item.data.path, currentPath.value) && item.data.workspaceHandle === workspaceInfo.value?.handle,
-  );
+const fileOperationsCurrentDir = asyncComputed(async () => {
+  const operations: Array<FileOperationProgress> = [];
+
+  for (const op of fileOperations.value) {
+    let path = '';
+    if (op.data.getDataType() === FileOperationDataType.Import) {
+      path = (op.data as ImportData).path;
+    } else if (op.data.getDataType() === FileOperationDataType.Move) {
+      path = await parsec.Path.parent((op.data as MoveData).dstPath);
+    }
+    if (op.data.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(path, currentPath.value)) {
+      operations.push(op);
+    }
+  }
+  return operations;
 });
 
 async function listFolder(): Promise<void> {
@@ -553,7 +585,19 @@ async function listFolder(): Promise<void> {
     for (const childStat of result.value) {
       const childName = childStat.name;
       // Excluding files currently being imported
-      if (fileImports.value.find((imp) => imp.data.file.name === childName) === undefined) {
+      let foundInFileOps = false;
+      for (const fileOp of fileOperations.value) {
+        if (fileOp.data.getDataType() === FileOperationDataType.Import) {
+          foundInFileOps = (fileOp.data as ImportData).file.name === childName;
+        } else if (fileOp.data.getDataType() === FileOperationDataType.Move) {
+          const fileName = await Path.filename((fileOp.data as MoveData).dstPath);
+          foundInFileOps = fileName === childName;
+        }
+        if (foundInFileOps) {
+          break;
+        }
+      }
+      if (!foundInFileOps) {
         if (childStat.isFile()) {
           (childStat as FileModel).isSelected = query.selectFile && query.selectFile === childName ? true : false;
           newFiles.push(childStat as FileModel);
@@ -815,49 +859,67 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
+  const excludePaths: Array<FsPath> = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      excludePaths.push(entry.path);
+    }
+  }
   const folder = await selectFolder({
     title: { key: 'FoldersPage.moveSelectFolderTitle', data: { count: entries.length }, count: entries.length },
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
+    excludePaths: excludePaths,
   });
   if (!folder) {
     return;
   }
-  let errorCount = 0;
+  // A bit complicated, but bear with me
+  const existingEntries: Array<EntryStat> = [];
+  // First, we try to detect if the destination already contains an entry with the same name
   for (const entry of entries) {
-    const currentEntryPath = await parsec.Path.join(currentPath.value, entry.name);
-    const newEntryPath = await parsec.Path.join(folder, entry.name);
-    const result = await parsec.moveEntry(currentEntryPath, newEntryPath);
-    errorCount += Number(!result.ok);
-  }
-  if (errorCount > 0) {
-    if (entries.length === 1) {
-      informationManager.present(
-        new Information({
-          message: { key: 'FoldersPage.errors.moveOneFailed', data: { name: entries[0].name } },
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: errorCount === entries.length ? 'FoldersPage.errors.moveMultipleAllFailed' : 'FoldersPage.errors.moveMultipleSomeFailed',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
+    const dstPath = await parsec.Path.join(folder, entry.name);
+    const statsResult = await entryStat(workspaceInfo.value.handle, dstPath);
+    if (statsResult.ok) {
+      existingEntries.push(entry);
     }
-  } else {
-    informationManager.present(
-      new Information({
-        message: { key: 'FoldersPage.moveSuccess', data: { count: entries.length }, count: entries.length },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
+  }
+  if (existingEntries.length > 0) {
+    const answer = await askQuestion(
+      {
+        key: 'FoldersPage.moveAlreadyExistTitle',
+        count: existingEntries.length,
+      },
+      {
+        key: 'FoldersPage.moveAlreadyExistQuestion',
+        data: existingEntries.length === 1 ? { file: existingEntries[0].name } : undefined,
+        count: existingEntries.length,
+      },
+      {
+        yesText: { key: 'FoldersPage.moveAlreadyExistReplace', count: existingEntries.length },
+        noText: { key: 'FoldersPage.moveAlreadyExistSkip', count: existingEntries.length },
+        yesIsDangerous: true,
+      },
+    );
+    // User chooses to skip, we remove the existing entries from the entries to move, and we clear existingEntries
+    if (answer === Answer.No) {
+      entries = entries.filter((e) => existingEntries.find((d) => d.id === e.id) === undefined);
+      // Too difficult to add a .clear() method on an array, plus it wouldn't make any sense, why would you ever
+      // want to clear an array?
+      existingEntries.splice(0, existingEntries.length);
+    }
+  }
+  for (const entry of entries) {
+    await fileOperationManager.moveEntry(
+      workspaceInfo.value.handle,
+      workspaceInfo.value.id,
+      await parsec.Path.join(currentPath.value, entry.name),
+      await parsec.Path.join(folder, entry.name),
+      // If the file is still in existingEntries, the user has given us
+      // permission to replace it, otherwise we don't want to force.
+      existingEntries.find((e) => e.id === entry.id) !== undefined,
     );
   }
-  await listFolder();
 }
 
 async function showDetails(entries: parsec.EntryStat[]): Promise<void> {

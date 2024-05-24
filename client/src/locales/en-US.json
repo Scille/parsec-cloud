@@ -425,9 +425,6 @@
             "listFailed": "Failed to list content of folder `{path}`",
             "deleteMultipleAllFailed": "Failed to delete any entry.",
             "deleteMultipleSomeFailed": "Some entries could not be deleted.",
-            "moveOneFailed": "Failed to move file `{name}`, please try again.",
-            "moveMultipleAllFailed": "Failed to move any entry.",
-            "moveMultipleSomeFailed": "Some entries could not be moved.",
             "copyOneFailed": "Failed to copy file `{name}`, please try again.",
             "copyMultipleAllFailed": "Failed to copy any entry.",
             "copyMultipleSomeFailed": "Some entries could not be copied."
@@ -461,7 +458,10 @@
         "deleteMultipleNo": "Keep items",
         "copySelectFolderTitle": "Copy one item | Copy {count} items",
         "moveSelectFolderTitle": "Move one item | Move {count} items",
-        "moveSuccess": "The entry has been moved to the desired folder. | All entries have been moved to the desired folder.",
+        "moveAlreadyExistTitle": "Replace or skip file | Replace or skip files",
+        "moveAlreadyExistQuestion": "A file named `{file}` already exists in the destination. What would you like to do? | Multiple files of the same name already exist in the destination. What would you like to do?",
+        "moveAlreadyExistSkip": "Skip | Skip All",
+        "moveAlreadyExistReplace": "Replace | Replace All",
         "copySuccess": "The entry has been copied to the desired folder. | All entries have been copied to the desired folder.",
         "open": {
             "fileFailed": "Failed to open file `{name}`",
