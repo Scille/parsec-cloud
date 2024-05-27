@@ -170,7 +170,7 @@ def gen_req(
 
     def dump(self) -> bytes: ...
 """
-    for field_name, field_type in fields:
+    for field_name, field_type in sorted(fields, key=lambda x: x[0]):
         code += f"""
     @property
     def {field_name}(self) -> {field_type}: ...
