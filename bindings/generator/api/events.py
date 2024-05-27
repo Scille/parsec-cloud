@@ -21,6 +21,9 @@ class ClientEvent(Variant):
     class WorkspacesSelfAccessChanged:
         pass
 
+    class WorkspaceLocallyCreated:
+        pass
+
     # class WorkspaceEntryChanged:
     #     workspace_id: VlobID
     #     vlob_id: VlobID
