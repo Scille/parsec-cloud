@@ -8,11 +8,12 @@ use crate::{
         CertifDecryptCurrentRealmNameError, CertifStoreError, InvalidEncryptedRealmNameError,
         InvalidKeysBundleError,
     },
+    event_bus::EventWorkspacesSelfAccessChanged,
     user::UserStoreUpdateError,
 };
 
 #[derive(Debug, thiserror::Error)]
-pub enum RefreshWorkspacesListError {
+pub enum ClientRefreshWorkspacesListError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Component has stopped")]
@@ -25,10 +26,12 @@ pub enum RefreshWorkspacesListError {
     Internal(#[from] anyhow::Error),
 }
 
-pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorkspacesListError> {
+pub async fn refresh_workspaces_list(
+    client: &Client,
+) -> Result<(), ClientRefreshWorkspacesListError> {
     // The strategy here is to first and foremost rely on the certificates locally present,
-    // then consider the additional entries from the old local user manifest's workspace
-    // list as local-only newly created workspaces.
+    // then consider the additional entries from the local user manifest's workspace list
+    // as local-only newly created workspaces.
     //
     // Note this approach may go backward when the certificates database is cleared
     // (e.g. a workspace shared with us will suddenly appeared as local-only newly
@@ -57,7 +60,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
         .get_current_self_realms_role()
         .await
         .map_err(|e| match e {
-            CertifStoreError::Stopped => RefreshWorkspacesListError::Stopped,
+            CertifStoreError::Stopped => ClientRefreshWorkspacesListError::Stopped,
             CertifStoreError::Internal(err) => {
                 err.context("Cannot retrieve self realms role").into()
             }
@@ -88,8 +91,8 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 Ok((name, CertificateBasedInfoOrigin::Certificate { timestamp }))
             }
             Err(e) => match e {
-                CertifDecryptCurrentRealmNameError::Stopped => Err(RefreshWorkspacesListError::Stopped),
-                CertifDecryptCurrentRealmNameError::Offline => Err(RefreshWorkspacesListError::Offline),
+                CertifDecryptCurrentRealmNameError::Stopped => Err(ClientRefreshWorkspacesListError::Stopped),
+                CertifDecryptCurrentRealmNameError::Offline => Err(ClientRefreshWorkspacesListError::Offline),
                 // We have lost access to the workspace concurrently, ignore it
                 CertifDecryptCurrentRealmNameError::NotAllowed => continue,
                 // This workspace is not fully bootstrapped yet (this is unlikely, as workspace
@@ -135,7 +138,7 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 // If the workspace name is a placeholder, it means we've just invented it.
                 // So we should use the old entry's name instead as it may correspond to a
                 // real name (e.g. we are the creator of the workspace, but our last
-                // bootstrap attempt didn't go to completion).
+                // workspace bootstrap attempt didn't go to completion).
                 //
                 // Note we don't care if the old entry's name comes from a certificate:
                 // instead we rely on the fact the initial name certificate upload is
@@ -186,19 +189,24 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
 
     local_workspaces.sort_unstable_by(|a, b| a.name.cmp(&b.name));
 
+    // Fast fail in case nothing has changed
+    if local_workspaces == old_local_workspaces {
+        return Ok(());
+    }
+
     // 6) Commit our change
 
     updater
         .set_workspaces_and_keep_lock(local_workspaces)
         .await
         .map_err(|e| match e {
-            UserStoreUpdateError::Stopped => RefreshWorkspacesListError::Stopped,
+            UserStoreUpdateError::Stopped => ClientRefreshWorkspacesListError::Stopped,
             UserStoreUpdateError::Internal(err) => {
                 err.context("Cannot update the local user manifest").into()
             }
         })?;
 
-    // 7) Last but not least: refresh the running workspaces
+    // 7) Refresh the running workspaces
     // At this point we hold two locks: `updater` (on local user manifest) and
     // `client.workspaces` (on the list of running workspaces).
     // We need to keep `updater` locked to ensure we are refreshing the running
@@ -234,6 +242,9 @@ pub async fn refresh_workspaces_list(client: &Client) -> Result<(), RefreshWorks
                 }),
         }
     }
+
+    // 8) Finally trigger an event about the refresh
+    client.event_bus.send(&EventWorkspacesSelfAccessChanged);
 
     Ok(())
 }

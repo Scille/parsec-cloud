@@ -14,15 +14,15 @@ pub enum ClientEvent {
     Ping {
         ping: String,
     },
+
     // Server connection
     Offline,
     Online,
+
     // Server-notified changes
     ServerConfigChanged,
-    // TODO
-    // WorkspaceSelfRoleChanged {
-    //     workspace_id: VlobID,
-    // },
+    WorkspacesSelfAccessChanged,
+
     // TODO
     // WorkspaceEntryChanged {
     //     workspace_id: VlobID,
@@ -32,6 +32,7 @@ pub enum ClientEvent {
         token: InvitationToken,
         status: InvitationStatus,
     },
+
     // Error from server & server-provided data
     ExpiredOrganization,
     RevokedSelfUser,
@@ -65,7 +66,8 @@ pub(crate) struct OnEventCallbackPlugged {
     _offline: EventBusConnectionLifetime<libparsec_client::EventOffline>,
     _online: EventBusConnectionLifetime<libparsec_client::EventOnline>,
     _server_config_changed: EventBusConnectionLifetime<libparsec_client::EventServerConfigChanged>,
-    // _workspace_self_role_changed: EventBusConnectionLifetime<libparsec_client::EventWorkspaceSelfRoleChanged>,
+    _workspace_self_access_changed:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspacesSelfAccessChanged>,
     // _workspace_entry_changed: EventBusConnectionLifetime<libparsec_client::EventWorkspaceEntryChanged>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
@@ -134,12 +136,14 @@ impl OnEventCallbackPlugged {
                 (on_event_callback)(ClientEvent::ServerConfigChanged);
             })
         };
-        // let workspace_self_role_changed = {
-        //     let on_event_callback = on_event_callback.clone();
-        //     event_bus.connect(move |e: &libparsec_client::EventWorkspaceSelfRoleChanged| {
-        //         (on_event_callback)(ClientEvent::WorkspaceSelfRoleChanged);
-        //     })
-        // };
+        let workspace_self_access_changed = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |_: &libparsec_client::EventWorkspacesSelfAccessChanged| {
+                    (on_event_callback)(ClientEvent::WorkspacesSelfAccessChanged);
+                },
+            )
+        };
         // let workspace_entry_changed = {
         //     let on_event_callback = on_event_callback.clone();
         //     event_bus.connect(move |e: &libparsec_client::EventWorkspaceEntryChanged| {
@@ -215,7 +219,7 @@ impl OnEventCallbackPlugged {
             _offline: offline,
             _online: online,
             _server_config_changed: server_config_changed,
-            // _workspace_self_role_changed: workspace_self_role_changed,
+            _workspace_self_access_changed: workspace_self_access_changed,
             // _workspace_entry_changed: workspace_entry_changed,
             _invitation_changed: invitation_changed,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,

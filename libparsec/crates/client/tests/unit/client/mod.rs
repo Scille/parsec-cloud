@@ -11,3 +11,4 @@ mod revoke_user;
 mod start_workspace;
 mod utils;
 mod with_monitors;
+mod workspace_refresh_list;

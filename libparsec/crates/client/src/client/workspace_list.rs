@@ -4,7 +4,7 @@ use libparsec_types::prelude::*;
 
 use super::Client;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct WorkspaceInfo {
     pub id: VlobID,
     pub current_name: EntryName,
