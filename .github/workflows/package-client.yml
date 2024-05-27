@@ -23,6 +23,10 @@ on:
         type: string
         description: The commit SHA to use when checkout'ing the repository
         default: ${{ github.sha }}
+      nightly_build:
+        type: boolean
+        description: The current build is a nightly build
+        default: false
   workflow_dispatch:
     inputs:
       version:
@@ -150,6 +154,12 @@ jobs:
         working-directory: client
         timeout-minutes: 2
 
+      - name: Patch snapcraft for nightly build
+        if: inputs.nightly_build
+        run:
+          sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
+        working-directory: client/electron
+
       - name: Build snap
         run: |
           ln -sv client/electron/snap
@@ -270,7 +280,10 @@ jobs:
         timeout-minutes: 30
 
       - name: Build Electron apps
-        run: npm run electron:release ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
+        run: >-
+          npm run electron:release
+          ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
+          ${{ inputs.nightly_build && '--nightly' || '' }}
         working-directory: client
         timeout-minutes: 5
 
