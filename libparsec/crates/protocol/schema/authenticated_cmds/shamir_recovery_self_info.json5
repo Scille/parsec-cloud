@@ -1,0 +1,23 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "shamir_recovery_self_info"
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        // `None` means no configuration
+                        // Otherwise, contains a `ShamirRecoveryBriefCertificate`
+                        "name": "self_info",
+                        "type": "RequiredOption<Bytes>"
+                    }
+                ]
+            }
+        ]
+    }
+]
