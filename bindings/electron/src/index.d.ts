@@ -511,6 +511,12 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballpark_client_early_offset: number
     ballpark_client_late_offset: number
 }
+export interface ClientEventWorkspaceLocallyCreated {
+    tag: "WorkspaceLocallyCreated"
+}
+export interface ClientEventWorkspacesSelfAccessChanged {
+    tag: "WorkspacesSelfAccessChanged"
+}
 export type ClientEvent =
   | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
@@ -521,6 +527,8 @@ export type ClientEvent =
   | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspacesSelfAccessChanged
 
 
 // ClientGetUserDeviceError
