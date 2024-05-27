@@ -536,6 +536,8 @@ export enum ClientEventTag {
     RevokedSelfUser = 'ClientEventRevokedSelfUser',
     ServerConfigChanged = 'ClientEventServerConfigChanged',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
+    WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
+    WorkspacesSelfAccessChanged = 'ClientEventWorkspacesSelfAccessChanged',
 }
 
 export interface ClientEventExpiredOrganization {
@@ -573,6 +575,12 @@ export interface ClientEventTooMuchDriftWithServerClock {
     ballparkClientEarlyOffset: number
     ballparkClientLateOffset: number
 }
+export interface ClientEventWorkspaceLocallyCreated {
+    tag: ClientEventTag.WorkspaceLocallyCreated
+}
+export interface ClientEventWorkspacesSelfAccessChanged {
+    tag: ClientEventTag.WorkspacesSelfAccessChanged
+}
 export type ClientEvent =
   | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
@@ -583,6 +591,8 @@ export type ClientEvent =
   | ClientEventRevokedSelfUser
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
+  | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspacesSelfAccessChanged
 
 // ClientGetUserDeviceError
 export enum ClientGetUserDeviceErrorTag {

@@ -2626,6 +2626,12 @@ fn variant_client_event_js_to_rs<'a>(
                 ballpark_client_late_offset,
             })
         }
+        "ClientEventWorkspaceLocallyCreated" => {
+            Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
+        }
+        "ClientEventWorkspacesSelfAccessChanged" => {
+            Ok(libparsec::ClientEvent::WorkspacesSelfAccessChanged {})
+        }
         _ => cx.throw_type_error("Object is not a ClientEvent"),
     }
 }
@@ -2728,6 +2734,16 @@ fn variant_client_event_rs_to_js<'a>(
                 "ballparkClientLateOffset",
                 js_ballpark_client_late_offset,
             )?;
+        }
+        libparsec::ClientEvent::WorkspaceLocallyCreated { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceLocallyCreated").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::WorkspacesSelfAccessChanged { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspacesSelfAccessChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
         }
     }
     Ok(js_obj)
