@@ -21,7 +21,9 @@ pub enum ClientEvent {
 
     // Server-notified changes
     ServerConfigChanged,
+
     WorkspacesSelfAccessChanged,
+    WorkspaceLocallyCreated,
 
     // TODO
     // WorkspaceEntryChanged {
@@ -68,6 +70,8 @@ pub(crate) struct OnEventCallbackPlugged {
     _server_config_changed: EventBusConnectionLifetime<libparsec_client::EventServerConfigChanged>,
     _workspace_self_access_changed:
         EventBusConnectionLifetime<libparsec_client::EventWorkspacesSelfAccessChanged>,
+    _workspace_locally_created:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceLocallyCreated>,
     // _workspace_entry_changed: EventBusConnectionLifetime<libparsec_client::EventWorkspaceEntryChanged>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
@@ -143,6 +147,12 @@ impl OnEventCallbackPlugged {
                     (on_event_callback)(ClientEvent::WorkspacesSelfAccessChanged);
                 },
             )
+        };
+        let workspace_locally_created = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |_: &libparsec_client::EventWorkspaceLocallyCreated| {
+                (on_event_callback)(ClientEvent::WorkspaceLocallyCreated);
+            })
         };
         // let workspace_entry_changed = {
         //     let on_event_callback = on_event_callback.clone();
@@ -220,6 +230,7 @@ impl OnEventCallbackPlugged {
             _online: online,
             _server_config_changed: server_config_changed,
             _workspace_self_access_changed: workspace_self_access_changed,
+            _workspace_locally_created: workspace_locally_created,
             // _workspace_entry_changed: workspace_entry_changed,
             _invitation_changed: invitation_changed,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
