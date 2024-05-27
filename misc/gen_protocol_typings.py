@@ -558,7 +558,7 @@ class AnyCmdReq:
         last_version = max(specs.keys())
         v_version = f"v{last_version}"
         last_version_specs = specs[max(specs.keys())]
-        for cmd_spec in last_version_specs:
+        for cmd_spec in sorted(last_version_specs, key=lambda x: x["req"]["cmd"]):
             req_spec = cmd_spec["req"]
             cmd_name = req_spec["cmd"]
             nested_types = {s["name"] for s in cmd_spec.get("nested_types", ())}
