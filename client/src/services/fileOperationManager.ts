@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  EntryStatFile,
+  EntryTree,
+  FileDescriptor,
   FsPath,
   Path,
   WorkspaceCreateFolderErrorTag,
@@ -12,8 +15,11 @@ import {
   closeFile,
   createFolder,
   deleteFile,
+  entryStat,
+  listTree,
   moveEntry,
   openFile,
+  readFile,
   resizeFile,
   writeFile,
 } from '@/parsec';
@@ -31,14 +37,18 @@ enum FileOperationState {
   FileImported,
   FileAdded,
   MoveAdded,
+  CopyAdded,
   ImportStarted,
   MoveStarted,
+  CopyStarted,
   CreateFailed,
   MoveFailed,
+  CopyFailed,
   WriteError,
   Cancelled,
   FolderCreated,
   EntryMoved,
+  EntryCopied,
 }
 
 export interface OperationProgressStateData {
@@ -62,12 +72,24 @@ export interface MoveFailedStateData {
   error: WorkspaceMoveEntryErrorTag;
 }
 
+export enum CopyFailedError {
+  MaxRecursionReached = 'max-recursion-reached',
+  MaxFilesReached = 'max-files-reached',
+  SourceDoesNotExist = 'source-does-not-exist',
+  OneFailed = 'one-failed',
+}
+
+export interface CopyFailedStateData {
+  error: CopyFailedError;
+}
+
 export type StateData =
   | OperationProgressStateData
   | CreateFailedStateData
   | WriteErrorStateData
   | FolderCreatedStateData
-  | MoveFailedStateData;
+  | MoveFailedStateData
+  | CopyFailedStateData;
 
 type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
 type FileOperationID = string;
@@ -166,7 +188,7 @@ class FileOperationManager {
     return this.running;
   }
 
-  isImporting(): boolean {
+  hasOperations(): boolean {
     return this.operationJobs.length + this.fileOperationData.length > 0;
   }
 
@@ -201,7 +223,7 @@ class FileOperationManager {
       this.start();
     }
     const newData = new CopyData(workspaceHandle, workspaceId, srcPath, dstPath);
-    await this.sendState(FileOperationState.FileAdded, newData);
+    await this.sendState(FileOperationState.CopyAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -236,12 +258,174 @@ class FileOperationManager {
     }
   }
 
+  private async doCopy(data: CopyData): Promise<void> {
+    await this.sendState(FileOperationState.CopyStarted, data);
+
+    let tree: EntryTree;
+
+    const statResult = await entryStat(data.workspaceHandle, data.srcPath);
+    if (!statResult.ok) {
+      await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.SourceDoesNotExist });
+      return;
+    }
+    const srcEntry = statResult.value;
+    if (statResult.value.isFile()) {
+      tree = {
+        totalSize: (statResult.value as EntryStatFile).size,
+        entries: [statResult.value as EntryStatFile],
+        maxRecursionReached: false,
+        maxFilesReached: false,
+      };
+    } else {
+      tree = await listTree(data.workspaceHandle, data.srcPath);
+    }
+
+    // If we reach max recursion or max files, it's better to simply give up right at the start rather than
+    // trying to copy incomplete data
+    if (tree.maxRecursionReached) {
+      await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.MaxRecursionReached });
+      return;
+    } else if (tree.maxFilesReached) {
+      await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.MaxFilesReached });
+      return;
+    }
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    let totalSizeCopied = 0;
+
+    for (const entry of tree.entries) {
+      let dstPath: FsPath;
+      if (srcEntry.isFile()) {
+        dstPath = await Path.join(data.dstPath, entry.name);
+      } else {
+        const srcParent = await Path.parent(data.srcPath);
+        const relativePath = entry.path.substring(srcParent.length);
+        dstPath = `${data.dstPath}/${relativePath}`;
+      }
+      const dstDir = await Path.parent(dstPath);
+      if (dstDir !== '/') {
+        const result = await createFolder(data.workspaceHandle, dstDir);
+        if (result.ok) {
+          await this.sendState(FileOperationState.FolderCreated, undefined, { path: dstDir, workspaceHandle: data.workspaceHandle });
+        } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
+          // No need to go further if the folder creation failed
+          continue;
+        }
+      }
+      // Welcome to hell
+      let fdR: FileDescriptor | null = null;
+      let fdW: FileDescriptor | null = null;
+      let copied = false;
+      let cancelled = false;
+      try {
+        // Open the source
+        const openReadResult = await openFile(data.workspaceHandle, entry.path, { read: true });
+        if (!openReadResult.ok) {
+          continue;
+        }
+        fdR = openReadResult.value;
+        // Try to open the destination
+        let openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, createNew: true });
+        let count = 2;
+        // If opened failed because the file already exists, we append a number to its name and try opening it again,
+        // until that number reaches 10 or until we manage to open it
+        while (!openWriteResult.ok && openWriteResult.error.tag === WorkspaceOpenFileErrorTag.EntryExistsInCreateNewMode && count < 10) {
+          const filename = (await Path.filename(dstPath)) || '';
+          const ext = Path.getFileExtension(dstPath);
+          let newFilename = '';
+          if (ext.length) {
+            newFilename = `${Path.filenameWithoutExtension(filename)} (${count}).${ext}`;
+          } else {
+            newFilename = `${Path.filenameWithoutExtension(filename)} (${count})`;
+          }
+          dstPath = await Path.join(await Path.parent(dstPath), newFilename);
+          openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, createNew: true });
+          count += 1;
+        }
+        // No luck, cancel the copy
+        if (!openWriteResult.ok) {
+          throw Error('Failed to open destination');
+        }
+        fdW = openWriteResult.value;
+
+        // Resize the destination
+        await resizeFile(data.workspaceHandle, fdW, entry.size);
+
+        let loop = true;
+        let offset = 0;
+        const READ_CHUNK_SIZE = 1_000_000;
+        while (loop) {
+          // Check if the copy has been cancelled
+          let shouldCancel = false;
+          const index = this.cancelList.findIndex((item) => item === data.id);
+
+          if (index !== -1) {
+            // Remove from cancel list
+            this.cancelList.splice(index, 1);
+            shouldCancel = true;
+          }
+          if (shouldCancel) {
+            cancelled = true;
+            throw Error('cancelled');
+          }
+
+          // Read the source
+          const readResult = await readFile(data.workspaceHandle, fdR, offset, READ_CHUNK_SIZE);
+
+          // Failed to read, cancel the copy
+          if (!readResult.ok) {
+            throw Error('Failed to read the source');
+          }
+          const chunk = readResult.value;
+          const writeResult = await writeFile(data.workspaceHandle, fdW, offset, new Uint8Array(chunk));
+
+          // Failed to write, or not everything's been written
+          if (!writeResult.ok || writeResult.value < chunk.byteLength) {
+            throw Error('Failed to write the destination');
+          }
+          // Smaller that what we asked for, we're at the end of the file
+          if (chunk.byteLength < READ_CHUNK_SIZE) {
+            loop = false;
+          } else {
+            // Otherwise, move the offset and keep going
+            offset += chunk.byteLength;
+          }
+          totalSizeCopied += chunk.byteLength;
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeCopied / tree.totalSize) * 100 });
+        }
+        copied = true;
+      } catch (e: any) {
+        console.warn(`Failed to copy file: ${e}`);
+      } finally {
+        if (fdR !== null) {
+          await closeFile(data.workspaceHandle, fdR);
+        }
+        if (fdW !== null) {
+          await closeFile(data.workspaceHandle, fdW);
+        }
+        if (cancelled) {
+          await deleteFile(data.workspaceHandle, dstPath);
+          await this.sendState(FileOperationState.Cancelled, data);
+          // eslint-disable-next-line no-unsafe-finally
+          return;
+        }
+        if (!copied) {
+          await deleteFile(data.workspaceHandle, dstPath);
+          await this.sendState(FileOperationState.CopyFailed, data, { error: CopyFailedError.OneFailed });
+          // eslint-disable-next-line no-unsafe-finally
+          return;
+        }
+      }
+    }
+    await this.sendState(FileOperationState.EntryCopied, data);
+  }
+
   private async doMove(data: MoveData): Promise<void> {
     await this.sendState(FileOperationState.MoveStarted, data);
 
     let moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, data.forceReplace);
     if (!moveResult.ok) {
-      let i = 1;
+      let i = 2;
       // If an entry with the same name already exists, we try appending a number at the end of the file.
       // We only try until we reach 9.
       while (!moveResult.ok && moveResult.error.tag === WorkspaceMoveEntryErrorTag.DestinationExists && i < 10) {
@@ -279,7 +463,6 @@ class FileOperationManager {
       if (result.ok) {
         await this.sendState(FileOperationState.FolderCreated, undefined, { path: data.path, workspaceHandle: data.workspaceHandle });
       } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
-        console.log(`Failed to create folder ${data.path} (reason: ${result.error.tag}), cancelling...`);
         await this.sendState(FileOperationState.CreateFailed, data, { error: result.error.tag });
         // No need to go further if the folder creation failed
         return;
@@ -417,6 +600,8 @@ class FileOperationManager {
           job = this.doImport(elem as ImportData);
         } else if (elem.getDataType() === FileOperationDataType.Move) {
           job = this.doMove(elem as MoveData);
+        } else if (elem.getDataType() === FileOperationDataType.Copy) {
+          job = this.doCopy(elem as CopyData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;

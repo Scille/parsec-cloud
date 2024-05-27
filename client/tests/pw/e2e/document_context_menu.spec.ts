@@ -50,11 +50,12 @@ for (const gridMode of [false, true]) {
     await expect(documents.locator('.file-context-menu')).toBeVisible();
     const popover = documents.locator('.file-context-menu');
     await expect(popover.getByRole('group')).toHaveCount(2);
-    await expect(popover.getByRole('listitem')).toHaveCount(7);
+    await expect(popover.getByRole('listitem')).toHaveCount(8);
     await expect(popover.getByRole('listitem')).toHaveText([
       'Manage file',
       'Rename',
       'Move to',
+      'Make a copy',
       'Delete',
       'Details',
       'Collaboration',

@@ -122,7 +122,7 @@ async function openPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.LogOut) {
     const answer = await askQuestion(
       'HomePage.topbar.logoutConfirmTitle',
-      fileOperationManager.isImporting() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
+      fileOperationManager.hasOperations() ? 'HomePage.topbar.logoutImportsConfirmQuestion' : 'HomePage.topbar.logoutConfirmQuestion',
       {
         yesText: 'HomePage.topbar.logoutYes',
         noText: 'HomePage.topbar.logoutNo',

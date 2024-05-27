@@ -391,7 +391,9 @@
         },
         "File": {
             "lastUpdate": "Last updated:",
-            "importing": "Importing..."
+            "importing": "Importing...",
+            "copying": "Copying...",
+            "moving": "Moving..."
         },
         "fileContextMenu": {
             "titleManage": "Manage file",
@@ -468,7 +470,6 @@
         "moveAlreadyExistQuestion": "A file named `{file}` already exists in the destination. What would you like to do? | Multiple files of the same name already exist in the destination. What would you like to do?",
         "moveAlreadyExistSkip": "Skip | Skip All",
         "moveAlreadyExistReplace": "Replace | Replace All",
-        "copySuccess": "The entry has been copied to the desired folder. | All entries have been copied to the desired folder.",
         "open": {
             "fileFailed": "Failed to open file `{name}`",
             "folderFailed": "Failed to open folder `{name}`",

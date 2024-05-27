@@ -112,6 +112,9 @@ export class EntryCollection<Model extends EntryModel> {
         existing.needSync = entry.needSync;
         existing.tag = entry.tag;
         existing.updated = entry.updated;
+        if (existing.isFile()) {
+          (existing as FileModel).size = (entry as FileModel).size;
+        }
         updated.push(existing.id);
       } else {
         // entry is not yet listed, mark it as to be added

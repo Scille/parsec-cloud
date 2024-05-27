@@ -40,7 +40,7 @@
           />
           <ms-action-bar-button
             id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
@@ -75,7 +75,7 @@
           />
           <ms-action-bar-button
             id="button-makeacopy"
-            v-show="ownRole !== parsec.WorkspaceRole.Reader && false"
+            v-show="ownRole !== parsec.WorkspaceRole.Reader"
             :button-label="'FoldersPage.fileContextMenu.actionMakeACopy'"
             :icon="copy"
             @click="copyEntries(getSelectedEntries())"
@@ -229,6 +229,7 @@ import {
   FileOperationState,
   StateData,
   FileOperationDataType,
+  CopyData,
 } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
@@ -509,15 +510,21 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
     fileOperations.value.push({ data: operationData, progress: 0 });
   } else if (state === FileOperationState.MoveAdded && operationData) {
     fileOperations.value.push({ data: operationData, progress: 0 });
+  } else if (state === FileOperationState.CopyAdded && operationData) {
+    fileOperations.value.push({ data: operationData, progress: 0 });
   } else if (state === FileOperationState.OperationProgress && operationData) {
     const op = fileOperations.value.find((item) => item.data.id === operationData.id);
     if (op) {
       op.progress = (stateData as OperationProgressStateData).progress;
     }
   } else if (
-    [FileOperationState.Cancelled, FileOperationState.CreateFailed, FileOperationState.WriteError, FileOperationState.MoveFailed].includes(
-      state,
-    ) &&
+    [
+      FileOperationState.Cancelled,
+      FileOperationState.CreateFailed,
+      FileOperationState.WriteError,
+      FileOperationState.MoveFailed,
+      FileOperationState.CopyFailed,
+    ].includes(state) &&
     operationData
   ) {
     const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
@@ -559,6 +566,16 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
       moveData.workspaceHandle === workspaceInfo.value?.handle &&
       (Path.areSame(dstPathParent, currentPath.value) || Path.areSame(srcPathParent, currentPath.value))
     ) {
+      await listFolder();
+    }
+  } else if (state === FileOperationState.EntryCopied && operationData) {
+    const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
+    if (index !== -1) {
+      fileOperations.value.splice(index, 1);
+    }
+    const copyData = operationData as CopyData;
+    const dstPathParent = await Path.parent(copyData.dstPath);
+    if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(dstPathParent, currentPath.value)) {
       await listFolder();
     }
   } else if (state === FileOperationState.FolderCreated) {
@@ -634,6 +651,8 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
       path = (op.data as ImportData).path;
     } else if (op.data.getDataType() === FileOperationDataType.Move) {
       path = await parsec.Path.parent((op.data as MoveData).dstPath);
+    } else if (op.data.getDataType() === FileOperationDataType.Copy) {
+      path = await parsec.Path.parent((op.data as CopyData).dstPath);
     }
     if (op.data.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(path, currentPath.value)) {
       operations.push(op);
@@ -659,11 +678,14 @@ async function listFolder(): Promise<void> {
       const childName = childStat.name;
       // Excluding files currently being imported
       let foundInFileOps = false;
-      for (const fileOp of fileOperations.value) {
+      for (const fileOp of fileOperationsCurrentDir.value) {
         if (fileOp.data.getDataType() === FileOperationDataType.Import) {
           foundInFileOps = (fileOp.data as ImportData).file.name === childName;
         } else if (fileOp.data.getDataType() === FileOperationDataType.Move) {
           const fileName = await Path.filename((fileOp.data as MoveData).dstPath);
+          foundInFileOps = fileName === childName;
+        } else if (fileOp.data.getDataType() === FileOperationDataType.Copy) {
+          const fileName = await Path.filename((fileOp.data as CopyData).srcPath);
           foundInFileOps = fileName === childName;
         }
         if (foundInFileOps) {
@@ -1016,49 +1038,27 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
+
+  const excludePaths: Array<FsPath> = [];
+  for (const entry of entries) {
+    if (!entry.isFile()) {
+      excludePaths.push(entry.path);
+    }
+  }
   const folder = await selectFolder({
     title: { key: 'FoldersPage.copySelectFolderTitle', data: { count: entries.length }, count: entries.length },
     startingPath: currentPath.value,
     workspaceHandle: workspaceInfo.value.handle,
+    excludePaths: excludePaths,
+    allowStartingPath: true,
   });
   if (!folder) {
     return;
   }
-  let errorCount = 0;
+
   for (const entry of entries) {
-    const currentEntryPath = await parsec.Path.join(currentPath.value, entry.name);
-    const newEntryPath = await parsec.Path.join(folder, entry.name);
-    const result = await parsec.copyEntry(currentEntryPath, newEntryPath);
-    errorCount += Number(!result.ok);
+    await fileOperationManager.copyEntry(workspaceInfo.value.handle, workspaceInfo.value.id, entry.path, folder);
   }
-  if (errorCount > 0) {
-    if (entries.length === 1) {
-      informationManager.present(
-        new Information({
-          message: { key: 'FoldersPage.errors.copyOneFailed', data: { name: entries[0].name } },
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    } else {
-      informationManager.present(
-        new Information({
-          message: errorCount === entries.length ? 'FoldersPage.errors.copyMultipleAllFailed' : 'FoldersPage.errors.copyMultipleSomeFailed',
-          level: InformationLevel.Error,
-        }),
-        PresentationMode.Toast,
-      );
-    }
-  } else {
-    informationManager.present(
-      new Information({
-        message: { key: 'FoldersPage.copySuccess', count: entries.length },
-        level: InformationLevel.Success,
-      }),
-      PresentationMode.Toast,
-    );
-  }
-  await listFolder();
 }
 
 async function downloadEntries(entries: parsec.EntryStat[]): Promise<void> {
