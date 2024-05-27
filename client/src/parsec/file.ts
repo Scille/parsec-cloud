@@ -22,6 +22,7 @@ import {
   WorkspaceCreateFolderError,
   WorkspaceCreateFolderErrorTag,
   WorkspaceFdCloseError,
+  WorkspaceFdReadError,
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceHandle,
@@ -364,4 +365,70 @@ export async function writeFile(
     await wait(100);
     return { ok: true, value: data.length };
   }
+}
+
+export async function readFile(
+  workspaceHandle: WorkspaceHandle,
+  fd: FileDescriptor,
+  offset: number,
+  size: number,
+): Promise<Result<ArrayBuffer, WorkspaceFdReadError>> {
+  if (!needsMocks()) {
+    return await libparsec.fdRead(workspaceHandle, fd, offset, size);
+  } else {
+    await wait(100);
+    return { ok: true, value: new Uint8Array([77, 97, 120, 32, 105, 115, 32, 115, 101, 120, 121]) };
+  }
+}
+
+export interface EntryTree {
+  totalSize: number;
+  entries: Array<EntryStatFile>;
+  maxRecursionReached: boolean;
+  maxFilesReached: boolean;
+}
+
+export async function listTree(workspaceHandle: WorkspaceHandle, path: FsPath, depthLimit = 12, filesLimit = 10000): Promise<EntryTree> {
+  async function _innerListTree(workspaceHandle: WorkspaceHandle, path: FsPath, depth: number): Promise<EntryTree> {
+    const tree: EntryTree = { totalSize: 0, entries: [], maxRecursionReached: false, maxFilesReached: false };
+
+    if (depth > depthLimit) {
+      console.warn('Max depth reached for listTree');
+      tree.maxRecursionReached = true;
+      return tree;
+    }
+    const result = await statFolderChildren(workspaceHandle, path);
+    if (result.ok) {
+      for (const entry of result.value) {
+        if (tree.maxRecursionReached || tree.maxFilesReached) {
+          break;
+        }
+        if (!entry.isFile()) {
+          const subTree = await _innerListTree(workspaceHandle, entry.path, depth + 1);
+          if (subTree.maxRecursionReached) {
+            tree.maxRecursionReached = true;
+            return tree;
+          }
+          if (subTree.maxFilesReached) {
+            tree.maxFilesReached = true;
+            return tree;
+          }
+          tree.totalSize += subTree.totalSize;
+          tree.entries.push(...subTree.entries);
+          if (tree.entries.length > filesLimit) {
+            tree.maxFilesReached = true;
+          }
+        } else {
+          tree.totalSize += (entry as EntryStatFile).size;
+          tree.entries.push(entry as EntryStatFile);
+          if (tree.entries.length > filesLimit) {
+            tree.maxFilesReached = true;
+          }
+        }
+      }
+    }
+    return tree;
+  }
+
+  return await _innerListTree(workspaceHandle, path, 0);
 }

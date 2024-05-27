@@ -36,7 +36,7 @@
           </span>
           <span
             class="hover-state"
-            v-show="[FileOperationState.FileImported].includes(state)"
+            v-show="[FileOperationState.EntryMoved].includes(state)"
           >
             {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
@@ -47,7 +47,7 @@
       <div class="waiting-info">
         <ion-text
           class="waiting-text body"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.MoveAdded"
         >
           {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
         </ion-text>
@@ -55,7 +55,7 @@
           fill="clear"
           size="small"
           class="cancel-button"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.MoveAdded"
           @click="$emit('cancel', operationData.id)"
         >
           <ion-icon
@@ -84,12 +84,12 @@
       <!-- done -->
       <ion-icon
         class="checkmark-icon default-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryMoved"
         :icon="checkmark"
       />
       <ion-icon
         class="arrow-icon hover-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryMoved"
         :icon="arrowForward"
       />
 

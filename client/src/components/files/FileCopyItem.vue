@@ -24,9 +24,10 @@
         </div>
       </div>
       <div class="element-details">
-        <ion-text class="element-details__name body">{{ shortenFileName('') }} </ion-text>
+        <ion-text class="element-details__name body">
+          COPY {{ shortenFileName(operationData.srcPath, { maxLength: 40, prefixLength: 8, suffixLength: 32 }) }}
+        </ion-text>
         <ion-label class="element-details__size body-sm">
-          <span class="default-state">{{ formatFileSize(1337) }}</span>
           <span
             class="default-state"
             v-if="workspaceInfo"
@@ -35,7 +36,7 @@
           </span>
           <span
             class="hover-state"
-            v-show="[FileOperationState.FileImported].includes(state)"
+            v-show="[FileOperationState.EntryCopied].includes(state)"
           >
             {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
@@ -46,7 +47,7 @@
       <div class="waiting-info">
         <ion-text
           class="waiting-text body"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.CopyAdded"
         >
           {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
         </ion-text>
@@ -54,7 +55,7 @@
           fill="clear"
           size="small"
           class="cancel-button"
-          v-if="state === FileOperationState.FileAdded"
+          v-if="state === FileOperationState.CopyAdded"
           @click="$emit('cancel', operationData.id)"
         >
           <ion-icon
@@ -83,12 +84,12 @@
       <!-- done -->
       <ion-icon
         class="checkmark-icon default-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryCopied"
         :icon="checkmark"
       />
       <ion-icon
         class="arrow-icon hover-state"
-        v-show="state === FileOperationState.FileImported"
+        v-show="state === FileOperationState.EntryCopied"
         :icon="arrowForward"
       />
 
@@ -123,7 +124,7 @@
 </template>
 
 <script setup lang="ts">
-import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
+import { getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { CopyData, FileOperationState } from '@/services/fileOperationManager';

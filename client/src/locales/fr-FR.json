@@ -391,7 +391,9 @@
         },
         "File": {
             "lastUpdate": "Dernière modification :",
-            "importing": "Importation..."
+            "importing": "Importation...",
+            "copying": "Copie...",
+            "moving": "Déplacement..."
         },
         "fileContextMenu": {
             "titleManage": "Gestion du fichier",
@@ -468,7 +470,6 @@
         "moveAlreadyExistQuestion": "Un élément nommé `{file}` existe déjà dans le dossier de destination. Que souhaitez-vous faire ? | Plusieurs éléments du même nom existent déjà dans le dossier de destination. Que souhaitez-vous faire ?",
         "moveAlreadyExistSkip": "Ignorer | Tout ignorer",
         "moveAlreadyExistReplace": "Remplacer | Tout remplacer",
-        "copySuccess": "L'élément a été copié dans le dossier choisi. | Tous les éléments ont été copiés dans le dossier choisi.",
         "open": {
             "fileFailed": "Le fichier `{name}` n'a pas pu être ouvert.",
             "folderFailed": "Le dossier `{name}` n'a pas pu être ouvert.",

@@ -167,18 +167,27 @@ const currentTab = ref(Tabs.InProgress);
 
 const inProgressItems = computed(() => {
   return fileOperations.value.filter((op) =>
-    [FileOperationState.OperationProgress, FileOperationState.FileAdded, FileOperationState.MoveAdded].includes(op.state),
+    [
+      FileOperationState.OperationProgress,
+      FileOperationState.FileAdded,
+      FileOperationState.MoveAdded,
+      FileOperationState.CopyAdded,
+    ].includes(op.state),
   );
 });
 
 const doneItems = computed(() => {
   return fileOperations.value.filter((op) =>
-    [FileOperationState.FileImported, FileOperationState.Cancelled, FileOperationState.EntryMoved].includes(op.state),
+    [FileOperationState.FileImported, FileOperationState.Cancelled, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(
+      op.state,
+    ),
   );
 });
 
 const errorItems = computed(() => {
-  return fileOperations.value.filter((op) => [FileOperationState.CreateFailed, FileOperationState.MoveFailed].includes(op.state));
+  return fileOperations.value.filter((op) =>
+    [FileOperationState.CreateFailed, FileOperationState.MoveFailed, FileOperationState.CopyFailed].includes(op.state),
+  );
 });
 
 function toggleMenu(): void {
@@ -250,6 +259,7 @@ async function onFileOperationEvent(
       break;
     case FileOperationState.FileAdded:
     case FileOperationState.MoveAdded:
+    case FileOperationState.CopyAdded:
       fileOperations.value.push({
         data: fileOperationData as FileOperationData,
         state: state,
@@ -264,10 +274,12 @@ async function onFileOperationEvent(
       break;
     case FileOperationState.FileImported:
     case FileOperationState.EntryMoved:
+    case FileOperationState.EntryCopied:
       updateImportState((fileOperationData as FileOperationData).id, state, 100);
       break;
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
+    case FileOperationState.CopyFailed:
       updateImportState((fileOperationData as FileOperationData).id, state, -1);
       break;
     case FileOperationState.Cancelled:

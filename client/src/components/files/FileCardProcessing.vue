@@ -12,26 +12,49 @@
       </ion-avatar>
 
       <ion-title class="card-content__title body">
-        {{ data.file.name }}
+        {{ fileName }}
       </ion-title>
 
       <ion-text class="card-content-last-update body-sm">
-        <span>{{ $msTranslate('FoldersPage.File.importing') }}</span>
+        <span>{{ $msTranslate(getFileOperationLabel()) }}</span>
       </ion-text>
     </div>
   </ion-item>
 </template>
 
 <script setup lang="ts">
-import { ImportData } from '@/services/fileOperationManager';
+import { EntryName, Path } from '@/parsec';
+import { CopyData, FileOperationData, FileOperationDataType, ImportData } from '@/services/fileOperationManager';
 import { IonAvatar, IonIcon, IonItem, IonText, IonTitle } from '@ionic/vue';
 import { document } from 'ionicons/icons';
-import { MsSpinner } from 'megashark-lib';
+import { MsSpinner, Translatable } from 'megashark-lib';
+import { onMounted, ref, Ref } from 'vue';
 
-defineProps<{
-  data: ImportData;
+const props = defineProps<{
+  data: FileOperationData;
   progress: number;
 }>();
+
+const fileName: Ref<EntryName> = ref('');
+
+onMounted(async () => {
+  if (props.data.getDataType() === FileOperationDataType.Import) {
+    fileName.value = (props.data as ImportData).file.name;
+  } else if (props.data.getDataType() === FileOperationDataType.Copy) {
+    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
+  } else if (props.data.getDataType() === FileOperationDataType.Move) {
+    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
+  }
+});
+
+function getFileOperationLabel(): Translatable {
+  if (props.data.getDataType() === FileOperationDataType.Copy) {
+    return 'FoldersPage.File.copying';
+  } else if (props.data.getDataType() === FileOperationDataType.Move) {
+    return 'FoldersPage.File.moving';
+  }
+  return 'FoldersPage.File.importing';
+}
 </script>
 
 <style lang="scss" scoped>
