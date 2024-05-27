@@ -9,10 +9,10 @@ import type { CustomPublishOptions as CustomGitHubOptions } from '../assets/publ
 
 // @ts-expect-error TS2415: GithubProvider don't expose `getChannelFilePrefix` method from `Provider` which we need to override.
 class CustomGithubProvider extends GitHubProvider {
-  protected readonly _runtimeOptions: ProviderRuntimeOptions;
-  protected readonly _options: CustomGitHubOptions;
-
-  constructor(options: CustomGitHubOptions, updater: _AppUpdater, runtimeOptions: ProviderRuntimeOptions) {
+  constructor(
+    protected readonly options: CustomGitHubOptions,
+    protected readonly updater: _AppUpdater,
+    protected readonly runtimeOptions: ProviderRuntimeOptions) {
     super(
       {
         ...options,
@@ -21,8 +21,6 @@ class CustomGithubProvider extends GitHubProvider {
       updater,
       runtimeOptions,
     );
-    this._options = options;
-    this._runtimeOptions = runtimeOptions;
   }
 
   /**
@@ -32,9 +30,9 @@ class CustomGithubProvider extends GitHubProvider {
    */
   protected override getChannelFilePrefix() {
     const { machine } = require('node:os');
-    const arch = process.env['TEST_UPDATER_ARCH'] || this._options.buildMachineArch || machine();
+    const arch = process.env['TEST_UPDATER_ARCH'] || this.options.buildMachineArch || machine();
 
-    switch (this._runtimeOptions.platform) {
+    switch (this.runtimeOptions.platform) {
       case 'linux':
         return `-linux-${arch}`;
       case 'darwin':
@@ -42,7 +40,7 @@ class CustomGithubProvider extends GitHubProvider {
       case 'win32':
         return `-win-${arch}`;
       default:
-        return `-${this._runtimeOptions.platform}-${arch}`;
+        return `-${this.runtimeOptions.platform}-${arch}`;
     }
   }
 }
