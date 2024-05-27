@@ -85,6 +85,20 @@ class BaseAuthenticatedRpcClient:
     async def _do_request(self, req: bytes) -> bytes:
         raise NotImplementedError
 
+    async def block_create(
+        self, block_id: BlockID, realm_id: VlobID, key_index: int, block: bytes
+    ) -> authenticated_cmds.latest.block_create.Rep:
+        req = authenticated_cmds.latest.block_create.Req(
+            block_id=block_id, realm_id=realm_id, key_index=key_index, block=block
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.block_create.Rep.load(raw_rep)
+
+    async def block_read(self, block_id: BlockID) -> authenticated_cmds.latest.block_read.Rep:
+        req = authenticated_cmds.latest.block_read.Req(block_id=block_id)
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.block_read.Rep.load(raw_rep)
+
     async def certificate_get(
         self,
         common_after: DateTime | None,
@@ -117,6 +131,15 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.events_listen.Req()
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.events_listen.Rep.load(raw_rep)
+
+    async def invite_1_greeter_wait_peer(
+        self, token: InvitationToken, greeter_public_key: PublicKey
+    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
+        req = authenticated_cmds.latest.invite_1_greeter_wait_peer.Req(
+            token=token, greeter_public_key=greeter_public_key
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep.load(raw_rep)
 
     async def invite_2a_greeter_get_hashed_nonce(
         self, token: InvitationToken
@@ -257,6 +280,20 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.realm_rename.Rep.load(raw_rep)
 
+    async def realm_rotate_key(
+        self,
+        realm_key_rotation_certificate: bytes,
+        per_participant_keys_bundle_access: dict[UserID, bytes],
+        keys_bundle: bytes,
+    ) -> authenticated_cmds.latest.realm_rotate_key.Rep:
+        req = authenticated_cmds.latest.realm_rotate_key.Req(
+            realm_key_rotation_certificate=realm_key_rotation_certificate,
+            per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+            keys_bundle=keys_bundle,
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)
+
     async def realm_share(
         self, realm_role_certificate: bytes, recipient_keys_bundle_access: bytes, key_index: int
     ) -> authenticated_cmds.latest.realm_share.Rep:
@@ -292,6 +329,15 @@ class BaseAuthenticatedRpcClient:
         )
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.user_create.Rep.load(raw_rep)
+
+    async def user_revoke(
+        self, revoked_user_certificate: bytes
+    ) -> authenticated_cmds.latest.user_revoke.Rep:
+        req = authenticated_cmds.latest.user_revoke.Req(
+            revoked_user_certificate=revoked_user_certificate
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.user_revoke.Rep.load(raw_rep)
 
     async def user_update(
         self, user_update_certificate: bytes
@@ -365,56 +411,19 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.vlob_update.Rep.load(raw_rep)
 
-    async def invite_1_greeter_wait_peer(
-        self, token: InvitationToken, greeter_public_key: PublicKey
-    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
-        req = authenticated_cmds.latest.invite_1_greeter_wait_peer.Req(
-            token=token, greeter_public_key=greeter_public_key
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep.load(raw_rep)
-
-    async def user_revoke(
-        self, revoked_user_certificate: bytes
-    ) -> authenticated_cmds.latest.user_revoke.Rep:
-        req = authenticated_cmds.latest.user_revoke.Req(
-            revoked_user_certificate=revoked_user_certificate
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.user_revoke.Rep.load(raw_rep)
-
-    async def block_create(
-        self, block_id: BlockID, realm_id: VlobID, key_index: int, block: bytes
-    ) -> authenticated_cmds.latest.block_create.Rep:
-        req = authenticated_cmds.latest.block_create.Req(
-            block_id=block_id, realm_id=realm_id, key_index=key_index, block=block
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.block_create.Rep.load(raw_rep)
-
-    async def block_read(self, block_id: BlockID) -> authenticated_cmds.latest.block_read.Rep:
-        req = authenticated_cmds.latest.block_read.Req(block_id=block_id)
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.block_read.Rep.load(raw_rep)
-
-    async def realm_rotate_key(
-        self,
-        realm_key_rotation_certificate: bytes,
-        per_participant_keys_bundle_access: dict[UserID, bytes],
-        keys_bundle: bytes,
-    ) -> authenticated_cmds.latest.realm_rotate_key.Rep:
-        req = authenticated_cmds.latest.realm_rotate_key.Req(
-            realm_key_rotation_certificate=realm_key_rotation_certificate,
-            per_participant_keys_bundle_access=per_participant_keys_bundle_access,
-            keys_bundle=keys_bundle,
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.realm_rotate_key.Rep.load(raw_rep)
-
 
 class BaseInvitedRpcClient:
     async def _do_request(self, req: bytes) -> bytes:
         raise NotImplementedError
+
+    async def invite_1_claimer_wait_peer(
+        self, claimer_public_key: PublicKey
+    ) -> invited_cmds.latest.invite_1_claimer_wait_peer.Rep:
+        req = invited_cmds.latest.invite_1_claimer_wait_peer.Req(
+            claimer_public_key=claimer_public_key
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_1_claimer_wait_peer.Rep.load(raw_rep)
 
     async def invite_2a_claimer_send_hashed_nonce(
         self, claimer_hashed_nonce: HashDigest
@@ -464,12 +473,3 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.ping.Rep.load(raw_rep)
-
-    async def invite_1_claimer_wait_peer(
-        self, claimer_public_key: PublicKey
-    ) -> invited_cmds.latest.invite_1_claimer_wait_peer.Rep:
-        req = invited_cmds.latest.invite_1_claimer_wait_peer.Req(
-            claimer_public_key=claimer_public_key
-        )
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_1_claimer_wait_peer.Rep.load(raw_rep)
