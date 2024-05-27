@@ -1347,14 +1347,19 @@ impl TestbedEventShareRealm {
                 return self.custom_keys_bundle_access.clone();
             }
 
-            let keys_bundle = {
+            let access = {
                 template
                     .events
                     .iter()
                     .rev()
                     .find_map(|e| match e {
                         TestbedEvent::RotateKeyRealm(x) if x.realm == self.realm => {
-                            Some(x.keys_bundle(template))
+                            let access = RealmKeysBundleAccess {
+                                keys_bundle_key: x.keys_bundle_access_key.clone(),
+                            }
+                            .dump();
+
+                            Some(access)
                         }
                         _ => None,
                     })
@@ -1363,7 +1368,7 @@ impl TestbedEventShareRealm {
 
             let recipient_public_key = template.user_private_key(&self.user).public_key();
 
-            Some(recipient_public_key.encrypt_for_self(&keys_bundle).into())
+            Some(recipient_public_key.encrypt_for_self(&access).into())
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard.1.populated(populate).to_owned()
