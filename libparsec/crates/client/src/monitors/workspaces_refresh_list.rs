@@ -7,7 +7,7 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 use super::Monitor;
 use crate::{
     event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
-    Client, EventNewCertificates, RefreshWorkspacesListError,
+    Client, ClientRefreshWorkspacesListError, EventNewCertificates,
 };
 
 const WORKSPACES_REFRESH_LIST_MONITOR_NAME: &str = "workspaces_refresh_list";
@@ -79,22 +79,22 @@ fn task_future_factory(event_bus: EventBus, client: Arc<Client>) -> impl Future<
                 match outcome {
                     Ok(_) => break,
                     Err(err) => match err {
-                        RefreshWorkspacesListError::Offline => {
+                        ClientRefreshWorkspacesListError::Offline => {
                             event_bus.wait_server_online().await;
                             continue;
                         }
-                        RefreshWorkspacesListError::Stopped => {
+                        ClientRefreshWorkspacesListError::Stopped => {
                             // Client has been stopped, time to shutdown !
                             return;
                         }
 
-                        err @ (RefreshWorkspacesListError::InvalidEncryptedRealmName(_)
-                        | RefreshWorkspacesListError::InvalidKeysBundle(_)) => {
+                        err @ (ClientRefreshWorkspacesListError::InvalidEncryptedRealmName(_)
+                        | ClientRefreshWorkspacesListError::InvalidKeysBundle(_)) => {
                             log::warn!("Stopping workspaces refresh list monitor due to unexpected outcome: {}", err);
                             return;
                         }
 
-                        RefreshWorkspacesListError::Internal(err) => {
+                        ClientRefreshWorkspacesListError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
                             log::warn!("Workspaces bootstrap monitor has crashed: {}", err);
                             let event = EventMonitorCrashed {

@@ -18,8 +18,8 @@ class ClientEvent(Variant):
     class ServerConfigChanged:
         pass
 
-    # class WorkspaceSelfRoleChanged:
-    #     workspace_id: VlobID
+    class WorkspacesSelfAccessChanged:
+        pass
 
     # class WorkspaceEntryChanged:
     #     workspace_id: VlobID

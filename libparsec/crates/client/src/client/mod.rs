@@ -20,7 +20,7 @@ use std::{
 pub use self::{
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError, workspace_list::WorkspaceInfo,
-    workspace_refresh_list::RefreshWorkspacesListError,
+    workspace_refresh_list::ClientRefreshWorkspacesListError,
     workspace_rename::ClientRenameWorkspaceError,
     workspace_rotate_key::ClientRotateWorkspaceKeyError,
     workspace_share::ClientShareWorkspaceError, workspace_start::ClientStartWorkspaceError,
@@ -415,7 +415,7 @@ impl Client {
     /// do so potentially involves server accesses (to fetch the keys bundle).
     ///
     /// This method is typically used by a monitor.
-    pub async fn refresh_workspaces_list(&self) -> Result<(), RefreshWorkspacesListError> {
+    pub async fn refresh_workspaces_list(&self) -> Result<(), ClientRefreshWorkspacesListError> {
         workspace_refresh_list::refresh_workspaces_list(self).await
     }
 

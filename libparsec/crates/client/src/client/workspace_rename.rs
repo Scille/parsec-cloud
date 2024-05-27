@@ -10,7 +10,7 @@ use crate::{
         CertificateBasedActionOutcome, InvalidCertificateError, InvalidEncryptedRealmNameError,
         InvalidKeysBundleError,
     },
-    RefreshWorkspacesListError,
+    ClientRefreshWorkspacesListError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -215,15 +215,15 @@ pub async fn rename_workspace(
         .refresh_workspaces_list()
         .await
         .map_err(|e| match e {
-            RefreshWorkspacesListError::Offline => ClientRenameWorkspaceError::Offline,
-            RefreshWorkspacesListError::Stopped => ClientRenameWorkspaceError::Stopped,
-            RefreshWorkspacesListError::InvalidEncryptedRealmName(err) => {
+            ClientRefreshWorkspacesListError::Offline => ClientRenameWorkspaceError::Offline,
+            ClientRefreshWorkspacesListError::Stopped => ClientRenameWorkspaceError::Stopped,
+            ClientRefreshWorkspacesListError::InvalidEncryptedRealmName(err) => {
                 ClientRenameWorkspaceError::InvalidEncryptedRealmName(err)
             }
-            RefreshWorkspacesListError::InvalidKeysBundle(err) => {
+            ClientRefreshWorkspacesListError::InvalidKeysBundle(err) => {
                 ClientRenameWorkspaceError::InvalidKeysBundle(err)
             }
-            RefreshWorkspacesListError::Internal(err) => {
+            ClientRefreshWorkspacesListError::Internal(err) => {
                 err.context("Cannot refresh workspace list").into()
             }
         })?;

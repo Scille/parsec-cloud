@@ -234,6 +234,7 @@ impl_events!(
     // Events related to ops
     UserOpsSynced,
     UserOpsNeedSync,
+    WorkspacesSelfAccessChanged,
     WorkspaceLocallyCreated {
         name: EntryName,
         realm_id: VlobID,
