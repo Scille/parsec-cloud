@@ -4,6 +4,7 @@ export interface CustomPublishOptions {
   readonly provider: 'custom';
   /** The machine arch the electron-builder is running on */
   readonly buildMachineArch: string;
+  nightlyBuild: boolean;
   /**
    * The repository name.
    */

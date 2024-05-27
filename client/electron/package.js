@@ -26,6 +26,7 @@ function cli() {
       .makeOptionMandatory(true),
   );
   program.addOption(new Option('--export', 'Export the configuration to JSON'));
+  program.addOption(new Option('--nightly', 'The current build is a nightly build').default(false));
   program.argument('[target...]', 'Targets to build');
 
   program.parse();
@@ -69,6 +70,7 @@ const publishConfig = {
   owner: 'Scille',
   repo: 'parsec-cloud',
   buildMachineArch: process.env.BUILD_MACHINE_ARCH,
+  nightlyBuild: OPTS.nightly,
 };
 
 const fs = require('node:fs');

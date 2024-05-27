@@ -36,6 +36,35 @@ enum ErrorCodes {
 /** Match the tag part of a github tag link */
 const HREF_REGEXP = /\/tag\/([^/]+)$/;
 
+enum PreReleaseTypes {
+  Nightly = 'nightly',
+  Alpha = 'alpha',
+  Beta = 'beta',
+  ReleaseCandidate = 'rc',
+}
+const PRERELEASE_TYPES: string[] = [PreReleaseTypes.Nightly, PreReleaseTypes.Alpha, PreReleaseTypes.Beta];
+const PRERELEASE_TYPE_ALIAS: Record<string, string> = {
+  a: PreReleaseTypes.Alpha,
+  b: PreReleaseTypes.Beta,
+  rc: PreReleaseTypes.ReleaseCandidate,
+};
+
+/** Check if the selected `next` channel would "downgrade" the `current` channel (nightly -> alpha -> beta). */
+function isChannelMissmatch(current: string, next: string): boolean {
+  switch (current) {
+    case PreReleaseTypes.Alpha:
+      // We should not got back to nightly.
+      return next === PreReleaseTypes.Nightly;
+    case PreReleaseTypes.Beta:
+      // We should not got back to nightly or alpha.
+      return next === PreReleaseTypes.Nightly || next === PreReleaseTypes.Alpha;
+    case PreReleaseTypes.ReleaseCandidate:
+      return next === PreReleaseTypes.Nightly || next === PreReleaseTypes.Alpha || next === PreReleaseTypes.Beta;
+    default:
+      return false;
+  }
+}
+
 // @ts-expect-error TS2415: GithubProvider don't expose
 //  - `getChannelFilePrefix` method from `Provider` which we need to override.
 //  - `getLatestVersion` method that we need to override to allow the use of the nightly channel.
@@ -87,6 +116,8 @@ class CustomGithubProvider extends GitHubProvider {
     if (latestReleaseData.tag === null) {
       throw newError('No published versions on GitHub', ErrorCodes.NoPublishedVersions);
     }
+
+    console.debug(`Latest release tag: ${latestReleaseData.tag}`);
 
     // 2. Fetch the channel file.
     let rawData: string;
@@ -143,7 +174,7 @@ class CustomGithubProvider extends GitHubProvider {
 
   async fetchReleaseFeed(cancellationToken: CancellationToken): Promise<XElement> {
     const feedXml = await this.httpRequest(
-      newUrlFromBase(`${this.baseUrl}.atom`, this.baseUrl),
+      newUrlFromBase(`${this.basePath}.atom`, this.baseUrl),
       { accept: 'application/xml, application/atom+xml, text/xml, */*' },
       cancellationToken,
     );
@@ -174,7 +205,9 @@ class CustomGithubProvider extends GitHubProvider {
   }
 
   private findLatestPreRelease(tag: string, latestRelease: XElement, feed: XElement): [string, XElement] {
-    const currentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null;
+    console.group('findLatestPreRelease');
+    const currentChannel = this.getCurrentChannel();
+    console.debug(`Current channel: ${currentChannel}`);
 
     // If we don't have a channel, we use the first entry in the feed.
     if (currentChannel === null) {
@@ -190,29 +223,50 @@ class CustomGithubProvider extends GitHubProvider {
 
         // Current entry GitHub tag.
         const hrefTag = hrefElement[1];
+        console.group(`hrefTag: ${hrefTag}`);
 
-        const hrefChannel = semver.prerelease(hrefTag)?.[0] || null;
+        const rawHrefChannel =
+          hrefTag === PreReleaseTypes.Nightly ? PreReleaseTypes.Nightly : (semver.prerelease(hrefTag)?.[0] as string) || null;
+        const hrefChannel = PRERELEASE_TYPE_ALIAS[rawHrefChannel] || rawHrefChannel;
 
-        const shouldFetchVersion = !currentChannel || ['alpha', 'beta'].includes(currentChannel);
-        const isCustomChannel = hrefChannel !== null && !['alpha', 'beta'].includes(String(hrefChannel));
+        const shouldFetchVersion = !currentChannel || PRERELEASE_TYPES.includes(currentChannel);
+        const isCustomChannel = hrefChannel !== null && !PRERELEASE_TYPES.includes(String(hrefChannel));
 
-        const channelMismatch = currentChannel === 'beta' && hrefChannel === 'alpha';
+        const channelMismatch = isChannelMissmatch(currentChannel, hrefChannel);
 
+        console.debug({
+          hrefChannel,
+          shouldFetchVersion,
+          isCustomChannel,
+          channelMismatch,
+        });
         if (shouldFetchVersion && !isCustomChannel && !channelMismatch) {
           latestRelease = element;
           tag = hrefTag;
+          console.groupEnd();
           break;
         }
 
         const isNextPreRelease = hrefChannel && hrefChannel === currentChannel;
+        console.debug({ isNextPreRelease });
         if (isNextPreRelease) {
           latestRelease = element;
           tag = hrefTag;
+          console.groupEnd();
           break;
         }
       }
     }
+    console.groupEnd();
     return [tag, latestRelease];
+  }
+
+  private getCurrentChannel(): string {
+    if (this.options.nightlyBuild) {
+      return PreReleaseTypes.Nightly;
+    }
+    const rawCurrentChannel = this.updater?.channel || (semver.prerelease(this.updater.currentVersion)?.[0] as string) || null;
+    return PRERELEASE_TYPE_ALIAS[rawCurrentChannel] || rawCurrentChannel;
   }
 
   private async getLatestTagName(cancellationToken: CancellationToken): Promise<string | null> {
@@ -308,7 +362,7 @@ export default class AppUpdater {
     [UpdaterState.UpdateDownloaded]: [],
   };
 
-  constructor(publishOption: CustomPublishOptions & CustomGitHubOptions) {
+  constructor(publishOption: CustomGitHubOptions) {
     switch (process.platform) {
       case 'darwin':
         const { MacUpdater } = require('electron-updater');
@@ -334,12 +388,15 @@ export default class AppUpdater {
     (this.updater.logger as Logger).transports.file.level = 'debug';
     (this.updater.logger as Logger).transports.console.level = 'debug';
 
+    publishOption.nightlyBuild = (process.env.FORCE_NIGHTLY || '0') === '1' || publishOption.nightlyBuild;
+
     this.updater.setFeedURL(publishOption);
     this.updater.autoDownload = true;
     this.updater.autoInstallOnAppQuit = false;
 
     console.log('=============================');
     console.log(`App version: ${this.updater.currentVersion}`);
+    console.log(`Nightly build: ${publishOption.nightlyBuild}`);
     console.log(`Auto download: ${this.updater.autoDownload}`);
     console.log(`Auto install on app quit: ${this.updater.autoInstallOnAppQuit}`);
     console.log(`Allow prerelease: ${this.updater.allowPrerelease}`);
