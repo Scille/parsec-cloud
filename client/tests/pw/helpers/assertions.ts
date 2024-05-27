@@ -58,7 +58,12 @@ export const expect = baseExpect.extend({
     };
   },
 
-  async toHaveHeader(page: Page, breadcrumbs: string[], backButtonVisible: boolean): Promise<AssertReturnType> {
+  async toHaveHeader(
+    page: Page,
+    breadcrumbs: Array<string | RegExp>,
+    backButtonVisible: boolean,
+    hasHomeButton: boolean,
+  ): Promise<AssertReturnType> {
     const header = page.locator('#connected-header').locator('.topbar-left');
     const backButton = header.locator('.back-button');
     let pass = true;
@@ -74,11 +79,17 @@ export const expect = baseExpect.extend({
       errorMessage = `Back button is ${backButtonVisible ? 'hidden' : 'visible'}`;
     }
     try {
-      const bcs = header.locator('ion-breadcrumb');
-      await expect(bcs).toHaveCount(breadcrumbs.length);
-      await expect(bcs).toHaveText(breadcrumbs);
+      // Couldn't find how to skip the first matching `ion-breadcrumb` so
+      // we add an empty element at the start of the provided array
+      if (hasHomeButton) {
+        breadcrumbs.unshift('');
+      }
+      const bcs = header.locator('ion-breadcrumbs').locator('ion-breadcrumb');
+      expect(bcs).toHaveCount(breadcrumbs.length);
+      await expect(bcs).toHaveText(breadcrumbs, { useInnerText: true });
     } catch (error: any) {
       pass = false;
+      console.log(error);
       errorMessage = `Invalid breadcrumbs. Expected '[${breadcrumbs}]', got '[${error.matcherResult.actual}]' instead.`;
     }
     return {

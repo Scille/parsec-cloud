@@ -114,7 +114,7 @@ msTest('Login', async ({ home }) => {
   await expect(loginButton).not.toHaveDisabledAttribute();
   await loginButton.click();
   await expect(home).toBeWorkspacePage();
-  await expect(home).toHaveHeader(['My workspaces'], false);
+  await expect(home).toHaveHeader(['My workspaces'], false, false);
   const profile = home.locator('.topbar').locator('.profile-header');
   await expect(profile.locator('.text-content-name')).toHaveText('Gordon Freeman');
 });

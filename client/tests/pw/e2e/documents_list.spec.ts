@@ -159,3 +159,51 @@ msTest('Selection in grid mode', async ({ documents }) => {
   await expect(entries.nth(2).locator('ion-checkbox')).toHaveState('checked');
   await expect(entries.nth(3).locator('ion-checkbox')).toHaveState('unchecked');
 });
+
+for (const gridMode of [false, true]) {
+  msTest(`Open file in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    await expect(documents.locator('.information-modal')).toBeHidden();
+    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    if (gridMode) {
+      await toggleViewMode(documents);
+      await documents.locator('.folder-container').locator('.file-card-item').nth(2).dblclick();
+    } else {
+      await documents.locator('.folder-container').getByRole('listitem').nth(2).dblclick();
+    }
+    const modal = documents.locator('.information-modal');
+    await expect(modal).toBeVisible();
+    await expect(modal.locator('.container-textinfo')).toHaveText('This feature is not yet available in web mode.');
+    await modal.locator('#next-button').click();
+    await expect(modal).toBeHidden();
+  });
+
+  msTest(`Navigation back and forth in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    async function navigateDown(): Promise<void> {
+      if (gridMode) {
+        await documents.locator('.folder-container').locator('.file-card-item').nth(0).dblclick();
+      } else {
+        await documents.locator('.folder-container').getByRole('listitem').nth(0).dblclick();
+      }
+    }
+
+    async function navigateUp(): Promise<void> {
+      await documents.locator('#connected-header').locator('.topbar-left').locator('.back-button-container').locator('ion-button').click();
+    }
+
+    if (gridMode) {
+      await toggleViewMode(documents);
+    }
+
+    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    await navigateDown();
+    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER], true, true);
+    await navigateDown();
+    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER, DIR_MATCHER], true, true);
+    await navigateUp();
+    await expect(documents).toHaveHeader(['The Copper Coronet', DIR_MATCHER], true, true);
+    await navigateUp();
+    await expect(documents).toHaveHeader(['The Copper Coronet'], true, true);
+    await navigateUp();
+    await expect(documents).toBeWorkspacePage();
+  });
+}
