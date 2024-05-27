@@ -53,14 +53,14 @@ export const msTest = base.extend<{
 
   documents: async ({ connected }, use) => {
     await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(0).click();
-    await expect(connected).toHaveHeader(['/', 'The Copper Coronet'], true);
+    await expect(connected).toHaveHeader(['The Copper Coronet'], true, true);
     await expect(connected).toBeDocumentPage();
     use(connected);
   },
 
   documentsReadOnly: async ({ connected }, use) => {
     await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(2).click();
-    await expect(connected).toHaveHeader(['/', "Watcher's Keep"], true);
+    await expect(connected).toHaveHeader(["Watcher's Keep"], true, true);
     await expect(connected).toBeDocumentPage();
     use(connected);
   },

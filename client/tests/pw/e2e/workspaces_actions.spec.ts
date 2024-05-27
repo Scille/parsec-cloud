@@ -79,7 +79,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     } else {
       await connected.locator('.sidebar').locator('.list-workspaces').getByRole('listitem').nth(1).click();
     }
-    await expect(connected).toHaveHeader(['/', 'Trademeet'], true);
+    await expect(connected).toHaveHeader(['Trademeet'], true, true);
   });
 
   msTest(`Rename a workspace ${mode}`, async ({ connected }) => {
