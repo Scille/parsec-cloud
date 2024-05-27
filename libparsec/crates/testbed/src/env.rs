@@ -334,6 +334,18 @@ impl TestbedEnv {
                 ),
                 _ => None,
             })
+            .expect("Realm has had no key rotation involving this user")
+    }
+
+    pub fn get_realm_keys(&self, realm_id: VlobID) -> &Vec<SecretKey> {
+        self.template
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(&x.keys),
+                _ => None,
+            })
             .expect("Realm has had no key rotation")
     }
 
