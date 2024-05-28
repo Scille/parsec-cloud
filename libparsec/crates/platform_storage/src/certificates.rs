@@ -455,12 +455,8 @@ pub enum GetCertificateError {
 
 #[derive(Debug, Clone)]
 pub struct GetCertificateQuery {
-    // TODO: `allow(dead_code)` is needed due to web version
-    #[allow(dead_code)]
     pub(crate) certificate_type: &'static str,
-    #[allow(dead_code)]
     pub(crate) filter1: Option<String>,
-    #[allow(dead_code)]
     pub(crate) filter2: Option<String>,
 }
 
