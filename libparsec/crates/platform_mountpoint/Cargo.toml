@@ -1,37 +1,37 @@
 [package]
-name = "libparsec_platform_mountpoint"
-publish.workspace = true
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-version.workspace = true
+name = "libparsec_platform_mountpoint"
+publish.workspace = true
 repository.workspace = true
+version.workspace = true
 
 [lints]
 workspace = true
 
 [target.'cfg(target_os = "windows")'.dependencies]
-winfsp_wrs = { workspace = true }
 once_cell = { workspace = true }
 regex = { workspace = true }
+winfsp_wrs = { workspace = true }
 
-[target.'cfg(target_os = "linux")'.dependencies]
+[target.'cfg(target_family = "unix")'.dependencies]
 fuser = { workspace = true, features = ["libfuse", "abi-7-21"] }
 libc = { workspace = true }
 
 [dependencies]
-libparsec_types = { workspace = true }
 libparsec_client = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
+libparsec_types = { workspace = true }
 log = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [dev-dependencies]
-libparsec_client_connection = { workspace = true }
-libparsec_tests_lite = { workspace = true }
-libparsec_tests_fixtures = { workspace = true, features = ["default"] }
-env_logger = { workspace = true }
 ctrlc = { workspace = true }
+env_logger = { workspace = true }
+libparsec_client_connection = { workspace = true }
+libparsec_tests_fixtures = { workspace = true, features = ["default"] }
+libparsec_tests_lite = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 windows-sys = { workspace = true, features = ["Win32"] }
 
