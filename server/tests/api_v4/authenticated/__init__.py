@@ -12,6 +12,7 @@ from .test_invite_3a_greeter_wait_peer_trust import *  # noqa
 from .test_invite_3b_greeter_signify_trust import *  # noqa
 from .test_invite_4_greeter_communicate import *  # noqa
 from .test_invite_cancel import *  # noqa
+from .test_invite_conduit_exchange import *  # noqa
 from .test_invite_list import *  # noqa
 from .test_invite_new_device import *  # noqa
 from .test_invite_new_user import *  # noqa
