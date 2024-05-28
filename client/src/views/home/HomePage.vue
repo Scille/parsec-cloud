@@ -292,7 +292,7 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
   // Since this is going to be alive the whole time, we don't need to remember the id to clear it later
   await eventDistributor.registerCallback(
     Events.Offline | Events.Online | Events.IncompatibleServer | Events.ExpiredOrganization | Events.ClientRevoked,
-    async (event: Events, _data: EventData) => {
+    async (event: Events, _data?: EventData) => {
       switch (event) {
         case Events.Offline: {
           informationManager.present(

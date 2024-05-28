@@ -108,7 +108,7 @@ export async function toggleFavorite(
     { favoriteList: favorites },
     WorkspaceDefaultData,
   );
-  eventDistributor.dispatchEvent(Events.WorkspaceFavorite, {});
+  eventDistributor.dispatchEvent(Events.WorkspaceFavorite);
 }
 
 export async function openWorkspaceContextMenu(

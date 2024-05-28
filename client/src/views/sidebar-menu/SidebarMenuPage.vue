@@ -365,7 +365,7 @@ async function loadAll(): Promise<void> {
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
     Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated,
-    async (event: Events, _data: EventData) => {
+    async (event: Events, _data?: EventData) => {
       if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
         await loadAll();
       }

@@ -68,7 +68,7 @@ const props = defineProps<{
 onMounted(async () => {
   eventCbId = await eventDistributor.registerCallback(
     Events.Offline | Events.Online | Events.UpdateAvailability,
-    async (event: Events, data: EventData) => {
+    async (event: Events, data?: EventData) => {
       if (event === Events.Offline) {
         isOnline.value = false;
       } else if (event === Events.Online) {

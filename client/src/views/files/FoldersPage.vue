@@ -215,7 +215,7 @@ import {
   SortProperty,
   selectFolder,
 } from '@/components/files';
-import { Path, entryStat, WorkspaceCreateFolderErrorTag, EntryStat, FsPath } from '@/parsec';
+import { Path, entryStat, WorkspaceCreateFolderErrorTag, listWorkspaces, WorkspaceID, WorkspaceRole, FsPath, EntryStat } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -391,11 +391,16 @@ onMounted(async () => {
 
   await defineShortcuts();
 
-  eventCbId = await eventDistributor.registerCallback(Events.EntryUpdated, async (event: Events, _data: EventData) => {
-    if (event === Events.EntryUpdated) {
-      await listFolder();
-    }
-  });
+  eventCbId = await eventDistributor.registerCallback(
+    Events.EntryUpdated | Events.WorkspaceUpdated,
+    async (event: Events, _data?: EventData) => {
+      if (event === Events.EntryUpdated) {
+        await listFolder();
+      } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
+        await updateWorkspaceInfo(workspaceInfo.value.id);
+      }
+    },
+  );
 
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
@@ -421,6 +426,74 @@ onUnmounted(async () => {
     eventDistributor.removeCallback(eventCbId);
   }
 });
+
+async function updateWorkspaceInfo(workspaceId: WorkspaceID): Promise<void> {
+  const workspacesResult = await listWorkspaces();
+
+  if (workspacesResult.ok) {
+    const wInfo = workspacesResult.value.find((wi) => wi.id === workspaceId);
+    if (!wInfo) {
+      // Not found, probably means that we've been excluded from the workspace
+      await informationManager.present(
+        new Information({
+          message: {
+            key: 'FoldersPage.events.workspaceUnshared',
+            data: {
+              name: workspaceInfo.value?.currentName,
+            },
+          },
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Modal,
+      );
+      await navigateTo(Routes.Workspaces);
+    } else {
+      // display a toast if the role has been changed in a significant manner: Reader to something else, or something else to Reader
+      if (workspaceInfo.value?.currentSelfRole === WorkspaceRole.Reader && wInfo.currentSelfRole !== WorkspaceRole.Reader) {
+        await informationManager.present(
+          new Information({
+            message: {
+              key: 'FoldersPage.events.roleUpdateNoLongerReader',
+            },
+            level: InformationLevel.Info,
+          }),
+          PresentationMode.Toast,
+        );
+      } else if (workspaceInfo.value?.currentSelfRole !== WorkspaceRole.Reader && wInfo.currentSelfRole === WorkspaceRole.Reader) {
+        await informationManager.present(
+          new Information({
+            message: {
+              key: 'FoldersPage.events.roleUpdateNowReader',
+            },
+            level: InformationLevel.Warning,
+          }),
+          PresentationMode.Toast,
+        );
+      }
+      // Just update the info, the page appearance should update automatically
+      if (!workspaceInfo.value) {
+        return;
+      }
+      workspaceInfo.value.currentName = wInfo.currentName;
+      workspaceInfo.value.currentSelfRole = wInfo.currentSelfRole;
+    }
+  } else {
+    // Don't really know what to do in this case, just move the user back to workspaces list
+    await informationManager.present(
+      new Information({
+        message: {
+          key: 'FoldersPage.errors.failedToListWorkspaces',
+          data: {
+            reason: workspacesResult.error.tag,
+          },
+        },
+        level: InformationLevel.Info,
+      }),
+      PresentationMode.Toast,
+    );
+    await navigateTo(Routes.Workspaces);
+  }
+}
 
 async function onDisplayStateChange(): Promise<void> {
   await storageManager.storeComponentData<FoldersPageSavedData>(FOLDERS_PAGE_DATA_KEY, { displayState: displayView.value });
