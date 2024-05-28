@@ -66,6 +66,38 @@ async def workspace_info(workspace: Handle) -> Result[StartedWorkspaceInfo, Work
     raise NotImplementedError
 
 
+class WorkspaceWatchError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Stopped:
+        pass
+
+    class EntryNotFound:
+        pass
+
+    class NoRealmAccess:
+        pass
+
+    class InvalidKeysBundle:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidManifest:
+        pass
+
+    class Internal:
+        pass
+
+
+async def workspace_watch_entry_oneshot(
+    workspace: Handle, path: FsPath
+) -> Result[VlobID, WorkspaceWatchError]:
+    raise NotImplementedError
+
+
 class WorkspaceMountError(ErrorVariant):
     class Disabled:
         pass

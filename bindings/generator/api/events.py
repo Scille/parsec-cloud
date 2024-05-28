@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from .common import Variant, DateTime, InvitationToken, InvitationStatus
+from .common import Variant, DateTime, InvitationToken, InvitationStatus, VlobID
 
 
 class ClientEvent(Variant):
@@ -24,9 +24,9 @@ class ClientEvent(Variant):
     class WorkspaceLocallyCreated:
         pass
 
-    # class WorkspaceEntryChanged:
-    #     workspace_id: VlobID
-    #     vlob_id: VlobID
+    class WorkspaceWatchedEntryChanged:
+        realm_id: VlobID
+        entry_id: VlobID
 
     class InvitationChanged:
         token: InvitationToken
