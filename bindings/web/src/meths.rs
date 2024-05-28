@@ -2937,6 +2937,39 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         "ClientEventWorkspaceLocallyCreated" => {
             Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
         }
+        "ClientEventWorkspaceWatchedEntryChanged" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            Ok(libparsec::ClientEvent::WorkspaceWatchedEntryChanged { realm_id, entry_id })
+        }
         "ClientEventWorkspacesSelfAccessChanged" => {
             Ok(libparsec::ClientEvent::WorkspacesSelfAccessChanged {})
         }
@@ -3057,6 +3090,35 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceLocallyCreated".into(),
             )?;
+        }
+        libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
+            realm_id, entry_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceWatchedEntryChanged".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         libparsec::ClientEvent::WorkspacesSelfAccessChanged { .. } => {
             Reflect::set(
@@ -6894,6 +6956,68 @@ fn variant_workspace_storage_cache_size_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceWatchError
+
+#[allow(dead_code)]
+fn variant_workspace_watch_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceWatchError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceWatchError::EntryNotFound { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorEntryNotFound".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorInternal".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::InvalidCertificate { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::InvalidKeysBundle { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorInvalidKeysBundle".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::InvalidManifest { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorInvalidManifest".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::NoRealmAccess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceWatchErrorNoRealmAccess".into(),
+            )?;
+        }
+        libparsec::WorkspaceWatchError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceWatchErrorOffline".into())?;
+        }
+        libparsec::WorkspaceWatchError::Stopped { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"WorkspaceWatchErrorStopped".into())?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // bootstrap_organization
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -9843,6 +9967,45 @@ pub fn workspaceStop(workspace: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_workspace_stop_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_watch_entry_oneshot
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceWatchEntryOneshot(workspace: u32, path: String) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::workspace_watch_entry_oneshot(workspace, path).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from_str({
+                    let custom_to_rs_string =
+                        |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                    match custom_to_rs_string(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    }
+                    .as_ref()
+                });
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_watch_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
