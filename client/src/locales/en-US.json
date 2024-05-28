@@ -427,7 +427,8 @@
             "deleteMultipleSomeFailed": "Some entries could not be deleted.",
             "copyOneFailed": "Failed to copy file `{name}`, please try again.",
             "copyMultipleAllFailed": "Failed to copy any entry.",
-            "copyMultipleSomeFailed": "Some entries could not be copied."
+            "copyMultipleSomeFailed": "Some entries could not be copied.",
+            "failedToListWorkspaces": "Failed to list the workspaces (reason: {reason})."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -443,6 +444,11 @@
             "folderTitle": "Rename a folder",
             "folderLabel": "Folder name",
             "folderPlaceholder": "My folder"
+        },
+        "events": {
+            "workspaceUnshared": "The workspace {name} is no longer shared with you.",
+            "roleUpdateNoLongerReader": "Your role on this workspace has been updated. You are no longer a Reader and can import and update entries.",
+            "roleUpdateNowReader": "Your role on this workspace has been updated. You are now a Reader and can no longer import or update entries."
         },
         "deleteOneFileQuestionTitle": "Delete one file",
         "deleteOneFileQuestionSubtitle": "Are you sure you want to delete file `{name}`?",

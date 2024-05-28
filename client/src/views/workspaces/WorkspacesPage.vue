@@ -271,12 +271,19 @@ onMounted(async (): Promise<void> => {
   );
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceFavorite | Events.WorkspaceUpdated,
-    async (event: Events, _data: EventData) => {
-      if (event === Events.WorkspaceFavorite) {
-        await loadFavorites();
-      } else if (event === Events.WorkspaceUpdated) {
-        await refreshWorkspacesList();
+    Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.WorkspaceCreated,
+    async (event: Events, _data?: EventData) => {
+      switch (event) {
+        case Events.WorkspaceFavorite:
+          await loadFavorites();
+          break;
+        case Events.WorkspaceUpdated:
+        case Events.WorkspaceCreated:
+          await refreshWorkspacesList();
+          break;
+        default:
+          console.log(`Unhandled event ${event}`);
+          break;
       }
     },
   );
@@ -451,8 +458,6 @@ async function createWorkspace(name: WorkspaceName): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-    await refreshWorkspacesList();
-    await eventDistributor.dispatchEvent(Events.WorkspaceCreated, { workspaceId: result.value });
   } else {
     informationManager.present(
       new Information({

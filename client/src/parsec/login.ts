@@ -108,10 +108,10 @@ export async function login(
   function parsecEventCallback(distributor: EventDistributor, event: ClientEvent): void {
     switch (event.tag) {
       case ClientEventTag.Online:
-        distributor.dispatchEvent(Events.Online, {});
+        distributor.dispatchEvent(Events.Online);
         break;
       case ClientEventTag.Offline:
-        distributor.dispatchEvent(Events.Offline, {});
+        distributor.dispatchEvent(Events.Offline);
         break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {
@@ -120,14 +120,20 @@ export async function login(
         });
         break;
       case ClientEventTag.IncompatibleServer:
-        distributor.dispatchEvent(Events.Offline, {});
-        distributor.dispatchEvent(Events.IncompatibleServer, {});
+        distributor.dispatchEvent(Events.Offline);
+        distributor.dispatchEvent(Events.IncompatibleServer);
         break;
       case ClientEventTag.RevokedSelfUser:
-        eventDistributor.dispatchEvent(Events.ClientRevoked, {});
+        eventDistributor.dispatchEvent(Events.ClientRevoked);
         break;
       case ClientEventTag.ExpiredOrganization:
-        eventDistributor.dispatchEvent(Events.ExpiredOrganization, {});
+        eventDistributor.dispatchEvent(Events.ExpiredOrganization);
+        break;
+      case ClientEventTag.WorkspaceLocallyCreated:
+        eventDistributor.dispatchEvent(Events.WorkspaceCreated);
+        break;
+      case ClientEventTag.WorkspacesSelfAccessChanged:
+        eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       default:
         console.log(`Unhandled event ${event.tag}`);
@@ -149,8 +155,7 @@ export async function login(
     if (result.ok) {
       // Simulate an update event every 10s to force a refresh
       const intervalId = setInterval(() => {
-        eventDistributor.dispatchEvent(Events.WorkspaceUpdated, {});
-        eventDistributor.dispatchEvent(Events.EntryUpdated, {});
+        eventDistributor.dispatchEvent(Events.EntryUpdated);
       }, 10000);
       loggedInDevices.push({ handle: result.value, device: device, intervalId: intervalId });
     }

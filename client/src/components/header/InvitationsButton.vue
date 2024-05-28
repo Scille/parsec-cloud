@@ -34,7 +34,7 @@ let eventCbId: string | null = null;
 const invitations: Ref<UserInvitation[]> = ref([]);
 
 onMounted(async () => {
-  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data: EventData) => {
+  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, _data?: EventData) => {
     if (event === Events.InvitationUpdated) {
       await updateInvitations();
     }

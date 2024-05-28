@@ -23,40 +23,22 @@ interface WorkspaceCreatedData {
   workspaceId: WorkspaceID;
 }
 
-interface OnlineData {}
-
-interface OfflineData {}
-
 interface InvitationUpdatedData {
   token: InvitationToken;
   status: InvitationStatus;
 }
-
-interface WorkspaceFavoriteData {}
 
 interface UpdateAvailabilityData {
   updateAvailable: boolean;
   version?: string;
 }
 
-interface WorkspaceUpdatedData {}
-
-interface EntryUpdatedData {}
-
-type EventData =
-  | WorkspaceCreatedData
-  | OnlineData
-  | OfflineData
-  | InvitationUpdatedData
-  | WorkspaceFavoriteData
-  | UpdateAvailabilityData
-  | EntryUpdatedData
-  | WorkspaceUpdatedData;
+type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData;
 
 interface Callback {
   id: string;
   events: number;
-  funct: (event: Events, data: EventData) => Promise<void>;
+  funct: (event: Events, data?: EventData) => Promise<void>;
 }
 
 class EventDistributor {
@@ -66,7 +48,7 @@ class EventDistributor {
     this.callbacks = [];
   }
 
-  async dispatchEvent(event: Events, data: EventData): Promise<void> {
+  async dispatchEvent(event: Events, data?: EventData): Promise<void> {
     for (const cb of this.callbacks) {
       if (event & cb.events) {
         await cb.funct(event, data);
@@ -74,7 +56,7 @@ class EventDistributor {
     }
   }
 
-  async registerCallback(events: number, funct: (event: Events, data: EventData) => Promise<void>): Promise<string> {
+  async registerCallback(events: number, funct: (event: Events, data?: EventData) => Promise<void>): Promise<string> {
     const id = uuid4();
     this.callbacks.push({ id: id, events: events, funct: funct });
     return id;
@@ -85,14 +67,4 @@ class EventDistributor {
   }
 }
 
-export {
-  EventData,
-  EventDistributor,
-  Events,
-  InvitationUpdatedData,
-  OfflineData,
-  OnlineData,
-  UpdateAvailabilityData,
-  WorkspaceCreatedData,
-  WorkspaceFavoriteData,
-};
+export { EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedData };
