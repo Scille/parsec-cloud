@@ -33,6 +33,63 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn ok_with_existing_certificates(
+    #[values("none", "reader")] last_known_role: &str,
+    #[values("manager", "owner")] new_role: &str,
+    env: &TestbedEnv,
+) {
+    let (env, wksp1_id) = env.customize_with_map(|builder| {
+        builder.new_user("bob");
+        // Bob creates a realm...
+        let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
+        builder.rotate_key_realm(wksp1_id);
+        builder.rename_realm(wksp1_id, "wksp1");
+        // ...then shares it with Alice...
+        builder.share_realm(wksp1_id, "alice", RealmRole::Manager);
+        // ...then change Alice's role one more time
+        match last_known_role {
+            "none" => {
+                builder.share_realm(wksp1_id, "alice", None);
+            }
+            "reader" => {
+                builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
+            }
+            unknown => panic!("Unknown kind: {}", unknown),
+        }
+
+        // Finally Bob changes one last time Alice's role, which is the certificate
+        // we are testing.
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+        match new_role {
+            "manager" => {
+                builder.share_realm(wksp1_id, "alice", RealmRole::Manager);
+            }
+            "owner" => {
+                builder.share_realm(wksp1_id, "alice", RealmRole::Owner);
+            }
+            unknown => panic!("Unknown kind: {}", unknown),
+        }
+
+        wksp1_id
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let (_, certif) = env.get_last_realm_role_certificate("alice", wksp1_id);
+    let switch = ops
+        .add_certificates_batch(
+            &[],
+            &[],
+            &[],
+            &[(wksp1_id, vec![certif])].into_iter().collect(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
     let env = env.customize(|builder| {
         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
@@ -461,6 +518,46 @@ async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &Tes
             *boxed,
             InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { .. }
         )
+    )
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn previously_owner_giving_role(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.new_user("bob");
+        builder.new_user("mallory");
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|e| e.realm);
+        builder.share_realm(realm_id, "bob", RealmRole::Owner);
+        builder.share_realm(realm_id, "mallory", RealmRole::Owner);
+
+        // Bob is no longer owner... but still tries to give a role !
+        builder.share_realm(realm_id, "bob", RealmRole::Contributor);
+        builder
+            .share_realm(realm_id, "alice", RealmRole::Reader)
+            .customize(|e| {
+                e.author = "bob@dev1".try_into().unwrap();
+            });
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let err = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &env.get_realms_certificates_signed(),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::RealmAuthorNotOwner { .. })
     )
 }
 

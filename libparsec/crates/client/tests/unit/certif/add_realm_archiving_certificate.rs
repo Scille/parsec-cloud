@@ -333,3 +333,41 @@ async fn revoked(
         if matches!(*boxed, InvalidCertificateError::RevokedAuthor { .. })
     );
 }
+
+#[parsec_test(testbed = "minimal")]
+async fn previously_owner_renaming(env: &TestbedEnv) {
+    let env = env.customize(|builder| {
+        builder.new_user("bob");
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|e| e.realm);
+        builder.share_realm(realm_id, "bob", RealmRole::Owner);
+
+        // Bob is no longer owner... but still tries to rotate keys !
+        builder.share_realm(realm_id, "bob", RealmRole::Contributor);
+        builder
+            .archive_realm(realm_id, RealmArchivingConfiguration::Archived)
+            .customize(|e| {
+                e.author = "bob@dev1".try_into().unwrap();
+            });
+    });
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(&env, &alice).await;
+
+    let err = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &env.get_realms_certificates_signed(),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(*boxed, InvalidCertificateError::RealmAuthorNotOwner { .. })
+    )
+}

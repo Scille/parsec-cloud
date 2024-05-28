@@ -1327,11 +1327,11 @@ async fn check_realm_role_certificate_consistency(
 
     // 2) Check author's realm role and if certificate is self-signed.
 
-    let realm_current_roles = store
+    let realm_roles = store
         .get_realm_roles(UpTo::Timestamp(cooked.timestamp), cooked.realm_id)
         .await?;
 
-    if realm_current_roles.is_empty() {
+    if realm_roles.is_empty() {
         // 2.a) The realm is a new one, so certificate must be self-signed with a OWNER role.
 
         if author.user_id() != &cooked.user_id {
@@ -1349,14 +1349,15 @@ async fn check_realm_role_certificate_consistency(
         // 2.b) The realm already exists, so certificate cannot be self-signed and
         // author must have a sufficient role.
 
-        let author_current_role = match realm_current_roles
+        let author_current_role = match realm_roles
             .iter()
+            .rev() // realm roles are sorted from oldest to newest, we need the last one
             .find(|role| &role.user_id == author.user_id())
             .and_then(|role| role.role)
         {
             // As expected, author currently has a role :)
             Some(author_current_role) => author_current_role,
-            // Author never had role, or it role got revoked :(
+            // Author never had role, or its role got revoked :(
             None => {
                 let hint = mk_hint();
                 let what = Box::new(InvalidCertificateError::RealmAuthorHasNoRole { hint });
@@ -1364,8 +1365,9 @@ async fn check_realm_role_certificate_consistency(
             }
         };
 
-        let user_current_role = realm_current_roles
+        let user_current_role = realm_roles
             .iter()
+            .rev() // realm roles are sorted from oldest to newest, we need the last one
             .find(|role| role.user_id == cooked.user_id)
             .and_then(|role| role.role);
         let user_new_role = cooked.role;
@@ -1442,7 +1444,7 @@ async fn check_realm_role_certificate_consistency(
         // - cannot be MANAGER
         // - can only be OWNER of not-shared workspaces
         UserProfile::Outsider
-            if (cooked.role == Some(RealmRole::Owner) && !realm_current_roles.is_empty())
+            if (cooked.role == Some(RealmRole::Owner) && !realm_roles.is_empty())
                 || cooked.role == Some(RealmRole::Manager) =>
         {
             // Given self-signing is only allowed for the first realm role certificate,
@@ -1492,11 +1494,11 @@ async fn check_realm_name_certificate_consistency(
 
     // 2) Check author's realm role and if certificate is self-signed.
 
-    let realm_current_roles = store
+    let realm_roles = store
         .get_realm_roles(UpTo::Timestamp(cooked.timestamp), cooked.realm_id)
         .await?;
 
-    if realm_current_roles.is_empty() {
+    if realm_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
@@ -1504,8 +1506,9 @@ async fn check_realm_name_certificate_consistency(
     } else {
         // 2.b) The realm already exists, as expected.
 
-        let author_current_role = match realm_current_roles
+        let author_current_role = match realm_roles
             .iter()
+            .rev() // realm roles are sorted from oldest to newest, we need the last one
             .find(|role| &role.user_id == cooked.author.user_id())
             .and_then(|role| role.role)
         {
@@ -1577,11 +1580,11 @@ async fn check_realm_key_rotation_certificate_consistency(
 
     // 2) Check author's realm role and if certificate is self-signed.
 
-    let realm_current_roles = store
+    let realm_roles = store
         .get_realm_roles(UpTo::Timestamp(cooked.timestamp), cooked.realm_id)
         .await?;
 
-    if realm_current_roles.is_empty() {
+    if realm_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
@@ -1589,8 +1592,9 @@ async fn check_realm_key_rotation_certificate_consistency(
     } else {
         // 2.b) The realm already exists, as expected.
 
-        let author_current_role = match realm_current_roles
+        let author_current_role = match realm_roles
             .iter()
+            .rev() // realm roles are sorted from oldest to newest, we need the last one
             .find(|role| &role.user_id == cooked.author.user_id())
             .and_then(|role| role.role)
         {
@@ -1662,11 +1666,11 @@ async fn check_realm_archiving_certificate_consistency(
 
     // 2) Check author's realm role and if certificate is self-signed.
 
-    let realm_current_roles = store
+    let realm_roles = store
         .get_realm_roles(UpTo::Timestamp(cooked.timestamp), cooked.realm_id)
         .await?;
 
-    if realm_current_roles.is_empty() {
+    if realm_roles.is_empty() {
         // 2.a) The realm is a new one, but only realm role certificate are allowed at this time !
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::RealmFirstCertificateMustBeRole { hint });
@@ -1674,8 +1678,9 @@ async fn check_realm_archiving_certificate_consistency(
     } else {
         // 2.b) The realm already exists, as expected.
 
-        let author_current_role = match realm_current_roles
+        let author_current_role = match realm_roles
             .iter()
+            .rev() // realm roles are sorted from oldest to newest, we need the last one
             .find(|role| &role.user_id == cooked.author.user_id())
             .and_then(|role| role.role)
         {
