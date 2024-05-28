@@ -60,7 +60,7 @@ jobs:
       version: ${{ needs.version.outputs.full }}
       version_patch_run_id: ${{ github.run_id }}
       commit_sha: ${{ needs.version.outputs.commit_sha }}
-      nightly_build: ${{ (github.event_name == 'schedule' || github.ref == 'refs/tags/nightly') && 'true' || 'false' }}
+      nightly_build: ${{ github.event_name == 'schedule' || github.ref == 'refs/tags/nightly' }}
 
   releaser:
     needs:
