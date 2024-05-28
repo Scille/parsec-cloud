@@ -2734,6 +2734,33 @@ fn variant_client_event_js_to_rs<'a>(
         "ClientEventWorkspaceLocallyCreated" => {
             Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
         }
+        "ClientEventWorkspaceWatchedEntryChanged" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceWatchedEntryChanged { realm_id, entry_id })
+        }
         "ClientEventWorkspacesSelfAccessChanged" => {
             Ok(libparsec::ClientEvent::WorkspacesSelfAccessChanged {})
         }
@@ -2844,6 +2871,33 @@ fn variant_client_event_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "ClientEventWorkspaceLocallyCreated").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
+            realm_id, entry_id, ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceWatchedEntryChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
         }
         libparsec::ClientEvent::WorkspacesSelfAccessChanged { .. } => {
             let js_tag =
@@ -6067,6 +6121,56 @@ fn variant_workspace_storage_cache_size_rs_to_js<'a>(
         }
         libparsec::WorkspaceStorageCacheSize::Default { .. } => {
             let js_tag = JsString::try_new(cx, "WorkspaceStorageCacheSizeDefault").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WorkspaceWatchError
+
+#[allow(dead_code)]
+fn variant_workspace_watch_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WorkspaceWatchError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WorkspaceWatchError::EntryNotFound { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorEntryNotFound").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::InvalidCertificate { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceWatchErrorInvalidCertificate").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::InvalidKeysBundle { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceWatchErrorInvalidKeysBundle").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::InvalidManifest { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WorkspaceWatchErrorInvalidManifest").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::NoRealmAccess { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorNoRealmAccess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::WorkspaceWatchError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "WorkspaceWatchErrorStopped").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -11524,6 +11628,77 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// workspace_watch_entry_oneshot
+fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    let workspace = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let path = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::workspace_watch_entry_oneshot(workspace, path).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = JsString::try_new(&mut cx, {
+                            let custom_to_rs_string =
+                                |x: libparsec::VlobID| -> Result<String, &'static str> {
+                                    Ok(x.hex())
+                                };
+                            match custom_to_rs_string(ok) {
+                                Ok(ok) => ok,
+                                Err(err) => return cx.throw_type_error(err),
+                            }
+                        })
+                        .or_throw(&mut cx)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_workspace_watch_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("bootstrapOrganization", bootstrap_organization)?;
     cx.export_function(
@@ -11708,5 +11883,6 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         workspace_stat_folder_children_by_id,
     )?;
     cx.export_function("workspaceStop", workspace_stop)?;
+    cx.export_function("workspaceWatchEntryOneshot", workspace_watch_entry_oneshot)?;
     Ok(())
 }

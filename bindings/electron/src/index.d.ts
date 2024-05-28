@@ -517,6 +517,11 @@ export interface ClientEventTooMuchDriftWithServerClock {
 export interface ClientEventWorkspaceLocallyCreated {
     tag: "WorkspaceLocallyCreated"
 }
+export interface ClientEventWorkspaceWatchedEntryChanged {
+    tag: "WorkspaceWatchedEntryChanged"
+    realm_id: string
+    entry_id: string
+}
 export interface ClientEventWorkspacesSelfAccessChanged {
     tag: "WorkspacesSelfAccessChanged"
 }
@@ -531,6 +536,7 @@ export type ClientEvent =
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfAccessChanged
 
 
@@ -1890,6 +1896,50 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeDefault
 
 
+// WorkspaceWatchError
+export interface WorkspaceWatchErrorEntryNotFound {
+    tag: "EntryNotFound"
+    error: string
+}
+export interface WorkspaceWatchErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidKeysBundle {
+    tag: "InvalidKeysBundle"
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidManifest {
+    tag: "InvalidManifest"
+    error: string
+}
+export interface WorkspaceWatchErrorNoRealmAccess {
+    tag: "NoRealmAccess"
+    error: string
+}
+export interface WorkspaceWatchErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface WorkspaceWatchErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export type WorkspaceWatchError =
+  | WorkspaceWatchErrorEntryNotFound
+  | WorkspaceWatchErrorInternal
+  | WorkspaceWatchErrorInvalidCertificate
+  | WorkspaceWatchErrorInvalidKeysBundle
+  | WorkspaceWatchErrorInvalidManifest
+  | WorkspaceWatchErrorNoRealmAccess
+  | WorkspaceWatchErrorOffline
+  | WorkspaceWatchErrorStopped
+
+
 export function bootstrapOrganization(
     config: ClientConfig,
     on_event_callback: (event: ClientEvent) => void,
@@ -2267,3 +2317,7 @@ export function workspaceStatFolderChildrenById(
 export function workspaceStop(
     workspace: number
 ): Promise<Result<null, WorkspaceStopError>>
+export function workspaceWatchEntryOneshot(
+    workspace: number,
+    path: string
+): Promise<Result<string, WorkspaceWatchError>>

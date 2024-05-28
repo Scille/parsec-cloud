@@ -540,6 +540,7 @@ export enum ClientEventTag {
     ServerConfigChanged = 'ClientEventServerConfigChanged',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
+    WorkspaceWatchedEntryChanged = 'ClientEventWorkspaceWatchedEntryChanged',
     WorkspacesSelfAccessChanged = 'ClientEventWorkspacesSelfAccessChanged',
 }
 
@@ -581,6 +582,11 @@ export interface ClientEventTooMuchDriftWithServerClock {
 export interface ClientEventWorkspaceLocallyCreated {
     tag: ClientEventTag.WorkspaceLocallyCreated
 }
+export interface ClientEventWorkspaceWatchedEntryChanged {
+    tag: ClientEventTag.WorkspaceWatchedEntryChanged
+    realmId: VlobID
+    entryId: VlobID
+}
 export interface ClientEventWorkspacesSelfAccessChanged {
     tag: ClientEventTag.WorkspacesSelfAccessChanged
 }
@@ -595,6 +601,7 @@ export type ClientEvent =
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfAccessChanged
 
 // ClientGetUserDeviceError
@@ -2269,6 +2276,60 @@ export type WorkspaceStorageCacheSize =
   | WorkspaceStorageCacheSizeCustom
   | WorkspaceStorageCacheSizeDefault
 
+// WorkspaceWatchError
+export enum WorkspaceWatchErrorTag {
+    EntryNotFound = 'WorkspaceWatchErrorEntryNotFound',
+    Internal = 'WorkspaceWatchErrorInternal',
+    InvalidCertificate = 'WorkspaceWatchErrorInvalidCertificate',
+    InvalidKeysBundle = 'WorkspaceWatchErrorInvalidKeysBundle',
+    InvalidManifest = 'WorkspaceWatchErrorInvalidManifest',
+    NoRealmAccess = 'WorkspaceWatchErrorNoRealmAccess',
+    Offline = 'WorkspaceWatchErrorOffline',
+    Stopped = 'WorkspaceWatchErrorStopped',
+}
+
+export interface WorkspaceWatchErrorEntryNotFound {
+    tag: WorkspaceWatchErrorTag.EntryNotFound
+    error: string
+}
+export interface WorkspaceWatchErrorInternal {
+    tag: WorkspaceWatchErrorTag.Internal
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidCertificate {
+    tag: WorkspaceWatchErrorTag.InvalidCertificate
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidKeysBundle {
+    tag: WorkspaceWatchErrorTag.InvalidKeysBundle
+    error: string
+}
+export interface WorkspaceWatchErrorInvalidManifest {
+    tag: WorkspaceWatchErrorTag.InvalidManifest
+    error: string
+}
+export interface WorkspaceWatchErrorNoRealmAccess {
+    tag: WorkspaceWatchErrorTag.NoRealmAccess
+    error: string
+}
+export interface WorkspaceWatchErrorOffline {
+    tag: WorkspaceWatchErrorTag.Offline
+    error: string
+}
+export interface WorkspaceWatchErrorStopped {
+    tag: WorkspaceWatchErrorTag.Stopped
+    error: string
+}
+export type WorkspaceWatchError =
+  | WorkspaceWatchErrorEntryNotFound
+  | WorkspaceWatchErrorInternal
+  | WorkspaceWatchErrorInvalidCertificate
+  | WorkspaceWatchErrorInvalidKeysBundle
+  | WorkspaceWatchErrorInvalidManifest
+  | WorkspaceWatchErrorNoRealmAccess
+  | WorkspaceWatchErrorOffline
+  | WorkspaceWatchErrorStopped
+
 export interface LibParsecPlugin {
     bootstrapOrganization(
         config: ClientConfig,
@@ -2647,4 +2708,8 @@ export interface LibParsecPlugin {
     workspaceStop(
         workspace: Handle
     ): Promise<Result<null, WorkspaceStopError>>
+    workspaceWatchEntryOneshot(
+        workspace: Handle,
+        path: FsPath
+    ): Promise<Result<VlobID, WorkspaceWatchError>>
 }
