@@ -65,15 +65,6 @@ describe('Workspace role', () => {
     ],
     // user is outsider, can be reader or contributor
     [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
-    [
-      UserProfile.Outsider,
-      WorkspaceRole.Contributor,
-      UserProfile.Admin,
-      WorkspaceRole.Owner,
-      WorkspaceRole.Contributor,
-      false,
-      'Current role of this user',
-    ],
     // ... but cannot be manager or owner
     [
       UserProfile.Outsider,

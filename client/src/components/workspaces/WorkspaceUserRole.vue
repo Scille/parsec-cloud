@@ -9,23 +9,24 @@
     />
 
     <ms-dropdown
+      ref="dropdownRef"
       class="dropdown"
       :options="options"
       :disabled="disabled"
-      :default-option-key="role || NOT_SHARED_KEY"
+      :default-option-key="role"
       :appearance="MsAppearance.Clear"
-      @change="$emit('roleUpdate', user, getRoleFromString($event.option.key))"
+      @change="onRoleChanged(user, $event.option, $event.oldOption)"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { MsAppearance, MsDropdown, MsOptions } from 'megashark-lib';
+import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{
   user: UserTuple;
@@ -35,18 +36,18 @@ const props = defineProps<{
   clientRole: WorkspaceRole | null;
 }>();
 
-defineEmits<{
-  (e: 'roleUpdate', user: UserTuple, newRole: WorkspaceRole | null): void;
+const emits = defineEmits<{
+  (e: 'roleUpdate', user: UserTuple, oldRole: WorkspaceRole | null, newRole: WorkspaceRole | null, reject: () => void): void;
 }>();
 
-const NOT_SHARED_KEY = 'not_shared';
+const dropdownRef = ref();
 
 const options = computed((): MsOptions => {
   return new MsOptions(
     [WorkspaceRole.Owner, WorkspaceRole.Manager, WorkspaceRole.Contributor, WorkspaceRole.Reader, null].map(
       (role: WorkspaceRole | null) => {
         return {
-          key: role === null ? NOT_SHARED_KEY : role,
+          key: role,
           label: getWorkspaceRoleTranslationKey(role).label,
           description: getWorkspaceRoleTranslationKey(role).description,
           disabled: !canChangeRole(props.clientProfile, props.user.profile, props.clientRole, props.role, role).authorized,
@@ -57,11 +58,13 @@ const options = computed((): MsOptions => {
   );
 });
 
-function getRoleFromString(role: string): WorkspaceRole | null {
-  if (role === NOT_SHARED_KEY) {
-    return null;
+function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?: MsOption): void {
+  if (oldRoleOption && newRoleOption.key === oldRoleOption.key) {
+    return;
   }
-  return role as WorkspaceRole;
+  emits('roleUpdate', user, oldRoleOption ? oldRoleOption.key : null, newRoleOption.key, () => {
+    dropdownRef.value.setCurrentKey(oldRoleOption ? oldRoleOption.key : null);
+  });
 }
 </script>
 

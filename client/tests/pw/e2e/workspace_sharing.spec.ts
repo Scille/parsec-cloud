@@ -27,7 +27,7 @@ msTest('Update user role', async ({ workspaceSharingModal }) => {
   await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
   // Use is outsider, owner and manager should be disabled
   for (const [index, role] of (await roles.all()).entries()) {
-    if (index === 0 || index === 1 || index === 4) {
+    if (index === 0 || index === 1) {
       await expect(role).toHaveTheClass('item-disabled');
     } else {
       await expect(role).not.toHaveTheClass('item-disabled');

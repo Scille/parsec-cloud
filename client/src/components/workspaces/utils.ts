@@ -49,14 +49,6 @@ export function canChangeRole(
   if (clientProfile === UserProfile.Outsider) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.outsiderProfile' };
   }
-  // Cannot change to the same role
-  if (userRole === targetRole) {
-    if (userRole === null) {
-      return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.alreadyNotShared' };
-    } else {
-      return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.sameRole' };
-    }
-  }
   // Outsiders cannot be set to Managers or Owners
   if (userProfile === UserProfile.Outsider && (targetRole === WorkspaceRole.Manager || targetRole === WorkspaceRole.Owner)) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.outsiderLimitedRole' };
