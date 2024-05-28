@@ -466,7 +466,7 @@ async fn validate_manifest<M>(
     // 3) Finally we have to check the manifest content is consistent with the system
     // (i.e. the author had the right to create this manifest)
     let author_role = store
-        .get_user_realm_role(
+        .get_last_user_realm_role(
             UpTo::Timestamp(timestamp),
             author.user_id().to_owned(),
             realm_id,

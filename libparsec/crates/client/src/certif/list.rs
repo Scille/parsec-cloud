@@ -64,7 +64,7 @@ pub(super) async fn get_current_self_realm_role(
     let certif = ops
         .store
         .for_read(|store| {
-            store.get_user_realm_role(UpTo::Current, ops.device.user_id().to_owned(), realm_id)
+            store.get_last_user_realm_role(UpTo::Current, ops.device.user_id().to_owned(), realm_id)
         })
         .await??;
 

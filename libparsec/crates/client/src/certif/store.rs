@@ -632,7 +632,7 @@ macro_rules! impl_read_methods {
 
         #[allow(unused)]
         /// Return the last realm role certificate for the given user in the given realm, if any.
-        pub async fn get_user_realm_role(
+        pub async fn get_last_user_realm_role(
             &mut self,
             up_to: UpTo,
             user_id: UserID,
@@ -684,8 +684,8 @@ macro_rules! impl_read_methods {
             )
         }
 
-        // TODO: Provide a `get_last_user_realms_roles` that, for a given user, returns
-        ///      the last valid realm role certificates for each realm he is part of.
+        // TODO: Provide a `get_user_last_realms_roles` that, for a given user, returns
+        //       the last valid realm role certificate for each of its realms.
 
         #[allow(unused)]
         pub async fn is_realm_created(
@@ -729,8 +729,8 @@ macro_rules! impl_read_methods {
             )
         }
 
-        // TODO: Provide a `get_last_realm_roles` that, for a given realm, returns
-        ///      the last valid realm role certificates for each user part of it.
+        // TODO: Provide a `get_realm_last_user_roles` that, for a given realm, returns
+        //       the last valid realm role certificate for each of its users.
 
         #[allow(unused)]
         pub async fn get_realm_last_name_certificate(
