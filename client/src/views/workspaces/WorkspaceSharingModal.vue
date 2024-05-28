@@ -168,12 +168,17 @@ function isOnlyOwner(): boolean {
   return true;
 }
 
-async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Promise<void> {
+async function updateUserRole(
+  user: UserTuple,
+  _oldRole: WorkspaceRole | null,
+  newRole: WorkspaceRole | null,
+  reject: () => void,
+): Promise<void> {
   const current = userRoles.value.find((item) => item[0].id === user.id);
 
   // Trying to set the same role again
-  if (current && current[1] === role) {
-    if (role === null) {
+  if (current && current[1] === newRole) {
+    if (newRole === null) {
       props.informationManager.present(
         new Information({
           message: { key: 'WorkspaceSharing.listFailure.alreadyNotShared', data: { user: user.humanHandle.label } },
@@ -188,7 +193,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.listFailure.alreadyHasRole',
             data: {
               user: user.humanHandle.label,
-              role: I18n.translate(getWorkspaceRoleTranslationKey(role).label),
+              role: I18n.translate(getWorkspaceRoleTranslationKey(newRole).label),
             },
           },
           level: InformationLevel.Info,
@@ -198,9 +203,9 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
     }
     return;
   }
-  const result = await shareWorkspace(props.workspaceId, user.id, role);
+  const result = await shareWorkspace(props.workspaceId, user.id, newRole);
   if (result.ok) {
-    if (!role) {
+    if (!newRole) {
       props.informationManager.present(
         new Information({
           message: {
@@ -220,7 +225,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
             key: 'WorkspaceSharing.updateRoleSuccess',
             data: {
               user: user.humanHandle.label,
-              role: I18n.translate(getWorkspaceRoleTranslationKey(role).label),
+              role: I18n.translate(getWorkspaceRoleTranslationKey(newRole).label),
             },
           },
           level: InformationLevel.Success,
@@ -229,6 +234,7 @@ async function updateUserRole(user: UserTuple, role: WorkspaceRole | null): Prom
       );
     }
   } else {
+    reject();
     props.informationManager.present(
       new Information({
         message: {
