@@ -510,6 +510,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_user_certificates(
             &mut self,
             up_to: UpTo,
@@ -549,6 +550,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_user_devices_certificates(
             &mut self,
             up_to: UpTo,
@@ -629,6 +631,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Return the last realm role certificate for the given user in the given realm, if any.
         pub async fn get_user_realm_role(
             &mut self,
             up_to: UpTo,
@@ -636,6 +639,7 @@ macro_rules! impl_read_methods {
             realm_id: VlobID,
         ) -> anyhow::Result<Option<Arc<RealmRoleCertificate>>> {
             let query = GetCertificateQuery::realm_role_certificate(realm_id, user_id);
+            // `get_certificate_encrypted` return the last certificate if multiple are available
             let encrypted = match self.storage.get_certificate_encrypted(query, up_to).await {
                 Ok((_, encrypted)) => encrypted,
                 Err(
@@ -655,6 +659,13 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Return all certificates involving the user.
+        ///
+        /// ⚠️ This method returns *all* certificates, including the ones that have been
+        /// superseded ! (i.e. you should iter from the last to the first certificate to
+        /// get the current role for a given realm).
+        ///
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_user_realms_roles(
             &mut self,
             up_to: UpTo,
@@ -673,6 +684,9 @@ macro_rules! impl_read_methods {
             )
         }
 
+        // TODO: Provide a `get_last_user_realms_roles` that, for a given user, returns
+        ///      the last valid realm role certificates for each realm he is part of.
+
         #[allow(unused)]
         pub async fn is_realm_created(
             &mut self,
@@ -690,6 +704,13 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Return all certificates involving the realm.
+        ///
+        /// ⚠️ This method returns *all* certificates, including the ones that have been
+        /// superseded ! (i.e. you should iter from the last to the first certificate to
+        /// get the current role of a given user).
+        ///
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_roles(
             &mut self,
             up_to: UpTo,
@@ -707,6 +728,9 @@ macro_rules! impl_read_methods {
                 UnsecureRealmRoleCertificate::skip_validation,
             )
         }
+
+        // TODO: Provide a `get_last_realm_roles` that, for a given realm, returns
+        ///      the last valid realm role certificates for each user part of it.
 
         #[allow(unused)]
         pub async fn get_realm_last_name_certificate(
@@ -734,6 +758,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_name_certificates(
             &mut self,
             up_to: UpTo,
@@ -778,6 +803,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_key_rotation_certificate(
             &mut self,
             up_to: UpTo,
@@ -808,6 +834,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_realm_key_rotation_certificates(
             &mut self,
             up_to: UpTo,
@@ -865,6 +892,7 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
         pub async fn get_sequester_service_certificates(
             &mut self,
             up_to: UpTo,
