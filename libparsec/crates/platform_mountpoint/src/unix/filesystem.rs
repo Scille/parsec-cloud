@@ -562,6 +562,9 @@ impl fuser::Filesystem for Filesystem {
 
         // Flags only contain RENAME_EXCHANGE or RENAME_NOREPLACE
         // (see https://libfuse.github.io/doxygen/structfuse__operations.html#adc484e37f216a8a18b97e01a83c6a6a2)
+        #[cfg(target_os = "macos")]
+        let mode = MoveEntryMode::CanReplace;
+        #[cfg(not(target_os = "macos"))]
         let mode = if flags & libc::RENAME_NOREPLACE != 0 {
             MoveEntryMode::NoReplace
         } else if flags & libc::RENAME_EXCHANGE != 0 {
