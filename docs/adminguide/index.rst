@@ -15,3 +15,4 @@ Administrator Guide
     stats_organization
     hosting/index
     migration/index
+    freeze_users
