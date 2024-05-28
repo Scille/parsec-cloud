@@ -5,7 +5,7 @@ import { registerPlugin } from '@capacitor/core';
 import { LibParsecPlugin } from '@/plugins/libparsec/definitions';
 import { LoadWebLibParsecPlugin } from '@libparsec_trampoline';
 
-export const libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
+const _libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
   electron: () => (window as any).libparsec_plugin,
 
   // In Web we have the whole libparsec compiled in Wasm and provided as a module
@@ -25,6 +25,25 @@ export const libparsec = registerPlugin<LibParsecPlugin>('LibParsec', {
   // In Android, capacitor already knows about the plugin given it has been registered from Java
 });
 
+class ParsecProxy {
+  get(target: LibParsecPlugin, name: any) {
+    return async (...args: any[]): Promise<any> => {
+      // @ts-expect-error Dont know how to fix the `...arg` properly so that the linter doesn't complain
+      const result = await target[name as keyof LibParsecPlugin](...args);
+      // eslint-disable-next-line no-prototype-builtins
+      if (result && result.hasOwnProperty('ok') && !(result as { ok: boolean }).ok) {
+        const resultError = result as { ok: boolean; error: { tag: string; error: string } };
+        console.warn(`Error when calling ${name}: ${resultError.error.tag} (${resultError.error.error})`);
+      }
+      return result;
+    };
+  }
+}
+
+const proxy = new Proxy(_libparsec, new ParsecProxy());
+
+export const libparsec = proxy;
+
 export * from '@/plugins/libparsec/definitions';
 
 // Global exposition of libparsec for easier debugging with console
@@ -33,4 +52,4 @@ declare global {
     libparsec: LibParsecPlugin;
   }
 }
-window.libparsec = libparsec;
+window.libparsec = proxy;
