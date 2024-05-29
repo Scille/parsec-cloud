@@ -28,13 +28,95 @@ features are still to be ported to v3 (see
 `v3-porting <https://github.com/Scille/parsec-cloud/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Av3-porting>`__
 issues)
 
-
-Parsec v2.16.0-a.0 (2023-06-07)
--------------------------------
+Parsec v2.17.0 (2024-02-13)
+---------------------------
 
 Features
 ~~~~~~~~
 
+* Add new administration routes to freeze users and prevent them from connecting
+  to the server.
+  (`#5811 <https://github.com/Scille/parsec-cloud/issues/5811>`__)
+
+* Added bulk reassignment of workspace roles
+  (`#5938 <https://github.com/Scille/parsec-cloud/issues/5938>`__)
+
+* Added a `Reencrypt all` action on workspace page
+  (`#5939 <https://github.com/Scille/parsec-cloud/issues/5939>`__)
+
+* Added a small message to encourage users to promote additional owners on their
+  workspaces
+  (`#5940 <https://github.com/Scille/parsec-cloud/issues/5940>`__)
+
+Bugfixes
+~~~~~~~~
+
+* Make write access to the Windows registry more robust.
+  (`#6142 <https://github.com/Scille/parsec-cloud/issues/6142>`__)
+
+* Fix the filter list when filtering user profiles.
+  (`#6369 <https://github.com/Scille/parsec-cloud/issues/6369>`__)
+
+* Add missing translation for offline availability dialog.
+  (`#6224 <https://github.com/Scille/parsec-cloud/issues/6224>`__)
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Add documentation for the ``recovery device`` feature. This feature was
+  introduced in v2.6.0 and it was not documented until now.
+  (`#5630 <https://github.com/Scille/parsec-cloud/issues/5630>`__)
+
+
+
+Parsec v2.16.3 (2023-12-01)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Check that the Parsec application is not running when executing the
+  uninstaller (and other improvements to the Windows installer)
+  (`#5893 <https://github.com/Scille/parsec-cloud/issues/5893>`__)
+
+
+
+Parsec v2.16.2 (2023-11-28)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix the Windows installer to properly uninstall the previous Parsec version (a
+  regression introduced in the Parsec 2.16.0 installer prevented Parsec 2.15.0 and
+  before to be properly uninstalled)
+  (`#5845 <https://github.com/Scille/parsec-cloud/issues/5845>`__)
+
+
+
+Parsec v2.16.1 (2023-11-13)
+---------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix file creation/modification times as shown in the file explorer on Windows
+  (`#5693 <https://github.com/Scille/parsec-cloud/issues/5693>`__)
+
+* Fix progress bar issue for offline availability when the workspace contains
+  more than 2GB of data
+  (`#5759 <https://github.com/Scille/parsec-cloud/issues/5759>`__)
+
+
+
+Parsec v2.16.0 (2023-10-31)
+---------------------------
+
+Features
+~~~~~~~~
+
+* Add support for archiving workspaces and planning their deletion.
+  (`#5061 <https://github.com/Scille/parsec-cloud/issues/5061>`__)
 * Add a dialog to manage offline availability for workspaces (i.e a user can now
   choose keep all the data available locally for offline access)
   (`#2266 <https://github.com/Scille/parsec-cloud/issues/2266>`__)
@@ -47,6 +129,20 @@ Features
 Bugfixes
 ~~~~~~~~
 
+* Fix a regression causing the offline availability feature to be unavailable
+  for workspaces other than the first one in the list.
+  (`#5556 <https://github.com/Scille/parsec-cloud/issues/5556>`__)
+* Fix confusing numbering of versions in the file history display.
+  (`#5561 <https://github.com/Scille/parsec-cloud/issues/5561>`__)
+* Fix a concurrency issue causing connection loss when logging in after a re-
+  encryption.
+  (`#5542 <https://github.com/Scille/parsec-cloud/issues/5542>`__)
+* Fixed an issue on MacOS where a file would be deleted when trying to save it
+  from some specific native softwares.
+  (`#2330 <https://github.com/Scille/parsec-cloud/issues/2330>`__)
+* On linux, if you're using something other than ubuntu, you may need to install
+  ``libfuse2`` or ``fuse2`` using the package manager of your system.
+  (`#4760 <https://github.com/Scille/parsec-cloud/issues/4760>`__)
 * Prevent accidental creation of multiple parsec organizations at the same time
   (`#3698 <https://github.com/Scille/parsec-cloud/issues/3698>`__)
 * Accept parenthesis in HumanHandle's label
@@ -74,6 +170,9 @@ Bugfixes
 Improved Documentation
 ~~~~~~~~~~~~~~~~~~~~~~
 
+* Add SBOM (Software Bills Of Materials) generation on software packaging. This
+  provides the list of dependencies used to build the software.
+  (`#4770 <https://github.com/Scille/parsec-cloud/issues/4770>`__)
 * Correct the favicon displayed on the provided documentation at
   <https://docs.parsec.cloud>
   (`#4127 <https://github.com/Scille/parsec-cloud/issues/4127>`__)
@@ -101,6 +200,7 @@ Miscellaneous internal changes
   (`#3958 <https://github.com/Scille/parsec-cloud/issues/3958>`__)
 * Fix french typography
   (`#4059 <https://github.com/Scille/parsec-cloud/issues/4059>`__)
+
 
 
 Parsec v2.15.0 (2022-12-12)
