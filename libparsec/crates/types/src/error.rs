@@ -74,6 +74,12 @@ pub enum DataError {
 
     #[error("Invalid version: expected `{expected}`, got `{got}`")]
     UnexpectedVersion { expected: u32, got: u32 },
+
+    #[error("Invalid file content")]
+    InvalidFileContent,
+
+    #[error("Invalid file content")]
+    NotReshaped,
 }
 
 pub type DataResult<T> = Result<T, DataError>;

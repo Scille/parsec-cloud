@@ -194,9 +194,8 @@ impl Chunk {
         true
     }
 
-    pub fn get_block_access(&self) -> Result<&BlockAccess, &'static str> {
-        self.block()
-            .ok_or("This chunk does not correspond to a block")
+    pub fn get_block_access(&self) -> DataResult<&BlockAccess> {
+        self.block().ok_or(DataError::NotReshaped)
     }
 }
 
@@ -290,22 +289,57 @@ impl LocalFileManifest {
         true
     }
 
-    pub fn assert_integrity(&self) {
+    /// The chunks in a local file manifest should:
+    /// - belong to their corresponding block span
+    /// - not overlap
+    /// - not go passed the file size
+    /// - not share the same block span
+    /// - not span over multiple block spans
+    /// - be internally consistent
+    /// Also the last block span should not be empty.
+    /// Note that they do not have to be contiguous.
+    /// Those checks have to remain compatible with `FileManifest::check_content_integrity`.
+    pub fn check_content_integrity(&self) -> DataResult<()> {
         let mut current = 0;
+
+        // Loop over block spans
         for (i, chunks) in self.blocks.iter().enumerate() {
-            assert!(current <= i as u64 * *self.blocksize);
+            let block_span_start = i as u64 * *self.blocksize;
+            let block_span_stop = block_span_start + *self.blocksize;
+
             for chunk in chunks {
-                assert!(current <= chunk.start);
-                assert!(chunk.start < chunk.stop.into());
-                assert!(chunk.raw_offset <= chunk.start);
-                assert!(chunk.stop.get() <= chunk.raw_offset + chunk.raw_size.get());
-                current = chunk.stop.into()
+                // Check that the chunk is internally consistent
+                if chunk.start >= chunk.stop.get()
+                    || chunk.raw_offset > chunk.start
+                    || chunk.stop.get() > chunk.raw_offset + chunk.raw_size.get()
+                {
+                    return Err(DataError::InvalidFileContent);
+                }
+
+                // Check that the chunk belong to the block span
+                if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
+                    return Err(DataError::InvalidFileContent);
+                }
+
+                // Check that the chunks are ordered and do not overlap
+                if current > chunk.start {
+                    return Err(DataError::InvalidFileContent);
+                }
+                current = chunk.stop.get();
             }
         }
+
+        // Check that the last block span is not empty
         if let Some(chunks) = self.blocks.last() {
             assert!(!chunks.is_empty())
         }
-        assert!(current <= self.size);
+
+        // Check that the file size is consistent with the last chunk
+        if current > self.size {
+            return Err(DataError::InvalidFileContent);
+        }
+
+        Ok(())
     }
 
     pub fn from_remote(remote: FileManifest) -> Self {
@@ -333,33 +367,41 @@ impl LocalFileManifest {
             blocks,
             base: remote,
         };
-        // TODO: use proper error handling
-        manifest.assert_integrity();
+
+        // Remote manifests comes from the certificate ops, so they are expected
+        // to be validated using `CertifOps::validate_child_manifest`.
+        // However, we still check the content integrity of the local manifest just in case.
+        manifest
+            .check_content_integrity()
+            .expect("Manifest integrity");
         manifest
     }
 
-    pub fn to_remote(
-        &self,
-        author: DeviceID,
-        timestamp: DateTime,
-    ) -> Result<FileManifest, &'static str> {
-        self.assert_integrity();
+    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> DataResult<FileManifest> {
+        // Make sure we don't upload an invalid manifest
+        self.check_content_integrity()?;
 
         let blocks = self
             .blocks
             .iter()
-            // In local manifest each blocksize area is represented by a list of chunks,
-            // on the other hand the remote manifest only store the non-empty list of chunks
+            // In a local manifest, each blocksize area is represented by a list of chunks.
+            // That list might be empty if it doesn't contain any data (e.g when the file has been resized)
+            // Since remote manifests is composed of a flat list of ordered and reshaped blocks,
+            // empty blocks (i.e lists containing no chunks) are simply filtered out.
             .filter(|chunks| !chunks.is_empty())
-            // Remote manifest is only composed of reshaped blocks
-            .map(|chunks| chunks[0].get_block_access())
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|_| "Need reshape")?
+            // Each blocksize area is expected to contain a single chunk, reshaped as an uploadable block
+            // (i.e a chunk with an access). If not, the `NotReshaped` error is returned.
+            .map(|chunks| match chunks.len() {
+                0 => unreachable!(),
+                1 => chunks[0].get_block_access(),
+                _ => Err(DataError::NotReshaped),
+            })
+            .collect::<DataResult<Vec<_>>>()?
             .into_iter()
             .cloned()
             .collect();
 
-        Ok(FileManifest {
+        let manifest = FileManifest {
             author,
             timestamp,
             id: self.base.id,
@@ -370,7 +412,10 @@ impl LocalFileManifest {
             size: self.size,
             blocksize: self.blocksize,
             blocks,
-        })
+        };
+        // The content integrity check is also done on the remote manifest, just in case
+        manifest.check_content_integrity()?;
+        Ok(manifest)
     }
 
     pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) -> Result<Vec<Chunk>, u64> {
@@ -844,7 +889,11 @@ impl LocalChildManifest {
 
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
         let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-        format_vx_load(&serialized)
+        let result = format_vx_load(&serialized);
+        if let Ok(Self::File(manifest)) = &result {
+            manifest.check_content_integrity()?;
+        }
+        result
     }
 }
 

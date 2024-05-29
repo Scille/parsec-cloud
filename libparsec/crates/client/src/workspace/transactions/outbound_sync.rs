@@ -179,7 +179,9 @@ async fn outbound_sync_file(
     let timestamp = ops.device.now();
     let to_upload = local
         .to_remote(ops.device.device_id.to_owned(), timestamp)
-        .expect("already reshaped");
+        // Errors occur if the manifest is not reshaped, or if the content is invalid
+        // None of these should happen given we've just reshaped the file
+        .map_err(|err| WorkspaceSyncError::Internal(err.into()))?;
 
     let remote = match upload_manifest(ops, to_upload).await? {
         UploadManifestOutcome::VersionConflict => {
