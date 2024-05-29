@@ -272,6 +272,47 @@ impl_manifest_dump_load!(FileManifest);
 
 parsec_data!("schema/manifest/file_manifest.json5");
 
+impl FileManifest {
+    /// The blocks in a file manifest should:
+    /// - be ordered by offset
+    /// - not overlap
+    /// - not go passed the file size
+    /// - not share the same block span
+    /// - not span over multiple block spans
+    /// Note that they do not have to be contiguous.
+    /// Those checks have to remain compatible with `LocalFileManifest::check_content_integrity`.
+    pub fn check_content_integrity(&self) -> DataResult<()> {
+        let mut current_offset = 0;
+        let mut current_block_index = 0;
+
+        for block in &self.blocks {
+            // Check that blocks are ordered and not overlapping
+            if current_offset > block.offset {
+                return Err(DataError::InvalidFileContent);
+            }
+            current_offset = block.offset + block.size.get();
+
+            // Check that blocks are not sharing the same block span
+            let block_index = block.offset / self.blocksize.inner();
+            if current_block_index > block_index {
+                return Err(DataError::InvalidFileContent);
+            }
+            current_block_index = block_index + 1;
+
+            // Check that blocks are not spanning over multiple block spans
+            let last_block_index = (block.offset + block.size.get() - 1) / self.blocksize.inner();
+            if last_block_index != block_index {
+                return Err(DataError::InvalidFileContent);
+            }
+        }
+        // Check that the file size is not exceeded
+        if current_offset > self.size {
+            return Err(DataError::InvalidFileContent);
+        }
+        Ok(())
+    }
+}
+
 impl TryFrom<FileManifestData> for FileManifest {
     type Error = &'static str;
     fn try_from(data: FileManifestData) -> Result<Self, Self::Error> {
