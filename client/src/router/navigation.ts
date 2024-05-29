@@ -40,8 +40,7 @@ export async function navigateTo(routeName: Routes, options?: NavigationOptions)
 
 export async function navigateToWorkspace(workspaceHandle: WorkspaceHandle, path = '/', selectFile?: EntryName): Promise<void> {
   await navigateTo(Routes.Documents, {
-    params: { workspaceHandle: workspaceHandle },
-    query: { documentPath: path, selectFile: selectFile },
+    query: { documentPath: path, selectFile: selectFile, workspaceHandle: workspaceHandle },
   });
 }
 

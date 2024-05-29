@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { ConnectionHandle, EntryName, FsPath, ParsecWorkspacePathAddr, WorkspaceName } from '@/parsec';
+import { ConnectionHandle, EntryName, FsPath, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
 import { DeviceID } from '@/plugins/libparsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
@@ -59,7 +59,7 @@ const routes: Array<RouteRecordRaw> = [
                     component: () => import('@/views/workspaces/WorkspacesPage.vue'),
                   },
                   {
-                    path: `/:handle(\\d+)/${Routes.Documents}/:workspaceHandle(\\d+)`,
+                    path: `/:handle(\\d+)/${Routes.Documents}`,
                     name: Routes.Documents,
                     component: () => import('@/views/files/FoldersPage.vue'),
                   },
@@ -148,4 +148,5 @@ export interface Query {
   workspaceName?: WorkspaceName;
   selectFile?: EntryName;
   loginInfo?: string;
+  workspaceHandle?: WorkspaceHandle;
 }
