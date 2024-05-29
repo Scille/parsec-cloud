@@ -236,6 +236,7 @@ const routeWatchCancel = watchRoute(async () => {
       await navigateTo(Routes.Workspaces, { query: {} });
     }
   }
+  await refreshWorkspacesList();
 });
 
 const msSorterLabels = {
