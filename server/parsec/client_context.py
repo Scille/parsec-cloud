@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import NoReturn
 from uuid import uuid4
 
@@ -26,16 +26,15 @@ class AnonymousClientContext:
     settled_api_version: ApiVersion
     organization_id: OrganizationID
     organization_internal_id: int
-    _logger: structlog.stdlib.BoundLogger | None = None
+    logger: structlog.stdlib.BoundLogger = field(init=False)
 
-    @property
-    def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger is None:
-            self._logger = logger.bind(
-                request=uuid4().hex, organization_id=self.organization_id.str, auth="anonymous"
-            )
-            assert self._logger is not None
-        return self._logger
+    def __post_init__(self):
+        self.logger = logger.bind(
+            request=uuid4().hex,
+            api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
+            auth="anonymous",
+            organization=self.organization_id.str,
+        )
 
     def organization_not_found_abort(self) -> NoReturn:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
@@ -63,19 +62,16 @@ class InvitedClientContext:
     type: InvitationType
     organization_internal_id: int
     invitation_internal_id: int
-    _logger: structlog.stdlib.BoundLogger | None = None
+    logger: structlog.stdlib.BoundLogger = field(init=False)
 
-    @property
-    def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger is None:
-            self._logger = logger.bind(
-                request=uuid4().hex,
-                organization_id=self.organization_id,
-                auth="invited",
-                token=self.token.hex,
-            )
-            assert self._logger is not None
-        return self._logger
+    def __post_init__(self):
+        self.logger = logger.bind(
+            request=uuid4().hex,
+            api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
+            auth="invited",
+            organization=self.organization_id.str,
+            token=self.token.hex,
+        )
 
     def organization_not_found_abort(self) -> NoReturn:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
@@ -111,26 +107,25 @@ class AuthenticatedClientContext:
     device_verify_key: VerifyKey
     organization_internal_id: int
     device_internal_id: int
-    _logger: structlog.stdlib.BoundLogger | None = None
+    logger: structlog.stdlib.BoundLogger = field(init=False)
     _user_id: UserID | None = None
+
+    def __post_init__(self):
+        self.logger = logger.bind(
+            request=uuid4().hex,
+            api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
+            auth="authenticated",
+            organization=self.organization_id.str,
+            device=self.device_id.str,
+        )
 
     @property
     def user_id(self) -> UserID:
+        # UserId is costly to retrieve given it must be generated from DeviceID
+        # then converted from Rust to Python !
         if self._user_id is None:
             self._user_id = self.device_id.user_id
         return self._user_id
-
-    @property
-    def logger(self) -> structlog.stdlib.BoundLogger:
-        if self._logger is None:
-            self._logger = logger.bind(
-                request=uuid4().hex,
-                organization_id=self.organization_id,
-                auth="authenticated",
-                device_id=self.device_id.str,
-            )
-            assert self._logger is not None
-        return self._logger
 
     def organization_not_found_abort(self) -> NoReturn:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort

@@ -17,6 +17,7 @@ from structlog.processors import JSONRenderer
 from structlog.types import EventDict, ExcInfo
 
 from parsec._version import __version__
+from parsec.config import LogLevel
 
 # Long story short Python's logging is an over-engineering mess, adding
 # structlog and Sentry brings another layer of complexity :/
@@ -72,14 +73,6 @@ def _format_timestamp(
 ) -> MutableMapping[str, object]:
     event["timestamp"] = cast(date, event["timestamp"]).isoformat() + "Z"
     return event
-
-
-def _cook_log_level(log_level: str | None) -> int:
-    if log_level is not None:
-        log_level = log_level.upper()
-    if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL", "FATAL"):
-        raise ValueError(f"Unknown log level `{log_level}`")
-    return getattr(logging, log_level)
 
 
 def _structlog_to_sentry_processor(
@@ -153,9 +146,8 @@ def _structlog_to_sentry_processor(
 
 
 def build_structlog_configuration(
-    log_level: str, log_format: str, log_stream: TextIO
+    log_level: LogLevel, log_format: str, log_stream: TextIO
 ) -> dict[str, Any]:
-    log_level_index = _cook_log_level(log_level)
     # A bit of structlog architecture:
     # - lazy proxy: component obtained through `structlog.get_logger()`, laziness
     #     is needed given it is imported very early on (later it bind operation
@@ -176,17 +168,15 @@ def build_structlog_configuration(
             structlog.processors.format_exc_info,
             _build_formatter_renderer(log_format),
         ],
-        "wrapper_class": structlog.make_filtering_bound_logger(log_level_index),
+        "wrapper_class": structlog.make_filtering_bound_logger(log_level.value),
         "logger_factory": structlog.PrintLoggerFactory(file=log_stream),
         "cache_logger_on_first_use": True,
     }
 
 
 def configure_stdlib_logger(
-    logger: logging.Logger, log_level: str, log_format: str, log_stream: TextIO
+    logger: logging.Logger, log_level: LogLevel, log_format: str, log_stream: TextIO
 ) -> None:
-    log_level_index = _cook_log_level(log_level)
-
     # Use structlog to format stdlib logging records.
     # Note this is only cosmetic: stdlib is still responsible for outputting them.
     formatter = structlog.stdlib.ProcessorFormatter(
@@ -202,7 +192,7 @@ def configure_stdlib_logger(
     handler.setFormatter(formatter)
 
     logger.addHandler(handler)
-    logger.setLevel(log_level_index)
+    logger.setLevel(log_level.value)
 
 
 def build_sentry_configuration(dsn: str, environment: str) -> dict[str, Any]:
@@ -218,7 +208,7 @@ def build_sentry_configuration(dsn: str, environment: str) -> dict[str, Any]:
     }
 
 
-def configure_logging(log_level: str, log_format: str, log_stream: TextIO) -> None:
+def configure_logging(log_level: LogLevel, log_format: str, log_stream: TextIO) -> None:
     config = build_structlog_configuration(
         log_level=log_level, log_format=log_format, log_stream=log_stream
     )

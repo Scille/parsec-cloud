@@ -49,6 +49,7 @@ from parsec.components.auth import (
     InvitedAuthInfo,
 )
 from parsec.components.events import ClientBroadcastableEventStream, SseAPiEventsListenBadOutcome
+from parsec.config import LogLevel
 from parsec.events import EventOrganizationConfig
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
@@ -428,8 +429,26 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
+    client_ctx.logger.debug(
+        "RPC start",
+        req=req,
+    )
+
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
+
+    if backend.config.log_level == LogLevel.DEBUG:
+        client_ctx.logger.debug(
+            "RPC done",
+            rep=rep,
+        )
+    else:
+        client_ctx.logger.info(
+            "RPC",
+            cmd=cmd_func._api_info["cmd"],  # type: ignore
+            status=type(rep).__name__,
+        )
+
     return _rpc_rep(rep, parsed.settled_api_version)
 
 
@@ -492,8 +511,26 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
+    client_ctx.logger.debug(
+        "RPC start",
+        req=req,
+    )
+
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
+
+    if backend.config.log_level == LogLevel.DEBUG:
+        client_ctx.logger.debug(
+            "RPC done",
+            rep=rep,
+        )
+    else:
+        client_ctx.logger.info(
+            "RPC",
+            cmd=cmd_func._api_info["cmd"],  # type: ignore
+            status=type(rep).__name__,
+        )
+
     return _rpc_rep(rep, parsed.settled_api_version)
 
 
@@ -571,8 +608,26 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
+    client_ctx.logger.debug(
+        "RPC start",
+        req=req,
+    )
+
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
+
+    if backend.config.log_level == LogLevel.DEBUG:
+        client_ctx.logger.debug(
+            "RPC done",
+            rep=rep,
+        )
+    else:
+        client_ctx.logger.info(
+            "RPC",
+            cmd=cmd_func._api_info["cmd"],  # type: ignore
+            status=type(rep).__name__,
+        )
+
     return _rpc_rep(rep, parsed.settled_api_version)
 
 
@@ -644,6 +699,7 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         device_internal_id=auth_info.device_internal_id,
         device_verify_key=auth_info.device_verify_key,
     )
+    client_ctx.logger.info("Start SSE connection")
 
     return StreamingResponseMiddleware(
         backend,
@@ -720,10 +776,12 @@ class StreamingResponseMiddleware(StreamingResponse):
                     return
 
             if scope.cancel_called:
+                self.client_ctx.logger.debug("SSE keepalive")
                 yield b":keepalive\n\n"
 
             else:
                 if next_event is None:
+                    self.client_ctx.logger.debug("SSE missed events")
                     # We have missed some events, most likely because the last event id
                     # provided by the client is too old. In this case we have to
                     # notify the client with a special `missed_events` message
@@ -737,6 +795,7 @@ class StreamingResponseMiddleware(StreamingResponse):
                     (event, apiv4_sse_payload) = next_event
                     if apiv4_sse_payload is None:
                         apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
+                    self.client_ctx.logger.debug("SSE event", event_=event)
                     yield apiv4_sse_payload
 
     async def __call__(self, scope, receive, send) -> None:
