@@ -22,6 +22,7 @@ from typing_extensions import Concatenate, ParamSpec
 from parsec._version import __version__
 from parsec.config import (
     BaseBlockStoreConfig,
+    LogLevel,
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
     RAID0BlockStoreConfig,
@@ -71,7 +72,11 @@ def logging_config_options(
         )
         @wraps(fn)
         def wrapper(
-            log_level: str, log_format: str, log_file: str | None, *args: P.args, **kwargs: P.kwargs
+            log_level: str,
+            log_format: str,
+            log_file: str | None,
+            *args: P.args,
+            **kwargs: P.kwargs,
         ) -> R:
             # `click.open_file` considers "-" to be stdout
             if log_file in (None, "-"):
@@ -87,12 +92,13 @@ def logging_config_options(
                     assert log_file is not None
                     yield cast(TextIO, click.open_file(filename=log_file, mode="w"))
 
-            kwargs["log_level"] = log_level
+            parsed_log_level = LogLevel[log_level.upper()]
+            kwargs["log_level"] = parsed_log_level
             kwargs["log_format"] = log_format
             kwargs["log_file"] = log_file
 
             with open_log_file() as fd:
-                configure_logging(log_level=log_level, log_format=log_format, log_stream=fd)
+                configure_logging(log_level=parsed_log_level, log_format=log_format, log_stream=fd)
 
                 return fn(*args, **kwargs)
 

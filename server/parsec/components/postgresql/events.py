@@ -26,7 +26,7 @@ from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, q_realm, q_user_internal_id, transaction
 from parsec.components.user import CheckDeviceBadOutcome
-from parsec.config import BackendConfig
+from parsec.config import BackendConfig, LogLevel
 from parsec.events import Event, EventOrganizationConfig
 
 logger = get_logger()
@@ -69,7 +69,7 @@ class PGEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(url: str) -> AsyncIterator[PGEventBus]:
+async def event_bus_factory(db_url: str, log_level: LogLevel) -> AsyncIterator[PGEventBus]:
     # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
     send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
     receive_events_channel: MemoryObjectReceiveStream[Event]
@@ -84,7 +84,19 @@ async def event_bus_factory(url: str) -> AsyncIterator[PGEventBus]:
 
     async def _pump_events():
         async for event in receive_events_channel:
-            logger.info("Broadcasting", event_=event)
+            if log_level == LogLevel.DEBUG:
+                logger.debug(
+                    "Received internal event",
+                    event_=event,
+                )
+            else:
+                logger.info(
+                    "Received internal event",
+                    event_type=event.type,
+                    event_id=event.event_id.hex,
+                    organization=event.organization_id.str,
+                )
+
             await send_signal(notification_conn, event)
 
     def _on_notification(conn: object, pid: int, channel: str, payload: object) -> None:
@@ -100,7 +112,7 @@ async def event_bus_factory(url: str) -> AsyncIterator[PGEventBus]:
 
     # This connection is dedicated to the notifications listening, so it
     # would only complicate stuff to include it into the connection pool
-    notification_conn = await asyncpg.connect(url)
+    notification_conn = await asyncpg.connect(db_url)
     try:
         try:
             async with anyio.create_task_group() as task_group:

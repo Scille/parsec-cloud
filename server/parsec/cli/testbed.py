@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import sys
 import tempfile
 from contextlib import asynccontextmanager
 from typing import Any, AsyncIterator, TypeAlias
@@ -27,10 +26,9 @@ except ImportError:
 
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
-from parsec.cli.options import debug_config_options
+from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
-from parsec.config import BackendConfig, MockedBlockStoreConfig, MockedEmailConfig
-from parsec.logging import configure_logging
+from parsec.config import BackendConfig, LogLevel, MockedBlockStoreConfig, MockedEmailConfig
 
 DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 DEFAULT_PORT = 6770
@@ -174,10 +172,13 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 
 
 @asynccontextmanager
-async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[TestbedBackend]:
+async def testbed_backend_factory(
+    server_addr: ParsecAddr, log_level: LogLevel
+) -> AsyncIterator[TestbedBackend]:
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
+        log_level=log_level,
         debug=True,
         db_url="MOCKED",
         db_min_connections=1,
@@ -240,6 +241,8 @@ async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[Test
     envvar="PARSEC_STOP_AFTER_PROCESS",
     help="Stop the server once the given process has terminated",
 )
+# Add --log-level/--log-format/--log-file
+@logging_config_options(default_log_level="INFO")
 # Add --debug
 @debug_config_options
 def testbed_cmd(
@@ -248,10 +251,11 @@ def testbed_cmd(
     orga_life_limit: float,
     server_addr: ParsecAddr,
     stop_after_process: int | None,
+    log_level: LogLevel,
+    log_format: str,
+    log_file: str | None,
     debug: bool,
 ) -> None:
-    configure_logging(log_level="INFO", log_format="CONSOLE", log_stream=sys.stderr)
-
     async def _run_testbed():
         # Task group must be enclosed by backend (and not the other way around !)
         # given we will sleep forever in it __aexit__ part
@@ -271,7 +275,9 @@ def testbed_cmd(
 
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
-            async with testbed_backend_factory(server_addr=server_addr) as testbed:
+            async with testbed_backend_factory(
+                server_addr=server_addr, log_level=log_level
+            ) as testbed:
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
                 click.secho(

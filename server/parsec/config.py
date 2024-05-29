@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import TYPE_CHECKING
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
@@ -100,6 +102,14 @@ class MockedEmailConfig:
 EmailConfig = SmtpEmailConfig | MockedEmailConfig
 
 
+class LogLevel(Enum):
+    DEBUG = logging.DEBUG
+    INFO = logging.INFO
+    WARNING = logging.WARNING
+    ERROR = logging.ERROR
+    CRITICAL = logging.CRITICAL
+
+
 @dataclass(slots=True)
 class BackendConfig:
     administration_token: str
@@ -115,6 +125,9 @@ class BackendConfig:
     forward_proto_enforce_https: tuple[str, str] | None
     server_addr: ParsecAddr | None
 
+    # If log level is DEBUG, we sometime want to replace some INFO logs by
+    # equivalent ones with more details.
+    log_level: LogLevel
     debug: bool
 
     organization_bootstrap_webhook_url: str | None = None

@@ -46,7 +46,7 @@ from parsec.components.sequester import (
     WebhookSequesterService,
 )
 from parsec.components.user import UserDump
-from parsec.config import BaseBlockStoreConfig
+from parsec.config import BaseBlockStoreConfig, LogLevel
 from parsec.sequester_export_reader import RealmExportProgress, extract_workspace
 
 SEQUESTER_SERVICE_CERTIFICATE_PEM_HEADER = "-----BEGIN PARSEC SEQUESTER SERVICE CERTIFICATE-----"
@@ -525,7 +525,10 @@ def update_service(
 async def _human_accesses(
     config: BackendDbConfig, organization: OrganizationID, user_filter: str
 ) -> None:
-    async with config.pool() as pool, event_bus_factory(config.db_url) as event_bus:
+    async with (
+        config.pool() as pool,
+        event_bus_factory(db_url=config.db_url, log_level=LogLevel.INFO) as event_bus,
+    ):
         user_component = PGUserComponent(pool=pool, event_bus=event_bus)
         realm_component = PGRealmComponent(pool=pool, event_bus=event_bus)
 
