@@ -832,8 +832,9 @@
             "titleDetails": "User details",
             "actionRevoke": "Revoke this user | Revoke these users",
             "actionDetails": "View details",
-            "titleAssignRoles": "Workspace roles",
-            "actionAssignRoles": "Assign workspace roles to someone else"
+            "titleAssignRoles": "Copy roles",
+            "actionAssignRoles": "Copy workspace roles to...",
+            "subtitleAssignRoles": "You can copy {sourceUser} roles to another person. Workspace roles will not be removed."
         },
         "greet": {
             "titles": {
@@ -950,14 +951,14 @@
         },
         "assignRoles": {
             "title": "Copy workspace roles",
+            "select": "Select",
             "okButton": "Copy roles",
             "assignSuccess": "All roles from {sourceUser} have been transfered to {targetUser}.",
             "assignSomeFailed": "Some roles could not be transferred.",
             "assignAllFailed": "Could not transfer the roles.",
             "processing": "Processing the changes to be made...",
             "noRoles": "No new roles to transfer to {user}.",
-            "close": "Close",
-            "update": "Update"
+            "close": "Close"
         }
     },
     "AboutPage": {
@@ -1087,7 +1088,7 @@
     "UserSelect": {
         "defaultLabel": "Choose a person",
         "defaultPlaceholder": "Name or email of the person",
-        "noMatch": "No users matching this query were found.",
+        "noMatch": "No users found",
         "queryFailed": "An error prevents us from listing the users."
     }
 }

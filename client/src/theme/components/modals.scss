@@ -213,3 +213,19 @@
     min-width: var(--parsec-modal-width-md);
   }
 }
+
+.question-modal,
+.information-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+    width: var(--parsec-modal-width-sm);
+  }
+
+  .ms-modal-header {
+    padding-bottom: 0rem !important;
+  }
+}
+
+.role-assignment-modal::part(content) {
+  max-width: var(--parsec-modal-width-sm);
+}

@@ -831,7 +831,10 @@
             "titleRemove": "Suppression",
             "titleDetails": "Détails de l'utilisateur",
             "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
-            "actionDetails": "Voir les détails"
+            "actionDetails": "Voir les détails",
+            "titleAssignRoles": "Copie de rôles",
+            "actionAssignRoles": "Copier les rôles des espaces de travail à...",
+            "subtitleAssignRoles": "Vous pouvez copier les rôles de {sourceUser} vers une autre personne. Les rôles des espaces de travail ne seront pas retirés."
         },
         "greet": {
             "titles": {
@@ -949,13 +952,13 @@
         "assignRoles": {
             "title": "Transférer les rôles",
             "okButton": "Transférer les rôles",
+            "select": "Sélectionner",
             "assignSuccess": "Tous les rôles de {sourceUser} ont été transférés à {targetUser}.",
             "assignSomeFailed": "Certains rôles n'ont pas pu être transférés.",
             "assignAllFailed": "Impossible de transférer les rôles.",
             "processing": "Calcul des changements...",
             "noRoles": "Aucun nouveau rôle à transférer à {user}",
-            "close": "Fermer",
-            "update": "Mettre à jour"
+            "close": "Fermer"
         }
     },
     "AboutPage": {
