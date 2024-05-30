@@ -125,9 +125,6 @@ class BackendConfig:
     forward_proto_enforce_https: tuple[str, str] | None
     server_addr: ParsecAddr | None
 
-    # If log level is DEBUG, we sometime want to replace some INFO logs by
-    # equivalent ones with more details.
-    log_level: LogLevel
     debug: bool
 
     organization_bootstrap_webhook_url: str | None = None

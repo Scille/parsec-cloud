@@ -14,6 +14,7 @@ from parsec.config import (
     MockedBlockStoreConfig,
     PostgreSQLBlockStoreConfig,
 )
+from parsec.logging import _make_filtering_bound_logger
 
 # Must be done before the module has any chance to be imported
 pytest.register_assert_rewrite("tests.common.event_bus_spy")
@@ -72,10 +73,20 @@ def pytest_addoption(parser: pytest.Parser) -> None:
     )
 
 
+def get_log_level_from_cli(config: pytest.Config) -> int:
+    match config.getoption("log_cli_level"):
+        case None:
+            return logging.INFO
+        case raw:
+            assert isinstance(raw, str)
+            return getattr(logging, raw.upper())
+
+
 def pytest_configure(config: pytest.Config) -> None:
     # Configure structlog to redirect everything in logging
     structlog.configure(
         logger_factory=structlog.stdlib.LoggerFactory(),
+        wrapper_class=_make_filtering_bound_logger(get_log_level_from_cli(config)),
         processors=[
             structlog.processors.StackInfoRenderer(),
             structlog.processors.format_exc_info,

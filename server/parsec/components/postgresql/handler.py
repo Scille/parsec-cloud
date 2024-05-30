@@ -13,12 +13,12 @@ from uuid import uuid4
 
 import asyncpg
 from asyncpg import PostgresError, UndefinedTableError, UniqueViolationError
-from structlog.stdlib import get_logger
 from typing_extensions import ParamSpec
 
 from parsec._parsec import ActiveUsersLimit, DateTime
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.events import AnyEvent, Event
+from parsec.logging import get_logger
 
 from . import migrations as migrations_module
 

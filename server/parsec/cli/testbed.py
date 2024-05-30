@@ -172,13 +172,10 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 
 
 @asynccontextmanager
-async def testbed_backend_factory(
-    server_addr: ParsecAddr, log_level: LogLevel
-) -> AsyncIterator[TestbedBackend]:
+async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[TestbedBackend]:
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
-        log_level=log_level,
         debug=True,
         db_url="MOCKED",
         db_min_connections=1,
@@ -275,9 +272,7 @@ def testbed_cmd(
 
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
-            async with testbed_backend_factory(
-                server_addr=server_addr, log_level=log_level
-            ) as testbed:
+            async with testbed_backend_factory(server_addr=server_addr) as testbed:
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
                 click.secho(

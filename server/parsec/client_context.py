@@ -5,8 +5,6 @@ from dataclasses import dataclass, field
 from typing import NoReturn
 from uuid import uuid4
 
-import structlog
-
 from parsec._parsec import (
     ApiVersion,
     DeviceID,
@@ -16,8 +14,9 @@ from parsec._parsec import (
     UserID,
     VerifyKey,
 )
+from parsec.logging import ParsecBoundLogger, get_logger
 
-logger = structlog.get_logger()
+logger = get_logger()
 
 
 @dataclass(slots=True)
@@ -26,7 +25,7 @@ class AnonymousClientContext:
     settled_api_version: ApiVersion
     organization_id: OrganizationID
     organization_internal_id: int
-    logger: structlog.stdlib.BoundLogger = field(init=False)
+    logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):
         self.logger = logger.bind(
@@ -62,7 +61,7 @@ class InvitedClientContext:
     type: InvitationType
     organization_internal_id: int
     invitation_internal_id: int
-    logger: structlog.stdlib.BoundLogger = field(init=False)
+    logger: ParsecBoundLogger = field(init=False)
 
     def __post_init__(self):
         self.logger = logger.bind(
@@ -107,7 +106,7 @@ class AuthenticatedClientContext:
     device_verify_key: VerifyKey
     organization_internal_id: int
     device_internal_id: int
-    logger: structlog.stdlib.BoundLogger = field(init=False)
+    logger: ParsecBoundLogger = field(init=False)
     _user_id: UserID | None = None
 
     def __post_init__(self):

@@ -36,7 +36,7 @@ async def components_factory(
         min_connections=config.db_min_connections,
         max_connections=config.db_max_connections,
     ) as pool:
-        async with event_bus_factory(db_url=config.db_url, log_level=config.log_level) as event_bus:
+        async with event_bus_factory(db_url=config.db_url) as event_bus:
             async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)

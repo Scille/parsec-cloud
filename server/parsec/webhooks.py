@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import httpx
 from pydantic import BaseModel, PlainSerializer
-from structlog import get_logger
 from typing_extensions import Annotated
 
 from parsec._parsec import (
@@ -13,6 +12,7 @@ from parsec._parsec import (
     OrganizationID,
 )
 from parsec.config import BackendConfig
+from parsec.logging import get_logger
 
 logger = get_logger()
 

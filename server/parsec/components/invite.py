@@ -14,7 +14,6 @@ from email.mime.text import MIMEText
 from enum import Enum, auto
 
 import anyio
-from structlog.stdlib import get_logger
 
 from parsec._parsec import (
     DateTime,
@@ -41,6 +40,7 @@ from parsec.events import (
     EventInvitation,
     InvitationStatusField,
 )
+from parsec.logging import get_logger
 from parsec.templates import get_template
 from parsec.types import BadOutcomeEnum
 
