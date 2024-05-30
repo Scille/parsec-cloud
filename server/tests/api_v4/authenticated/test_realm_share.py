@@ -153,6 +153,54 @@ async def test_authenticated_realm_share_role_already_granted(
     )
 
 
+async def test_authenticated_realm_share_ok_from_author_that_has_changed_role(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    # Bob is currently a READER...
+    bob_realms = await backend.realm.get_current_realms_for_user(
+        coolorg.organization_id, coolorg.bob.device_id.user_id
+    )
+    assert isinstance(bob_realms, dict)
+    assert bob_realms[coolorg.wksp1_id] == RealmRole.READER  # Sanity check
+
+    # ...so switch it to MANAGER
+    now = DateTime.now()
+    await backend.realm.share(
+        now=now,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        key_index=1,
+        realm_role_certificate=RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            realm_id=coolorg.wksp1_id,
+            role=RealmRole.MANAGER,
+            user_id=coolorg.bob.device_id.user_id,
+        ).dump_and_sign(coolorg.alice.signing_key),
+        recipient_keys_bundle_access=b"<bob keys bundle access>",
+    )
+
+    # Now Bob is allowed to share the realm with Mallory
+
+    bob_share_mallory_certificate = RealmRoleCertificate(
+        author=coolorg.bob.device_id,
+        timestamp=DateTime.now(),
+        realm_id=coolorg.wksp1_id,
+        user_id=coolorg.mallory.user_id,
+        role=RealmRole.READER,
+    )
+
+    rep = await coolorg.bob.realm_share(
+        key_index=1,
+        realm_role_certificate=bob_share_mallory_certificate.dump_and_sign(coolorg.bob.signing_key),
+        # Keys bundle access is not readable by the server, so we can put anything here
+        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+    )
+    assert rep == authenticated_cmds.v4.realm_share.RepOk()
+
+
 @pytest.mark.parametrize("kind", ("dummy_certif", "role_none", "self_share"))
 async def test_authenticated_realm_share_invalid_certificate(
     coolorg: CoolorgRpcClients,
