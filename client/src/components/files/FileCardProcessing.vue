@@ -41,7 +41,7 @@ onMounted(async () => {
   if (props.data.getDataType() === FileOperationDataType.Import) {
     fileName.value = (props.data as ImportData).file.name;
   } else if (props.data.getDataType() === FileOperationDataType.Copy) {
-    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
+    fileName.value = (await Path.filename((props.data as CopyData).srcPath)) || '';
   } else if (props.data.getDataType() === FileOperationDataType.Move) {
     fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
   }
