@@ -15,7 +15,7 @@
         {{ data.file.name }}
       </ion-title>
 
-      <ion-text class="card-content-last-update caption-caption">
+      <ion-text class="card-content-last-update body-sm">
         <span>{{ $msTranslate('FoldersPage.File.importing') }}</span>
       </ion-text>
     </div>
