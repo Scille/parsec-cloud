@@ -296,7 +296,7 @@ pub(super) async fn get_user_device(
         .await?
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct WorkspaceUserAccessInfo {
     pub user_id: UserID,
     pub human_handle: HumanHandle,
