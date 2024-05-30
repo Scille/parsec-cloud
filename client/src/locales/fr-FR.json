@@ -372,6 +372,7 @@
     },
     "FoldersPage": {
         "createFolder": "Nouveau dossier",
+        "copyHere": "Copier ici",
         "import": "Importer",
         "itemCount": "Aucun élément | Un élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
@@ -430,7 +431,11 @@
             "copyOneFailed": "Le fichier `{name}` n'a pas pu être copié, veuillez réessayer.",
             "copyMultipleAllFailed": "Aucun élément n'a pu être copié.",
             "copyMultipleSomeFailed": "Certains éléments n'ont pas pu être copiés.",
-            "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason})."
+            "failedToListWorkspaces": "Impossible de lister les espaces de travail (raison: {reason}).",
+            "copyFailedTooManyFiles": "Trop d'éléments à copier.",
+            "copyFailedMaxRecursion": "Trop d'éléments à copier.",
+            "copyFailedOneFailed": "Un ou plusieurs éléments n'ont pas pu être copiés.",
+            "copyFailedSourceDoesNotExist": "L'élément {source} n'existe pas."
         },
         "CreateFolderModal": {
             "title": "Créer un nouveau dossier",
@@ -496,6 +501,19 @@
             "noImportDone": "Pas d'import terminé",
             "noImportFailed": "Pas d'import échoué",
             "dropInstructions": "Glissez & déposez vos fichiers pour les importer"
+        },
+        "CopyFile": {
+            "waiting": "en attente",
+            "cancelled": "annulé",
+            "failed": "échoué",
+            "browse": "Aller à l'emplacement"
+        },
+        "MoveFile": {
+            "waiting": "en attente",
+            "cancelled": "annulé",
+            "failed": "échoué",
+            "browse": "Aller à l'emplacement",
+            "failedDetails": "Vérifier votre connexion internet"
         }
     },
     "FileDetails": {

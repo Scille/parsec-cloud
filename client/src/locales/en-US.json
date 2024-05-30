@@ -372,6 +372,7 @@
     },
     "FoldersPage": {
         "createFolder": "New folder",
+        "copyHere": "Copy here",
         "import": "Import",
         "itemCount": "No items | 1 item | {count} items",
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
@@ -430,7 +431,11 @@
             "copyOneFailed": "Failed to copy file `{name}`, please try again.",
             "copyMultipleAllFailed": "Failed to copy any entry.",
             "copyMultipleSomeFailed": "Some entries could not be copied.",
-            "failedToListWorkspaces": "Failed to list the workspaces (reason: {reason})."
+            "failedToListWorkspaces": "Failed to list the workspaces (reason: {reason}).",
+            "copyFailedTooManyFiles": "Too many entries to copy.",
+            "copyFailedMaxRecursion": "Too many entries to copy.",
+            "copyFailedOneFailed": "One or more entries could not be copied.",
+            "copyFailedSourceDoesNotExist": "Entry {source} does not exist."
         },
         "CreateFolderModal": {
             "title": "Create a new folder",
@@ -496,6 +501,19 @@
             "noImportDone": "No import done",
             "noImportFailed": "No import failed",
             "dropInstructions": "Drag & drop your files to import them"
+        },
+        "CopyFile": {
+            "waiting": "waiting",
+            "cancelled": "cancelled",
+            "failed": "failed",
+            "browse": "Go to location"
+        },
+        "MoveFile": {
+            "waiting": "waiting",
+            "cancelled": "cancelled",
+            "failed": "failed",
+            "browse": "Go to location",
+            "failedDetails": "Please make sure you are online."
         }
     },
     "FileDetails": {
