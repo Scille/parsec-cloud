@@ -15,7 +15,6 @@ from typing import (
 from uuid import UUID
 
 import anyio
-import structlog
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.datastructures import Headers
 from fastapi.responses import StreamingResponse
@@ -49,10 +48,10 @@ from parsec.components.auth import (
     InvitedAuthInfo,
 )
 from parsec.components.events import ClientBroadcastableEventStream, SseAPiEventsListenBadOutcome
-from parsec.config import LogLevel
 from parsec.events import EventOrganizationConfig
+from parsec.logging import get_logger
 
-logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+logger = get_logger()
 
 
 CONTENT_TYPE_MSGPACK = "application/msgpack"
@@ -437,17 +436,12 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
 
-    if backend.config.log_level == LogLevel.DEBUG:
-        client_ctx.logger.debug(
-            "RPC done",
-            rep=rep,
-        )
-    else:
-        client_ctx.logger.info(
-            "RPC",
-            cmd=cmd_func._api_info["cmd"],  # type: ignore
-            status=type(rep).__name__,
-        )
+    client_ctx.logger.info_with_debug_extra(
+        "RPC",
+        cmd=cmd_func._api_info["cmd"],  # type: ignore
+        status=type(rep).__name__,
+        debug_extra={"rep": rep},
+    )
 
     return _rpc_rep(rep, parsed.settled_api_version)
 
@@ -519,17 +513,12 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
 
-    if backend.config.log_level == LogLevel.DEBUG:
-        client_ctx.logger.debug(
-            "RPC done",
-            rep=rep,
-        )
-    else:
-        client_ctx.logger.info(
-            "RPC",
-            cmd=cmd_func._api_info["cmd"],  # type: ignore
-            status=type(rep).__name__,
-        )
+    client_ctx.logger.info_with_debug_extra(
+        "RPC",
+        cmd=cmd_func._api_info["cmd"],  # type: ignore
+        status=type(rep).__name__,
+        debug_extra={"rep": rep},
+    )
 
     return _rpc_rep(rep, parsed.settled_api_version)
 
@@ -616,17 +605,12 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
     cmd_func = backend.apis[type(req)]
     rep = await cmd_func(client_ctx, req)
 
-    if backend.config.log_level == LogLevel.DEBUG:
-        client_ctx.logger.debug(
-            "RPC done",
-            rep=rep,
-        )
-    else:
-        client_ctx.logger.info(
-            "RPC",
-            cmd=cmd_func._api_info["cmd"],  # type: ignore
-            status=type(rep).__name__,
-        )
+    client_ctx.logger.info_with_debug_extra(
+        "RPC",
+        cmd=cmd_func._api_info["cmd"],  # type: ignore
+        status=type(rep).__name__,
+        debug_extra={"rep": rep},
+    )
 
     return _rpc_rep(rep, parsed.settled_api_version)
 

@@ -7,7 +7,6 @@ from typing import AsyncIterator, override
 import anyio
 import asyncpg
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-from structlog import get_logger
 
 from parsec._parsec import (
     DateTime,
@@ -26,8 +25,9 @@ from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, q_realm, q_user_internal_id, transaction
 from parsec.components.user import CheckDeviceBadOutcome
-from parsec.config import BackendConfig, LogLevel
+from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
+from parsec.logging import get_logger
 
 logger = get_logger()
 
@@ -69,7 +69,7 @@ class PGEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(db_url: str, log_level: LogLevel) -> AsyncIterator[PGEventBus]:
+async def event_bus_factory(db_url: str) -> AsyncIterator[PGEventBus]:
     # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
     send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
     receive_events_channel: MemoryObjectReceiveStream[Event]
@@ -84,18 +84,13 @@ async def event_bus_factory(db_url: str, log_level: LogLevel) -> AsyncIterator[P
 
     async def _pump_events():
         async for event in receive_events_channel:
-            if log_level == LogLevel.DEBUG:
-                logger.debug(
-                    "Received internal event",
-                    event_=event,
-                )
-            else:
-                logger.info(
-                    "Received internal event",
-                    event_type=event.type,
-                    event_id=event.event_id.hex,
-                    organization=event.organization_id.str,
-                )
+            logger.info_with_debug_extra(
+                "Received internal event",
+                event_type=event.type,
+                event_id=event.event_id.hex,
+                organization=event.organization_id.str,
+                debug_extra={"event": event},
+            )
 
             await send_signal(notification_conn, event)
 

@@ -7,7 +7,6 @@ from typing import override
 import anyio
 import boto3
 from botocore.exceptions import BotoCoreError, ClientError
-from structlog.stdlib import get_logger
 
 from parsec._parsec import BlockID, OrganizationID
 from parsec.components.blockstore import (
@@ -15,6 +14,7 @@ from parsec.components.blockstore import (
     BlockStoreCreateBadOutcome,
     BlockStoreReadBadOutcome,
 )
+from parsec.logging import get_logger
 
 logger = get_logger()
 

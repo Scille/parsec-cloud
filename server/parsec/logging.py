@@ -4,7 +4,7 @@ from __future__ import annotations
 import logging
 import sys
 from datetime import date, datetime
-from typing import Any, MutableMapping, TextIO, Union, cast
+from typing import Any, Callable, MutableMapping, TextIO, Union, cast
 
 import structlog
 from sentry_sdk import Hub as sentry_Hub
@@ -18,6 +18,73 @@ from structlog.types import EventDict, ExcInfo
 
 from parsec._version import __version__
 from parsec.config import LogLevel
+
+# Re-expose structlog's get_logger with the correct typing
+get_logger: Callable[[], ParsecBoundLogger] = structlog.get_logger
+
+
+class ParsecBoundLogger(structlog.typing.FilteringBoundLogger):
+    """
+    Note this class is a *Protocol*, hence it is never instantiated and instead
+    is only used for type checking.
+    """
+
+    # Custom helpers
+
+    def info_with_debug_extra(self, event: str, debug_extra: dict[str, Any], **kwargs: Any) -> None:
+        """
+        Log at info level, but also include extra information if the log level is DEBUG.
+        """
+        ...
+
+    # Method from structlog needing re-typing
+
+    def bind(self, **new_values: Any) -> ParsecBoundLogger:
+        """
+        Return a new logger with *new_values* added to the existing ones.
+        """
+        ...
+
+    def unbind(self, *keys: str) -> ParsecBoundLogger:
+        """
+        Return a new logger with *keys* removed from the context.
+        """
+        ...
+
+    def try_unbind(self, *keys: str) -> ParsecBoundLogger:
+        """
+        Like :meth:`unbind`, but best effort: missing keys are ignored.
+        """
+        ...
+
+    def new(self, **new_values: Any) -> ParsecBoundLogger:
+        """
+        Clear context and binds *initial_values* using `bind`.
+        """
+        ...
+
+
+def _make_filtering_bound_logger(min_level: int) -> type[ParsecBoundLogger]:
+    bound_logger_cls = structlog.make_filtering_bound_logger(min_level)
+
+    if min_level <= logging.DEBUG:
+
+        def info_with_debug_extra(
+            self, event: str, debug_extra: dict[str, Any], **kwargs: Any
+        ) -> None:
+            kwargs |= debug_extra
+            self.info(event, **kwargs)
+    else:
+
+        def info_with_debug_extra(
+            self, event: str, debug_extra: dict[str, Any], **kwargs: Any
+        ) -> None:
+            self.info(event, **kwargs)
+
+    bound_logger_cls.info_with_debug_extra = info_with_debug_extra  # type: ignore
+
+    return bound_logger_cls  # type: ignore
+
 
 # Long story short Python's logging is an over-engineering mess, adding
 # structlog and Sentry brings another layer of complexity :/
@@ -168,7 +235,7 @@ def build_structlog_configuration(
             structlog.processors.format_exc_info,
             _build_formatter_renderer(log_format),
         ],
-        "wrapper_class": structlog.make_filtering_bound_logger(log_level.value),
+        "wrapper_class": _make_filtering_bound_logger(log_level.value),
         "logger_factory": structlog.PrintLoggerFactory(file=log_stream),
         "cache_logger_on_first_use": True,
     }

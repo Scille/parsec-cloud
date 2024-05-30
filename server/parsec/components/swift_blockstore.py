@@ -23,7 +23,6 @@ def side_effect(key: str) -> str:
 pbr.version.VersionInfo = Mock(side_effect=side_effect)
 
 import swiftclient
-from structlog.stdlib import get_logger
 from swiftclient.exceptions import ClientException
 
 from parsec._parsec import BlockID, OrganizationID
@@ -32,6 +31,7 @@ from parsec.components.blockstore import (
     BlockStoreCreateBadOutcome,
     BlockStoreReadBadOutcome,
 )
+from parsec.logging import get_logger
 
 logger = get_logger()
 

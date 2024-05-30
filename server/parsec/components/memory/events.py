@@ -7,13 +7,12 @@ from typing import AsyncIterator, override
 
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
-from structlog import get_logger
 
 from parsec._parsec import DeviceID, OrganizationID, UserProfile, VlobID
 from parsec.components.events import BaseEventsComponent, EventBus, SseAPiEventsListenBadOutcome
 from parsec.components.memory.datamodel import MemoryDatamodel
-from parsec.config import LogLevel
 from parsec.events import Event, EventOrganizationConfig
+from parsec.logging import get_logger
 
 logger = get_logger()
 
@@ -33,7 +32,7 @@ class MemoryEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(log_level: LogLevel) -> AsyncIterator[MemoryEventBus]:
+async def event_bus_factory() -> AsyncIterator[MemoryEventBus]:
     # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
     send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
     receive_events_channel: MemoryObjectReceiveStream[Event]
@@ -44,18 +43,13 @@ async def event_bus_factory(log_level: LogLevel) -> AsyncIterator[MemoryEventBus
         async for event in receive_events_channel:
             await asyncio.sleep(0)  # Sleep to force some asynchronousness
 
-            if log_level == LogLevel.DEBUG:
-                logger.debug(
-                    "Received internal event",
-                    event_=event,
-                )
-            else:
-                logger.info(
-                    "Received internal event",
-                    event_type=event.type,
-                    event_id=event.event_id.hex,
-                    organization=event.organization_id.str,
-                )
+            logger.info_with_debug_extra(
+                "Received internal event",
+                event_type=event.type,
+                event_id=event.event_id.hex,
+                organization=event.organization_id.str,
+                debug_extra={"event": event},
+            )
 
             event_bus._dispatch_incoming_event(event)
 

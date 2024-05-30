@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from enum import auto
 
 import httpx
-from structlog.stdlib import get_logger
 
 from parsec._parsec import (
     DateTime,
@@ -20,6 +19,7 @@ from parsec.api import api
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.client_context import AuthenticatedClientContext
 from parsec.components.realm import BadKeyIndex
+from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
 
 logger = get_logger()

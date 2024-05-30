@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any
 
 import click
-from structlog import get_logger
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
 from parsec.asgi import app as parsec_app
@@ -32,6 +31,7 @@ from parsec.config import (
     MockedEmailConfig,
     SmtpEmailConfig,
 )
+from parsec.logging import get_logger
 
 logger = get_logger()
 
@@ -374,7 +374,6 @@ def run_cmd(
             email_config=email_config,
             forward_proto_enforce_https=forward_proto_enforce_https,
             server_addr=server_addr,
-            log_level=log_level,
             debug=debug,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
             organization_spontaneous_bootstrap=spontaneous_organization_bootstrap,
