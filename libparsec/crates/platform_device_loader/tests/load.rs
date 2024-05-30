@@ -111,7 +111,8 @@ async fn invalid_salt_size(tmp_path: TmpPath, #[case] content: &[u8]) {
 async fn testbed(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.bootstrap_organization("alice"); // alice@dev1
-    });
+    })
+    .await;
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
     let access = DeviceAccessStrategy::Password {
         key_file,

@@ -109,7 +109,8 @@ async fn different_key_file(tmp_path: TmpPath) {
 async fn testbed_same_key_file(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.bootstrap_organization("alice"); // alice@dev1
-    });
+    })
+    .await;
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     let current_access = DeviceAccessStrategy::Password {
@@ -137,7 +138,8 @@ async fn testbed_same_key_file(env: &TestbedEnv) {
 async fn testbed_different_key_file(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.bootstrap_organization("alice"); // alice@dev1
-    });
+    })
+    .await;
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
     let new_key_file = env.discriminant_dir.join("devices/alice@dev2.keys");
 

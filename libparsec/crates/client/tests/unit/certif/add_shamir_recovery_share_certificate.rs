@@ -10,7 +10,7 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -18,9 +18,10 @@ async fn ok(env: &TestbedEnv) {
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -37,7 +38,7 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -51,9 +52,10 @@ async fn content_already_exists(env: &TestbedEnv) {
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -74,27 +76,29 @@ async fn content_already_exists(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
+    let timestamp = env
+        .customize(|builder| {
+            builder.new_user("bob");
 
-        let timestamp = builder
-            .new_shamir_recovery(
+            let timestamp = builder
+                .new_shamir_recovery(
+                    "bob",
+                    1,
+                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                )
+                .map(|event| event.timestamp);
+
+            builder.new_shamir_recovery(
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            )
-            .map(|event| event.timestamp);
+            );
 
-        builder.new_shamir_recovery(
-            "bob",
-            1,
-            [("alice".parse().unwrap(), 1.try_into().unwrap())],
-        );
-
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let mut shamir_recovery_certificates = env.get_shamir_recovery_certificates_signed();
     shamir_recovery_certificates.remove(shamir_recovery_certificates.len() - 2);
@@ -126,7 +130,7 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn missing_brief(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -134,9 +138,10 @@ async fn missing_brief(env: &TestbedEnv) {
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let mut shamir_recovery_certificates = env.get_shamir_recovery_certificates_signed();
     shamir_recovery_certificates.remove(shamir_recovery_certificates.len() - 2);

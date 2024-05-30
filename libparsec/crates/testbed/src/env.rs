@@ -29,8 +29,71 @@ lazy_static! {
     static ref TESTBED_ENVS: Mutex<Vec<Arc<TestbedEnv>>> = Mutex::default();
 }
 
+// HTTP client used to communicate with the testbed server
 lazy_static! {
     static ref HTTP_CLIENT: reqwest::Client = reqwest::Client::new();
+}
+
+/// Wow this is some seriously cursed stuff O_o'
+///
+/// This is a wrapper that allows to modify a value until it is sealed (after
+/// that, any modification attempt will panic), while also exposing the value
+/// as if it were a regular non-mutable structure.
+///
+/// This is "safe" as long as no reference is kept on the value before any
+/// replace is done.
+/// Of course this is totally unsafe for a generic usage, but it should be
+/// okay for customizing the testbed template:
+/// - The testbed template can only be modified in the customization step.
+/// - The customization step is only allowed once, and must be done before the
+///   testbed is sealed (which occurs as soon as the template is used to
+///   generated extra data such as certificates).
+/// - In practice this means the customization step is always the very first
+///   thing done in the test.
+///
+/// In theory the right approach for our problem would be to put the testbed's
+/// template field behind a mutex. However:
+/// - This would make accessing the template significantly more cumbersome
+///   (ex: it wouldn't be possible to just do `env.template.events.iter()`
+///   which is extremely common).
+/// - It would require modifying all existing tests :(
+pub struct YoloInit<T: Sized>(std::cell::UnsafeCell<(bool, T)>);
+
+// SAFETY: Taken from the Arc implementation
+unsafe impl<T: Sized + Send> Send for YoloInit<T> {}
+// SAFETY: Taken from the Arc implementation
+unsafe impl<T: Sized + Send> Sync for YoloInit<T> {}
+
+impl<T: Sized> YoloInit<T> {
+    pub fn new(data: T) -> Self {
+        Self(std::cell::UnsafeCell::new((false, data)))
+    }
+
+    pub fn seal(&self) {
+        // SAFETY: This is safe as long as no other reference is kept on the value...
+        let (seal_flag, _) = unsafe { &mut *self.0.get() };
+        *seal_flag = true;
+    }
+
+    pub fn yolo_replace(&self, data: T) {
+        // SAFETY: This is safe as long as no other reference is kept on the value...
+        let (seal_flag, t) = unsafe { &mut *self.0.get() };
+        assert!(!*seal_flag, "Already sealed !");
+        *t = data;
+    }
+}
+
+impl<T: Sized> std::ops::Deref for YoloInit<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        // SAFETY: Once sealed, this is perfectly safe. Before that this is only
+        // safe if `YoloInit::yolo_replace` is currently called.
+        // On top of that, extra care should be paid to discard the reference as
+        // soon as possible if the seal hasn't been done yet.
+        let (_, t) = unsafe { &*self.0.get() };
+        t
+    }
 }
 
 #[derive(Default)]
@@ -184,22 +247,9 @@ pub struct TestbedEnv {
     pub discriminant_dir: PathBuf,
     pub server_addr: ParsecAddr,
     pub organization_id: OrganizationID,
-    pub template: Arc<TestbedTemplate>,
+    pub template: YoloInit<Arc<TestbedTemplate>>,
 
     cache: Mutex<Option<TestbedEnvCache>>,
-}
-
-impl Clone for TestbedEnv {
-    fn clone(&self) -> Self {
-        Self {
-            kind: self.kind,
-            discriminant_dir: self.discriminant_dir.clone(),
-            server_addr: self.server_addr.clone(),
-            organization_id: self.organization_id.clone(),
-            template: self.template.clone(),
-            cache: Mutex::default(),
-        }
-    }
 }
 
 impl std::fmt::Debug for TestbedEnv {
@@ -224,6 +274,7 @@ impl TestbedEnv {
     fn seal_and<R>(&self, cb: impl FnOnce(&mut TestbedEnvCache) -> R) -> R {
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         let cache = guard.get_or_insert_with(TestbedEnvCache::default);
+        self.template.seal();
         cb(cache)
     }
 
@@ -235,49 +286,70 @@ impl TestbedEnv {
     /// Customize the env testbed
     ///
     /// ```
-    /// let new_env = env.customize(|builder| {
+    /// let realm_id = env.customize(|builder| {
     ///   // Add any events you want
     ///   builder.new_user("bob");
-    ///   builder.new_user_realm("bob");
+    ///   let realm_id = builder.new_user_realm("bob").map(|x| x.id);
     ///   // Clear client storages (certificate, user, workspace data&cache)
     ///   builder.filter_client_storage_events(|_event| true);
-    /// });
-    /// // `env` can still be used to access stuff, but it will be missing the new
-    /// // items, so the best is to just shadow it with `new_env`.
+    ///   realm_id
+    /// }).await;
     /// ```
-    /// Be careful env is going to be duplicated under the hood to apply the customization.
-    /// Hence only the last call of `customize` with be taken into account.
-    pub fn customize(&self, cb: impl FnOnce(&mut TestbedTemplateBuilder)) -> Arc<TestbedEnv> {
-        self.customize_with_map(cb).0
-    }
-
-    pub fn customize_with_map<T>(
-        &self,
-        cb: impl FnOnce(&mut TestbedTemplateBuilder) -> T,
-    ) -> (Arc<TestbedEnv>, T) {
-        let allow_server_side_events = matches!(self.kind, TestbedKind::ClientOnly);
-        let mut builder = TestbedTemplateBuilder::new_from_template(
-            "custom",
-            &self.template,
-            allow_server_side_events,
-        );
+    ///
+    /// Only one call to `customize` is allowed per testbed env, it should be done
+    /// before the env is sealed (i.e. before any non-template data is accessed).
+    ///
+    /// ⚠️ This method contains some cursed dark magic to patch the template while it is
+    /// not behind a mutex, so don't do anything too concurrent before calling it !
+    pub async fn customize<T>(&self, cb: impl FnOnce(&mut TestbedTemplateBuilder) -> T) -> T {
+        let mut builder = TestbedTemplateBuilder::new_from_template("custom", &self.template);
         let ret = cb(&mut builder);
 
         // Retrieve current testbed env in the global store...
-        let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
-        let env = envs
-            .iter_mut()
-            .find(|env| env.discriminant_dir == self.discriminant_dir)
-            .expect("Must exist");
+        let env = {
+            let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
+            envs.iter_mut()
+                .find(|env| env.discriminant_dir == self.discriminant_dir)
+                .expect("Must exist")
+                .clone()
+        };
 
         // ...and patch it with the new template
         assert!(
             !env.is_sealed(),
             "Testbed template cannot be customized once the env is sealed"
         );
-        Arc::make_mut(env).template = builder.finalize();
+        let new_template = builder.finalize();
+        // This is the cursed part where we patch `env.template` while it is not behind a mutex !
+        // This is "fine" as long as customization occurs early in the test while there is no
+        // concurrent operation occurring...
+        env.template.yolo_replace(new_template);
 
-        ((*env).clone(), ret)
+        // If the testbed has been customized, we now have to transmit the extra events
+        // to the server.
+        if matches!(self.kind, TestbedKind::ClientServer) && !self.template.events.is_empty() {
+            let url = self.server_addr.to_http_url(Some(&format!(
+                "/testbed/customize/{}",
+                self.organization_id.as_ref()
+            )));
+            let customization =
+                rmp_serde::to_vec(self.template.custom_events()).expect("Cannot serialize events");
+            let response = HTTP_CLIENT
+                .post(url)
+                .body(customization)
+                .send()
+                .await
+                .unwrap_or_else(|e| panic!("Cannot communicate with testbed server: {}", e));
+            if response.status() != StatusCode::OK {
+                panic!("Bad response status from testbed server: {:?}", response);
+            }
+        }
+
+        // Finally force seal the env, this is to avoid multiple customization (as it is
+        // exotic stuff and a single customization should be enough anyway).
+        env.seal_and(|_| ());
+
+        ret
     }
 
     pub fn organization_addr(&self) -> Arc<ParsecOrganizationAddr> {
@@ -826,7 +898,7 @@ pub async fn test_new_testbed(
         discriminant_dir,
         server_addr,
         organization_id,
-        template: template.clone(),
+        template: YoloInit::new(template),
         cache: Mutex::default(),
     });
     envs.push(env.clone());

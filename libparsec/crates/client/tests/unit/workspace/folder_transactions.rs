@@ -37,7 +37,8 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
                 None,
             );
         }
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

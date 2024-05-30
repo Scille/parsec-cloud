@@ -63,7 +63,7 @@ async fn non_placeholder(
 
     // 1) Customize testbed
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_device("alice"); // alice@dev2
         builder.certificates_storage_fetch_certificates("alice@dev1");
 

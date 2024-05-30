@@ -55,7 +55,8 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         builder.new_realm("alice");
         builder.new_device("alice");
         builder.new_user("john");
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
 

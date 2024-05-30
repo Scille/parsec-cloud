@@ -16,12 +16,13 @@ use crate::{ClientEnsureWorkspacesBootstrappedError, WorkspaceInfo};
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
     let wksp1_id = VlobID::default();
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.certificates_storage_fetch_certificates("alice@dev1");
         builder
             .user_storage_local_update("alice@dev1")
             .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
@@ -168,23 +169,25 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn legacy_shared_before_bootstrapped(env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        builder.new_user("mallory");
-        let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
-        // Must disable check consistency to build legacy-style workspace
-        builder.with_check_consistency_disabled(|builder| {
-            builder.share_realm(wksp1_id, "alice", Some(RealmRole::Owner));
-            builder.share_realm(wksp1_id, "mallory", Some(RealmRole::Reader));
-            builder.share_realm(wksp1_id, "bob", None);
-        });
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates()
-            .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            builder.new_user("mallory");
+            let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
+            // Must disable check consistency to build legacy-style workspace
+            builder.with_check_consistency_disabled(|builder| {
+                builder.share_realm(wksp1_id, "alice", Some(RealmRole::Owner));
+                builder.share_realm(wksp1_id, "mallory", Some(RealmRole::Reader));
+                builder.share_realm(wksp1_id, "bob", None);
+            });
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates()
+                .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
@@ -293,24 +296,26 @@ async fn partially_bootstrapped(
     #[values(true, false)] role_considered_placeholder: bool,
     env: &TestbedEnv,
 ) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-        builder.rotate_key_realm(wksp1_id);
-        // Initial rename is missing for bootstrap to be done
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        if role_considered_placeholder {
-            builder
-                .user_storage_local_update("alice@dev1")
-                // Ignore certificates for local workspaces, hence role stays a placeholder
-                .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
-        } else {
-            builder
-                .user_storage_local_update("alice@dev1")
-                .update_local_workspaces_with_fetched_certificates()
-                .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
-        }
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            builder.rotate_key_realm(wksp1_id);
+            // Initial rename is missing for bootstrap to be done
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            if role_considered_placeholder {
+                builder
+                    .user_storage_local_update("alice@dev1")
+                    // Ignore certificates for local workspaces, hence role stays a placeholder
+                    .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
+            } else {
+                builder
+                    .user_storage_local_update("alice@dev1")
+                    .update_local_workspaces_with_fetched_certificates()
+                    .add_or_update_placeholder(wksp1_id, "wksp1".parse().unwrap());
+            }
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
@@ -366,7 +371,7 @@ async fn partially_bootstrapped(
 async fn legacy_no_longer_access(env: &TestbedEnv) {
     // Workspace is not bootstrapped (doesn't have initial key rotation nor rename),
     // but alice cannot do anything about it given she no longer has access to the realm.
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
 
@@ -382,7 +387,8 @@ async fn legacy_no_longer_access(env: &TestbedEnv) {
         builder.with_check_consistency_disabled(|builder| {
             builder.share_realm(wksp1_id, "alice", None);
         });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
@@ -419,7 +425,7 @@ async fn legacy_no_longer_access(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn already_bootstrapped(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
         builder.rotate_key_realm(wksp1_id);
         builder.rename_realm(wksp1_id, "alice");
@@ -427,7 +433,8 @@ async fn already_bootstrapped(env: &TestbedEnv) {
         builder
             .user_storage_local_update("alice@dev1")
             .update_local_workspaces_with_fetched_certificates();
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
@@ -444,7 +451,8 @@ async fn stopped(#[values(true, false)] something_to_bootstrap: bool, env: &Test
             builder
                 .user_storage_local_update("alice@dev1")
                 .add_or_update_placeholder(VlobID::default(), "wksp1".parse().unwrap());
-        });
+        })
+        .await;
     }
 
     let alice = env.local_device("alice@dev1");

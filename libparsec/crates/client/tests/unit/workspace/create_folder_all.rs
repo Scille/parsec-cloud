@@ -220,7 +220,7 @@ async fn invalid_child_in_path(
         "self_referencing" => wksp1_foo_id,
         unknown => panic!("Unknown kind: {}", unknown),
     };
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         // Overwrite `/foo`so that it is now an invalid child
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(
@@ -233,7 +233,8 @@ async fn invalid_child_in_path(
                 let manifest = Arc::make_mut(&mut e.local_manifest);
                 manifest.parent = patched_parent_id;
             });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

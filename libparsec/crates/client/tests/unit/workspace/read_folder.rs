@@ -176,7 +176,8 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
             | TestbedEvent::WorkspaceCacheStorageFetchBlock(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -308,7 +309,7 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
     let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
     let non_existing_id = VlobID::default();
     let bad_parent_id = wksp1_foo_egg_txt_id;
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
             .customize_children(
@@ -320,7 +321,8 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
                 ]
                 .into_iter(),
             );
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

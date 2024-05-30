@@ -226,9 +226,9 @@ impl TestbedTemplateBuilderCounters {
 
 pub struct TestbedTemplateBuilder {
     pub(super) id: &'static str,
-    pub(super) allow_server_side_events: bool,
     pub(super) events: Vec<TestbedEvent>,
-    // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
+    custom_events_offset: usize,
+    // Stuff is useful to transmit arbitrary things (e.g. IDs) from the template to the test
     pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
     pub counters: TestbedTemplateBuilderCounters,
     pub(super) check_consistency: bool,
@@ -257,23 +257,19 @@ impl TestbedTemplateBuilder {
     pub(crate) fn new(id: &'static str) -> Self {
         Self {
             id,
-            allow_server_side_events: true,
             events: vec![],
+            custom_events_offset: 0,
             stuff: vec![],
             counters: TestbedTemplateBuilderCounters::default(),
             check_consistency: true,
         }
     }
 
-    pub(crate) fn new_from_template(
-        id: &'static str,
-        template: &TestbedTemplate,
-        allow_server_side_events: bool,
-    ) -> Self {
+    pub(crate) fn new_from_template(id: &'static str, template: &TestbedTemplate) -> Self {
         Self {
             id,
-            allow_server_side_events,
             events: template.events.clone(),
+            custom_events_offset: template.events.len(),
             stuff: template.stuff.clone(),
             counters: template.build_counters.clone(),
             check_consistency: true,
@@ -309,6 +305,16 @@ impl TestbedTemplateBuilder {
     /// You are only able to remove client-side events, as server-side ones depend
     /// on each other (e.g. removing NewUser that creates a device used in ShareRealm).
     pub fn filter_client_storage_events(&mut self, filter: fn(&TestbedEvent) -> bool) {
+        // Filtering change the number of events present, so it clashes with
+        // `custom_events_offset` field that we use to know which events are custom
+        // and hence should be sent to the server.
+        // So here we must update `custom_events_offset` along with `events`, which
+        // is much easier to do if no custom events have been added yet.
+        assert!(
+            self.events.len() == self.custom_events_offset,
+            "Filtering must be done before custom events are added !"
+        );
+
         let events = std::mem::take(&mut self.events);
         let only_client_side_filter = |e: &TestbedEvent| match e {
             // Only allow client-side events to be filtered
@@ -326,12 +332,14 @@ impl TestbedTemplateBuilder {
             _ => true,
         };
         self.events = events.into_iter().filter(only_client_side_filter).collect();
+        self.custom_events_offset = self.events.len();
     }
 
     pub fn finalize(self) -> Arc<TestbedTemplate> {
         Arc::new(TestbedTemplate {
             id: self.id,
             events: self.events,
+            custom_events_offset: self.custom_events_offset,
             stuff: self.stuff,
             build_counters: self.counters,
         })
@@ -419,9 +427,6 @@ macro_rules! impl_event_builder {
                     $( $( let $param: $param_type = $param.try_into().unwrap_or_else(|_| panic!(concat!("Invalid value for param ", stringify!($param)))); )* )?
                     let event = [< TestbedEvent $name >]::from_builder(self $( $(, $param)* )? );
                     let event = TestbedEvent::$name(event);
-                    if !self.allow_server_side_events && !event.is_client_side() {
-                        panic!("Testbed connects to an actual server, hence server-side events cannot be added: {:?}", event);
-                    }
                     self.events.push(event);
                     [< TestbedEvent $name Builder >] { builder: self }
                 }
@@ -458,7 +463,7 @@ impl<'a> TestbedEventBootstrapOrganizationBuilder<'a> {
     impl_customize_field_meth!(first_user_device_id, DeviceID);
     impl_customize_field_meth!(first_user_human_handle, HumanHandle);
     impl_customize_field_meth!(first_user_first_device_label, DeviceLabel);
-    impl_customize_field_meth!(first_user_local_password, &'static str);
+    impl_customize_field_meth!(first_user_local_password, String);
 }
 
 /*
@@ -491,7 +496,7 @@ impl<'a> TestbedEventNewUserBuilder<'a> {
     impl_customize_field_meth!(first_device_label, DeviceLabel);
     impl_customize_field_meth!(initial_profile, UserProfile);
     impl_customize_field_meth!(user_realm_id, VlobID);
-    impl_customize_field_meth!(local_password, &'static str);
+    impl_customize_field_meth!(local_password, String);
 }
 
 /*
@@ -503,7 +508,7 @@ impl_event_builder!(NewDevice, [user: UserID]);
 impl<'a> TestbedEventNewDeviceBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
     impl_customize_field_meth!(device_label, DeviceLabel);
-    impl_customize_field_meth!(local_password, &'static str);
+    impl_customize_field_meth!(local_password, String);
     pub fn with_device_name(self, device_name: DeviceName) -> Self {
         self.customize(|event| {
             event.device_id = DeviceID::new(event.device_id.user_id().to_owned(), device_name);

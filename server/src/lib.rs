@@ -89,6 +89,7 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
         // tm.add_function(wrap_pyfunction!(test_new_testbed, tm)?)?;
         // tm.add_function(wrap_pyfunction!(test_drop_testbed, tm)?)?;
         tm.add_function(wrap_pyfunction!(test_get_testbed_template, tm)?)?;
+        tm.add_function(wrap_pyfunction!(test_load_testbed_customization, tm)?)?;
         tm.add_class::<TestbedTemplateContent>()?;
         tm.add_class::<TestbedEventBootstrapOrganization>()?;
         tm.add_class::<TestbedEventNewSequesterService>()?;

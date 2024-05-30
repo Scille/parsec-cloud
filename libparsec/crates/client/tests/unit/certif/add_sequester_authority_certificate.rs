@@ -11,13 +11,14 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -34,13 +35,14 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn duplicate_authority_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let mut sequester_signed = env.get_sequester_certificates_signed();
     sequester_signed.push(sequester_signed[0].clone());
@@ -68,13 +70,14 @@ async fn duplicate_authority_certificate(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn root_signature_timestamp_mismatch(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let (authority_certif, _) = env.get_sequester_authority_certificate();
 

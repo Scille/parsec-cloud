@@ -10,7 +10,7 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -18,9 +18,10 @@ async fn ok(env: &TestbedEnv) {
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -42,7 +43,7 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn multiple(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -56,9 +57,10 @@ async fn multiple(env: &TestbedEnv) {
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificates`
     // which is tested in another file.
@@ -81,7 +83,7 @@ async fn multiple(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn older_than_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder
@@ -93,9 +95,10 @@ async fn older_than_author(env: &TestbedEnv) {
             .customize(|event| {
                 event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
             });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -128,29 +131,31 @@ async fn older_than_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn invalid_timestamp(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
+    let timestamp = env
+        .customize(|builder| {
+            builder.new_user("bob");
 
-        let timestamp = builder
-            .new_shamir_recovery(
-                "bob",
-                1,
-                [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            )
-            .map(|event| event.timestamp);
+            let timestamp = builder
+                .new_shamir_recovery(
+                    "bob",
+                    1,
+                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                )
+                .map(|event| event.timestamp);
 
-        builder
-            .new_shamir_recovery(
-                "bob",
-                1,
-                [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            )
-            .customize(|event| event.timestamp = timestamp);
+            builder
+                .new_shamir_recovery(
+                    "bob",
+                    1,
+                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                )
+                .customize(|event| event.timestamp = timestamp);
 
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -183,23 +188,25 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
+    let timestamp = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
 
-        builder
-            // Check can't be bypassed
-            .new_shamir_recovery(
-                "alice",
-                1,
-                [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            )
-            .customize(|event| event.author = "bob@dev1".parse().unwrap());
+            builder
+                // Check can't be bypassed
+                .new_shamir_recovery(
+                    "alice",
+                    1,
+                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                )
+                .customize(|event| event.author = "bob@dev1".parse().unwrap());
 
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -229,7 +236,7 @@ async fn revoked(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn threshold_greater_than_share(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
 
         builder.new_shamir_recovery(
@@ -237,9 +244,10 @@ async fn threshold_greater_than_share(env: &TestbedEnv) {
             2,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -265,7 +273,7 @@ async fn threshold_greater_than_share(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
 
@@ -277,9 +285,10 @@ async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
                 ("mallory".parse().unwrap(), 1.try_into().unwrap()),
             ],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -301,15 +310,16 @@ async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn self_recipient(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_shamir_recovery(
             "alice",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
         );
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.
@@ -331,21 +341,23 @@ async fn self_recipient(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn recipient_revoked(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
+    let timestamp = env
+        .customize(|builder| {
+            builder.new_user("bob");
 
-        let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
+            let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
 
-        builder.new_shamir_recovery(
-            "alice",
-            1,
-            [("bob".parse().unwrap(), 1.try_into().unwrap())],
-        );
+            builder.new_shamir_recovery(
+                "alice",
+                1,
+                [("bob".parse().unwrap(), 1.try_into().unwrap())],
+            );
 
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
     // which is tested in another file.

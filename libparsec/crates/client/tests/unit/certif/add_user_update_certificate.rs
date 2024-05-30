@@ -11,12 +11,13 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.update_user_profile("bob", UserProfile::Admin);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -43,18 +44,19 @@ async fn ok_outsider_switch(
     } else {
         (UserProfile::Standard, UserProfile::Outsider)
     };
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(initial_profile);
         builder.update_user_profile("bob", updated_profile);
-    });
+    })
+    .await;
     let device = if switched_is_self {
         env.local_device("bob@dev1")
     } else {
         env.local_device("alice@dev1")
     };
-    let ops = certificates_ops_factory(&env, &device).await;
+    let ops = certificates_ops_factory(env, &device).await;
     let mut certificates = env.get_common_certificates_signed();
 
     if !storage_initially_empty {
@@ -78,15 +80,16 @@ async fn ok_outsider_switch(
 
 #[parsec_test(testbed = "minimal")]
 async fn content_already_exists(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.update_user_profile("bob", UserProfile::Admin);
         builder.with_check_consistency_disabled(|builder| {
             builder.update_user_profile("bob", UserProfile::Admin);
         });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -110,16 +113,17 @@ async fn content_already_exists(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn older_than_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder
             .update_user_profile("bob", UserProfile::Admin)
             .customize(|event| {
                 event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
             });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -147,17 +151,19 @@ async fn older_than_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn invalid_timestamp(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        let timestamp = builder.new_user("bob").map(|e| e.timestamp);
-        builder
-            .update_user_profile("bob", UserProfile::Admin)
-            .customize(|event| {
-                event.timestamp = timestamp;
-            });
-        timestamp
-    });
+    let timestamp = env
+        .customize(|builder| {
+            let timestamp = builder.new_user("bob").map(|e| e.timestamp);
+            builder
+                .update_user_profile("bob", UserProfile::Admin)
+                .customize(|event| {
+                    event.timestamp = timestamp;
+                });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -185,12 +191,13 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn non_existing_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.update_user_profile("bob", UserProfile::Standard);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let certificates = vec![
         env.get_user_certificate("alice").1,
@@ -214,12 +221,13 @@ async fn non_existing_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn same_profile(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.update_user_profile("bob", UserProfile::Standard);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -243,13 +251,14 @@ async fn same_profile(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn owner_of_realm_not_shared_to_outsider_is_ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user_realm("bob");
         builder.update_user_profile("bob", UserProfile::Outsider);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -274,7 +283,7 @@ async fn owner_of_realm_not_shared_to_outsider_is_ok(env: &TestbedEnv) {
 #[case(RealmRole::Contributor)]
 #[case(RealmRole::Reader)]
 async fn realm_member_switching_to_outsider_is_ok(#[case] role: RealmRole, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         let realm_id = builder
             .new_realm("alice")
@@ -282,9 +291,10 @@ async fn realm_member_switching_to_outsider_is_ok(#[case] role: RealmRole, env: 
             .map(|e| e.realm);
         builder.share_realm(realm_id, "bob", Some(role));
         builder.update_user_profile("bob", UserProfile::Outsider);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -301,7 +311,7 @@ async fn realm_member_switching_to_outsider_is_ok(#[case] role: RealmRole, env: 
 
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(UserProfile::Admin);
@@ -310,9 +320,10 @@ async fn revoked(env: &TestbedEnv) {
         builder
             .update_user_profile("mallory", UserProfile::Admin)
             .with_author("bob@dev1".try_into().unwrap());
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -339,15 +350,16 @@ async fn revoked(env: &TestbedEnv) {
 #[case(UserProfile::Standard)]
 #[case(UserProfile::Outsider)]
 async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob").with_initial_profile(profile);
         builder.new_user("mallory");
         builder
             .update_user_profile("mallory", UserProfile::Admin)
             .with_author("bob@dev1".try_into().unwrap());
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -372,14 +384,15 @@ async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn self_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder
             .update_user_profile("bob", UserProfile::Admin)
             .with_author("bob@dev1".try_into().unwrap());
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(

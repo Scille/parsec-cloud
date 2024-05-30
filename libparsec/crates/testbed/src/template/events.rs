@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::num::NonZeroU64;
 use std::sync::{Arc, Mutex};
 
 use libparsec_types::prelude::*;
+use serde_with::serde_as;
 
 use super::crc_hash::CrcHash;
 use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
@@ -65,11 +67,15 @@ macro_rules! impl_event_crc_hash {
 }
 
 macro_rules! no_certificate_event {
-    ($struct_name:ident, [ $($field_name: ident: $field_type: ty),+ $(,)? ] $(, cache: $cache_type: ty )? $(,)? ) => {
-        #[derive(Clone)]
+    ($struct_name:ident, [ $( $(#[$field_attr:meta])* $field_name: ident: $field_type: ty ),+ $(,)? ] $(, cache: $cache_type: ty )? $(,)? ) => {
+        #[serde_as]
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct $struct_name {
-            $( pub $field_name: $field_type,)*
-            $( cache: $cache_type, )?
+            $( $(#[$field_attr])* pub $field_name: $field_type,)*
+            $(
+                #[serde(skip)]
+                cache: $cache_type,
+            )?
         }
         impl_event_debug!($struct_name, [ $( $field_name: $field_type ),* ]);
         impl_event_crc_hash!($struct_name, [ $( $field_name: $field_type ),* ]);
@@ -95,10 +101,12 @@ macro_rules! impl_certificates_meth_for_single_certificate {
 }
 
 macro_rules! single_certificate_event {
-    ($struct_name:ident, [ $($field_name: ident: $field_type: ty),+ $(,)? ], $populate: expr, no_hash) => {
-        #[derive(Clone)]
+    ($struct_name:ident, [ $( $(#[$field_attr:meta])* $field_name: ident: $field_type: ty ),+ $(,)? ], $populate: expr, no_hash) => {
+        #[serde_as]
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct $struct_name {
-            $( pub $field_name: $field_type,)*
+            $( $(#[$field_attr])* pub $field_name: $field_type,)*
+            #[serde(skip)]
             cache: Arc<Mutex<TestbedEventCertificatesCache>>,
         }
         impl $struct_name {
@@ -113,10 +121,12 @@ macro_rules! single_certificate_event {
         impl_event_debug!($struct_name, [ $( $field_name: $field_type ),* ]);
         impl_certificates_meth_for_single_certificate!($struct_name, $populate);
     };
-    ($struct_name:ident, [ $($field_name: ident: $field_type: ty),+ $(,)? ], $populate: expr) => {
-        #[derive(Clone)]
+    ($struct_name:ident, [ $( $(#[$field_attr:meta])* $field_name: ident: $field_type: ty ),+ $(,)? ], $populate: expr) => {
+        #[serde_as]
+        #[derive(Serialize, Deserialize, Clone)]
         pub struct $struct_name {
-            $( pub $field_name: $field_type,)*
+            $( $(#[$field_attr])* pub $field_name: $field_type,)*
+            #[serde(skip)]
             cache: Arc<Mutex<TestbedEventCertificatesCache>>,
         }
         impl_event_debug!($struct_name, [ $( $field_name: $field_type ),* ]);
@@ -129,7 +139,7 @@ macro_rules! single_certificate_event {
  * TestbedEvent
  */
 
-#[derive(Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum TestbedEvent {
     // 1) Client/server interaction events producing certificates
     BootstrapOrganization(TestbedEventBootstrapOrganization),
@@ -414,13 +424,28 @@ impl TestbedEvent {
  * TestbedEventBootstrapOrganization
  */
 
-#[derive(Clone)]
+serde_with::serde_conv!(
+    SequesterSigningKeyDerAsBytes,
+    SequesterSigningKeyDer,
+    |key: &SequesterSigningKeyDer| -> Vec<u8> {
+        let der = key.dump();
+        // The DER key is wrapped in a Zeroizing struct, but we must bypass this
+        // given serde doesn't understand it.
+        // It is a security hazard, but it is fine given this code in only for test.
+        (*der).to_owned()
+    },
+    |value: &[u8]| -> Result<_, _> { SequesterSigningKeyDer::try_from(value) }
+);
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventBootstrapOrganizationSequesterAuthority {
+    #[serde_as(as = "SequesterSigningKeyDerAsBytes")]
     pub signing_key: SequesterSigningKeyDer,
     pub verify_key: SequesterVerifyKeyDer,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventBootstrapOrganization {
     pub timestamp: DateTime,
     pub root_signing_key: SigningKey,
@@ -433,7 +458,8 @@ pub struct TestbedEventBootstrapOrganization {
     pub first_user_user_realm_id: VlobID,
     pub first_user_user_realm_key: SecretKey,
     pub first_user_local_symkey: SecretKey,
-    pub first_user_local_password: &'static str,
+    pub first_user_local_password: String,
+    #[serde(skip)]
     cache: Arc<
         Mutex<(
             TestbedEventCertificatesCache,
@@ -521,7 +547,7 @@ impl TestbedEventBootstrapOrganization {
             first_user_user_realm_id: builder.counters.next_entry_id(),
             first_user_user_realm_key: builder.counters.next_secret_key(),
             first_user_local_symkey: builder.counters.next_secret_key(),
-            first_user_local_password: "P@ssw0rd.",
+            first_user_local_password: "P@ssw0rd.".to_string(),
             cache: Arc::default(),
         }
     }
@@ -626,12 +652,26 @@ impl TestbedEventBootstrapOrganization {
  * TestbedEventNewSequesterService
  */
 
+serde_with::serde_conv!(
+    SequesterPrivateKeyDerAsBytes,
+    SequesterPrivateKeyDer,
+    |key: &SequesterPrivateKeyDer| -> Vec<u8> {
+        let der = key.dump();
+        // The DER key is wrapped in a Zeroizing struct, but we must bypass this
+        // given serde doesn't understand it.
+        // It is a security hazard, but it is fine given this code in only for test.
+        (*der).to_owned()
+    },
+    |value: &[u8]| -> Result<_, _> { SequesterPrivateKeyDer::try_from(value) }
+);
+
 single_certificate_event!(
     TestbedEventNewSequesterService,
     [
         timestamp: DateTime,
         id: SequesterServiceID,
         label: String,
+        #[serde_as(as = "SequesterPrivateKeyDerAsBytes")]
         encryption_private_key: SequesterPrivateKeyDer,
         encryption_public_key: SequesterPublicKeyDer,
     ],
@@ -778,7 +818,7 @@ impl CrcHash for TestbedEventRevokeSequesterService {
  * TestbedEventNewUser
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventNewUser {
     pub timestamp: DateTime,
     pub author: DeviceID,
@@ -791,7 +831,8 @@ pub struct TestbedEventNewUser {
     pub user_realm_id: VlobID,
     pub user_realm_key: SecretKey,
     pub local_symkey: SecretKey,
-    pub local_password: &'static str,
+    pub local_password: String,
+    #[serde(skip)]
     cache: Arc<Mutex<(TestbedEventCertificatesCache, TestbedEventCertificatesCache)>>,
 }
 
@@ -872,7 +913,7 @@ impl TestbedEventNewUser {
             user_realm_id: builder.counters.next_entry_id(),
             user_realm_key: builder.counters.next_secret_key(),
             local_symkey: builder.counters.next_secret_key(),
-            local_password: "P@ssw0rd.",
+            local_password: "P@ssw0rd.".to_string(),
             cache: Arc::default(),
         }
     }
@@ -964,7 +1005,7 @@ single_certificate_event!(
         device_label: DeviceLabel,
         signing_key: SigningKey,
         local_symkey: SecretKey,
-        local_password: &'static str,
+        local_password: String,
     ],
     |e: &TestbedEventNewDevice, t: &TestbedTemplate| {
         let author_signkey = t.device_signing_key(&e.author);
@@ -1022,7 +1063,7 @@ impl TestbedEventNewDevice {
             device_label,
             signing_key: builder.counters.next_signing_key(),
             local_symkey: builder.counters.next_secret_key(),
-            local_password: "P@ssw0rd.",
+            local_password: "P@ssw0rd.".to_string(),
             cache: Arc::default(),
         }
     }
@@ -1212,7 +1253,7 @@ impl TestbedEventNewRealm {
  * TestbedEventShareRealm
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventShareRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
@@ -1225,6 +1266,7 @@ pub struct TestbedEventShareRealm {
     /// Customize only needed for testing bad key bundle access.
     /// Always None if role is None.
     pub custom_keys_bundle_access: Option<Bytes>,
+    #[serde(skip)]
     cache: Arc<
         Mutex<(
             TestbedEventCertificatesCache,
@@ -1379,7 +1421,7 @@ impl TestbedEventShareRealm {
  * TestbedEventRenameRealm
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventRenameRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
@@ -1387,6 +1429,7 @@ pub struct TestbedEventRenameRealm {
     pub name: EntryName,
     pub key_index: IndexInt,
     pub key: SecretKey,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCertificatesCache>>,
 }
 
@@ -1491,7 +1534,7 @@ struct TestbedEventRotateKeyRealmCache {
     per_user_keys_bundle_access: TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventRotateKeyRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
@@ -1504,6 +1547,7 @@ pub struct TestbedEventRotateKeyRealm {
     // Customize the key canary is only useful to test bad key canary
     pub custom_key_canary: Option<Vec<u8>>,
     pub participants: Vec<(UserID, PublicKey)>,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventRotateKeyRealmCache>>,
 }
 
@@ -1693,12 +1737,13 @@ impl TestbedEventRotateKeyRealm {
  * TestbedEventArchiveRealm
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventArchiveRealm {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub realm: VlobID,
     pub configuration: RealmArchivingConfiguration,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCertificatesCache>>,
 }
 
@@ -1782,12 +1827,13 @@ impl TestbedEventArchiveRealm {
  * TestbedEventNewShamirRecovery
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventNewShamirRecovery {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub threshold: NonZeroU64,
     pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<Vec<TestbedTemplateEventCertificate>>>>,
 }
 
@@ -1980,16 +2026,17 @@ impl TestbedEventNewUserInvitation {
  * TestbedEventCreateOrUpdateUserManifestVlob
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventCreateOrUpdateVlobCache {
     pub signed: Bytes,
     pub encrypted: Bytes,
     pub sequestered: Option<Vec<(SequesterServiceID, Bytes)>>,
 }
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventCreateOrUpdateUserManifestVlob {
     pub manifest: Arc<UserManifest>,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
 
@@ -2106,12 +2153,13 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
  * TestbedEventCreateOrUpdateFolderManifestVlob
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventCreateOrUpdateFolderManifestVlob {
     pub realm: VlobID,
     pub key_index: IndexInt,
     pub key: SecretKey,
     pub manifest: Arc<FolderManifest>,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
 
@@ -2258,12 +2306,13 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
  * TestbedEventCreateOrUpdateFileManifestVlob
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventCreateOrUpdateFileManifestVlob {
     pub realm: VlobID,
     pub key_index: IndexInt,
     pub key: SecretKey,
     pub manifest: Arc<FileManifest>,
+    #[serde(skip)]
     cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventCreateOrUpdateVlobCache>>>,
 }
 
@@ -2445,7 +2494,7 @@ no_certificate_event!(
  * TestbedEventCreateBlock
  */
 
-#[derive(Clone)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventCreateBlockCache {
     pub encrypted: Bytes,
 }

@@ -8,8 +8,8 @@ use crate::WorkspaceInfo;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let (env, (wksp1_id, wksp2_id, wksp3_id, _, wksp5_id, wksp6_id)) =
-        env.customize_with_map(|builder| {
+    let (wksp1_id, wksp2_id, wksp3_id, _, wksp5_id, wksp6_id) = env
+        .customize(|builder| {
             builder.new_user("bob");
 
             // wksp1 is a bootstrapped workspace
@@ -85,7 +85,8 @@ async fn ok(env: &TestbedEnv) {
                 });
 
             (wksp1_id, wksp2_id, wksp3_id, wksp4_id, wksp5_id, wksp6_id)
-        });
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;

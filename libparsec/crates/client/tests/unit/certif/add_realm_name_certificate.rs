@@ -13,15 +13,16 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
             .map(|event| event.realm);
         builder.rename_realm(realm_id, "wksp1");
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -38,19 +39,21 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn multiple(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder.rename_realm(realm_id, "wksp1");
-        builder.rename_realm(realm_id, "wksp2");
-        realm_id
-    });
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.rename_realm(realm_id, "wksp1");
+            builder.rename_realm(realm_id, "wksp2");
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
     let realm_certificates = &env.get_realms_certificates_signed()[&realm_id];
 
     let switch = ops
@@ -71,7 +74,7 @@ async fn multiple(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn same_name(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
@@ -79,9 +82,10 @@ async fn same_name(env: &TestbedEnv) {
 
         builder.rename_realm(realm_id, "wksp1");
         builder.rename_realm(realm_id, "wksp1");
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -98,7 +102,7 @@ async fn same_name(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn older_than_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
@@ -107,9 +111,10 @@ async fn older_than_author(env: &TestbedEnv) {
         builder.rename_realm(realm_id, "wksp1").customize(|event| {
             event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
         });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -137,24 +142,26 @@ async fn older_than_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn invalid_timestamp(env: &TestbedEnv) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
+    let timestamp = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
 
-        let timestamp = builder
-            .rename_realm(realm_id, "wksp1")
-            .map(|event| event.timestamp);
+            let timestamp = builder
+                .rename_realm(realm_id, "wksp1")
+                .map(|event| event.timestamp);
 
-        builder
-            .rename_realm(realm_id, "wksp1")
-            .customize(|event| event.timestamp = timestamp);
+            builder
+                .rename_realm(realm_id, "wksp1")
+                .customize(|event| event.timestamp = timestamp);
 
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -182,7 +189,7 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn not_member(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("alice")
@@ -192,9 +199,10 @@ async fn not_member(env: &TestbedEnv) {
         builder
             .rename_realm(realm_id, "wksp1")
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -215,7 +223,7 @@ async fn not_member(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn author_not_owner(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("alice")
@@ -227,9 +235,10 @@ async fn author_not_owner(env: &TestbedEnv) {
         builder
             .rename_realm(realm_id, "wksp1")
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -250,7 +259,7 @@ async fn author_not_owner(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("bob")
@@ -266,9 +275,10 @@ async fn revoked(env: &TestbedEnv) {
         builder
             .rename_realm(realm_id, "wksp1")
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -289,7 +299,7 @@ async fn revoked(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn previously_owner_renaming(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         let realm_id = builder
             .new_realm("alice")
@@ -304,9 +314,10 @@ async fn previously_owner_renaming(env: &TestbedEnv) {
             .customize(|e| {
                 e.author = "bob@dev1".try_into().unwrap();
             });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(

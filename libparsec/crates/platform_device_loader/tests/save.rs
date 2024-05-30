@@ -96,7 +96,8 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
 async fn testbed(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.bootstrap_organization("alice"); // alice@dev1
-    });
+    })
+    .await;
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     // Sanity check to ensure the key file is the one present in testbed

@@ -30,8 +30,8 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
     let mut expected_version: VersionInt = 0;
     let mut expected_checkpoint: IndexInt = 0;
 
-    let (env, (realm_id, block_id, chunk_id, file_id, folder_id)) =
-        env.customize_with_map(|builder| {
+    let (realm_id, block_id, chunk_id, file_id, folder_id) = env
+        .customize(|builder| {
             let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
             builder.rotate_key_realm(realm_id);
             let block_id = builder
@@ -131,7 +131,8 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
             }
 
             (realm_id, block_id, chunk_id, file_id, folder_id)
-        });
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
 

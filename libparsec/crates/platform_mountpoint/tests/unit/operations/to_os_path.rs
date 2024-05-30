@@ -34,7 +34,7 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn invalid_windows_character(tmp_path: TmpPath, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         let wksp1_foo_id = *builder.get_stuff("wksp1_foo_id");
         // Rename /foo -> /?
         builder
@@ -66,7 +66,8 @@ async fn invalid_windows_character(tmp_path: TmpPath, env: &TestbedEnv) {
                     .children
                     .insert("AUX.h".parse().unwrap(), egg_id);
             });
-    });
+    })
+    .await;
 
     let parsec_path = "/?/AUX.h".parse().unwrap();
     #[cfg(target_os = "windows")]

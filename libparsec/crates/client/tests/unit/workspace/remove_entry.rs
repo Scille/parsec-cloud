@@ -118,7 +118,7 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(
                 "alice@dev1",
@@ -136,7 +136,8 @@ async fn ignore_invalid_children(env: &TestbedEnv) {
                 ]
                 .into_iter(),
             );
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

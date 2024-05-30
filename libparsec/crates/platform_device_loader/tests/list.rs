@@ -190,7 +190,8 @@ async fn testbed(env: &TestbedEnv) {
         builder.new_device("alice"); // alice@dev2
         builder.new_device("bob"); // bob@dev2
         builder.new_user("mallory"); // mallory@dev1
-    });
+    })
+    .await;
     let devices = list_available_devices(&env.discriminant_dir).await;
     p_assert_eq!(
         devices

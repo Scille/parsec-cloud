@@ -156,7 +156,7 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // New version of the file that we our client doesn't know about
         builder.create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, wksp1_bar_txt_id, None);
     });

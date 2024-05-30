@@ -10,14 +10,15 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
         builder.new_sequester_service();
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -34,7 +35,7 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn content_already_exists(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
@@ -42,9 +43,10 @@ async fn content_already_exists(env: &TestbedEnv) {
         builder.new_sequester_service().customize(|e| {
             e.id = service_id;
         });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -66,16 +68,17 @@ async fn content_already_exists(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn invalid_timestamp(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
         builder.new_sequester_service().customize(|event| {
             event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap();
         });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -103,14 +106,15 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn missing_authority_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
         builder.new_sequester_service();
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let mut sequester_signed = env.get_sequester_certificates_signed();
     // Remove the authority certificate

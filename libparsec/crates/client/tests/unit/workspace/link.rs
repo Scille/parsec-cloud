@@ -54,12 +54,13 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
     let keys_bundle_1 = env.get_last_realm_keys_bundle(wksp1_id);
     let keys_bundle_1_access =
         env.get_last_realm_keys_bundle_access_for(wksp1_id, &"alice".parse().unwrap());
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         if !key_in_storage {
             // The link uses a key our client doesn't know about
             builder.rotate_key_realm(wksp1_id);
         }
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -143,10 +144,11 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn decrypt_missing_key_and_offline(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // The link uses a key our client doesn't know about
         builder.rotate_key_realm(wksp1_id);
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

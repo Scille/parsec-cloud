@@ -55,7 +55,7 @@ async fn non_placeholder(
 
     // 1) Customize testbed
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_device("alice"); // alice@dev2
         builder.certificates_storage_fetch_certificates("alice@dev1");
 
@@ -319,7 +319,7 @@ async fn placeholder(
     #[values(false, true)] local_change: bool,
     env: &TestbedEnv,
 ) {
-    let (env, (wksp1_id, wksp1_foo_id)) = env.customize_with_map(|builder| {
+    let (env, (wksp1_id, wksp1_foo_id)) = env.customize(|builder| {
         builder.new_device("alice"); // alice@dev2
 
         // Alice has access to a realm, alice@dev2 has synchronized the initial workspace

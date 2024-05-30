@@ -28,7 +28,7 @@ async fn ignore_invalid_children(tmp_path: TmpPath, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
     let bad_parent_id = wksp1_foo_egg_txt_id;
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
             .customize_children(
@@ -38,7 +38,8 @@ async fn ignore_invalid_children(tmp_path: TmpPath, env: &TestbedEnv) {
                 ]
                 .into_iter(),
             );
-    });
+    })
+    .await;
 
     mount_and_test!(
         env,
@@ -144,7 +145,7 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
@@ -163,9 +164,10 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let err = tokio::fs::read_dir(mountpoint_path.join("foo"))

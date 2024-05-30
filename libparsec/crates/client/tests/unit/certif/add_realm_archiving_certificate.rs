@@ -23,16 +23,17 @@ async fn ok(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
             .map(|event| event.realm);
 
         builder.archive_realm(realm_id, conf);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let switch = ops
         .add_certificates_batch(
@@ -67,18 +68,20 @@ async fn multiple(
     second_conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder.archive_realm(realm_id, first_conf);
-        builder.archive_realm(realm_id, second_conf);
-        realm_id
-    });
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.archive_realm(realm_id, first_conf);
+            builder.archive_realm(realm_id, second_conf);
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
     let realm_certificates = &env.get_realms_certificates_signed()[&realm_id];
 
     let switch = ops
@@ -109,7 +112,7 @@ async fn older_than_author(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
@@ -118,9 +121,10 @@ async fn older_than_author(
         builder.archive_realm(realm_id, conf).customize(|event| {
             event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
         });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -158,20 +162,22 @@ async fn invalid_timestamp(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let (env, timestamp) = env.customize_with_map(|builder| {
-        let (realm_id, timestamp) = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| (event.realm, event.timestamp));
+    let timestamp = env
+        .customize(|builder| {
+            let (realm_id, timestamp) = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| (event.realm, event.timestamp));
 
-        builder
-            .archive_realm(realm_id, conf)
-            .customize(|event| event.timestamp = timestamp);
+            builder
+                .archive_realm(realm_id, conf)
+                .customize(|event| event.timestamp = timestamp);
 
-        timestamp
-    });
+            timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -209,7 +215,7 @@ async fn not_member(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("alice")
@@ -219,9 +225,10 @@ async fn not_member(
         builder
             .archive_realm(realm_id, conf)
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -252,7 +259,7 @@ async fn author_not_owner(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("alice")
@@ -264,9 +271,10 @@ async fn author_not_owner(
         builder
             .archive_realm(realm_id, conf)
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -297,7 +305,7 @@ async fn revoked(
     conf: RealmArchivingConfiguration,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let bob = builder.new_user("bob").map(|event| event.device_id.clone());
         let realm_id = builder
             .new_realm("bob")
@@ -313,9 +321,10 @@ async fn revoked(
         builder
             .archive_realm(realm_id, conf)
             .customize(|event| event.author = bob);
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(
@@ -336,7 +345,7 @@ async fn revoked(
 
 #[parsec_test(testbed = "minimal")]
 async fn previously_owner_renaming(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         let realm_id = builder
             .new_realm("alice")
@@ -351,9 +360,10 @@ async fn previously_owner_renaming(env: &TestbedEnv) {
             .customize(|e| {
                 e.author = "bob@dev1".try_into().unwrap();
             });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .add_certificates_batch(

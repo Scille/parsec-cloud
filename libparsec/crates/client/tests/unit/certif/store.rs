@@ -122,16 +122,17 @@ async fn add_device_certificate(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn add_user_update_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .new_user("bob")
             .with_initial_profile(UserProfile::Admin);
         builder.update_user_profile("alice", UserProfile::Outsider);
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let alice_user_id = alice.user_id();
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (alice_update_certif, alice_update_signed) = env.get_last_user_update_certificate("alice");
 
@@ -178,21 +179,22 @@ async fn add_user_update_certificate(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_certif!(store).await.unwrap().unwrap();
     p_assert_eq!(got, Some(alice_update_certif));
 }
 
 #[parsec_test(testbed = "minimal")]
 async fn add_revoked_user_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.revoke_user("bob");
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let bob_user_id: UserID = "bob".parse().unwrap();
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (bob_revoked_certif, bob_revoked_signed) = env.get_revoked_certificate("bob");
 
@@ -239,18 +241,19 @@ async fn add_revoked_user_certificate(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_certif!(store).await.unwrap().unwrap();
     p_assert_eq!(got, Some(bob_revoked_certif));
 }
 
 #[parsec_test(testbed = "minimal")]
 async fn add_realm_role_certificate(env: &TestbedEnv) {
-    let (env, realm_id) =
-        env.customize_with_map(|builder| builder.new_user_realm("alice").map(|e| e.realm_id));
+    let realm_id = env
+        .customize(|builder| builder.new_user_realm("alice").map(|e| e.realm_id))
+        .await;
 
     let alice = env.local_device("alice@dev1");
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (alice_realm_role_certif, alice_realm_role_signed) =
         env.get_last_realm_role_certificate("alice", realm_id);
@@ -295,21 +298,22 @@ async fn add_realm_role_certificate(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_certif!(store).await.unwrap().unwrap();
     p_assert_eq!(got, vec![alice_realm_role_certif]);
 }
 
 #[parsec_test(testbed = "empty")]
 async fn add_sequester_authority_certificate(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (authority_certif, authority_signed) = env.get_sequester_authority_certificate();
 
@@ -352,23 +356,25 @@ async fn add_sequester_authority_certificate(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_certif!(store).await.unwrap().unwrap();
     p_assert_eq!(got, Some(authority_certif));
 }
 
 #[parsec_test(testbed = "empty")]
 async fn add_sequester_service_certificate(env: &TestbedEnv) {
-    let (env, service_id) = env.customize_with_map(|builder| {
-        builder
-            .bootstrap_organization("alice")
-            .and_set_sequestered_organization();
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder.new_sequester_service().map(|e| e.id)
-    });
+    let service_id = env
+        .customize(|builder| {
+            builder
+                .bootstrap_organization("alice")
+                .and_set_sequestered_organization();
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.new_sequester_service().map(|e| e.id)
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (authority_certif, _) = env.get_sequester_authority_certificate();
     let (service_certif, service_signed) = env.get_sequester_service_certificate(service_id);
@@ -431,7 +437,7 @@ async fn add_sequester_service_certificate(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_service_certif!(store).await.unwrap().unwrap();
     p_assert_eq!(got, vec![service_certif]);
     ensure_authority_certif_in_store_hasnt_changed!(store);
@@ -506,14 +512,15 @@ async fn get_last_timestamps_common(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn get_last_timestamps_sequester(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .bootstrap_organization("alice")
             .and_set_sequestered_organization();
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (certif, signed) = env.get_sequester_authority_certificate();
 
@@ -567,7 +574,7 @@ async fn get_last_timestamps_sequester(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_last_timestamps!(store).await.unwrap().unwrap();
     assert_eq!(
         got,
@@ -582,11 +589,12 @@ async fn get_last_timestamps_sequester(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn get_last_timestamps_realm(env: &TestbedEnv) {
-    let (env, realm_id) =
-        env.customize_with_map(|builder| builder.new_realm("alice").map(|e| e.realm_id));
+    let realm_id = env
+        .customize(|builder| builder.new_realm("alice").map(|e| e.realm_id))
+        .await;
 
     let alice = env.local_device("alice@dev1");
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
 
     let (certif, signed) = env.get_last_realm_role_certificate("alice", realm_id);
 
@@ -640,7 +648,7 @@ async fn get_last_timestamps_realm(env: &TestbedEnv) {
 
     // Ensure we don't rely on a cache but on data in persistent database
 
-    let store = certificates_store_factory(&env, &alice).await;
+    let store = certificates_store_factory(env, &alice).await;
     let got = store_get_last_timestamps!(store).await.unwrap().unwrap();
     assert_eq!(
         got,
