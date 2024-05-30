@@ -1,22 +1,27 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ms-input
-    id="select-user-input"
-    ref="inputRef"
-    :label="label || 'UserSelect.defaultLabel'"
-    :placeholder="placeholder || 'UserSelect.defaultPlaceholder'"
-    @change="onInput"
-    :model-value="selectedUser ? `${selectedUser.humanHandle.label} <${selectedUser.humanHandle.email}>` : undefined"
-    :disabled="querying"
-  />
-  <ion-label v-if="errorMessage">
-    {{ $msTranslate(errorMessage) }}
-  </ion-label>
+  <div class="user-select-container">
+    <ms-input
+      id="select-user-input"
+      ref="inputRef"
+      :label="label || 'UserSelect.defaultLabel'"
+      :placeholder="placeholder || 'UserSelect.defaultPlaceholder'"
+      @change="onInput"
+      :model-value="selectedUser ? `${selectedUser.humanHandle.label} (${selectedUser.humanHandle.email})` : undefined"
+      :disabled="querying"
+    />
+    <ion-text
+      class="body form-helperText"
+      v-if="errorMessage"
+    >
+      {{ $msTranslate(errorMessage) }}
+    </ion-text>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IonLabel, popoverController } from '@ionic/vue';
+import { popoverController } from '@ionic/vue';
 import { onMounted, Ref, ref } from 'vue';
 import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
 import { listUsers, UserInfo } from '@/parsec';
@@ -110,4 +115,14 @@ onMounted(async () => {
 });
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.user-select-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.form-helperText {
+  color: var(--parsec-color-light-secondary-soft-text);
+}
+</style>

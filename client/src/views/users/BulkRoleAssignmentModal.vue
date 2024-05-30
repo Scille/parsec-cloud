@@ -25,9 +25,18 @@
         <ion-title class="modal-header__title title-h2">
           {{ $msTranslate('UsersPage.assignRoles.title') }}
         </ion-title>
+        <ion-text class="modal-header__text body">
+          <i18n-t
+            keypath="UsersPage.userContextMenu.subtitleAssignRoles"
+            scope="global"
+          >
+            <template #sourceUser>
+              <strong> {{ sourceUser.humanHandle.label }} </strong>
+            </template>
+          </i18n-t>
+        </ion-text>
       </ion-header>
       <div
-        class="details"
         v-if="currentPage === 1"
       >
         <user-select
@@ -35,49 +44,80 @@
           v-model="targetUser"
         />
       </div>
+
       <div
-        class="details"
+        class="modal-content"
         v-show="currentPage === 2 && targetUser"
       >
         <ms-spinner title="UsersPage.assignRoles.processing" />
       </div>
+
       <div
-        class="details"
+        class="modal-content"
         v-if="currentPage === 3 && targetUser"
       >
-        <ion-label>
-          {{ targetUser.humanHandle.label }}
-        </ion-label>
-        <ion-button
-          fill="clear"
-          @click="currentPage = 1"
-        >
-          {{ $msTranslate('UsersPage.assignRoles.update') }}
-        </ion-button>
+        <div class="chosen-users">
+          <user-avatar-name
+            class="chosen-users-source"
+            :user-avatar="sourceUser.humanHandle.label"
+            :user-name="sourceUser.humanHandle.label"
+          />
+          <ion-icon
+            :icon="arrowForward"
+            class="arrow-icon"
+          />
+          <div class="chosen-users-target">
+            <user-avatar-name
+              :user-avatar="targetUser.humanHandle.label"
+              :user-name="targetUser.humanHandle.label"
+            />
+            <ion-icon
+              :icon="pencil"
+              @click="currentPage = 1"
+            />
+          </div>
+        </div>
 
         <div>
-          <ion-label v-show="roleUpdates.length === 0">
+          <ion-text
+            class="subtitle-small no-new-roles"
+            v-show="roleUpdates.length === 0"
+          >
             {{ $msTranslate({ key: 'UsersPage.assignRoles.noRoles', data: { user: targetUser.humanHandle.label } }) }}
-          </ion-label>
+          </ion-text>
 
-          <ion-list class="role-updates">
+          <ion-list class="workspace-list">
             <ion-item
+              class="ion-no-padding workspace-item-container"
               v-for="roleUpdate in roleUpdates"
               :key="roleUpdate.workspace.id"
             >
-              {{ roleUpdate.workspace.currentName }}
-              {{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.oldRole).label) }} >
-              {{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.newRole).label) }}
+              <div class="workspace-item">
+                <div class="workspace-item__name">
+                  <ion-icon
+                    :icon="business"
+                  />
+                  <ion-text class="title-h5">{{ roleUpdate.workspace.currentName }}</ion-text>
+                </div>
+                <div class="workspace-item__role">
+                  <ion-text class="body">{{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.oldRole).label) }}</ion-text>
+                  <ion-icon
+                    :icon="arrowForward"
+                  />
+                  <ion-text class="body">{{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.newRole).label) }}</ion-text>
+                  <ion-icon
+                    class="error-icon"
+                    v-show="roleUpdate.reassigned === false"
+                    :icon="closeCircle"
+                  />
 
-              <ion-icon
-                v-show="roleUpdate.reassigned === false"
-                :icon="closeCircle"
-              />
-
-              <ion-icon
-                v-show="roleUpdate.reassigned === true"
-                :icon="checkmarkCircle"
-              />
+                  <ion-icon
+                    class="success-icon"
+                    v-show="roleUpdate.reassigned === true"
+                    :icon="checkmarkCircle"
+                  />
+                </div>
+              </div>
             </ion-item>
           </ion-list>
         </div>
@@ -102,7 +142,7 @@
             @click="nextStep"
             :disabled="!canGoForward()"
           >
-            {{ $msTranslate(finished ? 'UsersPage.assignRoles.close' : 'UsersPage.assignRoles.okButton') }}
+            {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
         </ion-buttons>
       </ion-footer>
@@ -112,10 +152,10 @@
 
 <script setup lang="ts">
 import { UserSelect } from '@/components/users';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import {
   IonPage,
   IonButtons,
-  IonLabel,
   IonButton,
   IonFooter,
   IonIcon,
@@ -127,7 +167,7 @@ import {
 } from '@ionic/vue';
 import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { ref, Ref } from 'vue';
-import { close, checkmarkCircle, closeCircle } from 'ionicons/icons';
+import { close, checkmarkCircle, closeCircle, business, arrowForward, pencil } from 'ionicons/icons';
 import { MsModalResult, MsSpinner } from 'megashark-lib';
 import { compareWorkspaceRoles } from '@/components/workspaces/utils';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
@@ -278,6 +318,143 @@ async function nextStep(): Promise<void> {
 async function cancel(): Promise<void> {
   await modalController.dismiss(null, MsModalResult.Cancel);
 }
+
+function getNextButtonText(): string {
+  switch (currentPage.value) {
+    case 1:
+      return 'UsersPage.assignRoles.select';
+    case 2:
+      return 'UsersPage.assignRoles.okButton';
+    case 3:
+      return 'UsersPage.assignRoles.okButton';
+    default:
+      return '';
+  }
+}
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.chosen-users {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+
+  .chosen-users-source, .chosen-users-target {
+    display: flex;
+    align-items: center;
+    padding: 0.25rem 0.5rem 0.25rem 0.25rem;
+    border-radius: var(--parsec-radius-6);
+    flex-grow: 1;
+  }
+
+  .chosen-users-target {
+    justify-content: space-between;
+    cursor: pointer;
+    transition: background 150ms ease-in-out;
+
+    ion-icon {
+      color: var(--parsec-color-light-secondary-soft-grey);
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+
+      ion-icon {
+        color: var(--parsec-color-light-primary-700);
+      }
+    }
+  }
+
+  .arrow-icon {
+    color: var(--parsec-color-light-secondary-soft-grey);
+    width: 1rem;
+  }
+}
+
+.no-new-roles {
+  padding: 0.5rem;
+}
+
+.workspace-list {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.workspace-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-radius: var(--parsec-radius-4);
+  border-left: 3px solid var(--parsec-color-light-secondary-medium);
+  background: var(--parsec-color-light-secondary-background);
+
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+
+  &-container {
+    --inner-padding-end: 0;
+    --background: none;
+  }
+
+  &__name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow: hidden;
+
+    ion-icon {
+      color: var(--parsec-color-light-secondary-soft-text);
+      font-size: 1.125rem;
+      flex-shrink: 0;
+    }
+
+    ion-text {
+      color: var(--parsec-color-light-secondary-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  &__role {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-hard-text);
+
+    ion-text {
+      white-space: nowrap;
+      color: var(--parsec-color-light-secondary-hard-grey);
+
+      &:last-child {
+        color: var(--parsec-color-light-primary-700);
+      }
+    }
+
+    ion-icon {
+      color: var(--parsec-color-light-secondary-soft-grey);
+    }
+  }
+
+  .success-icon {
+    color: var(--parsec-color-light-success-500);
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .error-icon {
+    color: var(--parsec-color-light-danger-500);
+    display: flex;
+    flex-shrink: 0
+  }
+}
+</style>

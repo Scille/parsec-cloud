@@ -81,7 +81,7 @@ defineProps<{
   }
 
   &:not(.main-cell) .person-name {
-    color: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-text);
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;

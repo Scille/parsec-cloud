@@ -54,7 +54,7 @@
           @click="onClick(UserAction.AssignRoles)"
           class="ion-no-padding list-group-item"
         >
-          <ion-icon :icon="informationCircle" />
+          <ion-icon :icon="returnUpForward" />
           <ion-label class="body list-group-item__label">
             {{ $msTranslate('UsersPage.userContextMenu.actionAssignRoles') }}
           </ion-label>
@@ -74,7 +74,7 @@ export enum UserAction {
 
 <script setup lang="ts">
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
-import { informationCircle, personRemove } from 'ionicons/icons';
+import { informationCircle, personRemove, returnUpForward } from 'ionicons/icons';
 
 defineProps<{
   isRevoked: boolean;
