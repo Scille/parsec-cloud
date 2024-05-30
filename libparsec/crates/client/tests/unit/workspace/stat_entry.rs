@@ -27,7 +27,8 @@ async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) 
                 | TestbedEvent::WorkspaceCacheStorageFetchBlock(_) => false,
                 _ => true,
             });
-        });
+        })
+        .await;
     }
 
     let alice = env.local_device("alice@dev1");
@@ -135,7 +136,8 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
             }
             _ => true,
         });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
 

@@ -45,7 +45,7 @@ async fn ok(env: &TestbedEnv) {
 async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(
                 "alice@dev1",
@@ -59,7 +59,8 @@ async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
                     .children
                     .insert("unknown.txt".parse().unwrap(), VlobID::default());
             });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -77,7 +78,7 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         let patched_parent_id = wksp1_foo_id;
         builder
             .workspace_data_storage_local_file_manifest_create_or_update(
@@ -90,7 +91,8 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
                 let manifest = Arc::make_mut(&mut x.local_manifest);
                 manifest.base.parent = patched_parent_id;
             });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -112,7 +114,7 @@ async fn inconsistent_path_parent_mismatch(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         let patched_parent_id = match kind {
             "other_entry" => wksp1_foo_id,
             "self_referencing" => wksp1_bar_txt_id,
@@ -129,7 +131,8 @@ async fn inconsistent_path_parent_mismatch(
                 let manifest = Arc::make_mut(&mut x.local_manifest);
                 manifest.parent = patched_parent_id;
             });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -147,7 +150,7 @@ async fn inconsistent_path_recursive(#[values("root", "child")] kind: &str, env:
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         let recursive_target_id = match kind {
             "root" => wksp1_id,
             "child" => wksp1_foo_id,
@@ -166,7 +169,8 @@ async fn inconsistent_path_recursive(#[values("root", "child")] kind: &str, env:
                     .children
                     .insert("recursive".parse().unwrap(), recursive_target_id);
             });
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

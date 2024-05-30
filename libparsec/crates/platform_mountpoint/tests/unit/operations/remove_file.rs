@@ -97,7 +97,7 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
@@ -116,9 +116,10 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let path = mountpoint_path.join("foo/egg.txt");
@@ -139,7 +140,7 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "coolorg")]
 async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
@@ -158,7 +159,8 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -179,8 +181,8 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
         }
     );
 
-    let alice_client = super::utils::start_client(&env, "alice@dev1").await;
-    mount_and_test!(as "bob@dev1", &env, &tmp_path, |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
+    let alice_client = super::utils::start_client(env, "alice@dev1").await;
+    mount_and_test!(as "bob@dev1", env, &tmp_path, |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
         // Bob lose access to the workspace while it has it mounted...
 
         alice_client.share_workspace(bob_wksp1_ops.realm_id(), bob_client.device_id().user_id().to_owned(), None).await.unwrap();
@@ -208,9 +210,10 @@ async fn read_only_realm(tmp_path: TmpPath, env: &TestbedEnv) {
         builder
             .user_storage_local_update("alice@dev1")
             .update_local_workspaces_with_fetched_certificates();
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let path = mountpoint_path.join("bar.txt");

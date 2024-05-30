@@ -44,7 +44,7 @@
 //     let folder_child_id = VlobID::from_hex("aa0000000000000000000000000f01de").unwrap();
 //     let file_child_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-//     let env = env.customize(|builder| {
+//     env.customize(|builder| {
 //         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
 //         init_realm_id = Some(realm_id);
 
@@ -88,7 +88,7 @@
 //         }
 
 //         builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", realm_id);
-//     });
+//     }).await;
 
 //     let realm_id = init_realm_id.unwrap();
 
@@ -178,7 +178,7 @@
 // #[case::update_delayed_flush(true)]
 // async fn get_need_sync_entries_child(#[case] update_delayed_flush: bool, env: &TestbedEnv) {
 //     let mut init_realm_id = None;
-//     let env = env.customize(|builder| {
+//     env.customize(|builder| {
 //         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
 //         init_realm_id = Some(realm_id);
 
@@ -187,7 +187,7 @@
 //         // We don't care about workspace manifest here, so make it synchronized
 //         builder.create_or_update_workspace_manifest_vlob("alice@dev1", realm_id);
 //         builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", realm_id, None);
-//     });
+//     }).await;
 //     let realm_id = init_realm_id.unwrap();
 
 //     let alice = env.local_device("alice@dev1");

@@ -13,11 +13,19 @@ use libparsec_types::prelude::*;
 
 use crc_hash::CrcHash;
 
+#[derive(Clone)]
 pub struct TestbedTemplate {
     pub id: &'static str,
     pub events: Vec<TestbedEvent>,
+    // If the template has been customized, we need a way to retrieve only the custom
+    // events (so that we can send them to the server).
+    custom_events_offset: usize,
     // Stuff is useful store provide arbitrary things (e.g. IDs) from the template to the test
     pub stuff: Vec<(&'static str, &'static (dyn std::any::Any + Send + Sync))>,
+    // As it name suggest, `build_counters` is only used by the `TestbedTemplateBuilder`
+    // and is it never used by `TestbedTemplate`.
+    // It is only kept here so that we can re-create a template builder from this
+    // template, which is what `TestbedEnv::customize` uses to add new events.
     build_counters: TestbedTemplateBuilderCounters,
 }
 
@@ -31,6 +39,10 @@ impl std::fmt::Debug for TestbedTemplate {
 }
 
 impl TestbedTemplate {
+    pub fn custom_events(&self) -> &[TestbedEvent] {
+        &self.events[self.custom_events_offset..]
+    }
+
     pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
         build::get_stuff(&self.stuff, key)
     }

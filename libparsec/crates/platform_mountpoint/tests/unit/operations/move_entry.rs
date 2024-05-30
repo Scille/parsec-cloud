@@ -233,7 +233,7 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
@@ -252,9 +252,10 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let src = mountpoint_path.join("bar.txt");

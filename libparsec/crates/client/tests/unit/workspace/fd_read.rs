@@ -19,7 +19,7 @@ async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
         .to_owned();
 
     if !local_cache {
-        env.customize_with_map(|builder| {
+        env.customize(|builder| {
             builder.filter_client_storage_events(|event| {
                 !matches!(
                     event,
@@ -27,7 +27,8 @@ async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
                         | TestbedEvent::WorkspaceCacheStorageFetchBlock(_)
                 )
             });
-        });
+        })
+        .await;
 
         let last_common_certificate_timestamp = env.get_last_common_certificate_timestamp();
         let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(wksp1_id);

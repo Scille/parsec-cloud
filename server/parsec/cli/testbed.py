@@ -9,6 +9,7 @@ from typing import Any, AsyncIterator, TypeAlias
 
 import anyio
 import click
+import structlog
 from fastapi import BackgroundTasks, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,16 +20,21 @@ try:
 
     TESTBED_AVAILABLE = True
 
+    TestbedTemplateContent: TypeAlias = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
     TestbedTemplate: TypeAlias = tuple[OrganizationID, int, testbed.TestbedTemplateContent]  # pyright: ignore[reportRedeclaration]
 except ImportError:
-    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
     TESTBED_AVAILABLE = False
+    TestbedTemplate: TypeAlias = tuple[OrganizationID, int, Any]  # pyright: ignore[reportRedeclaration]
+    TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
 
 from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
 from parsec.config import BackendConfig, LogLevel, MockedBlockStoreConfig, MockedEmailConfig
+
+logger: structlog.stdlib.BoundLogger = structlog.get_logger()
+
 
 DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 DEFAULT_PORT = 6770
@@ -55,6 +61,7 @@ class TestbedBackend:
         self._load_template_lock = anyio.Lock()
         # keys: template ID, values: (to duplicate organization ID, CRC, template content)
         self._loaded_templates = {} if loaded_templates is None else loaded_templates
+        self.template_per_org: dict[OrganizationID, TestbedTemplateContent] = {}
 
     async def get_template(self, template: str) -> TestbedTemplate:
         try:
@@ -95,11 +102,18 @@ class TestbedBackend:
         self._org_count += 1
         new_org_id = OrganizationID(f"Org{self._org_count}")
         await self.backend.test_duplicate_organization(template_org_id, new_org_id)
+        self.template_per_org[new_org_id] = template_content
 
         return (new_org_id, template_crc, template_content)
 
+    async def customize_organization(self, id: OrganizationID, customization: bytes) -> None:
+        template = self.template_per_org[id]
+        cooked_customization = testbed.test_load_testbed_customization(template, customization)  # pyright: ignore [reportPossiblyUnboundVariable]
+        await self.backend.test_customize_organization(id, template, cooked_customization)
+
     async def drop_organization(self, id: OrganizationID) -> None:
         await self.backend.test_drop_organization(id)
+        del self.template_per_org[id]
 
 
 app = app_factory()
@@ -144,7 +158,7 @@ async def test_new(template: str, request: Request, background_tasks: Background
 
     async def _organization_garbage_collector():
         await asyncio.sleep(orga_life_limit)
-        print(f"drop {new_org_id}")
+        logger.info("Dropping testbed org due to time limit", organization=new_org_id.str)
         # Dropping is idempotent, so no need for error handling
         await testbed.backend.test_drop_organization(new_org_id)
 
@@ -156,6 +170,21 @@ async def test_new(template: str, request: Request, background_tasks: Background
     )
 
 
+@app.post("/testbed/customize/{raw_organization_id}")
+async def test_customize(raw_organization_id: str, request: Request) -> Response:
+    testbed: TestbedBackend = request.app.state.testbed
+
+    try:
+        organization_id = OrganizationID(raw_organization_id)
+    except ValueError:
+        return Response(status_code=400, content=b"")
+
+    customization = await request.body()
+    await testbed.customize_organization(organization_id, customization)
+
+    return Response(status_code=200, content=b"")
+
+
 @app.post("/testbed/drop/{raw_organization_id}")
 async def test_drop(raw_organization_id: str, request: Request) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
@@ -164,7 +193,7 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
         organization_id = OrganizationID(raw_organization_id)
     except ValueError:
         return Response(status_code=400, content=b"")
-    print(f"drop {organization_id}")
+
     # Dropping is idempotent, so no need for error handling
     await testbed.drop_organization(organization_id)
 

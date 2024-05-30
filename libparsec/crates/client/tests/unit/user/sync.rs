@@ -103,7 +103,8 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
             .customize(|e| {
                 std::sync::Arc::make_mut(&mut e.local_manifest).speculative = is_speculative;
             });
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
     let user_ops = user_ops_factory(env, &alice).await;
 

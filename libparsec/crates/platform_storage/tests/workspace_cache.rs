@@ -15,7 +15,7 @@
 //     let mut present_block_id = None;
 //     let mut missing_block_id = None;
 
-//     let env = env.customize(|builder| {
+//     env.customize(|builder| {
 //         let realm_id = builder.new_realm("alice").map(|e| e.realm_id);
 //         wksp1_realm_id = Some(realm_id);
 
@@ -31,7 +31,7 @@
 //                 .create_block("alice@dev1", realm_id, Bytes::from_static(b"zzz"))
 //                 .map(|e| e.block_id),
 //         );
-//     });
+//     }).await;
 
 //     let wksp1_realm_id = wksp1_realm_id.unwrap();
 //     let present_block_id = present_block_id.unwrap();

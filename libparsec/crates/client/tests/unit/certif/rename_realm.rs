@@ -14,17 +14,19 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -112,17 +114,19 @@ async fn server_error(
     #[case] assert: impl FnOnce(CertifRenameRealmError),
     env: &TestbedEnv,
 ) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -157,17 +161,19 @@ async fn server_error(
 
 #[parsec_test(testbed = "minimal")]
 async fn server_initial_name_already_exists(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -237,19 +243,21 @@ async fn invalid_keys_bundle(
     #[case] assert: impl FnOnce(CertifRenameRealmError),
     env: &TestbedEnv,
 ) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
-    let rep = rep(&env, realm_id, alice.user_id());
+    let rep = rep(env, realm_id, alice.user_id());
     test_register_send_hook(&env.discriminant_dir, {
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             p_assert_eq!(req.key_index, 1);
@@ -282,17 +290,19 @@ async fn unknown_realm(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn invalid_response(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
         Ok(ResponseMock::Mocked((
@@ -312,17 +322,19 @@ async fn invalid_response(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn stopped(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     ops.stop().await.unwrap();
 

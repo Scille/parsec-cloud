@@ -78,28 +78,30 @@ async fn create_with_existing_invalid_child(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
-    let (env, bad_id) = env.customize_with_map(|builder| {
-        let bad_id = match kind {
-            "unknown_child" => VlobID::default(),
-            "child_with_different_parent" => wksp1_id,
-            "self_reference" => wksp1_foo_id,
-            uknown => panic!("Unknown kind: {}", uknown),
-        };
-        builder
-            .workspace_data_storage_local_folder_manifest_create_or_update(
-                "alice@dev1",
-                wksp1_id,
-                wksp1_foo_id,
-                None,
-            )
-            .customize(|e| {
-                let manifest = Arc::make_mut(&mut e.local_manifest);
-                manifest
-                    .children
-                    .insert("new_folder".parse().unwrap(), bad_id);
-            });
-        bad_id
-    });
+    let bad_id = env
+        .customize(|builder| {
+            let bad_id = match kind {
+                "unknown_child" => VlobID::default(),
+                "child_with_different_parent" => wksp1_id,
+                "self_reference" => wksp1_foo_id,
+                uknown => panic!("Unknown kind: {}", uknown),
+            };
+            builder
+                .workspace_data_storage_local_folder_manifest_create_or_update(
+                    "alice@dev1",
+                    wksp1_id,
+                    wksp1_foo_id,
+                    None,
+                )
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.local_manifest);
+                    manifest
+                        .children
+                        .insert("new_folder".parse().unwrap(), bad_id);
+                });
+            bad_id
+        })
+        .await;
 
     // Given child ID doesn't exist, the client will look for it on the server
     if matches!(kind, "unknown_child") {
@@ -224,26 +226,28 @@ async fn invalid_path(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
-    let (env, path) = env.customize_with_map(|builder| match kind {
-        "unknown_path" => "/foo/unknown/new_folder",
-        "invalid_child_in_path" => {
-            let bad_id = wksp1_id;
-            builder
-                .workspace_data_storage_local_folder_manifest_create_or_update(
-                    "alice@dev1",
-                    wksp1_id,
-                    wksp1_foo_id,
-                    None,
-                )
-                .customize(|e| {
-                    let manifest = Arc::make_mut(&mut e.local_manifest);
-                    manifest.children.insert("invalid".parse().unwrap(), bad_id);
-                });
-            "/foo/invalid/new_folder"
-        }
-        "file_in_path" => "/foo/egg.txt/new_folder",
-        unknown => panic!("Unknown kind: {}", unknown),
-    });
+    let path = env
+        .customize(|builder| match kind {
+            "unknown_path" => "/foo/unknown/new_folder",
+            "invalid_child_in_path" => {
+                let bad_id = wksp1_id;
+                builder
+                    .workspace_data_storage_local_folder_manifest_create_or_update(
+                        "alice@dev1",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        None,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.local_manifest);
+                        manifest.children.insert("invalid".parse().unwrap(), bad_id);
+                    });
+                "/foo/invalid/new_folder"
+            }
+            "file_in_path" => "/foo/egg.txt/new_folder",
+            unknown => panic!("Unknown kind: {}", unknown),
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

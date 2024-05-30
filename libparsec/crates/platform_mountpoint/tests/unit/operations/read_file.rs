@@ -124,7 +124,7 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // No chunk&block in the local storage, so server access must occur if we
         // read the content of a file !
         builder.filter_client_storage_events(|e| {
@@ -134,9 +134,10 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
                     | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
             )
         });
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let mut fd = tokio::fs::OpenOptions::new()
@@ -166,7 +167,7 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
 #[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
         // No chunk&block in the local storage, so server access must occur if we
         // read the content of a file !
@@ -182,7 +183,8 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
         builder.share_realm(wksp1_id, "bob", Some(RealmRole::Owner));
         builder.share_realm(wksp1_id, "alice", None);
         // So Alice has lost the access to the workspace, but doesn't know it yet...
-    });
+    })
+    .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -195,7 +197,7 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
     );
 
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let mut fd = tokio::fs::OpenOptions::new()
@@ -228,7 +230,7 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
 #[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // No chunk&block in the local storage, so server access must occur if we
         // read the content of a file !
         builder.filter_client_storage_events(|e| {
@@ -238,7 +240,8 @@ async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &Testbe
                     | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
             )
         });
-    });
+    })
+    .await;
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
@@ -248,7 +251,7 @@ async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &Testbe
     );
 
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let mut fd = tokio::fs::OpenOptions::new()
@@ -282,7 +285,7 @@ async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &Testbe
 #[ignore]
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // No chunk&block in the local storage, so server access must occur if we
         // read the content of a file !
         builder.filter_client_storage_events(|e| {
@@ -292,7 +295,8 @@ async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEn
                     | TestbedEvent::WorkspaceDataStorageChunkCreate(_)
             )
         });
-    });
+    })
+    .await;
 
     let wksp1_id: libparsec_types::VlobID = *env.template.get_stuff("wksp1_id");
     let last_realm_certificate_timestamp = env.get_last_realm_certificate_timestamp(wksp1_id);
@@ -310,7 +314,7 @@ async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEn
     );
 
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let mut fd = tokio::fs::OpenOptions::new()

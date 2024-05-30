@@ -26,7 +26,7 @@ async fn ok(
     kind: CertifChange,
     env: &TestbedEnv,
 ) {
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         match kind {
             CertifChange::None => (),
             CertifChange::BobNewUserProfile => {
@@ -45,7 +45,8 @@ async fn ok(
             }
         }
         builder.certificates_storage_fetch_certificates("alice@dev1");
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;

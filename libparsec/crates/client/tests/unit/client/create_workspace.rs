@@ -10,9 +10,10 @@ use crate::{ClientCreateWorkspaceError, EventWorkspaceLocallyCreated, WorkspaceI
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(#[values(false, true)] restart_client: bool, env: &TestbedEnv) {
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         builder.certificates_storage_fetch_certificates("alice@dev1");
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
@@ -75,29 +76,31 @@ async fn duplicated_name_is_allowed(
     env: &TestbedEnv,
 ) {
     let common_name: EntryName = "common_wksp_name".parse().unwrap();
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        let wksp1_id = if previous_is_bootstrapped {
-            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-            builder.rotate_key_realm(wksp1_id);
-            builder.rename_realm(wksp1_id, common_name.clone());
+    let wksp1_id = env
+        .customize(|builder| {
+            let wksp1_id = if previous_is_bootstrapped {
+                let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+                builder.rotate_key_realm(wksp1_id);
+                builder.rename_realm(wksp1_id, common_name.clone());
+                wksp1_id
+            } else {
+                VlobID::default()
+            };
+
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            if previous_is_bootstrapped {
+                builder
+                    .user_storage_local_update("alice@dev1")
+                    .update_local_workspaces_with_fetched_certificates();
+            } else {
+                builder
+                    .user_storage_local_update("alice@dev1")
+                    .add_or_update_placeholder(wksp1_id, common_name.clone());
+            }
+
             wksp1_id
-        } else {
-            VlobID::default()
-        };
-
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        if previous_is_bootstrapped {
-            builder
-                .user_storage_local_update("alice@dev1")
-                .update_local_workspaces_with_fetched_certificates();
-        } else {
-            builder
-                .user_storage_local_update("alice@dev1")
-                .add_or_update_placeholder(wksp1_id, common_name.clone());
-        }
-
-        wksp1_id
-    });
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;

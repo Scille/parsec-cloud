@@ -102,17 +102,19 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        // Realm created but not bootstrapped
-        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-        builder.rotate_key_realm(wksp1_id);
-        // No initial rename, hence the realm is not fully bootstrapped
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            // Realm created but not bootstrapped
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            builder.rotate_key_realm(wksp1_id);
+            // No initial rename, hence the realm is not fully bootstrapped
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
@@ -199,16 +201,18 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        // Realm created but not bootstrapped
-        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-        // No initial key rotation and rename, hence the realm is not fully bootstrapped
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            // Realm created but not bootstrapped
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            // No initial key rotation and rename, hence the realm is not fully bootstrapped
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
@@ -343,21 +347,23 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn legacy_realm_shared_before_initial_key_rotation(env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        // Realm created but not bootstrapped
-        builder.new_user("bob");
-        let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
-        // Disable check to allow simulate Parsec < v3 behavior were key rotation didn't exist
-        builder.with_check_consistency_disabled(|builder| {
-            // Given Alice is not OWNER, she cannot bootstrap the realm (this also means)
-            builder.share_realm(wksp1_id, "alice", Some(RealmRole::Manager));
-        });
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            // Realm created but not bootstrapped
+            builder.new_user("bob");
+            let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
+            // Disable check to allow simulate Parsec < v3 behavior were key rotation didn't exist
+            builder.with_check_consistency_disabled(|builder| {
+                // Given Alice is not OWNER, she cannot bootstrap the realm (this also means)
+                builder.share_realm(wksp1_id, "alice", Some(RealmRole::Manager));
+            });
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
@@ -375,19 +381,21 @@ async fn legacy_realm_shared_before_initial_key_rotation(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn not_allowed(env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
-        builder.rotate_key_realm(wksp1_id);
-        builder.rename_realm(wksp1_id, "wksp1");
-        // Given Alice is not OWNER, she is not allowed to do a rename
-        builder.share_realm(wksp1_id, "alice", Some(RealmRole::Manager));
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        wksp1_id
-    });
+    let wksp1_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let wksp1_id = builder.new_realm("bob").map(|e| e.realm_id);
+            builder.rotate_key_realm(wksp1_id);
+            builder.rename_realm(wksp1_id, "wksp1");
+            // Given Alice is not OWNER, she is not allowed to do a rename
+            builder.share_realm(wksp1_id, "alice", Some(RealmRole::Manager));
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;

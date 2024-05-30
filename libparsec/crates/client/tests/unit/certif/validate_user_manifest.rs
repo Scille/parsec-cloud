@@ -8,23 +8,25 @@ use crate::certif::{CertifValidateManifestError, InvalidManifestError};
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let (env, (expected_manifest, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
-        builder.new_user_realm("alice");
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .create_or_update_user_manifest_vlob("alice")
-            .map(|e| {
-                (
-                    e.manifest.clone(),
-                    e.encrypted(&env.template),
-                    e.manifest.timestamp,
-                )
-            })
-    });
+    let (expected_manifest, vlob, vlob_timestamp) = env
+        .customize(|builder| {
+            builder.new_user_realm("alice");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .create_or_update_user_manifest_vlob("alice")
+                .map(|e| {
+                    (
+                        e.manifest.clone(),
+                        e.encrypted(&env.template),
+                        e.manifest.timestamp,
+                    )
+                })
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let manifest = ops
         .validate_user_manifest(
@@ -59,16 +61,17 @@ async fn offline(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn non_existent_author(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user_realm("alice");
         builder.certificates_storage_fetch_certificates("alice@dev1");
-    });
+    })
+    .await;
 
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .validate_user_manifest(
@@ -91,16 +94,17 @@ async fn non_existent_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn corrupted(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user_realm("alice");
         builder.certificates_storage_fetch_certificates("alice@dev1");
-    });
+    })
+    .await;
 
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .validate_user_manifest(
@@ -123,18 +127,20 @@ async fn corrupted(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
-    let (env, (other_realm_id, timestamp)) = env.customize_with_map(|builder| {
-        builder.new_user_realm("alice");
-        let (realm_id, timestamp) = builder
-            .new_realm("alice")
-            .map(|e| (e.realm_id, e.timestamp));
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        (realm_id, timestamp)
-    });
+    let (other_realm_id, timestamp) = env
+        .customize(|builder| {
+            builder.new_user_realm("alice");
+            let (realm_id, timestamp) = builder
+                .new_realm("alice")
+                .map(|e| (e.realm_id, e.timestamp));
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            (realm_id, timestamp)
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let alice_manifest = UserManifest {
         author: alice.device_id.clone(),
@@ -167,7 +173,7 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user_realm("bob");
         builder.revoke_user("bob");
@@ -175,11 +181,12 @@ async fn revoked(env: &TestbedEnv) {
         builder.with_check_consistency_disabled(|builder| {
             builder.create_or_update_user_manifest_vlob("bob");
         })
-    });
+    })
+    .await;
 
     let bob = env.local_device("bob@dev1");
 
-    let ops = certificates_ops_factory(&env, &bob).await;
+    let ops = certificates_ops_factory(env, &bob).await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
         TestbedEvent::CreateOrUpdateUserManifestVlob(e) => {
@@ -226,29 +233,31 @@ async fn revoked(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn cannot_write(env: &TestbedEnv) {
-    let (env, (shared_realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let realm_id = builder
-            .new_user_realm("alice")
-            // Key rotation is not supposed to be used for user realm, but
-            // current test is rather odd anyway (access rights should never
-            // change for user realm)
-            .then_do_initial_key_rotation()
-            .map(|e| e.realm);
-        builder.share_realm(realm_id, "bob", Some(RealmRole::Owner));
-        builder.share_realm(realm_id, "alice", Some(RealmRole::Reader));
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        let (vlob, vlob_timestamp) = builder.with_check_consistency_disabled(|builder| {
-            builder
-                .create_or_update_user_manifest_vlob("alice")
-                .map(|e| (e.encrypted(&env.template), e.manifest.timestamp))
-        });
-        (realm_id, vlob, vlob_timestamp)
-    });
+    let (shared_realm_id, vlob, vlob_timestamp) = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_user_realm("alice")
+                // Key rotation is not supposed to be used for user realm, but
+                // current test is rather odd anyway (access rights should never
+                // change for user realm)
+                .then_do_initial_key_rotation()
+                .map(|e| e.realm);
+            builder.share_realm(realm_id, "bob", Some(RealmRole::Owner));
+            builder.share_realm(realm_id, "alice", Some(RealmRole::Reader));
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            let (vlob, vlob_timestamp) = builder.with_check_consistency_disabled(|builder| {
+                builder
+                    .create_or_update_user_manifest_vlob("alice")
+                    .map(|e| (e.encrypted(&env.template), e.manifest.timestamp))
+            });
+            (realm_id, vlob, vlob_timestamp)
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
         .validate_user_manifest(

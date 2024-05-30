@@ -32,7 +32,7 @@ async fn ok(
     kind: OkKind,
     env: &TestbedEnv,
 ) {
-    let env = &env.customize(|builder| {
+    env.customize(|builder| {
         // Create additional users with various updates to make sur all those
         // certificates are taken into account
         builder
@@ -44,7 +44,8 @@ async fn ok(
             .with_initial_profile(UserProfile::Outsider); // mallory@dev1
         builder.update_user_profile("mallory", UserProfile::Standard);
         builder.certificates_storage_fetch_certificates("alice@dev1");
-    });
+    })
+    .await;
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 

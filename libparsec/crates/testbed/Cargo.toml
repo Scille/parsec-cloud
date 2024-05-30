@@ -16,7 +16,9 @@ libparsec_types = { workspace = true }
 
 hex-literal = { workspace = true }
 crc32fast = { workspace = true, features = ["std"] }
-serde = { workspace = true, features = ["derive"] }
+# "rc" feature enables serialization of Arc<T>
+serde = { workspace = true, features = ["derive", "rc"] }
+serde_with = { workspace = true }
 rmp-serde = { workspace = true }
 lazy_static = { workspace = true }
 reqwest = { workspace = true, features = ["default-tls"] }

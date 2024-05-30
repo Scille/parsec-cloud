@@ -18,89 +18,91 @@ async fn ok_with_changes(
 
     use libparsec_protocol::authenticated_cmds;
 
-    let (env, expected_workspaces) = env.customize_with_map(|builder| {
-        let mut expected_workspaces = vec![];
+    let expected_workspaces = env
+        .customize(|builder| {
+            let mut expected_workspaces = vec![];
 
-        // The testbed env is coolorg, hence Alice already has acces to workspace wksp1...
+            // The testbed env is coolorg, hence Alice already has acces to workspace wksp1...
 
-        let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
+            let wksp1_id: VlobID = *builder.get_stuff("wksp1_id");
 
-        expected_workspaces.push(WorkspaceInfo {
-            id: wksp1_id,
-            current_name: "wksp1".parse().unwrap(),
-            current_self_role: RealmRole::Owner,
-            is_started: false,
-            is_bootstrapped: true,
-        });
-
-        // ...provide Alice's client with an additional local-only workspace.
-
-        let wksp2_id = VlobID::default();
-        builder
-            .user_storage_local_update("alice@dev1")
-            .customize(|e| {
-                let local_manifest = Arc::make_mut(&mut e.local_manifest);
-                local_manifest
-                    .local_workspaces
-                    .push(LocalUserManifestWorkspaceEntry {
-                        id: wksp2_id,
-                        name: "wksp2".parse().unwrap(),
-                        name_origin: CertificateBasedInfoOrigin::Placeholder,
-                        role: RealmRole::Owner,
-                        role_origin: CertificateBasedInfoOrigin::Placeholder,
-                    });
+            expected_workspaces.push(WorkspaceInfo {
+                id: wksp1_id,
+                current_name: "wksp1".parse().unwrap(),
+                current_self_role: RealmRole::Owner,
+                is_started: false,
+                is_bootstrapped: true,
             });
 
-        expected_workspaces.push(WorkspaceInfo {
-            id: wksp2_id,
-            current_name: "wksp2".parse().unwrap(),
-            current_self_role: RealmRole::Owner,
-            is_started: false,
-            is_bootstrapped: false,
-        });
+            // ...provide Alice's client with an additional local-only workspace.
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-
-        match kind {
-            "new_sharing" => {
-                let wksp3_id = builder.new_realm("bob").map(|e| e.realm_id);
-                builder.rotate_key_realm(wksp3_id);
-                builder.rename_realm(wksp3_id, "wksp3");
-                builder.share_realm(wksp3_id, "alice", RealmRole::Manager);
-
-                expected_workspaces.push(WorkspaceInfo {
-                    id: wksp3_id,
-                    current_name: "wksp3".parse().unwrap(),
-                    current_self_role: RealmRole::Manager,
-                    is_started: false,
-                    is_bootstrapped: true,
+            let wksp2_id = VlobID::default();
+            builder
+                .user_storage_local_update("alice@dev1")
+                .customize(|e| {
+                    let local_manifest = Arc::make_mut(&mut e.local_manifest);
+                    local_manifest
+                        .local_workspaces
+                        .push(LocalUserManifestWorkspaceEntry {
+                            id: wksp2_id,
+                            name: "wksp2".parse().unwrap(),
+                            name_origin: CertificateBasedInfoOrigin::Placeholder,
+                            role: RealmRole::Owner,
+                            role_origin: CertificateBasedInfoOrigin::Placeholder,
+                        });
                 });
-            }
-            "unsharing" => {
-                // Must promote Bob first so that he can change Alice's role
-                builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
-                builder.share_realm(wksp1_id, "alice", None);
 
-                expected_workspaces.remove(0);
-            }
-            "self_role_change" => {
-                // Must promote Bob first so that he can change Alice's role
-                builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
-                builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
+            expected_workspaces.push(WorkspaceInfo {
+                id: wksp2_id,
+                current_name: "wksp2".parse().unwrap(),
+                current_self_role: RealmRole::Owner,
+                is_started: false,
+                is_bootstrapped: false,
+            });
 
-                expected_workspaces[0].current_self_role = RealmRole::Reader;
-            }
-            "renamed" => {
-                builder.rename_realm(wksp1_id, "wksp1-renamed");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-                expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
-            }
-            unknown => panic!("Unknown kind: {}", unknown),
-        }
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            match kind {
+                "new_sharing" => {
+                    let wksp3_id = builder.new_realm("bob").map(|e| e.realm_id);
+                    builder.rotate_key_realm(wksp3_id);
+                    builder.rename_realm(wksp3_id, "wksp3");
+                    builder.share_realm(wksp3_id, "alice", RealmRole::Manager);
 
-        expected_workspaces
-    });
+                    expected_workspaces.push(WorkspaceInfo {
+                        id: wksp3_id,
+                        current_name: "wksp3".parse().unwrap(),
+                        current_self_role: RealmRole::Manager,
+                        is_started: false,
+                        is_bootstrapped: true,
+                    });
+                }
+                "unsharing" => {
+                    // Must promote Bob first so that he can change Alice's role
+                    builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
+                    builder.share_realm(wksp1_id, "alice", None);
+
+                    expected_workspaces.remove(0);
+                }
+                "self_role_change" => {
+                    // Must promote Bob first so that he can change Alice's role
+                    builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
+                    builder.share_realm(wksp1_id, "alice", RealmRole::Reader);
+
+                    expected_workspaces[0].current_self_role = RealmRole::Reader;
+                }
+                "renamed" => {
+                    builder.rename_realm(wksp1_id, "wksp1-renamed");
+
+                    expected_workspaces[0].current_name = "wksp1-renamed".parse().unwrap();
+                }
+                unknown => panic!("Unknown kind: {}", unknown),
+            }
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+
+            expected_workspaces
+        })
+        .await;
 
     let keys_bundles = HashMap::<VlobID, (Bytes, Bytes)>::from_iter(
         expected_workspaces.iter().filter_map(|wksp| {

@@ -8,20 +8,22 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "empty")]
 async fn ok(env: &TestbedEnv) {
-    let (env, (service_id, sequester_pubkey)) = env.customize_with_map(|builder| {
-        builder
-            .bootstrap_organization("alice")
-            .and_set_sequestered_organization();
-        let (service_id, sequester_pubkey) = builder
-            .new_sequester_service()
-            .map(|event| (event.id, event.encryption_private_key.clone()));
+    let (service_id, sequester_pubkey) = env
+        .customize(|builder| {
+            builder
+                .bootstrap_organization("alice")
+                .and_set_sequestered_organization();
+            let (service_id, sequester_pubkey) = builder
+                .new_sequester_service()
+                .map(|event| (event.id, event.encryption_private_key.clone()));
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        (service_id, sequester_pubkey)
-    });
+            (service_id, sequester_pubkey)
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops
         .encrypt_for_sequester_services(b"data")
@@ -37,24 +39,26 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "empty")]
 async fn multiple(env: &TestbedEnv) {
-    let (env, (id0, pubkey0, id1, pubkey1)) = env.customize_with_map(|builder| {
-        builder
-            .bootstrap_organization("alice")
-            .and_set_sequestered_organization();
-        let (id0, pubkey0) = builder
-            .new_sequester_service()
-            .map(|event| (event.id, event.encryption_private_key.clone()));
+    let (id0, pubkey0, id1, pubkey1) = env
+        .customize(|builder| {
+            builder
+                .bootstrap_organization("alice")
+                .and_set_sequestered_organization();
+            let (id0, pubkey0) = builder
+                .new_sequester_service()
+                .map(|event| (event.id, event.encryption_private_key.clone()));
 
-        let (id1, pubkey1) = builder
-            .new_sequester_service()
-            .map(|event| (event.id, event.encryption_private_key.clone()));
+            let (id1, pubkey1) = builder
+                .new_sequester_service()
+                .map(|event| (event.id, event.encryption_private_key.clone()));
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        (id0, pubkey0, id1, pubkey1)
-    });
+            (id0, pubkey0, id1, pubkey1)
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops
         .encrypt_for_sequester_services(b"data")

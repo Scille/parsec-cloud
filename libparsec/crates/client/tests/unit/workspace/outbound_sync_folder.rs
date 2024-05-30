@@ -136,10 +136,11 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // New version of the file that we our client doesn't know about
         builder.create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None);
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;

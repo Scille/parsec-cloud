@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, AsyncGenerator, Type
+from typing import TYPE_CHECKING, Any, AsyncGenerator, Type, TypeAlias
 
 from parsec._parsec import (
     BootstrapToken,
@@ -42,6 +42,15 @@ from parsec.webhooks import WebhooksComponent
 if TYPE_CHECKING:
     from parsec.api import ApiFn
 
+    try:
+        from parsec._parsec import testbed
+
+        TestbedEvent: TypeAlias = testbed.TestbedEvent  # pyright: ignore[reportRedeclaration]
+        TestbedTemplateContent: TypeAlias = testbed.TestbedTemplateContent  # pyright: ignore[reportRedeclaration]
+    except ImportError:
+        TestbedEvent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
+        TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
+
 
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
@@ -69,6 +78,9 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             sequester=components["sequester"],
             events=components["events"],
         )
+
+
+TEST_BOOTSTRAP_TOKEN = BootstrapToken.new()
 
 
 @dataclass(slots=True, eq=False, repr=False)
@@ -113,27 +125,60 @@ class Backend:
     async def test_duplicate_organization(self, id: OrganizationID, new_id: OrganizationID) -> None:
         await self.organization.test_duplicate_organization(id, new_id)
 
+    async def test_customize_organization(
+        self,
+        id: OrganizationID,
+        template: TestbedTemplateContent,
+        customization: list[TestbedEvent],
+    ) -> None:
+        await self.apply_events(
+            org_id=id,
+            events=template.events + customization,
+            skip_events_offset=len(template.events),
+        )
+
     async def test_drop_organization(self, id: OrganizationID) -> None:
         await self.organization.test_drop_organization(id)
 
-    async def test_load_template(self, template: Any) -> OrganizationID:
-        from parsec._parsec import testbed
-
+    async def test_load_template(self, template: TestbedTemplateContent) -> OrganizationID:
         org_id = OrganizationID(f"{template.id.capitalize()}OrgTemplate")
-        match await self.organization.create(now=DateTime(1970, 1, 1), id=org_id):
-            case BootstrapToken() as bootstrap_token:
+        match await self.organization.create(
+            now=DateTime(1970, 1, 1), id=org_id, force_bootstrap_token=TEST_BOOTSTRAP_TOKEN
+        ):
+            case BootstrapToken():
                 pass
             case error:
                 assert False, error
 
-        verify_key_per_device: dict[DeviceID, VerifyKey] = {}
+        await self.apply_events(org_id=org_id, events=template.events)
 
-        for event in template.events:
+        return org_id
+
+    async def apply_events(
+        self, org_id: OrganizationID, events: list[TestbedEvent], skip_events_offset: int = 0
+    ) -> None:
+        from parsec._parsec import testbed
+
+        def _get_device_verify_key(device_id: DeviceID) -> VerifyKey:
+            for event in events:
+                if isinstance(event, testbed.TestbedEventBootstrapOrganization):
+                    if event.first_user_device_id == device_id:
+                        return event.first_user_first_device_certificate.verify_key
+                elif isinstance(event, testbed.TestbedEventNewUser):
+                    if event.device_id == device_id:
+                        return event.first_device_certificate.verify_key
+                elif isinstance(event, testbed.TestbedEventNewDevice):
+                    if event.device_id == device_id:
+                        return event.certificate.verify_key
+            else:
+                raise ValueError(f"Device {device_id} not found in events")
+
+        for event in events[skip_events_offset:]:
             if isinstance(event, testbed.TestbedEventBootstrapOrganization):
                 outcome = await self.organization.bootstrap(
                     id=org_id,
                     now=event.timestamp,
-                    bootstrap_token=bootstrap_token,
+                    bootstrap_token=TEST_BOOTSTRAP_TOKEN,
                     root_verify_key=event.root_signing_key.verify_key,
                     user_certificate=event.first_user_raw_certificate,
                     device_certificate=event.first_user_first_device_raw_certificate,
@@ -142,8 +187,6 @@ class Backend:
                     sequester_authority_certificate=event.sequester_authority_raw_certificate,
                 )
                 assert isinstance(outcome, tuple), outcome
-                device_certif = outcome[1]
-                verify_key_per_device[device_certif.device_id] = device_certif.verify_key
             elif isinstance(event, testbed.TestbedEventNewSequesterService):
                 outcome = await self.sequester.create_storage_service(
                     now=event.timestamp,
@@ -163,33 +206,29 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     user_certificate=event.user_raw_certificate,
                     redacted_user_certificate=event.user_raw_redacted_certificate,
                     device_certificate=event.first_device_raw_certificate,
                     redacted_device_certificate=event.first_device_raw_redacted_certificate,
                 )
                 assert isinstance(outcome, tuple), outcome
-                device_certif = outcome[1]
-                verify_key_per_device[device_certif.device_id] = device_certif.verify_key
             elif isinstance(event, testbed.TestbedEventNewDevice):
                 outcome = await self.user.create_device(
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     device_certificate=event.raw_certificate,
                     redacted_device_certificate=event.raw_redacted_certificate,
                 )
                 assert isinstance(outcome, DeviceCertificate), outcome
-                device_certif = outcome
-                verify_key_per_device[device_certif.device_id] = device_certif.verify_key
             elif isinstance(event, testbed.TestbedEventUpdateUserProfile):
                 outcome = await self.user.update_user(
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     user_update_certificate=event.raw_certificate,
                 )
                 assert isinstance(outcome, UserUpdateCertificate), outcome
@@ -198,7 +237,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     revoked_user_certificate=event.raw_certificate,
                 )
                 assert isinstance(outcome, RevokedUserCertificate), outcome
@@ -226,7 +265,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     realm_role_certificate=event.raw_certificate,
                 )
                 assert isinstance(outcome, RealmRoleCertificate), outcome
@@ -236,7 +275,7 @@ class Backend:
                         now=event.timestamp,
                         organization_id=org_id,
                         author=event.author,
-                        author_verify_key=verify_key_per_device[event.author],
+                        author_verify_key=_get_device_verify_key(event.author),
                         realm_role_certificate=event.raw_certificate,
                     )
                 else:
@@ -246,7 +285,7 @@ class Backend:
                         now=event.timestamp,
                         organization_id=org_id,
                         author=event.author,
-                        author_verify_key=verify_key_per_device[event.author],
+                        author_verify_key=_get_device_verify_key(event.author),
                         realm_role_certificate=event.raw_certificate,
                         key_index=event.key_index,
                         recipient_keys_bundle_access=event.recipient_keys_bundle_access,
@@ -257,7 +296,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     realm_name_certificate=event.raw_certificate,
                     initial_name_or_fail=False,
                 )
@@ -267,7 +306,7 @@ class Backend:
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
-                    author_verify_key=verify_key_per_device[event.author],
+                    author_verify_key=_get_device_verify_key(event.author),
                     realm_key_rotation_certificate=event.raw_certificate,
                     per_participant_keys_bundle_access=event.per_participant_keys_bundle_access,
                     keys_bundle=event.keys_bundle,
@@ -328,5 +367,3 @@ class Backend:
                         sequester_blob=event.sequestered,
                     )
                     assert outcome is None, outcome
-
-        return org_id

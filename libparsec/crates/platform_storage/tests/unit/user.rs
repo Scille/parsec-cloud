@@ -51,7 +51,8 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
 
         // Sanity check to ensure additional (and to be ignored) manifest have been added
         p_assert_ne!(expected_version, actual_version);
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
 

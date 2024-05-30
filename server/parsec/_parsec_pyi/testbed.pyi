@@ -21,7 +21,6 @@ from parsec._parsec import (
     SequesterAuthorityCertificate,
     SequesterPrivateKeyDer,
     SequesterPublicKeyDer,
-    SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     SequesterServiceID,
     SequesterSigningKeyDer,
@@ -37,27 +36,13 @@ from parsec._parsec import (
 )
 
 def test_get_testbed_template(id: str) -> TestbedTemplateContent | None: ...
+def test_load_testbed_customization(
+    testbed: TestbedTemplateContent, customization: bytes
+) -> list[TestbedEvent]: ...
 
 class TestbedTemplateContent:
     id: str
     events: list["TestbedEvent"]
-    certificates: list[
-        tuple[
-            UserCertificate
-            | DeviceCertificate
-            | RevokedUserCertificate
-            | UserUpdateCertificate
-            | RealmRoleCertificate
-            | RealmArchivingCertificate
-            | SequesterAuthorityCertificate
-            | SequesterServiceCertificate
-            | SequesterRevokedServiceCertificate
-            | ShamirRecoveryBriefCertificate
-            | ShamirRecoveryShareCertificate,
-            bytes,
-            bytes,
-        ]
-    ]
 
     def compute_crc(self) -> int: ...
 

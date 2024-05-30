@@ -398,10 +398,6 @@ class MinimalorgRpcClients:
         return self._anonymous
 
     @property
-    def initial_certificate_index(self) -> int:
-        return len(self.testbed_template.certificates)
-
-    @property
     def alice(self) -> AuthenticatedRpcClient:
         if self._alice:
             return self._alice

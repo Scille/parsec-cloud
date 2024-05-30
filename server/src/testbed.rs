@@ -1,8 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    exceptions::PyValueError,
     prelude::*,
-    types::{PyBytes, PyDict, PyList},
+    types::{PyBytes, PyDict, PyList, PyString},
 };
 use std::collections::HashMap;
 use std::num::NonZeroU64;
@@ -29,8 +30,6 @@ pub(crate) struct TestbedTemplateContent {
     id: &'static str,
     #[pyo3(get)]
     events: Py<PyList>,
-    #[pyo3(get)]
-    certificates: Py<PyList>,
 }
 
 #[pymethods]
@@ -86,7 +85,7 @@ event_wrapper!(
         first_user_user_realm_id: VlobID,
         first_user_user_realm_key: SecretKey,
         first_user_local_symkey: SecretKey,
-        first_user_local_password: &'static str,
+        first_user_local_password: Py<PyString>,
         sequester_authority_certificate: Option<SequesterAuthorityCertificate>,
         sequester_authority_raw_certificate: Option<Py<PyBytes>>,
         first_user_certificate: UserCertificate,
@@ -153,7 +152,7 @@ event_wrapper!(
         user_realm_id: VlobID,
         user_realm_key: SecretKey,
         local_symkey: SecretKey,
-        local_password: &'static str,
+        local_password: Py<PyString>,
         user_certificate: UserCertificate,
         user_raw_redacted_certificate: Py<PyBytes>,
         user_raw_certificate: Py<PyBytes>,
@@ -181,7 +180,7 @@ event_wrapper!(
         device_label: DeviceLabel,
         signing_key: SigningKey,
         local_symkey: SecretKey,
-        local_password: &'static str,
+        local_password: Py<PyString>,
         certificate: DeviceCertificate,
         raw_redacted_certificate: Py<PyBytes>,
         raw_certificate: Py<PyBytes>,
@@ -450,6 +449,51 @@ event_wrapper!(
 );
 
 #[pyfunction]
+pub(crate) fn test_load_testbed_customization<'py>(
+    py: Python<'py>,
+    template: &'py TestbedTemplateContent,
+    customization: &'py PyBytes,
+) -> PyResult<&'py PyList> {
+    let template = &template.template;
+    let customization = customization.as_bytes();
+
+    // To convert the event to a Python object, we need the template (as the
+    // certificate will be generated during conversion).
+    // However the template itself must be updated with the customization !
+    let customized_template = {
+        let mut customized_template = template.clone();
+
+        // 1) Load the events constituting the customization
+        let mut customization_events =
+            rmp_serde::from_slice::<Vec<libparsec_testbed::TestbedEvent>>(&customization)
+                .map_err(|err| PyValueError::new_err(err.to_string()))?;
+
+        // 2) Apply the customization to the template
+        let customized_template_mut = Arc::make_mut(&mut customized_template);
+        customized_template_mut
+            .events
+            .append(&mut customization_events);
+
+        customized_template
+    };
+
+    // 3) Convert the events constituting the customization to Python objects
+
+    let py_events = PyList::empty(py);
+    for event in customized_template
+        .events
+        .iter()
+        .skip(template.events.len())
+    {
+        if let Some(pyobj) = event_to_pyobject(py, &customized_template, event)? {
+            py_events.append(pyobj)?;
+        }
+    }
+
+    Ok(py_events)
+}
+
+#[pyfunction]
 pub(crate) fn test_get_testbed_template(
     py: Python,
     id: &str,
@@ -457,74 +501,17 @@ pub(crate) fn test_get_testbed_template(
     match libparsec_testbed::test_get_template(id) {
         None => Ok(None),
         Some(template) => {
-            let events = {
-                let events = PyList::empty(py);
-                for event in template.events.iter() {
-                    if let Some(pyobj) = event_to_pyobject(py, &template, event)? {
-                        events.append(pyobj)?;
-                    }
+            let py_events = PyList::empty(py);
+            for event in template.events.iter() {
+                if let Some(pyobj) = event_to_pyobject(py, &template, event)? {
+                    py_events.append(pyobj)?;
                 }
-                events
-            };
-            let certificates = PyList::new(
-                py,
-                template
-                    .certificates()
-                    .map(|certif| {
-                        let py_certif = match certif.certificate {
-                            libparsec_types::AnyArcCertificate::User(c) => {
-                                UserCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::Device(c) => {
-                                DeviceCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::UserUpdate(c) => {
-                                UserUpdateCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::RevokedUser(c) => {
-                                RevokedUserCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::RealmRole(c) => {
-                                RealmRoleCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::RealmName(c) => {
-                                RealmNameCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::RealmKeyRotation(c) => {
-                                RealmKeyRotationCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::RealmArchiving(c) => {
-                                RealmArchivingCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::ShamirRecoveryBrief(c) => {
-                                ShamirRecoveryBriefCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::ShamirRecoveryShare(c) => {
-                                ShamirRecoveryShareCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::SequesterAuthority(c) => {
-                                SequesterAuthorityCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::SequesterRevokedService(c) => {
-                                SequesterRevokedServiceCertificate::from(c).into_py(py)
-                            }
-                            libparsec_types::AnyArcCertificate::SequesterService(c) => {
-                                SequesterServiceCertificate::from(c).into_py(py)
-                            }
-                        };
-                        (
-                            py_certif,
-                            PyBytes::new(py, &certif.signed),
-                            PyBytes::new(py, &certif.signed_redacted),
-                        )
-                    })
-                    .collect::<Vec<_>>(),
-            );
+            }
+
             Ok(Some(TestbedTemplateContent {
                 id: template.id,
                 template,
-                events: events.into_py(py),
-                certificates: certificates.into_py(py),
+                events: py_events.into_py(py),
             }))
         }
     }
@@ -603,7 +590,8 @@ fn event_to_pyobject(
                 first_user_user_realm_id: x.first_user_user_realm_id.into(),
                 first_user_user_realm_key: x.first_user_user_realm_key.clone().into(),
                 first_user_local_symkey: x.first_user_local_symkey.clone().into(),
-                first_user_local_password: x.first_user_local_password,
+                first_user_local_password: PyString::new(py, &x.first_user_local_password)
+                    .into_py(py),
                 sequester_authority_certificate: sequester_authority_certif.as_ref().map(|x| {
                     SequesterAuthorityCertificate::from(match &x.certificate {
                         libparsec_types::AnyArcCertificate::SequesterAuthority(x) => x.to_owned(),
@@ -684,7 +672,7 @@ fn event_to_pyobject(
                 user_realm_id: x.user_realm_id.into(),
                 user_realm_key: x.user_realm_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
-                local_password: x.local_password,
+                local_password: PyString::new(py, &x.local_password).into_py(py),
                 user_raw_certificate: PyBytes::new(py, &user_certif.signed).into_py(py),
                 user_raw_redacted_certificate: PyBytes::new(py, &user_certif.signed_redacted)
                     .into_py(py),
@@ -718,7 +706,7 @@ fn event_to_pyobject(
                 device_label: x.device_label.clone().into(),
                 signing_key: x.signing_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
-                local_password: x.local_password,
+                local_password: PyString::new(py, &x.local_password).into_py(py),
                 raw_certificate,
                 raw_redacted_certificate,
                 certificate,

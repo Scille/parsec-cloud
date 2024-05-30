@@ -163,7 +163,7 @@ async fn src_not_found(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         if bad_entry_in_children {
             // Create a file with `/foo` as parent...
             let new_file_id = builder
@@ -186,7 +186,8 @@ async fn src_not_found(
                 None,
             );
         }
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
@@ -232,7 +233,7 @@ async fn exchange_but_dst_not_found(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         if bad_entry_in_children {
             // Create a file with `/foo` as parent...
             let new_file_id = builder
@@ -255,7 +256,8 @@ async fn exchange_but_dst_not_found(
                 None,
             );
         }
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;

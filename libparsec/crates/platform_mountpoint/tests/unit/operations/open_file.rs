@@ -244,7 +244,7 @@ async fn offline(
     tmp_path: TmpPath,
     env: &TestbedEnv,
 ) {
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         // Ignore all events related to workspace local storage except for the
         // workspace manifest. This way we have a root containing entries, but
         // accessing them require to fetch data from the server.
@@ -263,9 +263,10 @@ async fn offline(
             | TestbedEvent::WorkspaceDataStorageChunkCreate(_) => false,
             _ => true,
         });
-    });
+    })
+    .await;
     mount_and_test!(
-        &env,
+        env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
             let mut open_options = tokio::fs::OpenOptions::new();
@@ -327,7 +328,8 @@ async fn read_only_realm(
 
         builder.workspace_data_storage_fetch_workspace_vlob("bob@dev1", wksp1_id, None);
         builder.workspace_data_storage_fetch_file_vlob("bob@dev1", wksp1_id, bar_txt_id);
-    });
+    })
+    .await;
 
     mount_and_test!(as "bob@dev1", &env, &tmp_path, |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
         let mut open_options = tokio::fs::OpenOptions::new();

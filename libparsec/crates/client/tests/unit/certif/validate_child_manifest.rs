@@ -14,8 +14,8 @@ use crate::certif::{CertifValidateManifestError, InvalidManifestError};
 async fn ok(env: &TestbedEnv) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, (realm_id, expected_manifest, vlob, vlob_timestamp)) =
-        env.customize_with_map(|builder| {
+    let (realm_id, expected_manifest, vlob, vlob_timestamp) = env
+        .customize(|builder| {
             let realm_id = builder
                 .new_realm("alice")
                 .then_do_initial_key_rotation()
@@ -31,12 +31,13 @@ async fn ok(env: &TestbedEnv) {
                         e.manifest.timestamp,
                     )
                 })
-        });
+        })
+        .await;
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -96,21 +97,23 @@ async fn offline(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn non_existent_author(env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -148,14 +151,16 @@ async fn non_existent_author(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, env: &TestbedEnv) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        realm_id
-    });
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
     let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let child_id = VlobID::default();
@@ -182,7 +187,7 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
         unknown => panic!("Unknown kind {}", unknown),
     };
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -222,23 +227,25 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
 async fn author_no_access_to_realm(env: &TestbedEnv) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|e| e.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob(
-                "bob@dev1",
-                realm_id,
-                file_id,
-                Some(realm_id),
-            );
-        });
-        realm_id
-    });
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|e| e.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.with_check_consistency_disabled(|builder| {
+                builder.create_or_update_file_manifest_vlob(
+                    "bob@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                );
+            });
+            realm_id
+        })
+        .await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
@@ -249,7 +256,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
@@ -289,31 +296,33 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
 async fn revoked(env: &TestbedEnv) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let realm_id = builder
-            .new_realm("bob")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.revoke_user("bob");
-        builder.certificates_storage_fetch_certificates("bob@dev1");
-        builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob(
-                "bob@dev1",
-                realm_id,
-                file_id,
-                Some(realm_id),
-            );
-        });
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("bob")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.revoke_user("bob");
+            builder.certificates_storage_fetch_certificates("bob@dev1");
+            builder.with_check_consistency_disabled(|builder| {
+                builder.create_or_update_file_manifest_vlob(
+                    "bob@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                );
+            });
 
-        realm_id
-    });
+            realm_id
+        })
+        .await;
 
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let bob = env.local_device("bob@dev1");
 
-    let ops = certificates_ops_factory(&env, &bob).await;
+    let ops = certificates_ops_factory(env, &bob).await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
@@ -377,30 +386,32 @@ async fn revoked(env: &TestbedEnv) {
 async fn cannot_write(env: &TestbedEnv) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, shared_realm_id) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|e| e.realm);
-        builder.share_realm(realm_id, "bob", Some(RealmRole::Reader));
-        builder.certificates_storage_fetch_certificates("bob@dev1");
-        builder.with_check_consistency_disabled(|builder| {
-            builder.create_or_update_file_manifest_vlob(
-                "bob@dev1",
-                realm_id,
-                file_id,
-                Some(realm_id),
-            );
-        });
-        realm_id
-    });
+    let shared_realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|e| e.realm);
+            builder.share_realm(realm_id, "bob", Some(RealmRole::Reader));
+            builder.certificates_storage_fetch_certificates("bob@dev1");
+            builder.with_check_consistency_disabled(|builder| {
+                builder.create_or_update_file_manifest_vlob(
+                    "bob@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                );
+            });
+            realm_id
+        })
+        .await;
     let (_, shared_realm_key_index) = env.get_last_realm_key(shared_realm_id);
 
     let alice = env.local_device("alice@dev1");
     let bob = env.local_device("bob@dev1");
 
-    let ops = certificates_ops_factory(&env, &bob).await;
+    let ops = certificates_ops_factory(env, &bob).await;
 
     let (vlob, vlob_timestamp) = match env.template.events.iter().last().unwrap() {
         TestbedEvent::CreateOrUpdateFileManifestVlob(e) => {
@@ -494,21 +505,28 @@ async fn server_error(
 ) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
-            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
-    });
+    let (realm_id, vlob, vlob_timestamp) = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .create_or_update_file_manifest_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                )
+                .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+        })
+        .await;
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     test_register_send_hook(
         &env.discriminant_dir,
@@ -559,23 +577,30 @@ async fn invalid_keys_bundle(
 ) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
-            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
-    });
+    let (realm_id, vlob, vlob_timestamp) = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .create_or_update_file_manifest_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                )
+                .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+        })
+        .await;
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
-    let rep = rep(&env, realm_id, alice.user_id());
+    let rep = rep(env, realm_id, alice.user_id());
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| rep,
@@ -603,21 +628,28 @@ async fn invalid_keys_bundle(
 async fn invalid_response(env: &TestbedEnv) {
     let file_id = VlobID::from_hex("aa00000000000000000000000000f11e").unwrap();
 
-    let (env, (realm_id, vlob, vlob_timestamp)) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .create_or_update_file_manifest_vlob("alice@dev1", realm_id, file_id, Some(realm_id))
-            .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
-    });
+    let (realm_id, vlob, vlob_timestamp) = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .create_or_update_file_manifest_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    file_id,
+                    Some(realm_id),
+                )
+                .map(|e| (realm_id, e.encrypted(&env.template), e.manifest.timestamp))
+        })
+        .await;
     let (_, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let alice = env.local_device("alice@dev1");
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     test_register_low_level_send_hook(&env.discriminant_dir, |_request_builder| async {
         Ok(ResponseMock::Mocked((

@@ -47,7 +47,7 @@ async fn non_placeholder(
 
     // 1) Customize testbed
 
-    let env = env.customize(|builder| {
+    env.customize(|builder| {
         builder.new_device("alice"); // alice@dev2
         builder.certificates_storage_fetch_certificates("alice@dev1");
 
@@ -293,7 +293,7 @@ async fn non_placeholder(
 
 #[parsec_test(testbed = "minimal")]
 async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedEnv) {
-    let (env, wksp1_id) = env.customize_with_map(|builder| {
+    let wksp1_id = env.customize(|builder| {
         // Alice has access to a workspace partially bootstrapped: only the realm creation has been done
         let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
 

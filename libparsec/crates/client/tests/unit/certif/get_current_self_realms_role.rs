@@ -9,17 +9,19 @@ use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
 async fn ok(env: &TestbedEnv) {
-    let (env, (realm_id, timestamp)) = env.customize_with_map(|builder| {
-        let (realm_id, timestamp) = builder
-            .new_realm("alice")
-            .map(|event| (event.realm_id, event.timestamp));
+    let (realm_id, timestamp) = env
+        .customize(|builder| {
+            let (realm_id, timestamp) = builder
+                .new_realm("alice")
+                .map(|event| (event.realm_id, event.timestamp));
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        (realm_id, timestamp)
-    });
+            (realm_id, timestamp)
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops.get_current_self_realms_role().await.unwrap();
 
@@ -28,21 +30,23 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn multiple_realm(env: &TestbedEnv) {
-    let (env, (realm_id1, t1, realm_id2, t2)) = env.customize_with_map(|builder| {
-        let (realm_id1, t1) = builder
-            .new_realm("alice")
-            .map(|event| (event.realm_id, event.timestamp));
+    let (realm_id1, t1, realm_id2, t2) = env
+        .customize(|builder| {
+            let (realm_id1, t1) = builder
+                .new_realm("alice")
+                .map(|event| (event.realm_id, event.timestamp));
 
-        let (realm_id2, t2) = builder
-            .new_realm("alice")
-            .map(|event| (event.realm_id, event.timestamp));
+            let (realm_id2, t2) = builder
+                .new_realm("alice")
+                .map(|event| (event.realm_id, event.timestamp));
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        (realm_id1, t1, realm_id2, t2)
-    });
+            (realm_id1, t1, realm_id2, t2)
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let res = ops.get_current_self_realms_role().await.unwrap();
 
@@ -57,24 +61,26 @@ async fn multiple_realm(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn duplicate_realm_id(env: &TestbedEnv) {
-    let (env, (realm_id, timestamp)) = env.customize_with_map(|builder| {
-        builder.new_user("bob");
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
+    let (realm_id, timestamp) = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
 
-        builder.share_realm(realm_id, "bob", Some(RealmRole::Contributor));
-        let timestamp = builder
-            .share_realm(realm_id, "bob", Some(RealmRole::Manager))
-            .map(|event| event.timestamp);
+            builder.share_realm(realm_id, "bob", Some(RealmRole::Contributor));
+            let timestamp = builder
+                .share_realm(realm_id, "bob", Some(RealmRole::Manager))
+                .map(|event| event.timestamp);
 
-        builder.certificates_storage_fetch_certificates("bob@dev1");
+            builder.certificates_storage_fetch_certificates("bob@dev1");
 
-        (realm_id, timestamp)
-    });
+            (realm_id, timestamp)
+        })
+        .await;
     let bob = env.local_device("bob@dev1");
-    let ops = certificates_ops_factory(&env, &bob).await;
+    let ops = certificates_ops_factory(env, &bob).await;
 
     let res = ops.get_current_self_realms_role().await.unwrap();
 

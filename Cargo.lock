@@ -2156,6 +2156,7 @@ dependencies = [
  "reqwest",
  "rmp-serde",
  "serde",
+ "serde_with",
 ]
 
 [[package]]
