@@ -36,9 +36,7 @@
           </i18n-t>
         </ion-text>
       </ion-header>
-      <div
-        v-if="currentPage === 1"
-      >
+      <div v-if="currentPage === 1">
         <user-select
           :exclude-users="[sourceUser, currentUser]"
           v-model="targetUser"
@@ -79,12 +77,12 @@
         </div>
 
         <div>
-          <ion-text
-            class="subtitle-small no-new-roles"
+          <ms-report-text
             v-show="roleUpdates.length === 0"
+            :theme="MsReportTheme.Info"
           >
             {{ $msTranslate({ key: 'UsersPage.assignRoles.noRoles', data: { user: targetUser.humanHandle.label } }) }}
-          </ion-text>
+          </ms-report-text>
 
           <ion-list class="workspace-list">
             <ion-item
@@ -94,17 +92,17 @@
             >
               <div class="workspace-item">
                 <div class="workspace-item__name">
-                  <ion-icon
-                    :icon="business"
-                  />
+                  <ion-icon :icon="business" />
                   <ion-text class="title-h5">{{ roleUpdate.workspace.currentName }}</ion-text>
                 </div>
                 <div class="workspace-item__role">
-                  <ion-text class="body">{{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.oldRole).label) }}</ion-text>
-                  <ion-icon
-                    :icon="arrowForward"
-                  />
-                  <ion-text class="body">{{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.newRole).label) }}</ion-text>
+                  <ion-text class="body workspace-item__role-old">
+                    {{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.oldRole).label) }}
+                  </ion-text>
+                  <ion-icon :icon="arrowForward" />
+                  <ion-text class="body workspace-item__role-new">
+                    {{ $msTranslate(getWorkspaceRoleTranslationKey(roleUpdate.newRole).label) }}
+                  </ion-text>
                   <ion-icon
                     class="error-icon"
                     v-show="roleUpdate.reassigned === false"
@@ -164,11 +162,12 @@ import {
   IonList,
   IonItem,
   modalController,
+  IonText,
 } from '@ionic/vue';
 import { getWorkspacesSharedWith, shareWorkspace, UserInfo, UserProfile, WorkspaceInfo, WorkspaceRole } from '@/parsec';
 import { ref, Ref } from 'vue';
 import { close, checkmarkCircle, closeCircle, business, arrowForward, pencil } from 'ionicons/icons';
-import { MsModalResult, MsSpinner } from 'megashark-lib';
+import { MsModalResult, MsSpinner, MsReportText, MsReportTheme } from 'megashark-lib';
 import { compareWorkspaceRoles } from '@/components/workspaces/utils';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { wait } from '@/parsec/internals';
@@ -182,7 +181,7 @@ interface WorkspaceRoleUpdate {
 }
 
 const targetUser: Ref<UserInfo | undefined> = ref();
-const currentPage: Ref<1 | 2 | 3> = ref(1);
+const currentPage: Ref<1 | 2 | 3 | 4> = ref(1);
 const roleUpdates: Ref<WorkspaceRoleUpdate[]> = ref([]);
 const finished = ref(false);
 
@@ -272,6 +271,7 @@ async function assignNewRoles(): Promise<void> {
     }
   }
   if (failures === 0) {
+    // currentPage.value = 4;
     props.informationManager.present(
       new Information({
         message: {
@@ -307,7 +307,7 @@ async function nextStep(): Promise<void> {
     currentPage.value = 2;
     await findWorkspaces();
   } else if (currentPage.value === 3) {
-    if (finished.value) {
+    if (roleUpdates.value.length === 0 || finished.value) {
       await modalController.dismiss(null, MsModalResult.Confirm);
     } else {
       await assignNewRoles();
@@ -321,12 +321,19 @@ async function cancel(): Promise<void> {
 
 function getNextButtonText(): string {
   switch (currentPage.value) {
-    case 1:
+    case 1: {
       return 'UsersPage.assignRoles.select';
-    case 2:
+    }
+    case 2: {
       return 'UsersPage.assignRoles.okButton';
-    case 3:
-      return 'UsersPage.assignRoles.okButton';
+    }
+    case 3: {
+      if (roleUpdates.value.length === 0 || finished.value) {
+        return 'UsersPage.assignRoles.close';
+      } else {
+        return 'UsersPage.assignRoles.okButton';
+      }
+    }
     default:
       return '';
   }
@@ -345,7 +352,8 @@ function getNextButtonText(): string {
   align-items: center;
   gap: 1.5rem;
 
-  .chosen-users-source, .chosen-users-target {
+  .chosen-users-source,
+  .chosen-users-target {
     display: flex;
     align-items: center;
     padding: 0.25rem 0.5rem 0.25rem 0.25rem;
@@ -375,10 +383,6 @@ function getNextButtonText(): string {
     color: var(--parsec-color-light-secondary-soft-grey);
     width: 1rem;
   }
-}
-
-.no-new-roles {
-  padding: 0.5rem;
 }
 
 .workspace-list {
@@ -433,11 +437,13 @@ function getNextButtonText(): string {
 
     ion-text {
       white-space: nowrap;
-      color: var(--parsec-color-light-secondary-hard-grey);
+    }
 
-      &:last-child {
-        color: var(--parsec-color-light-primary-700);
-      }
+    &-old {
+      color: var(--parsec-color-light-secondary-grey);
+    }
+    &-new {
+      color: var(--parsec-color-light-primary-700);
     }
 
     ion-icon {
@@ -454,7 +460,7 @@ function getNextButtonText(): string {
   .error-icon {
     color: var(--parsec-color-light-danger-500);
     display: flex;
-    flex-shrink: 0
+    flex-shrink: 0;
   }
 }
 </style>

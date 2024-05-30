@@ -116,7 +116,7 @@ for (const revokedUser of [false, true]) {
     await item.locator('.options-button').click();
     await expect(usersPage.locator('#user-context-menu')).toBeVisible();
     const menu = usersPage.locator('#user-context-menu');
-    const expectedActions = ['User details', 'View details', 'Workspace roles', 'Assign workspace roles to someone else'];
+    const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
     if (!revokedUser) {
       expectedActions.unshift(...['Deletion', 'Revoke this user']);
     }
@@ -463,12 +463,12 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await sourceUser.hover();
   await sourceUser.locator('.options-button').click();
   const menuButton = usersPage.locator('.user-context-menu').getByRole('group').nth(2).getByRole('listitem').nth(1);
-  await expect(menuButton).toHaveText('Assign workspace roles to someone else');
+  await expect(menuButton).toHaveText('Copy workspace roles to...');
   await menuButton.click();
   const modal = usersPage.locator('.role-assignment-modal');
   await expect(modal).toBeVisible();
   const nextButton = modal.locator('#next-button');
-  await expect(nextButton).toHaveText('Copy roles');
+  await expect(nextButton).toHaveText('Select');
   await expect(nextButton).toHaveDisabledAttribute();
   const input = modal.locator('#select-user-input').locator('ion-input');
   await fillIonInput(input, 'gmail');
@@ -480,12 +480,14 @@ msTest('Reassign workspace role', async ({ usersPage }) => {
   await expect(dropdown.getByRole('listitem').nth(1).locator('.option-text__label')).toHaveText('Karl Hungus');
   await dropdown.getByRole('listitem').nth(1).click();
   // cspell:disable-next-line
-  await expect(input.locator('input')).toHaveValue('Karl Hungus <karlhungus@gmail.com>');
+  await expect(input.locator('input')).toHaveValue('Karl Hungus (karlhungus@gmail.com)');
   await expect(nextButton).not.toHaveDisabledAttribute();
   await nextButton.click();
   await usersPage.waitForTimeout(1000);
-  const newRoles = modal.locator('.role-updates').getByRole('listitem');
+  const newRoles = modal.locator('.workspace-list').getByRole('listitem');
   await expect(newRoles).toHaveCount(2);
-  await expect(newRoles).toHaveText(['Trademeet Not shared > Reader', 'The Copper Coronet Not shared > Reader']);
+  await expect(newRoles.locator('.workspace-item__name')).toHaveText(['Trademeet', 'The Copper Coronet']);
+  await expect(newRoles.locator('.workspace-item__role-old')).toHaveText(['Not shared', 'Not shared']);
+  await expect(newRoles.locator('.workspace-item__role-new')).toHaveText(['Reader', 'Reader']);
   await nextButton.click();
 });
