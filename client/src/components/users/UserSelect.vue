@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { popoverController } from '@ionic/vue';
+import { popoverController, IonText } from '@ionic/vue';
 import { onMounted, Ref, ref } from 'vue';
 import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
 import { listUsers, UserInfo } from '@/parsec';
