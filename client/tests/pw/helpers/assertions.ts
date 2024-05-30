@@ -203,7 +203,7 @@ export const expect = baseExpect.extend({
 
   async toBeDocumentPage(page: Page): Promise<AssertReturnType> {
     try {
-      await expect(page).toHaveURL(/\/\d+\/documents\/\d+\?documentPath=\/.*$/);
+      await expect(page).toHaveURL(/\/\d+\/documents\?documentPath=\/.*&workspaceHandle=\d+$/);
     } catch (error: any) {
       return {
         message: () => `Page is not documents page (url is '${error.matcherResult.actual}')`,
