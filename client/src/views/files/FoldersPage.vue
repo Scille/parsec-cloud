@@ -653,7 +653,7 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
     } else if (op.data.getDataType() === FileOperationDataType.Move) {
       path = await parsec.Path.parent((op.data as MoveData).dstPath);
     } else if (op.data.getDataType() === FileOperationDataType.Copy) {
-      path = await parsec.Path.parent((op.data as CopyData).dstPath);
+      path = (op.data as CopyData).dstPath;
     }
     if (op.data.workspaceHandle === workspaceInfo.value?.handle && parsec.Path.areSame(path, currentPath.value)) {
       operations.push(op);
@@ -725,8 +725,7 @@ async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
   if (!entry.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
-      params: { workspaceHandle: workspaceInfo.value?.handle },
-      query: { documentPath: newPath },
+      query: { documentPath: newPath, workspaceHandle: workspaceInfo.value?.handle },
     });
   } else {
     await openEntries([entry]);

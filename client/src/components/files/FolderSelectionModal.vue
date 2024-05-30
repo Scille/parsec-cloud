@@ -78,7 +78,6 @@ import { FolderSelectionOptions } from '@/components/files';
 import { Folder, MsImage, MsModalResult, MsModal } from 'megashark-lib';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryStat, FsPath, Path, StartedWorkspaceInfo, getWorkspaceInfo, statFolderChildren } from '@/parsec';
-import { getWorkspaceHandle } from '@/router';
 import { IonButton, IonButtons, IonIcon, IonItem, IonLabel, IonList, modalController } from '@ionic/vue';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
@@ -100,10 +99,10 @@ onMounted(async () => {
 });
 
 async function update(): Promise<void> {
-  const workspaceHandle = getWorkspaceHandle();
-  if (!workspaceHandle) {
+  if (!workspaceInfo.value) {
     return;
   }
+  const workspaceHandle = workspaceInfo.value.handle;
   const components = await Path.parse(selectedPath.value);
 
   const result = await statFolderChildren(workspaceHandle, selectedPath.value);

@@ -29,11 +29,11 @@
         @files-added="onFilesAdded"
       />
 
-      <file-card-importing
-        v-for="fileImport in importsInProgress"
-        :key="fileImport.data.id"
-        :data="fileImport.data as ImportData"
-        :progress="fileImport.progress"
+      <file-card-processing
+        v-for="op in operationsInProgress"
+        :key="op.data.id"
+        :data="op.data"
+        :progress="op.progress"
       />
     </div>
   </file-drop-zone>
@@ -41,13 +41,12 @@
 
 <script setup lang="ts">
 import FileCard from '@/components/files/FileCard.vue';
-import FileCardImporting from '@/components/files/FileCardImporting.vue';
+import FileCardProcessing from '@/components/files/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
-import { FileOperationDataType, ImportData } from '@/services/fileOperationManager';
-import { computed, ref } from 'vue';
+import { ref } from 'vue';
 
 const props = defineProps<{
   operationsInProgress: Array<FileOperationProgress>;
@@ -63,10 +62,6 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
-
-const importsInProgress = computed(() => {
-  return props.operationsInProgress.filter((op) => op.data.getDataType() === FileOperationDataType.Import);
-});
 
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value.reset();

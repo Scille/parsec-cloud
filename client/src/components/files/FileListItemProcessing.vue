@@ -44,7 +44,7 @@
       <!-- file size -->
       <div
         class="file-size"
-        v-show="data.getDataType() === FileOperationDataType.Import"
+        v-if="data.getDataType() === FileOperationDataType.Import"
       >
         <ion-label class="label-size cell">
           {{ $msTranslate(formatFileSize((data as ImportData).file.size)) }}
@@ -83,7 +83,7 @@ onMounted(async () => {
   if (props.data.getDataType() === FileOperationDataType.Import) {
     fileName.value = (props.data as ImportData).file.name;
   } else if (props.data.getDataType() === FileOperationDataType.Copy) {
-    fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
+    fileName.value = (await Path.filename((props.data as CopyData).srcPath)) || '';
   } else if (props.data.getDataType() === FileOperationDataType.Move) {
     fileName.value = (await Path.filename((props.data as CopyData).dstPath)) || '';
   }
