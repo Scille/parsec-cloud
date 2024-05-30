@@ -38,7 +38,7 @@
             class="hover-state"
             v-show="[FileOperationState.EntryMoved].includes(state)"
           >
-            {{ $msTranslate('FoldersPage.ImportFile.browse') }}
+            {{ $msTranslate('FoldersPage.MoveFile.browse') }}
           </span>
         </ion-label>
       </div>
@@ -49,7 +49,7 @@
           class="waiting-text body"
           v-if="state === FileOperationState.MoveAdded"
         >
-          {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
+          {{ $msTranslate('FoldersPage.MoveFile.waiting') }}
         </ion-text>
         <ion-button
           fill="clear"
@@ -98,19 +98,20 @@
         class="cancel-text body"
         v-if="state === FileOperationState.Cancelled"
       >
-        {{ $msTranslate('FoldersPage.ImportFile.cancelled') }}
+        {{ $msTranslate('FoldersPage.MoveFile.cancelled') }}
       </ion-text>
 
       <!-- failed -->
       <div
         class="failed-content"
-        v-if="state === FileOperationState.CreateFailed"
+        v-if="state === FileOperationState.MoveFailed"
       >
         <ion-text class="failed-text body">
-          {{ $msTranslate('FoldersPage.ImportFile.failed') }}
+          {{ $msTranslate('FoldersPage.MoveFile.failed') }}
         </ion-text>
         <ms-information-tooltip
-          :text="'FoldersPage.ImportFile.failedDetails'"
+          v-show="false"
+          :text="'FoldersPage.MoveFile.failedDetails'"
           class="information-icon"
           slot="end"
         />
@@ -118,7 +119,7 @@
     </ion-item>
     <ion-progress-bar
       class="element-progress-bar"
-      :value="state === FileOperationState.Cancelled ? 100 : progress / 100"
+      :value="getProgress() / 100"
     />
   </div>
 </template>
@@ -127,14 +128,14 @@
 import { getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo, Path, EntryName } from '@/parsec';
-import { MoveData, FileOperationState } from '@/services/fileOperationManager';
+import { MoveData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationData: MoveData;
-  progress: number;
+  stateData?: StateData;
   state: FileOperationState;
 }>();
 
@@ -157,6 +158,15 @@ defineEmits<{
   (event: 'cancel', id: string): void;
   (event: 'click', operationData: MoveData, state: FileOperationState): void;
 }>();
+
+function getProgress(): number {
+  if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.EntryMoved) {
+    return 100;
+  } else if (props.state === FileOperationState.OperationProgress && props.stateData) {
+    return (props.stateData as OperationProgressStateData).progress;
+  }
+  return 0;
+}
 </script>
 
 <style scoped lang="scss">

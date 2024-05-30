@@ -63,8 +63,8 @@
           v-for="item in inProgressItems"
           :is="getFileOperationComponent(item)"
           :key="item.data.id"
-          :progress="item.progress"
           :state="item.state"
+          :state-data="item.stateData"
           :operation-data="item.data"
           @cancel="cancelOperation"
         />
@@ -83,8 +83,8 @@
           v-for="item in doneItems"
           :is="getFileOperationComponent(item)"
           :key="item.data.id"
-          :progress="item.progress"
           :state="item.state"
+          :state-data="item.stateData"
           :operation-data="item.data"
           @cancel="cancelOperation"
           @click="onOperationFinishedClick"
@@ -104,8 +104,8 @@
           v-for="item in errorItems"
           :is="getFileOperationComponent(item)"
           :key="item.data.id"
-          :progress="item.progress"
           :state="item.state"
+          :state-data="item.stateData"
           :operation-data="item.data"
           @cancel="cancelOperation"
         />
@@ -129,7 +129,6 @@ import { FileUploadItem, FileCopyItem, FileMoveItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
 import {
-  OperationProgressStateData,
   ImportData,
   FileOperationManager,
   FileOperationManagerKey,
@@ -137,16 +136,18 @@ import {
   FileOperationState,
   StateData,
   FileOperationDataType,
+  CopyData,
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { Component } from 'vue';
+import { entryStat, Path } from '@/parsec';
 
 interface OperationItem {
   data: FileOperationData;
   state: FileOperationState;
-  progress: number;
+  stateData?: StateData;
 }
 
 const menu = useUploadMenu();
@@ -217,22 +218,34 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
   }
 }
 
-function updateImportState(id: string, state: FileOperationState, progress?: number): void {
+function updateImportState(id: string, state: FileOperationState, stateData?: StateData): void {
   const operation = fileOperations.value.find((op) => op.data.id === id);
   if (operation) {
     operation.state = state;
-    if (progress !== undefined) {
-      operation.progress = progress;
-    }
+    operation.stateData = stateData;
   }
 }
 
 async function onOperationFinishedClick(operationData: FileOperationData, state: FileOperationState): Promise<void> {
-  if (state !== FileOperationState.FileImported) {
+  if (state !== FileOperationState.FileImported && state !== FileOperationState.EntryCopied) {
     return;
   }
   if (operationData.getDataType() === FileOperationDataType.Import) {
     await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
+  } else if (operationData.getDataType() === FileOperationDataType.Copy) {
+    const dstPath = (operationData as CopyData).dstPath;
+    const statResult = await entryStat(operationData.workspaceHandle, dstPath);
+    if (statResult.ok) {
+      if (statResult.value.isFile()) {
+        const parentPath = await Path.parent(dstPath);
+        const fileName = await Path.filename(dstPath);
+        if (fileName) {
+          await navigateToWorkspace(operationData.workspaceHandle, parentPath, fileName);
+        }
+      } else {
+        await navigateToWorkspace(operationData.workspaceHandle, dstPath);
+      }
+    }
   }
   menu.minimize();
 }
@@ -255,7 +268,11 @@ async function onFileOperationEvent(
       break;
     case FileOperationState.OperationAllFinished:
       isFileOperationManagerActive.value = false;
-      currentTab.value = Tabs.Done;
+      if (errorItems.value.length > 0) {
+        currentTab.value = Tabs.Error;
+      } else {
+        currentTab.value = Tabs.Done;
+      }
       break;
     case FileOperationState.FileAdded:
     case FileOperationState.MoveAdded:
@@ -263,24 +280,24 @@ async function onFileOperationEvent(
       fileOperations.value.push({
         data: fileOperationData as FileOperationData,
         state: state,
-        progress: 0,
+        stateData: stateData,
       });
       if (uploadMenuList.value?.$el) {
         uploadMenuList.value.$el.scrollTo({ top: 0, behavior: 'smooth' });
       }
       break;
     case FileOperationState.OperationProgress:
-      updateImportState((fileOperationData as FileOperationData).id, state, (stateData as OperationProgressStateData).progress);
+      updateImportState((fileOperationData as FileOperationData).id, state, stateData);
       break;
     case FileOperationState.FileImported:
     case FileOperationState.EntryMoved:
     case FileOperationState.EntryCopied:
-      updateImportState((fileOperationData as FileOperationData).id, state, 100);
+      updateImportState((fileOperationData as FileOperationData).id, state, stateData);
       break;
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
     case FileOperationState.CopyFailed:
-      updateImportState((fileOperationData as FileOperationData).id, state, -1);
+      updateImportState((fileOperationData as FileOperationData).id, state, stateData);
       break;
     case FileOperationState.Cancelled:
       updateImportState((fileOperationData as FileOperationData).id, state);

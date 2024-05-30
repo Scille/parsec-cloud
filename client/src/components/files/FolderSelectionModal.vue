@@ -10,7 +10,7 @@
       onClick: cancel,
     }"
     :confirm-button="{
-      label: 'TextInputModal.moveHere',
+      label: okButtonLabel || 'TextInputModal.moveHere',
       disabled: allowStartingPath ? false : selectedPath === startingPath,
       onClick: confirm,
     }"

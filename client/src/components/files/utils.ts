@@ -17,6 +17,7 @@ export interface FolderSelectionOptions {
   workspaceHandle: WorkspaceHandle;
   allowStartingPath?: boolean;
   excludePaths?: Array<FsPath>;
+  okButtonLabel?: Translatable;
 }
 
 export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<FileImportTuple[]> {

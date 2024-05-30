@@ -6,9 +6,9 @@
     :class="{
       waiting: state === FileOperationState.FileAdded,
       progress: state === FileOperationState.OperationProgress,
-      done: state === FileOperationState.FileImported,
+      done: state === FileOperationState.EntryCopied,
       cancelled: state === FileOperationState.Cancelled,
-      failed: state === FileOperationState.CreateFailed,
+      failed: state === FileOperationState.CopyFailed,
     }"
   >
     <ion-item
@@ -38,7 +38,7 @@
             class="hover-state"
             v-show="[FileOperationState.EntryCopied].includes(state)"
           >
-            {{ $msTranslate('FoldersPage.ImportFile.browse') }}
+            {{ $msTranslate('FoldersPage.CopyFile.browse') }}
           </span>
         </ion-label>
       </div>
@@ -49,7 +49,7 @@
           class="waiting-text body"
           v-if="state === FileOperationState.CopyAdded"
         >
-          {{ $msTranslate('FoldersPage.ImportFile.waiting') }}
+          {{ $msTranslate('FoldersPage.CopyFile.waiting') }}
         </ion-text>
         <ion-button
           fill="clear"
@@ -98,19 +98,20 @@
         class="cancel-text body"
         v-if="state === FileOperationState.Cancelled"
       >
-        {{ $msTranslate('FoldersPage.ImportFile.cancelled') }}
+        {{ $msTranslate('FoldersPage.CopyFile.cancelled') }}
       </ion-text>
 
       <!-- failed -->
       <div
         class="failed-content"
-        v-if="state === FileOperationState.CreateFailed"
+        v-if="state === FileOperationState.CopyFailed"
       >
         <ion-text class="failed-text body">
-          {{ $msTranslate('FoldersPage.ImportFile.failed') }}
+          {{ $msTranslate('FoldersPage.CopyFile.failed') }}
         </ion-text>
         <ms-information-tooltip
-          text="FoldersPage.ImportFile.failedDetails"
+          v-show="getFailureReason() !== ''"
+          :text="getFailureReason()"
           class="information-icon"
           slot="end"
         />
@@ -118,24 +119,31 @@
     </ion-item>
     <ion-progress-bar
       class="element-progress-bar"
-      :value="state === FileOperationState.Cancelled ? 100 : progress / 100"
+      :value="getProgress() / 100"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip } from 'megashark-lib';
+import { MsImage, MsInformationTooltip, Translatable } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
-import { CopyData, FileOperationState } from '@/services/fileOperationManager';
+import {
+  CopyData,
+  CopyFailedError,
+  CopyFailedStateData,
+  FileOperationState,
+  OperationProgressStateData,
+  StateData,
+} from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationData: CopyData;
-  progress: number;
   state: FileOperationState;
+  stateData?: StateData;
 }>();
 
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
@@ -151,10 +159,36 @@ onMounted(async () => {
   }
 });
 
+function getProgress(): number {
+  if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.EntryCopied) {
+    return 100;
+  } else if (props.state === FileOperationState.OperationProgress && props.stateData) {
+    return (props.stateData as OperationProgressStateData).progress;
+  }
+  return 0;
+}
+
 defineEmits<{
   (event: 'cancel', id: string): void;
   (event: 'click', operationData: CopyData, state: FileOperationState): void;
 }>();
+
+function getFailureReason(): Translatable {
+  if (props.state === FileOperationState.CopyFailed && props.stateData) {
+    const data = props.stateData as CopyFailedStateData;
+    switch (data.error) {
+      case CopyFailedError.MaxFilesReached:
+        return { key: 'FoldersPage.errors.copyFailedTooManyFiles' };
+      case CopyFailedError.MaxRecursionReached:
+        return { key: 'FoldersPage.errors.copyFailedMaxRecursion' };
+      case CopyFailedError.OneFailed:
+        return { key: 'FoldersPage.errors.copyFailedOneFailed' };
+      case CopyFailedError.SourceDoesNotExist:
+        return { key: 'FoldersPage.errors.copyFailedSourceDoesNotExist', data: { source: props.operationData.srcPath } };
+    }
+  }
+  return '';
+}
 </script>
 
 <style scoped lang="scss">

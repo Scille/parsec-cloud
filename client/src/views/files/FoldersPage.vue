@@ -214,6 +214,7 @@ import {
   ImportType,
   SortProperty,
   selectFolder,
+  EntryModel,
 } from '@/components/files';
 import { Path, entryStat, WorkspaceCreateFolderErrorTag, listWorkspaces, WorkspaceID, WorkspaceRole, FsPath, EntryStat } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
@@ -720,7 +721,7 @@ async function listFolder(): Promise<void> {
   }
 }
 
-async function onEntryClick(entry: parsec.EntryStat, _event: Event): Promise<void> {
+async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
   if (!entry.isFile()) {
     const newPath = await parsec.Path.join(currentPath.value, entry.name);
     navigateTo(Routes.Documents, {
@@ -792,11 +793,11 @@ async function onImportClicked(event: Event): Promise<void> {
   }
 }
 
-function getSelectedEntries(): parsec.EntryStat[] {
+function getSelectedEntries(): EntryModel[] {
   return [...folders.value.getSelectedEntries(), ...files.value.getSelectedEntries()];
 }
 
-async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
+async function deleteEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   } else if (entries.length === 1) {
@@ -871,7 +872,7 @@ async function deleteEntries(entries: parsec.EntryStat[]): Promise<void> {
   await listFolder();
 }
 
-async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
+async function renameEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
@@ -914,7 +915,7 @@ async function renameEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
+async function copyLink(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
@@ -950,7 +951,7 @@ async function copyLink(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
+async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
@@ -1014,10 +1015,11 @@ async function moveEntriesTo(entries: parsec.EntryStat[]): Promise<void> {
       // permission to replace it, otherwise we don't want to force.
       existingEntries.find((e) => e.id === entry.id) !== undefined,
     );
+    entry.isSelected = false;
   }
 }
 
-async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
+async function showDetails(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
@@ -1034,7 +1036,7 @@ async function showDetails(entries: parsec.EntryStat[]): Promise<void> {
   await modal.onWillDismiss();
 }
 
-async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
+async function copyEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length === 0 || !workspaceInfo.value) {
     return;
   }
@@ -1051,6 +1053,7 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
     workspaceHandle: workspaceInfo.value.handle,
     excludePaths: excludePaths,
     allowStartingPath: true,
+    okButtonLabel: 'FoldersPage.copyHere',
   });
   if (!folder) {
     return;
@@ -1058,21 +1061,22 @@ async function copyEntries(entries: parsec.EntryStat[]): Promise<void> {
 
   for (const entry of entries) {
     await fileOperationManager.copyEntry(workspaceInfo.value.handle, workspaceInfo.value.id, entry.path, folder);
+    entry.isSelected = false;
   }
 }
 
-async function downloadEntries(entries: parsec.EntryStat[]): Promise<void> {
+async function downloadEntries(entries: EntryModel[]): Promise<void> {
   console.log('Download', entries);
 }
 
-async function showHistory(entries: parsec.EntryStat[]): Promise<void> {
+async function showHistory(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
   console.log('Show history', entries[0]);
 }
 
-async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
+async function openEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value) {
     return;
   }
@@ -1105,7 +1109,7 @@ async function openEntries(entries: parsec.EntryStat[]): Promise<void> {
   }
 }
 
-async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFinished?: () => void): Promise<void> {
+async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -1129,7 +1133,7 @@ async function openEntryContextMenu(event: Event, entry: parsec.EntryStat, onFin
     return;
   }
 
-  const actions = new Map<FileAction, (file: parsec.EntryStat[]) => Promise<void>>([
+  const actions = new Map<FileAction, (file: EntryModel[]) => Promise<void>>([
     [FileAction.Rename, renameEntries],
     [FileAction.MoveTo, moveEntriesTo],
     [FileAction.MakeACopy, copyEntries],

@@ -111,6 +111,7 @@
           {{ $msTranslate('FoldersPage.ImportFile.failed') }}
         </ion-text>
         <ms-information-tooltip
+          v-show="false"
           :text="'FoldersPage.ImportFile.failedDetails'"
           class="information-icon"
           slot="end"
@@ -119,7 +120,7 @@
     </ion-item>
     <ion-progress-bar
       class="element-progress-bar"
-      :value="state === FileOperationState.Cancelled ? 100 : progress / 100"
+      :value="getProgress() / 100"
     />
   </div>
 </template>
@@ -128,15 +129,15 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
-import { ImportData, FileOperationState } from '@/services/fileOperationManager';
+import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmark, close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationData: ImportData;
-  progress: number;
   state: FileOperationState;
+  stateData?: StateData;
 }>();
 
 // Props get refreshed for every event but the file name or size
@@ -155,6 +156,15 @@ onMounted(async () => {
     workspaceInfo.value = result.value;
   }
 });
+
+function getProgress(): number {
+  if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.FileImported) {
+    return 100;
+  } else if (props.state === FileOperationState.OperationProgress && props.stateData) {
+    return (props.stateData as OperationProgressStateData).progress;
+  }
+  return 0;
+}
 
 defineEmits<{
   (event: 'cancel', id: string): void;
