@@ -19,10 +19,6 @@
         <ion-label class="file-name__label cell">
           {{ data.file.name }}
         </ion-label>
-        <ion-icon
-          class="cloud-overlay"
-          :icon="cloudOffline"
-        />
       </div>
 
       <!-- updated by -->
@@ -30,6 +26,7 @@
       <div
         class="file-updatedBy"
         v-if="clientInfo"
+        v-show="false"
       >
         <user-avatar-name
           :user-avatar="clientInfo.humanHandle.label"
@@ -63,8 +60,7 @@ import { MsImage } from 'megashark-lib';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { ClientInfo, getClientInfo } from '@/parsec';
 import { ImportData } from '@/services/fileOperationManager';
-import { IonIcon, IonItem, IonLabel } from '@ionic/vue';
-import { cloudOffline } from 'ionicons/icons';
+import { IonItem, IonLabel } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 import { MsSpinner } from 'megashark-lib';
 
@@ -93,11 +89,6 @@ onMounted(async () => {
   &__label {
     color: var(--parsec-color-light-secondary-text);
     margin-left: 1em;
-  }
-
-  .cloud-overlay {
-    font-size: 1rem;
-    color: var(--parsec-color-light-secondary-grey);
   }
 }
 </style>
