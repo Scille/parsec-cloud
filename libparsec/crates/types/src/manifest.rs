@@ -288,26 +288,34 @@ impl FileManifest {
         for block in &self.blocks {
             // Check that blocks are ordered and not overlapping
             if current_offset > block.offset {
-                return Err(DataError::FileManifestIntegrity);
+                return Err(DataError::FileManifestIntegrity {
+                    invariant: "blocks are ordered and not overlapping",
+                });
             }
             current_offset = block.offset + block.size.get();
 
             // Check that blocks are not sharing the same block span
             let block_index = block.offset / self.blocksize.inner();
             if current_block_index > block_index {
-                return Err(DataError::FileManifestIntegrity);
+                return Err(DataError::FileManifestIntegrity {
+                    invariant: "blocks are not sharing the same block span",
+                });
             }
             current_block_index = block_index + 1;
 
             // Check that blocks are not spanning over multiple block spans
             let last_block_index = (block.offset + block.size.get() - 1) / self.blocksize.inner();
             if last_block_index != block_index {
-                return Err(DataError::FileManifestIntegrity);
+                return Err(DataError::FileManifestIntegrity {
+                    invariant: "blocks are not spanning over multiple block spans",
+                });
             }
         }
         // Check that the file size is not exceeded
         if current_offset > self.size {
-            return Err(DataError::FileManifestIntegrity);
+            return Err(DataError::FileManifestIntegrity {
+                invariant: "file size is not exceeded",
+            });
         }
         Ok(())
     }

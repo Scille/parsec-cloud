@@ -224,14 +224,24 @@ impl Chunk {
             .ok_or(ChunkGetBlockAccessError::NotPromotedAsBlock)
     }
 
+    #[allow(clippy::nonminimal_bool)]
     pub fn check_integrity(&self) -> DataResult<()> {
         // As explained above, the following rule applies:
         //   raw_offset <= start < stop <= raw_offset + raw_size
-        if !(self.raw_offset <= self.start
-            && self.start < self.stop.get()
-            && self.stop.get() <= self.raw_offset + self.raw_size.get())
-        {
-            return Err(DataError::ChunkIntegrity);
+        if !(self.raw_offset <= self.start) {
+            return Err(DataError::ChunkIntegrity {
+                invariant: "raw_offset <= start",
+            });
+        }
+        if !(self.start < self.stop.get()) {
+            return Err(DataError::ChunkIntegrity {
+                invariant: "start < stop",
+            });
+        }
+        if !(self.stop.get() <= self.raw_offset + self.raw_size.get()) {
+            return Err(DataError::ChunkIntegrity {
+                invariant: "stop <= raw_offset + raw_size",
+            });
         }
         Ok(())
     }
@@ -351,12 +361,16 @@ impl LocalFileManifest {
 
                 // Check that the chunk belong to the block span
                 if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
-                    return Err(DataError::LocalFileManifestIntegrity);
+                    return Err(DataError::LocalFileManifestIntegrity {
+                        invariant: "Chunk belong to the block span",
+                    });
                 }
 
                 // Check that the chunks are ordered and do not overlap
                 if current > chunk.start {
-                    return Err(DataError::LocalFileManifestIntegrity);
+                    return Err(DataError::LocalFileManifestIntegrity {
+                        invariant: "Chunks are ordered and do not overlap",
+                    });
                 }
                 current = chunk.stop.get();
             }
@@ -369,7 +383,9 @@ impl LocalFileManifest {
 
         // Check that the file size is consistent with the last chunk
         if current > self.size {
-            return Err(DataError::LocalFileManifestIntegrity);
+            return Err(DataError::LocalFileManifestIntegrity {
+                invariant: "File size is consistent with the last chunk",
+            });
         }
 
         Ok(())
