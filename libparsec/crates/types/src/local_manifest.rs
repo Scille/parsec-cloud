@@ -39,6 +39,31 @@ macro_rules! impl_local_manifest_dump_load {
 }
 
 /*
+ * Method specific errors
+ */
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum ChunkPromoteAsBlockError {
+    #[error("This chunk has already been promoted as a block")]
+    AlreadyPromotedAsBlock,
+
+    #[error("This chunk is not aligned and can't be promoted as a block")]
+    NotAligned,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum ChunkGetBlockAccessError {
+    #[error("This chunk hasn't been promoted as a block")]
+    NotPromotedAsBlock,
+}
+
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum LocalFileManifestToRemoteError {
+    #[error("Local file manifest needs reshape before being converted to remote")]
+    NeedReshape,
+}
+
+/*
  * Chunk
  */
 
@@ -140,15 +165,15 @@ impl Chunk {
         }
     }
 
-    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), &'static str> {
+    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), ChunkPromoteAsBlockError> {
         // No-op
         if self.is_block() {
-            return Err("already a block");
+            return Err(ChunkPromoteAsBlockError::AlreadyPromotedAsBlock);
         }
 
         // Check alignement
-        if self.raw_offset != self.start {
-            return Err("not aligned");
+        if !self.is_aligned() {
+            return Err(ChunkPromoteAsBlockError::NotAligned);
         }
 
         // Craft access
@@ -165,8 +190,8 @@ impl Chunk {
     fn block(&self) -> Option<&BlockAccess> {
         // Requires an access
         if let Some(access) = &self.access {
-            // Pseudo block
-            if self.is_pseudo_block()
+            // Correctly aligned
+            if self.is_aligned()
             // Offset inconsistent
             && self.raw_offset == access.offset
             // Size inconsistent
@@ -182,7 +207,7 @@ impl Chunk {
         self.block().is_some()
     }
 
-    pub fn is_pseudo_block(&self) -> bool {
+    pub fn is_aligned(&self) -> bool {
         // Not left aligned
         if self.start != self.raw_offset {
             return false;
@@ -194,8 +219,9 @@ impl Chunk {
         true
     }
 
-    pub fn get_block_access(&self) -> DataResult<&BlockAccess> {
-        self.block().ok_or(DataError::NotReshaped)
+    pub fn get_block_access(&self) -> Result<&BlockAccess, ChunkGetBlockAccessError> {
+        self.block()
+            .ok_or(ChunkGetBlockAccessError::NotPromotedAsBlock)
     }
 }
 
@@ -377,9 +403,14 @@ impl LocalFileManifest {
         manifest
     }
 
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> DataResult<FileManifest> {
-        // Make sure we don't upload an invalid manifest
-        self.check_content_integrity()?;
+    pub fn to_remote(
+        &self,
+        author: DeviceID,
+        timestamp: DateTime,
+    ) -> Result<FileManifest, LocalFileManifestToRemoteError> {
+        // Sanity check: make sure we don't upload an invalid manifest
+        self.check_content_integrity()
+            .expect("Local file manifest content integrity");
 
         let blocks = self
             .blocks
@@ -393,10 +424,12 @@ impl LocalFileManifest {
             // (i.e a chunk with an access). If not, the `NotReshaped` error is returned.
             .map(|chunks| match chunks.len() {
                 0 => unreachable!(),
-                1 => chunks[0].get_block_access(),
-                _ => Err(DataError::NotReshaped),
+                1 => chunks[0]
+                    .get_block_access()
+                    .map_err(|_| LocalFileManifestToRemoteError::NeedReshape),
+                _ => Err(LocalFileManifestToRemoteError::NeedReshape),
             })
-            .collect::<DataResult<Vec<_>>>()?
+            .collect::<Result<Vec<_>, _>>()?
             .into_iter()
             .cloned()
             .collect();
@@ -414,7 +447,9 @@ impl LocalFileManifest {
             blocks,
         };
         // The content integrity check is also done on the remote manifest, just in case
-        manifest.check_content_integrity()?;
+        manifest
+            .check_content_integrity()
+            .expect("File manifest content integrity");
         Ok(manifest)
     }
 
