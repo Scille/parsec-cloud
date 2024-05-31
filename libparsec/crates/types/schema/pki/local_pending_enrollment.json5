@@ -3,15 +3,19 @@
     "type": "local_pending_enrollment",
     "other_fields": [
         {
-            "name": "x509_certificate",
-            "type": "X509Certificate"
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
         },
         {
-            // URL has format `parsec3://parsec.example.com/my_org?a=pki_enrollment`.
-            // Note legacy `parsec://parsec.example.com/my_org?action=pki_enrollment`
-            // format is also supported here for backwards compatibility.
-            "name": "addr",
-            "type": "ParsecPkiEnrollmentAddr"
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "x509_certificate",
+            "type": "X509Certificate"
         },
         {
             "name": "submitted_on",

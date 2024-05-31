@@ -59,8 +59,8 @@ impl ParsecAddr {
     }
 
     #[pyo3(signature = (path = ""))]
-    fn to_http_domain_url(&self, path: &str) -> String {
-        self.0.to_http_url_with_path(Some(path)).to_string()
+    fn to_http_url(&self, path: &str) -> String {
+        self.0.to_http_url(Some(path)).to_string()
     }
 
     fn to_http_redirection_url(&self) -> String {
@@ -365,11 +365,6 @@ impl ParsecOrganizationBootstrapAddr {
 
     fn to_http_redirection_url(&self) -> String {
         self.0.to_http_redirection_url().to_string()
-    }
-
-    #[pyo3(signature = (path = ""))]
-    fn to_http_domain_url(&self, path: &str) -> String {
-        self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]
@@ -784,11 +779,6 @@ impl ParsecPkiEnrollmentAddr {
 
     fn to_http_redirection_url(&self) -> String {
         self.0.to_http_redirection_url().to_string()
-    }
-
-    #[pyo3(signature = (path = ""))]
-    fn to_http_domain_url(&self, path: &str) -> String {
-        self.0.to_http_url_with_path(Some(path)).to_string()
     }
 
     #[classmethod]

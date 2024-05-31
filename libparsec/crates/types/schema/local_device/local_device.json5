@@ -3,12 +3,19 @@
     "type": "local_device",
     "other_fields": [
         {
-            // cspell:disable-next-line
-            // URL has format `parsec3://parsec.example.com/MyOrg?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA`.
-            // Note legacy `parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss`
-            // format is also supported here for backwards compatibility.
-            "name": "organization_addr",
-            "type": "ParsecOrganizationAddr"
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
+        },
+        {
+            "name": "root_verify_key",
+            "type": "VerifyKey"
         },
         {
             "name": "user_id",

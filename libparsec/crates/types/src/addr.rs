@@ -1,11 +1,24 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::convert::TryFrom;
+//! This module defines the type of URL used in Parsec.
+//!
+//! Notes:
+//! - Parsec URLs have a specific `parsec3://` schema, but are under the hood regular
+//!   `http(s)://` urls.
+//! - There is no http vs https dichotomy here: Parsec always uses SSL in production
+//!   so a `parsec3://` is expected to be equivalent to a `https://` URL.
+//!   However for test purpose only we can disable SSL by passing a `no_ssl=true` query
+//!   parameter (e.g. `parsec3://foo` -> `https://foo`, `parsec3://foo?no_ssl=true` -> `http://foo`).
+//! - Non-http scheme are often poorly supported (e.g. url in email displayed
+//!   in Outlook are not clickable). Hence the need for redirection HTTP URLs
+//!   point to the Parsec server and then redirect to the final `parsec3://` URL.
+//! - Parsec URLs are not serializable with serde as we shouldn't use them in the data
+//!   schemes. This is so that we can change the URL format without breaking the data
+//!  serialization format.
+
 use std::str::FromStr;
 
-use data_encoding::{BASE32, BASE64URL_NOPAD};
-use serde::de::{self, Deserialize, Deserializer, Visitor};
-use serde::ser::{Serialize, Serializer};
+use data_encoding::BASE64URL_NOPAD;
 pub use url::Url;
 
 use libparsec_crypto::VerifyKey;
@@ -33,6 +46,7 @@ const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 struct ParsecUrlAsHTTPScheme(Url);
 
 impl ParsecUrlAsHTTPScheme {
+    /// Parse a redirection url (i.e. `http(s)://<domain>/redirect/<path>`)
     fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
         // 1) Validate the http/https url
 
@@ -61,6 +75,19 @@ impl ParsecUrlAsHTTPScheme {
         parsed.set_path(&path);
 
         // 3) Handle per-specific-address type parsing details
+        Ok(ParsecUrlAsHTTPScheme(parsed))
+    }
+
+    // Parse a `http(s)://` url just like if it had the `parsec3://` scheme
+    fn from_http_url(url: &str) -> Result<Self, AddrError> {
+        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+
+        // `no_ssl` is defined by http/https scheme and shouldn't be
+        // overwritten by the query part of the url
+        let mut cleaned_query = url::form_urlencoded::Serializer::new(String::new());
+        cleaned_query.extend_pairs(parsed.query_pairs().filter(|(k, _)| k != "no_ssl"));
+        parsed.set_query(Some(&cleaned_query.finish()));
+
         Ok(ParsecUrlAsHTTPScheme(parsed))
     }
 }
@@ -118,7 +145,7 @@ impl FromStr for ParsecUrlAsHTTPScheme {
 }
 
 macro_rules! impl_common_stuff {
-    ($name:ty, _internal_ $(, $legacy_deserialize_hook:path)?) => {
+    ($name:ty, _internal_) => {
         impl $name {
             /// Returns a `parsec3://` url
             pub fn to_url(&self) -> Url {
@@ -170,56 +197,11 @@ macro_rules! impl_common_stuff {
                 Self::_from_url(&parsed)
             }
         }
-
-        impl Serialize for $name {
-            fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-            where
-                S: Serializer,
-            {
-                serializer.serialize_str(self.to_url().as_str())
-            }
-        }
-
-        paste::paste! {
-            impl<'de> Deserialize<'de> for $name {
-                fn deserialize<D>(deserializer: D) -> Result<$name, D::Error>
-                where
-                    D: Deserializer<'de>,
-                {
-                    deserializer.deserialize_str([<$name Visitor>])
-                }
-            }
-
-            struct [<$name Visitor>];
-
-            impl<'de> Visitor<'de> for [<$name Visitor>] {
-                type Value = $name;
-
-                fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                    formatter.write_str(concat!("a ", stringify!($name), " URL"))
-                }
-
-                fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
-                where
-                    E: de::Error,
-                {
-                    value.parse()
-                    .map_err(E::custom)
-                    $(
-                        .or_else(|original_err| {
-                            $legacy_deserialize_hook(value).or_else(move |_| {
-                                Err(original_err)
-                            })
-                        })
-                    )?
-                }
-            }
-        }
     };
     (ParsecAddr) => {
         impl_common_stuff!(ParsecAddr, _internal_);
     };
-    ($name:ty $(, legacy_deserialize_hook: $legacy_deserialize_hook:path)?) => {
+    ($name:ty) => {
         impl From<$name> for ParsecAddr {
             fn from(value: $name) -> Self {
                 ParsecAddr { base: value.base }
@@ -232,7 +214,7 @@ macro_rules! impl_common_stuff {
                 }
             }
         }
-        impl_common_stuff!($name, _internal_ $(, $legacy_deserialize_hook)?);
+        impl_common_stuff!($name, _internal_);
     };
 }
 
@@ -353,11 +335,6 @@ macro_rules! expose_base_parsec_addr_fields {
         pub fn use_ssl(&self) -> bool {
             self.base.use_ssl
         }
-
-        /// Create a url for http request with an optional path
-        pub fn to_http_url(&self, path: Option<&str>) -> Url {
-            self.base.to_http_url(path)
-        }
     };
 }
 
@@ -451,7 +428,13 @@ impl ParsecAddr {
         }
     }
 
-    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
+    pub fn from_http_url(url: &str) -> Result<Self, AddrError> {
+        let parsed = ParsecUrlAsHTTPScheme::from_http_url(url)?;
+        Self::_from_url(&parsed)
+    }
+
+    /// Create a url for http request with an optional path
+    pub fn to_http_url(&self, path: Option<&str>) -> Url {
         self.base.to_http_url(path)
     }
 
@@ -485,7 +468,7 @@ pub struct ParsecOrganizationAddr {
     root_verify_key: VerifyKey,
 }
 
-impl_common_stuff!(ParsecOrganizationAddr, legacy_deserialize_hook: ParsecOrganizationAddr::from_legacy_parsec_v2);
+impl_common_stuff!(ParsecOrganizationAddr);
 
 impl ParsecOrganizationAddr {
     pub fn new(
@@ -547,60 +530,6 @@ impl ParsecOrganizationAddr {
     pub fn to_anonymous_http_url(&self) -> Url {
         self.base
             .to_http_url(Some(&format!("/anonymous/{}", self.organization_id)))
-    }
-
-    /// In Parsec < v3, the url is something like `parsec://parsec.example.com/my_org?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss`
-    pub fn from_legacy_parsec_v2(url: &str) -> Result<Self, AddrError> {
-        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
-
-        const LEGACY_PARSEC_SCHEMA: &str = "parsec";
-        const LEGACY_PARSEC_PARAM_RVK: &str = "rvk";
-
-        // 1) Convert scheme `parsec://` -> `parsec3://`
-
-        if parsed.scheme() != LEGACY_PARSEC_SCHEMA {
-            return Err(AddrError::InvalidUrlScheme {
-                got: parsed.scheme().to_string(),
-                expected: LEGACY_PARSEC_SCHEMA,
-            });
-        }
-        parsed
-            .set_scheme(PARSEC_SCHEME)
-            .expect("old and new schemes are valid and compatible with each other");
-
-        // 2) Convert rvk param into the payload format
-
-        let mut pairs = vec![];
-        for (k, v) in parsed.query_pairs() {
-            if k == LEGACY_PARSEC_PARAM_RVK {
-                let mk_err = || AddrError::InvalidParamValue {
-                    param: LEGACY_PARSEC_PARAM_RVK,
-                    value: v.to_string(),
-                    help: "Invalid root verify key".to_string(),
-                };
-
-                // Legacy binary encoding is based on base32 encoding, but with padding
-                // chars `=` replaced by a simple `s` (which is not part of the base32
-                // table so no risk of collision) to avoid copy/paste errors and silly
-                // escaping issues when carrying the key around.
-
-                let encoded_b32 = v.replace('s', "=");
-                let buff = BASE32
-                    .decode(encoded_b32.as_bytes())
-                    .map_err(|_| mk_err())?;
-
-                let key = VerifyKey::try_from(buff.as_slice()).map_err(|_| mk_err())?;
-                let payload = b64_msgpack_serialize(&key);
-
-                pairs.push((PARSEC_PARAM_PAYLOAD.to_string(), payload));
-            } else {
-                pairs.push((k.to_string(), v.to_string()));
-            }
-        }
-        parsed.query_pairs_mut().clear().extend_pairs(pairs);
-
-        // 2) Url has been converted, we can now parse it as a regular one
-        Self::from_str(parsed.as_str())
     }
 }
 
@@ -734,10 +663,6 @@ impl ParsecOrganizationBootstrapAddr {
 
     pub fn token(&self) -> Option<&BootstrapToken> {
         self.token.as_ref()
-    }
-
-    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        self.base.to_http_url(path)
     }
 
     pub fn generate_organization_addr(&self, root_verify_key: VerifyKey) -> ParsecOrganizationAddr {
@@ -964,7 +889,8 @@ impl ParsecInvitationAddr {
 
     /// Return an [Url] that points to the server endpoint for invited commands.
     pub fn to_invited_url(&self) -> Url {
-        self.to_http_url(Some(&format!("/invited/{}", self.organization_id())))
+        self.base
+            .to_http_url(Some(&format!("/invited/{}", &self.organization_id)))
     }
 }
 
@@ -980,7 +906,7 @@ pub struct ParsecPkiEnrollmentAddr {
     organization_id: OrganizationID,
 }
 
-impl_common_stuff!(ParsecPkiEnrollmentAddr, legacy_deserialize_hook: ParsecPkiEnrollmentAddr::from_legacy_parsec_v2);
+impl_common_stuff!(ParsecPkiEnrollmentAddr);
 
 impl ParsecPkiEnrollmentAddr {
     pub fn new(server_addr: impl Into<ParsecAddr>, organization_id: OrganizationID) -> Self {
@@ -1013,10 +939,6 @@ impl ParsecPkiEnrollmentAddr {
         url
     }
 
-    pub fn to_http_url_with_path(&self, path: Option<&str>) -> Url {
-        self.base.to_http_url(path)
-    }
-
     pub fn organization_id(&self) -> &OrganizationID {
         &self.organization_id
     }
@@ -1035,42 +957,6 @@ impl ParsecPkiEnrollmentAddr {
             self.organization_id().clone(),
             root_verify_key,
         )
-    }
-
-    /// In Parsec < v3, the url is something like `parsec://parsec.example.com/my_org?action=pki_enrollment`
-    pub fn from_legacy_parsec_v2(url: &str) -> Result<Self, AddrError> {
-        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
-
-        const LEGACY_PARSEC_SCHEMA: &str = "parsec";
-        const LEGACY_PARSEC_PARAM_ACTION: &str = "action";
-
-        // 1) Convert scheme `parsec://` -> `parsec3://`
-
-        if parsed.scheme() != LEGACY_PARSEC_SCHEMA {
-            return Err(AddrError::InvalidUrlScheme {
-                got: parsed.scheme().to_string(),
-                expected: LEGACY_PARSEC_SCHEMA,
-            });
-        }
-        parsed
-            .set_scheme(PARSEC_SCHEME)
-            .expect("old and new schemes are valid and compatible with each other");
-
-        // 2) Convert param `action` -> `a`
-        let pairs: Vec<_> = parsed
-            .query_pairs()
-            .map(|(k, v)| {
-                if k == LEGACY_PARSEC_PARAM_ACTION {
-                    (PARSEC_PARAM_ACTION.to_string().to_string(), v.to_string())
-                } else {
-                    (k.to_string(), v.to_string())
-                }
-            })
-            .collect();
-        parsed.query_pairs_mut().clear().extend_pairs(pairs);
-
-        // 3) Url has been converted, we can now parse it as a regular one
-        Self::from_str(parsed.as_str())
     }
 }
 

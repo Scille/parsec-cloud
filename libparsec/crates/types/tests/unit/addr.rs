@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use rstest_reuse::{self, apply, template};
-use serde_test::{assert_tokens, Token};
 use std::str::FromStr;
 
 use libparsec_tests_lite::prelude::*;
@@ -61,12 +60,6 @@ macro_rules! impl_testbed_common {
 
             // Also compare the objects
             p_assert_eq!(addr, expected_addr);
-
-            // Test serde
-            // `Token::Str` requires `&'static str` but we have a regular `&str` here...
-            // the solution is to explicitly leak the memory *shocked*
-            let static_expected_url = Box::leak(expected_url.to_string().into_boxed_str());
-            assert_tokens(&addr, &[Token::Str(static_expected_url)]);
         }
         fn assert_addr_err(&self, url: &str, err_msg: AddrError) {
             let ret = url.parse::<$addr_type>();
@@ -215,9 +208,9 @@ fn good_addr_base(testbed: &dyn Testbed) {
     Some("/El Niño/"),
     "https://example.com/El%20Ni%C3%B1o/"
 )]
-fn parsec_addr_to_http_domain_url(value: &str, path: Option<&str>, expected: &str) {
+fn parsec_addr_to_http_url(value: &str, path: Option<&str>, expected: &str) {
     let addr: ParsecAddr = value.parse().unwrap();
-    let result = addr.to_http_url_with_path(path);
+    let result = addr.to_http_url(path);
     p_assert_eq!(result.as_str(), expected);
 }
 
@@ -918,124 +911,4 @@ fn organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrErr
         ParsecOrganizationBootstrapAddr::from_str(url).unwrap_err(),
         msg
     );
-}
-
-#[test]
-fn legacy_parsec_v2_server_addr() {
-    const LEGACY_URL: &str = "parsec://example.com";
-    let expected_error = AddrError::InvalidUrlScheme {
-        got: "parsec".to_string(),
-        expected: "parsec3",
-    };
-
-    // Simply no longer supported
-    p_assert_matches!(
-        ParsecAddr::from_str(LEGACY_URL),
-        Err(e) if e == expected_error
-    );
-
-    serde_test::assert_de_tokens_error::<ParsecAddr>(
-        &[Token::Str(LEGACY_URL)],
-        &expected_error.to_string(),
-    )
-}
-
-#[test]
-fn legacy_parsec_v2_organization_addr() {
-    // cspell:disable-next-line
-    const LEGACY_URL: &str = "parsec://parsec.example.com/MyOrg?rvk=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
-
-    // No longer supported...
-    p_assert_matches!(
-        ParsecOrganizationAddr::from_str(LEGACY_URL),
-        Err(e) if e == AddrError::InvalidUrlScheme{ got: "parsec".to_string(), expected: "parsec3" }
-    );
-
-    // ...except in deserialization for backward compatibility (needed by `LocalDevice` schema)
-    let expected_url: ParsecOrganizationAddr =
-        // cspell:disable-next-line
-        "parsec3://parsec.example.com/MyOrg?p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
-            .parse()
-            .unwrap();
-    serde_test::assert_de_tokens(&expected_url, &[Token::Str(LEGACY_URL)])
-}
-
-#[test]
-fn legacy_parsec_v2_organization_bootstrap_addr() {
-    const LEGACY_URL: &str =
-        "parsec://parsec.example.com/my_org?action=bootstrap_organization&token=1234ABCD";
-    let expected_error = AddrError::InvalidUrlScheme {
-        got: "parsec".to_string(),
-        expected: "parsec3",
-    };
-
-    // Simply no longer supported
-    p_assert_matches!(
-        ParsecOrganizationBootstrapAddr::from_str(LEGACY_URL),
-        Err(e) if e == expected_error
-    );
-
-    serde_test::assert_de_tokens_error::<ParsecOrganizationBootstrapAddr>(
-        &[Token::Str(LEGACY_URL)],
-        &expected_error.to_string(),
-    )
-}
-
-#[test]
-fn legacy_parsec_v2_workspace_path_addr() {
-    // cspell:disable-next-line
-    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=path&workspace_id=3a50b191122b480ebb113b10216ef343&path=7NFDS4VQLP3XPCMTSEN34ZOXKGGIMTY2W2JI2SPIHB2P3M6K4YWAssss";
-    let expected_error = AddrError::InvalidUrlScheme {
-        got: "parsec".to_string(),
-        expected: "parsec3",
-    };
-
-    // Simply no longer supported
-    p_assert_matches!(
-        ParsecWorkspacePathAddr::from_str(LEGACY_URL),
-        Err(e) if e == expected_error
-    );
-
-    serde_test::assert_de_tokens_error::<ParsecWorkspacePathAddr>(
-        &[Token::Str(LEGACY_URL)],
-        &expected_error.to_string(),
-    )
-}
-
-#[test]
-fn legacy_parsec_v2_invitation_addr() {
-    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=claim_user&token=3a50b191122b480ebb113b10216ef343";
-    let expected_error = AddrError::InvalidUrlScheme {
-        got: "parsec".to_string(),
-        expected: "parsec3",
-    };
-
-    // Simply no longer supported
-    p_assert_matches!(
-        ParsecInvitationAddr::from_str(LEGACY_URL),
-        Err(e) if e == expected_error
-    );
-
-    serde_test::assert_de_tokens_error::<ParsecInvitationAddr>(
-        &[Token::Str(LEGACY_URL)],
-        &expected_error.to_string(),
-    )
-}
-
-#[test]
-fn legacy_parsec_v2_pki_enrollment_addr() {
-    const LEGACY_URL: &str = "parsec://parsec.example.com/my_org?action=pki_enrollment";
-
-    // No longer supported...
-    p_assert_matches!(
-        ParsecPkiEnrollmentAddr::from_str(LEGACY_URL),
-        Err(e) if e == AddrError::InvalidUrlScheme{ got: "parsec".to_string(), expected: "parsec3" }
-    );
-
-    // ...except in deserialization for backward compatibility (needed by `LocalPendingEnrollment` schema)
-    let expected_url: ParsecPkiEnrollmentAddr =
-        "parsec3://parsec.example.com/my_org?a=pki_enrollment"
-            .parse()
-            .unwrap();
-    serde_test::assert_de_tokens(&expected_url, &[Token::Str(LEGACY_URL)])
 }

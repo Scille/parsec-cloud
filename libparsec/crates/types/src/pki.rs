@@ -14,7 +14,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle,
+    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecAddr,
     ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
     UserID, UserProfile,
 };
@@ -137,7 +137,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(
     into = "LocalPendingEnrollmentData",
-    from = "LocalPendingEnrollmentData"
+    try_from = "LocalPendingEnrollmentData"
 )]
 pub struct LocalPendingEnrollment {
     pub x509_certificate: X509Certificate,
@@ -228,17 +228,50 @@ impl LocalPendingEnrollment {
 
 parsec_data!("schema/pki/local_pending_enrollment.json5");
 
-impl_transparent_data_format_conversion!(
-    LocalPendingEnrollment,
-    LocalPendingEnrollmentData,
-    x509_certificate,
-    addr,
-    submitted_on,
-    enrollment_id,
-    submit_payload,
-    encrypted_key,
-    ciphertext,
-);
+impl TryFrom<LocalPendingEnrollmentData> for LocalPendingEnrollment {
+    type Error = &'static str;
+
+    fn try_from(data: LocalPendingEnrollmentData) -> Result<Self, Self::Error> {
+        let addr = {
+            let server_addr =
+                ParsecAddr::from_http_url(&data.server_url).map_err(|_| "Invalid server URL")?;
+            ParsecPkiEnrollmentAddr::new(server_addr, data.organization_id)
+        };
+        Ok(Self {
+            addr,
+            x509_certificate: data.x509_certificate,
+            submitted_on: data.submitted_on,
+            enrollment_id: data.enrollment_id,
+            submit_payload: data.submit_payload,
+            encrypted_key: data.encrypted_key,
+            ciphertext: data.ciphertext,
+        })
+    }
+}
+
+impl From<LocalPendingEnrollment> for LocalPendingEnrollmentData {
+    fn from(obj: LocalPendingEnrollment) -> Self {
+        let server_url = {
+            let server_addr = ParsecAddr::new(
+                obj.addr.hostname().to_string(),
+                Some(obj.addr.port()),
+                obj.addr.use_ssl(),
+            );
+            server_addr.to_http_url(None).to_string()
+        };
+        Self {
+            ty: Default::default(),
+            server_url,
+            organization_id: obj.addr.organization_id().clone(),
+            x509_certificate: obj.x509_certificate,
+            submitted_on: obj.submitted_on,
+            enrollment_id: obj.enrollment_id,
+            submit_payload: obj.submit_payload,
+            encrypted_key: obj.encrypted_key,
+            ciphertext: obj.ciphertext,
+        }
+    }
+}
 
 #[cfg(test)]
 #[path = "../tests/unit/pki.rs"]
