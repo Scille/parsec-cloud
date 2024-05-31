@@ -241,10 +241,26 @@ jobs:
         with:
           tool: nextest@0.9.54
 
-      - name: Test Rust codebase (${{ matrix.name }} specific)
+      - name: Check rust agnostic codebase
         shell: bash
         run: |
-          set -ex
+          set -x
+          NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
+          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
+        timeout-minutes: 10 # It can be very slow if cache has missed
+        env:
+          RUST_LOG: debug
+
+      # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
+      # implementation and its compatibility with the rest of the project
+      - name: Test rust crypto crate with sodium
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
+        timeout-minutes: 10
+
+      - name: Test Rust platform codebase with sodium
+        shell: bash
+        run: |
+          set -x
           PLATFORM_CRATES=`python3 misc/libparsec_crates_flags.py platform`
           if [[ '${{ matrix.os }}' = macos* ]]; then
             # Mountpoint cannot be tested on macOS because it requires macFUSE installation,
@@ -252,15 +268,4 @@ jobs:
             PLATFORM_CRATES=`echo $PLATFORM_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
           fi
           cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} $PLATFORM_CRATES --features libparsec_crypto/use-sodiumoxide
-          # By default `libparsec_crypto` uses RustCrypto, so here we test the sodiumoxide
-          # implementation and its compatibility with the rest of the project
-          cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package libparsec_crypto --features use-sodiumoxide
-          NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
-          if [[ '${{ matrix.os }}' = macos* ]]; then
-            # Do not test mountpoint on macOS, see reason above.
-            NON_BINDINGS_CRATES=`echo $NON_BINDINGS_CRATES | sed -e 's/-p libparsec_platform_mountpoint//'`
-          fi
-          cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
-        timeout-minutes: 50 # It can be very slow if cache has missed
-        env:
-          RUST_LOG: debug
+        timeout-minutes: 10
