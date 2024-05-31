@@ -493,4 +493,4 @@ impl CertifOps {
 #[cfg(test)]
 #[path = "../../tests/unit/certif/mod.rs"]
 #[allow(clippy::unwrap_used)]
-mod certif_test;
+mod tests;
