@@ -1,5 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+//! Types used to store the content of the workspace on local storage.
+//! Those types are never sent to the server.
+//!
+//! The local manifest are base on remote manifest but with additional information
+//! Unlike the remote manifest that represent an immutable version of a data
+//! that have been uploaded to the server, the local manifest represent the
+//! as it is currently known by the client:
+//! - It is based on a remote manifest (see the `base` field).
+//! - If the local manifest has just been created on local, then the remote
+//!   manifest it is based on is a placeholder with version = 0.
+//! - It gets modified by the client (e.g. when a file is created, the parent folder
+//!   manifest is updated to add the new file entry).
+//! - It gets converted into a remote manifest when the data is synchronized with the server.
+//! - The remote manifest it is based on is used to merge the local change with the
+//!   remote change when synchronizing.
+
 use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
@@ -76,7 +92,6 @@ pub enum LocalFileManifestToRemoteError {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-// TODO: Rework this documentation, it's really not clear :'(
 /// Represents a chunk of a data in file manifest.
 ///
 /// The raw data is identified by its `id` attribute and is aligned using the
@@ -215,6 +230,37 @@ impl Chunk {
         self.block().is_some()
     }
 
+    /// A chunk needs to be aligned with its raw data in order to form a valid
+    /// block that can be uploaded.
+    ///
+    /// For instance let's consider a file being modified by the user:
+    ///
+    /// 1. The user creates a new file with a blocksize of 512 bytes.
+    /// 2. The user writes 400 bytes of data.
+    /// 3. The user writes 200 bytes at the offset 100.
+    ///
+    /// Up until step 3, the local file manifest contains a single chunk of 400
+    /// bytes that is properly aligned with its raw data (i.e. if we sync the file
+    /// right now we will end up with a single block taken verbatim from this chunk).
+    ///
+    /// Then after step 3, the local file manifest contains 3 chunks:
+    /// a. A chunk of 100 bytes at offset 0
+    /// b. A chunk of 200 bytes at offset 100
+    /// c. A chunk of 100 bytes at offset 300
+    ///
+    /// Chunks a and c have the same chunk ID as they are two windows over different
+    /// parts of the same piece of data that was locally saved at step 2.
+    /// Hence those two chunks are not properly aligned: a reshape is required to
+    /// flatten the data written at step 2 and 3 to obtain a piece of data
+    /// that can be uploaded as a proper block, i.e:
+    /// d. A chunk of 400 bytes at offset 0
+    ///
+    /// Also note that blocksize doesn't play a role here: chunk d is a considered
+    /// aligned with its raw data even if it is not aligned on blocksize (being smaller
+    /// than the blocksize). This is because:
+    /// - The last block in a file is allowed to be smaller than the blocksize.
+    /// - The alignment on the blocksize is enforced at the `LocalFileManifest`
+    ///   level (chunks are stored grouped to form a block slot).
     pub fn is_aligned_with_raw_data(&self) -> bool {
         // Not left aligned
         if self.start != self.raw_offset {
@@ -267,6 +313,15 @@ impl Chunk {
  * LocalFileManifest
  */
 
+/// The `LocalFileManifest` is used to represents a file in the client.
+///
+/// Unlike the `FileManifest`, it is designed to be modified as the changes
+/// occurs locally. It is also stored serialized on the local storage.
+///
+/// It can be merged with a `FileManifest` if only the parent field differs (e.i.
+/// the file has been moved in another folder). However if the file content differs,
+/// then we get a merge conflict that end up with the creation of a copy of the
+/// file containing the local modifications.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
 pub struct LocalFileManifest {
@@ -276,6 +331,19 @@ pub struct LocalFileManifest {
     pub updated: DateTime,
     pub size: u64,
     pub blocksize: Blocksize,
+    /// This field is named after the `FileManifest::blocks` field, however it
+    /// works quiet differently !
+    ///
+    /// You should see this field as a list of *block slots*, i.e. a list of
+    /// arenas of `blocksize` bytes (except the very last that can be smaller).
+    ///
+    /// Each *block slot* itself contains a list of chunks that represent the
+    /// actual data present.
+    ///
+    /// To be able to be synchronized, each block slot must be reshaped. This
+    /// process flatten the chunks into a single one (hence a `LocalFileManifest`
+    /// created from a `FileManifest` should only contains block slots made of
+    /// a single chunk).
     pub blocks: Vec<Vec<Chunk>>,
 }
 
@@ -516,6 +584,12 @@ impl LocalFileManifest {
  * LocalFolderManifest
  */
 
+/// The `LocalFolderManifest` is used to represents a folder in the client.
+///
+/// Unlike the `FileManifest`, it is designed to be modified as the changes
+/// occurs locally. It is also stored serialized on the local storage.
+///
+/// It can always be merged with a `FolderManifest` without conflict (CRDT ftw !).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFolderManifestData", from = "LocalFolderManifestData")]
 pub struct LocalFolderManifest {
