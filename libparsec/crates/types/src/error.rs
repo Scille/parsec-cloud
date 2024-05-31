@@ -75,11 +75,14 @@ pub enum DataError {
     #[error("Invalid version: expected `{expected}`, got `{got}`")]
     UnexpectedVersion { expected: u32, got: u32 },
 
-    #[error("Invalid file content")]
-    InvalidFileContent,
+    #[error("Broken invariant in chunk content")]
+    ChunkIntegrity,
 
-    #[error("Invalid file content")]
-    NotReshaped,
+    #[error("Broken invariant in file manifest content")]
+    FileManifestIntegrity,
+
+    #[error("Broken invariant in local file manifest content")]
+    LocalFileManifestIntegrity,
 }
 
 pub type DataResult<T> = Result<T, DataError>;
