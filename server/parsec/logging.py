@@ -72,6 +72,8 @@ def _make_filtering_bound_logger(min_level: int) -> type[ParsecBoundLogger]:
         def info_with_debug_extra(
             self, event: str, debug_extra: dict[str, Any], **kwargs: Any
         ) -> None:
+            if "event" in debug_extra:
+                debug_extra["event_"] = debug_extra.pop("event")
             kwargs |= debug_extra
             self.info(event, **kwargs)
     else:
