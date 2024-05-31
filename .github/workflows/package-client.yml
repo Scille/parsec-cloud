@@ -170,7 +170,7 @@ jobs:
         shell: bash
         run: |
           ARCH=$(uname -m)
-          mv -v parsec-v3_*_*.snap Parsec-v3_${{ steps.version.outputs.full }}_linux_$ARCH.snap
+          mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
       - uses: taiki-e/install-action@60784cb1f434ce8a3cc04670ea753e1c8868e17e # pin v2.33.34
@@ -184,7 +184,7 @@ jobs:
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app-snap
           path: |
-            Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
+            Parsec_${{ steps.version.outputs.full }}_linux_*.snap
             Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
@@ -304,7 +304,7 @@ jobs:
         shell: bash
         run: |
           arch=$(uname -m)
-          app_file="Parsec-v3_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}.${{ matrix.extension }}"
+          app_file="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}.${{ matrix.extension }}"
           latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
 
           cat << EOF | tee -a $GITHUB_OUTPUT
