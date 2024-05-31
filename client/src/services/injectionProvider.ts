@@ -65,12 +65,14 @@ export class InjectionProvider {
     for (const injections of this.injections.values()) {
       await injections.eventDistributor.dispatchEvent(event, data);
     }
+    this.default.eventDistributor.dispatchEvent(event, data);
   }
 
   async notifyAll(info: Information, mode: number): Promise<void> {
     for (const injections of this.injections.values()) {
       await injections.informationManager.present(info, mode);
     }
+    this.default.informationManager.present(info, mode);
   }
 
   async clean(handle: ConnectionHandle): Promise<void> {
