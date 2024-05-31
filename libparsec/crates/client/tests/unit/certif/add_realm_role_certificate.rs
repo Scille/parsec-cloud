@@ -266,14 +266,27 @@ async fn non_existing_author(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn revoked(env: &TestbedEnv) {
+async fn cannot_share_with_revoked(
+    #[values("new_share", "update_role")] kind: &str,
+    env: &TestbedEnv,
+) {
     env.customize(|builder| {
+        let wksp_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation_and_naming("wksp1")
+            .map(|e| e.realm);
         builder.new_user("bob");
+        match kind {
+            "new_share" => (),
+            "update_role" => {
+                builder.share_realm(wksp_id, "bob", RealmRole::Reader);
+            }
+            unknown => panic!("Unknown kind: {}", unknown),
+        }
         builder.revoke_user("bob");
-        builder
-            // TODO: check consistency can't be skipped
-            .new_user_realm("alice")
-            .with_author("bob@dev1".try_into().unwrap());
+        builder.with_check_consistency_disabled(|builder| {
+            builder.share_realm(wksp_id, "bob", RealmRole::Contributor);
+        });
     })
     .await;
     let alice = env.local_device("alice@dev1");
@@ -294,10 +307,39 @@ async fn revoked(env: &TestbedEnv) {
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
         if matches!(
             *boxed,
-            InvalidCertificateError::RelatedUserAlreadyRevoked { user_revoked_on, .. }
-            if user_revoked_on == DateTime::from_ymd_hms_us(2000, 1, 4, 0, 0, 0, 0).unwrap()
+            InvalidCertificateError::RelatedUserAlreadyRevoked { .. }
         )
     );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn can_unshare_with_revoked(env: &TestbedEnv) {
+    env.customize(|builder| {
+        let wksp_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation_and_naming("wksp1")
+            .map(|e| e.realm);
+        builder.new_user("bob");
+        builder.share_realm(wksp_id, "bob", RealmRole::Contributor);
+        builder.revoke_user("bob");
+        builder.share_realm(wksp_id, "bob", None);
+        wksp_id
+    })
+    .await;
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &env.get_realms_certificates_signed(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
 }
 
 #[parsec_test(testbed = "minimal")]

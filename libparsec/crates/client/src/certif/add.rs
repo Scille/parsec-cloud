@@ -1458,9 +1458,14 @@ async fn check_realm_role_certificate_consistency(
     let user_certificate =
         check_user_exists(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
-    // 4) Make sure the user is not already revoked
+    // 4) Make sure the user is not already revoked if we are giving it a role.
+    // (note revoked users *will* be revoked from any realm they are part of once
+    // an OWNER notifies the change).
 
-    check_user_not_revoked(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
+    let user_new_role = cooked.role;
+    if user_new_role.is_some() {
+        check_user_not_revoked(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
+    }
 
     // 5) Make sure the user's profile is compatible with the realm and its given role
 
