@@ -76,13 +76,13 @@ pub enum DataError {
     UnexpectedVersion { expected: u32, got: u32 },
 
     #[error("Broken invariant in chunk content")]
-    ChunkIntegrity,
+    ChunkIntegrity { invariant: &'static str },
 
-    #[error("Broken invariant in file manifest content")]
-    FileManifestIntegrity,
+    #[error("Broken invariant in file manifest content: {invariant}")]
+    FileManifestIntegrity { invariant: &'static str },
 
     #[error("Broken invariant in local file manifest content")]
-    LocalFileManifestIntegrity,
+    LocalFileManifestIntegrity { invariant: &'static str },
 }
 
 pub type DataResult<T> = Result<T, DataError>;
