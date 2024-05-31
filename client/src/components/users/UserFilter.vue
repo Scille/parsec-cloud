@@ -41,7 +41,7 @@ async function openPopover(event: Event): Promise<void> {
 
 <style lang="scss" scoped>
 #select-filter-popover-button {
-  --background: var(--parsec-color-light-secondary-white);
+  --background: transparent;
   --background-hover: var(--parsec-color-light-secondary-medium);
   --color: var(--parsec-color-light-secondary-text);
 
