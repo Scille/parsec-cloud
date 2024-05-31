@@ -59,6 +59,8 @@
         </ion-button>
       </ion-buttons>
     </div>
+
+    <update-banner />
   </div>
 </template>
 
@@ -67,6 +69,7 @@ import { APP_VERSION } from '@/common/mocks';
 import { LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
+import UpdateBanner from '@/components/notifications/UpdateBanner.vue';
 
 defineProps<{
   showBackButton: boolean;

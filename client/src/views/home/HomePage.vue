@@ -18,6 +18,7 @@
             @back-click="backToOrganizations"
             :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
           />
+          <update-banner />
           <slide-horizontal
             :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
             :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
@@ -86,6 +87,7 @@ import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
+import UpdateBanner from '@/components/notifications/UpdateBanner.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
