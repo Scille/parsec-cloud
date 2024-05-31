@@ -1,13 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::collections::HashMap;
-use std::io::{Read, Write};
 use std::num::NonZeroU64;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use flate2::read::ZlibDecoder;
-use flate2::write::ZlibEncoder;
 use paste::paste;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -25,36 +22,28 @@ use crate::{
     SequesterServiceID, UserID, UserProfile, VlobID,
 };
 
-fn load<T>(compressed: &[u8]) -> DataResult<T>
+fn load<T>(serialized: &[u8]) -> DataResult<T>
 where
     T: for<'a> Deserialize<'a>,
 {
-    let mut serialized = vec![];
-    ZlibDecoder::new(compressed)
-        .read_to_end(&mut serialized)
-        .map_err(|_| DataError::Compression)?;
-    rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+    rmp_serde::from_slice(serialized).map_err(|_| DataError::Serialization)
 }
 
 fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
 where
     T: for<'a> Deserialize<'a>,
 {
-    let compressed = author_verify_key
+    let serialized = author_verify_key
         .verify(signed)
         .map_err(|_| DataError::Signature)?;
-    load::<T>(compressed)
+    load::<T>(serialized)
 }
 
 fn dump<T>(obj: &T) -> Vec<u8>
 where
     T: Serialize,
 {
-    let serialized = ::rmp_serde::to_vec_named(obj).expect("object should be serializable");
-    let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-    e.write_all(&serialized)
-        .and_then(|_| e.finish())
-        .expect("in-memory buffer should not fail")
+    ::rmp_serde::to_vec_named(obj).expect("object should be serializable")
 }
 
 fn check_author_allow_root(

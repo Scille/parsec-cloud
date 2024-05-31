@@ -1,13 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-    num::NonZeroU64,
-    ops::Deref,
-};
+use std::{collections::HashMap, num::NonZeroU64, ops::Deref};
 
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
@@ -29,12 +23,7 @@ macro_rules! impl_manifest_dump_load {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
-                let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-                let compressed = e
-                    .write_all(&serialized)
-                    .and_then(|_| e.finish())
-                    .expect("in-memory buffer should not fail");
-                author_signkey.sign(&compressed)
+                author_signkey.sign(&serialized)
             }
 
             /// Dump and sign itself, then encrypt the resulting data using the provided [SecretKey]
@@ -79,14 +68,9 @@ macro_rules! impl_manifest_dump_load {
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
-                let compressed = author_verify_key
+                let serialized = author_verify_key
                     .verify(&signed)
                     .map_err(|_| DataError::Signature)?;
-                let mut serialized = vec![];
-
-                ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
 
                 let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
@@ -468,13 +452,7 @@ impl ChildManifest {
     }
 
     fn deserialize_data(data: &[u8]) -> DataResult<Self> {
-        let mut deserialized = Vec::new();
-
-        ZlibDecoder::new(data)
-            .read_to_end(&mut deserialized)
-            .map_err(|_| DataError::Compression)?;
-
-        rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)
+        rmp_serde::from_slice(data).map_err(|_| DataError::Serialization)
     }
 }
 

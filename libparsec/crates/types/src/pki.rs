@@ -2,12 +2,10 @@
 
 use std::{
     collections::HashMap,
-    io::{Read, Write},
     path::{Path, PathBuf},
 };
 
 use bytes::Bytes;
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
@@ -20,22 +18,11 @@ use crate::{
 };
 
 fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
-    let mut decompressed = vec![];
-
-    ZlibDecoder::new(raw)
-        .read_to_end(&mut decompressed)
-        .map_err(|_| DataError::Compression)?;
-
-    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
+    rmp_serde::from_slice(raw).map_err(|_| DataError::Serialization)
 }
 
 fn dump<T: Serialize>(data: &T) -> Vec<u8> {
-    let serialized = rmp_serde::to_vec_named(data).expect("Unreachable");
-
-    let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-    e.write_all(&serialized).expect("Unreachable");
-
-    e.finish().expect("Unreachable")
+    rmp_serde::to_vec_named(data).expect("Unreachable")
 }
 
 /*

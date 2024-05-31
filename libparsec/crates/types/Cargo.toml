@@ -40,7 +40,6 @@ regex = { workspace = true, features = ["std", "perf", "unicode"] }
 regex-syntax = { workspace = true, features = ["unicode-perl"] }
 unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
-flate2 = { workspace = true, features = ["rust_backend"] }
 rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true }
 email-address-parser = { workspace = true }

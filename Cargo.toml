@@ -116,7 +116,6 @@ email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.2", default-features = false }
 event-listener = { version = "5.3.0", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
-flate2 = { version = "1.0.30", default-features = false }
 flume = { version = "0.11.0", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }
 fuser = { version = "0.14.0", default-features =  false }
