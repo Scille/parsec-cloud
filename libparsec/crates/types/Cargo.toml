@@ -48,6 +48,12 @@ fnmatch-regex = { workspace = true }
 sha2 = { workspace = true, features = ["std"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
+lz4 = "1.24.0"
+zstd = "0.13.0"
+# TODO: temporary to fix parquet wasm build
+# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
+zstd-sys = { version = "=2.0.9" }
+flate2 = { version = "1.0.30", features = ["rust_backend"] }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }

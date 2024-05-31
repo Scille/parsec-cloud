@@ -23,7 +23,42 @@ macro_rules! impl_manifest_dump_load {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
                 let serialized =
                     ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
-                author_signkey.sign(&serialized)
+                // ::rmp_serde::to_vec(&self).expect("object should be serializable");
+
+                // // Gzip (default)
+                // let compression = {
+                //     use flate2::{write::ZlibEncoder, Compression};
+                //     let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
+                //     let compressed = e
+                //         .write_all(&serialized)
+                //         .and_then(|_| e.finish())
+                //         .expect("in-memory buffer should not fail");
+                // }
+
+                // // LZ4
+                // let compressed = {
+                //     use lz4::EncoderBuilder;
+                //     use std::io::Write;
+                //     let mut compressed = Vec::new();
+                //     let mut encoder = EncoderBuilder::new().build(&mut compressed)
+                //         .expect("object should be serializable");
+                //     encoder.write_all(&serialized)
+                //         .expect("object should be serializable");
+                //     encoder.finish().1
+                //         .expect("object should be serializable");
+                //     compressed
+                // };
+
+                // // Zstd
+                // let compressed = {
+                //     zstd::stream::encode_all(std::io::Cursor::new(serialized), 0)
+                //         .expect("object should be serializable")
+                // };
+
+                // No compression
+                let compressed = { serialized };
+
+                author_signkey.sign(&compressed)
             }
 
             /// Dump and sign itself, then encrypt the resulting data using the provided [SecretKey]
@@ -68,9 +103,38 @@ macro_rules! impl_manifest_dump_load {
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
-                let serialized = author_verify_key
+                let compressed = author_verify_key
                     .verify(&signed)
                     .map_err(|_| DataError::Signature)?;
+
+                // // Gzip (default)
+                // let serialized = {
+                //     use flate2::read::ZlibDecoder;
+                //     ZlibDecoder::new(&compressed[..])
+                //         .read_to_end(&mut serialized)
+                //         .map_err(|_| DataError::Compression)?;
+                // };
+
+                // // LZ4
+                // let serialized = {
+                //     use lz4::Decoder;
+                //     use std::io::Read;
+                //     let mut decoder = Decoder::new(compressed)
+                //     .map_err(|_| DataError::Serialization)?;
+                //     let mut serialized = Vec::new();
+                //     decoder.read_to_end(&mut serialized)
+                //     .map_err(|_| DataError::Serialization)?;
+                //     serialized
+                // };
+
+                // // Zstd
+                // let serialized = {
+                //     zstd::stream::decode_all(std::io::Cursor::new(compressed))
+                //         .map_err(|_| DataError::Serialization)?
+                // };
+
+                // No compression
+                let serialized = { compressed };
 
                 let obj = rmp_serde::from_slice::<Self>(&serialized)
                     .map_err(|_| DataError::Serialization)?;
