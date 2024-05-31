@@ -69,37 +69,50 @@ pub async fn share_workspace(
 
     // 1) Make sure the workspace is bootstrapped
 
-    let outcome = client
+    let outcome = match client
         .certificates_ops
         .bootstrap_workspace(realm_id, &entry.name)
         .await
-        .map_err(|e| match e {
-            CertifBootstrapWorkspaceError::Offline => ClientShareWorkspaceError::Offline,
-            CertifBootstrapWorkspaceError::Stopped => ClientShareWorkspaceError::Stopped,
+    {
+        Ok(outcome) => outcome,
+        Err(err) => match err {
+            // If our author is not allowed, it means the workspace has been shared
+            // with us... and hence the bootstrap has been done already !
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
-                ClientShareWorkspaceError::AuthorNotAllowed
+                CertificateBasedActionOutcome::LocalIdempotent
+            }
+            CertifBootstrapWorkspaceError::Offline => {
+                return Err(ClientShareWorkspaceError::Offline)
+            }
+            CertifBootstrapWorkspaceError::Stopped => {
+                return Err(ClientShareWorkspaceError::Stopped)
             }
             CertifBootstrapWorkspaceError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
-            } => ClientShareWorkspaceError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            },
+            } => {
+                return Err(ClientShareWorkspaceError::TimestampOutOfBallpark {
+                    server_timestamp,
+                    client_timestamp,
+                    ballpark_client_early_offset,
+                    ballpark_client_late_offset,
+                })
+            }
             CertifBootstrapWorkspaceError::InvalidKeysBundle(err) => {
-                ClientShareWorkspaceError::InvalidKeysBundle(err)
+                return Err(ClientShareWorkspaceError::InvalidKeysBundle(err))
             }
             CertifBootstrapWorkspaceError::InvalidCertificate(err) => {
-                ClientShareWorkspaceError::InvalidCertificate(err)
+                return Err(ClientShareWorkspaceError::InvalidCertificate(err))
             }
-            CertifBootstrapWorkspaceError::Internal(err) => err
-                .context("Cannot ensure workspace is bootstrapped")
-                .into(),
-        })?;
+            CertifBootstrapWorkspaceError::Internal(err) => {
+                return Err(err
+                    .context("Cannot ensure workspace is bootstrapped")
+                    .into())
+            }
+        },
+    };
 
     match outcome {
         CertificateBasedActionOutcome::Uploaded {
