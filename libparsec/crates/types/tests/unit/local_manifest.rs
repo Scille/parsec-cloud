@@ -651,7 +651,7 @@ fn chunk_promote_as_block() {
 
     let mut block = Chunk::from_block_access(block_access);
     let err = block.promote_as_block(b"<data>").unwrap_err();
-    p_assert_eq!(err, "already a block");
+    p_assert_eq!(err, ChunkPromoteAsBlockError::AlreadyPromotedAsBlock);
 
     let mut chunk = Chunk {
         id,
@@ -663,7 +663,7 @@ fn chunk_promote_as_block() {
     };
 
     let err = chunk.promote_as_block(b"<data>").unwrap_err();
-    p_assert_eq!(err, "not aligned");
+    p_assert_eq!(err, ChunkPromoteAsBlockError::NotAligned);
 }
 
 #[rstest]
@@ -677,7 +677,7 @@ fn chunk_is_block() {
         access: None,
     };
 
-    assert!(chunk.is_pseudo_block());
+    assert!(chunk.is_aligned());
     assert!(!chunk.is_block());
 
     let mut block = {
@@ -686,42 +686,42 @@ fn chunk_is_block() {
         block
     };
 
-    assert!(block.is_pseudo_block());
+    assert!(block.is_aligned());
     assert!(block.is_block());
 
     block.start = 1;
 
-    assert!(!block.is_pseudo_block());
+    assert!(!block.is_aligned());
     assert!(!block.is_block());
 
     block.access.as_mut().unwrap().offset = 1;
 
-    assert!(!block.is_pseudo_block());
+    assert!(!block.is_aligned());
     assert!(!block.is_block());
 
     block.raw_offset = 1;
 
-    assert!(!block.is_pseudo_block());
+    assert!(!block.is_aligned());
     assert!(!block.is_block());
 
     block.stop = NonZeroU64::try_from(2).unwrap();
 
-    assert!(block.is_pseudo_block());
+    assert!(block.is_aligned());
     assert!(block.is_block());
 
     block.stop = NonZeroU64::try_from(5).unwrap();
 
-    assert!(!block.is_pseudo_block());
+    assert!(!block.is_aligned());
     assert!(!block.is_block());
 
     block.raw_size = NonZeroU64::try_from(4).unwrap();
 
-    assert!(block.is_pseudo_block());
+    assert!(block.is_aligned());
     assert!(!block.is_block());
 
     block.access.as_mut().unwrap().size = NonZeroU64::try_from(4).unwrap();
 
-    assert!(block.is_pseudo_block());
+    assert!(block.is_aligned());
     assert!(block.is_block());
 }
 

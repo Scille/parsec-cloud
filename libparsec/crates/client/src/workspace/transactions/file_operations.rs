@@ -376,7 +376,7 @@ impl ReshapeBlockOperation<'_> {
         if chunks.is_empty() || chunks.len() == 1 && chunks[0].is_block() {
             None
         // Already a pseudo-block, we can keep the chunk as it is
-        } else if chunks.len() == 1 && chunks[0].is_pseudo_block() {
+        } else if chunks.len() == 1 && chunks[0].is_aligned() {
             let reshaped_chunk = chunks[0].clone();
             Some(ReshapeBlockOperation {
                 manifest_chunks: chunks,
@@ -401,16 +401,16 @@ impl ReshapeBlockOperation<'_> {
         self.manifest_chunks
     }
 
-    pub fn is_pseudo_block(&self) -> bool {
-        self.manifest_chunks.len() == 1 && self.manifest_chunks[0].is_pseudo_block()
+    pub fn is_aligned(&self) -> bool {
+        self.manifest_chunks.len() == 1 && self.manifest_chunks[0].is_aligned()
     }
 
     pub fn write_back(&self) -> bool {
-        !self.is_pseudo_block()
+        !self.is_aligned()
     }
 
     pub fn cleanup_ids(&self) -> HashSet<ChunkID> {
-        if self.is_pseudo_block() {
+        if self.is_aligned() {
             HashSet::new()
         } else {
             // Remove duplicate IDs by returning a HashSet
