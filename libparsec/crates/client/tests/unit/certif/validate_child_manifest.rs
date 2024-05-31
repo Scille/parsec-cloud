@@ -173,6 +173,28 @@ async fn cannot_decrypt(env: &TestbedEnv) {
 
     let alice = env.local_device("alice@dev1");
 
+    let (encrypted, data_error) = match kind {
+        "dummy" => (b"<dummy data>".to_vec(), DataError::Decryption),
+        "parent_pointing_on_itself" => {
+            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
+            let manifest = FolderManifest {
+                author: alice.device_id.clone(),
+                timestamp: now,
+                id: child_id,
+                parent: child_id,
+                version: 1,
+                created: now,
+                updated: now,
+                children: Default::default(),
+            };
+            (
+                manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key),
+                DataError::Serialization,
+            )
+        }
+        unknown => panic!("Unknown kind {}", unknown),
+    };
+
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
@@ -306,14 +328,16 @@ async fn content_corrupted(
     kind: &str,
     env: &TestbedEnv,
 ) {
-    let (env, realm_id) = env.customize_with_map(|builder| {
-        let realm_id = builder
-            .new_realm("alice")
-            .then_do_initial_key_rotation()
-            .map(|event| event.realm);
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        realm_id
-    });
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
     let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let child_id = VlobID::default();
@@ -409,7 +433,7 @@ async fn content_corrupted(
     };
     let encrypted = manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key);
 
-    let ops = certificates_ops_factory(&env, &alice).await;
+    let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
     let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());

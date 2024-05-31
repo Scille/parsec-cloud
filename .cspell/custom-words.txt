@@ -393,6 +393,7 @@ nocapture
 noenc
 NONCEBYTES
 nonextensible
+nonminimal
 nonstopmode
 noopener
 noreferrer
