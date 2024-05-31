@@ -1,188 +1,393 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// TODO: share with self is not allowed
-// TODO: share newly (not sync) created workspace
+use std::collections::HashMap;
 
-// use libparsec_client_connection::{
-//     protocol::authenticated_cmds, test_register_send_hook, test_register_sequence_of_send_hooks,
-// };
-// use libparsec_tests_fixtures::prelude::*;
-// use libparsec_types::prelude::*;
+use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::prelude::*;
 
-// use super::utils::{load_realm_keys_bundle, user_ops_factory};
-// use crate::user::ShareWorkspaceError;
+use super::utils::client_factory;
+use crate::{ClientShareWorkspaceError, WorkspaceUserAccessInfo};
 
-// #[parsec_test(testbed = "minimal_client_ready")]
-// async fn to_self(env: &TestbedEnv) {
-//     let alice = env.local_device("alice@dev1");
-//     let user_ops = user_ops_factory(env, &alice).await;
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn ok_with_author_having_changed_its_role(
+    #[values("new_role", "unshared_then_shared_again")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    env.customize(|builder| {
+        // Bob is Reader, so he cannot share the realm...
 
-//     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+        match kind {
+            "new_role" => (),
+            "unshared_then_shared_again" => {
+                builder.share_realm(wksp1_id, "bob", None);
+            }
+            unknown => panic!("Unknown kind: {}", unknown),
+        }
 
-//     let outcome = user_ops
-//         .share_workspace(
-//             wksp1_id,
-//             alice.user_id.to_owned(),
-//             Some(RealmRole::Contributor),
-//         )
-//         .await;
-//     p_assert_matches!(outcome, Err(ShareWorkspaceError::ShareToSelf));
-// }
+        // ...but then he gets promoted to Manager
+        builder.share_realm(wksp1_id, "bob", RealmRole::Manager);
+    })
+    .await;
 
-// #[parsec_test(testbed = "minimal_client_ready")]
-// async fn to_unknown_user(env: &TestbedEnv) {
-//     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let bob = env.local_device("bob@dev1");
+    let client = client_factory(&env.discriminant_dir, bob).await;
 
-//     // Note Bob doesn't exist in this env !
-//     let alice = env.local_device("alice@dev1");
+    client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap();
+}
 
-//     let user_ops = user_ops_factory(env, &alice).await;
-//     load_realm_keys_bundle(env, &user_ops, wksp1_id).await;
+#[parsec_test(testbed = "minimal", with_server)]
+async fn ok(#[values("author_is_owner", "author_is_manager")] kind: &str, env: &TestbedEnv) {
+    let wksp1_id = env
+        .customize(|builder| {
+            // Alice create the realm, then Bob is the one we will use to share the realm with Mallory
+            let wksp1_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation_and_naming("wksp1")
+                .map(|e| e.realm);
+            builder.new_user("bob");
+            builder.new_user("mallory");
+            match kind {
+                "author_is_owner" => {
+                    builder.share_realm(wksp1_id, "bob", RealmRole::Owner);
+                }
+                "author_is_manager" => {
+                    builder.share_realm(wksp1_id, "bob", RealmRole::Manager);
+                }
+                unknown => panic!("Unknown kind: {}", unknown),
+            }
+            builder.certificates_storage_fetch_certificates("bob@dev1");
+            builder
+                .user_storage_local_update("bob@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp1_id
+        })
+        .await;
 
-//     let outcome = user_ops
-//         .share_workspace(
-//             wksp1_id,
-//             "bob".parse().unwrap(),
-//             Some(RealmRole::Contributor),
-//         )
-//         .await;
-//     p_assert_matches!(outcome, Err(ShareWorkspaceError::UserNotFound));
-// }
+    let mallory = env.local_device("mallory@dev1");
+    let bob = env.local_device("bob@dev1");
+    let client = client_factory(&env.discriminant_dir, bob.clone()).await;
 
-// #[parsec_test(testbed = "minimal_client_ready")]
-// async fn simple(env: &TestbedEnv) {
-//     let env = env.customize(|builder: &mut TestbedTemplateBuilder| {
-//         builder.new_user("bob");
-//         // Fetch bob certificate in alice@dev1
-//         builder.certificates_storage_fetch_certificates("alice@dev1");
-//     });
-//     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-//     let alice = env.local_device("alice@dev1");
-//     let bob = env.local_device("bob@dev1");
-//     let user_ops = user_ops_factory(&env, &alice).await;
-//     load_realm_keys_bundle(&env, &user_ops, wksp1_id).await;
+    let cook_access_info =
+        |info: Vec<WorkspaceUserAccessInfo>| -> HashMap<UserID, WorkspaceUserAccessInfo> {
+            HashMap::from_iter(info.into_iter().map(|info| (info.user_id, info)))
+        };
 
-//     // Mock server command `realm_share`
-//     test_register_send_hook(&env.discriminant_dir, {
-//         let env = env.clone();
-//         move |req: authenticated_cmds::latest::realm_share::Req| {
-//             p_assert_eq!(
-//                 req.key_index,
-//                 env.get_last_realm_keys_bundle_index(wksp1_id)
-//             );
+    let mut expected_wksp1_access_info =
+        cook_access_info(client.list_workspace_users(wksp1_id).await.unwrap());
 
-//             let decrypted_keys_bundle_access = bob
-//                 .private_key
-//                 .decrypt_from_self(&req.recipient_keys_bundle_access)
-//                 .unwrap();
-//             let keys_bundle_access =
-//                 RealmKeysBundleAccess::load(&decrypted_keys_bundle_access).unwrap();
-//             assert_eq!(
-//                 &keys_bundle_access.keys_bundle_key,
-//                 env.get_last_realm_keys_bundle_access_key(wksp1_id)
-//             );
+    // 1) Give initial access
 
-//             let certif = RealmRoleCertificate::verify_and_load(
-//                 &req.realm_role_certificate,
-//                 &alice.verify_key(),
-//                 CertificateSignerRef::User(&alice.device_id),
-//                 Some(wksp1_id),
-//                 Some(bob.user_id()),
-//             )
-//             .unwrap();
-//             p_assert_matches!(certif.role, Some(RealmRole::Contributor));
+    client
+        .share_workspace(wksp1_id, mallory.user_id, Some(RealmRole::Contributor))
+        .await
+        .unwrap();
 
-//             authenticated_cmds::latest::realm_share::Rep::Ok {}
-//         }
-//     });
+    let wksp1_access_info = cook_access_info(client.list_workspace_users(wksp1_id).await.unwrap());
+    expected_wksp1_access_info.insert(
+        mallory.user_id,
+        WorkspaceUserAccessInfo {
+            user_id: mallory.user_id,
+            human_handle: mallory.human_handle.clone(),
+            current_profile: UserProfile::Standard,
+            current_role: RealmRole::Contributor,
+        },
+    );
+    p_assert_eq!(wksp1_access_info, expected_wksp1_access_info);
 
-//     user_ops
-//         .share_workspace(
-//             wksp1_id,
-//             "bob".parse().unwrap(),
-//             Some(RealmRole::Contributor),
-//         )
-//         .await
-//         .unwrap();
-// }
+    // Change again
 
-// #[parsec_test(testbed = "minimal_client_ready")]
-// async fn placeholder_workspace(env: &TestbedEnv) {
-//     let env = &env.customize(|builder: &mut TestbedTemplateBuilder| {
-//         builder.new_user("bob");
-//         // Fetch bob certificate in alice@dev1
-//         builder.certificates_storage_fetch_certificates("alice@dev1");
-//     });
-//     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-//     let alice = env.local_device("alice@dev1");
-//     let bob = env.local_device("bob@dev1");
-//     let user_ops = user_ops_factory(env, &alice).await;
-//     load_realm_keys_bundle(&env, &user_ops, wksp1_id).await;
+    client
+        .share_workspace(wksp1_id, mallory.user_id, Some(RealmRole::Reader))
+        .await
+        .unwrap();
 
-//     // Create a workspace but don't sync it...
-//     let wid = user_ops
-//         .create_workspace("wksp2".parse().unwrap())
-//         .await
-//         .unwrap();
+    let wksp1_access_info = cook_access_info(client.list_workspace_users(wksp1_id).await.unwrap());
+    expected_wksp1_access_info
+        .get_mut(&mallory.user_id)
+        .unwrap()
+        .current_role = RealmRole::Reader;
+    p_assert_eq!(wksp1_access_info, expected_wksp1_access_info);
 
-//     // Mock server
-//     test_register_sequence_of_send_hooks!(
-//         &env.discriminant_dir,
-//         // 1) `realm_create` for the shared workspace
-//         {
-//             let alice = alice.clone();
-//             move |req: authenticated_cmds::latest::realm_create::Req| {
-//                 let certif = RealmRoleCertificate::verify_and_load(
-//                     &req.realm_role_certificate,
-//                     &alice.verify_key(),
-//                     CertificateSignerRef::User(&alice.device_id),
-//                     Some(wid),
-//                     Some(alice.user_id),
-//                 )
-//                 .unwrap();
-//                 p_assert_matches!(certif.role, Some(RealmRole::Owner));
+    // Finally unshare
 
-//                 authenticated_cmds::latest::realm_create::Rep::Ok {}
-//             }
-//         },
-//         // 2) `realm_share`
-//         {
-//             let env = env.clone();
-//             move |req: authenticated_cmds::latest::realm_share::Req| {
-//                 p_assert_eq!(
-//                     req.key_index,
-//                     env.get_last_realm_keys_bundle_index(wksp1_id)
-//                 );
+    client
+        .share_workspace(wksp1_id, mallory.user_id, None)
+        .await
+        .unwrap();
 
-//                 let decrypted_keys_bundle_access = bob
-//                     .private_key
-//                     .decrypt_from_self(&req.recipient_keys_bundle_access)
-//                     .unwrap();
-//                 let keys_bundle_access =
-//                     RealmKeysBundleAccess::load(&decrypted_keys_bundle_access).unwrap();
-//                 assert_eq!(
-//                     &keys_bundle_access.keys_bundle_key,
-//                     env.get_last_realm_keys_bundle_access_key(wksp1_id)
-//                 );
+    let wksp1_access_info = cook_access_info(client.list_workspace_users(wksp1_id).await.unwrap());
+    expected_wksp1_access_info.remove(&mallory.user_id);
+    p_assert_eq!(wksp1_access_info, expected_wksp1_access_info);
+}
 
-//                 let certif = RealmRoleCertificate::verify_and_load(
-//                     &req.realm_role_certificate,
-//                     &alice.verify_key(),
-//                     CertificateSignerRef::User(&alice.device_id),
-//                     Some(wksp1_id),
-//                     Some(bob.user_id()),
-//                 )
-//                 .unwrap();
-//                 p_assert_matches!(certif.role, Some(RealmRole::Contributor));
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn ok_require_bootstrap_before_share(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
 
-//                 authenticated_cmds::latest::realm_share::Rep::Ok {}
-//             }
-//         }
-//     );
+    // Create a workspace but don't sync it...
+    let wid = client
+        .create_workspace("wksp2".parse().unwrap())
+        .await
+        .unwrap();
 
-//     // ...and share it, which should trigger its sync before anything else
-//     user_ops
-//         .share_workspace(wid, "bob".parse().unwrap(), Some(RealmRole::Contributor))
-//         .await
-//         .unwrap();
-// }
+    client
+        .share_workspace(wid, "bob".parse().unwrap(), Some(RealmRole::Reader))
+        .await
+        .unwrap();
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn ok_placeholder_workspace(env: &TestbedEnv) {
+    let wksp2_id = env
+        .customize(|builder| {
+            let wksp2_id = builder.new_realm("alice").map(|e| e.realm_id);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            wksp2_id
+        })
+        .await;
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    client
+        .share_workspace(wksp2_id, "bob".parse().unwrap(), Some(RealmRole::Reader))
+        .await
+        .unwrap();
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn to_self(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(wksp1_id, "alice".parse().unwrap(), Some(RealmRole::Reader))
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::RecipientIsSelf);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn to_unknown_user(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(wksp1_id, "mike".parse().unwrap(), Some(RealmRole::Reader))
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::RecipientNotFound);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn to_unknown_workspace(env: &TestbedEnv) {
+    let dummy_id: VlobID = VlobID::default();
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(dummy_id, "mallory".parse().unwrap(), Some(RealmRole::Owner))
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::WorkspaceNotFound);
+}
+
+// This test requires the server given the check is currently only done on server-side
+// (it could be done on client-side as well, but it's not the case for now)
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn cannot_share_with_revoked_recipient_known_on_client(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    env.customize(|builder| {
+        builder.revoke_user("mallory");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::RecipientRevoked);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn cannot_share_with_revoked_recipient_unknown_on_client(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    env.customize(|builder| {
+        builder.revoke_user("mallory");
+        // Client is not aware that Mallory has been revoked !
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::RecipientRevoked);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn can_unshare_with_revoked_recipient(
+    #[values("from_client", "from_server")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    match kind {
+        "from_client" => {
+            env.customize(|builder| {
+                builder.revoke_user("bob");
+                builder.certificates_storage_fetch_certificates("alice@dev1");
+            })
+            .await;
+        }
+        "from_server" => {
+            env.customize(|builder| {
+                builder.revoke_user("bob");
+            })
+            .await;
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+
+    client
+        .share_workspace(wksp1_id, "bob".parse().unwrap(), None)
+        .await
+        .unwrap();
+
+    let wksp1_access_info = client.list_workspace_users(wksp1_id).await.unwrap();
+    p_assert_eq!(
+        wksp1_access_info,
+        [WorkspaceUserAccessInfo {
+            user_id: alice.user_id,
+            human_handle: alice.human_handle.clone(),
+            current_profile: UserProfile::Admin,
+            current_role: RealmRole::Owner,
+        }]
+    );
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn author_not_allowed(#[values("from_client", "from_server")] kind: &str, env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    match kind {
+        "from_client" => (),
+        "from_server" => {
+            env.customize(|builder| {
+                // Bob's client thinks he can share the workspace...
+                builder.share_realm(wksp1_id, "bob", RealmRole::Manager);
+                builder.certificates_storage_fetch_certificates("bob@dev1");
+                // ...but his access has been removed in the meantime !
+                builder.share_realm(wksp1_id, "bob", None);
+            })
+            .await;
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
+
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let bob = env.local_device("bob@dev1");
+    let client = client_factory(&env.discriminant_dir, bob).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::AuthorNotAllowed);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn role_incompatible_with_outsider(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Manager),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::RoleIncompatibleWithOutsider);
+}
+
+#[parsec_test(testbed = "coolorg")]
+async fn offline(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ClientShareWorkspaceError::Offline);
+}
+
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn timestamp_out_of_ballpark(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let alice = env.local_device("alice@dev1");
+    // Alice's clock is 1h too late
+    alice.time_provider.mock_time_shifted(-3_600_000_000);
+    let client = client_factory(&env.discriminant_dir, alice).await;
+
+    let err = client
+        .share_workspace(
+            wksp1_id,
+            "mallory".parse().unwrap(),
+            Some(RealmRole::Reader),
+        )
+        .await
+        .unwrap_err();
+    p_assert_matches!(
+        err,
+        ClientShareWorkspaceError::TimestampOutOfBallpark { .. }
+    );
+}

@@ -345,7 +345,7 @@ impl Client {
     /// Share the workspace with another user, this function requires to be online.
     ///
     /// If the workspace is not bootstrapped, this function will try to bootstrap
-    /// it (but this may fail the current user is not an OWNER role).
+    /// it (this may fail if the current user does not have the OWNER role).
     pub async fn share_workspace(
         &self,
         realm_id: VlobID,
