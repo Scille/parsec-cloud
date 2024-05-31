@@ -48,7 +48,7 @@ async def event_bus_factory() -> AsyncIterator[MemoryEventBus]:
                 event_type=event.type,
                 event_id=event.event_id.hex,
                 organization=event.organization_id.str,
-                debug_extra={"event": event},
+                debug_extra={"event_detail": event},
             )
 
             event_bus._dispatch_incoming_event(event)
