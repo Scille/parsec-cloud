@@ -280,8 +280,8 @@ impl FileManifest {
     /// - not share the same block span
     /// - not span over multiple block spans
     /// Note that they do not have to be contiguous.
-    /// Those checks have to remain compatible with `LocalFileManifest::check_content_integrity`.
-    pub fn check_content_integrity(&self) -> DataResult<()> {
+    /// Those checks have to remain compatible with `LocalFileManifest::check_integrity`.
+    pub fn check_integrity(&self) -> DataResult<()> {
         let mut current_offset = 0;
         let mut current_block_index = 0;
 

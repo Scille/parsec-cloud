@@ -383,7 +383,7 @@ pub(super) async fn validate_child_manifest(
 
             // Check FileManifest integrity
             if let ChildManifest::File(ref manifest) = res {
-                manifest.check_content_integrity().map_err(|x| {
+                manifest.check_integrity().map_err(|x| {
                     let what = Box::new(InvalidManifestError::Corrupted {
                         realm: realm_id,
                         vlob: vlob_id,

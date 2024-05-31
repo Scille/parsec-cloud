@@ -119,7 +119,7 @@ impl Chunk {
             access: None,
         };
         // Sanity check
-        chunk.check_content_integrity().expect("Chunk integrity");
+        chunk.check_integrity().expect("Chunk integrity");
         chunk
     }
 
@@ -224,7 +224,7 @@ impl Chunk {
             .ok_or(ChunkGetBlockAccessError::NotPromotedAsBlock)
     }
 
-    pub fn check_content_integrity(&self) -> DataResult<()> {
+    pub fn check_integrity(&self) -> DataResult<()> {
         // As explained above, the following rule applies:
         //   raw_offset <= start < stop <= raw_offset + raw_size
         if !(self.raw_offset <= self.start
@@ -336,8 +336,8 @@ impl LocalFileManifest {
     /// - be internally consistent
     /// Also the last block span should not be empty.
     /// Note that they do not have to be contiguous.
-    /// Those checks have to remain compatible with `FileManifest::check_content_integrity`.
-    pub fn check_content_integrity(&self) -> DataResult<()> {
+    /// Those checks have to remain compatible with `FileManifest::check_integrity`.
+    pub fn check_integrity(&self) -> DataResult<()> {
         let mut current = 0;
 
         // Loop over block spans
@@ -347,7 +347,7 @@ impl LocalFileManifest {
 
             for chunk in chunks {
                 // Check that the chunk is internally consistent
-                chunk.check_content_integrity()?;
+                chunk.check_integrity()?;
 
                 // Check that the chunk belong to the block span
                 if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
@@ -404,9 +404,7 @@ impl LocalFileManifest {
         // Remote manifests comes from the certificate ops, so they are expected
         // to be validated using `CertifOps::validate_child_manifest`.
         // However, we still check the content integrity of the local manifest just in case.
-        manifest
-            .check_content_integrity()
-            .expect("Manifest integrity");
+        manifest.check_integrity().expect("Manifest integrity");
         manifest
     }
 
@@ -416,7 +414,7 @@ impl LocalFileManifest {
         timestamp: DateTime,
     ) -> Result<FileManifest, LocalFileManifestToRemoteError> {
         // Sanity check: make sure we don't upload an invalid manifest
-        self.check_content_integrity()
+        self.check_integrity()
             .expect("Local file manifest content integrity");
 
         let blocks = self
@@ -455,7 +453,7 @@ impl LocalFileManifest {
         };
         // The content integrity check is also done on the remote manifest, just in case
         manifest
-            .check_content_integrity()
+            .check_integrity()
             .expect("File manifest content integrity");
         Ok(manifest)
     }
@@ -933,7 +931,7 @@ impl LocalChildManifest {
         let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
         let result = format_vx_load(&serialized);
         if let Ok(Self::File(manifest)) = &result {
-            manifest.check_content_integrity()?;
+            manifest.check_integrity()?;
         }
         result
     }
