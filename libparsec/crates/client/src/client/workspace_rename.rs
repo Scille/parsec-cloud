@@ -66,6 +66,10 @@ pub async fn rename_workspace(
         .map_err(|e| match e {
             CertifBootstrapWorkspaceError::Offline => ClientRenameWorkspaceError::Offline,
             CertifBootstrapWorkspaceError::Stopped => ClientRenameWorkspaceError::Stopped,
+            // Note if our author is not allowed, it means the workspace has been shared
+            // with us... and hence the bootstrap has been done already !
+            // However this also means there is no point in trying to do the rename
+            // given it requires the same kind of authorizations.
             CertifBootstrapWorkspaceError::AuthorNotAllowed => {
                 ClientRenameWorkspaceError::AuthorNotAllowed
             }
