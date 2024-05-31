@@ -1,4 +1,4 @@
-name: parsec-v3
+name: parsec
 base: core22
 version: 3.0.0-b.6+dev
 summary: Secure cloud framework
@@ -8,7 +8,7 @@ confinement: classic
 type: app
 
 apps:
-  parsec-v3:
+  parsec:
     plugs:
       - desktop
       - desktop-legacy
@@ -22,7 +22,7 @@ apps:
       - audio-playback
       - pulseaudio
       - password-manager-service
-    desktop: usr/share/applications/parsec-v3.desktop
+    desktop: usr/share/applications/parsec.desktop
     command: bin/desktop-launch
 
 parts:
@@ -136,12 +136,12 @@ parts:
 
       cp -vr dist/linux-unpacked "$CRAFT_PART_INSTALL"/app
 
-  parsec-v3-desktop:
+  parsec-desktop:
     plugin: nil
     source: client/electron/assets
     build-environment:
-      - ICON_PATH: &desktop-icon-path usr/share/icons/hicolor/512x512/apps/parsec-v3.png
-      - DESKTOP_PATH: &desktop-path usr/share/applications/parsec-v3.desktop
+      - ICON_PATH: &desktop-icon-path usr/share/icons/hicolor/512x512/apps/parsec.png
+      - DESKTOP_PATH: &desktop-path usr/share/applications/parsec.desktop
       - PARSEC_SCHEME: parsec3
     prime:
       - *desktop-icon-path
@@ -153,7 +153,7 @@ parts:
       mkdir -p $(dirname "$CRAFT_PART_INSTALL"/$DESKTOP_PATH)
       cat << EOF > "$CRAFT_PART_INSTALL"/$DESKTOP_PATH
       [Desktop Entry]
-      Name=Parsec-v3
+      Name=Parsec
       Comment=Secure cloud framework
       Exec=\${SNAP}/bin/desktop-launch %U
       Icon=\${SNAP}/$ICON_PATH
@@ -204,7 +204,7 @@ parts:
 
       cat > command.sh << EOF
       #!/bin/bash -e
-      exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec-v3" "\$@" --no-sandbox
+      exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" "\$@" --no-sandbox
       EOF
 
       mkdir -p "$CRAFT_PART_INSTALL"/bin
