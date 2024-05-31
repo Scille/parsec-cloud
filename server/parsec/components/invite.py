@@ -336,7 +336,7 @@ class BaseInviteComponent:
             reply_to=greeter_human_handle.email,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            server_url=self._config.server_addr.to_http_domain_url(),
+            server_url=self._config.server_addr.to_http_url(),
         )
 
         return await send_email(
@@ -369,7 +369,7 @@ class BaseInviteComponent:
             reply_to=None,
             organization_id=organization_id,
             invitation_url=invitation_url,
-            server_url=self._config.server_addr.to_http_domain_url(),
+            server_url=self._config.server_addr.to_http_url(),
         )
 
         return await send_email(

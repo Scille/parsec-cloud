@@ -834,9 +834,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::UserManifest => quote! { crate::data::UserManifest },
         FieldType::ActiveUsersLimit => quote! { crate::protocol::ActiveUsersLimit },
         FieldType::Chunk => quote! { crate::data::Chunk },
-        FieldType::ParsecOrganizationAddr => quote! { crate::addrs::ParsecOrganizationAddr },
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
-        FieldType::ParsecPkiEnrollmentAddr => quote! { crate::addrs::ParsecPkiEnrollmentAddr },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
     }
@@ -969,14 +967,8 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! { crate::protocol::ActiveUsersLimit(#field_path.to_owned()) }
         }
         FieldType::Chunk => quote! { crate::data::Chunk(#field_path.to_owned()) },
-        FieldType::ParsecOrganizationAddr => {
-            quote! { crate::addrs::ParsecOrganizationAddr(#field_path.to_owned()) }
-        }
         FieldType::UsersPerProfileDetailItem => {
             quote! { crate::data::UsersPerProfileDetailItem(#field_path.to_owned()) }
-        }
-        FieldType::ParsecPkiEnrollmentAddr => {
-            quote! { crate::addrs::ParsecPkiEnrollmentAddr(#field_path.to_owned()) }
         }
         FieldType::PkiEnrollmentSubmitPayload => {
             quote! { crate::data::PkiEnrollmentSubmitPayload(#field_path.to_owned()) }
@@ -1060,9 +1052,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::UserManifest => quote! { crate::data::UserManifest },
         FieldType::ActiveUsersLimit => quote! { crate::protocol::ActiveUsersLimit },
         FieldType::Chunk => quote! { crate::data::Chunk },
-        FieldType::ParsecOrganizationAddr => quote! { crate::addrs::ParsecOrganizationAddr },
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
-        FieldType::ParsecPkiEnrollmentAddr => quote! { crate::addrs::ParsecPkiEnrollmentAddr },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
     }
@@ -1184,9 +1174,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::UserManifest
         | FieldType::ActiveUsersLimit
         | FieldType::Chunk
-        | FieldType::ParsecOrganizationAddr
         | FieldType::UsersPerProfileDetailItem
-        | FieldType::ParsecPkiEnrollmentAddr
         | FieldType::PkiEnrollmentSubmitPayload
         | FieldType::X509Certificate => quote! { #field_name.0 },
         // No conversion for the rest

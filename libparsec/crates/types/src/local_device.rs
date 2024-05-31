@@ -7,7 +7,7 @@ use libparsec_serialization_format::parsec_data;
 
 use crate::{
     self as libparsec_types, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
-    ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
+    ParsecAddr, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -125,8 +125,13 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
     type Error = &'static str;
 
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
+        let organization_addr = {
+            let server_addr =
+                ParsecAddr::from_http_url(&data.server_url).map_err(|_| "Invalid server URL")?;
+            ParsecOrganizationAddr::new(server_addr, data.organization_id, data.root_verify_key)
+        };
         Ok(Self {
-            organization_addr: data.organization_addr,
+            organization_addr,
             user_id: data.user_id,
             device_id: data.device_id,
             device_label: data.device_label,
@@ -144,9 +149,19 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
 
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
+        let server_url = {
+            let server_addr = ParsecAddr::new(
+                obj.organization_addr.hostname().to_string(),
+                Some(obj.organization_addr.port()),
+                obj.organization_addr.use_ssl(),
+            );
+            server_addr.to_http_url(None).to_string()
+        };
         Self {
             ty: Default::default(),
-            organization_addr: obj.organization_addr,
+            organization_id: obj.organization_addr.organization_id().clone(),
+            root_verify_key: obj.organization_addr.root_verify_key().clone(),
+            server_url,
             user_id: obj.user_id,
             device_id: obj.device_id,
             device_label: obj.device_label,
