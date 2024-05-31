@@ -108,10 +108,7 @@ impl PartialOrd<u64> for Chunk {
 
 impl Chunk {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
-        // TODO: Return an error instead of panicking
-        // TODO: also to this check when deserializing data
-        assert!(start < stop.get());
-        Self {
+        let chunk = Self {
             id: ChunkID::default(),
             start,
             stop,
@@ -120,7 +117,10 @@ impl Chunk {
             raw_size: NonZeroU64::try_from(stop.get() - start)
                 .expect("Chunk raw_size should be NonZeroU64"),
             access: None,
-        }
+        };
+        // Sanity check
+        chunk.check_content_integrity().expect("Chunk integrity");
+        chunk
     }
 
     pub fn size(&self) -> u64 {
@@ -222,6 +222,18 @@ impl Chunk {
     pub fn get_block_access(&self) -> Result<&BlockAccess, ChunkGetBlockAccessError> {
         self.block()
             .ok_or(ChunkGetBlockAccessError::NotPromotedAsBlock)
+    }
+
+    pub fn check_content_integrity(&self) -> DataResult<()> {
+        // As explained above, the following rule applies:
+        //   raw_offset <= start < stop <= raw_offset + raw_size
+        if !(self.raw_offset <= self.start
+            && self.start < self.stop.get()
+            && self.stop.get() <= self.raw_offset + self.raw_size.get())
+        {
+            return Err(DataError::ChunkIntegrity);
+        }
+        Ok(())
     }
 }
 
@@ -335,21 +347,16 @@ impl LocalFileManifest {
 
             for chunk in chunks {
                 // Check that the chunk is internally consistent
-                if chunk.start >= chunk.stop.get()
-                    || chunk.raw_offset > chunk.start
-                    || chunk.stop.get() > chunk.raw_offset + chunk.raw_size.get()
-                {
-                    return Err(DataError::InvalidFileContent);
-                }
+                chunk.check_content_integrity()?;
 
                 // Check that the chunk belong to the block span
                 if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
-                    return Err(DataError::InvalidFileContent);
+                    return Err(DataError::LocalFileManifestIntegrity);
                 }
 
                 // Check that the chunks are ordered and do not overlap
                 if current > chunk.start {
-                    return Err(DataError::InvalidFileContent);
+                    return Err(DataError::LocalFileManifestIntegrity);
                 }
                 current = chunk.stop.get();
             }
@@ -362,7 +369,7 @@ impl LocalFileManifest {
 
         // Check that the file size is consistent with the last chunk
         if current > self.size {
-            return Err(DataError::InvalidFileContent);
+            return Err(DataError::LocalFileManifestIntegrity);
         }
 
         Ok(())

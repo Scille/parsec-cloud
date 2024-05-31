@@ -441,7 +441,7 @@ async fn content_corrupted(
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == DataError::InvalidFileContent)
+        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == DataError::FileManifestIntegrity)
     );
 }
 
