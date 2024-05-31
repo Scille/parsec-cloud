@@ -195,7 +195,7 @@ async fn cannot_decrypt(env: &TestbedEnv) {
             realm_key_index,
             child_id,
             alice.device_id,
-            0,
+            1,
             now,
             b"<dummy data>",
         )
@@ -283,12 +283,12 @@ async fn cleartext_corrupted(
         "dummy" => p_assert_matches!(
             err,
             CertifValidateManifestError::InvalidManifest(boxed)
-            if matches!(&*boxed, InvalidManifestError::Corrupted { error, .. } if **error == DataError::Decryption)
+            if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == DataError::Decryption)
         ),
         "parent_pointing_on_itself" => p_assert_matches!(
             err,
             CertifValidateManifestError::InvalidManifest(boxed)
-            if matches!(&*boxed, InvalidManifestError::Corrupted { error, .. } if **error == DataError::Serialization)
+            if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if matches!(**error, DataError::BadSerialization { .. }))
         ),
         unknown => panic!("Unknown kind {}", unknown),
     }
@@ -400,7 +400,7 @@ async fn content_corrupted(
         timestamp: now,
         id: child_id,
         parent: parent_id,
-        version: 0,
+        version: 1,
         created: now,
         updated: now,
         blocks,
@@ -431,7 +431,7 @@ async fn content_corrupted(
             realm_key_index,
             child_id,
             &alice.device_id,
-            0,
+            1,
             now,
             &encrypted,
         )
@@ -441,11 +441,7 @@ async fn content_corrupted(
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-<<<<<<< HEAD
-        if matches!(*boxed, InvalidManifestError::CleartextCorrupted { .. })
-=======
-        if matches!(&*boxed, InvalidManifestError::Corrupted { error, .. } if **error == DataError::InvalidFileContent)
->>>>>>> 388c45e4d (Add content_corrupted test for validate_child_manifest)
+        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == DataError::InvalidFileContent)
     );
 }
 
