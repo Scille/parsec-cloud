@@ -70,7 +70,7 @@ jobs:
             --repo=${{ github.server_url }}/${{ github.repository }} \
             download \
             ${{ env.RELEASE_TAG }} \
-            --pattern=Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap \
+            --pattern=Parsec_${{ steps.version.outputs.full }}_linux_*.snap \
             --dir=snap
         env:
           GH_TOKEN: ${{ github.token }}
@@ -84,7 +84,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Upload Snap
-        run: snapcraft upload --release=nightly/stable snap/Parsec-v3_${{ steps.version.outputs.full }}_linux_*.snap
+        run: snapcraft upload --release=nightly/stable snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 2
