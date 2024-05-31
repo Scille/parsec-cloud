@@ -160,10 +160,7 @@ impl StateMachineTest for FileOperationStateMachine {
         ref_state: &<Self::Reference as ReferenceStateMachine>::State,
     ) {
         // 1. Manifest integrity
-        state
-            .manifest
-            .check_integrity()
-            .expect("Manifest integrity");
+        state.manifest.check_integrity().unwrap();
         // 2. Same size for the manifest and the cursor
         assert_eq!(ref_state.cursor.position(), state.manifest.size);
         // 3. Remote conversion is OK
@@ -174,7 +171,7 @@ impl StateMachineTest for FileOperationStateMachine {
                 .unwrap();
             LocalFileManifest::from_remote(remote)
                 .check_integrity()
-                .expect("Manifest integrity");
+                .unwrap();
         }
         // 3. No corruption or leaks in the storage
         let manifest_ids: HashSet<_> = state
