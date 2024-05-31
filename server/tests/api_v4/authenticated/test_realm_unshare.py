@@ -30,11 +30,33 @@ def alice_unshare_bob_certificate(coolorg: CoolorgRpcClients) -> RealmRoleCertif
     )
 
 
+@pytest.mark.parametrize("revoked_user", (False, True))
 async def test_authenticated_realm_unshare_ok(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_unshare_bob_certificate: RealmRoleCertificate,
+    revoked_user: bool,
 ) -> None:
+    if revoked_user:
+        await backend.user.revoke_user(
+            now=DateTime.now(),
+            organization_id=coolorg.organization_id,
+            author=coolorg.alice.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            revoked_user_certificate=RevokedUserCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=DateTime.now(),
+                user_id=coolorg.bob.user_id,
+            ).dump_and_sign(coolorg.alice.signing_key),
+        )
+
+    alice_unshare_bob_certificate = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=DateTime.now(),
+        realm_id=coolorg.wksp1_id,
+        user_id=coolorg.bob.user_id,
+        role=None,
+    )
+
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.realm_unshare(
             realm_role_certificate=alice_unshare_bob_certificate.dump_and_sign(
