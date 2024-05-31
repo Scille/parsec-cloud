@@ -159,7 +159,7 @@ async def test_authenticated_realm_share_ok_from_author_that_has_changed_role(
 ) -> None:
     # Bob is currently a READER...
     bob_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.bob.device_id.user_id
+        coolorg.organization_id, coolorg.bob.user_id
     )
     assert isinstance(bob_realms, dict)
     assert bob_realms[coolorg.wksp1_id] == RealmRole.READER  # Sanity check
@@ -177,7 +177,7 @@ async def test_authenticated_realm_share_ok_from_author_that_has_changed_role(
             timestamp=now,
             realm_id=coolorg.wksp1_id,
             role=RealmRole.MANAGER,
-            user_id=coolorg.bob.device_id.user_id,
+            user_id=coolorg.bob.user_id,
         ).dump_and_sign(coolorg.alice.signing_key),
         recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
