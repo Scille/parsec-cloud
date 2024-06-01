@@ -677,7 +677,7 @@ fn chunk_is_block() {
         access: None,
     };
 
-    assert!(chunk.is_aligned());
+    assert!(chunk.is_aligned_with_raw_data());
     assert!(!chunk.is_block());
 
     let mut block = {
@@ -686,42 +686,42 @@ fn chunk_is_block() {
         block
     };
 
-    assert!(block.is_aligned());
+    assert!(block.is_aligned_with_raw_data());
     assert!(block.is_block());
 
     block.start = 1;
 
-    assert!(!block.is_aligned());
+    assert!(!block.is_aligned_with_raw_data());
     assert!(!block.is_block());
 
     block.access.as_mut().unwrap().offset = 1;
 
-    assert!(!block.is_aligned());
+    assert!(!block.is_aligned_with_raw_data());
     assert!(!block.is_block());
 
     block.raw_offset = 1;
 
-    assert!(!block.is_aligned());
+    assert!(!block.is_aligned_with_raw_data());
     assert!(!block.is_block());
 
     block.stop = NonZeroU64::try_from(2).unwrap();
 
-    assert!(block.is_aligned());
+    assert!(block.is_aligned_with_raw_data());
     assert!(block.is_block());
 
     block.stop = NonZeroU64::try_from(5).unwrap();
 
-    assert!(!block.is_aligned());
+    assert!(!block.is_aligned_with_raw_data());
     assert!(!block.is_block());
 
     block.raw_size = NonZeroU64::try_from(4).unwrap();
 
-    assert!(block.is_aligned());
+    assert!(block.is_aligned_with_raw_data());
     assert!(!block.is_block());
 
     block.access.as_mut().unwrap().size = NonZeroU64::try_from(4).unwrap();
 
-    assert!(block.is_aligned());
+    assert!(block.is_aligned_with_raw_data());
     assert!(block.is_block());
 }
 

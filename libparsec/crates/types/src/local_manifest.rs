@@ -172,7 +172,7 @@ impl Chunk {
         }
 
         // Check alignement
-        if !self.is_aligned() {
+        if !self.is_aligned_with_raw_data() {
             return Err(ChunkPromoteAsBlockError::NotAligned);
         }
 
@@ -191,7 +191,7 @@ impl Chunk {
         // Requires an access
         if let Some(access) = &self.access {
             // Correctly aligned
-            if self.is_aligned()
+            if self.is_aligned_with_raw_data()
             // Offset inconsistent
             && self.raw_offset == access.offset
             // Size inconsistent
@@ -207,7 +207,7 @@ impl Chunk {
         self.block().is_some()
     }
 
-    pub fn is_aligned(&self) -> bool {
+    pub fn is_aligned_with_raw_data(&self) -> bool {
         // Not left aligned
         if self.start != self.raw_offset {
             return false;
