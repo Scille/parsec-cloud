@@ -43,16 +43,45 @@ interface Callback {
 
 class EventDistributor {
   private callbacks: Array<Callback>;
+  private timeouts: Map<Events, number>;
 
   constructor() {
     this.callbacks = [];
+    this.timeouts = new Map<number, Events>();
   }
 
-  async dispatchEvent(event: Events, data?: EventData): Promise<void> {
-    for (const cb of this.callbacks) {
-      if (event & cb.events) {
-        await cb.funct(event, data);
+  async dispatchEvent(event: Events, data?: EventData, aggregateTime?: number): Promise<void> {
+    async function sendToAll(callbacks: Array<Callback>, event: Events, data?: EventData): Promise<void> {
+      for (const cb of callbacks) {
+        if (event & cb.events) {
+          await cb.funct(event, data);
+        }
       }
+    }
+
+    // In some cases, events can occur very close to each other, leading to some heavy operations.
+    // We can aggregate those cases in order to distribute only one event if multiple occur in a short
+    // time lapse.
+    if (aggregateTime !== undefined) {
+      if (data) {
+        // Can't have data with an aggregateTime, we wouldn't know what data to use
+        console.warn('Cannot have an aggregate time with data, ignoring this event.');
+        return;
+      }
+      // Clear previous interval if any
+      if (this.timeouts.has(event)) {
+        const interval = this.timeouts.get(event);
+        this.timeouts.delete(event);
+        window.clearInterval(interval);
+      }
+      // Create a new timeout
+      const interval = window.setTimeout(async () => {
+        await sendToAll(this.callbacks, event, undefined);
+      }, aggregateTime);
+      // Add it to the list
+      this.timeouts.set(event, interval);
+    } else {
+      await sendToAll(this.callbacks, event, data);
     }
   }
 
