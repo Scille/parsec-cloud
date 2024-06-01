@@ -2,7 +2,14 @@
 
 from typing import override
 
-from parsec._parsec import DateTime, DeviceCertificate, DeviceID, InvitationToken, OrganizationID
+from parsec._parsec import (
+    DateTime,
+    DeviceID,
+    InvitationToken,
+    OrganizationID,
+    UserID,
+    VerifyKey,
+)
 from parsec.components.auth import (
     AnonymousAuthInfo,
     AuthAnonymousAuthBadOutcome,
@@ -23,6 +30,7 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_human,
     q_organization_internal_id,
+    q_user,
     transaction,
 )
 from parsec.components.user import (
@@ -57,8 +65,9 @@ ORDER BY profile.certified_on DESC LIMIT 1
 _q_get_device = Q(
     f"""
 SELECT
+    { q_user(select="user_id", _id="device.user_") } as user_id,
     device_label,
-    device_certificate,
+    verify_key,
     redacted_device_certificate,
     { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
     created_on
@@ -72,22 +81,22 @@ WHERE
 
 async def query_check_user_for_authentication(
     conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
-) -> DeviceCertificate | CheckUserForAuthenticationBadOutcome:
+) -> tuple[UserID, VerifyKey] | CheckUserForAuthenticationBadOutcome:
     d_row = await conn.fetchrow(
-        *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+        *_q_get_device(organization_id=organization_id.str, device_id=device_id)
     )
     if not d_row:
         return CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND
-    u_row = await conn.fetchrow(
-        *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
-    )
+    user_id = UserID.from_hex(d_row["user_id"])
+    u_row = await conn.fetchrow(*_q_get_user(organization_id=organization_id.str, user_id=user_id))
     if not u_row:
         return CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND
     if u_row["revoked_on"] is not None:
         return CheckUserForAuthenticationBadOutcome.USER_REVOKED
     if u_row["frozen"]:
         return CheckUserForAuthenticationBadOutcome.USER_FROZEN
-    return DeviceCertificate.unsecure_load(d_row["device_certificate"])
+    verify_key = VerifyKey(d_row["verify_key"])
+    return (user_id, verify_key)
 
 
 class PGAuthComponent(BaseAuthComponent):
@@ -113,13 +122,13 @@ class PGAuthComponent(BaseAuthComponent):
         spontaneous_bootstrap: bool,
     ) -> AnonymousAuthInfo | AuthAnonymousAuthBadOutcome:
         match await self.organization._get(conn, organization_id):
+            case Organization() as organization:
+                is_expired = organization.is_expired
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 if not spontaneous_bootstrap:
                     return AuthAnonymousAuthBadOutcome.ORGANIZATION_NOT_FOUND
                 await self.organization.spontaneous_create(conn, organization_id, now=now)
                 is_expired = False
-            case Organization() as organization:
-                is_expired = organization.is_expired
 
         if is_expired:
             return AuthAnonymousAuthBadOutcome.ORGANIZATION_EXPIRED
@@ -139,6 +148,8 @@ class PGAuthComponent(BaseAuthComponent):
         token: InvitationToken,
     ) -> InvitedAuthInfo | AuthInvitedAuthBadOutcome:
         match await self.invite._info_as_invited(conn, organization_id, token):
+            case DeviceInvitation() | UserInvitation() as invitation:
+                pass
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND:
                 return AuthInvitedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED:
@@ -147,8 +158,6 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthInvitedAuthBadOutcome.INVITATION_NOT_FOUND
             case InviteAsInvitedInfoBadOutcome.INVITATION_DELETED:
                 return AuthInvitedAuthBadOutcome.INVITATION_ALREADY_USED
-            case DeviceInvitation() | UserInvitation() as invitation:
-                pass
 
         return InvitedAuthInfo(
             organization_id=organization_id,
@@ -167,15 +176,17 @@ class PGAuthComponent(BaseAuthComponent):
         device_id: DeviceID,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND
 
         if organization.is_expired:
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
 
         match await query_check_user_for_authentication(conn, organization_id, device_id):
+            case (user_id, verify_key):
+                pass
             case CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND:
                 return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
             case CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND:
@@ -184,13 +195,12 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
             case CheckUserForAuthenticationBadOutcome.USER_FROZEN:
                 return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
-            case DeviceCertificate() as certificate:
-                pass
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,
+            user_id=user_id,
             device_id=device_id,
-            device_verify_key=certificate.verify_key,
+            device_verify_key=verify_key,
             organization_internal_id=0,  # Only used by PostgreSQL implementation
             device_internal_id=0,  # Only used by PostgreSQL implementation
         )

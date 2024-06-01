@@ -17,8 +17,30 @@ use crate::{
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
 
+pub const ALICE_USER_ID: UserID = UserID(uuid::uuid!("A11CEC00100000000000000000000000"));
+pub const BOB_USER_ID: UserID = UserID(uuid::uuid!("808C0010000000000000000000000000"));
+pub const MALLORY_USER_ID: UserID = UserID(uuid::uuid!("3A11031C001000000000000000000000"));
+pub const MIKE_USER_ID: UserID = UserID(uuid::uuid!("31CEC001000000000000000000000000"));
+pub const PHILIP_USER_ID: UserID = UserID(uuid::uuid!("91119EC0010000000000000000000000"));
+pub const ALICE_DEV1_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE10A11CEC0010000000000000000000"));
+pub const ALICE_DEV2_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE20A11CEC0010000000000000000000"));
+pub const ALICE_DEV3_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE30A11CEC0010000000000000000000"));
+pub const BOB_DEV1_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE10808C001000000000000000000000"));
+pub const BOB_DEV2_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE20808C001000000000000000000000"));
+pub const MALLORY_DEV1_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE103A11031C00100000000000000000"));
+pub const MALLORY_DEV2_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE203A11031C00100000000000000000"));
+pub const MIKE_DEV1_DEVICE_ID: DeviceID = DeviceID(uuid::uuid!("DE1031CEC00100000000000000000000"));
+pub const PHILIP_DEV1_DEVICE_ID: DeviceID =
+    DeviceID(uuid::uuid!("DE1091119EC001000000000000000000"));
+
 pub struct Device {
     pub organization_addr: ParsecOrganizationAddr,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
@@ -32,10 +54,6 @@ pub struct Device {
 }
 
 impl Device {
-    pub fn user_id(&self) -> &UserID {
-        self.device_id.user_id()
-    }
-
     pub fn organization_id(&self) -> &OrganizationID {
         self.organization_addr.organization_id()
     }
@@ -55,7 +73,8 @@ impl Device {
     pub fn local_device(&self) -> LocalDevice {
         LocalDevice {
             organization_addr: self.organization_addr.to_owned(),
-            device_id: self.device_id.to_owned(),
+            user_id: self.user_id,
+            device_id: self.device_id,
             device_label: self.device_label.to_owned(),
             human_handle: self.human_handle.to_owned(),
             signing_key: self.signing_key.to_owned(),
@@ -100,7 +119,8 @@ pub fn coolorg() -> Organization {
 pub fn alice(coolorg: &Organization) -> Device {
     Device {
         organization_addr: coolorg.addr_with_prefixed_host("alice_dev1"),
-        device_id: "alice@dev1".parse().unwrap(),
+        user_id: ALICE_USER_ID,
+        device_id: ALICE_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: HumanHandle::new("alice@example.com", "Alicey McAliceFace").unwrap(),
         signing_key: SigningKey::from(hex!(
@@ -126,7 +146,8 @@ pub fn alice(coolorg: &Organization) -> Device {
 pub fn bob(coolorg: &Organization) -> Device {
     Device {
         organization_addr: coolorg.addr_with_prefixed_host("bob_dev1"),
-        device_id: "bob@dev1".parse().unwrap(),
+        user_id: BOB_USER_ID,
+        device_id: BOB_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: HumanHandle::new("bob@example.com", "Boby McBobFace").unwrap(),
         signing_key: SigningKey::from(hex!(
@@ -152,7 +173,8 @@ pub fn bob(coolorg: &Organization) -> Device {
 pub fn mallory(coolorg: &Organization) -> Device {
     Device {
         organization_addr: coolorg.addr_with_prefixed_host("mallory_dev1"),
-        device_id: "mallory@dev1".parse().unwrap(),
+        user_id: MALLORY_USER_ID,
+        device_id: MALLORY_DEV1_DEVICE_ID,
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: HumanHandle::new("mallory@example.com", "Mallory McMalloryFace").unwrap(),
         signing_key: SigningKey::generate(),
@@ -196,9 +218,9 @@ pub fn timestamps(timestamp: DateTime) -> TimestampGenerator {
 #[once]
 pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        user_id: bob.user_id().clone(),
+        user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -211,10 +233,10 @@ pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Ve
 #[once]
 pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        user_id: bob.user_id().clone(),
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id())),
+        user_id: bob.user_id,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: UserProfile::Standard,
@@ -226,9 +248,10 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
 #[once]
 pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        device_id: bob.device_id.clone(),
+        user_id: bob.user_id,
+        device_id: bob.device_id,
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
@@ -240,10 +263,11 @@ pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> 
 #[once]
 pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        device_id: bob.device_id.clone(),
-        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id.device_name())),
+        user_id: bob.user_id,
+        device_id: bob.device_id,
+        device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id)),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     }

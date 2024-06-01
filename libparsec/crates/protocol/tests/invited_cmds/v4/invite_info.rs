@@ -45,7 +45,7 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Python implementation (Parsec v2.6.0+dev)
+            // Generated from Rust implementation (Parsec 3.0.0-b.6+dev)
             // Content:
             //   type: "USER"
             //   claimer_email: "alice@dev1"
@@ -53,32 +53,31 @@ pub fn rep_ok() {
             //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
             //   status: "ok"
             &hex!(
-                "85ad636c61696d65725f656d61696caa616c6963654064657631b4677265657465725f"
-                "68756d616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f"
-                "757365725f6964d9203130396236386261356364663432386561303031376663366263"
-                "633034643461a6737461747573a26f6ba474797065a455534552"
+                "85a6737461747573a26f6ba474797065a455534552ad636c61696d65725f656d61696c"
+                "aa616c6963654064657631b4677265657465725f68756d616e5f68616e646c6592a862"
+                "6f624064657631a3626f62af677265657465725f757365725f6964d802109b68ba5cdf"
+                "428ea0017fc6bcc04d4a"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::UserOrDevice::User {
                 claimer_email: "alice@dev1".to_owned(),
-                greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
+                greeter_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }),
         ),
         (
-            // Generated from Python implementation (Parsec v2.6.0+dev)
+            // Generated from Rust implementation (Parsec 3.0.0-b.6+dev)
             // Content:
             //   type: "DEVICE"
             //   greeter_human_handle: ["bob@dev1", "bob"]
             //   greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a"
             //   status: "ok"
             &hex!(
-                "84b4677265657465725f68756d616e5f68616e646c6592a8626f624064657631a3626f"
-                "62af677265657465725f757365725f6964d92031303962363862613563646634323865"
-                "61303031376663366263633034643461a6737461747573a26f6ba474797065a6444556"
-                "494345"
+                "84a6737461747573a26f6ba474797065a6444556494345b4677265657465725f68756d"
+                "616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f757365"
+                "725f6964d802109b68ba5cdf428ea0017fc6bcc04d4a"
             )[..],
             invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::UserOrDevice::Device {
-                greeter_user_id: "109b68ba5cdf428ea0017fc6bcc04d4a".parse().unwrap(),
+                greeter_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }),
         ),

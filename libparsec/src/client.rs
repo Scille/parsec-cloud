@@ -247,8 +247,8 @@ pub async fn client_info(client: Handle) -> Result<ClientInfo, ClientInfoError> 
     Ok(ClientInfo {
         organization_addr: client.organization_addr().clone(),
         organization_id: client.organization_id().clone(),
-        device_id: client.device_id().clone(),
-        user_id: client.device_id().user_id().clone(),
+        device_id: client.device_id(),
+        user_id: client.user_id(),
         device_label: client.device_label().to_owned(),
         human_handle: client.human_handle().to_owned(),
         current_profile: client

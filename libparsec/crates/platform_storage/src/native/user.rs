@@ -256,7 +256,7 @@ pub async fn user_storage_non_speculative_init(
 
     let timestamp = device.now();
     let manifest = LocalUserManifest::new(
-        device.device_id.clone(),
+        device.device_id,
         timestamp,
         Some(device.user_realm_id),
         false,

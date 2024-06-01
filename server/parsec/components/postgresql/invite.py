@@ -41,6 +41,7 @@ from parsec.components.postgresql.utils import (
     q_device,
     q_device_internal_id,
     q_organization_internal_id,
+    q_user,
     q_user_internal_id,
     transaction,
 )
@@ -101,16 +102,16 @@ WITH new_invitations AS (
         organization,
         token,
         type,
-        created_by,
         claimer_email,
+        created_by,
         created_on
     )
     VALUES (
         { q_organization_internal_id("$organization_id") },
         $token,
         $type,
-        { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
         $claimer_email,
+        { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
         $created_on
     )
     RETURNING _id, created_by
@@ -146,7 +147,8 @@ _q_list_invitations = Q(
 SELECT
     invitation.token,
     invitation.type,
-    { q_device(_id="invitation.created_by", select="device_id") },
+    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
+    { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
     human.email,
     human.label,
     invitation.claimer_email,
@@ -168,9 +170,10 @@ _q_list_all_invitations = Q(
 SELECT
     invitation.token,
     invitation.type,
-    { q_device(_id="invitation.created_by", select="device_id") },
-    human.email,
-    human.label,
+    { q_user(_id="device.user_", select="user_id") } as created_by_user_id,
+    device.device_id as created_by_device_id,
+    human.email as created_by_email,
+    human.label as created_by_label,
     invitation.claimer_email,
     invitation.created_on,
     invitation.deleted_on,
@@ -190,7 +193,8 @@ _q_info_invitation = Q(
 SELECT
     invitation._id,
     invitation.type,
-    { q_device(_id="invitation.created_by", select="device_id") },
+    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
+    { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
     human.email,
     human.label,
     invitation.claimer_email,
@@ -210,7 +214,7 @@ LIMIT 1
 _q_get_invitation_created_by = Q(
     f"""
 SELECT
-    { q_device(_id="created_by", select="device_id") } AS created_by
+    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by
 FROM invitation
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
@@ -310,14 +314,15 @@ async def query_retrieve_active_human_by_email(
         )
     )
     if result:
-        return UserID(result["user_id"])
+        return UserID.from_hex(result["user_id"])
     return None
 
 
 async def _do_new_user_or_device_invitation(
     conn: AsyncpgConnection,
     organization_id: OrganizationID,
-    author: DeviceID,
+    author_user_id: UserID,
+    author_device_id: DeviceID,
     claimer_email: str | None,
     created_on: DateTime,
     invitation_type: InvitationType,
@@ -329,14 +334,14 @@ async def _do_new_user_or_device_invitation(
             q = _q_retrieve_compatible_user_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
-                user_id=author.user_id.str,
+                user_id=author_user_id,
                 claimer_email=claimer_email,
             )
         case InvitationType.DEVICE:
             q = _q_retrieve_compatible_device_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
-                user_id=author.user_id.str,
+                user_id=author_user_id,
             )
         case _:
             assert False, "No other invitation type for the moment"
@@ -352,8 +357,8 @@ async def _do_new_user_or_device_invitation(
                 organization_id=organization_id.str,
                 type=invitation_type.str,
                 token=token.hex,
-                created_by=author.str,
                 claimer_email=claimer_email,
+                created_by=author_device_id,
                 created_on=created_on,
             )
         )
@@ -362,7 +367,7 @@ async def _do_new_user_or_device_invitation(
         EventInvitation(
             organization_id=organization_id,
             token=token,
-            greeter=author.user_id,
+            greeter=author_user_id,
             status=InvitationStatus.IDLE,
         ),
     )
@@ -375,7 +380,7 @@ async def _human_handle_from_user_id(
     result = await conn.fetchrow(
         *_q_get_human_handle_from_user_id(
             organization_id=organization_id.str,
-            user_id=user_id.str,
+            user_id=user_id,
         )
     )
     if result:
@@ -409,22 +414,22 @@ class PGInviteComponent(BaseInviteComponent):
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteNewForUserBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, current_profile, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteNewForUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as current_profile, DateTime()):
-                pass
         if current_profile != UserProfile.ADMIN:
             return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -436,7 +441,8 @@ class PGInviteComponent(BaseInviteComponent):
         token = await _do_new_user_or_device_invitation(
             conn,
             organization_id=organization_id,
-            author=author,
+            author_user_id=author_user_id,
+            author_device_id=author,
             claimer_email=claimer_email,
             created_on=now,
             invitation_type=InvitationType.USER,
@@ -445,7 +451,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         if send_email:
             greeter_human_handle = await _human_handle_from_user_id(
-                conn, organization_id=organization_id, user_id=author.user_id
+                conn, organization_id=organization_id, user_id=author_user_id
             )
             if not greeter_human_handle:
                 assert (
@@ -474,28 +480,29 @@ class PGInviteComponent(BaseInviteComponent):
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteNewForDeviceBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         suggested_token = force_token or InvitationToken.new()
         token = await _do_new_user_or_device_invitation(
             conn,
             organization_id=organization_id,
-            author=author,
+            author_user_id=author_user_id,
+            author_device_id=author,
             claimer_email=None,
             created_on=now,
             invitation_type=InvitationType.DEVICE,
@@ -504,7 +511,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         if send_email:
             human_handle = await _human_handle_from_user_id(
-                conn, organization_id=organization_id, user_id=author.user_id
+                conn, organization_id=organization_id, user_id=author_user_id
             )
             if not human_handle:
                 assert (
@@ -530,22 +537,22 @@ class PGInviteComponent(BaseInviteComponent):
         token: InvitationToken,
     ) -> None | InviteCancelBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteCancelBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         row = await conn.fetchrow(
             *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
@@ -567,7 +574,7 @@ class PGInviteComponent(BaseInviteComponent):
             EventInvitation(
                 organization_id=organization_id,
                 token=token,
-                greeter=author.user_id,
+                greeter=author_user_id,
                 status=InvitationStatus.CANCELLED,
             )
         )
@@ -578,25 +585,25 @@ class PGInviteComponent(BaseInviteComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
     ) -> list[Invitation] | InviteListBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteListBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return InviteListBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return InviteListBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteListBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         rows = await conn.fetch(
-            *_q_list_invitations(organization_id=organization_id.str, user_id=author.user_id.str)
+            *_q_list_invitations(organization_id=organization_id.str, user_id=author_user_id)
         )
 
         invitations_with_claimer_online = self._claimers_ready[organization_id]
@@ -604,7 +611,8 @@ class PGInviteComponent(BaseInviteComponent):
         for (
             token_str,
             type,
-            created_by_str,
+            created_by_user_id_str,
+            created_by_device_id_str,
             created_by_email,
             created_by_label,
             claimer_email,
@@ -612,7 +620,8 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             deleted_reason,
         ) in rows:
-            created_by = DeviceID(created_by_str)
+            created_by_user_id = UserID.from_hex(created_by_user_id_str)
+            created_by_device_id = DeviceID.from_hex(created_by_device_id_str)
             token = InvitationToken.from_hex(token_str)
             assert created_by_email is not None
             greeter_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
@@ -627,7 +636,8 @@ class PGInviteComponent(BaseInviteComponent):
             invitation: Invitation
             if type == InvitationType.USER.str:
                 invitation = UserInvitation(
-                    created_by=created_by,
+                    created_by_user_id=created_by_user_id,
+                    created_by_device_id=created_by_device_id,
                     created_by_human_handle=greeter_human_handle,
                     claimer_email=claimer_email,
                     token=token,
@@ -636,7 +646,8 @@ class PGInviteComponent(BaseInviteComponent):
                 )
             else:  # Device
                 invitation = DeviceInvitation(
-                    created_by=created_by,
+                    created_by_user_id=created_by_user_id,
+                    created_by_device_id=created_by_device_id,
                     created_by_human_handle=greeter_human_handle,
                     token=token,
                     created_on=created_on,
@@ -649,10 +660,10 @@ class PGInviteComponent(BaseInviteComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
     ) -> Invitation | InviteAsInvitedInfoBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND
 
         if organization.is_expired:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
@@ -664,7 +675,8 @@ class PGInviteComponent(BaseInviteComponent):
         (
             _id,
             type,
-            created_by_str,
+            created_by_user_id_str,
+            created_by_device_id_str,
             created_by_email,
             created_by_label,
             claimer_email,
@@ -672,14 +684,16 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_on,
             _deleted_reason,
         ) = row
-        created_by = DeviceID(created_by_str)
+        created_by_user_id = UserID.from_hex(created_by_user_id_str)
+        created_by_device_id = DeviceID.from_hex(created_by_device_id_str)
         if deleted_on:
             return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
         assert created_by_email is not None
         greeter_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
         if type == InvitationType.USER.str:
             return UserInvitation(
-                created_by=created_by,
+                created_by_user_id=created_by_user_id,
+                created_by_device_id=created_by_device_id,
                 created_by_human_handle=greeter_human_handle,
                 claimer_email=claimer_email,
                 token=token,
@@ -688,7 +702,8 @@ class PGInviteComponent(BaseInviteComponent):
             )
         else:  # Device
             return DeviceInvitation(
-                created_by=created_by,
+                created_by_user_id=created_by_user_id,
+                created_by_device_id=created_by_device_id,
                 created_by_human_handle=greeter_human_handle,
                 token=token,
                 created_on=created_on,
@@ -717,7 +732,6 @@ class PGInviteComponent(BaseInviteComponent):
         # On top of retrieving the invitation row, this query lock the row
         # in the database for the duration of the transaction.
         # Hence concurrent request will be on hold until the end of the transaction.
-
         row = await conn.fetchrow(
             *_q_get_invitation_created_by(organization_id=organization_id.str, token=token.hex)
         )
@@ -725,13 +739,13 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
         # The greeter is the author of the invitation for the moment
         # TODO: make it more flexible later
-        greeter = DeviceID(row["created_by"]).user_id
+        greeter = UserID.from_hex(row["created_by"])
 
         if is_greeter:
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
                     organization_id=organization_id.str,
-                    greeter_user_id=greeter.str,
+                    greeter_user_id=greeter,
                     token=token.hex,
                 )
             )
@@ -740,7 +754,7 @@ class PGInviteComponent(BaseInviteComponent):
                 *_q_conduit_claimer_info(
                     organization_id=organization_id.str,
                     token=token.hex,
-                    greeter_user_id=greeter.str,
+                    greeter_user_id=greeter,
                 )
             )
 
@@ -835,7 +849,7 @@ class PGInviteComponent(BaseInviteComponent):
             row = await conn.fetchrow(
                 *_q_conduit_greeter_info(
                     organization_id=ctx.organization_id.str,
-                    greeter_user_id=ctx.greeter.str,
+                    greeter_user_id=ctx.greeter,
                     token=ctx.token.hex,
                 )
             )
@@ -843,7 +857,7 @@ class PGInviteComponent(BaseInviteComponent):
             row = await conn.fetchrow(
                 *_q_conduit_claimer_info(
                     organization_id=ctx.organization_id.str,
-                    greeter_user_id=ctx.greeter.str,
+                    greeter_user_id=ctx.greeter,
                     token=ctx.token.hex,
                 )
             )
@@ -981,7 +995,8 @@ class PGInviteComponent(BaseInviteComponent):
         for (
             token_str,
             type,
-            created_by_str,
+            created_by_user_id_raw,
+            created_by_device_id_raw,
             created_by_email,
             created_by_label,
             claimer_email,
@@ -991,8 +1006,9 @@ class PGInviteComponent(BaseInviteComponent):
         ) in rows:
             # Parse row
             token = InvitationToken.from_hex(token_str)
-            created_by = DeviceID(created_by_str)
-            current_user_invitations = per_user_invitations.setdefault(created_by.user_id, [])
+            created_by_user_id = UserID.from_hex(created_by_user_id_raw)
+            created_by_device_id = DeviceID.from_hex(created_by_device_id_raw)
+            current_user_invitations = per_user_invitations.setdefault(created_by_user_id, [])
             type = InvitationType.from_str(type)
             created_by_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
             if deleted_on:
@@ -1010,7 +1026,8 @@ class PGInviteComponent(BaseInviteComponent):
                             claimer_email=claimer_email,
                             created_on=created_on,
                             status=status,
-                            created_by=created_by,
+                            created_by_user_id=created_by_user_id,
+                            created_by_device_id=created_by_device_id,
                             created_by_human_handle=created_by_human_handle,
                             token=token,
                         )
@@ -1020,7 +1037,8 @@ class PGInviteComponent(BaseInviteComponent):
                         DeviceInvitation(
                             created_on=created_on,
                             status=status,
-                            created_by=created_by,
+                            created_by_user_id=created_by_user_id,
+                            created_by_device_id=created_by_device_id,
                             created_by_human_handle=created_by_human_handle,
                             token=token,
                         )

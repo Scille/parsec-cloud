@@ -107,17 +107,83 @@ impl TestbedTemplate {
         }))
     }
 
-    pub fn device_signing_key(&self, device_id: &DeviceID) -> &SigningKey {
+    pub fn device_creation_event(&self, device_id: DeviceID) -> &TestbedEvent {
+        self.events
+            .iter()
+            .find(|e| {
+                matches!(e,
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_first_device_id: candidate,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser {
+                        first_device_id: candidate,
+                        ..
+                    })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                        device_id: candidate,
+                        ..
+                    }) if *candidate == device_id,
+                )
+            })
+            .expect("Device doesn't exist")
+    }
+
+    pub fn user_creation_event(&self, user_id: UserID) -> &TestbedEvent {
+        self.events
+            .iter()
+            .find(|e| {
+                matches!(e,
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_id: candidate,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser {
+                        user_id: candidate, ..
+                    })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                        user_id: candidate, ..
+                    }) if *candidate == user_id,
+                )
+            })
+            .expect("User doesn't exist")
+    }
+
+    pub fn device_user_id(&self, device_id: DeviceID) -> UserID {
         self.events
             .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id: candidate,
+                    first_user_first_device_id: candidate,
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser {
+                    first_device_id: candidate,
+                    user_id,
+                    ..
+                })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                    device_id: candidate,
+                    user_id,
+                    ..
+                }) if *candidate == device_id => Some(*user_id),
+                _ => None,
+            })
+            .expect("Device doesn't exist")
+    }
+
+    pub fn device_signing_key(&self, device_id: DeviceID) -> &SigningKey {
+        self.events
+            .iter()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_first_device_id: candidate,
                     first_user_first_device_signing_key: signing_key,
                     ..
                 })
                 | TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id: candidate,
+                    first_device_id: candidate,
                     first_device_signing_key: signing_key,
                     ..
                 })
@@ -125,23 +191,23 @@ impl TestbedTemplate {
                     device_id: candidate,
                     signing_key,
                     ..
-                }) if candidate == device_id => Some(signing_key),
+                }) if *candidate == device_id => Some(signing_key),
                 _ => None,
             })
             .expect("Device doesn't exist")
     }
 
-    pub fn device_local_symkey(&self, device_id: &DeviceID) -> &SecretKey {
+    pub fn device_local_symkey(&self, device_id: DeviceID) -> &SecretKey {
         self.events
             .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id: candidate,
+                    first_user_first_device_id: candidate,
                     first_user_local_symkey: local_symkey,
                     ..
                 })
                 | TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id: candidate,
+                    first_device_id: candidate,
                     local_symkey,
                     ..
                 })
@@ -149,54 +215,52 @@ impl TestbedTemplate {
                     device_id: candidate,
                     local_symkey,
                     ..
-                }) if candidate == device_id => Some(local_symkey),
+                }) if *candidate == device_id => Some(local_symkey),
                 _ => None,
             })
             .expect("Device doesn't exist")
     }
 
-    pub fn user_private_key(&self, user_id: &UserID) -> &PrivateKey {
+    pub fn user_private_key(&self, user_id: UserID) -> &PrivateKey {
         self.events
             .iter()
             .find_map(|e| match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id: candidate,
+                    first_user_id: candidate,
                     first_user_private_key: private_key,
                     ..
                 })
                 | TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id: candidate,
+                    user_id: candidate,
                     private_key,
                     ..
-                }) if candidate.user_id() == user_id => Some(private_key),
+                }) if *candidate == user_id => Some(private_key),
                 _ => None,
             })
             .expect("User doesn't exist")
     }
 
-    pub fn user_profile_at(&self, user_id: &UserID, up_to: DateTime) -> UserProfile {
+    pub fn user_profile_at(&self, user_id: UserID, up_to: DateTime) -> UserProfile {
         let mut current_profile = None;
         self.events.iter().find_map(|e| {
             let maybe_profile_update = match e {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id,
+                    first_user_id: candidate,
                     timestamp,
                     ..
-                }) if first_user_device_id.user_id() == user_id => {
-                    Some((UserProfile::Admin, *timestamp))
-                }
+                }) if *candidate == user_id => Some((UserProfile::Admin, *timestamp)),
                 TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id,
+                    user_id: candidate,
                     initial_profile,
                     timestamp,
                     ..
-                }) if device_id.user_id() == user_id => Some((*initial_profile, *timestamp)),
+                }) if *candidate == user_id => Some((*initial_profile, *timestamp)),
                 TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
-                    user,
+                    user: candidate,
                     profile,
                     timestamp,
                     ..
-                }) if user == user_id => Some((*profile, *timestamp)),
+                }) if *candidate == user_id => Some((*profile, *timestamp)),
                 _ => None,
             };
             maybe_profile_update.map(|(profile, certificate_timestamp)| {

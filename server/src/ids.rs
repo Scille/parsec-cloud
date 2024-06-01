@@ -167,73 +167,21 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __richcmp__ ord,
     __hash__,
 );
+gen_uuid!(UserID);
 
+// Helper stuff to be able to use `alice`, `bob` etc. as a user ID in tests
+#[cfg(feature = "test-utils")]
 #[pymethods]
 impl UserID {
-    #[new]
-    fn new(user_id: &PyAny) -> PyResult<Self> {
-        if let Ok(user_id) = user_id.extract::<Self>() {
-            Ok(user_id)
-        } else if let Ok(user_id) = user_id.extract::<&str>() {
-            match user_id.parse::<libparsec_types::UserID>() {
-                Ok(user_id) => Ok(Self(user_id)),
-                Err(err) => Err(PyValueError::new_err(err)),
-            }
-        } else {
-            Err(PyValueError::new_err("Unimplemented"))
-        }
-    }
-
-    fn capitalize(&self) -> PyResult<String> {
-        Ok(self.0.to_string().to_uppercase())
-    }
-
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
+    fn test_nickname(&self) -> Option<&str> {
+        self.0.test_nickname()
     }
-
-    fn to_device_id(&self, device_name: DeviceName) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.to_device_id(device_name.0)))
-    }
-}
-
-crate::binding_utils::gen_py_wrapper_class_for_id!(
-    DeviceName,
-    libparsec_types::DeviceName,
-    __repr__,
-    __copy__,
-    __deepcopy__,
-    __str__,
-    __richcmp__ ord,
-    __hash__,
-);
-
-#[pymethods]
-impl DeviceName {
-    #[new]
-    fn new(device_name: &PyAny) -> PyResult<Self> {
-        if let Ok(device_name) = device_name.extract::<Self>() {
-            Ok(device_name)
-        } else if let Ok(device_name) = device_name.extract::<&str>() {
-            match device_name.parse::<libparsec_types::DeviceName>() {
-                Ok(device_name) => Ok(Self(device_name)),
-                Err(err) => Err(PyValueError::new_err(err)),
-            }
-        } else {
-            Err(PyValueError::new_err("Unimplemented"))
-        }
-    }
-
-    #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec_types::DeviceName::default()))
+    #[staticmethod]
+    fn test_from_nickname(nickname: &str) -> PyResult<Self> {
+        libparsec_types::UserID::test_from_nickname(nickname)
+            .map_err(|err| PyValueError::new_err(err))
+            .map(Self)
     }
 }
 
@@ -265,8 +213,8 @@ impl DeviceLabel {
     }
 
     #[staticmethod]
-    fn new_redacted(device_name: DeviceName) -> Self {
-        Self(libparsec_types::DeviceLabel::new_redacted(&device_name.0))
+    fn new_redacted(device_id: DeviceID) -> Self {
+        Self(libparsec_types::DeviceLabel::new_redacted(device_id.0))
     }
 
     #[getter]
@@ -285,42 +233,21 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
     __richcmp__ ord,
     __hash__,
 );
+gen_uuid!(DeviceID);
 
+// Helper stuff to be able to use `alice@dev1`, `bob@dev2` etc. as a device ID in tests
+#[cfg(feature = "test-utils")]
 #[pymethods]
 impl DeviceID {
-    #[new]
-    fn new(device_id: &PyAny) -> PyResult<Self> {
-        if let Ok(device_id) = device_id.extract::<Self>() {
-            Ok(device_id)
-        } else if let Ok(device_id) = device_id.extract::<&str>() {
-            match device_id.parse::<libparsec_types::DeviceID>() {
-                Ok(device_id) => Ok(Self(device_id)),
-                Err(err) => Err(PyValueError::new_err(err)),
-            }
-        } else {
-            Err(PyValueError::new_err("Unimplemented"))
-        }
-    }
-
     #[getter]
-    fn str(&self) -> PyResult<String> {
-        Ok(self.0.to_string())
+    fn test_nickname(&self) -> Option<&str> {
+        self.0.test_nickname()
     }
-
-    #[getter]
-    fn user_id(&self) -> PyResult<UserID> {
-        Ok(UserID(self.0.user_id().clone()))
-    }
-
-    #[getter]
-    fn device_name(&self) -> PyResult<DeviceName> {
-        Ok(DeviceName(self.0.device_name().clone()))
-    }
-
-    #[classmethod]
-    #[pyo3(name = "new")]
-    fn class_new(_cls: &PyType) -> PyResult<Self> {
-        Ok(Self(libparsec_types::DeviceID::default()))
+    #[staticmethod]
+    fn test_from_nickname(nickname: &str) -> PyResult<Self> {
+        libparsec_types::DeviceID::test_from_nickname(nickname)
+            .map_err(|err| PyValueError::new_err(err))
+            .map(Self)
     }
 }
 
@@ -347,7 +274,7 @@ impl HumanHandle {
 
     #[staticmethod]
     fn new_redacted(user_id: UserID) -> Self {
-        Self(libparsec_types::HumanHandle::new_redacted(&user_id.0))
+        Self(libparsec_types::HumanHandle::new_redacted(user_id.0))
     }
 
     #[getter]

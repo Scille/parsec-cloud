@@ -69,7 +69,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
             // 2) Actually do the initialization
             if let Some(up_to) = up_to {
                 let need_redacted = matches!(
-                    env.template.user_profile_at(device.user_id(), up_to),
+                    env.template.user_profile_at(device.user_id, up_to),
                     UserProfile::Outsider
                 );
 
@@ -164,7 +164,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
             }
 
             // Mark as populated
-            guard.push((device.device_id.clone(), StorageKind::Certificates));
+            guard.push((device.device_id, StorageKind::Certificates));
         }
     }
 }
@@ -236,7 +236,7 @@ pub(crate) async fn maybe_populate_user_storage(data_base_dir: &Path, device: &L
             }
 
             // Mark as populated
-            guard.push((device.device_id.clone(), StorageKind::User));
+            guard.push((device.device_id, StorageKind::User));
         }
     }
 }
@@ -372,7 +372,7 @@ pub(crate) async fn maybe_populate_workspace_storage(
             }
 
             // Mark as populated
-            guard.push((device.device_id.clone(), StorageKind::Workspace(realm_id)));
+            guard.push((device.device_id, StorageKind::Workspace(realm_id)));
         }
     }
 }

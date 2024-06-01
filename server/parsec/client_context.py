@@ -102,12 +102,12 @@ class AuthenticatedClientContext:
     client_api_version: ApiVersion
     settled_api_version: ApiVersion
     organization_id: OrganizationID
+    user_id: UserID
     device_id: DeviceID
     device_verify_key: VerifyKey
     organization_internal_id: int
     device_internal_id: int
     logger: ParsecBoundLogger = field(init=False)
-    _user_id: UserID | None = None
 
     def __post_init__(self):
         self.logger = logger.bind(
@@ -115,16 +115,8 @@ class AuthenticatedClientContext:
             api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
             auth="authenticated",
             organization=self.organization_id.str,
-            device=self.device_id.str,
+            device=self.device_id.hex,
         )
-
-    @property
-    def user_id(self) -> UserID:
-        # UserId is costly to retrieve given it must be generated from DeviceID
-        # then converted from Rust to Python !
-        if self._user_id is None:
-            self._user_id = self.device_id.user_id
-        return self._user_id
 
     def organization_not_found_abort(self) -> NoReturn:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort

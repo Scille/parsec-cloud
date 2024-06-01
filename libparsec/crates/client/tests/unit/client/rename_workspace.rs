@@ -18,6 +18,7 @@ async fn ok(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
+    let alice_user_id = alice.user_id;
     let client = client_factory(&env.discriminant_dir, alice).await;
 
     // Mock requests to server
@@ -29,7 +30,7 @@ async fn ok(env: &TestbedEnv) {
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, &"alice".parse().unwrap());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice_user_id);
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
                     keys_bundle,
@@ -128,7 +129,7 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
                     keys_bundle,

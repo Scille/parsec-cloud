@@ -29,7 +29,8 @@ from tests.common import (
     TestbedBackend,
 )
 
-NEW_MIKE_DEVICE_ID = DeviceID("mike@new_dev")
+NEW_MIKE_USER_ID = UserID.new()
+NEW_MIKE_DEVICE_ID = DeviceID.new()
 NEW_MIKE_HUMAN_HANDLE = HumanHandle(email="mike@ifd.invalid", label="Mike")
 NEW_MIKE_SIGNING_KEY = SigningKey.generate()
 NEW_MIKE_PRIVATE_KEY = PrivateKey.generate()
@@ -38,6 +39,7 @@ NEW_MIKE_PRIVATE_KEY = PrivateKey.generate()
 def generate_new_mike_device_certificates(
     author: AuthenticatedRpcClient,
     timestamp: DateTime,
+    user_id=NEW_MIKE_USER_ID,
     device_id=NEW_MIKE_DEVICE_ID,
     verify_key=NEW_MIKE_SIGNING_KEY.verify_key,
     author_device_id=None,
@@ -47,6 +49,7 @@ def generate_new_mike_device_certificates(
     raw_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        user_id=user_id,
         device_id=device_id,
         device_label=DeviceLabel("New device"),
         verify_key=verify_key,
@@ -56,6 +59,7 @@ def generate_new_mike_device_certificates(
     raw_redacted_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        user_id=user_id,
         device_id=device_id,
         device_label=None,
         verify_key=verify_key,
@@ -68,7 +72,7 @@ def generate_new_mike_device_certificates(
 def generate_new_mike_user_certificates(
     author: AuthenticatedRpcClient,
     timestamp: DateTime,
-    user_id=NEW_MIKE_DEVICE_ID.user_id,
+    user_id=NEW_MIKE_USER_ID,
     human_handle=NEW_MIKE_HUMAN_HANDLE,
     public_key=NEW_MIKE_PRIVATE_KEY.public_key,
     profile=UserProfile.STANDARD,
@@ -106,9 +110,9 @@ async def test_authenticated_user_create_ok(
 ) -> None:
     t1 = DateTime.now()
     expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
-    expected_dump[NEW_MIKE_DEVICE_ID.user_id] = UserDump(
-        user_id=NEW_MIKE_DEVICE_ID.user_id,
-        devices=[NEW_MIKE_DEVICE_ID.device_name],
+    expected_dump[NEW_MIKE_USER_ID] = UserDump(
+        user_id=NEW_MIKE_USER_ID,
+        devices=[NEW_MIKE_DEVICE_ID],
         current_profile=UserProfile.STANDARD,
         created_on=t1,
         human_handle=NEW_MIKE_HUMAN_HANDLE,
@@ -145,6 +149,7 @@ async def test_authenticated_user_create_ok(
     alice2_rpc = AuthenticatedRpcClient(
         raw_client=minimalorg.raw_client,
         organization_id=minimalorg.organization_id,
+        user_id=NEW_MIKE_USER_ID,
         device_id=NEW_MIKE_DEVICE_ID,
         signing_key=NEW_MIKE_SIGNING_KEY,
     )
@@ -249,11 +254,11 @@ async def test_authenticated_user_create_invalid_certificate(
             )
         case "user_certif_not_author_user_id":
             user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
-                coolorg.alice, t1, user_id=UserID("unknown")
+                coolorg.alice, t1, user_id=UserID.new()
             )
         case "user_certif_author_mismatch":
             _, redacted_user_certificate = generate_new_mike_user_certificates(
-                coolorg.alice, t1, author_device_id=DeviceID("alice@dev2")
+                coolorg.alice, t1, author_device_id=DeviceID.test_from_nickname("alice@dev2")
             )
         case "user_certif_timestamp_mismatch":
             _, redacted_user_certificate = generate_new_mike_user_certificates(
@@ -261,7 +266,7 @@ async def test_authenticated_user_create_invalid_certificate(
             )
         case "user_certif_user_id_mismatch":
             _, redacted_user_certificate = generate_new_mike_user_certificates(
-                coolorg.alice, t1, user_id=UserID("dummy")
+                coolorg.alice, t1, user_id=UserID.new()
             )
         case "user_certif_profile_mismatch":
             _, redacted_user_certificate = generate_new_mike_user_certificates(
@@ -276,15 +281,15 @@ async def test_authenticated_user_create_invalid_certificate(
 
         case "device_certif_user_id_from_another_user":
             device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"{coolorg.bob.user_id}@new_device")
+                coolorg.alice, t1, user_id=coolorg.bob.user_id
             )
         case "device_certif_not_author_user_id":
             device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID("unknown@new_device")
+                coolorg.alice, t1, user_id=UserID.new()
             )
         case "device_certif_author_mismatch":
             _, redacted_device_certificate = generate_new_mike_device_certificates(
-                coolorg.alice, t1, author_device_id=DeviceID("alice@dev2")
+                coolorg.alice, t1, author_device_id=DeviceID.test_from_nickname("alice@dev2")
             )
         case "device_certif_timestamp_mismatch":
             _, redacted_device_certificate = generate_new_mike_device_certificates(
@@ -292,11 +297,11 @@ async def test_authenticated_user_create_invalid_certificate(
             )
         case "device_certif_user_id_mismatch":
             _, redacted_device_certificate = generate_new_mike_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"dummy@{NEW_MIKE_DEVICE_ID.device_name}")
+                coolorg.alice, t1, user_id=UserID.new()
             )
         case "device_certif_device_id_mismatch":
             _, redacted_device_certificate = generate_new_mike_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"{NEW_MIKE_DEVICE_ID.user_id}@dummy")
+                coolorg.alice, t1, device_id=DeviceID.new()
             )
         case "device_certif_verify_key_mismatch":
             _, redacted_device_certificate = generate_new_mike_device_certificates(
@@ -321,12 +326,12 @@ async def test_authenticated_user_create_user_already_exists(
     coolorg: CoolorgRpcClients,
 ) -> None:
     t1 = DateTime.now()
-    device_id = DeviceID("alice@new_dev")
+    alice_user_id = UserID.test_from_nickname("alice")
     device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-        coolorg.alice, t1, device_id=device_id
+        coolorg.alice, t1, user_id=alice_user_id
     )
     user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
-        coolorg.alice, t1, user_id=device_id.user_id
+        coolorg.alice, t1, user_id=alice_user_id
     )
     rep = await coolorg.alice.user_create(
         user_certificate=user_certificate,
@@ -398,7 +403,7 @@ async def test_authenticated_user_create_require_greater_timestamp(
 
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
-        user_id=coolorg.mallory.device_id.user_id,
+        user_id=coolorg.mallory.user_id,
         timestamp=t1,
     )
     await backend.user.revoke_user(

@@ -6,35 +6,103 @@ use crate::TestbedEventNewDevice;
 
 use super::{TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewUser};
 
-pub(super) fn non_revoked_users(events: &[TestbedEvent]) -> impl Iterator<Item = &DeviceID> {
+pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) -> UserID {
+    events
+        .iter()
+        .find_map(|e| match e {
+            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                first_user_id: user_id,
+                first_user_first_device_id: device_id,
+                ..
+            })
+            | TestbedEvent::NewUser(TestbedEventNewUser {
+                user_id,
+                first_device_id: device_id,
+                ..
+            })
+            | TestbedEvent::NewDevice(TestbedEventNewDevice {
+                user_id, device_id, ..
+            }) if *device_id == device => Some(*user_id),
+            _ => None,
+        })
+        .expect("Uknown device ID !")
+}
+
+/// Return the first device of each non-revoked user.
+#[allow(unused)]
+pub(super) fn non_revoked_users(
+    events: &[TestbedEvent],
+) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
     events.iter().filter_map(|e| match e {
         TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-            first_user_device_id: device_id,
+            first_user_id: user_id,
+            first_user_first_device_id: device_id,
             ..
         })
-        | TestbedEvent::NewUser(TestbedEventNewUser { device_id, .. }) => {
-            let user_id = device_id.user_id();
+        | TestbedEvent::NewUser(TestbedEventNewUser {
+            user_id,
+            first_device_id: device_id,
+            ..
+        }) => {
             let is_revoked = events
                 .iter()
                 .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == *user_id));
             if is_revoked {
                 None
             } else {
-                Some(device_id)
+                Some((*user_id, *device_id))
             }
         }
         _ => None,
     })
 }
 
-pub(super) fn non_revoked_admins(events: &[TestbedEvent]) -> impl Iterator<Item = &DeviceID> {
+/// Return all devices of each non-revoked user.
+pub(super) fn non_revoked_users_each_devices(
+    events: &[TestbedEvent],
+) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
     events.iter().filter_map(|e| match e {
         TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-            first_user_device_id: device_id,
+            first_user_id: user_id,
+            first_user_first_device_id: device_id,
             ..
         })
-        | TestbedEvent::NewUser(TestbedEventNewUser { device_id, .. }) => {
-            let user_id = device_id.user_id();
+        | TestbedEvent::NewUser(TestbedEventNewUser {
+            user_id,
+            first_device_id: device_id,
+            ..
+        })
+        | TestbedEvent::NewDevice(TestbedEventNewDevice {
+            user_id, device_id, ..
+        }) => {
+            let is_revoked = events
+                .iter()
+                .any(|e| matches!(e, TestbedEvent::RevokeUser(x) if x.user == *user_id));
+            if is_revoked {
+                None
+            } else {
+                Some((*user_id, *device_id))
+            }
+        }
+        _ => None,
+    })
+}
+
+/// Return the first device of each non-revoked user with ADMIN profile.
+pub(super) fn non_revoked_admins(
+    events: &[TestbedEvent],
+) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
+    events.iter().filter_map(|e| match e {
+        TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+            first_user_id: user_id,
+            first_user_first_device_id: device_id,
+            ..
+        })
+        | TestbedEvent::NewUser(TestbedEventNewUser {
+            user_id,
+            first_device_id: device_id,
+            ..
+        }) => {
             // Is revoked ?
             if events
                 .iter()
@@ -48,19 +116,15 @@ pub(super) fn non_revoked_admins(events: &[TestbedEvent]) -> impl Iterator<Item 
                 .rev()
                 .find_map(|e| match e {
                     TestbedEvent::UpdateUserProfile(x) if x.user == *user_id => Some(x.profile),
-                    TestbedEvent::BootstrapOrganization(x)
-                        if x.first_user_device_id.user_id() == user_id =>
-                    {
+                    TestbedEvent::BootstrapOrganization(x) if x.first_user_id == *user_id => {
                         Some(UserProfile::Admin)
                     }
-                    TestbedEvent::NewUser(x) if x.device_id.user_id() == user_id => {
-                        Some(x.initial_profile)
-                    }
+                    TestbedEvent::NewUser(x) if x.user_id == *user_id => Some(x.initial_profile),
                     _ => None,
                 })
                 .expect("The user must at least have a creation event");
             if profile == UserProfile::Admin {
-                Some(device_id)
+                Some((*user_id, *device_id))
             } else {
                 None
             }
@@ -69,45 +133,41 @@ pub(super) fn non_revoked_admins(events: &[TestbedEvent]) -> impl Iterator<Item 
     })
 }
 
+/// Return the first device of each non-revoked user having OWNER profile on the given realm.
 pub(super) fn non_revoked_realm_owners(
     events: &[TestbedEvent],
     realm: VlobID,
-) -> impl Iterator<Item = &DeviceID> {
-    non_revoked_users(events).filter(move |device_id| {
-        let user_id = device_id.user_id();
-        let is_owner = events.iter().rev().find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == realm && x.author.user_id() == user_id => {
-                Some(true)
-            }
-            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user_id => {
-                Some(matches!(x.role, Some(RealmRole::Owner)))
-            }
-            _ => None,
-        });
-        match is_owner {
-            Some(true) => true,
-            // User is either not part of the realm, or not owner
-            _ => false,
+) -> impl Iterator<Item = (UserID, DeviceID)> + '_ {
+    events.iter().filter_map(move |e| match e {
+        TestbedEvent::NewRealm(x) if x.realm_id == realm => {
+            non_revoked_users_each_devices(events).find(|(_, d)| *d == x.author)
         }
+        TestbedEvent::ShareRealm(x)
+            if x.realm == realm && matches!(x.role, Some(RealmRole::Owner)) =>
+        {
+            non_revoked_users(events).find(|(u, _)| *u == x.user)
+        }
+        _ => None,
     })
 }
 
+/// Return the first device of each non-revoked user having access to the given realm.
 #[allow(unused)]
 pub(super) fn non_revoked_realm_members(
     events: &[TestbedEvent],
     realm: VlobID,
-) -> impl Iterator<Item = (&DeviceID, RealmRole)> {
-    non_revoked_users(events).filter_map(move |device_id| {
-        let user_id = device_id.user_id();
-        events.iter().rev().find_map(|e| match e {
-            TestbedEvent::NewRealm(x) if x.realm_id == realm && x.author.user_id() == user_id => {
-                Some((device_id, RealmRole::Owner))
-            }
-            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user_id => {
-                x.role.map(|role| (device_id, role))
-            }
-            _ => None,
-        })
+) -> impl Iterator<Item = (UserID, DeviceID, RealmRole)> + '_ {
+    events.iter().filter_map(move |e| match e {
+        TestbedEvent::NewRealm(x) if x.realm_id == realm => non_revoked_users_each_devices(events)
+            .find(|(_, d)| *d == x.author)
+            .map(|(user_id, device_id)| (user_id, device_id, RealmRole::Owner)),
+        TestbedEvent::ShareRealm(x) if x.realm == realm => match x.role {
+            Some(role) => non_revoked_users(events)
+                .find(|(u, _)| *u == x.user)
+                .map(|(user_id, device_id)| (user_id, device_id, role)),
+            None => None,
+        },
+        _ => None,
     })
 }
 
@@ -128,18 +188,19 @@ pub(super) fn realm_keys(
 pub(super) fn assert_realm_member_has_read_access(
     events: &[TestbedEvent],
     realm: VlobID,
-    user: &UserID,
+    user: UserID,
 ) {
     let has_read_access = events
         .iter()
         .rev()
         .find_map(move |e| match e {
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == user => {
+                Some(x.role.map(|r| r.can_read()).unwrap_or(false))
+            }
             TestbedEvent::NewRealm(x) if x.realm_id == realm => {
                 // Last chance if the user is the creator of the realm
-                Some(x.author.user_id() == user)
-            }
-            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user => {
-                Some(x.role.map(|r| r.can_read()).unwrap_or(false))
+                let author_user_id = user_id_from_device_id(events, x.author);
+                Some(author_user_id == user)
             }
             _ => None,
         })
@@ -153,18 +214,19 @@ pub(super) fn assert_realm_member_has_read_access(
 pub(super) fn assert_realm_member_has_write_access(
     events: &[TestbedEvent],
     realm: VlobID,
-    user: &UserID,
+    user: UserID,
 ) {
     let has_write_access = events
         .iter()
         .rev()
         .find_map(move |e| match e {
+            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == user => {
+                Some(x.role.map(|r| r.can_write()).unwrap_or(false))
+            }
             TestbedEvent::NewRealm(x) if x.realm_id == realm => {
                 // Last chance if the user is the creator of the realm
-                Some(x.author.user_id() == user)
-            }
-            TestbedEvent::ShareRealm(x) if x.realm == realm && x.user == *user => {
-                Some(x.role.map(|r| r.can_write()).unwrap_or(false))
+                let author_user_id = user_id_from_device_id(events, x.author);
+                Some(author_user_id == user)
             }
             _ => None,
         })
@@ -184,26 +246,28 @@ pub(super) fn assert_organization_bootstrapped(
     }
 }
 
-pub(super) fn assert_device_exists_and_not_revoked<'a>(
-    events: &'a [TestbedEvent],
-    device: &DeviceID,
-) -> &'a TestbedEvent {
+pub(super) fn assert_device_exists_and_not_revoked(
+    events: &'_ [TestbedEvent],
+    device: DeviceID,
+) -> &'_ TestbedEvent {
+    let user_id = user_id_from_device_id(events, device);
+
     for event in events.iter().rev() {
         match event {
             e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_device_id: candidate,
+                first_user_first_device_id: candidate,
                 ..
             })
             | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                device_id: candidate,
+                first_device_id: candidate,
                 ..
-            }) if candidate == device => return e,
+            }) if *candidate == device => return e,
             e @ TestbedEvent::NewDevice(TestbedEventNewDevice {
                 device_id: candidate,
                 ..
-            }) if candidate == device => return e,
-            TestbedEvent::RevokeUser(x) if x.user == *device.user_id() => {
-                panic!("User {} already revoked !", device.user_id())
+            }) if *candidate == device => return e,
+            TestbedEvent::RevokeUser(x) if x.user == user_id => {
+                panic!("User {} already revoked !", user_id)
             }
             _ => (),
         }
@@ -211,45 +275,44 @@ pub(super) fn assert_device_exists_and_not_revoked<'a>(
     panic!("Device {} doesn't exist", device);
 }
 
-pub(super) fn assert_user_exists_and_not_revoked<'a>(
-    events: &'a [TestbedEvent],
-    user: &UserID,
-) -> &'a TestbedEvent {
+pub(super) fn assert_user_exists_and_not_revoked(
+    events: &'_ [TestbedEvent],
+    user: UserID,
+) -> &'_ TestbedEvent {
     let mut creation_event = None;
     for event in events.iter() {
         match event {
             e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_device_id: candidate,
+                first_user_id: candidate,
                 ..
             })
             | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                device_id: candidate,
-                ..
-            }) if candidate.user_id() == user => {
+                user_id: candidate, ..
+            }) if *candidate == user => {
                 creation_event = Some(e);
             }
-            TestbedEvent::RevokeUser(x) if x.user == *user => panic!("User already revoked !"),
+            TestbedEvent::RevokeUser(x) if x.user == user => panic!("User already revoked !"),
             _ => (),
         }
     }
     creation_event.unwrap_or_else(|| panic!("User {} doesn't exist", user))
 }
 
-pub(super) fn assert_device_exists<'a>(
-    events: &'a [TestbedEvent],
-    device: &DeviceID,
-) -> &'a TestbedEvent {
+pub(super) fn assert_device_exists(
+    events: &'_ [TestbedEvent],
+    device: DeviceID,
+) -> &'_ TestbedEvent {
     let mut creation_event = None;
     for event in events.iter() {
         match event {
             e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_device_id: candidate,
+                first_user_first_device_id: candidate,
                 ..
             })
             | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                device_id: candidate,
+                first_device_id: candidate,
                 ..
-            }) if candidate == device => {
+            }) if *candidate == device => {
                 creation_event = Some(e);
             }
             _ => (),

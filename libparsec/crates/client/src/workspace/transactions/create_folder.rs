@@ -135,7 +135,7 @@ pub(crate) async fn create_folder(
 
     let now = ops.device.time_provider.now();
     let new_child = Arc::new(LocalFolderManifest::new(
-        ops.device.device_id.clone(),
+        ops.device.device_id,
         parent_id,
         now,
     ));

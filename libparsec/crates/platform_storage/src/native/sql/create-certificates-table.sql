@@ -15,20 +15,20 @@ CREATE TABLE IF NOT EXISTS certificates (
     --
     -- The format is:
     -- - User certificates: filter1=<user_id>, filter2=NULL
-    -- - Device certificate: filter1=<device_name>, filter2=<user_id>
+    -- - Device certificate: filter1=<device_id>, filter2=<user_id>
     -- - Revoked user certificates: filter1=<user_id>, filter2=NULL
     -- - User update certificates: filter1=<user_id>, filter2=NULL
-    -- - Realm role certificate: filter1=<realm id as hex>, filter2=<user_id>
-    -- - Realm name certificate: filter1=<realm id as hex>, filter2=NULL
-    -- - Realm key rotation certificate: filter1=<realm id as hex>, filter2=NULL
-    -- - Realm archiving certificate: filter1=<realm id as hex>, filter2=NULL
-    -- - Shamir recovery brief certificate: filter1=<author's user_id>, filter2=NULL
-    -- - Shamir recovery share certificate: filter1=<author's user_id>, filter2=NULL
+    -- - Realm role certificate: filter1=<realm id>, filter2=<user_id>
+    -- - Realm name certificate: filter1=<realm id>, filter2=NULL
+    -- - Realm key rotation certificate: filter1=<realm id>, filter2=<key index as big endian>
+    -- - Realm archiving certificate: filter1=<realm id>, filter2=NULL
+    -- - Shamir recovery brief certificate: filter1=<user_id>, filter2=NULL
+    -- - Shamir recovery share certificate: filter1=<user_id>, filter2=<recipient's user_id>
     -- - Sequester service certificate: filter1=<service_id>, filter2=NULL
     -- - Sequester authority: filter1=NULL, filter2=NULL (nothing to filter)
     certificate_type TEXT NOT NULL,
-    filter1 TEXT,
-    filter2 TEXT
+    filter1 BLOB,
+    filter2 BLOB
 );
 
 CREATE INDEX IF NOT EXISTS certificates_type_filter1 ON certificates (certificate_type, filter1);

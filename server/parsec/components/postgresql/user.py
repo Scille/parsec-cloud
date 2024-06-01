@@ -31,6 +31,7 @@ from parsec.components.postgresql.utils import (
     q_human,
     q_human_internal_id,
     q_organization_internal_id,
+    q_user,
     q_user_internal_id,
     transaction,
 )
@@ -73,6 +74,7 @@ if TYPE_CHECKING:
 _q_get_device = Q(
     f"""
 SELECT
+    { q_user(_id="device.user_", select="user_id") } as user_id,
     device_label,
     device_certificate,
     redacted_device_certificate,
@@ -291,6 +293,7 @@ ORDER BY user_._id, profile.certified_on DESC
 _q_get_organization_devices = Q(
     f"""
 SELECT
+    { q_user(select="user_id", _id="device.user_") } as user_id,
     device_id,
     device_label,
     device_certificate,
@@ -390,6 +393,7 @@ INSERT INTO device (
     user_,
     device_id,
     device_label,
+    verify_key,
     device_certificate,
     redacted_device_certificate,
     device_certifier,
@@ -400,6 +404,7 @@ VALUES (
     { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") },
     $device_id,
     $device_label,
+    $verify_key,
     $device_certificate,
     $redacted_device_certificate,
     { q_device_internal_id(organization_id="$organization_id", device_id="$device_certifier") },
@@ -418,7 +423,7 @@ async def query_list_users(
     for row in rows:
         users.append(
             UserInfo(
-                user_id=UserID(row["user_id"]),
+                user_id=UserID.from_hex(row["user_id"]),
                 human_handle=HumanHandle(email=row["human_email"], label=row["human_label"]),
                 frozen=row["frozen"],
             )
@@ -461,12 +466,12 @@ class PGUserComponent(BaseUserComponent):
         # Now insert the new user
         try:
             user_certifier = (
-                user_certificate_cooked.author.str if user_certificate_cooked.author else None
+                user_certificate_cooked.author if user_certificate_cooked.author else None
             )
             result = await conn.execute(
                 *_q_insert_user_with_human_handle(
                     organization_id=organization_id.str,
-                    user_id=user_certificate_cooked.user_id.str,
+                    user_id=user_certificate_cooked.user_id,
                     initial_profile=user_certificate_cooked.profile.str,
                     user_certificate=user_certificate,
                     redacted_user_certificate=user_certificate_redacted,
@@ -493,7 +498,7 @@ class PGUserComponent(BaseUserComponent):
         )
         if (
             len(not_revoked_users) != 1
-            or not_revoked_users[0]["user_id"] != user_certificate_cooked.user_id.str
+            or UserID.from_hex(not_revoked_users[0]["user_id"]) != user_certificate_cooked.user_id
         ):
             # Exception cancels the transaction so the user insertion is automatically cancelled
             return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
@@ -520,7 +525,7 @@ class PGUserComponent(BaseUserComponent):
             existing_devices = await conn.fetch(
                 *_q_get_user_devices(
                     organization_id=organization_id.str,
-                    user_id=device_certificate_cooked.device_id.user_id.str,
+                    user_id=device_certificate_cooked.user_id,
                 )
             )
             if not existing_devices:
@@ -531,16 +536,15 @@ class PGUserComponent(BaseUserComponent):
 
         try:
             device_certifier = (
-                device_certificate_cooked.author.str if device_certificate_cooked.author else None
+                device_certificate_cooked.author if device_certificate_cooked.author else None
             )
             result = await conn.execute(
                 *_q_insert_device(
                     organization_id=organization_id.str,
-                    user_id=device_certificate_cooked.device_id.user_id.str,
-                    device_id=device_certificate_cooked.device_id.str,
-                    device_label=device_certificate_cooked.device_label.str
-                    if device_certificate_cooked.device_label
-                    else None,
+                    user_id=device_certificate_cooked.user_id,
+                    device_id=device_certificate_cooked.device_id,
+                    device_label=device_certificate_cooked.device_label.str,
+                    verify_key=device_certificate_cooked.verify_key.encode(),
                     device_certificate=device_certificate,
                     redacted_device_certificate=device_certificate_redacted,
                     device_certifier=device_certifier,
@@ -566,25 +570,30 @@ class PGUserComponent(BaseUserComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
-    ) -> tuple[UserProfile, DateTime] | CheckDeviceBadOutcome:
+    ) -> tuple[UserID, UserProfile, DateTime] | CheckDeviceBadOutcome:
         common_timestamp = await conn.fetchval(
             *_q_check_common_topic(organization_id=organization_id.str)
         )
         if common_timestamp is None:
             common_timestamp = DateTime.from_timestamp(0)
         d_row = await conn.fetchrow(
-            *_q_get_device(organization_id=organization_id.str, device_id=device_id.str)
+            *_q_get_device(organization_id=organization_id.str, device_id=device_id)
         )
         if not d_row:
             return CheckDeviceBadOutcome.DEVICE_NOT_FOUND
+        user_id = UserID.from_hex(d_row["user_id"])
         u_row = await conn.fetchrow(
-            *_q_get_user(organization_id=organization_id.str, user_id=device_id.user_id.str)
+            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
         )
         if not u_row:
             return CheckDeviceBadOutcome.USER_NOT_FOUND
         if u_row["revoked_on"] is not None:
             return CheckDeviceBadOutcome.USER_REVOKED
-        return UserProfile.from_str(u_row["profile"]), common_timestamp
+        return (
+            user_id,
+            UserProfile.from_str(u_row["profile"]),
+            common_timestamp,
+        )
 
     async def _check_user(
         self,
@@ -598,7 +607,7 @@ class PGUserComponent(BaseUserComponent):
         if common_timestamp is None:
             common_timestamp = DateTime.from_timestamp(0)
         u_row = await conn.fetchrow(
-            *_q_get_user(organization_id=organization_id.str, user_id=user_id.str)
+            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
         )
         if not u_row:
             return CheckUserBadOutcome.USER_NOT_FOUND
@@ -635,10 +644,10 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserCreateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if organization.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -646,15 +655,15 @@ class PGUserComponent(BaseUserComponent):
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
 
         match await self._check_device(conn, organization_id, author):
+            case (_, profile, _):
+                if profile != UserProfile.ADMIN:
+                    return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_create_user_validate(
             now=now,
@@ -736,10 +745,10 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserCreateDeviceStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if organization.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -747,18 +756,19 @@ class PGUserComponent(BaseUserComponent):
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
 
         match await self._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match user_create_device_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
@@ -779,10 +789,10 @@ class PGUserComponent(BaseUserComponent):
             redacted_device_certificate,
             first_device=False,
         ):
-            case UserCreateDeviceStoreBadOutcome() as bad_outcome:
-                return bad_outcome
             case None:
                 pass
+            case UserCreateDeviceStoreBadOutcome() as bad_outcome:
+                return bad_outcome
 
         await self.event_bus.send(
             EventCommonCertificate(
@@ -811,29 +821,30 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserUpdateUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
 
         match await self._check_device(conn, organization_id, author):
+            case (author_user_id, profile, _):
+                if profile != UserProfile.ADMIN:
+                    return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_update_user_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             user_update_certificate=user_update_certificate,
         ):
@@ -843,14 +854,14 @@ class PGUserComponent(BaseUserComponent):
                 return error
 
         match await self._check_user(conn, organization_id, certif.user_id):
+            case (current_profile, _):
+                if current_profile == certif.new_profile:
+                    return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
+                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return UserUpdateUserStoreBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return UserUpdateUserStoreBadOutcome.USER_REVOKED
-            case (UserProfile() as current_profile, DateTime()):
-                if current_profile == certif.new_profile:
-                    return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
-                pass
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -880,10 +891,10 @@ class PGUserComponent(BaseUserComponent):
         result = await conn.execute(
             *_q_update_user(
                 organization_id=organization_id.str,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 profile=certif.new_profile.str,
                 profile_certificate=user_update_certificate,
-                certified_by=author.str,
+                certified_by=author,
                 certified_on=now,
             )
         )
@@ -920,7 +931,7 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         row = await conn.fetchrow(
-            *_q_get_user_info(organization_id=organization_id.str, user_id=user_id.str)
+            *_q_get_user_info(organization_id=organization_id.str, user_id=user_id)
         )
         if row is None:
             return None
@@ -935,7 +946,7 @@ class PGUserComponent(BaseUserComponent):
         )
         if row is None:
             return None
-        user_id = UserID(row["user_id"])
+        user_id = UserID.from_hex(row["user_id"])
         human_handle = HumanHandle(row["email"], row["label"])
         return UserInfo(user_id, human_handle, bool(row["frozen"]))
 
@@ -945,10 +956,10 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserListUsersBadOutcome.ORGANIZATION_NOT_FOUND
 
         return await query_list_users(conn, organization_id)
 
@@ -965,22 +976,22 @@ class PGUserComponent(BaseUserComponent):
         realm_after: dict[VlobID, DateTime],
     ) -> CertificatesBundle | UserGetCertificatesAsUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 assert organization.bootstrapped_on is not None
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self._check_device(conn, organization_id, author):
+            case (author_user_id, profile, _):
+                redacted = profile == UserProfile.OUTSIDER
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserGetCertificatesAsUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                redacted = profile == UserProfile.OUTSIDER
 
         # 1) Common certificates (i.e. user/device/revoked/update)
 
@@ -1057,7 +1068,7 @@ class PGUserComponent(BaseUserComponent):
         # 3) Realm certificates
 
         realm_items = await self.realm._get_realm_certificates_for_user(
-            conn, organization_id, author.user_id, realm_after
+            conn, organization_id, author_user_id, realm_after
         )
 
         # 4) Shamir certificates
@@ -1091,29 +1102,30 @@ class PGUserComponent(BaseUserComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserRevokeUserStoreBadOutcome.ORGANIZATION_NOT_FOUND
         if organization.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
         common_topic_timestamp = await self._lock_common_topic(conn, organization_id)
 
         match await self._check_device(conn, organization_id, author):
+            case (author_user_id, profile, _):
+                if profile != UserProfile.ADMIN:
+                    return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
-                if profile != UserProfile.ADMIN:
-                    return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         match user_revoke_user_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             revoked_user_certificate=revoked_user_certificate,
         ):
@@ -1123,14 +1135,14 @@ class PGUserComponent(BaseUserComponent):
                 return error
 
         match await self._check_user(conn, organization_id, certif.user_id):
+            case tuple():
+                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return CertificateBasedActionIdempotentOutcome(
                     certificate_timestamp=common_topic_timestamp
                 )
-            case (UserProfile(), DateTime()):
-                pass
 
         # Ensure certificate consistency: our certificate must be the newest thing on the server.
         #
@@ -1149,9 +1161,9 @@ class PGUserComponent(BaseUserComponent):
         result = await conn.execute(
             *_q_revoke_user(
                 organization_id=organization_id.str,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 revoked_user_certificate=revoked_user_certificate,
-                revoked_user_certifier=author.str,
+                revoked_user_certifier=author,
                 revoked_on=certif.timestamp,
             )
         )
@@ -1194,10 +1206,10 @@ class PGUserComponent(BaseUserComponent):
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return UserFreezeUserBadOutcome.ORGANIZATION_NOT_FOUND
 
         match (user_id, user_email):
             case (None, None):
@@ -1222,9 +1234,7 @@ class PGUserComponent(BaseUserComponent):
                 )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
 
         await conn.execute(
-            *q_freeze_user(
-                organization_id=organization_id.str, user_id=info.user_id.str, frozen=frozen
-            )
+            *q_freeze_user(organization_id=organization_id.str, user_id=info.user_id, frozen=frozen)
         )
         info.frozen = frozen
 
@@ -1253,7 +1263,7 @@ class PGUserComponent(BaseUserComponent):
         rows = await conn.fetch(*_q_get_organization_users(organization_id=organization_id.str))
         items: dict[UserID, UserDump] = {}
         for row in rows:
-            user_id = UserID(row["user_id"])
+            user_id = UserID.from_hex(row["user_id"])
             human_handle = HumanHandle(email=row["human_email"], label=row["human_label"])
             items[user_id] = UserDump(
                 user_id=user_id,
@@ -1264,7 +1274,8 @@ class PGUserComponent(BaseUserComponent):
                 current_profile=UserProfile.from_str(row["current_profile"]),
             )
         rows = await conn.fetch(*_q_get_organization_devices(organization_id=organization_id.str))
-        for row in rows:
-            device_id = DeviceID(row["device_id"])
-            items[device_id.user_id].devices.append(device_id.device_name)
+        for row in sorted(rows, key=lambda row: row["created_on"]):
+            user_id = UserID.from_hex(row["user_id"])
+            device_id = DeviceID.from_hex(row["device_id"])
+            items[user_id].devices.append(device_id)
         return items

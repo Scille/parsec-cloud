@@ -52,7 +52,7 @@ macro_rules! impl_manifest_dump_load {
                 encrypted: &[u8],
                 key: &SecretKey,
                 author_verify_key: &VerifyKey,
-                expected_author: &DeviceID,
+                expected_author: DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
@@ -74,7 +74,7 @@ macro_rules! impl_manifest_dump_load {
             pub fn verify_and_load(
                 signed: &[u8],
                 author_verify_key: &VerifyKey,
-                expected_author: &DeviceID,
+                expected_author: DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
@@ -103,15 +103,15 @@ macro_rules! impl_manifest_dump_load {
             /// Verify the manifest against a set of expected values
             pub fn verify(
                 &self,
-                expected_author: &DeviceID,
+                expected_author: DeviceID,
                 expected_timestamp: DateTime,
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<()> {
-                if self.author != *expected_author {
+                if self.author != expected_author {
                     return Err(DataError::UnexpectedAuthor {
-                        expected: Box::new(expected_author.clone()),
-                        got: Some(Box::new(self.author.clone())),
+                        expected: expected_author,
+                        got: Some(self.author),
                     });
                 }
 
@@ -416,7 +416,7 @@ impl ChildManifest {
         encrypted: &[u8],
         key: &SecretKey,
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,
@@ -436,7 +436,7 @@ impl ChildManifest {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,

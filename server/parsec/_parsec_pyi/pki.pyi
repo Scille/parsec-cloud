@@ -7,18 +7,21 @@ from pathlib import Path
 from parsec._parsec_pyi.addrs import ParsecPkiEnrollmentAddr
 from parsec._parsec_pyi.crypto import PublicKey, VerifyKey
 from parsec._parsec_pyi.enumerate import UserProfile
-from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EnrollmentID, HumanHandle
+from parsec._parsec_pyi.ids import DeviceID, DeviceLabel, EnrollmentID, HumanHandle, UserID
 from parsec._parsec_pyi.time import DateTime
 
 class PkiEnrollmentAnswerPayload:
     def __init__(
         self,
+        user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
         human_handle: HumanHandle,
         profile: UserProfile,
         root_verify_key: VerifyKey,
     ): ...
+    @property
+    def user_id(self) -> UserID: ...
     @property
     def device_id(self) -> DeviceID: ...
     @property

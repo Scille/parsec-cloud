@@ -50,7 +50,7 @@ async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
                             let vlob_read_batch_item = (
                                 wksp1_bar_txt_id,
                                 e.key_index,
-                                e.manifest.author.clone(),
+                                e.manifest.author,
                                 e.manifest.version,
                                 e.manifest.timestamp,
                                 e.encrypted(&env.template),
@@ -79,7 +79,7 @@ async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
             {
                 let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
                 let keys_bundle_access =
-                    env.get_last_realm_keys_bundle_access_for(wksp1_id, &"alice".parse().unwrap());
+                    env.get_last_realm_keys_bundle_access_for(wksp1_id, "alice".parse().unwrap());
                 move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                     p_assert_eq!(req.realm_id, wksp1_id);
                     p_assert_eq!(req.key_index, 1);

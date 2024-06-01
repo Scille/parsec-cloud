@@ -7,13 +7,13 @@ use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, DateTime, DeviceID, DeviceLabel, DeviceName, HumanHandle,
-    OrganizationID, ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
+    self as libparsec_types, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
+    ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
 
 pub fn local_device_slug(
     organization_id: &OrganizationID,
-    device_id: &DeviceID,
+    device_id: DeviceID,
     root_verify_key: &VerifyKey,
 ) -> String {
     // Add a hash to avoid clash when the server is reseted and we recreate
@@ -28,6 +28,7 @@ pub fn local_device_slug(
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
 pub struct LocalDevice {
     pub organization_addr: ParsecOrganizationAddr,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
@@ -52,17 +53,20 @@ impl std::fmt::Debug for LocalDevice {
 }
 
 impl LocalDevice {
+    #[allow(clippy::too_many_arguments)]
     pub fn generate_new_device(
         organization_addr: ParsecOrganizationAddr,
         initial_profile: UserProfile,
         human_handle: HumanHandle,
         device_label: DeviceLabel,
+        user_id: Option<UserID>,
         device_id: Option<DeviceID>,
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
     ) -> Self {
         Self {
             organization_addr,
+            user_id: user_id.unwrap_or_default(),
             device_id: device_id.unwrap_or_default(),
             device_label,
             human_handle,
@@ -104,7 +108,7 @@ impl LocalDevice {
     pub fn slug(&self) -> String {
         local_device_slug(
             self.organization_id(),
-            &self.device_id,
+            self.device_id,
             self.root_verify_key(),
         )
     }
@@ -118,34 +122,12 @@ impl LocalDevice {
         format!("{:x}", hasher.finalize())
     }
 
-    pub fn load_slug(slug: &str) -> Result<(OrganizationID, DeviceID), &'static str> {
-        let msg = "Invalid slug";
-
-        let mut parts = slug.split('#');
-        parts.next(); // Drop hashed root verify key
-        let organization_id: OrganizationID = parts.next().ok_or(msg)?.parse().map_err(|_| msg)?;
-        let device_id: DeviceID = parts.next().ok_or(msg)?.parse().map_err(|_| msg)?;
-        if parts.next().is_none() {
-            Ok((organization_id, device_id))
-        } else {
-            Err(msg)
-        }
-    }
-
     pub fn root_verify_key(&self) -> &VerifyKey {
         self.organization_addr.root_verify_key()
     }
 
     pub fn organization_id(&self) -> &OrganizationID {
         self.organization_addr.organization_id()
-    }
-
-    pub fn device_name(&self) -> &DeviceName {
-        self.device_id.device_name()
-    }
-
-    pub fn user_id(&self) -> &UserID {
-        self.device_id.user_id()
     }
 
     pub fn verify_key(&self) -> VerifyKey {
@@ -184,6 +166,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
     fn try_from(data: LocalDeviceData) -> Result<Self, Self::Error> {
         Ok(Self {
             organization_addr: data.organization_addr,
+            user_id: data.user_id,
             device_id: data.device_id,
             device_label: data.device_label,
             human_handle: data.human_handle,
@@ -202,6 +185,7 @@ impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         Self {
             organization_addr: obj.organization_addr,
+            user_id: obj.user_id,
             device_id: obj.device_id,
             device_label: obj.device_label,
             human_handle: obj.human_handle,

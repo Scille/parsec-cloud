@@ -110,8 +110,9 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                     case MemoryPkiEnrollmentState.ACCEPTED:
                         # Previous attempt end successfully, we are not allowed to submit
                         # unless the created user has been revoked
-                        assert enrollment.submitter_accepted_device is not None
-                        user = org.users[enrollment.submitter_accepted_device.user_id]
+                        assert enrollment.submitter_accepted_user_id is not None
+                        assert enrollment.submitter_accepted_device_id is not None
+                        user = org.users[enrollment.submitter_accepted_user_id]
                         if not user.is_revoked:
                             return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
 
@@ -205,7 +206,13 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             return PkiEnrollmentListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return PkiEnrollmentListBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return PkiEnrollmentListBadOutcome.AUTHOR_NOT_FOUND
 
@@ -244,10 +251,13 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentRejectBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return PkiEnrollmentRejectBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author.user_id]
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return PkiEnrollmentRejectBadOutcome.AUTHOR_REVOKED
         if author_user.current_profile != UserProfile.ADMIN:
@@ -304,10 +314,13 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author.user_id]
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED
 
@@ -369,7 +382,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
 
         enrollment.enrollment_state = MemoryPkiEnrollmentState.ACCEPTED
         enrollment.accepter = author
-        enrollment.submitter_accepted_device = d_certif.device_id
+        enrollment.submitter_accepted_user_id = d_certif.user_id
+        enrollment.submitter_accepted_device_id = d_certif.device_id
         enrollment.info_accepted = MemoryPkiEnrollmentInfoAccepted(
             accepted_on=now,
             accept_payload=accept_payload,

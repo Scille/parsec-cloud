@@ -37,22 +37,17 @@ pub enum DataError {
     #[error("Invalid serialization")]
     Serialization,
 
-    // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
     UnexpectedAuthor {
-        expected: Box<DeviceID>,
-        got: Option<Box<DeviceID>>,
+        expected: DeviceID,
+        got: Option<DeviceID>,
     },
 
     #[error("Invalid author: expected root, got `{0}`")]
     UnexpectedNonRootAuthor(DeviceID),
 
-    // `DeviceID` is 72bytes long, so boxing is needed to limit presure on the stack
     #[error("Invalid device ID: expected `{expected}`, got `{got}`")]
-    UnexpectedDeviceID {
-        expected: Box<DeviceID>,
-        got: Box<DeviceID>,
-    },
+    UnexpectedDeviceID { expected: DeviceID, got: DeviceID },
 
     #[error("Invalid realm ID: expected `{expected}`, got `{got}`")]
     UnexpectedRealmID { expected: VlobID, got: VlobID },

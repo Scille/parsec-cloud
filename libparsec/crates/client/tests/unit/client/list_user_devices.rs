@@ -55,10 +55,7 @@ async fn unknown_user(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
-    let unknown_user_devices = client
-        .list_user_devices("unknown".parse().unwrap())
-        .await
-        .unwrap();
+    let unknown_user_devices = client.list_user_devices(UserID::default()).await.unwrap();
     p_assert_eq!(unknown_user_devices.len(), 0);
 }
 

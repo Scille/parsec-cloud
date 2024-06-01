@@ -102,7 +102,7 @@ async def test_ok(
     expected_coolorg_stats = {
         "active_users": 3,
         "data_size": 0,
-        "metadata_size": 650,
+        "metadata_size": 665,
         "realms": 3,
         "users": 3,
         "users_per_profile_detail": {
@@ -208,7 +208,7 @@ async def test_ok(
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         new_profile=UserProfile.ADMIN,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         timestamp=DateTime.now(),
     )
     await backend.user.update_user(
@@ -223,7 +223,7 @@ async def test_ok(
 
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
-        user_id=coolorg.mallory.device_id.user_id,
+        user_id=coolorg.mallory.user_id,
         timestamp=DateTime.now(),
     )
     await backend.user.revoke_user(

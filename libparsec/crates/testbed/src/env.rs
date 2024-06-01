@@ -125,76 +125,67 @@ impl TestbedEnvCache {
 
         // Not found, must generate it
 
-        let (human_handle, private_key, profile, user_realm_id, user_realm_key) = env
-            .template
-            .events
-            .iter()
-            .find_map(|e| match e {
+        let (user_id, device_label, signing_key, local_symkey) =
+            match env.template.device_creation_event(device_id) {
                 TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id: candidate,
-                    first_user_human_handle: human_handle,
-                    first_user_private_key: private_key,
-                    first_user_user_realm_id: user_realm_id,
-                    first_user_user_realm_key: user_realm_key,
-                    ..
-                }) if candidate.user_id() == device_id.user_id() => Some((
-                    human_handle,
-                    private_key,
-                    UserProfile::Admin,
-                    user_realm_id,
-                    user_realm_key,
-                )),
-                TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id: candidate,
-                    human_handle,
-                    private_key,
-                    initial_profile,
-                    user_realm_id,
-                    user_realm_key,
-                    ..
-                }) if candidate.user_id() == device_id.user_id() => Some((
-                    human_handle,
-                    private_key,
-                    *initial_profile,
-                    user_realm_id,
-                    user_realm_key,
-                )),
-                _ => None,
-            })
-            .expect("User not found");
-
-        let (device_label, signing_key, local_symkey) = env
-            .template
-            .events
-            .iter()
-            .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                    first_user_device_id: candidate,
+                    first_user_id: user_id,
                     first_user_first_device_label: device_label,
                     first_user_first_device_signing_key: signing_key,
                     first_user_local_symkey: local_symkey,
                     ..
                 })
                 | TestbedEvent::NewUser(TestbedEventNewUser {
-                    device_id: candidate,
+                    user_id,
                     first_device_label: device_label,
                     first_device_signing_key: signing_key,
                     local_symkey,
                     ..
                 })
                 | TestbedEvent::NewDevice(TestbedEventNewDevice {
-                    device_id: candidate,
+                    user_id,
                     device_label,
                     signing_key,
                     local_symkey,
                     ..
-                }) if candidate == &device_id => Some((device_label, signing_key, local_symkey)),
-                _ => None,
-            })
-            .expect("Device not found");
+                }) => (*user_id, device_label, signing_key, local_symkey),
+                _ => unreachable!(),
+            };
+
+        let (human_handle, private_key, profile, user_realm_id, user_realm_key) =
+            match env.template.user_creation_event(user_id) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_human_handle: human_handle,
+                    first_user_private_key: private_key,
+                    first_user_user_realm_id: user_realm_id,
+                    first_user_user_realm_key: user_realm_key,
+                    ..
+                }) => (
+                    human_handle,
+                    private_key,
+                    UserProfile::Admin,
+                    user_realm_id,
+                    user_realm_key,
+                ),
+                TestbedEvent::NewUser(TestbedEventNewUser {
+                    human_handle,
+                    private_key,
+                    initial_profile,
+                    user_realm_id,
+                    user_realm_key,
+                    ..
+                }) => (
+                    human_handle,
+                    private_key,
+                    *initial_profile,
+                    user_realm_id,
+                    user_realm_key,
+                ),
+                _ => unreachable!(),
+            };
 
         let local_device = Arc::new(LocalDevice {
             organization_addr: (*self.organization_addr(env)).clone(),
+            user_id,
             device_id,
             device_label: device_label.to_owned(),
             human_handle: human_handle.to_owned(),
@@ -389,7 +380,7 @@ impl TestbedEnv {
             .expect("Realm has had no key rotation")
     }
 
-    pub fn get_last_realm_keys_bundle_access_for(&self, realm_id: VlobID, user: &UserID) -> Bytes {
+    pub fn get_last_realm_keys_bundle_access_for(&self, realm_id: VlobID, user: UserID) -> Bytes {
         self.template
             .events
             .iter()
@@ -397,10 +388,10 @@ impl TestbedEnv {
             .find_map(|event| match event {
                 TestbedEvent::RotateKeyRealm(x) if x.realm == realm_id => Some(
                     x.per_participant_keys_bundle_access()
-                        .remove(user)
+                        .remove(&user)
                         .expect("No keys bundle access for user"),
                 ),
-                TestbedEvent::ShareRealm(x) if x.realm == realm_id && x.user == *user => Some(
+                TestbedEvent::ShareRealm(x) if x.realm == realm_id && x.user == user => Some(
                     x.recipient_keys_bundle_access(&self.template)
                         .expect("No keys bundle access for user"),
                 ),
@@ -700,16 +691,16 @@ impl TestbedEnv {
             .unwrap()
     }
 
-    pub fn get_last_shamir_recovery_certificate_timestamp(&self, author: &UserID) -> DateTime {
+    pub fn get_last_shamir_recovery_certificate_timestamp(&self, user_id: UserID) -> DateTime {
         self.template
             .certificates_rev()
             .find_map(|event| {
-                let (candidate_author, timestamp) = match &event.certificate {
+                let (candidate, timestamp) = match &event.certificate {
                     AnyArcCertificate::ShamirRecoveryBrief(certif) => {
-                        (&certif.author, certif.timestamp)
+                        (certif.user_id, certif.timestamp)
                     }
                     AnyArcCertificate::ShamirRecoveryShare(certif) => {
-                        (&certif.author, certif.timestamp)
+                        (certif.user_id, certif.timestamp)
                     }
 
                     // Exhaustive match so that we detect when new certificates are added
@@ -725,7 +716,7 @@ impl TestbedEnv {
                     | AnyArcCertificate::SequesterService(_)
                     | AnyArcCertificate::SequesterRevokedService(_) => return None,
                 };
-                if candidate_author.user_id() == author {
+                if candidate == user_id {
                     Some(timestamp)
                 } else {
                     None

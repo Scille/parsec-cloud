@@ -74,7 +74,7 @@ struct CurrentViewCache {
     pub per_topic_last_timestamps: ScalarCache<PerTopicLastTimestamps>,
     pub self_profile: ScalarCache<UserProfile>,
     pub per_user_profile: HashMap<UserID, UserProfile>,
-    pub per_device_verify_key: HashMap<DeviceID, (VerifyKey, DateTime)>,
+    pub per_device_verify_key_and_user_id: HashMap<DeviceID, (VerifyKey, DateTime, UserID)>,
     // Realm keys is a special case: it stores cache on data (keys bundle
     // & keys bundle access key) that are not directly from certificates.
     // Instead those data are fetched from the server then validated against the
@@ -393,7 +393,7 @@ macro_rules! impl_read_methods {
             let maybe_update = self
                 .get_last_user_update_certificate(
                     UpTo::Current,
-                    self.store.device.user_id().to_owned(),
+                    self.store.device.user_id,
                 )
                 .await?;
             let self_profile = match maybe_update {
@@ -445,13 +445,24 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             device_id: DeviceID,
         ) -> Result<VerifyKey, GetCertificateError> {
+            self.get_device_verify_key_and_user_id(up_to, device_id)
+                .await
+                .map(|(verify_key, _)| verify_key)
+        }
+
+        #[allow(unused)]
+        pub async fn get_device_verify_key_and_user_id(
+            &mut self,
+            up_to: UpTo,
+            device_id: DeviceID,
+        ) -> Result<(VerifyKey, UserID), GetCertificateError> {
             {
                 let cache = self
                     .store
                     .current_view_cache
                     .lock()
                     .expect("Mutex is poisoned !");
-                if let Some((verify_key, timestamp)) = cache.per_device_verify_key.get(&device_id) {
+                if let Some((verify_key, timestamp, user_id)) = cache.per_device_verify_key_and_user_id.get(&device_id) {
                     if let UpTo::Timestamp(up_to) = up_to {
                         if *timestamp > up_to {
                             return Err(GetCertificateError::ExistButTooRecent {
@@ -459,13 +470,13 @@ macro_rules! impl_read_methods {
                             });
                         }
                     }
-                    return Ok(verify_key.to_owned());
+                    return Ok((verify_key.to_owned(), *user_id));
                 }
             }
 
             // Cache miss !
 
-            let query = GetCertificateQuery::device_certificate(device_id.clone());
+            let query = GetCertificateQuery::device_certificate(&device_id);
             let (_, encrypted) = self.storage.get_certificate_encrypted(query, up_to).await?;
 
             let certif = get_certificate_from_encrypted(
@@ -483,11 +494,11 @@ macro_rules! impl_read_methods {
                     .lock()
                     .expect("Mutex is poisoned !");
                 cache
-                    .per_device_verify_key
-                    .insert(device_id, (certif.verify_key.clone(), certif.timestamp));
+                    .per_device_verify_key_and_user_id
+                    .insert(device_id, (certif.verify_key.clone(), certif.timestamp, certif.user_id));
             }
 
-            Ok(certif.verify_key.to_owned())
+            Ok((certif.verify_key.to_owned(), certif.user_id))
         }
 
         #[allow(unused)]
@@ -496,7 +507,26 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             user_id: UserID,
         ) -> Result<Arc<UserCertificate>, GetCertificateError> {
-            let query = GetCertificateQuery::user_certificate(user_id);
+            let query = GetCertificateQuery::user_certificate(&user_id);
+            let (_, encrypted) = self.storage.get_certificate_encrypted(query, up_to).await?;
+
+            let certif = get_certificate_from_encrypted(
+                self.store,
+                &encrypted,
+                UserCertificate::unsecure_load,
+                UnsecureUserCertificate::skip_validation,
+            )?;
+
+            Ok(certif)
+        }
+
+        #[allow(unused)]
+        pub async fn get_user_certificate_from_device_id(
+            &mut self,
+            up_to: UpTo,
+            device_id: DeviceID,
+        ) -> Result<Arc<UserCertificate>, GetCertificateError> {
+            let query = GetCertificateQuery::user_certificate_from_device_id(&device_id);
             let (_, encrypted) = self.storage.get_certificate_encrypted(query, up_to).await?;
 
             let certif = get_certificate_from_encrypted(
@@ -536,7 +566,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             device_id: DeviceID,
         ) -> Result<Arc<DeviceCertificate>, GetCertificateError> {
-            let query = GetCertificateQuery::device_certificate(device_id);
+            let query = GetCertificateQuery::device_certificate(&device_id);
             let (_, encrypted) = self.storage.get_certificate_encrypted(query, up_to).await?;
 
             let certif = get_certificate_from_encrypted(
@@ -556,7 +586,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             user_id: UserID,
         ) -> anyhow::Result<Vec<Arc<DeviceCertificate>>> {
-            let query = GetCertificateQuery::user_device_certificates(user_id);
+            let query = GetCertificateQuery::user_devices_certificates(&user_id);
             let items = self
                 .storage
                 .get_multiple_certificates_encrypted(query, up_to, None, None)
@@ -575,7 +605,34 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             user_id: UserID,
         ) -> anyhow::Result<Option<Arc<RevokedUserCertificate>>> {
-            let query = GetCertificateQuery::revoked_user_certificate(user_id);
+            let query = GetCertificateQuery::revoked_user_certificate(&user_id);
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            get_certificate_from_encrypted(
+                self.store,
+                &encrypted,
+                RevokedUserCertificate::unsecure_load,
+                UnsecureRevokedUserCertificate::skip_validation,
+            )
+            .map(Some)
+        }
+
+        #[allow(unused)]
+        pub async fn get_revoked_user_certificate_from_device_id(
+            &mut self,
+            up_to: UpTo,
+            device_id: DeviceID,
+        ) -> anyhow::Result<Option<Arc<RevokedUserCertificate>>> {
+            let query = GetCertificateQuery::revoked_user_certificate_from_device_id(&device_id);
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
 
             let encrypted = match outcome {
@@ -602,7 +659,41 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             user_id: UserID,
         ) -> anyhow::Result<Option<Arc<UserUpdateCertificate>>> {
-            let query = GetCertificateQuery::user_update_certificates(user_id);
+            let query = GetCertificateQuery::user_update_certificates(&user_id);
+            // `get_certificate_encrypted` return the last certificate if multiple are available
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let signed = self
+                .store
+                .device
+                .local_symkey
+                .decrypt(&encrypted)
+                .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
+
+            let unsecure = UserUpdateCertificate::unsecure_load(signed.into())
+                .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
+
+            let certif =
+                unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
+
+            Ok(Some(Arc::new(certif)))
+        }
+
+        #[allow(unused)]
+        pub async fn get_last_user_update_certificate_from_device_id(
+            &mut self,
+            up_to: UpTo,
+            device_id: DeviceID,
+        ) -> anyhow::Result<Option<Arc<UserUpdateCertificate>>> {
+            let query = GetCertificateQuery::user_update_certificates_from_device_id(&device_id);
             // `get_certificate_encrypted` return the last certificate if multiple are available
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             let encrypted = match outcome {
@@ -638,7 +729,7 @@ macro_rules! impl_read_methods {
             user_id: UserID,
             realm_id: VlobID,
         ) -> anyhow::Result<Option<Arc<RealmRoleCertificate>>> {
-            let query = GetCertificateQuery::realm_role_certificate(realm_id, user_id);
+            let query = GetCertificateQuery::realm_role_certificate(&realm_id, &user_id);
             // `get_certificate_encrypted` return the last certificate if multiple are available
             let encrypted = match self.storage.get_certificate_encrypted(query, up_to).await {
                 Ok((_, encrypted)) => encrypted,
@@ -671,7 +762,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             user_id: UserID,
         ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-            let query = GetCertificateQuery::user_realm_role_certificates(user_id);
+            let query = GetCertificateQuery::user_realm_role_certificates(&user_id);
             let items = self
                 .storage
                 .get_multiple_certificates_encrypted(query, up_to, None, None)
@@ -693,7 +784,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<bool> {
-            let query = GetCertificateQuery::realm_role_certificates(realm_id);
+            let query = GetCertificateQuery::realm_role_certificates(&realm_id);
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             match outcome {
                 Ok(_) => Ok(true),
@@ -716,7 +807,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<Vec<Arc<RealmRoleCertificate>>> {
-            let query = GetCertificateQuery::realm_role_certificates(realm_id);
+            let query = GetCertificateQuery::realm_role_certificates(&realm_id);
             let items = self
                 .storage
                 .get_multiple_certificates_encrypted(query, up_to, None, None)
@@ -738,7 +829,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<Option<Arc<RealmNameCertificate>>> {
-            let query = GetCertificateQuery::realm_name_certificates(realm_id);
+            let query = GetCertificateQuery::realm_name_certificates(&realm_id);
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             let encrypted = match outcome {
                 Ok((_, encrypted)) => encrypted,
@@ -764,7 +855,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<Vec<Arc<RealmNameCertificate>>> {
-            let query = GetCertificateQuery::realm_name_certificates(realm_id);
+            let query = GetCertificateQuery::realm_name_certificates(&realm_id);
             let items = self
                 .storage
                 .get_multiple_certificates_encrypted(query, up_to, None, None)
@@ -783,7 +874,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<Option<Arc<RealmKeyRotationCertificate>>> {
-            let query = GetCertificateQuery::realm_key_rotation_certificates(realm_id);
+            let query = GetCertificateQuery::realm_key_rotation_certificates(&realm_id);
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
             let encrypted = match outcome {
                 Ok((_, encrypted)) => encrypted,
@@ -810,7 +901,7 @@ macro_rules! impl_read_methods {
             realm_id: VlobID,
             key_index: IndexInt,
         ) -> anyhow::Result<Option<Arc<RealmKeyRotationCertificate>>> {
-            let query = GetCertificateQuery::realm_key_rotation_certificate(realm_id, key_index);
+            let query = GetCertificateQuery::realm_key_rotation_certificate(&realm_id, key_index);
             let outcome = self
                 .storage
                 .get_certificate_encrypted(query, UpTo::Current)
@@ -840,7 +931,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             realm_id: VlobID,
         ) -> anyhow::Result<Vec<Arc<RealmKeyRotationCertificate>>> {
-            let query = GetCertificateQuery::realm_key_rotation_certificates(realm_id);
+            let query = GetCertificateQuery::realm_key_rotation_certificates(&realm_id);
             let items = self
                 .storage
                 .get_multiple_certificates_encrypted(query, up_to, None, None)
@@ -923,7 +1014,7 @@ macro_rules! impl_read_methods {
             up_to: UpTo,
             service_id: SequesterServiceID,
         ) -> anyhow::Result<Option<Arc<SequesterRevokedServiceCertificate>>> {
-            let query = GetCertificateQuery::sequester_revoked_service_certificate(service_id);
+            let query = GetCertificateQuery::sequester_revoked_service_certificate(&service_id);
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
 
             let encrypted = match outcome {
@@ -992,7 +1083,7 @@ macro_rules! impl_read_methods {
             recipient: UserID,
         ) -> anyhow::Result<Option<Arc<ShamirRecoveryShareCertificate>>> {
             let query = GetCertificateQuery::user_recipient_shamir_recovery_share_certificates(
-                author, recipient,
+                &author, &recipient,
             );
             // `get_certificate_encrypted` return the last certificate if multiple are available
             let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
@@ -1124,8 +1215,8 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                 update_timestamp_cache(&mut cache, certif.timestamp);
                 cache
                     .per_user_profile
-                    .insert(certif.user_id.clone(), certif.profile);
-                if &certif.user_id == self.store.device.user_id() {
+                    .insert(certif.user_id, certif.profile);
+                if certif.user_id == self.store.device.user_id {
                     cache.self_profile.set(certif.profile);
                 }
             }
@@ -1140,9 +1231,9 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                     .lock()
                     .expect("Mutex is poisoned");
                 update_timestamp_cache(&mut cache, certif.timestamp);
-                cache.per_device_verify_key.insert(
-                    certif.device_id.clone(),
-                    (certif.verify_key.clone(), certif.timestamp),
+                cache.per_device_verify_key_and_user_id.insert(
+                    certif.device_id,
+                    (certif.verify_key.clone(), certif.timestamp, certif.user_id),
                 );
             }
             CommonTopicArcCertificate::UserUpdate(certif) => {
@@ -1158,8 +1249,8 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                 update_timestamp_cache(&mut cache, certif.timestamp);
                 cache
                     .per_user_profile
-                    .insert(certif.user_id.clone(), certif.new_profile);
-                if &certif.user_id == self.store.device.user_id() {
+                    .insert(certif.user_id, certif.new_profile);
+                if certif.user_id == self.store.device.user_id {
                     cache.self_profile.set(certif.new_profile);
                 }
             }

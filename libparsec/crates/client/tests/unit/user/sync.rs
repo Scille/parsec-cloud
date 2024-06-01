@@ -72,7 +72,7 @@ async fn sync_non_placeholder(
                 &req.blob,
                 &alice.user_realm_key,
                 &alice.verify_key(),
-                &alice.device_id,
+                alice.device_id,
                 req.timestamp,
                 Some(alice.user_realm_id),
                 Some(2),
@@ -124,9 +124,9 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    &alice.device_id,
+                    alice.device_id,
                     Some(alice.user_realm_id),
-                    Some(alice.user_id()),
+                    Some(alice.user_id),
                 )
                 .unwrap();
                 authenticated_cmds::latest::realm_create::Rep::Ok {}
@@ -141,7 +141,7 @@ async fn sync_placeholder(#[case] is_speculative: bool, env: &TestbedEnv) {
                 &req.blob,
                 &alice.user_realm_key,
                 &alice.verify_key(),
-                &alice.device_id,
+                alice.device_id,
                 req.timestamp,
                 Some(alice.user_realm_id),
                 Some(1),

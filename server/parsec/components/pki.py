@@ -80,7 +80,7 @@ def pki_enrollment_accept_validate(
         case _:
             pass
 
-    if u_data.user_id != d_data.device_id.user_id:
+    if u_data.user_id != d_data.user_id:
         return PkiEnrollmentAcceptValidateBadOutcome.USER_ID_MISMATCH
 
     if not ru_data.is_redacted:

@@ -113,7 +113,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteConduitExchangeBadOutcome.INVITATION_DELETED
 
         try:
-            greeter_user = org.users[invitation.created_by.user_id]
+            greeter_user = org.users[invitation.created_by_user_id]
         except KeyError as exc:
             # Database is corrupted if we end up here !
             assert False, exc
@@ -298,7 +298,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -316,7 +322,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 force_token is None
                 and not invitation.is_deleted
                 and invitation.type == InvitationType.USER
-                and invitation.created_by.user_id == author.user_id
+                and invitation.created_by_user_id == author_user_id
                 and invitation.claimer_email == claimer_email
             ):
                 # An invitation already exists for what the user has asked for
@@ -330,7 +336,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[token] = MemoryInvitation(
                 token=token,
                 type=InvitationType.USER,
-                created_by=author,
+                created_by_user_id=author_user_id,
+                created_by_device_id=author,
                 claimer_email=claimer_email,
                 created_on=now,
             )
@@ -339,7 +346,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 EventInvitation(
                     organization_id=organization_id,
                     token=token,
-                    greeter=author.user_id,
+                    greeter=author_user_id,
                     status=InvitationStatus.IDLE,
                 )
             )
@@ -374,7 +381,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -385,7 +398,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 force_token is None
                 and not invitation.is_deleted
                 and invitation.type == InvitationType.DEVICE
-                and invitation.created_by.user_id == author.user_id
+                and invitation.created_by_user_id == author_user_id
             ):
                 # An invitation already exists for what the user has asked for
                 token = invitation.token
@@ -398,7 +411,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             org.invitations[token] = MemoryInvitation(
                 token=token,
                 type=InvitationType.DEVICE,
-                created_by=author,
+                created_by_user_id=author_user_id,
+                created_by_device_id=author,
                 claimer_email=None,
                 created_on=now,
             )
@@ -407,7 +421,7 @@ class MemoryInviteComponent(BaseInviteComponent):
                 EventInvitation(
                     organization_id=organization_id,
                     token=token,
-                    greeter=author.user_id,
+                    greeter=author_user_id,
                     status=InvitationStatus.IDLE,
                 )
             )
@@ -439,7 +453,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -459,7 +479,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             EventInvitation(
                 organization_id=organization_id,
                 token=token,
-                greeter=author.user_id,
+                greeter=author_user_id,
                 status=InvitationStatus.CANCELLED,
             )
         )
@@ -476,7 +496,13 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteListBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteListBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return InviteListBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -484,7 +510,7 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         items = []
         for invitation in org.invitations.values():
-            if invitation.created_by.user_id != author.user_id:
+            if invitation.created_by_user_id != author_user_id:
                 continue
 
             status = self._get_invitation_status(organization_id, invitation)
@@ -495,7 +521,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                         claimer_email=invitation.claimer_email,
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by=invitation.created_by,
+                        created_by_device_id=invitation.created_by_device_id,
+                        created_by_user_id=invitation.created_by_user_id,
                         created_by_human_handle=author_user.cooked.human_handle,
                         status=status,
                     )
@@ -503,7 +530,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                     item = DeviceInvitation(
                         token=invitation.token,
                         created_on=invitation.created_on,
-                        created_by=invitation.created_by,
+                        created_by_device_id=invitation.created_by_device_id,
+                        created_by_user_id=invitation.created_by_user_id,
                         created_by_human_handle=author_user.cooked.human_handle,
                         status=status,
                     )
@@ -532,7 +560,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
         if invitation.is_deleted:
             return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
-        created_by_human_handle = org.users[invitation.created_by.user_id].cooked.human_handle
+        created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
 
         match invitation.type:
             case InvitationType.USER:
@@ -541,7 +569,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                     claimer_email=invitation.claimer_email,
                     created_on=invitation.created_on,
                     status=self._get_invitation_status(organization_id, invitation),
-                    created_by=invitation.created_by,
+                    created_by_user_id=invitation.created_by_user_id,
+                    created_by_device_id=invitation.created_by_device_id,
                     created_by_human_handle=created_by_human_handle,
                     token=invitation.token,
                 )
@@ -549,7 +578,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                 return DeviceInvitation(
                     created_on=invitation.created_on,
                     status=self._get_invitation_status(organization_id, invitation),
-                    created_by=invitation.created_by,
+                    created_by_user_id=invitation.created_by_user_id,
+                    created_by_device_id=invitation.created_by_device_id,
                     created_by_human_handle=created_by_human_handle,
                     token=invitation.token,
                 )
@@ -564,11 +594,11 @@ class MemoryInviteComponent(BaseInviteComponent):
         per_user_invitations = {}
         for invitation in org.invitations.values():
             try:
-                current_user_invitations = per_user_invitations[invitation.created_by.user_id]
+                current_user_invitations = per_user_invitations[invitation.created_by_user_id]
             except KeyError:
                 current_user_invitations = []
-                per_user_invitations[invitation.created_by.user_id] = current_user_invitations
-            created_by_human_handle = org.users[invitation.created_by.user_id].cooked.human_handle
+                per_user_invitations[invitation.created_by_user_id] = current_user_invitations
+            created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
             match invitation.type:
                 case InvitationType.USER:
                     assert invitation.claimer_email is not None
@@ -577,7 +607,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                             claimer_email=invitation.claimer_email,
                             created_on=invitation.created_on,
                             status=self._get_invitation_status(organization_id, invitation),
-                            created_by=invitation.created_by,
+                            created_by_user_id=invitation.created_by_user_id,
+                            created_by_device_id=invitation.created_by_device_id,
                             created_by_human_handle=created_by_human_handle,
                             token=invitation.token,
                         )
@@ -587,7 +618,8 @@ class MemoryInviteComponent(BaseInviteComponent):
                         DeviceInvitation(
                             created_on=invitation.created_on,
                             status=self._get_invitation_status(organization_id, invitation),
-                            created_by=invitation.created_by,
+                            created_by_user_id=invitation.created_by_user_id,
+                            created_by_device_id=invitation.created_by_device_id,
                             created_by_human_handle=created_by_human_handle,
                             token=invitation.token,
                         )

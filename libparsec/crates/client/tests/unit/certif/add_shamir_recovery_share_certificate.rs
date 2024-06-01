@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_tests_fixtures::prelude::*;
 
 use crate::certif::{
@@ -162,6 +164,69 @@ async fn missing_brief(env: &TestbedEnv) {
         if matches!(
             *boxed,
             InvalidCertificateError::ShamirRecoveryMissingBriefCertificate { .. }
+        )
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn invalid_user_id(env: &TestbedEnv) {
+    let bob_user_id = env
+        .customize(|builder| {
+            let bob_user_id = builder.new_user("bob").map(|u| u.user_id);
+
+            builder.new_shamir_recovery(
+                "bob",
+                1,
+                [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            );
+
+            bob_user_id
+        })
+        .await;
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    // Patch the certificate to have an invalid user id
+
+    let shamir_recovery_certificates = match env.template.events.last().unwrap() {
+        TestbedEvent::NewShamirRecovery(e) => {
+            let mut rev_certifs = e
+                .certificates(&env.template)
+                .collect::<Vec<_>>()
+                .into_iter()
+                .rev();
+            let share = rev_certifs.next().unwrap();
+            let brief = rev_certifs.next().unwrap();
+            let share_certificate = match share.certificate {
+                libparsec_types::AnyArcCertificate::ShamirRecoveryShare(mut c) => {
+                    let c_mut = Arc::make_mut(&mut c);
+                    c_mut.user_id = alice.user_id;
+                    c_mut.dump_and_sign(&alice.signing_key)
+                }
+                _ => unreachable!(),
+            };
+            vec![brief.signed, share_certificate.into()]
+        }
+        _ => unreachable!(),
+    };
+
+    let err = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &shamir_recovery_certificates,
+            &Default::default(),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::ShamirRecoveryNotAboutSelf { user_id, author_user_id, .. }
+            if user_id == alice.user_id && author_user_id == bob_user_id
         )
     );
 }

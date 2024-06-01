@@ -14,7 +14,7 @@ use libparsec::{
         user_create::{self, UserCreateRep},
     },
     load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
-    DeviceAccessStrategy, DeviceCertificate, DeviceLabel, DeviceName, HumanHandle, LocalDevice,
+    DeviceAccessStrategy, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice,
     MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr,
     PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
     UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR, PARSEC_SCHEME,
@@ -61,9 +61,10 @@ fn create_new_device(
     now: DateTime,
 ) -> (Bytes, Bytes) {
     let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp: now,
-        device_id: new_device.device_id.clone(),
+        user_id: new_device.user_id,
+        device_id: new_device.device_id,
         device_label: MaybeRedacted::Real(new_device.device_label.clone()),
         verify_key: new_device.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
@@ -87,9 +88,9 @@ fn create_new_user(
     now: DateTime,
 ) -> (Bytes, Bytes) {
     let user_cert = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp: now,
-        user_id: new_device.device_id.user_id().clone(),
+        user_id: new_device.user_id,
         human_handle: MaybeRedacted::Real(new_device.human_handle.clone()),
         profile: initial_profile,
         public_key: new_device.public_key().clone(),
@@ -116,9 +117,8 @@ async fn register_new_device(
         initial_profile: author.initial_profile,
         human_handle: author.human_handle.clone(),
         device_label,
-        device_id: format!("{}@{}", author.user_id(), DeviceName::default())
-            .parse()
-            .expect("Unreachable"),
+        user_id: author.user_id,
+        device_id: DeviceID::default(),
         signing_key: SigningKey::generate(),
         private_key: author.private_key.clone(),
         user_realm_id: author.user_realm_id,
@@ -170,6 +170,7 @@ async fn register_new_user(
         initial_profile,
         human_handle,
         device_label,
+        None,
         None,
         None,
         None,

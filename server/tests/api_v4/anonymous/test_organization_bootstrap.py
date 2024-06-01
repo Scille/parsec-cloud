@@ -21,6 +21,7 @@ from parsec._parsec import (
     SigningKey,
     SigningKeyAlgorithm,
     UserCertificate,
+    UserID,
     UserProfile,
     anonymous_cmds,
 )
@@ -316,7 +317,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     root_verify_key = root_signing_key.verify_key
 
     device_id = DeviceID.new()
-    user_id = device_id.user_id
+    user_id = UserID.new()
     user_priv_key = PrivateKey.generate()
     user_human_handle = HumanHandle("foo@bar.com", str(user_id))
     device_label = DeviceLabel("device label")
@@ -342,6 +343,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     device_certificate = DeviceCertificate(
         author=device_id,
         timestamp=late if device_certif_late else now,
+        user_id=user_id,
         device_id=device_id,
         device_label=device_label,
         verify_key=root_verify_key,
@@ -350,6 +352,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     redacted_device_certificate = DeviceCertificate(
         author=device_certificate.author,
         timestamp=device_certificate.timestamp,
+        user_id=user_id,
         device_id=device_certificate.device_id,
         device_label=None,
         verify_key=device_certificate.verify_key,

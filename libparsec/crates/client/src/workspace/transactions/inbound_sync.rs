@@ -331,7 +331,7 @@ async fn merge_manifest_and_update_store(
             // Note merge may end up with nothing to sync, typically if the remote version is
             // already the one local is based on
             let merge_outcome = super::super::merge::merge_local_folder_manifest(
-                &ops.device.device_id,
+                ops.device.device_id,
                 ops.device.now(),
                 &local_manifest,
                 remote_manifest,
@@ -361,7 +361,7 @@ async fn merge_manifest_and_update_store(
             // Note merge may end up with nothing to sync, typically if the remote version is
             // already the one local is based on
             let merge_outcome = super::super::merge::merge_local_file_manifest(
-                &ops.device.device_id,
+                ops.device.device_id,
                 ops.device.now(),
                 &local_manifest,
                 remote_manifest,
@@ -439,7 +439,7 @@ async fn handle_conflict_and_update_store(
             } = child_manifest.as_ref();
 
             let mut conflicting =
-                LocalFileManifest::new(ops.device.device_id.clone(), *parent, ops.device.now());
+                LocalFileManifest::new(ops.device.device_id, *parent, ops.device.now());
             conflicting.need_sync = *need_sync;
             conflicting.updated = *updated;
             conflicting.size = *size;
@@ -659,7 +659,7 @@ pub trait RemoteManifest: Sized {
         realm_id: VlobID,
         key_index: IndexInt,
         vlob_id: VlobID,
-        author: &DeviceID,
+        author: DeviceID,
         version: VersionInt,
         timestamp: DateTime,
         encrypted: &[u8],
@@ -693,7 +693,7 @@ impl RemoteManifest for RootManifest {
         realm_id: VlobID,
         key_index: IndexInt,
         vlob_id: VlobID,
-        author: &DeviceID,
+        author: DeviceID,
         version: VersionInt,
         timestamp: DateTime,
         encrypted: &[u8],
@@ -745,7 +745,7 @@ impl RemoteManifest for ChildManifest {
         realm_id: VlobID,
         key_index: IndexInt,
         vlob_id: VlobID,
-        author: &DeviceID,
+        author: DeviceID,
         version: VersionInt,
         timestamp: DateTime,
         encrypted: &[u8],
@@ -887,7 +887,7 @@ async fn fetch_remote_manifest_last_version<M: RemoteManifest>(
         ops.realm_id(),
         key_index,
         entry_id,
-        &author,
+        author,
         version,
         timestamp,
         &encrypted,
@@ -965,7 +965,7 @@ async fn fetch_remote_manifest_version<M: RemoteManifest>(
         ops.realm_id(),
         key_index,
         entry_id,
-        &author,
+        author,
         version,
         timestamp,
         &encrypted,

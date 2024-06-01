@@ -162,10 +162,10 @@ class Backend:
         def _get_device_verify_key(device_id: DeviceID) -> VerifyKey:
             for event in events:
                 if isinstance(event, testbed.TestbedEventBootstrapOrganization):
-                    if event.first_user_device_id == device_id:
+                    if event.first_user_first_device_id == device_id:
                         return event.first_user_first_device_certificate.verify_key
                 elif isinstance(event, testbed.TestbedEventNewUser):
-                    if event.device_id == device_id:
+                    if event.first_device_id == device_id:
                         return event.first_device_certificate.verify_key
                 elif isinstance(event, testbed.TestbedEventNewDevice):
                     if event.device_id == device_id:

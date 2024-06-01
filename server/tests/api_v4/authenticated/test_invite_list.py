@@ -50,7 +50,7 @@ async def test_authenticated_invite_list_ok(
     # outcome = await backend.invite.new_for_user(
     #     now=t3,
     #     organization_id=coolorg.organization_id,
-    #     author=coolorg.alice.device_id.user_id,
+    #     author=coolorg.alice.user_id,
     #     claimer_email="zack@example.invalid",
     #     send_email=False,
     # )

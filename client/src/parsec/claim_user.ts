@@ -230,6 +230,7 @@ export class UserClaim {
       this.device = {
         keyFilePath: '/path',
         organizationId: 'MyOrg',
+        userId: 'userid',
         deviceId: 'deviceid',
         humanHandle: {
           label: 'A',

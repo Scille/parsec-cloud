@@ -42,7 +42,7 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         if matches!(fetch_strategy, FetchStrategy::Multiple) {
             // Only the last fetch is taken into account, so this should be known
             builder.new_device("alice");
-            expected_last_timestamps.common = builder.new_user("bill").map(|e| Some(e.timestamp));
+            expected_last_timestamps.common = builder.new_user("mike").map(|e| Some(e.timestamp));
             builder.new_realm("alice").map(|e| {
                 expected_last_timestamps
                     .realm
@@ -54,7 +54,7 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
         // Stuff the our storage is not aware of
         builder.new_realm("alice");
         builder.new_device("alice");
-        builder.new_user("john");
+        builder.new_user("philip");
     })
     .await;
 
@@ -91,8 +91,8 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
 
     // Now with certificates
 
-    let device_id = &alice.device_id;
-    let user_id = alice.device_id.user_id();
+    let device_id = alice.device_id;
+    let user_id = alice.user_id;
     let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
@@ -101,7 +101,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &UserCertificate {
                 timestamp: t1,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
@@ -123,7 +123,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &RevokedUserCertificate {
                 timestamp: t2,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
             },
@@ -141,7 +141,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &UserUpdateCertificate {
                 timestamp: t3,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
                 new_profile: UserProfile::Admin,
@@ -160,12 +160,11 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &DeviceCertificate {
                 timestamp: t4,
-                device_id: device_id.clone(),
+                user_id,
+                device_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    &DeviceName::default(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                 verify_key: alice.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             },
@@ -184,9 +183,9 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
             &RealmRoleCertificate {
                 timestamp: t5,
                 realm_id,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"<encrypted>".to_vec(),
@@ -246,7 +245,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 realm_id,
                 key_index: 0,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
@@ -268,7 +267,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 realm_id,
                 // Not meaningful for the test
                 key_index: 0,
-                author: device_id.clone(),
+                author: device_id,
                 encrypted_name: b"encrypted_name".to_vec(),
             },
             b"<encrypted>".to_vec(),
@@ -287,7 +286,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 timestamp: t10,
                 realm_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 configuration: RealmArchivingConfiguration::Archived,
             },
             b"<encrypted>".to_vec(),
@@ -320,7 +319,8 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &ShamirRecoveryBriefCertificate {
                 timestamp: t12,
-                author: device_id.clone(),
+                author: device_id,
+                user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
                 threshold: NonZeroU64::new(1).unwrap(),
@@ -339,8 +339,9 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
         .add_certificate(
             &ShamirRecoveryShareCertificate {
                 timestamp: t13,
-                author: device_id.clone(),
-                recipient: user_id.clone(),
+                author: device_id,
+                user_id,
+                recipient: user_id,
                 // Not meaningful for the test
                 ciphered_share: b"ciphered_share".to_vec(),
             },
@@ -362,8 +363,8 @@ async fn get_certificate_empty_storage(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    let user_id = alice.device_id.user_id();
-    let device_id = &alice.device_id;
+    let user_id = alice.user_id;
+    let device_id = alice.device_id;
     let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id1 = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
@@ -381,22 +382,25 @@ async fn get_certificate_empty_storage(env: &TestbedEnv) {
         };
     }
 
-    assert_not_in_db!(user_certificate, user_id.to_owned()).await;
-    assert_not_in_db!(revoked_user_certificate, user_id.to_owned()).await;
-    assert_not_in_db!(user_update_certificates, user_id.to_owned()).await;
-    assert_not_in_db!(device_certificate, device_id.to_owned()).await;
-    assert_not_in_db!(user_device_certificates, user_id.to_owned()).await;
-    assert_not_in_db!(realm_role_certificates, realm_id).await;
-    assert_not_in_db!(realm_name_certificates, realm_id).await;
-    assert_not_in_db!(realm_key_rotation_certificate, realm_id, 1).await;
-    assert_not_in_db!(realm_key_rotation_certificates, realm_id).await;
-    assert_not_in_db!(realm_archiving_certificates, realm_id).await;
-    assert_not_in_db!(user_realm_role_certificates, user_id.to_owned()).await;
+    assert_not_in_db!(user_certificate, &user_id).await;
+    assert_not_in_db!(user_certificate_from_device_id, &device_id).await;
+    assert_not_in_db!(revoked_user_certificate, &user_id).await;
+    assert_not_in_db!(revoked_user_certificate_from_device_id, &device_id).await;
+    assert_not_in_db!(user_update_certificates, &user_id).await;
+    assert_not_in_db!(user_update_certificates_from_device_id, &device_id).await;
+    assert_not_in_db!(device_certificate, &device_id).await;
+    assert_not_in_db!(user_devices_certificates, &user_id).await;
+    assert_not_in_db!(realm_role_certificates, &realm_id).await;
+    assert_not_in_db!(realm_name_certificates, &realm_id).await;
+    assert_not_in_db!(realm_key_rotation_certificate, &realm_id, 1).await;
+    assert_not_in_db!(realm_key_rotation_certificates, &realm_id).await;
+    assert_not_in_db!(realm_archiving_certificates, &realm_id).await;
+    assert_not_in_db!(user_realm_role_certificates, &user_id).await;
     assert_not_in_db!(shamir_recovery_brief_certificates).await;
     assert_not_in_db!(shamir_recovery_share_certificates).await;
     assert_not_in_db!(sequester_authority_certificate).await;
     assert_not_in_db!(sequester_service_certificates).await;
-    assert_not_in_db!(sequester_service_certificate, service_id1).await;
+    assert_not_in_db!(sequester_service_certificate, &service_id1).await;
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -409,9 +413,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
     let mut storage_mut = storage.for_update().await.unwrap();
 
-    let user_id = alice.device_id.user_id();
-    let other_user_id = &"bob".parse::<UserID>().unwrap();
-    let device_id = &alice.device_id;
+    let user_id = alice.user_id;
+    let other_user_id = "bob".parse::<UserID>().unwrap();
+    let device_id = alice.device_id;
     let other_device_id = "bob@dev1".parse::<DeviceID>().unwrap();
     let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let other_realm_id = VlobID::from_hex("810d8d137b934985b62627042058aee4").unwrap();
@@ -434,16 +438,19 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         };
     }
 
-    assert_not_in_db!(user_certificate, user_id.to_owned()).await;
-    assert_not_in_db!(revoked_user_certificate, user_id.to_owned()).await;
-    assert_not_in_db!(user_update_certificates, user_id.to_owned()).await;
-    assert_not_in_db!(device_certificate, device_id.to_owned()).await;
-    assert_not_in_db!(user_device_certificates, user_id.to_owned()).await;
-    assert_not_in_db!(realm_role_certificates, realm_id).await;
-    assert_not_in_db!(user_realm_role_certificates, user_id.to_owned()).await;
+    assert_not_in_db!(user_certificate, &user_id).await;
+    assert_not_in_db!(user_certificate_from_device_id, &device_id).await;
+    assert_not_in_db!(revoked_user_certificate, &user_id).await;
+    assert_not_in_db!(revoked_user_certificate_from_device_id, &device_id).await;
+    assert_not_in_db!(user_update_certificates, &user_id).await;
+    assert_not_in_db!(user_update_certificates_from_device_id, &device_id).await;
+    assert_not_in_db!(device_certificate, &device_id).await;
+    assert_not_in_db!(user_devices_certificates, &user_id).await;
+    assert_not_in_db!(realm_role_certificates, &realm_id).await;
+    assert_not_in_db!(user_realm_role_certificates, &user_id).await;
     assert_not_in_db!(sequester_authority_certificate).await;
     assert_not_in_db!(sequester_service_certificates).await;
-    assert_not_in_db!(sequester_service_certificate, service_id1).await;
+    assert_not_in_db!(sequester_service_certificate, &service_id1).await;
 
     // 2) ...now populate with certificates...
 
@@ -452,7 +459,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &UserCertificate {
                 timestamp: t1,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
@@ -470,7 +477,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &RevokedUserCertificate {
                 timestamp: t2,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
             },
@@ -484,7 +491,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &UserUpdateCertificate {
                 timestamp: t3,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
                 new_profile: UserProfile::Admin,
@@ -499,7 +506,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &UserUpdateCertificate {
                 timestamp: t4,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
                 new_profile: UserProfile::Admin,
@@ -514,7 +521,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &UserUpdateCertificate {
                 timestamp: t5,
-                user_id: other_user_id.clone(),
+                user_id: other_user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
                 new_profile: UserProfile::Admin,
@@ -529,12 +536,11 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &DeviceCertificate {
                 timestamp: t6,
-                device_id: device_id.clone(),
+                device_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    &DeviceName::default(),
-                )),
+                user_id,
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                 verify_key: alice.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             },
@@ -549,9 +555,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
             &RealmRoleCertificate {
                 timestamp: t7,
                 realm_id,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"realm_role1".to_vec(),
@@ -565,9 +571,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
             &RealmRoleCertificate {
                 timestamp: t8,
                 realm_id,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"realm_role2".to_vec(),
@@ -581,9 +587,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
             &RealmRoleCertificate {
                 timestamp: t9,
                 realm_id: other_realm_id,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"other_realm_role".to_vec(),
@@ -597,9 +603,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
             &RealmRoleCertificate {
                 timestamp: t10,
                 realm_id,
-                user_id: other_user_id.clone(),
+                user_id: other_user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"realm_role_other_user".to_vec(),
@@ -665,7 +671,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 key_index: 0,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
@@ -683,7 +689,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 key_index: 1,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
@@ -701,7 +707,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 // Not meaningful for the test
                 key_index: 0,
-                author: device_id.clone(),
+                author: device_id,
                 encrypted_name: b"encrypted_name".to_vec(),
             },
             b"realm_name1".to_vec(),
@@ -717,7 +723,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 realm_id,
                 // Not meaningful for the test
                 key_index: 0,
-                author: device_id.clone(),
+                author: device_id,
                 encrypted_name: b"encrypted_name".to_vec(),
             },
             b"realm_name2".to_vec(),
@@ -732,7 +738,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 timestamp: t18,
                 realm_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 configuration: RealmArchivingConfiguration::Archived,
             },
             b"realm_archiving1".to_vec(),
@@ -747,7 +753,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 timestamp: t19,
                 realm_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 configuration: RealmArchivingConfiguration::Archived,
             },
             b"realm_archiving2".to_vec(),
@@ -784,7 +790,8 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &ShamirRecoveryBriefCertificate {
                 timestamp: t22,
-                author: device_id.clone(),
+                author: device_id,
+                user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
                 threshold: NonZeroU64::new(1).unwrap(),
@@ -799,7 +806,8 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &ShamirRecoveryBriefCertificate {
                 timestamp: t23,
-                author: other_device_id.clone(),
+                author: other_device_id,
+                user_id: other_user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
                 threshold: NonZeroU64::new(1).unwrap(),
@@ -814,8 +822,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &ShamirRecoveryShareCertificate {
                 timestamp: t24,
-                author: device_id.clone(),
-                recipient: user_id.clone(),
+                author: device_id,
+                user_id,
+                recipient: user_id,
                 // Not meaningful for the test
                 ciphered_share: b"ciphered_share".to_vec(),
             },
@@ -829,8 +838,9 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .add_certificate(
             &ShamirRecoveryShareCertificate {
                 timestamp: t25,
-                author: other_device_id.clone(),
-                recipient: other_user_id.clone(),
+                author: other_device_id,
+                user_id: other_user_id,
+                recipient: other_user_id,
                 // Not meaningful for the test
                 ciphered_share: b"ciphered_share".to_vec(),
             },
@@ -871,22 +881,29 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         };
     }
 
-    assert_one_in_db!(user_certificate, user_id.to_owned() => (t1, b"user".to_vec())).await;
-    assert_one_in_db!(revoked_user_certificate, user_id.to_owned() => (t2, b"revoked_user".to_vec())).await;
+    assert_one_in_db!(user_certificate, &user_id => (t1, b"user".to_vec())).await;
+    assert_one_in_db!(user_certificate_from_device_id, &device_id => (t1, b"user".to_vec())).await;
+    assert_one_in_db!(revoked_user_certificate, &user_id => (t2, b"revoked_user".to_vec())).await;
+    assert_one_in_db!(revoked_user_certificate_from_device_id, &device_id => (t2, b"revoked_user".to_vec())).await;
     assert_multiple_in_db!(
-        user_update_certificates, user_id.to_owned() =>
+        user_update_certificates, &user_id =>
         vec![(t3, b"user_update1".to_vec()), (t4, b"user_update2".to_vec())]
     )
     .await;
-    assert_one_in_db!(user_update_certificates, other_user_id.to_owned() => (t5, b"other_user_update".to_vec())).await;
-    assert_one_in_db!(device_certificate, device_id.to_owned() => (t6, b"device".to_vec())).await;
-    assert_multiple_in_db!(user_device_certificates, user_id.to_owned() =>
+    assert_one_in_db!(user_update_certificates, &other_user_id => (t5, b"other_user_update".to_vec())).await;
+    assert_multiple_in_db!(
+        user_update_certificates_from_device_id, &device_id =>
+        vec![(t3, b"user_update1".to_vec()), (t4, b"user_update2".to_vec())]
+    )
+    .await;
+    assert_one_in_db!(device_certificate, &device_id => (t6, b"device".to_vec())).await;
+    assert_multiple_in_db!(user_devices_certificates, &user_id =>
         vec![
             (t6, b"device".to_vec())
         ]
     )
     .await;
-    assert_multiple_in_db!(realm_role_certificates, realm_id =>
+    assert_multiple_in_db!(realm_role_certificates, &realm_id =>
         vec![
             (t7, b"realm_role1".to_vec()),
             (t8, b"realm_role2".to_vec()),
@@ -894,8 +911,8 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(realm_role_certificates, other_realm_id => (t9, b"other_realm_role".to_vec())).await;
-    assert_multiple_in_db!(user_realm_role_certificates, user_id.to_owned() =>
+    assert_one_in_db!(realm_role_certificates, &other_realm_id => (t9, b"other_realm_role".to_vec())).await;
+    assert_multiple_in_db!(user_realm_role_certificates, &user_id =>
         vec![
             (t7, b"realm_role1".to_vec()),
             (t8, b"realm_role2".to_vec()),
@@ -903,7 +920,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(user_realm_role_certificates, other_user_id.to_owned() =>
+    assert_one_in_db!(user_realm_role_certificates, &other_user_id =>
         (t10, b"realm_role_other_user".to_vec())
     )
     .await;
@@ -916,30 +933,30 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(sequester_service_certificate, service_id1 => (t12, b"sequester_service1".to_vec())).await;
-    assert_one_in_db!(realm_key_rotation_certificate, realm_id, 0 => (t14, b"realm_key_rotation1".to_vec())).await;
-    assert_multiple_in_db!(realm_key_rotation_certificates, realm_id =>
+    assert_one_in_db!(sequester_service_certificate, &service_id1 => (t12, b"sequester_service1".to_vec())).await;
+    assert_one_in_db!(realm_key_rotation_certificate, &realm_id, 0 => (t14, b"realm_key_rotation1".to_vec())).await;
+    assert_multiple_in_db!(realm_key_rotation_certificates, &realm_id =>
         vec![
             (t14, b"realm_key_rotation1".to_vec()),
             (t15, b"realm_key_rotation2".to_vec()),
         ]
     )
     .await;
-    assert_multiple_in_db!(realm_name_certificates, realm_id =>
+    assert_multiple_in_db!(realm_name_certificates, &realm_id =>
         vec![
             (t16, b"realm_name1".to_vec()),
             (t17, b"realm_name2".to_vec()),
         ]
     )
     .await;
-    assert_multiple_in_db!(realm_archiving_certificates, realm_id =>
+    assert_multiple_in_db!(realm_archiving_certificates, &realm_id =>
         vec![
             (t18, b"realm_archiving1".to_vec()),
             (t19, b"realm_archiving2".to_vec()),
         ]
     )
     .await;
-    assert_one_in_db!(sequester_revoked_service_certificate, service_id1 => (t20, b"sequester_revoked1".to_vec())).await;
+    assert_one_in_db!(sequester_revoked_service_certificate, &service_id1 => (t20, b"sequester_revoked1".to_vec())).await;
     assert_multiple_in_db!(sequester_revoked_service_certificates =>
         vec![
             (t20, b"sequester_revoked1".to_vec()),
@@ -947,7 +964,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(user_shamir_recovery_brief_certificates, user_id.to_owned() => (t22, b"shamir_recovery_brief1".to_vec())).await;
+    assert_one_in_db!(user_shamir_recovery_brief_certificates, &user_id => (t22, b"shamir_recovery_brief1".to_vec())).await;
     assert_multiple_in_db!(shamir_recovery_brief_certificates =>
         vec![
             (t22, b"shamir_recovery_brief1".to_vec()),
@@ -955,7 +972,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         ]
     )
     .await;
-    assert_one_in_db!(user_recipient_shamir_recovery_share_certificates, user_id.to_owned(), user_id.to_owned() => (t24, b"shamir_recovery_share1".to_vec())).await;
+    assert_one_in_db!(user_recipient_shamir_recovery_share_certificates, &user_id, &user_id => (t24, b"shamir_recovery_share1".to_vec())).await;
     assert_multiple_in_db!(shamir_recovery_share_certificates =>
         vec![
             (t24, b"shamir_recovery_share1".to_vec()),
@@ -971,7 +988,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
     // methods)
 
     let t0 = "2019-01-01T00:00:00Z".parse().unwrap();
-    let query = GetCertificateQuery::user_certificate(user_id.to_owned());
+    let query = GetCertificateQuery::user_certificate(&user_id);
     let item = storage_mut
         .get_certificate_encrypted(query.clone(), UpTo::Timestamp(t0))
         .await;
@@ -986,7 +1003,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
         .unwrap();
     assert!(items.is_empty());
 
-    let query = GetCertificateQuery::realm_role_certificates(realm_id.to_owned());
+    let query = GetCertificateQuery::realm_role_certificates(&realm_id);
     let item = storage_mut
         .get_certificate_encrypted(query.clone(), UpTo::Timestamp(t8))
         .await
@@ -1003,7 +1020,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
 
     // 5) Test offset & limit
 
-    let query = GetCertificateQuery::realm_role_certificates(realm_id.to_owned());
+    let query = GetCertificateQuery::realm_role_certificates(&realm_id);
     p_assert_eq!(
         storage_mut
             .get_multiple_certificates_encrypted(query.clone(), UpTo::Current, Some(3), None)
@@ -1044,8 +1061,8 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
 
     let mut storage_mut = storage.for_update().await.unwrap();
 
-    let user_id = alice.device_id.user_id();
-    let device_id = &alice.device_id;
+    let user_id = alice.user_id;
+    let device_id = alice.device_id;
     let realm_id = VlobID::from_hex("fe15ca8ad55140d08b4951f26f7073d5").unwrap();
     let service_id = SequesterServiceID::from_hex("a065170f3b6649f997ec14dbe36c5c13").unwrap();
 
@@ -1056,7 +1073,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &UserCertificate {
                 timestamp: t1,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
                 human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
@@ -1074,7 +1091,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &RevokedUserCertificate {
                 timestamp: t2,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
             },
@@ -1088,7 +1105,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &UserUpdateCertificate {
                 timestamp: t3,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
                 author: DeviceID::default(),
                 new_profile: UserProfile::Admin,
@@ -1103,12 +1120,11 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &DeviceCertificate {
                 timestamp: t4,
-                device_id: device_id.clone(),
+                device_id,
+                user_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
-                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                    &DeviceName::default(),
-                )),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
                 verify_key: alice.verify_key(),
                 algorithm: SigningKeyAlgorithm::Ed25519,
             },
@@ -1123,9 +1139,9 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
             &RealmRoleCertificate {
                 timestamp: t5,
                 realm_id,
-                user_id: user_id.clone(),
+                user_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 role: None,
             },
             b"<encrypted>".to_vec(),
@@ -1173,7 +1189,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 realm_id,
                 key_index: 0,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
@@ -1191,7 +1207,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 realm_id,
                 // Not meaningful for the test
                 key_index: 0,
-                author: device_id.clone(),
+                author: device_id,
                 encrypted_name: b"encrypted_name".to_vec(),
             },
             b"<encrypted>".to_vec(),
@@ -1206,7 +1222,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 timestamp: t10,
                 realm_id,
                 // Not meaningful for the test
-                author: device_id.clone(),
+                author: device_id,
                 configuration: RealmArchivingConfiguration::Archived,
             },
             b"<encrypted>".to_vec(),
@@ -1231,7 +1247,8 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &ShamirRecoveryBriefCertificate {
                 timestamp: t12,
-                author: device_id.clone(),
+                author: device_id,
+                user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
                 threshold: NonZeroU64::new(1).unwrap(),
@@ -1246,8 +1263,9 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
         .add_certificate(
             &ShamirRecoveryShareCertificate {
                 timestamp: t13,
-                author: device_id.clone(),
-                recipient: user_id.clone(),
+                author: device_id,
+                user_id,
+                recipient: user_id,
                 // Not meaningful for the test
                 ciphered_share: b"ciphered_share".to_vec(),
             },
@@ -1273,7 +1291,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
 
     async fn assert_not_in_db(
         storage: &mut CertificatesStorageUpdater<'_>,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'_>,
     ) {
         p_assert_matches!(
             storage
@@ -1285,37 +1303,52 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
 
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::user_certificate(user_id.to_owned()),
+        GetCertificateQuery::user_certificate(&user_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::revoked_user_certificate(user_id.to_owned()),
+        GetCertificateQuery::user_certificate_from_device_id(&device_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::user_update_certificates(user_id.to_owned()),
+        GetCertificateQuery::revoked_user_certificate(&user_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::device_certificate(device_id.to_owned()),
+        GetCertificateQuery::revoked_user_certificate_from_device_id(&device_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::user_device_certificates(user_id.to_owned()),
+        GetCertificateQuery::user_update_certificates(&user_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::realm_role_certificates(realm_id.to_owned()),
+        GetCertificateQuery::user_update_certificates_from_device_id(&device_id),
     )
     .await;
     assert_not_in_db(
         &mut storage_mut,
-        GetCertificateQuery::user_realm_role_certificates(user_id.to_owned()),
+        GetCertificateQuery::device_certificate(&device_id),
+    )
+    .await;
+    assert_not_in_db(
+        &mut storage_mut,
+        GetCertificateQuery::user_devices_certificates(&user_id),
+    )
+    .await;
+    assert_not_in_db(
+        &mut storage_mut,
+        GetCertificateQuery::realm_role_certificates(&realm_id),
+    )
+    .await;
+    assert_not_in_db(
+        &mut storage_mut,
+        GetCertificateQuery::user_realm_role_certificates(&user_id),
     )
     .await;
     assert_not_in_db(

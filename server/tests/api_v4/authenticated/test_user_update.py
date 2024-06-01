@@ -6,6 +6,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     RevokedUserCertificate,
+    UserID,
     UserProfile,
     UserUpdateCertificate,
     authenticated_cmds,
@@ -19,12 +20,12 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.ADMIN,
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.device_id.user_id].current_profile = UserProfile.ADMIN
+    expected_dump[coolorg.bob.user_id].current_profile = UserProfile.ADMIN
 
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.user_update(
@@ -35,7 +36,7 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
         await spy.wait_event_occurred(
             EventUserUpdated(
                 organization_id=coolorg.organization_id,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
                 new_profile=UserProfile.ADMIN,
             )
         )
@@ -51,12 +52,12 @@ async def test_authenticated_user_update_author_not_allowed(
     certif = UserUpdateCertificate(
         author=coolorg.bob.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.ADMIN,
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.device_id.user_id].current_profile = UserProfile.STANDARD
+    expected_dump[coolorg.bob.user_id].current_profile = UserProfile.STANDARD
 
     rep = await coolorg.bob.user_update(
         user_update_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
@@ -74,7 +75,7 @@ async def test_authenticated_user_update_user_not_found(
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=DeviceID("mike@new_dev").user_id,
+        user_id=UserID.new(),
         new_profile=UserProfile.ADMIN,
     )
 
@@ -93,7 +94,7 @@ async def test_authenticated_user_update_user_revoked(
     certif1 = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=t1,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     )
 
     outcome = await backend.user.revoke_user(
@@ -112,7 +113,7 @@ async def test_authenticated_user_update_user_revoked(
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.ADMIN,
     )
 
@@ -129,7 +130,7 @@ async def test_authenticated_user_update_user_no_changes(
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.STANDARD,
     )
 
@@ -160,21 +161,21 @@ async def test_authenticated_user_update_invalid_certificate(
             certif = UserUpdateCertificate(
                 author=coolorg.bob.device_id,
                 timestamp=now,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
                 new_profile=UserProfile.ADMIN,
             ).dump_and_sign(coolorg.alice.signing_key)
         case "user_update_certificate_author_device_mismatch":
             certif = UserUpdateCertificate(
-                author=DeviceID("alice@dev2"),
+                author=DeviceID.test_from_nickname("alice@dev2"),
                 timestamp=now,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
                 new_profile=UserProfile.ADMIN,
             ).dump_and_sign(coolorg.alice.signing_key)
         case "user_update_certificate_author_update_itself":
             certif = UserUpdateCertificate(
                 author=coolorg.alice.device_id,
                 timestamp=now,
-                user_id=coolorg.alice.device_id.user_id,
+                user_id=coolorg.alice.user_id,
                 new_profile=UserProfile.STANDARD,
             ).dump_and_sign(coolorg.alice.signing_key)
         case _:
@@ -191,7 +192,7 @@ async def test_authenticated_user_update_timestamp_out_of_ballpark(
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=t0,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.ADMIN,
     )
 
@@ -222,7 +223,7 @@ async def test_authenticated_user_update_require_greater_timestamp(
     existing_certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.ADMIN,
     ).dump_and_sign(coolorg.alice.signing_key)
 
@@ -240,7 +241,7 @@ async def test_authenticated_user_update_require_greater_timestamp(
     new_certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
         timestamp=user_update_timestamp,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
         new_profile=UserProfile.STANDARD,
     ).dump_and_sign(coolorg.alice.signing_key)
 

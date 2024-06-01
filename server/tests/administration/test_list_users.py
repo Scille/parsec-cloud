@@ -54,19 +54,19 @@ async def test_ok(
     assert response.json() == {
         "users": [
             {
-                "user_id": "alice",
+                "user_id": "a11cec00100000000000000000000000",
                 "user_email": "alice@example.com",
                 "user_name": "Alicey McAliceFace",
                 "frozen": False,
             },
             {
-                "user_id": "bob",
+                "user_id": "808c0010000000000000000000000000",
                 "user_email": "bob@example.com",
                 "user_name": "Boby McBobFace",
                 "frozen": False,
             },
             {
-                "user_id": "mallory",
+                "user_id": "3a11031c001000000000000000000000",
                 "user_email": "mallory@example.com",
                 "user_name": "Malloryy McMalloryFace",
                 "frozen": False,
@@ -91,19 +91,19 @@ async def test_ok(
     assert response.json() == {
         "users": [
             {
-                "user_id": "alice",
+                "user_id": "a11cec00100000000000000000000000",
                 "user_email": "alice@example.com",
                 "user_name": "Alicey McAliceFace",
                 "frozen": True,
             },
             {
-                "user_id": "bob",
+                "user_id": "808c0010000000000000000000000000",
                 "user_email": "bob@example.com",
                 "user_name": "Boby McBobFace",
                 "frozen": False,
             },
             {
-                "user_id": "mallory",
+                "user_id": "3a11031c001000000000000000000000",
                 "user_email": "mallory@example.com",
                 "user_name": "Malloryy McMalloryFace",
                 "frozen": False,

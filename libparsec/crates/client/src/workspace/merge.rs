@@ -24,7 +24,7 @@ pub(super) enum MergeLocalFolderManifestOutcome {
 }
 
 pub(super) fn merge_local_file_manifest(
-    local_author: &DeviceID,
+    local_author: DeviceID,
     timestamp: DateTime,
     local_manifest: &LocalFileManifest,
     remote_manifest: FileManifest,
@@ -49,7 +49,7 @@ pub(super) fn merge_local_file_manifest(
     // 3) The remote changes are ours (our current local changes occurs while
     // we were uploading previous local changes that became the remote changes),
     // simply acknowledge the remote changes and keep our local changes
-    if remote_manifest.author == *local_author {
+    if remote_manifest.author == local_author {
         let mut new_local = local_manifest.to_owned();
         new_local.base = remote_manifest;
         return MergeLocalFileManifestOutcome::Merged(new_local);
@@ -145,7 +145,7 @@ pub(super) fn merge_local_file_manifest(
 }
 
 pub(super) fn merge_local_folder_manifest(
-    local_author: &DeviceID,
+    local_author: DeviceID,
     timestamp: DateTime,
     local: &LocalFolderManifest,
     remote: FolderManifest,
@@ -189,7 +189,7 @@ pub(super) fn merge_local_folder_manifest(
     //   that would be considered as bug :/
     // - the fixtures and server data binder system used in the tests
     //   makes it much more likely
-    if remote.author == *local_author && !local.speculative {
+    if remote.author == local_author && !local.speculative {
         let mut new_local = local.to_owned();
         new_local.base = remote;
         return MergeLocalFolderManifestOutcome::Merged(Arc::new(new_local));

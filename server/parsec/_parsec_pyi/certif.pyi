@@ -88,6 +88,7 @@ class DeviceCertificate:
         self,
         author: DeviceID | None,
         timestamp: DateTime,
+        user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel | None,
         verify_key: VerifyKey,
@@ -97,6 +98,8 @@ class DeviceCertificate:
     def author(self) -> DeviceID | None: ...
     @property
     def timestamp(self) -> DateTime: ...
+    @property
+    def user_id(self) -> UserID: ...
     @property
     def device_id(self) -> DeviceID: ...
     @property
@@ -151,13 +154,13 @@ class RevokedUserCertificate:
 class UserUpdateCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
         timestamp: DateTime,
         user_id: UserID,
         new_profile: UserProfile,
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -215,22 +218,18 @@ class RealmRoleCertificate:
     def unsecure_load(cls, signed: bytes) -> RealmRoleCertificate:
         """Raise `ValueError` if invalid"""
         ...
-    @classmethod
-    def build_realm_root_certif(
-        cls, author: DeviceID, timestamp: DateTime, realm_id: VlobID
-    ) -> RealmRoleCertificate: ...
 
 class RealmNameCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
         key_index: int,
         encrypted_name: bytes,
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -276,7 +275,7 @@ class HashAlgorithm:
 class RealmKeyRotationCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
         key_index: int,
@@ -326,13 +325,13 @@ class RealmArchivingConfiguration:
 class RealmArchivingCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
         configuration: RealmArchivingConfiguration,
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -358,13 +357,16 @@ class RealmArchivingCertificate:
 class ShamirRecoveryBriefCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
+        user_id: UserID,
         timestamp: DateTime,
         threshold: int,
         per_recipient_shares: dict[UserID, int],
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
+    @property
+    def user_id(self) -> UserID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property
@@ -389,13 +391,16 @@ class ShamirRecoveryBriefCertificate:
 class ShamirRecoveryShareCertificate:
     def __init__(
         self,
-        author: DeviceID | None,
+        author: DeviceID,
+        user_id: UserID,
         timestamp: DateTime,
         realm_id: VlobID,
         configuration: RealmArchivingConfiguration,
     ) -> None: ...
     @property
-    def author(self) -> DeviceID | None: ...
+    def author(self) -> DeviceID: ...
+    @property
+    def user_id(self) -> UserID: ...
     @property
     def timestamp(self) -> DateTime: ...
     @property

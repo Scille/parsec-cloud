@@ -153,6 +153,7 @@ async fn list_devices(tmp_path: TmpPath) {
         AvailableDevice {
             key_file_path: alice_file_path,
             organization_id: "CoolOrg".parse().unwrap(),
+            user_id: "alice".parse().unwrap(),
             device_id: "alice@dev1".parse().unwrap(),
             slug: "f78292422e#CoolOrg#alice@dev1".to_owned(),
             human_handle: "Alicey McAliceFace <alice@example.com>".parse().unwrap(),
@@ -162,6 +163,7 @@ async fn list_devices(tmp_path: TmpPath) {
         AvailableDevice {
             key_file_path: bob_file_path,
             organization_id: "CoolOrg".parse().unwrap(),
+            user_id: "cc2578be6a174c9590a98b7d0d2c7e4f".parse().unwrap(),
             device_id: "cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686".parse().unwrap(),
             slug: "f78292422e#CoolOrg#cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686".to_owned(),
             human_handle: "Boby McBobFace <bob@example.com>".parse().unwrap(),
@@ -171,6 +173,7 @@ async fn list_devices(tmp_path: TmpPath) {
         AvailableDevice {
             key_file_path: mallory_file_path,
             organization_id: "CoolOrg".parse().unwrap(),
+            user_id: "mallory".parse().unwrap(),
             device_id: "mallory@dev3".parse().unwrap(),
             slug: "f78292422e#CoolOrg#mallory@dev3".to_owned(),
             human_handle: "Mallory McMalloryFace <mallory@example.com>".parse().unwrap(),

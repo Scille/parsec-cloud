@@ -158,11 +158,7 @@ async fn sharing(env: &TestbedEnv) {
         .await
         .unwrap();
     alice_client
-        .share_workspace(
-            wid,
-            bob.device_id.user_id().to_owned(),
-            Some(RealmRole::Owner),
-        )
+        .share_workspace(wid, bob.user_id, Some(RealmRole::Owner))
         .await
         .unwrap();
 
@@ -194,7 +190,7 @@ async fn sharing(env: &TestbedEnv) {
     // 3a) Now Bob betrays Alice and unshare the workspace with her...
 
     bob_client
-        .share_workspace(wid, alice.device_id.user_id().to_owned(), None)
+        .share_workspace(wid, alice.user_id, None)
         .await
         .unwrap();
 

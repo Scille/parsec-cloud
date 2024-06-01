@@ -205,6 +205,7 @@ new_devices AS (
         organization,
         user_,
         device_id,
+        verify_key,
         device_certificate,
         device_certifier,
         created_on,
@@ -218,6 +219,7 @@ new_devices AS (
             WHERE user_id = { q_user(_id="device.user_", select="user_id") }
         ),
         device_id,
+        verify_key,
         device_certificate,
         device_certifier,
         created_on,

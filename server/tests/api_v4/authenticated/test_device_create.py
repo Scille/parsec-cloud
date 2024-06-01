@@ -10,6 +10,7 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SigningKey,
     SigningKeyAlgorithm,
+    UserID,
     authenticated_cmds,
 )
 from parsec.events import EventCommonCertificate
@@ -21,35 +22,38 @@ from tests.common import (
     TestbedBackend,
 )
 
-NEW_ALICE_DEVICE_ID = DeviceID("alice@new_dev")
+NEW_ALICE_DEVICE_ID = DeviceID.new()
 NEW_ALICE_SIGNING_KEY = SigningKey.generate()
 
 
 def generate_new_alice_device_certificates(
-    author: AuthenticatedRpcClient,
+    alice: AuthenticatedRpcClient,
     timestamp: DateTime,
+    user_id=UserID.test_from_nickname("alice"),
     device_id=NEW_ALICE_DEVICE_ID,
     verify_key=NEW_ALICE_SIGNING_KEY.verify_key,
     author_device_id=None,
 ) -> tuple[bytes, bytes]:
-    author_device_id = author_device_id or author.device_id
+    author_device_id = author_device_id or alice.device_id
     raw_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        user_id=user_id,
         device_id=device_id,
         device_label=DeviceLabel("New device"),
         verify_key=verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(author.signing_key)
+    ).dump_and_sign(alice.signing_key)
 
     raw_redacted_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        user_id=user_id,
         device_id=device_id,
         device_label=None,
         verify_key=verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
-    ).dump_and_sign(author.signing_key)
+    ).dump_and_sign(alice.signing_key)
 
     return raw_device_certificate, raw_redacted_device_certificate
 
@@ -60,7 +64,7 @@ async def test_authenticated_device_create_ok(
     backend: Backend,
 ) -> None:
     expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
-    expected_dump[minimalorg.alice.user_id].devices.append(NEW_ALICE_DEVICE_ID.device_name)
+    expected_dump[minimalorg.alice.user_id].devices.append(NEW_ALICE_DEVICE_ID)
 
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_alice_device_certificates(
@@ -88,6 +92,7 @@ async def test_authenticated_device_create_ok(
     alice2_rpc = AuthenticatedRpcClient(
         raw_client=minimalorg.raw_client,
         organization_id=minimalorg.organization_id,
+        user_id=minimalorg.alice.user_id,
         device_id=NEW_ALICE_DEVICE_ID,
         signing_key=NEW_ALICE_SIGNING_KEY,
     )
@@ -101,7 +106,6 @@ async def test_authenticated_device_create_ok(
         "certificate",
         "redacted_certificate",
         "user_id_from_another_user",
-        "not_author_user_id",
         "author_mismatch",
         "timestamp_mismatch",
         "user_id_mismatch",
@@ -129,18 +133,16 @@ async def test_authenticated_device_create_invalid_certificate(
                 device_certificate,
                 redacted_device_certificate,
             ) = generate_new_alice_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"{coolorg.bob.user_id}@new_device")
+                coolorg.alice, t1, user_id=coolorg.bob.user_id
             )
         case "not_author_user_id":
             (
                 device_certificate,
                 redacted_device_certificate,
-            ) = generate_new_alice_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID("unknown@new_device")
-            )
+            ) = generate_new_alice_device_certificates(coolorg.alice, t1, user_id=UserID.new())
         case "author_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
-                coolorg.alice, t1, author_device_id=DeviceID("alice@dev2")
+                coolorg.alice, t1, author_device_id=DeviceID.test_from_nickname("alice@dev2")
             )
         case "timestamp_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
@@ -148,11 +150,11 @@ async def test_authenticated_device_create_invalid_certificate(
             )
         case "user_id_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"dummy@{NEW_ALICE_DEVICE_ID.device_name}")
+                coolorg.alice, t1, user_id=UserID.new()
             )
         case "device_id_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
-                coolorg.alice, t1, device_id=DeviceID(f"{NEW_ALICE_DEVICE_ID.user_id}@dummy")
+                coolorg.alice, t1, device_id=DeviceID.new()
             )
         case "verify_key_mismatch":
             _, redacted_device_certificate = generate_new_alice_device_certificates(
@@ -175,7 +177,7 @@ async def test_authenticated_device_create_device_already_exists(
 ) -> None:
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_alice_device_certificates(
-        coolorg.alice, t1, device_id=DeviceID("alice@dev2")
+        coolorg.alice, t1, device_id=DeviceID.test_from_nickname("alice@dev2")
     )
 
     rep = await coolorg.alice.device_create(
@@ -222,7 +224,7 @@ async def test_authenticated_device_create_require_greater_timestamp(
 
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
-        user_id=coolorg.mallory.device_id.user_id,
+        user_id=coolorg.mallory.user_id,
         timestamp=t1,
     )
     await backend.user.revoke_user(

@@ -11,6 +11,12 @@
             "type": "DateTime"
         },
         {
+            /// User here must be the one owning the device used as author
+            /// (i.e. it is the user to be recovered).
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
             "type": "NonZeroInteger"

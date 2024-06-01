@@ -216,7 +216,7 @@
 //         let timestamp = alice.now();
 //         Arc::new(LocalFileManifest {
 //             base: FileManifest {
-//                 author: alice.device_id.clone(),
+//                 author: alice.device_id,
 //                 timestamp,
 //                 id: child2_id,
 //                 parent: realm_id,
@@ -334,7 +334,7 @@
 //     let workspace_manifest = storage.get_workspace_manifest();
 //     let expected = LocalWorkspaceManifest {
 //         base: WorkspaceManifest {
-//             author: alice.device_id.clone(),
+//             author: alice.device_id,
 //             timestamp: workspace_manifest.updated,
 //             id: realm_id,
 //             version: 0,
@@ -400,7 +400,7 @@
 //     let workspace_manifest = storage.get_workspace_manifest();
 //     let expected = LocalWorkspaceManifest {
 //         base: WorkspaceManifest {
-//             author: alice.device_id.clone(),
+//             author: alice.device_id,
 //             timestamp: workspace_manifest.updated,
 //             id: realm_id,
 //             version: 0,

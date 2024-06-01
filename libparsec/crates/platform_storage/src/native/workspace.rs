@@ -422,8 +422,7 @@ pub async fn workspace_storage_non_speculative_init(
     // 2) Populate the database with the workspace manifest
 
     let timestamp = device.now();
-    let manifest =
-        LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, false);
+    let manifest = LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, false);
 
     storage
         .update_manifest(&UpdateManifestData {

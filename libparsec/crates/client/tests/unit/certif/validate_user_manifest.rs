@@ -32,7 +32,7 @@ async fn ok(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(alice.user_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -52,7 +52,7 @@ async fn offline(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
-        .validate_user_manifest(now, now, &alice.device_id, 0, now, b"")
+        .validate_user_manifest(now, now, alice.device_id, 0, now, b"")
         .await
         .unwrap_err();
 
@@ -77,7 +77,7 @@ async fn non_existent_author(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(alice.user_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &"alice@dev2".parse().unwrap(),
+            "alice@dev2".parse().unwrap(),
             0,
             now,
             b"",
@@ -110,7 +110,7 @@ async fn corrupted(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(alice.user_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &alice.device_id,
+            alice.device_id,
             0,
             now,
             b"",
@@ -143,7 +143,7 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let alice_manifest = UserManifest {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
         // Bad realm !
         id: other_realm_id,
@@ -156,7 +156,7 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(alice.user_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &alice.device_id,
+            alice.device_id,
             0,
             timestamp,
             &alice_manifest.dump_sign_and_encrypt(&alice.signing_key, &ops.device.local_symkey),
@@ -199,7 +199,7 @@ async fn revoked(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(bob.user_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &bob.device_id,
+            bob.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -263,7 +263,7 @@ async fn cannot_write(env: &TestbedEnv) {
         .validate_user_manifest(
             env.get_last_realm_certificate_timestamp(shared_realm_id),
             env.get_last_common_certificate_timestamp(),
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -305,7 +305,7 @@ async fn stopped(env: &TestbedEnv) {
     ops.stop().await.unwrap();
 
     let err = ops
-        .validate_user_manifest(now, now, &alice.device_id, 0, now, b"")
+        .validate_user_manifest(now, now, alice.device_id, 0, now, b"")
         .await
         .unwrap_err();
 

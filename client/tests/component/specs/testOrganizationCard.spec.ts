@@ -10,7 +10,8 @@ describe('Organization Card', () => {
   const DEVICE: AvailableDevice = {
     keyFilePath: '/path',
     organizationId: 'Black Mesa',
-    deviceId: '5ada1b25e8904e9ba238834227a40abf@9700f0fd005e4752a13bcba0042d4703',
+    userId: '5ada1b25e8904e9ba238834227a40abf',
+    deviceId: '9700f0fd005e4752a13bcba0042d4703',
     humanHandle: {
       label: 'Gordon Freeman',
       email: 'freeman.gordon@black-mesa.com',

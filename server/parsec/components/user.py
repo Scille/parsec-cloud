@@ -9,7 +9,6 @@ from parsec._parsec import (
     DateTime,
     DeviceCertificate,
     DeviceID,
-    DeviceName,
     HumanHandle,
     OrganizationID,
     RevokedUserCertificate,
@@ -47,7 +46,7 @@ class UserDump:
     created_on: DateTime
     revoked_on: DateTime | None
     current_profile: UserProfile
-    devices: list[DeviceName]
+    devices: list[DeviceID]
 
 
 @dataclass(slots=True)
@@ -112,7 +111,7 @@ def user_create_user_validate(
         case _:
             pass
 
-    if u_data.user_id != d_data.device_id.user_id:
+    if u_data.user_id != d_data.user_id:
         return UserCreateUserValidateBadOutcome.USER_ID_MISMATCH
 
     if not ru_data.is_redacted:
@@ -139,7 +138,8 @@ class UserCreateDeviceValidateBadOutcome(BadOutcomeEnum):
 
 def user_create_device_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     device_certificate: bytes,
     redacted_device_certificate: bytes,
@@ -148,13 +148,13 @@ def user_create_device_validate(
         data = DeviceCertificate.verify_and_load(
             device_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
         redacted_data = DeviceCertificate.verify_and_load(
             redacted_device_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -166,7 +166,7 @@ def user_create_device_validate(
         case _:
             pass
 
-    if data.device_id.user_id != expected_author.user_id:
+    if data.user_id != expected_author_user_id:
         return UserCreateDeviceValidateBadOutcome.USER_ID_MISMATCH
 
     if not redacted_data.is_redacted:
@@ -186,7 +186,8 @@ class UserRevokeUserValidateBadOutcome(BadOutcomeEnum):
 
 def user_revoke_user_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     revoked_user_certificate: bytes,
 ) -> RevokedUserCertificate | TimestampOutOfBallpark | UserRevokeUserValidateBadOutcome:
@@ -194,7 +195,7 @@ def user_revoke_user_validate(
         data = RevokedUserCertificate.verify_and_load(
             signed=revoked_user_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -206,7 +207,7 @@ def user_revoke_user_validate(
         case _:
             pass
 
-    if expected_author.user_id == data.user_id:
+    if expected_author_user_id == data.user_id:
         return UserRevokeUserValidateBadOutcome.CANNOT_SELF_REVOKE
 
     return data
@@ -220,7 +221,8 @@ class UserUpdateUserValidateBadOutcome(BadOutcomeEnum):
 
 def user_update_user_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     user_update_certificate: bytes,
 ) -> UserUpdateCertificate | TimestampOutOfBallpark | UserUpdateUserValidateBadOutcome:
@@ -228,7 +230,7 @@ def user_update_user_validate(
         data = UserUpdateCertificate.verify_and_load(
             signed=user_update_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -240,7 +242,7 @@ def user_update_user_validate(
         case _:
             pass
 
-    if expected_author.user_id == data.user_id:
+    if expected_author_user_id == data.user_id:
         return UserUpdateUserValidateBadOutcome.CANNOT_SELF_REVOKE
 
     return data

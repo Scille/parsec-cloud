@@ -51,9 +51,10 @@ class TestbedEventBootstrapOrganization:
     root_signing_key: SigningKey
     sequester_authority_signing_key: SequesterSigningKeyDer | None
     sequester_authority_verify_key: SequesterVerifyKeyDer | None
-    first_user_device_id: DeviceID
+    first_user_id: UserID
     first_user_human_handle: HumanHandle
     first_user_private_key: PrivateKey
+    first_user_first_device_id: DeviceID
     first_user_first_device_label: DeviceLabel
     first_user_first_device_signing_key: SigningKey
     first_user_user_realm_id: VlobID
@@ -94,9 +95,10 @@ class TestbedEventRevokeSequesterService:
 class TestbedEventNewUser:
     timestamp: DateTime
     author: DeviceID
-    device_id: DeviceID
+    user_id: UserID
     human_handle: HumanHandle
     private_key: PrivateKey
+    first_device_id: DeviceID
     first_device_label: DeviceLabel
     first_device_signing_key: SigningKey
     initial_profile: UserProfile
@@ -116,6 +118,7 @@ class TestbedEventNewUser:
 class TestbedEventNewDevice:
     timestamp: DateTime
     author: DeviceID
+    user_id: UserID
     device_id: DeviceID
     device_label: DeviceLabel
     signing_key: SigningKey

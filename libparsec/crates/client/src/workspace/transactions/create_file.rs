@@ -135,11 +135,7 @@ pub(crate) async fn create_file(
     let parent_id = parent_manifest.base.id;
 
     let now = ops.device.time_provider.now();
-    let new_child = Arc::new(LocalFileManifest::new(
-        ops.device.device_id.clone(),
-        parent_id,
-        now,
-    ));
+    let new_child = Arc::new(LocalFileManifest::new(ops.device.device_id, parent_id, now));
     let child_id = new_child.base.id;
     let mut_parent_manifest = Arc::make_mut(&mut parent_manifest);
     mut_parent_manifest

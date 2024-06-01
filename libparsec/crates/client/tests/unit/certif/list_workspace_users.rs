@@ -74,14 +74,14 @@ async fn multiple(env: &TestbedEnv) {
         res,
         [
             (
-                "alice".parse().unwrap(),
-                UserProfile::Admin,
-                RealmRole::Owner
-            ),
-            (
                 "bob".parse().unwrap(),
                 UserProfile::Standard,
                 RealmRole::Contributor
+            ),
+            (
+                "alice".parse().unwrap(),
+                UserProfile::Admin,
+                RealmRole::Owner
             ),
         ]
     );

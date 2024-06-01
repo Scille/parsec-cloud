@@ -77,9 +77,10 @@ event_wrapper!(
         root_signing_key: SigningKey,
         sequester_authority_signing_key: Option<SequesterSigningKeyDer>,
         sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
-        first_user_device_id: DeviceID,
+        first_user_id: UserID,
         first_user_human_handle: HumanHandle,
         first_user_private_key: PrivateKey,
+        first_user_first_device_id: DeviceID,
         first_user_first_device_label: DeviceLabel,
         first_user_first_device_signing_key: SigningKey,
         first_user_user_realm_id: VlobID,
@@ -97,14 +98,15 @@ event_wrapper!(
     ],
     |_py, x: &TestbedEventBootstrapOrganization| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, sequestered={}, first_user={:?}",
+            "timestamp={:?}, sequestered={}, first_user={:?}, first_device={:?}",
             x.timestamp.0,
             if x.sequester_authority_signing_key.is_some() {
                 "true"
             } else {
                 "false"
             },
-            x.first_user_device_id.0,
+            x.first_user_id.0,
+            x.first_user_first_device_id.0,
         ))
     }
 );
@@ -143,9 +145,10 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        device_id: DeviceID,
+        user_id: UserID,
         human_handle: HumanHandle,
         private_key: PrivateKey,
+        first_device_id: DeviceID,
         first_device_label: DeviceLabel,
         first_device_signing_key: SigningKey,
         initial_profile: &'static PyObject,
@@ -162,11 +165,12 @@ event_wrapper!(
     ],
     |py, x: &TestbedEventNewUser| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, user={:?}, profile={}",
+            "timestamp={:?}, author={:?}, user={:?}, profile={}, first_device={:?}",
             x.timestamp.0,
             x.author.0,
-            x.device_id.0,
+            x.user_id.0,
             x.initial_profile.as_ref(py).repr()?.to_str()?,
+            x.first_device_id.0,
         ))
     }
 );
@@ -176,6 +180,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
+        user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
         signing_key: SigningKey,
@@ -187,8 +192,8 @@ event_wrapper!(
     ],
     |_py, x: &TestbedEventNewDevice| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, device={:?}",
-            x.timestamp.0, x.author.0, x.device_id.0,
+            "timestamp={:?}, author={:?}, user={:?}, device={:?}",
+            x.timestamp.0, x.author.0, x.user_id.0, x.device_id.0,
         ))
     }
 );
@@ -579,7 +584,8 @@ fn event_to_pyobject(
                     .sequester_authority
                     .as_ref()
                     .map(|sequester_authority| sequester_authority.verify_key.clone().into()),
-                first_user_device_id: x.first_user_device_id.clone().into(),
+                first_user_id: x.first_user_id.into(),
+                first_user_first_device_id: x.first_user_first_device_id.into(),
                 first_user_human_handle: x.first_user_human_handle.clone().into(),
                 first_user_private_key: x.first_user_private_key.clone().into(),
                 first_user_first_device_label: x.first_user_first_device_label.clone().into(),
@@ -662,10 +668,11 @@ fn event_to_pyobject(
             };
             let obj = TestbedEventNewUser {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
-                device_id: x.device_id.clone().into(),
+                author: x.author.into(),
+                user_id: x.user_id.into(),
                 human_handle: x.human_handle.clone().into(),
                 private_key: x.private_key.clone().into(),
+                first_device_id: x.first_device_id.into(),
                 first_device_label: x.first_device_label.clone().into(),
                 first_device_signing_key: x.first_device_signing_key.clone().into(),
                 initial_profile: UserProfile::convert(x.initial_profile),
@@ -701,8 +708,9 @@ fn event_to_pyobject(
                 single_certificate_with_redacted!(py, x, template, Device);
             let obj = TestbedEventNewDevice {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
-                device_id: x.device_id.clone().into(),
+                author: x.author.into(),
+                user_id: x.user_id.into(),
+                device_id: x.device_id.into(),
                 device_label: x.device_label.clone().into(),
                 signing_key: x.signing_key.clone().into(),
                 local_symkey: x.local_symkey.clone().into(),
@@ -718,7 +726,7 @@ fn event_to_pyobject(
             let (certificate, raw_certificate) = single_certificate!(py, x, template, UserUpdate);
             let obj = TestbedEventUpdateUserProfile {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 user: x.user.clone().into(),
                 profile: UserProfile::convert(x.profile),
                 raw_certificate,
@@ -731,7 +739,7 @@ fn event_to_pyobject(
             let (certificate, raw_certificate) = single_certificate!(py, x, template, RevokedUser);
             let obj = TestbedEventRevokeUser {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 user: x.user.clone().into(),
                 raw_certificate,
                 certificate,
@@ -762,7 +770,7 @@ fn event_to_pyobject(
             let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmRole);
             let obj = TestbedEventNewRealm {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm_id: x.realm_id.into(),
                 raw_certificate,
                 certificate,
@@ -774,7 +782,7 @@ fn event_to_pyobject(
             let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmRole);
             let obj = TestbedEventShareRealm {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 user: x.user.clone().into(),
                 role: x.role.map(RealmRole::convert),
@@ -792,7 +800,7 @@ fn event_to_pyobject(
             let (certificate, raw_certificate) = single_certificate!(py, x, template, RealmName);
             let obj = TestbedEventRenameRealm {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 raw_certificate,
                 certificate,
@@ -805,7 +813,7 @@ fn event_to_pyobject(
                 single_certificate!(py, x, template, RealmKeyRotation);
             let obj = TestbedEventRotateKeyRealm {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 per_participant_keys_bundle_access: {
                     let pyobj = PyDict::new(py);
@@ -830,7 +838,7 @@ fn event_to_pyobject(
                 single_certificate!(py, x, template, RealmArchiving);
             let obj = TestbedEventArchiveRealm {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 raw_certificate,
                 certificate,
@@ -872,7 +880,7 @@ fn event_to_pyobject(
 
             let obj = TestbedEventNewShamirRecovery {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 threshold: x.threshold,
                 per_recipient_shares: x
                     .per_recipient_shares
@@ -903,7 +911,7 @@ fn event_to_pyobject(
             };
             let obj = TestbedEventCreateOrUpdateOpaqueVlob {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 key_index: x.key_index,
                 version: x.version,
@@ -998,7 +1006,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::CreateOpaqueBlock(x) => {
             let obj = TestbedEventCreateOpaqueBlock {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
                 key_index: x.key_index,
@@ -1010,7 +1018,7 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::CreateBlock(x) => {
             let obj = TestbedEventCreateBlock {
                 timestamp: x.timestamp.into(),
-                author: x.author.clone().into(),
+                author: x.author.into(),
                 realm: x.realm.into(),
                 block_id: x.block_id.into(),
                 key_index: x.key_index,

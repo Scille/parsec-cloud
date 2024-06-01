@@ -54,14 +54,15 @@ async def test_authenticated_certificate_get_ok_common_certificates(
 
     # 1) Org is bootstrapped, Alice is created
 
-    alice_device_id = DeviceID("alice@dev1")
+    alice_user_id = UserID.test_from_nickname("alice")
+    alice1_device_id = DeviceID.test_from_nickname("alice@dev1")
     alice_privkey = PrivateKey.generate()
     alice_signkey = SigningKey.generate()
 
     alice_user_certificate = UserCertificate(
         author=None,
         timestamp=t1,
-        user_id=alice_device_id.user_id,
+        user_id=alice_user_id,
         profile=UserProfile.ADMIN,
         human_handle=HumanHandle(label="Alice", email="alice@example.invalid"),
         public_key=alice_privkey.public_key,
@@ -71,7 +72,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_redacted_user_certificate = UserCertificate(
         author=None,
         timestamp=t1,
-        user_id=alice_device_id.user_id,
+        user_id=alice_user_id,
         profile=UserProfile.ADMIN,
         human_handle=None,
         public_key=alice_privkey.public_key,
@@ -81,7 +82,8 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_device_certificate = DeviceCertificate(
         author=None,
         timestamp=t1,
-        device_id=alice_device_id,
+        user_id=alice_user_id,
+        device_id=alice1_device_id,
         device_label=DeviceLabel("Dev1"),
         verify_key=alice_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
@@ -90,7 +92,8 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_redacted_device_certificate = DeviceCertificate(
         author=None,
         timestamp=t1,
-        device_id=alice_device_id,
+        user_id=alice_user_id,
+        device_id=alice1_device_id,
         device_label=None,
         verify_key=alice_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
@@ -120,12 +123,14 @@ async def test_authenticated_certificate_get_ok_common_certificates(
 
     # 2) Bob is created
 
+    bob_user_id = UserID.test_from_nickname("bob")
+    bob1_device_id = DeviceID.test_from_nickname("bob@dev1")
     bob_privkey = PrivateKey.generate()
     bob_signkey = SigningKey.generate()
     bob_user_certificate = UserCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t2,
-        user_id=UserID("bob"),
+        user_id=bob_user_id,
         profile=UserProfile.STANDARD,
         human_handle=HumanHandle(label="Bob", email="bob@example.invalid"),
         public_key=bob_privkey.public_key,
@@ -133,9 +138,9 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     ).dump_and_sign(alice_signkey)
 
     bob_redacted_user_certificate = UserCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t2,
-        user_id=UserID("bob"),
+        user_id=bob_user_id,
         profile=UserProfile.STANDARD,
         human_handle=None,
         public_key=bob_privkey.public_key,
@@ -143,18 +148,20 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     ).dump_and_sign(alice_signkey)
 
     bob_device_certificate = DeviceCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t2,
-        device_id=DeviceID("bob@dev1"),
+        user_id=bob_user_id,
+        device_id=bob1_device_id,
         device_label=DeviceLabel("Dev1"),
         verify_key=bob_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     bob_redacted_device_certificate = DeviceCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t2,
-        device_id=DeviceID("bob@dev1"),
+        user_id=bob_user_id,
+        device_id=bob1_device_id,
         device_label=None,
         verify_key=bob_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
@@ -163,7 +170,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     outcome = await backend.user.create_user(
         organization_id=org_id,
         now=t2,
-        author=alice_device_id,
+        author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
         user_certificate=bob_user_certificate,
         device_certificate=bob_device_certificate,
@@ -182,16 +189,16 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     # 3) Bob profile is changed
 
     bob_user_update_certificate = UserUpdateCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t3,
-        user_id=UserID("bob"),
+        user_id=bob_user_id,
         new_profile=UserProfile.ADMIN,
     ).dump_and_sign(alice_signkey)
 
     outcome = await backend.user.update_user(
         organization_id=org_id,
         now=t3,
-        author=alice_device_id,
+        author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
         user_update_certificate=bob_user_update_certificate,
     )
@@ -203,11 +210,12 @@ async def test_authenticated_certificate_get_ok_common_certificates(
 
     mallory_privkey = PrivateKey.generate()
     mallory_signkey = SigningKey.generate()
-    mallory_device_id = DeviceID("mallory@dev1")
+    mallory_user_id = UserID.test_from_nickname("mallory")
+    mallory1_device_id = DeviceID.test_from_nickname("mallory@dev1")
     mallory_user_certificate = UserCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t4,
-        user_id=mallory_device_id.user_id,
+        user_id=mallory_user_id,
         profile=UserProfile.OUTSIDER,
         human_handle=HumanHandle(label="Mallory", email="mallory@example.invalid"),
         public_key=mallory_privkey.public_key,
@@ -215,9 +223,9 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     ).dump_and_sign(alice_signkey)
 
     mallory_redacted_user_certificate = UserCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t4,
-        user_id=mallory_device_id.user_id,
+        user_id=mallory_user_id,
         profile=UserProfile.OUTSIDER,
         human_handle=None,
         public_key=mallory_privkey.public_key,
@@ -225,18 +233,20 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     ).dump_and_sign(alice_signkey)
 
     mallory_device_certificate = DeviceCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t4,
-        device_id=mallory_device_id,
+        user_id=mallory_user_id,
+        device_id=mallory1_device_id,
         device_label=DeviceLabel("Dev1"),
         verify_key=mallory_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
     ).dump_and_sign(alice_signkey)
 
     mallory_redacted_device_certificate = DeviceCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t4,
-        device_id=mallory_device_id,
+        user_id=mallory_user_id,
+        device_id=mallory1_device_id,
         device_label=None,
         verify_key=mallory_signkey.verify_key,
         algorithm=SigningKeyAlgorithm.ED25519,
@@ -245,7 +255,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     outcome = await backend.user.create_user(
         organization_id=org_id,
         now=t4,
-        author=alice_device_id,
+        author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
         user_certificate=mallory_user_certificate,
         device_certificate=mallory_device_certificate,
@@ -264,15 +274,15 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     # 5) Bob is revoked
 
     bob_revoked_user_certificate = RevokedUserCertificate(
-        author=alice_device_id,
+        author=alice1_device_id,
         timestamp=t5,
-        user_id=UserID("bob"),
+        user_id=bob_user_id,
     ).dump_and_sign(alice_signkey)
 
     outcome = await backend.user.revoke_user(
         organization_id=org_id,
         now=t5,
-        author=alice_device_id,
+        author=alice1_device_id,
         author_verify_key=alice_signkey.verify_key,
         revoked_user_certificate=bob_revoked_user_certificate,
     )
@@ -285,7 +295,8 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         user_client = AuthenticatedRpcClient(
             client,
             organization_id=org_id,
-            device_id=mallory_device_id,
+            user_id=mallory_user_id,
+            device_id=mallory1_device_id,
             signing_key=mallory_signkey,
             event=None,
         )
@@ -293,7 +304,8 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         user_client = AuthenticatedRpcClient(
             client,
             organization_id=org_id,
-            device_id=alice_device_id,
+            user_id=alice_user_id,
+            device_id=alice1_device_id,
             signing_key=alice_signkey,
             event=None,
         )

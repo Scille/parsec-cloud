@@ -154,7 +154,7 @@ impl WorkspaceStore {
             // corrected by the merge during sync).
             None => {
                 let timestamp = device.now();
-                LocalFolderManifest::new_root(device.device_id.clone(), realm_id, timestamp, true)
+                LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, true)
             }
         };
 

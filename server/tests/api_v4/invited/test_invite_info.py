@@ -14,7 +14,7 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
             assert rep == invited_cmds.v4.invite_info.RepOk(
                 invited_cmds.v4.invite_info.UserOrDeviceUser(
                     claimer_email=coolorg.invited_zack.claimer_email,
-                    greeter_user_id=coolorg.alice.device_id.user_id,
+                    greeter_user_id=coolorg.alice.user_id,
                     greeter_human_handle=coolorg.alice.human_handle,
                 )
             )
@@ -23,7 +23,7 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
             rep = await coolorg.invited_alice_dev3.invite_info()
             assert rep == invited_cmds.v4.invite_info.RepOk(
                 invited_cmds.v4.invite_info.UserOrDeviceDevice(
-                    greeter_user_id=coolorg.alice.device_id.user_id,
+                    greeter_user_id=coolorg.alice.user_id,
                     greeter_human_handle=coolorg.alice.human_handle,
                 )
             )

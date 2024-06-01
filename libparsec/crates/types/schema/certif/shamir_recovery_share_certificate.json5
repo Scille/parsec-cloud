@@ -11,6 +11,13 @@
             "type": "DateTime"
         },
         {
+            /// User here must be the one owning the device used as author
+            /// (i.e. it is the user to be recovered).
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            /// Recipient is the user that will be able to decrypt the share.
             "name": "recipient",
             "type": "UserID"
         },

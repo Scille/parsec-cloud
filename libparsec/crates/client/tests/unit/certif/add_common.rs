@@ -66,7 +66,7 @@ async fn corrupted_serialization(env: &TestbedEnv) {
     let now = DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap();
 
     let manifest = UserManifest {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: now,
         id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 0,

@@ -11,6 +11,7 @@ use libparsec_serialization_format::parsec_data;
 use crate as libparsec_types;
 use crate::{
     impl_transparent_data_format_conversion, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
+    UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -19,6 +20,7 @@ pub struct DeviceFileKeyring {
     pub ciphertext: Bytes,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -34,6 +36,7 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     human_handle,
     device_label,
+    user_id,
     device_id,
     organization_id,
     slug,
@@ -47,6 +50,7 @@ pub struct DeviceFilePassword {
     pub ciphertext: Bytes,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -61,6 +65,7 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     human_handle,
     device_label,
+    user_id,
     device_id,
     organization_id,
     slug,
@@ -73,6 +78,7 @@ pub struct DeviceFileRecovery {
     pub ciphertext: Bytes,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -86,6 +92,7 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     human_handle,
     device_label,
+    user_id,
     device_id,
     organization_id,
     slug,
@@ -97,6 +104,7 @@ pub struct DeviceFileSmartcard {
     pub ciphertext: Bytes,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
     pub slug: String,
@@ -114,6 +122,7 @@ impl_transparent_data_format_conversion!(
     ciphertext,
     human_handle,
     device_label,
+    user_id,
     device_id,
     organization_id,
     slug,
@@ -205,6 +214,7 @@ impl DeviceAccessStrategy {
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
     pub organization_id: OrganizationID,
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,

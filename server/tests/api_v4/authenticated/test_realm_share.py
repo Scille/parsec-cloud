@@ -52,7 +52,7 @@ async def test_authenticated_realm_share_ok_new_sharing(
     alice_share_mallory_certificate: RealmRoleCertificate,
 ) -> None:
     mallory_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.mallory.device_id.user_id
+        coolorg.organization_id, coolorg.mallory.user_id
     )
     assert isinstance(mallory_realms, dict)
     assert coolorg.wksp1_id not in mallory_realms
@@ -78,7 +78,7 @@ async def test_authenticated_realm_share_ok_new_sharing(
         )
 
     mallory_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.mallory.device_id.user_id
+        coolorg.organization_id, coolorg.mallory.user_id
     )
     assert isinstance(mallory_realms, dict)
     assert mallory_realms[coolorg.wksp1_id] == RealmRole.READER
@@ -90,7 +90,7 @@ async def test_authenticated_realm_share_ok_update_sharing_role(
     alice_share_bob_certificate: RealmRoleCertificate,
 ) -> None:
     bob_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.bob.device_id.user_id
+        coolorg.organization_id, coolorg.bob.user_id
     )
     assert isinstance(bob_realms, dict)
     assert bob_realms[coolorg.wksp1_id] == RealmRole.READER
@@ -116,7 +116,7 @@ async def test_authenticated_realm_share_ok_update_sharing_role(
         )
 
     bob_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.bob.device_id.user_id
+        coolorg.organization_id, coolorg.bob.user_id
     )
     assert isinstance(bob_realms, dict)
     assert bob_realms[coolorg.wksp1_id] == RealmRole.MANAGER
@@ -126,7 +126,7 @@ async def test_authenticated_realm_share_role_already_granted(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     bob_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.bob.device_id.user_id
+        coolorg.organization_id, coolorg.bob.user_id
     )
     assert isinstance(bob_realms, dict)
     assert bob_realms[coolorg.wksp1_id] == RealmRole.READER
@@ -137,7 +137,7 @@ async def test_authenticated_realm_share_role_already_granted(
         timestamp=timestamp,
         realm_id=coolorg.wksp1_id,
         role=RealmRole.READER,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     ).dump_and_sign(coolorg.alice.signing_key)
 
     rep = await coolorg.alice.realm_share(
@@ -220,8 +220,8 @@ async def test_authenticated_realm_share_key_bad_key_index(
                 author_verify_key=coolorg.alice.signing_key.verify_key,
                 keys_bundle=b"<keys bundle>",
                 per_participant_keys_bundle_access={
-                    coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-                    coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+                    coolorg.alice.user_id: b"<alice keys bundle access>",
+                    coolorg.bob.user_id: b"<bob keys bundle access>",
                 },
                 realm_key_rotation_certificate=realm_key_rotation_certificate,
             )
@@ -249,7 +249,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
                 timestamp=t0,
                 realm_id=wksp_id,
                 role=RealmRole.OWNER,
-                user_id=coolorg.alice.device_id.user_id,
+                user_id=coolorg.alice.user_id,
             )
             outcome = await backend.realm.create(
                 now=t0,
@@ -294,7 +294,7 @@ async def test_authenticated_realm_share_recipient_revoked(
         revoked_user_certificate=RevokedUserCertificate(
             author=coolorg.alice.device_id,
             timestamp=revoked_timestamp,
-            user_id=coolorg.mallory.device_id.user_id,
+            user_id=coolorg.mallory.user_id,
         ).dump_and_sign(coolorg.alice.signing_key),
     )
     assert isinstance(outcome, RevokedUserCertificate)
@@ -365,7 +365,7 @@ async def test_authenticated_realm_share_recipient_not_found(
     coolorg: CoolorgRpcClients,
     alice_share_mallory_certificate: RealmRoleCertificate,
 ) -> None:
-    bad_user_id = UserID("dummy")
+    bad_user_id = UserID.new()
     certif = patch_realm_role_certificate(alice_share_mallory_certificate, user_id=bad_user_id)
     rep = await coolorg.alice.realm_share(
         key_index=1,

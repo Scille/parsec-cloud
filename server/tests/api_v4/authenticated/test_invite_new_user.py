@@ -29,19 +29,20 @@ async def test_authenticated_invite_new_user_ok_new(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.device_id.user_id,
+                greeter=minimalorg.alice.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
     expected_invitations = {
-        minimalorg.alice.device_id.user_id: [
+        minimalorg.alice.user_id: [
             UserInvitation(
                 token=invitation_token,
                 created_on=ANY,
                 claimer_email="new@example.invalid",
-                created_by=minimalorg.alice.device_id,
+                created_by_device_id=minimalorg.alice.device_id,
+                created_by_user_id=minimalorg.alice.user_id,
                 created_by_human_handle=minimalorg.alice.human_handle,
                 status=InvitationStatus.IDLE,
             )
@@ -83,7 +84,7 @@ async def test_authenticated_invite_new_user_ok_already_exist(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.device_id.user_id,
+                greeter=minimalorg.alice.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
@@ -152,19 +153,20 @@ async def test_authenticated_invite_new_user_send_email_bad_outcome(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=minimalorg.organization_id,
-                greeter=minimalorg.alice.device_id.user_id,
+                greeter=minimalorg.alice.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
     expected_invitations = {
-        minimalorg.alice.device_id.user_id: [
+        minimalorg.alice.user_id: [
             UserInvitation(
                 token=invitation_token,
                 created_on=ANY,
                 claimer_email="new@example.invalid",
-                created_by=minimalorg.alice.device_id,
+                created_by_device_id=minimalorg.alice.device_id,
+                created_by_user_id=minimalorg.alice.user_id,
                 created_by_human_handle=minimalorg.alice.human_handle,
                 status=InvitationStatus.IDLE,
             )

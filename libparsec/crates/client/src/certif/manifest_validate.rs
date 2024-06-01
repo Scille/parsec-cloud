@@ -96,7 +96,7 @@ pub(super) async fn validate_user_manifest(
     ops: &CertifOps,
     needed_realm_certificate_timestamp: DateTime,
     needed_common_certificate_timestamp: DateTime,
-    author: &DeviceID,
+    author: DeviceID,
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
@@ -144,7 +144,7 @@ pub(super) async fn validate_workspace_manifest(
     needed_common_certificate_timestamp: DateTime,
     realm_id: VlobID,
     key_index: IndexInt,
-    author: &DeviceID,
+    author: DeviceID,
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
@@ -258,7 +258,7 @@ pub(super) async fn validate_child_manifest(
     realm_id: VlobID,
     key_index: IndexInt,
     vlob_id: VlobID,
-    author: &DeviceID,
+    author: DeviceID,
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
@@ -372,7 +372,7 @@ async fn validate_manifest<M>(
     realm_id: VlobID,
     key: &SecretKey,
     vlob_id: VlobID,
-    author: &DeviceID,
+    author: DeviceID,
     version: VersionInt,
     timestamp: DateTime,
     encrypted: &[u8],
@@ -380,7 +380,7 @@ async fn validate_manifest<M>(
         &[u8],
         &SecretKey,
         &VerifyKey,
-        &DeviceID,
+        DeviceID,
         DateTime,
         Option<VlobID>,
         Option<VersionInt>,
@@ -414,11 +414,12 @@ async fn validate_manifest<M>(
             return Err(CertifValidateManifestError::Internal(err.into()))
         }
     };
+    let author_user_id = author_certif.user_id;
 
     // 1.2) Check author is not revoked
 
     match store
-        .get_revoked_user_certificate(UpTo::Timestamp(timestamp), author.user_id().clone())
+        .get_revoked_user_certificate(UpTo::Timestamp(timestamp), author_certif.user_id)
         .await
     {
         // Not revoked at the considered timestamp, as we expected :)
@@ -466,11 +467,7 @@ async fn validate_manifest<M>(
     // 3) Finally we have to check the manifest content is consistent with the system
     // (i.e. the author had the right to create this manifest)
     let author_role = store
-        .get_last_user_realm_role(
-            UpTo::Timestamp(timestamp),
-            author.user_id().to_owned(),
-            realm_id,
-        )
+        .get_last_user_realm_role(UpTo::Timestamp(timestamp), author_user_id, realm_id)
         .await?
         .and_then(|certif| certif.role);
     match author_role {

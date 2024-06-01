@@ -73,12 +73,12 @@ pub enum InvalidCertificateError {
     },
     #[error("Certificate `{hint}` breaks consistency: related user cannot change profile to Outsider given it still has Owner/Manager role in some realms")]
     CannotDowngradeUserToOutsider { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: as first device certificate for it user it must have the same author that the user certificate ({user_author:?})")]
+    #[error("Certificate `{hint}` breaks consistency: as first device certificate for its user it must have the same author that the user certificate ({user_author:?})")]
     UserFirstDeviceAuthorMismatch {
         hint: String,
         user_author: CertificateSignerOwned,
     },
-    #[error("Certificate `{hint}` breaks consistency: as first device certificate for it user it must have the same timestamp that the user certificate ({user_timestamp})")]
+    #[error("Certificate `{hint}` breaks consistency: as first device certificate for its user it must have the same timestamp that the user certificate ({user_timestamp})")]
     UserFirstDeviceTimestampMismatch {
         hint: String,
         user_timestamp: DateTime,
@@ -109,6 +109,12 @@ pub enum InvalidCertificateError {
         "Certificate `{hint}` breaks consistency: no related shamir recovery brief certificate"
     )]
     ShamirRecoveryMissingBriefCertificate { hint: String },
+    #[error("Certificate `{hint}` breaks consistency: it is about a different user ({user_id}) than its author ({author_user_id}), which is not allowed")]
+    ShamirRecoveryNotAboutSelf {
+        hint: String,
+        user_id: UserID,
+        author_user_id: UserID,
+    },
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -307,9 +313,10 @@ macro_rules! verify_certificate_signature {
     // Internal macro implementation stuff
 
     (@internal, Device, $unsecure:ident, $author:expr, $ops:expr, $store:expr) => {
-        match $store.get_device_verify_key(UpTo::Timestamp($unsecure.timestamp().to_owned()), $author).await {
-            Ok(author_verify_key) => $unsecure
+        match $store.get_device_verify_key_and_user_id(UpTo::Timestamp($unsecure.timestamp().to_owned()), $author).await {
+            Ok((author_verify_key, author_user_id)) => $unsecure
                 .verify_signature(&author_verify_key)
+                .map(|(certif, _)| (certif, author_user_id))
                 .map_err(|(unsecure, error)| {
                     let hint = unsecure.hint();
                     Box::new(InvalidCertificateError::Corrupted { hint, error })
@@ -348,6 +355,7 @@ macro_rules! verify_certificate_signature {
         match $unsecure.author() {
             CertificateSignerOwned::Root => $unsecure
                 .verify_signature($ops.device.root_verify_key())
+                .map(|(certif, _)| (certif, None))
                 .map_err(|(unsecure, error)| {
                     let hint = unsecure.hint();
                     Box::new(InvalidCertificateError::Corrupted { hint, error })
@@ -358,10 +366,10 @@ macro_rules! verify_certificate_signature {
                     @internal,
                     Device,
                     $unsecure,
-                    author.to_owned(),
+                    author,
                     $ops,
                     $store
-                )
+                ).map(|(certif, author_user_id)| (certif, Some(author_user_id)))
             }
         }
     };
@@ -393,34 +401,38 @@ async fn validate_common_certificate(
 
     match unsecure {
         UnsecureCommonTopicCertificate::User(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(DeviceOrRoot, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_user_certificate_consistency(ops, store, &cooked).await?;
+            check_user_certificate_consistency(ops, store, &cooked, author_user_id).await?;
 
             Ok(CommonTopicArcCertificate::User(cooked))
         }
         UnsecureCommonTopicCertificate::Device(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(DeviceOrRoot, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(DeviceOrRoot, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_device_certificate_consistency(ops, store, &cooked).await?;
+            check_device_certificate_consistency(ops, store, &cooked, author_user_id).await?;
 
             Ok(CommonTopicArcCertificate::Device(cooked))
         }
         UnsecureCommonTopicCertificate::UserUpdate(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_user_update_certificate_consistency(ops, store, &cooked).await?;
+            check_user_update_certificate_consistency(ops, store, &cooked, author_user_id).await?;
 
             Ok(CommonTopicArcCertificate::UserUpdate(cooked))
         }
         UnsecureCommonTopicCertificate::RevokedUser(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_revoked_user_certificate_consistency(ops, store, &cooked).await?;
+            check_revoked_user_certificate_consistency(ops, store, &cooked, author_user_id).await?;
 
             Ok(CommonTopicArcCertificate::RevokedUser(cooked))
         }
@@ -453,7 +465,8 @@ async fn validate_realm_certificate(
 
     match unsecure {
         UnsecureRealmTopicCertificate::RealmRole(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
@@ -467,12 +480,13 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_role_certificate_consistency(store, &cooked).await?;
+            check_realm_role_certificate_consistency(store, &cooked, author_user_id).await?;
 
             Ok(RealmTopicArcCertificate::RealmRole(cooked))
         }
         UnsecureRealmTopicCertificate::RealmName(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
@@ -486,12 +500,13 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_name_certificate_consistency(ops, store, &cooked).await?;
+            check_realm_name_certificate_consistency(ops, store, &cooked, author_user_id).await?;
 
             Ok(RealmTopicArcCertificate::RealmName(cooked))
         }
         UnsecureRealmTopicCertificate::RealmKeyRotation(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
@@ -505,12 +520,14 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_key_rotation_certificate_consistency(ops, store, &cooked).await?;
+            check_realm_key_rotation_certificate_consistency(ops, store, &cooked, author_user_id)
+                .await?;
 
             Ok(RealmTopicArcCertificate::RealmKeyRotation(cooked))
         }
         UnsecureRealmTopicCertificate::RealmArchiving(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) Ensure the certificate corresponds to the considered realm
             if cooked.realm_id != realm_id {
@@ -524,7 +541,8 @@ async fn validate_realm_certificate(
             }
 
             // 4) The certificate is valid, last check is the consistency with other certificates
-            check_realm_archiving_certificate_consistency(ops, store, &cooked).await?;
+            check_realm_archiving_certificate_consistency(ops, store, &cooked, author_user_id)
+                .await?;
 
             Ok(RealmTopicArcCertificate::RealmArchiving(cooked))
         }
@@ -556,20 +574,34 @@ async fn validate_shamir_recovery_certificate(
 
     match unsecure {
         UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_shamir_recovery_brief_certificate_consistency(ops, store, &cooked).await?;
+            check_shamir_recovery_brief_certificate_consistency(
+                ops,
+                store,
+                &cooked,
+                author_user_id,
+            )
+            .await?;
 
             Ok(ShamirRecoveryTopicArcCertificate::ShamirRecoveryBrief(
                 cooked,
             ))
         }
         UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
-            let (cooked, _) = verify_certificate_signature!(Device, unsecure, ops, store)?;
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
 
             // 3) The certificate is valid, last check is the consistency with other certificates
-            check_shamir_recovery_share_certificate_consistency(ops, store, &cooked).await?;
+            check_shamir_recovery_share_certificate_consistency(
+                ops,
+                store,
+                &cooked,
+                author_user_id,
+            )
+            .await?;
 
             Ok(ShamirRecoveryTopicArcCertificate::ShamirRecoveryShare(
                 cooked,
@@ -700,7 +732,7 @@ async fn validate_sequester_non_authority_certificate(
 async fn check_user_exists(
     store: &mut CertificatesStoreWriteGuard<'_>,
     up_to: DateTime,
-    user_id: &UserID,
+    user_id: UserID,
     mk_hint: impl FnOnce() -> String,
 ) -> Result<Arc<UserCertificate>, CertifAddCertificatesBatchError> {
     match store
@@ -740,7 +772,7 @@ async fn check_user_exists(
 async fn check_user_not_revoked(
     store: &mut CertificatesStoreWriteGuard<'_>,
     up_to: DateTime,
-    user_id: &UserID,
+    user_id: UserID,
     mk_hint: impl FnOnce() -> String,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     match store
@@ -770,12 +802,12 @@ async fn check_author_not_revoked_and_profile(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     up_to: DateTime,
-    author: &UserID,
+    author: UserID,
     author_must_be_admin: bool,
     mk_hint: impl FnOnce() -> String + std::marker::Copy,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     match store
-        .get_revoked_user_certificate(UpTo::Timestamp(up_to), author.to_owned())
+        .get_revoked_user_certificate(UpTo::Timestamp(up_to), author)
         .await?
     {
         // Not revoked, as expected :)
@@ -832,7 +864,7 @@ async fn check_author_not_revoked_and_profile(
 async fn get_user_profile(
     store: &mut CertificatesStoreWriteGuard<'_>,
     up_to: DateTime,
-    user_id: &UserID,
+    user_id: UserID,
     mk_hint: impl FnOnce() -> String,
     already_fetched_user_certificate: Option<Arc<UserCertificate>>,
 ) -> Result<UserProfile, CertifAddCertificatesBatchError> {
@@ -857,6 +889,7 @@ async fn check_user_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &UserCertificate,
+    author_user_id: Option<UserID>,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -888,14 +921,14 @@ async fn check_user_certificate_consistency(
 
     // 2) Check author
 
-    match &cooked.author {
+    match author_user_id {
         // 2.a) If author is a user, it should have has ADMIN profile and not be revoked.
-        CertificateSignerOwned::User(author) => {
+        Some(author_user_id) => {
             check_author_not_revoked_and_profile(
                 ops,
                 store,
                 cooked.timestamp,
-                author.user_id(),
+                author_user_id,
                 true,
                 mk_hint,
             )
@@ -904,7 +937,7 @@ async fn check_user_certificate_consistency(
         // 2.b) Otherwise we are checking the first user created during organization bootstrap.
         // In that case no other certificates should be present (except for the
         // sequester authority certificate if it exists).
-        CertificateSignerOwned::Root => {
+        None => {
             // Other topics depend on common topic (i.e. their certificates are signed
             // by a device), so need to ensure they are empty.
             if last_stored_common_timestamp.is_some() {
@@ -930,7 +963,7 @@ async fn check_user_certificate_consistency(
     // 3) Make sure the user doesn't already exists
 
     match store
-        .get_user_certificate(UpTo::Timestamp(cooked.timestamp), cooked.user_id.clone())
+        .get_user_certificate(UpTo::Timestamp(cooked.timestamp), cooked.user_id)
         .await
     {
         // This user doesn't already exist, this is what we expected :)
@@ -978,17 +1011,18 @@ async fn check_device_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &DeviceCertificate,
+    author_user_id: Option<UserID>,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
-    let user_id = cooked.device_id.user_id();
+    let user_id = cooked.user_id;
 
-    let is_first_user_device = match &cooked.author {
+    let is_first_user_device = match author_user_id {
         // The user has created a new device for himself
-        CertificateSignerOwned::User(author) if author.user_id() == user_id => false,
+        Some(author_user_id) if author_user_id == user_id => false,
         // The author is an ADMIN that have enrolled the user
-        CertificateSignerOwned::User(_) => true,
+        Some(_) => true,
         // First device of the user that have bootstrapped the organization
-        CertificateSignerOwned::Root => true,
+        None => true,
     };
 
     // 1) Certificate must be the newest among the ones in common topic.
@@ -1022,14 +1056,14 @@ async fn check_device_certificate_consistency(
 
     // 2) Check author
 
-    match &cooked.author {
+    match author_user_id {
         // 2.a) Same-user-signed: the user has created a new device for himself (hence doesn't need to be ADMIN)
-        CertificateSignerOwned::User(author) if author.user_id() == user_id => {
+        Some(author_user_id) if author_user_id == user_id => {
             check_author_not_revoked_and_profile(
                 ops,
                 store,
                 cooked.timestamp,
-                author.user_id(),
+                author_user_id,
                 false,
                 mk_hint,
             )
@@ -1037,12 +1071,12 @@ async fn check_device_certificate_consistency(
         }
 
         // 2.b) Not same-user-signed: The author is an ADMIN that have enrolled the user
-        CertificateSignerOwned::User(author) => {
+        Some(author_user_id) => {
             check_author_not_revoked_and_profile(
                 ops,
                 store,
                 cooked.timestamp,
-                author.user_id(),
+                author_user_id,
                 true,
                 mk_hint,
             )
@@ -1052,7 +1086,7 @@ async fn check_device_certificate_consistency(
         // 2.c) Not same-user-signed: First device of the user that have bootstrapped the organization
         // In that case no other certificates should be present (except for the corresponding
         // user certificate and the sequester authority certificate if it exists).
-        CertificateSignerOwned::Root => (),
+        None => (),
     }
 
     // 3) Make sure the user exists
@@ -1066,7 +1100,7 @@ async fn check_device_certificate_consistency(
             let hint = mk_hint();
             let what = Box::new(InvalidCertificateError::UserFirstDeviceAuthorMismatch {
                 hint,
-                user_author: user_certif.author.clone(),
+                user_author: user_certif.author,
             });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
@@ -1131,6 +1165,7 @@ async fn check_user_update_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &UserUpdateCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1155,7 +1190,7 @@ async fn check_user_update_certificate_consistency(
 
     // 2) Check the certificate is not self-signed
 
-    if cooked.author.user_id() == &cooked.user_id {
+    if author_user_id == cooked.user_id {
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::SelfSigned { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
@@ -1167,7 +1202,7 @@ async fn check_user_update_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         true,
         mk_hint,
     )
@@ -1176,18 +1211,18 @@ async fn check_user_update_certificate_consistency(
     // 4) Make sure the user exists
 
     let user_certificate =
-        check_user_exists(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+        check_user_exists(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     // 5) Make sure the user is not already revoked
 
-    check_user_not_revoked(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     // 6) Make sure the user doesn't already have this profile
 
     let user_current_profile = get_user_profile(
         store,
         cooked.timestamp,
-        &cooked.user_id,
+        cooked.user_id,
         mk_hint,
         Some(user_certificate),
     )
@@ -1202,7 +1237,7 @@ async fn check_user_update_certificate_consistency(
     // 7) If user is downgraded to Outsider, it should not be Owner/Manager of any shared realm
     if cooked.new_profile == UserProfile::Outsider {
         for certif in store
-            .get_user_realms_roles(UpTo::Timestamp(cooked.timestamp), cooked.user_id.clone())
+            .get_user_realms_roles(UpTo::Timestamp(cooked.timestamp), cooked.user_id)
             .await?
         {
             match certif.role {
@@ -1241,6 +1276,7 @@ async fn check_revoked_user_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RevokedUserCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1265,7 +1301,7 @@ async fn check_revoked_user_certificate_consistency(
 
     // 2) Check the certificate is not self-signed
 
-    if cooked.author.user_id() == &cooked.user_id {
+    if author_user_id == cooked.user_id {
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::SelfSigned { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
@@ -1277,7 +1313,7 @@ async fn check_revoked_user_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         true,
         mk_hint,
     )
@@ -1285,11 +1321,11 @@ async fn check_revoked_user_certificate_consistency(
 
     // 4) Make sure the user exists
 
-    check_user_exists(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+    check_user_exists(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     // 5) Make sure the user is not already revoked
 
-    check_user_not_revoked(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     Ok(())
 }
@@ -1297,10 +1333,9 @@ async fn check_revoked_user_certificate_consistency(
 async fn check_realm_role_certificate_consistency(
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmRoleCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
-
-    let author = &cooked.author;
 
     // 1) Certificate must be the newest among the ones in it realm's topic.
     // Note we also reject same timestamp given realm role certificate is always
@@ -1334,7 +1369,7 @@ async fn check_realm_role_certificate_consistency(
     if realm_roles.is_empty() {
         // 2.a) The realm is a new one, so certificate must be self-signed with a OWNER role.
 
-        if author.user_id() != &cooked.user_id {
+        if author_user_id != cooked.user_id {
             let hint = mk_hint();
             let what = Box::new(InvalidCertificateError::RealmFirstRoleMustBeSelfSigned { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
@@ -1352,7 +1387,7 @@ async fn check_realm_role_certificate_consistency(
         let author_current_role = match realm_roles
             .iter()
             .rev() // realm roles are sorted from oldest to newest, we need the last one
-            .find(|role| &role.user_id == author.user_id())
+            .find(|role| role.user_id == author_user_id)
             .and_then(|role| role.role)
         {
             // As expected, author currently has a role :)
@@ -1421,18 +1456,18 @@ async fn check_realm_role_certificate_consistency(
     // 3) Make sure the user exists
 
     let user_certificate =
-        check_user_exists(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+        check_user_exists(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     // 4) Make sure the user is not already revoked
 
-    check_user_not_revoked(store, cooked.timestamp, &cooked.user_id, mk_hint).await?;
+    check_user_not_revoked(store, cooked.timestamp, cooked.user_id, mk_hint).await?;
 
     // 5) Make sure the user's profile is compatible with the realm and its given role
 
     let profile = get_user_profile(
         store,
         cooked.timestamp,
-        &cooked.user_id,
+        cooked.user_id,
         mk_hint,
         Some(user_certificate),
     )
@@ -1466,6 +1501,7 @@ async fn check_realm_name_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmNameCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1509,7 +1545,7 @@ async fn check_realm_name_certificate_consistency(
         let author_current_role = match realm_roles
             .iter()
             .rev() // realm roles are sorted from oldest to newest, we need the last one
-            .find(|role| &role.user_id == cooked.author.user_id())
+            .find(|role| role.user_id == author_user_id)
             .and_then(|role| role.role)
         {
             // As expected, author currently has a role :)
@@ -1539,7 +1575,7 @@ async fn check_realm_name_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         false,
         mk_hint,
     )
@@ -1552,6 +1588,7 @@ async fn check_realm_key_rotation_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmKeyRotationCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1595,7 +1632,7 @@ async fn check_realm_key_rotation_certificate_consistency(
         let author_current_role = match realm_roles
             .iter()
             .rev() // realm roles are sorted from oldest to newest, we need the last one
-            .find(|role| &role.user_id == cooked.author.user_id())
+            .find(|role| role.user_id == author_user_id)
             .and_then(|role| role.role)
         {
             // As expected, author currently has a role :)
@@ -1625,7 +1662,7 @@ async fn check_realm_key_rotation_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         false,
         mk_hint,
     )
@@ -1638,6 +1675,7 @@ async fn check_realm_archiving_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmArchivingCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1681,7 +1719,7 @@ async fn check_realm_archiving_certificate_consistency(
         let author_current_role = match realm_roles
             .iter()
             .rev() // realm roles are sorted from oldest to newest, we need the last one
-            .find(|role| &role.user_id == cooked.author.user_id())
+            .find(|role| role.user_id == author_user_id)
             .and_then(|role| role.role)
         {
             // As expected, author currently has a role :)
@@ -1711,7 +1749,7 @@ async fn check_realm_archiving_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         false,
         mk_hint,
     )
@@ -1724,6 +1762,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &ShamirRecoveryBriefCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1764,23 +1803,35 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         }
     }
 
-    // 3) Check author is not revoked
+    // 3) Check `user_id` field matches with author
+
+    if cooked.user_id != author_user_id {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryNotAboutSelf {
+            hint,
+            user_id: cooked.user_id,
+            author_user_id,
+        });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 4) Check author is not revoked
 
     check_author_not_revoked_and_profile(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         false,
         mk_hint,
     )
     .await?;
 
-    // 4) Make sure all recipients exist and are not revoked
+    // 5) Make sure all recipients exist and are not revoked
 
     for recipient in cooked.per_recipient_shares.keys() {
-        check_user_exists(store, cooked.timestamp, recipient, mk_hint).await?;
-        check_user_not_revoked(store, cooked.timestamp, recipient, mk_hint).await?;
+        check_user_exists(store, cooked.timestamp, *recipient, mk_hint).await?;
+        check_user_not_revoked(store, cooked.timestamp, *recipient, mk_hint).await?;
     }
 
     Ok(())
@@ -1790,6 +1841,7 @@ async fn check_shamir_recovery_share_certificate_consistency(
     ops: &CertifOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &ShamirRecoveryShareCertificate,
+    author_user_id: UserID,
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
@@ -1833,8 +1885,8 @@ async fn check_shamir_recovery_share_certificate_consistency(
     let maybe_exist = store
         .get_last_shamir_recovery_share_certificate_for_recipient(
             UpTo::Timestamp(cooked.timestamp),
-            cooked.author.user_id().to_owned(),
-            cooked.recipient.clone(),
+            author_user_id.to_owned(),
+            cooked.recipient,
         )
         .await?;
     if maybe_exist.is_some() {
@@ -1843,7 +1895,19 @@ async fn check_shamir_recovery_share_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 3) Check author is not revoked
+    // 3) Check `user_id` field matches with author
+
+    if cooked.user_id != author_user_id {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryNotAboutSelf {
+            hint,
+            user_id: cooked.user_id,
+            author_user_id,
+        });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 4) Check author is not revoked
     // This should have already been checked during the related brief certificate's
     // validation, but better safe than sorry !
 
@@ -1851,7 +1915,7 @@ async fn check_shamir_recovery_share_certificate_consistency(
         ops,
         store,
         cooked.timestamp,
-        cooked.author.user_id(),
+        author_user_id,
         false,
         mk_hint,
     )

@@ -64,6 +64,7 @@ pub async fn bootstrap_organization(
         None,
         None,
         None,
+        None,
     ));
 
     let timestamp = device.now();
@@ -71,7 +72,7 @@ pub async fn bootstrap_organization(
         let mut user_certificate = UserCertificate {
             author: CertificateSignerOwned::Root,
             timestamp,
-            user_id: device.user_id().to_owned(),
+            user_id: device.user_id,
             human_handle: MaybeRedacted::Real(device.human_handle.clone()),
             public_key: device.public_key(),
             algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -80,7 +81,7 @@ pub async fn bootstrap_organization(
         let signed = user_certificate.dump_and_sign(&root_signing_key);
 
         user_certificate.human_handle =
-            MaybeRedacted::Redacted(HumanHandle::new_redacted(device.user_id()));
+            MaybeRedacted::Redacted(HumanHandle::new_redacted(device.user_id));
         let redacted_signed = user_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())
@@ -90,7 +91,8 @@ pub async fn bootstrap_organization(
         let mut device_certificate = DeviceCertificate {
             author: CertificateSignerOwned::Root,
             timestamp,
-            device_id: device.device_id.clone(),
+            user_id: device.user_id,
+            device_id: device.device_id,
             device_label: MaybeRedacted::Real(device.device_label.clone()),
             verify_key: device.verify_key(),
             algorithm: SigningKeyAlgorithm::Ed25519,
@@ -98,7 +100,7 @@ pub async fn bootstrap_organization(
         let signed = device_certificate.dump_and_sign(&root_signing_key);
 
         device_certificate.device_label =
-            MaybeRedacted::Redacted(DeviceLabel::new_redacted(device.device_id.device_name()));
+            MaybeRedacted::Redacted(DeviceLabel::new_redacted(device.device_id));
         let redacted_signed = device_certificate.dump_and_sign(&root_signing_key);
 
         (signed.into(), redacted_signed.into())
@@ -235,7 +237,8 @@ impl OrganizationBootstrapFinalizeCtx {
         Ok(AvailableDevice {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
-            device_id: self.new_local_device.device_id.clone(),
+            user_id: self.new_local_device.user_id,
+            device_id: self.new_local_device.device_id,
             device_label: self.new_local_device.device_label.clone(),
             human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),

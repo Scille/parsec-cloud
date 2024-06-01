@@ -42,9 +42,9 @@ async fn ok(env: &TestbedEnv) {
                 RealmRoleCertificate::verify_and_load(
                     &req.realm_role_certificate,
                     &alice.verify_key(),
-                    &alice.device_id,
+                    alice.device_id,
                     Some(wksp1_id),
-                    Some(alice.user_id()),
+                    Some(alice.user_id),
                 )
                 .unwrap();
                 new_realm_certificates
@@ -64,7 +64,7 @@ async fn ok(env: &TestbedEnv) {
                 RealmKeyRotationCertificate::verify_and_load(
                     &req.realm_key_rotation_certificate,
                     &alice.verify_key(),
-                    &alice.device_id,
+                    alice.device_id,
                     Some(wksp1_id),
                 )
                 .unwrap();
@@ -126,7 +126,7 @@ async fn ok(env: &TestbedEnv) {
                 RealmNameCertificate::verify_and_load(
                     &req.realm_name_certificate,
                     &alice.verify_key(),
-                    &alice.device_id,
+                    alice.device_id,
                     Some(wksp1_id),
                 )
                 .unwrap();
@@ -334,7 +334,7 @@ async fn partially_bootstrapped(
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
             move |_req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
                     keys_bundle,
@@ -351,7 +351,7 @@ async fn partially_bootstrapped(
                 let certif = RealmNameCertificate::verify_and_load(
                     &req.realm_name_certificate,
                     &alice.verify_key(),
-                    &alice.device_id,
+                    alice.device_id,
                     Some(wksp1_id),
                 )
                 .unwrap();

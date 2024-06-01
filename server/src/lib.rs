@@ -67,7 +67,6 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     m.add_class::<EnrollmentID>()?;
     m.add_class::<HumanHandle>()?;
     m.add_class::<DeviceID>()?;
-    m.add_class::<DeviceName>()?;
     m.add_class::<DeviceLabel>()?;
     m.add_class::<UserID>()?;
     m.add_class::<BootstrapToken>()?;

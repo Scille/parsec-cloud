@@ -12,6 +12,7 @@ from parsec._parsec import (
     InvitationType,
     OrganizationID,
     SigningKey,
+    UserID,
     VerifyKey,
 )
 from parsec.ballpark import timestamps_in_the_ballpark
@@ -61,6 +62,7 @@ class InvitedAuthInfo:
 @dataclass
 class AuthenticatedAuthInfo:
     organization_id: OrganizationID
+    user_id: UserID
     device_id: DeviceID
     device_verify_key: VerifyKey
     organization_internal_id: int
@@ -88,8 +90,8 @@ class AuthenticatedToken:
     # Only used for tests, but coherent to have it here
     @staticmethod
     def generate_raw(device_id: DeviceID, timestamp: DateTime, key: SigningKey) -> bytes:
-        raw_device_id = urlsafe_b64encode(device_id.str.encode("utf8"))
-        raw_timestamp = str(int(timestamp.timestamp())).encode("utf8")
+        raw_device_id = device_id.hex.encode("ascii")
+        raw_timestamp = str(int(timestamp.timestamp())).encode("ascii")
         header_and_payload = b"%s.%s.%s" % (AuthenticatedToken.HEADER, raw_device_id, raw_timestamp)
         signature = key.sign_only_signature(header_and_payload)
         raw_signature = urlsafe_b64encode(signature)
@@ -103,7 +105,7 @@ class AuthenticatedToken:
             if header != cls.HEADER:
                 raise ValueError
             signature = urlsafe_b64decode(raw_signature)
-            device_id = DeviceID(urlsafe_b64decode(raw_device_id).decode("utf8"))
+            device_id = DeviceID.from_hex(raw_device_id.decode("ascii"))
             timestamp = DateTime.from_timestamp(int(raw_timestamp))
         except ValueError:
             raise ValueError("Invalid token format")
@@ -139,7 +141,7 @@ class BaseAuthComponent:
                 self._device_cache = {
                     (org_id, device_id): v
                     for ((org_id, device_id), v) in self._device_cache.items()
-                    if org_id != event.organization_id or device_id.user_id != event.user_id
+                    if org_id != event.organization_id or v.user_id != event.user_id
                 }
             case _:
                 pass

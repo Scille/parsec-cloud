@@ -76,7 +76,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         | SequesterServiceNotAvailable
         | SequesterInconsistency
     ):
-        author_user_id = author.user_id
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -84,8 +83,12 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobCreateBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
         author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return VlobCreateBadOutcome.AUTHOR_REVOKED
@@ -210,7 +213,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         | SequesterServiceNotAvailable
         | SequesterInconsistency
     ):
-        author_user_id = author.user_id
         try:
             org = self._data.organizations[organization_id]
         except KeyError:
@@ -218,8 +220,12 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobUpdateBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
         author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return VlobUpdateBadOutcome.AUTHOR_REVOKED
@@ -340,7 +346,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -351,7 +363,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author.user_id):
+        match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -412,7 +424,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -423,7 +441,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author.user_id):
+        match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -485,7 +503,13 @@ class MemoryVlobComponent(BaseVlobComponent):
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            author_user = org.users[author.user_id]
+            author_device = org.devices[author]
+        except KeyError:
+            return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
@@ -496,7 +520,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         except KeyError:
             return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author.user_id):
+        match realm.get_current_role_for(author_user_id):
             case None:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 

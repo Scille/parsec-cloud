@@ -49,7 +49,7 @@ class RealmStats:
 @dataclass(slots=True, repr=False)
 class RealmGrantedRole:
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}({self.user_id.str} {self.role})"
+        return f"{self.__class__.__name__}({self.user_id.hex} {self.role})"
 
     certificate: bytes
     realm_id: VlobID
@@ -75,7 +75,8 @@ class RealmCreateValidateBadOutcome(BadOutcomeEnum):
 
 def realm_create_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
 ) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmCreateValidateBadOutcome:
@@ -83,7 +84,7 @@ def realm_create_validate(
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -95,10 +96,7 @@ def realm_create_validate(
         case _:
             pass
 
-    assert (
-        data.author is not None
-    )  # TODO: remove me once RealmRoleCertificate's author is corrected
-    if data.author.user_id != data.user_id:
+    if expected_author_user_id != data.user_id:
         return RealmCreateValidateBadOutcome.USER_ID_MISMATCH
 
     if data.role != RealmRole.OWNER:
@@ -116,7 +114,8 @@ class RealmShareValidateBadOutcome(BadOutcomeEnum):
 
 def realm_share_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
 ) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmShareValidateBadOutcome:
@@ -124,7 +123,7 @@ def realm_share_validate(
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -136,10 +135,7 @@ def realm_share_validate(
         case _:
             pass
 
-    assert (
-        data.author is not None
-    )  # TODO: remove me once RealmRoleCertificate's author is corrected
-    if data.author.user_id == data.user_id:
+    if expected_author_user_id == data.user_id:
         return RealmShareValidateBadOutcome.CANNOT_SELF_SHARE
 
     if data.role is None:
@@ -157,7 +153,8 @@ class RealmUnshareValidateBadOutcome(BadOutcomeEnum):
 
 def realm_unshare_validate(
     now: DateTime,
-    expected_author: DeviceID,
+    expected_author_user_id: UserID,
+    expected_author_device_id: DeviceID,
     author_verify_key: VerifyKey,
     realm_role_certificate: bytes,
 ) -> RealmRoleCertificate | TimestampOutOfBallpark | RealmUnshareValidateBadOutcome:
@@ -165,7 +162,7 @@ def realm_unshare_validate(
         data = RealmRoleCertificate.verify_and_load(
             realm_role_certificate,
             author_verify_key=author_verify_key,
-            expected_author=expected_author,
+            expected_author=expected_author_device_id,
         )
 
     except ValueError:
@@ -177,10 +174,7 @@ def realm_unshare_validate(
         case _:
             pass
 
-    assert (
-        data.author is not None
-    )  # TODO: remove me once RealmRoleCertificate's author is corrected
-    if data.author.user_id == data.user_id:
+    if expected_author_user_id == data.user_id:
         return RealmUnshareValidateBadOutcome.CANNOT_SELF_UNSHARE
 
     if data.role is not None:

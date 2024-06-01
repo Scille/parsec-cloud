@@ -92,10 +92,12 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
 
-        author_user = org.users[author.user_id]
+        author_user = org.users[author_device.cooked.user_id]
         if author_user.is_revoked:
             return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
         if author_user.current_profile != UserProfile.ADMIN:
@@ -178,16 +180,20 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
 
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
 
         match user_create_device_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             device_certificate=device_certificate,
             redacted_device_certificate=redacted_device_certificate,
@@ -247,9 +253,13 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
         if author_user.current_profile != UserProfile.ADMIN:
@@ -257,7 +267,8 @@ class MemoryUserComponent(BaseUserComponent):
 
         match user_revoke_user_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             revoked_user_certificate=revoked_user_certificate,
         ):
@@ -334,9 +345,13 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
         if author_user.current_profile != UserProfile.ADMIN:
@@ -344,7 +359,8 @@ class MemoryUserComponent(BaseUserComponent):
 
         match user_update_user_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             user_update_certificate=user_update_certificate,
         ):
@@ -432,7 +448,9 @@ class MemoryUserComponent(BaseUserComponent):
             return UserGetCertificatesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[author.user_id]
+            device = org.devices[author]
+            author_user_id = device.cooked.user_id
+            user = org.users[author_user_id]
         except KeyError:
             return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
         redacted = user.current_profile == UserProfile.OUTSIDER
@@ -510,7 +528,7 @@ class MemoryUserComponent(BaseUserComponent):
         for realm in org.realms.values():
             last_role = None
             for role in reversed(realm.roles):
-                if role.cooked.user_id == author.user_id:
+                if role.cooked.user_id == author_user_id:
                     last_role = role.cooked
                     break
             if not last_role:
@@ -572,8 +590,8 @@ class MemoryUserComponent(BaseUserComponent):
             return UserGetActiveDeviceVerifyKeyBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[device_id.user_id]
             device = org.devices[device_id]
+            user = org.users[device.cooked.user_id]
 
         except KeyError:
             return UserGetActiveDeviceVerifyKeyBadOutcome.DEVICE_NOT_FOUND
@@ -594,9 +612,7 @@ class MemoryUserComponent(BaseUserComponent):
             items[user_id] = UserDump(
                 user_id=user_id,
                 devices=[
-                    d.cooked.device_id.device_name
-                    for d in org.devices.values()
-                    if d.cooked.device_id.user_id == user_id
+                    d.cooked.device_id for d in org.devices.values() if d.cooked.user_id == user_id
                 ],
                 current_profile=user.current_profile,
                 created_on=user.cooked.timestamp,

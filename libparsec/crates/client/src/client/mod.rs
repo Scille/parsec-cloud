@@ -257,8 +257,12 @@ impl Client {
         self.device.slughash()
     }
 
-    pub fn device_id(&self) -> &DeviceID {
-        &self.device.device_id
+    pub fn device_id(&self) -> DeviceID {
+        self.device.device_id
+    }
+
+    pub fn user_id(&self) -> UserID {
+        self.device.user_id
     }
 
     pub fn device_label(&self) -> &DeviceLabel {

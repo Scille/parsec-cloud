@@ -56,7 +56,7 @@ impl UserStore {
             None => {
                 let timestamp = device.now();
                 LocalUserManifest::new(
-                    device.device_id.clone(),
+                    device.device_id,
                     timestamp,
                     Some(device.user_realm_id),
                     true,

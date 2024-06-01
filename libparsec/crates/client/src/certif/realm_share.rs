@@ -74,7 +74,7 @@ pub(super) async fn share_realm(
     recipient: UserID,
     role: Option<RealmRole>,
 ) -> Result<CertificateBasedActionOutcome, CertifShareRealmError> {
-    if *ops.device.device_id.user_id() == recipient {
+    if ops.device.user_id == recipient {
         return Err(CertifShareRealmError::RecipientIsSelf);
     }
 
@@ -102,10 +102,8 @@ pub(super) async fn share_realm(
     let mut timestamp = ops.device.now();
     loop {
         let outcome = match role {
-            Some(role) => {
-                share_do_server_command(ops, realm_id, recipient.clone(), role, timestamp).await
-            }
-            None => unshare_do_server_command(ops, realm_id, recipient.clone(), timestamp).await,
+            Some(role) => share_do_server_command(ops, realm_id, recipient, role, timestamp).await,
+            None => unshare_do_server_command(ops, realm_id, recipient, timestamp).await,
         }?;
 
         match outcome {
@@ -151,14 +149,14 @@ async fn unshare_do_server_command(
 ) -> Result<DoServerCommandOutcome, CertifShareRealmError> {
     // 0) Sanity check to prevent generating and invalid certificate
 
-    if recipient == *ops.device.device_id.user_id() {
+    if recipient == ops.device.user_id {
         return Err(CertifShareRealmError::RecipientIsSelf);
     }
 
     // 1) Build role certificate
 
     let signed_certificate = RealmRoleCertificate {
-        author: ops.device.device_id.clone(),
+        author: ops.device.device_id,
         timestamp,
         realm_id,
         user_id: recipient,
@@ -238,7 +236,7 @@ async fn share_do_server_command(
 ) -> Result<DoServerCommandOutcome, CertifShareRealmError> {
     // 0) Sanity check to prevent generating and invalid certificate
 
-    if recipient == *ops.device.device_id.user_id() {
+    if recipient == ops.device.user_id {
         return Err(CertifShareRealmError::RecipientIsSelf);
     }
 
@@ -247,7 +245,6 @@ async fn share_do_server_command(
     let (encrypted_keys_bundle_access, key_index) = ops
         .store
         .for_read({
-            let recipient = recipient.clone();
             |store| async move {
                 super::realm_keys_bundle::encrypt_realm_keys_bundle_access_for_user(
                     ops, store, realm_id, recipient,
@@ -276,7 +273,7 @@ async fn share_do_server_command(
     // 2) Build role certificate
 
     let signed_certificate = RealmRoleCertificate {
-        author: ops.device.device_id.clone(),
+        author: ops.device.device_id,
         timestamp,
         realm_id,
         user_id: recipient,

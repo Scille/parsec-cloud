@@ -228,9 +228,15 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             return OrganizationStatsAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         try:
-            user = org.users[author.user_id]
+            device = org.devices[author]
         except KeyError:
             return OrganizationStatsAsUserBadOutcome.AUTHOR_NOT_FOUND
+
+        try:
+            user = org.users[device.cooked.user_id]
+        except KeyError:
+            return OrganizationStatsAsUserBadOutcome.AUTHOR_NOT_FOUND
+
         if user.is_revoked:
             return OrganizationStatsAsUserBadOutcome.AUTHOR_REVOKED
 

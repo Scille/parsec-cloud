@@ -68,7 +68,7 @@ async def test_bad_method(
     response = await client.patch(
         url,
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-        json={"user_id": coolorg.alice.user_id.str, "frozen": True},
+        json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
     )
     assert response.status_code == 405, response.content
 
@@ -88,7 +88,7 @@ async def test_disconnect_sse(
         response = await client.post(
             url,
             headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-            json={"user_id": coolorg.alice.user_id.str, "frozen": True},
+            json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
         )
         assert response.status_code == 200, response.content
 
@@ -119,11 +119,11 @@ async def test_ok(
             response = await client.post(
                 url,
                 headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-                json={"user_id": coolorg.alice.user_id.str, "frozen": True},
+                json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
             )
             assert response.status_code == 200, response.content
             assert response.json() == {
-                "user_id": "alice",
+                "user_id": "a11cec00100000000000000000000000",
                 "user_email": "alice@example.com",
                 "user_name": "Alicey McAliceFace",
                 "frozen": True,
@@ -132,7 +132,7 @@ async def test_ok(
             await spy.wait_event_occurred(
                 EventUserRevokedOrFrozen(
                     organization_id=coolorg.organization_id,
-                    user_id=coolorg.alice.device_id.user_id,
+                    user_id=coolorg.alice.user_id,
                 )
             )
 
@@ -153,7 +153,7 @@ async def test_ok(
             )
             assert response.status_code == 200, response.content
             assert response.json() == {
-                "user_id": "alice",
+                "user_id": "a11cec00100000000000000000000000",
                 "user_email": "alice@example.com",
                 "user_name": "Alicey McAliceFace",
                 "frozen": False,
@@ -162,7 +162,7 @@ async def test_ok(
             await spy.wait_event_occurred(
                 EventUserUnfrozen(
                     organization_id=coolorg.organization_id,
-                    user_id=coolorg.alice.device_id.user_id,
+                    user_id=coolorg.alice.user_id,
                 )
             )
 
@@ -181,7 +181,7 @@ async def test_unknown_organization(
     response = await client.post(
         url,
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-        json={"user_id": coolorg.alice.user_id.str, "frozen": True},
+        json={"user_id": coolorg.alice.user_id.hex, "frozen": True},
     )
     assert response.status_code == 404, response.content
 
@@ -195,7 +195,7 @@ async def test_unknown_user_id(
     response = await client.post(
         url,
         headers={"Authorization": f"Bearer {backend.config.administration_token}"},
-        json={"user_id": "Dummy", "frozen": True},
+        json={"user_id": "d51589e233c0451e9d2fa1c7b9a8b08b", "frozen": True},
     )
     assert response.status_code == 404, response.content
 

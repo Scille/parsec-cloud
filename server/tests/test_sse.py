@@ -254,7 +254,7 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         revoke_certif = RevokedUserCertificate(
             author=coolorg.alice.device_id,
             timestamp=now,
-            user_id=coolorg.bob.device_id.user_id,
+            user_id=coolorg.bob.user_id,
         )
         rep = await coolorg.alice.user_revoke(
             revoke_certif.dump_and_sign(coolorg.alice.signing_key)

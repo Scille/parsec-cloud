@@ -69,7 +69,7 @@ async def test_authenticated_realm_rotate_key_ok(
             timestamp=t0,
             realm_id=wksp_id,
             role=RealmRole.OWNER,
-            user_id=coolorg.alice.device_id.user_id,
+            user_id=coolorg.alice.user_id,
         )
         await backend.realm.create(
             now=t0,
@@ -79,12 +79,12 @@ async def test_authenticated_realm_rotate_key_ok(
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         )
         initial_key_index = 0
-        participants = {coolorg.alice.device_id.user_id}
+        participants = {coolorg.alice.user_id}
     else:
         # Coolorg's wksp1 is bootstrapped, hence it has already its initial key rotation
         wksp_id = coolorg.wksp1_id
         initial_key_index = 1
-        participants = {coolorg.alice.device_id.user_id, coolorg.bob.device_id.user_id}
+        participants = {coolorg.alice.user_id, coolorg.bob.user_id}
 
     certif = patch_realm_key_rotation_certificate(
         wksp1_key_rotation_certificate,
@@ -105,7 +105,7 @@ async def test_authenticated_realm_rotate_key_ok(
                 organization_id=coolorg.organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=coolorg.alice.device_id.user_id,
+                user_id=coolorg.alice.user_id,
                 role_removed=False,
             )
         )
@@ -118,7 +118,10 @@ async def test_authenticated_realm_rotate_key_ok(
     )
     assert isinstance(keys_bundle, KeysBundle)
     assert keys_bundle.key_index == initial_key_index + 1
-    assert keys_bundle.keys_bundle_access == b"<alice keys bundle access>"
+    assert (
+        keys_bundle.keys_bundle_access
+        == b"<a11cec00-1000-0000-0000-000000000000 keys bundle access>"
+    )
     assert keys_bundle.keys_bundle == b"<keys bundle>"
 
 
@@ -145,8 +148,8 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
     rep = await author.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(author.signing_key),
         per_participant_keys_bundle_access={
-            coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-            coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+            coolorg.alice.user_id: b"<alice keys bundle access>",
+            coolorg.bob.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
     )
@@ -166,8 +169,8 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         per_participant_keys_bundle_access={
-            coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-            coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+            coolorg.alice.user_id: b"<alice keys bundle access>",
+            coolorg.bob.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
     )
@@ -193,7 +196,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
             timestamp=t0,
             realm_id=wksp_id,
             role=RealmRole.OWNER,
-            user_id=coolorg.alice.device_id.user_id,
+            user_id=coolorg.alice.user_id,
         )
         await backend.realm.create(
             now=t0,
@@ -203,14 +206,14 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
             realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         )
         initial_key_index = 0
-        participants = {coolorg.alice.device_id.user_id}
+        participants = {coolorg.alice.user_id}
         wksp_last_certificate_timestamp = t0
 
     else:
         # Coolorg's wksp1 is bootstrapped, hence it has already its initial key rotation
         wksp_id = coolorg.wksp1_id
         initial_key_index = 1
-        participants = {coolorg.alice.device_id.user_id, coolorg.bob.device_id.user_id}
+        participants = {coolorg.alice.user_id, coolorg.bob.user_id}
         wksp_last_certificate_timestamp = get_last_realm_certificate_timestamp(
             coolorg.testbed_template, wksp_id
         )
@@ -247,16 +250,16 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
     kind: str,
 ) -> None:
     per_participant_keys_bundle_access = {
-        coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-        coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+        coolorg.alice.user_id: b"<alice keys bundle access>",
+        coolorg.bob.user_id: b"<bob keys bundle access>",
     }
     match kind:
         case "additional_participant":
-            per_participant_keys_bundle_access[coolorg.mallory.device_id.user_id] = (
+            per_participant_keys_bundle_access[coolorg.mallory.user_id] = (
                 b"<unexpected keys bundle access>"
             )
         case "missing_participant":
-            del per_participant_keys_bundle_access[coolorg.bob.device_id.user_id]
+            del per_participant_keys_bundle_access[coolorg.bob.user_id]
         case _:
             assert False
     rep = await coolorg.alice.realm_rotate_key(
@@ -288,8 +291,8 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif,
         per_participant_keys_bundle_access={
-            coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-            coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+            coolorg.alice.user_id: b"<alice keys bundle access>",
+            coolorg.bob.user_id: b"<bob keys bundle access>",
         },
         keys_bundle=b"<keys bundle>",
     )

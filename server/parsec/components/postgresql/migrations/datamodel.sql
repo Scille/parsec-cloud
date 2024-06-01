@@ -74,7 +74,7 @@ CREATE TYPE user_profile AS ENUM ('ADMIN', 'STANDARD', 'OUTSIDER');
 CREATE TABLE user_ (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-    user_id VARCHAR(32) NOT NULL,
+    user_id UUID NOT NULL,
     user_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
     user_certifier INTEGER,
@@ -113,19 +113,16 @@ CREATE TABLE device (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    device_id VARCHAR(65) NOT NULL,
+    device_id UUID NOT NULL,
+    device_label VARCHAR(254) NOT NULL,
+    verify_key BYTEA NOT NULL,
     device_certificate BYTEA NOT NULL,
     -- NULL if certifier is the Root Verify Key
     device_certifier INTEGER REFERENCES device (_id),
     created_on TIMESTAMPTZ NOT NULL,
     redacted_device_certificate BYTEA NOT NULL,
-    -- `device_label` field has been introduced in Parsec v1.14, hence it is basically always here.
-    -- If it's not the case, we are in an exotic case (very old certificate) and use the
-    -- redacted system to obtain a device label (i.e. device name is used).
-    device_label VARCHAR(254),
 
-    UNIQUE(organization, device_id),
-    UNIQUE(user_, device_id)
+    UNIQUE(organization, device_id)
 );
 
 

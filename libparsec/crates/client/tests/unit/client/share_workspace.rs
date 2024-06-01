@@ -22,7 +22,7 @@
 //     let outcome = user_ops
 //         .share_workspace(
 //             wksp1_id,
-//             alice.user_id().to_owned(),
+//             alice.user_id.to_owned(),
 //             Some(RealmRole::Contributor),
 //         )
 //         .await;
@@ -137,7 +137,7 @@
 //                     &alice.verify_key(),
 //                     CertificateSignerRef::User(&alice.device_id),
 //                     Some(wid),
-//                     Some(alice.user_id()),
+//                     Some(alice.user_id),
 //                 )
 //                 .unwrap();
 //                 p_assert_matches!(certif.role, Some(RealmRole::Owner));

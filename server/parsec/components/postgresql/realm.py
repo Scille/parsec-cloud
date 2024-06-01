@@ -394,15 +394,13 @@ class PGRealmComponent(BaseRealmComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
-        author: DeviceID | UserID,
+        author_user_id: UserID,
     ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
-        if isinstance(author, DeviceID):
-            author = author.user_id
         row = await conn.fetchrow(
             *q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
-                user_id=author.str,
+                user_id=author_user_id,
             )
         )
         if not row:
@@ -416,13 +414,13 @@ class PGRealmComponent(BaseRealmComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         realm_id: VlobID,
-        author: DeviceID,
+        author_user_id: UserID,
     ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
         row = await conn.fetchrow(
             *q_lock_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
-                user_id=author.user_id.str,
+                user_id=author_user_id,
             )
         )
         if not row:
@@ -442,7 +440,7 @@ class PGRealmComponent(BaseRealmComponent):
             *q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
-                user_id=user_id.str,
+                user_id=user_id,
             )
         )
         if not row or row["role"] is None:
@@ -453,7 +451,7 @@ class PGRealmComponent(BaseRealmComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
     ) -> dict[VlobID, tuple[RealmRole | None, DateTime]]:
         rep = await conn.fetch(
-            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
         )
         result = {}
         for row in rep:
@@ -569,27 +567,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, last_common_certificate_timestamp):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
-                pass
 
         match realm_create_validate(
             now=now,
-            expected_author=author,
+            expected_author_device_id=author,
+            expected_author_user_id=author_user_id,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -607,9 +606,9 @@ class PGRealmComponent(BaseRealmComponent):
                 organization_id=organization_id.str,
                 realm_id=certif.realm_id,
                 timestamp=certif.timestamp,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 certificate=realm_role_certificate,
-                certified_by=certif.author.str,
+                certified_by=certif.author,
             )
         )
         assert result is not None
@@ -651,27 +650,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmShareStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmShareStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match realm_share_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -681,12 +681,12 @@ class PGRealmComponent(BaseRealmComponent):
                 return error
 
         match await self.user._check_user(conn, organization_id, certif.user_id):
+            case (target_current_profile, _):
+                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
-            case (UserProfile() as target_current_profile, DateTime()):
-                pass
 
         if target_current_profile == UserProfile.OUTSIDER and certif.role in (
             RealmRole.MANAGER,
@@ -694,18 +694,14 @@ class PGRealmComponent(BaseRealmComponent):
         ):
             return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
 
-        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author_user_id):
+            case (current_author_role, realm_key_index, last_realm_certificate_timestamp):
+                if current_author_role not in (RealmRole.OWNER, RealmRole.MANAGER):
+                    return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmShareStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as current_author_role,
-                KeyIndex() as realm_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
-                if current_author_role not in (RealmRole.OWNER, RealmRole.MANAGER):
-                    return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         existing_target_role = await self._get_current_role_for_user(
             conn, organization_id, certif.realm_id, certif.user_id
@@ -745,10 +741,10 @@ class PGRealmComponent(BaseRealmComponent):
             *_q_insert_realm_user_role(
                 organization_id=organization_id.str,
                 realm_id=certif.realm_id,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 role=certif.role.str,
                 certificate=realm_role_certificate,
-                certified_by=author.str,
+                certified_by=author,
                 certified_on=certif.timestamp,
             )
         )
@@ -758,7 +754,7 @@ class PGRealmComponent(BaseRealmComponent):
             *_q_insert_recipient_keys_bundle_access(
                 organization_id=organization_id.str,
                 realm_id=certif.realm_id,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 access=recipient_keys_bundle_access,
                 key_index=key_index,
             )
@@ -806,27 +802,28 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmUnshareStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match realm_unshare_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -836,23 +833,23 @@ class PGRealmComponent(BaseRealmComponent):
                 return error
 
         match await self.user._check_user(conn, organization_id, certif.user_id):
+            case tuple():
+                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 # It is allowed to unshare with a revoked user. This allows for client
                 # to only check for unshare event to detect when key rotation is needed.
                 pass
-            case (UserProfile(), DateTime()):
-                pass
 
-        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author_user_id):
+            case (role, _, last_realm_certificate_timestamp):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER):
+                    return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole() as role, KeyIndex(), DateTime() as last_realm_certificate_timestamp):
-                if role not in (RealmRole.OWNER, RealmRole.MANAGER):
-                    return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         existing_target_role = await self._get_current_role_for_user(
             conn, organization_id, certif.realm_id, certif.user_id
@@ -886,10 +883,10 @@ class PGRealmComponent(BaseRealmComponent):
             *_q_insert_realm_user_role(
                 organization_id=organization_id.str,
                 realm_id=certif.realm_id,
-                user_id=certif.user_id.str,
+                user_id=certif.user_id,
                 role=None,
                 certificate=realm_role_certificate,
-                certified_by=author.str,
+                certified_by=author,
                 certified_on=certif.timestamp,
             )
         )
@@ -937,23 +934,23 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmRenameStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match realm_rename_validate(
             now=now,
@@ -966,18 +963,14 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
-        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author_user_id):
+            case (role, realm_key_index, last_realm_certificate_timestamp):
+                if role != RealmRole.OWNER:
+                    return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as role,
-                KeyIndex() as realm_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
-                if role != RealmRole.OWNER:
-                    return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if realm_key_index != certif.key_index:
             return BadKeyIndex(last_realm_certificate_timestamp=last_realm_certificate_timestamp)
@@ -994,7 +987,7 @@ class PGRealmComponent(BaseRealmComponent):
                 organization_id=organization_id.str,
                 realm_id=certif.realm_id,
                 realm_name_certificate=realm_name_certificate,
-                certified_by=author.str,
+                certified_by=author,
                 certified_on=certif.timestamp,
             )
         )
@@ -1014,7 +1007,7 @@ class PGRealmComponent(BaseRealmComponent):
                 organization_id=organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=author.user_id,
+                user_id=author_user_id,
                 role_removed=False,
             )
         )
@@ -1042,23 +1035,23 @@ class PGRealmComponent(BaseRealmComponent):
         | RequireGreaterTimestamp
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
         match realm_rotate_key_validate(
             now=now,
@@ -1071,18 +1064,14 @@ class PGRealmComponent(BaseRealmComponent):
             case error:
                 return error
 
-        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author):
+        match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author_user_id):
+            case (role, realm_key_index, last_realm_certificate_timestamp):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as role,
-                KeyIndex() as realm_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
-                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
-                    return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         if certif.key_index != realm_key_index + 1:
             return BadKeyIndex(
@@ -1107,7 +1096,7 @@ class PGRealmComponent(BaseRealmComponent):
                 organization_id=organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=author.user_id,
+                user_id=author_user_id,
                 role_removed=False,
             )
         )
@@ -1125,30 +1114,30 @@ class PGRealmComponent(BaseRealmComponent):
         key_index: int | None,
     ) -> KeysBundle | RealmGetKeysBundleBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmGetKeysBundleBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmGetKeysBundleBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
             return RealmGetKeysBundleBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
-        match await self._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (_, current_key_index, _):
+                pass
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), KeyIndex() as current_key_index, DateTime()):
-                pass
 
         # `key_index` starts at 1, but the array starts at 0
         match key_index:
@@ -1176,7 +1165,7 @@ class PGRealmComponent(BaseRealmComponent):
         row = await conn.fetchrow(
             *q_get_keys_bundle_access(
                 realm_keys_bundle_internal_id=realm_keys_bundle_internal_id,
-                user_id=author.user_id.str,
+                user_id=author_user_id,
             )
         )
         if row is None:
@@ -1195,21 +1184,21 @@ class PGRealmComponent(BaseRealmComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
     ) -> dict[VlobID, RealmRole] | RealmGetCurrentRealmsForUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return RealmGetCurrentRealmsForUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return RealmGetCurrentRealmsForUserBadOutcome.ORGANIZATION_NOT_FOUND
 
         match await self.user._check_user(conn, organization_id, user):
+            case tuple():
+                pass
             case CheckUserBadOutcome.USER_NOT_FOUND:
                 return RealmGetCurrentRealmsForUserBadOutcome.USER_NOT_FOUND
             case CheckUserBadOutcome.USER_REVOKED:
                 pass
-            case (UserProfile(), DateTime()):
-                pass
 
         rows = await conn.fetch(
-            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
         )
         user_realms = {}
         for row in rows:
@@ -1227,7 +1216,7 @@ class PGRealmComponent(BaseRealmComponent):
         rows = await conn.fetch(
             *q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
         )
-        return {UserID(row["user_id"]) for row in rows if row["role"] is not None}
+        return {UserID.from_hex(row["user_id"]) for row in rows if row["role"] is not None}
 
     async def _add_realm_key_rotation_certificate(
         self,
@@ -1245,7 +1234,7 @@ class PGRealmComponent(BaseRealmComponent):
                 realm_id=realm_key_rotation_certificate_cooked.realm_id,
                 key_index=realm_key_rotation_certificate_cooked.key_index,
                 realm_key_rotation_certificate=realm_key_rotation_certificate,
-                certified_by=realm_key_rotation_certificate_cooked.author.str,
+                certified_by=realm_key_rotation_certificate_cooked.author,
                 certified_on=realm_key_rotation_certificate_cooked.timestamp,
                 key_canary=realm_key_rotation_certificate_cooked.key_canary,
                 keys_bundle=keys_bundle,
@@ -1259,7 +1248,7 @@ class PGRealmComponent(BaseRealmComponent):
                     organization_id=organization_id.str,
                     realm_id=realm_key_rotation_certificate_cooked.realm_id,
                     realm_keys_bundle_internal_id=keys_bundle_internal_id,
-                    user_id=user_id.str,
+                    user_id=user_id,
                     access=access,
                 )
                 yield x

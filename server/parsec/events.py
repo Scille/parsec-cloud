@@ -42,13 +42,13 @@ OrganizationIDField = Annotated[
 ]
 UserIDField = Annotated[
     UserID,
-    PlainValidator(lambda x: x if isinstance(x, UserID) else UserID(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
+    PlainValidator(lambda x: x if isinstance(x, UserID) else UserID.from_hex(x)),
+    PlainSerializer(lambda x: x.hex, return_type=str),
 ]
 DeviceIDField = Annotated[
     DeviceID,
-    PlainValidator(lambda x: x if isinstance(x, DeviceID) else DeviceID(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
+    PlainValidator(lambda x: x if isinstance(x, DeviceID) else DeviceID.from_hex(x)),
+    PlainSerializer(lambda x: x.hex, return_type=str),
 ]
 InvitationTokenField = Annotated[
     InvitationToken,

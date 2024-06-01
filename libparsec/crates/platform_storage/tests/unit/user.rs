@@ -162,7 +162,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     let expected = LocalUserManifest {
         base: UserManifest {
-            author: alice.device_id.clone(),
+            author: alice.device_id,
             timestamp: user_manifest.updated,
             id: alice.user_realm_id,
             version: 0,

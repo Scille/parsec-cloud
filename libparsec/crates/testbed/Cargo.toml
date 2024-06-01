@@ -12,7 +12,7 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
-libparsec_types = { workspace = true }
+libparsec_types = { workspace = true, features = ["test-fixtures"] }
 
 hex-literal = { workspace = true }
 crc32fast = { workspace = true, features = ["std"] }

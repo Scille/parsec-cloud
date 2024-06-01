@@ -102,8 +102,21 @@ pub trait StorableCertificate {
     /// is purely for simplicity as the two are totally decorrelated.
     const TYPE: &'static str;
 
-    fn filters(&self) -> (Option<String>, Option<String>);
+    fn filters(&self) -> (FilterKind, FilterKind);
     fn timestamp(&self) -> DateTime;
+}
+
+#[derive(Debug, Clone)]
+pub enum FilterKind<'a> {
+    Null,
+    Bytes(&'a [u8]),
+    U64([u8; 8]),
+}
+
+impl FilterKind<'_> {
+    pub fn from_u64(value: u64) -> Self {
+        Self::U64(value.to_le_bytes())
+    }
 }
 
 /// Certificates are grouped into topic, each of which being provided by the server
@@ -165,8 +178,10 @@ impl_storable_certificate_topic!(
 
 impl StorableCertificate for UserCertificate {
     const TYPE: &'static str = "user_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        user_certificate_filters(self.user_id.clone())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -175,8 +190,10 @@ impl StorableCertificate for UserCertificate {
 
 impl StorableCertificate for DeviceCertificate {
     const TYPE: &'static str = "device_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        device_certificate_filters(self.device_id.clone())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.device_id.as_bytes());
+        let filter2 = FilterKind::Bytes(self.user_id.as_bytes());
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -185,8 +202,10 @@ impl StorableCertificate for DeviceCertificate {
 
 impl StorableCertificate for RevokedUserCertificate {
     const TYPE: &'static str = "revoked_user_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        revoked_user_certificate_filters(self.user_id.clone())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -195,8 +214,10 @@ impl StorableCertificate for RevokedUserCertificate {
 
 impl StorableCertificate for UserUpdateCertificate {
     const TYPE: &'static str = "user_update_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        user_update_certificate_filters(self.user_id.clone())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -205,8 +226,10 @@ impl StorableCertificate for UserUpdateCertificate {
 
 impl StorableCertificate for RealmRoleCertificate {
     const TYPE: &'static str = "realm_role_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        realm_role_certificate_filters(self.realm_id, self.user_id.clone())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
+        let filter2 = FilterKind::Bytes(self.user_id.as_bytes());
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -215,8 +238,10 @@ impl StorableCertificate for RealmRoleCertificate {
 
 impl StorableCertificate for RealmNameCertificate {
     const TYPE: &'static str = "realm_name_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        realm_name_certificate_filters(self.realm_id)
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -225,8 +250,10 @@ impl StorableCertificate for RealmNameCertificate {
 
 impl StorableCertificate for RealmKeyRotationCertificate {
     const TYPE: &'static str = "realm_key_rotation_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        realm_key_rotation_certificate_filters(self.realm_id, self.key_index)
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
+        let filter2 = FilterKind::from_u64(self.key_index);
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -235,8 +262,10 @@ impl StorableCertificate for RealmKeyRotationCertificate {
 
 impl StorableCertificate for RealmArchivingCertificate {
     const TYPE: &'static str = "realm_archiving_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        realm_archiving_certificate_filters(self.realm_id)
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.realm_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -245,8 +274,11 @@ impl StorableCertificate for RealmArchivingCertificate {
 
 impl StorableCertificate for SequesterAuthorityCertificate {
     const TYPE: &'static str = "sequester_authority_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        sequester_authority_certificate_filters()
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        // No filter is needed as there is a most one authority certificate
+        let filter1 = FilterKind::Null;
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -255,8 +287,10 @@ impl StorableCertificate for SequesterAuthorityCertificate {
 
 impl StorableCertificate for SequesterServiceCertificate {
     const TYPE: &'static str = "sequester_service_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        sequester_service_certificate_filters(self.service_id)
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.service_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -265,8 +299,10 @@ impl StorableCertificate for SequesterServiceCertificate {
 
 impl StorableCertificate for SequesterRevokedServiceCertificate {
     const TYPE: &'static str = "sequester_revoked_service_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        sequester_revoked_service_certificate_filters(self.service_id)
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.service_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -275,8 +311,10 @@ impl StorableCertificate for SequesterRevokedServiceCertificate {
 
 impl StorableCertificate for ShamirRecoveryBriefCertificate {
     const TYPE: &'static str = "shamir_recovery_brief_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        shamir_recovery_brief_certificate_filters(self.author.user_id().to_owned())
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
+        let filter2 = FilterKind::Null;
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
@@ -285,162 +323,14 @@ impl StorableCertificate for ShamirRecoveryBriefCertificate {
 
 impl StorableCertificate for ShamirRecoveryShareCertificate {
     const TYPE: &'static str = "shamir_recovery_share_certificate";
-    fn filters(&self) -> (Option<String>, Option<String>) {
-        shamir_recovery_share_certificate_filters(
-            self.author.user_id().to_owned(),
-            self.recipient.clone(),
-        )
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
+        let filter2 = FilterKind::Bytes(self.recipient.as_bytes());
+        (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
         self.timestamp
     }
-}
-
-fn user_certificate_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-/// Get all user certificates
-fn users_certificates_filters() -> (Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-fn device_certificate_filters(device_id: DeviceID) -> (Option<String>, Option<String>) {
-    let (user_id, device_name) = device_id.into();
-    // DeviceName is already unique enough, so we provide it as first filter
-    // to speed up database lookup
-    let filter1 = Some(device_name.into());
-    let filter2 = Some(user_id.into());
-    (filter1, filter2)
-}
-
-/// Get all device certificates for a given user
-fn user_device_certificates_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = Some(user_id.into());
-    (filter1, filter2)
-}
-
-fn revoked_user_certificate_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-fn user_update_certificate_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(user_id.into());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-/// Get all user update certificates for a given user
-fn user_update_certificates_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    // User update certificates only have filter on the user
-    user_update_certificate_filters(user_id)
-}
-
-fn realm_role_certificate_filters(
-    realm_id: VlobID,
-    user_id: UserID,
-) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = Some(user_id.into());
-    (filter1, filter2)
-}
-
-fn realm_name_certificate_filters(realm_id: VlobID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    (filter1, None)
-}
-
-fn realm_key_rotation_certificate_filters(
-    realm_id: VlobID,
-    key_index: IndexInt,
-) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = Some(key_index.to_string());
-    (filter1, filter2)
-}
-
-/// Get all realm name certificates for a given realm
-fn realm_key_rotation_certificates_filters(realm_id: VlobID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-fn realm_archiving_certificate_filters(realm_id: VlobID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    (filter1, None)
-}
-
-/// Get all realm role certificates for a given realm
-fn realm_role_certificates_filters(realm_id: VlobID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(realm_id.hex());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-/// Get all realm role certificates for a given user
-fn user_realm_role_certificates_filters(user_id: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = Some(user_id.into());
-    (filter1, filter2)
-}
-
-fn sequester_authority_certificate_filters() -> (Option<String>, Option<String>) {
-    // No filter is needed as there is a most one authority certificate
-    let filter1 = None;
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-fn shamir_recovery_brief_certificate_filters(author: UserID) -> (Option<String>, Option<String>) {
-    let filter1 = Some(author.into());
-    (filter1, None)
-}
-
-fn shamir_recovery_share_certificate_filters(
-    author: UserID,
-    recipient: UserID,
-) -> (Option<String>, Option<String>) {
-    let filter1 = Some(author.into());
-    let filter2 = Some(recipient.into());
-    (filter1, filter2)
-}
-
-fn sequester_service_certificate_filters(
-    service_id: SequesterServiceID,
-) -> (Option<String>, Option<String>) {
-    let filter1 = Some(service_id.hex());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-// Get all sequester service certificates
-fn sequester_service_certificates_filters() -> (Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-fn sequester_revoked_service_certificate_filters(
-    service_id: SequesterServiceID,
-) -> (Option<String>, Option<String>) {
-    let filter1 = Some(service_id.hex());
-    let filter2 = None;
-    (filter1, filter2)
-}
-
-// Get all sequester revoked service certificates
-fn sequester_revoked_service_certificates_filters() -> (Option<String>, Option<String>) {
-    let filter1 = None;
-    let filter2 = None;
-    (filter1, filter2)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -454,223 +344,243 @@ pub enum GetCertificateError {
 }
 
 #[derive(Debug, Clone)]
-pub struct GetCertificateQuery {
-    pub(crate) certificate_type: &'static str,
-    pub(crate) filter1: Option<String>,
-    pub(crate) filter2: Option<String>,
+pub enum GetCertificateQuery<'a> {
+    /// SELECT * FROM certificates
+    NoFilter { certificate_type: &'static str },
+    /// SELECT * FROM certificates WHERE type = ? AND filter1 = ?
+    Filter1 {
+        certificate_type: &'static str,
+        filter1: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter2 = ?
+    Filter2 {
+        certificate_type: &'static str,
+        filter2: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter1 = ? AND filter2 = ?
+    BothFilters {
+        certificate_type: &'static str,
+        filter1: FilterKind<'a>,
+        filter2: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter1 = (SELECT filter2 FROM certificates WHERE type = ? AND filter1 = ?)
+    Filter1EqFilter2WhereFilter1 {
+        certificate_type: &'static str,
+        subquery_certificate_type: &'static str,
+        filter1: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter1 = (SELECT filter1 FROM certificates WHERE type = ? AND filter2 = ?)
+    Filter1EqFilter1WhereFilter2 {
+        certificate_type: &'static str,
+        subquery_certificate_type: &'static str,
+        filter2: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter2 = (SELECT filter1 FROM certificates WHERE type = ? AND filter2 = ?)
+    Filter2EqFilter1WhereFilter2 {
+        certificate_type: &'static str,
+        subquery_certificate_type: &'static str,
+        filter2: FilterKind<'a>,
+    },
+    /// SELECT * FROM certificates WHERE type = ? AND filter2 = (SELECT filter2 FROM certificates WHERE type = ? AND filter1 = ?)
+    Filter2EqFilter2WhereFilter1 {
+        certificate_type: &'static str,
+        subquery_certificate_type: &'static str,
+        filter1: FilterKind<'a>,
+    },
 }
 
-impl GetCertificateQuery {
+impl<'a> GetCertificateQuery<'a> {
     /// Get all users
     pub fn users_certificates() -> Self {
-        let (filter1, filter2) = users_certificates_filters();
-        Self {
+        Self::NoFilter {
             certificate_type: <UserCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
         }
     }
 
-    pub fn user_certificate(user_id: UserID) -> Self {
-        let (filter1, filter2) = user_certificate_filters(user_id);
-        Self {
+    pub fn user_certificate(user_id: &'a UserID) -> Self {
+        Self::Filter1 {
             certificate_type: <UserCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
-    pub fn revoked_user_certificate(user_id: UserID) -> Self {
-        let (filter1, filter2) = revoked_user_certificate_filters(user_id);
-        Self {
+    pub fn user_certificate_from_device_id(device_id: &'a DeviceID) -> Self {
+        Self::Filter1EqFilter2WhereFilter1 {
+            certificate_type: <UserCertificate as StorableCertificate>::TYPE,
+            subquery_certificate_type: <DeviceCertificate as StorableCertificate>::TYPE,
+            filter1: FilterKind::Bytes(device_id.as_bytes()),
+        }
+    }
+
+    pub fn revoked_user_certificate(user_id: &'a UserID) -> Self {
+        Self::Filter1 {
             certificate_type: <RevokedUserCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
+        }
+    }
+
+    pub fn revoked_user_certificate_from_device_id(device_id: &'a DeviceID) -> Self {
+        Self::Filter1EqFilter2WhereFilter1 {
+            certificate_type: <RevokedUserCertificate as StorableCertificate>::TYPE,
+            subquery_certificate_type: <DeviceCertificate as StorableCertificate>::TYPE,
+            filter1: FilterKind::Bytes(device_id.as_bytes()),
         }
     }
 
     /// Get all user update certificates for a given user
-    pub fn user_update_certificates(user_id: UserID) -> Self {
-        let (filter1, filter2) = user_update_certificates_filters(user_id);
-        Self {
+    pub fn user_update_certificates(user_id: &'a UserID) -> Self {
+        Self::Filter1 {
             certificate_type: <UserUpdateCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
-    pub fn device_certificate(device_id: DeviceID) -> Self {
-        let (filter1, filter2) = device_certificate_filters(device_id);
-        Self {
+    /// Get all user update certificates for a given user
+    pub fn user_update_certificates_from_device_id(device_id: &'a DeviceID) -> Self {
+        Self::Filter1EqFilter2WhereFilter1 {
+            certificate_type: <UserUpdateCertificate as StorableCertificate>::TYPE,
+            subquery_certificate_type: <DeviceCertificate as StorableCertificate>::TYPE,
+            filter1: FilterKind::Bytes(device_id.as_bytes()),
+        }
+    }
+
+    pub fn device_certificate(device_id: &'a DeviceID) -> Self {
+        Self::Filter1 {
             certificate_type: <DeviceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(device_id.as_bytes()),
         }
     }
 
     /// Get all device certificates for a given user
-    pub fn user_device_certificates(user_id: UserID) -> Self {
-        let (filter1, filter2) = user_device_certificates_filters(user_id);
-        Self {
+    pub fn user_devices_certificates(user_id: &'a UserID) -> Self {
+        Self::Filter2 {
             certificate_type: <DeviceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter2: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
-    pub fn realm_role_certificate(realm_id: VlobID, user_id: UserID) -> Self {
-        let (filter1, filter2) = realm_role_certificate_filters(realm_id, user_id);
-        Self {
+    pub fn realm_role_certificate(realm_id: &'a VlobID, user_id: &'a UserID) -> Self {
+        Self::BothFilters {
             certificate_type: <RealmRoleCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
+            filter2: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
     /// Get all realm name certificates for a given realm
-    pub fn realm_name_certificates(realm_id: VlobID) -> Self {
-        let (filter1, filter2) = realm_name_certificate_filters(realm_id);
-        Self {
+    pub fn realm_name_certificates(realm_id: &'a VlobID) -> Self {
+        Self::Filter1 {
             certificate_type: <RealmNameCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
         }
     }
 
-    pub fn realm_key_rotation_certificate(realm_id: VlobID, key_index: IndexInt) -> Self {
-        let (filter1, filter2) = realm_key_rotation_certificate_filters(realm_id, key_index);
-        Self {
+    pub fn realm_key_rotation_certificate(realm_id: &'a VlobID, key_index: IndexInt) -> Self {
+        Self::BothFilters {
             certificate_type: <RealmKeyRotationCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
+            filter2: FilterKind::from_u64(key_index),
         }
     }
 
     /// Get all realm name certificates for a given realm
-    pub fn realm_key_rotation_certificates(realm_id: VlobID) -> Self {
-        let (filter1, filter2) = realm_key_rotation_certificates_filters(realm_id);
-        Self {
+    pub fn realm_key_rotation_certificates(realm_id: &'a VlobID) -> Self {
+        Self::Filter1 {
             certificate_type: <RealmKeyRotationCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
         }
     }
 
     /// Get all realm archiving certificates for a given realm
-    pub fn realm_archiving_certificates(realm_id: VlobID) -> Self {
-        let (filter1, filter2) = realm_archiving_certificate_filters(realm_id);
-        Self {
+    pub fn realm_archiving_certificates(realm_id: &'a VlobID) -> Self {
+        Self::Filter1 {
             certificate_type: <RealmArchivingCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
         }
     }
 
     /// Get all realm role certificates for a given realm
-    pub fn realm_role_certificates(realm_id: VlobID) -> Self {
-        let (filter1, filter2) = realm_role_certificates_filters(realm_id);
-        Self {
+    pub fn realm_role_certificates(realm_id: &'a VlobID) -> Self {
+        Self::Filter1 {
             certificate_type: <RealmRoleCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(realm_id.as_bytes()),
         }
     }
 
     /// Get all realm role certificates for a given user
-    pub fn user_realm_role_certificates(user_id: UserID) -> Self {
-        let (filter1, filter2) = user_realm_role_certificates_filters(user_id);
-        Self {
+    pub fn user_realm_role_certificates(user_id: &'a UserID) -> Self {
+        Self::Filter2 {
             certificate_type: <RealmRoleCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter2: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
     /// Get all shamir recovery brief certificates we know about
     pub fn shamir_recovery_brief_certificates() -> Self {
-        Self {
+        Self::NoFilter {
             certificate_type: <ShamirRecoveryBriefCertificate as StorableCertificate>::TYPE,
-            filter1: None,
-            filter2: None,
         }
     }
 
     /// Get all shamir recovery share certificates we know about
     pub fn shamir_recovery_share_certificates() -> Self {
-        Self {
+        Self::NoFilter {
             certificate_type: <ShamirRecoveryShareCertificate as StorableCertificate>::TYPE,
-            filter1: None,
-            filter2: None,
         }
     }
 
     /// Get all shamir recovery brief certificates for a given user
-    pub fn user_shamir_recovery_brief_certificates(user_id: UserID) -> Self {
-        let (filter1, filter2) = shamir_recovery_brief_certificate_filters(user_id);
-        Self {
+    pub fn user_shamir_recovery_brief_certificates(user_id: &'a UserID) -> Self {
+        Self::Filter1 {
             certificate_type: <ShamirRecoveryBriefCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 
     /// Get the recipient's shamir recovery share certificate to recover author
     pub fn user_recipient_shamir_recovery_share_certificates(
-        author: UserID,
-        recipient: UserID,
+        user_id: &'a UserID,
+        recipient: &'a UserID,
     ) -> Self {
-        let (filter1, filter2) = shamir_recovery_share_certificate_filters(author, recipient);
-        Self {
+        Self::BothFilters {
             certificate_type: <ShamirRecoveryShareCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
+            filter2: FilterKind::Bytes(recipient.as_bytes()),
         }
     }
 
     pub fn sequester_authority_certificate() -> Self {
-        let (filter1, filter2) = sequester_authority_certificate_filters();
-        Self {
+        // No filter is needed as there is a most one authority certificate
+        Self::NoFilter {
             certificate_type: <SequesterAuthorityCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
         }
     }
 
-    pub fn sequester_service_certificate(service_id: SequesterServiceID) -> Self {
-        let (filter1, filter2) = sequester_service_certificate_filters(service_id);
-        Self {
+    pub fn sequester_service_certificate(service_id: &'a SequesterServiceID) -> Self {
+        Self::Filter1 {
             certificate_type: <SequesterServiceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(service_id.as_bytes()),
         }
     }
 
     // Get all sequester service certificates
     pub fn sequester_service_certificates() -> Self {
-        let (filter1, filter2) = sequester_service_certificates_filters();
-        Self {
+        Self::NoFilter {
             certificate_type: <SequesterServiceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
         }
     }
 
-    pub fn sequester_revoked_service_certificate(service_id: SequesterServiceID) -> Self {
-        let (filter1, filter2) = sequester_revoked_service_certificate_filters(service_id);
-        Self {
+    pub fn sequester_revoked_service_certificate(service_id: &'a SequesterServiceID) -> Self {
+        Self::Filter1 {
             certificate_type: <SequesterRevokedServiceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
+            filter1: FilterKind::Bytes(service_id.as_bytes()),
         }
     }
 
     // Get all sequester service certificates
     pub fn sequester_revoked_service_certificates() -> Self {
-        let (filter1, filter2) = sequester_revoked_service_certificates_filters();
-        Self {
+        Self::NoFilter {
             certificate_type: <SequesterRevokedServiceCertificate as StorableCertificate>::TYPE,
-            filter1,
-            filter2,
         }
     }
 }
@@ -723,18 +633,18 @@ impl CertificatesStorage {
     }
 
     /// Note if multiple results are possible, the latest certificate is kept
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'a>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'a>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         self.platform.get_certificate_encrypted(query, up_to).await
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'a>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'a>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
@@ -791,18 +701,18 @@ impl<'a> CertificatesStorageUpdater<'a> {
     }
 
     /// Note if multiple results are possible, the latest certificate is kept
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         self.platform.get_certificate_encrypted(query, up_to).await
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

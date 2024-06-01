@@ -88,7 +88,7 @@ fn dump_load(alice: &Device) {
     let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
 
     let expected_file_manifest = FileManifest {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: now,
         id,
         parent,
@@ -101,14 +101,14 @@ fn dump_load(alice: &Device) {
     };
 
     assert!(expected_file_manifest
-        .verify(&alice.device_id, now, Some(id), Some(0))
+        .verify(alice.device_id, now, Some(id), Some(0))
         .is_ok());
 
     p_assert_eq!(
         FileManifest::verify_and_load(
             &signed,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0),
@@ -121,7 +121,7 @@ fn dump_load(alice: &Device) {
             &signed_encrypted,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0),
@@ -136,7 +136,7 @@ fn dump_load(alice: &Device) {
             &signed_encrypted,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0),
@@ -150,7 +150,7 @@ fn dump_load(alice: &Device) {
         FileManifest::verify_and_load(
             &expected_file_manifest.dump_and_sign(&alice.signing_key),
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0),
@@ -163,7 +163,7 @@ fn dump_load(alice: &Device) {
             &expected_file_manifest.dump_sign_and_encrypt(&alice.signing_key, &alice.local_symkey),
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0),
@@ -225,7 +225,7 @@ fn invalid_load(alice: &Device) {
             &dummy_without_compression,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0)
@@ -239,7 +239,7 @@ fn invalid_load(alice: &Device) {
             &dummy,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0)
@@ -253,7 +253,7 @@ fn invalid_load(alice: &Device) {
             &data,
             &SecretKey::generate(),
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0)
@@ -267,7 +267,7 @@ fn invalid_load(alice: &Device) {
             &data,
             &alice.local_symkey,
             &SigningKey::generate().verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(0)
@@ -281,14 +281,14 @@ fn invalid_load(alice: &Device) {
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
-            &expected_author,
+            expected_author,
             now,
             Some(id),
             Some(0)
         ),
         Err(DataError::UnexpectedAuthor {
-            expected: Box::new(expected_author),
-            got: Some(Box::new(alice.device_id.clone())),
+            expected: expected_author,
+            got: Some(alice.device_id),
         })
     );
 
@@ -298,7 +298,7 @@ fn invalid_load(alice: &Device) {
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             expected_timestamp,
             Some(id),
             Some(0)
@@ -315,7 +315,7 @@ fn invalid_load(alice: &Device) {
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(expected_id),
             Some(0)
@@ -332,7 +332,7 @@ fn invalid_load(alice: &Device) {
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             now,
             Some(id),
             Some(expected_version)
@@ -393,7 +393,7 @@ fn serde_file_manifest_ok(alice: &Device) {
     ));
 
     let expected = FileManifest {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: now,
         id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
@@ -426,7 +426,7 @@ fn serde_file_manifest_ok(alice: &Device) {
         &data,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -442,7 +442,7 @@ fn serde_file_manifest_ok(alice: &Device) {
         &data2,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -485,7 +485,7 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         &data,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -526,7 +526,7 @@ fn serde_folder_manifest(alice: &Device) {
     ));
 
     let expected = FolderManifest {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: now,
         id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
@@ -549,7 +549,7 @@ fn serde_folder_manifest(alice: &Device) {
         &data,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -565,7 +565,7 @@ fn serde_folder_manifest(alice: &Device) {
         &data2,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -600,7 +600,7 @@ fn serde_user_manifest(alice: &Device) {
     ));
 
     let expected = UserManifest {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: now,
         id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
         version: 42,
@@ -612,7 +612,7 @@ fn serde_user_manifest(alice: &Device) {
         &data,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -628,7 +628,7 @@ fn serde_user_manifest(alice: &Device) {
         &data2,
         &key,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         now,
         None,
         None,
@@ -677,11 +677,11 @@ fn file_manifest_verify(
 
     let expected_author = expected_author
         .map(|author| DeviceID::from_str(author).expect("Invalid raw DeviceID"))
-        .unwrap_or_else(|| alice.device_id.to_owned());
+        .unwrap_or_else(|| alice.device_id);
     let expected_timestamp = expected_timestamp.unwrap_or(now);
 
     let manifest = FileManifest {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: now,
         id,
         parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
@@ -696,7 +696,7 @@ fn file_manifest_verify(
     p_assert_eq!(
         manifest
             .verify(
-                &expected_author,
+                expected_author,
                 expected_timestamp,
                 expected_id,
                 expected_version,

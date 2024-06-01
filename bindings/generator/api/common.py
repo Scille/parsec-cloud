@@ -150,14 +150,13 @@ class OrganizationID(StrBasedType):
 
 
 class UserID(StrBasedType):
-    pass
+    custom_from_rs_string = "|s: String| -> Result<libparsec::UserID, _> { libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class DeviceID(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string()) }"
-    custom_to_rs_string = (
-        "|device_id: libparsec::DeviceID| -> Result<_, &'static str> { Ok(device_id.to_string()) }"
-    )
+    custom_from_rs_string = "|s: String| -> Result<libparsec::DeviceID, _> { libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string()) }"
+    custom_to_rs_string = "|x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) }"
 
 
 class DeviceLabel(StrBasedType):

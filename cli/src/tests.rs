@@ -578,7 +578,7 @@ async fn share_workspace(tmp_path: TmpPath) {
 
     load_client_and_run(
         get_default_config_dir(),
-        Some(alice.slughash()),
+        Some(alice.device_id.hex()),
         |client| async move {
             let wid = client
                 .create_workspace("new-workspace".parse().unwrap())
@@ -600,9 +600,9 @@ async fn share_workspace(tmp_path: TmpPath) {
                     "--device",
                     &alice.slughash(),
                     "--workspace-id",
-                    &wid.simple().to_string(),
+                    &wid.hex(),
                     "--user-id",
-                    &bob_id.to_string(),
+                    &bob_id.hex(),
                     "--role",
                     "contributor",
                 ])
@@ -869,7 +869,7 @@ async fn remove_device(tmp_path: TmpPath) {
         .join("config")
         .join("parsec-v3-alpha")
         .join("devices")
-        .join(format!("{}.keys", alice.slughash()));
+        .join(format!("{}.keys", alice.device_id.hex()));
 
     assert!(alice_device_file.exists());
 

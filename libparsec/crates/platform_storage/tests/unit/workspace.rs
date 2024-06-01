@@ -1024,7 +1024,7 @@ async fn non_speculative_init(env: &TestbedEnv) {
 
     let expected = LocalFolderManifest {
         base: FolderManifest {
-            author: alice.device_id.clone(),
+            author: alice.device_id,
             timestamp: workspace_manifest.updated,
             id: realm_id,
             parent: realm_id,

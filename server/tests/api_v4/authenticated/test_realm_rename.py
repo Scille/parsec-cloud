@@ -121,7 +121,7 @@ async def test_authenticated_realm_rename_ok_initial_rename(
         author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"<keys bundle>",
         per_participant_keys_bundle_access={
-            coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
+            coolorg.alice.user_id: b"<alice keys bundle access>",
         },
         realm_key_rotation_certificate=key_rotation_certif.dump_and_sign(coolorg.alice.signing_key),
     )
@@ -141,7 +141,7 @@ async def test_authenticated_realm_rename_ok_initial_rename(
                 organization_id=coolorg.organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=coolorg.alice.device_id.user_id,
+                user_id=coolorg.alice.user_id,
                 role_removed=False,
             )
         )
@@ -228,8 +228,8 @@ async def test_authenticated_realm_rename_bad_key_index(
                 author_verify_key=coolorg.alice.signing_key.verify_key,
                 keys_bundle=b"<keys bundle>",
                 per_participant_keys_bundle_access={
-                    coolorg.alice.device_id.user_id: b"<alice keys bundle access>",
-                    coolorg.bob.device_id.user_id: b"<bob keys bundle access>",
+                    coolorg.alice.user_id: b"<alice keys bundle access>",
+                    coolorg.bob.user_id: b"<bob keys bundle access>",
                 },
                 realm_key_rotation_certificate=key_rotation_certif.dump_and_sign(
                     coolorg.alice.signing_key

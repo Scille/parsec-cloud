@@ -40,7 +40,7 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -58,7 +58,7 @@ async fn ok(env: &TestbedEnv) {
             realm_id,
             realm_key_index,
             file_id,
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -84,7 +84,7 @@ async fn offline(env: &TestbedEnv) {
             VlobID::default(),
             0,
             VlobID::default(),
-            &alice.device_id,
+            alice.device_id,
             0,
             now,
             b"",
@@ -116,7 +116,7 @@ async fn non_existent_author(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -134,7 +134,7 @@ async fn non_existent_author(env: &TestbedEnv) {
             realm_id,
             realm_key_index,
             VlobID::default(),
-            &"alice@dev2".parse().unwrap(),
+            "alice@dev2".parse().unwrap(),
             0,
             now,
             b"",
@@ -173,7 +173,7 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
         "parent_pointing_on_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FolderManifest {
-                author: alice.device_id.clone(),
+                author: alice.device_id,
                 timestamp: now,
                 id: child_id,
                 parent: child_id,
@@ -190,7 +190,7 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -208,7 +208,7 @@ async fn corrupted(#[values("dummy", "parent_pointing_on_itself")] kind: &str, e
             realm_id,
             realm_key_index,
             child_id,
-            &alice.device_id,
+            alice.device_id,
             0,
             now,
             &encrypted,
@@ -259,7 +259,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -278,7 +278,7 @@ async fn author_no_access_to_realm(env: &TestbedEnv) {
             realm_id,
             1,
             file_id,
-            &"bob@dev1".parse().unwrap(),
+            "bob@dev1".parse().unwrap(),
             1,
             vlob_timestamp,
             &vlob,
@@ -332,7 +332,7 @@ async fn revoked(env: &TestbedEnv) {
     };
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, bob.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, bob.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -350,7 +350,7 @@ async fn revoked(env: &TestbedEnv) {
             realm_id,
             realm_key_index,
             file_id,
-            &bob.device_id,
+            bob.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -423,7 +423,7 @@ async fn cannot_write(env: &TestbedEnv) {
     let keys_bundle = env.get_last_realm_keys_bundle(shared_realm_id);
     let keys_bundle_access = {
         let alice_keys_bundle_access =
-            env.get_last_realm_keys_bundle_access_for(shared_realm_id, alice.user_id());
+            env.get_last_realm_keys_bundle_access_for(shared_realm_id, alice.user_id);
         let cleartext_keys_bundle_access = alice
             .private_key
             .decrypt_from_self(&alice_keys_bundle_access)
@@ -449,7 +449,7 @@ async fn cannot_write(env: &TestbedEnv) {
             shared_realm_id,
             shared_realm_key_index,
             file_id,
-            &bob.device_id,
+            bob.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -540,7 +540,7 @@ async fn server_error(
             realm_id,
             realm_key_index,
             file_id,
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -553,14 +553,14 @@ async fn server_error(
 
 #[parsec_test(testbed = "minimal")]
 #[case::invalid_keys_bundle(
-    |env: &TestbedEnv, realm_id, user_id: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+    |env: &TestbedEnv, realm_id, user_id: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
         keys_bundle: Bytes::from_static(b""),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
     |err| p_assert_matches!(err, CertifValidateManifestError::InvalidKeysBundle(_))
 )]
 #[case::invalid_keys_bundle_access(
-    |env: &TestbedEnv, realm_id, _: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+    |env: &TestbedEnv, realm_id, _: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: Bytes::from_static(b""),
     },
@@ -570,7 +570,7 @@ async fn invalid_keys_bundle(
     #[case] rep: impl FnOnce(
         &TestbedEnv,
         VlobID,
-        &UserID,
+        UserID,
     ) -> authenticated_cmds::latest::realm_get_keys_bundle::Rep,
     #[case] assert: impl FnOnce(CertifValidateManifestError),
     env: &TestbedEnv,
@@ -600,7 +600,7 @@ async fn invalid_keys_bundle(
 
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let rep = rep(env, realm_id, alice.user_id());
+    let rep = rep(env, realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| rep,
@@ -613,7 +613,7 @@ async fn invalid_keys_bundle(
             realm_id,
             realm_key_index,
             file_id,
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -666,7 +666,7 @@ async fn invalid_response(env: &TestbedEnv) {
             realm_id,
             realm_key_index,
             file_id,
-            &alice.device_id,
+            alice.device_id,
             1,
             vlob_timestamp,
             &vlob,
@@ -693,7 +693,7 @@ async fn stopped(env: &TestbedEnv) {
             VlobID::default(),
             0,
             VlobID::default(),
-            &alice.device_id,
+            alice.device_id,
             0,
             now,
             b"",

@@ -54,7 +54,7 @@ impl UserCertificate {
         let human_handle = match human_handle {
             Some(human_handle) => libparsec_types::MaybeRedacted::Real(human_handle.0),
             None => libparsec_types::MaybeRedacted::Redacted(
-                libparsec_types::HumanHandle::new_redacted(&user_id.0),
+                libparsec_types::HumanHandle::new_redacted(user_id.0),
             ),
         };
         Ok(Self(Arc::new(libparsec_types::UserCertificate {
@@ -87,7 +87,7 @@ impl UserCertificate {
                 Some(device_id) => CertificateSignerRef::User(&device_id.0),
                 None => CertificateSignerRef::Root,
             },
-            expected_user.map(|x| &x.0),
+            expected_user.map(|x| x.0),
             expected_human_handle.map(|x| &x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
@@ -139,7 +139,7 @@ impl UserCertificate {
     fn author(&self) -> Option<DeviceID> {
         match &self.0.author {
             CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
+            CertificateSignerOwned::User(device_id) => Some(DeviceID(*device_id)),
         }
     }
 
@@ -150,7 +150,7 @@ impl UserCertificate {
 
     #[getter]
     fn user_id(&self) -> UserID {
-        self.0.user_id.clone().into()
+        self.0.user_id.into()
     }
 
     #[getter]
@@ -204,10 +204,11 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl DeviceCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, device_id, device_label, verify_key, algorithm))]
+    #[pyo3(signature = (author, timestamp, user_id, device_id, device_label, verify_key, algorithm))]
     fn new(
         author: Option<DeviceID>,
         timestamp: DateTime,
+        user_id: UserID,
         device_id: DeviceID,
         device_label: Option<DeviceLabel>,
         verify_key: VerifyKey,
@@ -216,7 +217,7 @@ impl DeviceCertificate {
         let device_label = match device_label {
             Some(device_label) => libparsec_types::MaybeRedacted::Real(device_label.0),
             None => libparsec_types::MaybeRedacted::Redacted(
-                libparsec_types::DeviceLabel::new_redacted(device_id.0.device_name()),
+                libparsec_types::DeviceLabel::new_redacted(device_id.0),
             ),
         };
         Ok(Self(Arc::new(libparsec_types::DeviceCertificate {
@@ -225,6 +226,7 @@ impl DeviceCertificate {
                 None => CertificateSignerOwned::Root,
             },
             timestamp: timestamp.0,
+            user_id: user_id.0,
             device_id: device_id.0,
             device_label,
             verify_key: verify_key.0,
@@ -247,7 +249,7 @@ impl DeviceCertificate {
                 Some(device_id) => CertificateSignerRef::User(&device_id.0),
                 None => CertificateSignerRef::Root,
             },
-            expected_device.map(|x| &x.0),
+            expected_device.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -269,6 +271,7 @@ impl DeviceCertificate {
         let libparsec_types::DeviceCertificate {
             author,
             timestamp,
+            user_id,
             device_id,
             verify_key,
             algorithm,
@@ -278,6 +281,7 @@ impl DeviceCertificate {
         let libparsec_types::DeviceCertificate {
             author: redacted_author,
             timestamp: redacted_timestamp,
+            user_id: redacted_user_id,
             device_id: redacted_device_id,
             verify_key: redacted_verify_key,
             algorithm: redacted_algorithm,
@@ -287,6 +291,7 @@ impl DeviceCertificate {
         author == redacted_author
             && timestamp == redacted_timestamp
             && device_id == redacted_device_id
+            && user_id == redacted_user_id
             && verify_key == redacted_verify_key
             && algorithm == redacted_algorithm
     }
@@ -295,7 +300,7 @@ impl DeviceCertificate {
     fn author(&self) -> Option<DeviceID> {
         match &self.0.author {
             CertificateSignerOwned::Root => None,
-            CertificateSignerOwned::User(device_id) => Some(DeviceID(device_id.clone())),
+            CertificateSignerOwned::User(device_id) => Some(DeviceID(*device_id)),
         }
     }
 
@@ -305,8 +310,13 @@ impl DeviceCertificate {
     }
 
     #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id)
+    }
+
+    #[getter]
     fn device_id(&self) -> DeviceID {
-        DeviceID(self.0.device_id.clone())
+        DeviceID(self.0.device_id)
     }
 
     #[getter]
@@ -365,8 +375,8 @@ impl RevokedUserCertificate {
         libparsec_types::RevokedUserCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
-            expected_user.map(|x| &x.0),
+            expected_author.0,
+            expected_user.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -386,7 +396,7 @@ impl RevokedUserCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
     }
 
     #[getter]
@@ -396,7 +406,7 @@ impl RevokedUserCertificate {
 
     #[getter]
     fn user_id(&self) -> UserID {
-        UserID(self.0.user_id.clone())
+        UserID(self.0.user_id)
     }
 }
 
@@ -438,8 +448,8 @@ impl UserUpdateCertificate {
         libparsec_types::UserUpdateCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
-            expected_user.map(|x| &x.0),
+            expected_author.0,
+            expected_user.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -459,7 +469,7 @@ impl UserUpdateCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        self.0.author.clone().into()
+        self.0.author.into()
     }
 
     #[getter]
@@ -469,7 +479,7 @@ impl UserUpdateCertificate {
 
     #[getter]
     fn user_id(&self) -> UserID {
-        self.0.user_id.clone().into()
+        self.0.user_id.into()
     }
 
     #[getter]
@@ -519,9 +529,9 @@ impl RealmRoleCertificate {
         libparsec_types::RealmRoleCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_realm.map(|x| x.0),
-            expected_user.map(|x| &x.0),
+            expected_user.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -539,25 +549,9 @@ impl RealmRoleCertificate {
             .map(|x| Self(Arc::new(x)))
     }
 
-    #[classmethod]
-    fn build_realm_root_certif(
-        _cls: &PyType,
-        author: DeviceID,
-        timestamp: DateTime,
-        realm_id: VlobID,
-    ) -> Self {
-        Self(Arc::new(libparsec_types::RealmRoleCertificate {
-            user_id: author.0.user_id().clone(),
-            author: author.0,
-            timestamp: timestamp.0,
-            realm_id: realm_id.0,
-            role: Some(libparsec_types::RealmRole::Owner),
-        }))
-    }
-
     #[getter]
     fn author(&self) -> DeviceID {
-        self.0.author.clone().into()
+        self.0.author.into()
     }
 
     #[getter]
@@ -572,7 +566,7 @@ impl RealmRoleCertificate {
 
     #[getter]
     fn user_id(&self) -> UserID {
-        self.0.user_id.clone().into()
+        self.0.user_id.into()
     }
 
     #[getter]
@@ -621,7 +615,7 @@ impl RealmNameCertificate {
         libparsec_types::RealmNameCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_realm.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
@@ -642,7 +636,7 @@ impl RealmNameCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
     }
 
     #[getter]
@@ -728,7 +722,7 @@ impl RealmKeyRotationCertificate {
         libparsec_types::RealmKeyRotationCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_realm.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
@@ -749,7 +743,7 @@ impl RealmKeyRotationCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
     }
 
     #[getter]
@@ -882,7 +876,7 @@ impl RealmArchivingCertificate {
         libparsec_types::RealmArchivingCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_realm.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
@@ -903,7 +897,7 @@ impl RealmArchivingCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
     }
 
     #[getter]
@@ -934,10 +928,11 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl ShamirRecoveryBriefCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, threshold, per_recipient_shares))]
+    #[pyo3(signature = (author, timestamp, user_id, threshold, per_recipient_shares))]
     fn new(
         author: DeviceID,
         timestamp: DateTime,
+        user_id: UserID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
     ) -> PyResult<Self> {
@@ -945,6 +940,7 @@ impl ShamirRecoveryBriefCertificate {
             libparsec_types::ShamirRecoveryBriefCertificate {
                 timestamp: timestamp.0,
                 author: author.0,
+                user_id: user_id.0,
                 threshold,
                 per_recipient_shares: per_recipient_shares
                     .into_iter()
@@ -964,7 +960,7 @@ impl ShamirRecoveryBriefCertificate {
         libparsec_types::ShamirRecoveryBriefCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -984,7 +980,12 @@ impl ShamirRecoveryBriefCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
+    }
+
+    #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id)
     }
 
     #[getter]
@@ -1002,7 +1003,7 @@ impl ShamirRecoveryBriefCertificate {
         let d = PyDict::new(py);
 
         for (k, v) in &self.0.per_recipient_shares {
-            let py_k = UserID(k.clone()).into_py(py);
+            let py_k = UserID(*k).into_py(py);
             let py_v = (*v).into_py(py);
             let _ = d.set_item(py_k, py_v);
         }
@@ -1023,10 +1024,11 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl ShamirRecoveryShareCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, recipient, ciphered_share))]
+    #[pyo3(signature = (author, timestamp, user_id, recipient, ciphered_share))]
     fn new(
         author: DeviceID,
         timestamp: DateTime,
+        user_id: UserID,
         recipient: UserID,
         ciphered_share: Vec<u8>,
     ) -> PyResult<Self> {
@@ -1034,6 +1036,7 @@ impl ShamirRecoveryShareCertificate {
             libparsec_types::ShamirRecoveryShareCertificate {
                 timestamp: timestamp.0,
                 author: author.0,
+                user_id: user_id.0,
                 recipient: recipient.0,
                 ciphered_share,
             },
@@ -1051,8 +1054,8 @@ impl ShamirRecoveryShareCertificate {
         libparsec_types::ShamirRecoveryShareCertificate::verify_and_load(
             signed,
             &author_verify_key.0,
-            &expected_author.0,
-            expected_recipient.map(|x| x.0).as_ref(),
+            expected_author.0,
+            expected_recipient.map(|x| x.0),
         )
         .map_err(|e| PyValueError::new_err(e.to_string()))
         .map(|x| Self(Arc::new(x)))
@@ -1072,7 +1075,12 @@ impl ShamirRecoveryShareCertificate {
 
     #[getter]
     fn author(&self) -> DeviceID {
-        DeviceID(self.0.author.clone())
+        DeviceID(self.0.author)
+    }
+
+    #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id)
     }
 
     #[getter]
@@ -1082,7 +1090,7 @@ impl ShamirRecoveryShareCertificate {
 
     #[getter]
     fn recipient(&self) -> UserID {
-        UserID(self.0.recipient.clone())
+        UserID(self.0.recipient)
     }
 
     #[getter]

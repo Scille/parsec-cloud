@@ -128,12 +128,8 @@ async fn realm_initial_key_rotation_idempotent(
         // Given there is no other key rotation, we can create the keys bundle ex nihilo
         let (keys_bundle, keys_bundle_access_cleartext) = {
             let keys_bundle_access_key = SecretKey::generate();
-            let keys_bundle = RealmKeysBundle::new(
-                ops.device.device_id.clone(),
-                timestamp,
-                realm_id,
-                vec![key.clone()],
-            );
+            let keys_bundle =
+                RealmKeysBundle::new(ops.device.device_id, timestamp, realm_id, vec![key.clone()]);
             let keys_bundle_encrypted =
                 keys_bundle_access_key.encrypt(&keys_bundle.dump_and_sign(&ops.device.signing_key));
             let keys_bundle_access_cleartext = RealmKeysBundleAccess {
@@ -170,7 +166,7 @@ async fn realm_initial_key_rotation_idempotent(
                 // dedicated error that will stop this function, so there is no risk
                 // of infinite loop here.
                 per_participant_keys_bundle_access.insert(
-                    ops.device.user_id().to_owned(),
+                    ops.device.user_id,
                     ops.device
                         .public_key()
                         .encrypt_for_self(&keys_bundle_access_cleartext)
@@ -183,7 +179,7 @@ async fn realm_initial_key_rotation_idempotent(
                         continue;
                     }
                     let user = store
-                        .get_user_certificate(UpTo::Current, role.user_id.clone())
+                        .get_user_certificate(UpTo::Current, role.user_id)
                         .await
                         .map_err(|e| match e {
                             GetCertificateError::Internal(e) => {
@@ -195,7 +191,7 @@ async fn realm_initial_key_rotation_idempotent(
                             | GetCertificateError::ExistButTooRecent { .. } => unreachable!(),
                         })?;
                     per_participant_keys_bundle_access.insert(
-                        user.user_id.clone(),
+                        user.user_id,
                         user.public_key
                             .encrypt_for_self(&keys_bundle_access_cleartext)
                             .into(),
