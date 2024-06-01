@@ -81,6 +81,9 @@ pub enum DataError {
     #[error("Broken invariant in file manifest content: {invariant}")]
     FileManifestIntegrity { invariant: &'static str },
 
+    #[error("Broken invariant in folder manifest content: {invariant}")]
+    FolderManifestIntegrity { invariant: &'static str },
+
     #[error("Broken invariant in local file manifest content")]
     LocalFileManifestIntegrity { invariant: &'static str },
 }
