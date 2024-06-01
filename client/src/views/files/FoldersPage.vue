@@ -242,7 +242,7 @@ import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
+import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -400,12 +400,24 @@ onMounted(async () => {
   await defineShortcuts();
 
   eventCbId = await eventDistributor.registerCallback(
-    Events.EntryUpdated | Events.WorkspaceUpdated,
-    async (event: Events, _data?: EventData) => {
+    Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced,
+    async (event: Events, data?: EventData) => {
       if (event === Events.EntryUpdated) {
         await listFolder();
       } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
         await updateWorkspaceInfo(workspaceInfo.value.id);
+      } else if (event === Events.EntrySynced) {
+        const syncedData = data as EntrySyncedData;
+        if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
+          return;
+        }
+        let entry: EntryModel | undefined = files.value.getEntries().find((e) => e.id === syncedData.entryId);
+        if (!entry) {
+          entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
+        }
+        if (entry) {
+          entry.needSync = false;
+        }
       }
     },
   );
