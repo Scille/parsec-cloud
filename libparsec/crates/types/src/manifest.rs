@@ -281,7 +281,15 @@ impl FileManifest {
     /// - not span over multiple block spans
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `LocalFileManifest::check_integrity`.
+    /// Also, the id and parent id should be different so the manifest does not point to itself.
     pub fn check_integrity(&self) -> DataResult<()> {
+        // Check that id and parent are different
+        if self.id == self.parent {
+            return Err(DataError::FileManifestIntegrity {
+                invariant: "id and parent are different",
+            });
+        }
+
         let mut current_offset = 0;
         let mut current_block_index = 0;
 
@@ -379,6 +387,16 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
+    pub fn check_integrity(&self) -> DataResult<()> {
+        // Check that id and parent are different
+        if self.id == self.parent {
+            return Err(DataError::FolderManifestIntegrity {
+                invariant: "id and parent are different",
+            });
+        }
+        Ok(())
+    }
+
     pub fn is_root(&self) -> bool {
         self.id == self.parent
     }
@@ -446,6 +464,13 @@ pub enum ChildManifest {
 }
 
 impl ChildManifest {
+    pub fn check_integrity(&self) -> DataResult<()> {
+        match self {
+            Self::File(file) => file.check_integrity(),
+            Self::Folder(folder) => folder.check_integrity(),
+        }
+    }
+
     pub fn decrypt_verify_and_load(
         encrypted: &[u8],
         key: &SecretKey,

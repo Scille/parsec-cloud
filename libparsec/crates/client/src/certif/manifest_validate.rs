@@ -381,37 +381,18 @@ pub(super) async fn validate_child_manifest(
             )
             .await?;
 
-            // Check FileManifest integrity
-            if let ChildManifest::File(ref manifest) = res {
-                manifest.check_integrity().map_err(|x| {
-                    let what = Box::new(InvalidManifestError::Corrupted {
-                        realm: realm_id,
-                        vlob: vlob_id,
-                        version,
-                        author: author.to_owned(),
-                        timestamp,
-                        error: Box::new(x),
-                    });
-                    CertifValidateManifestError::InvalidManifest(what)
-                })?;
-            }
-
-            // Last check: child manifest's parent should never points to itself
-            let same_id_and_parent = match &res {
-                ChildManifest::File(manifest) => manifest.id == manifest.parent,
-                ChildManifest::Folder(manifest) => manifest.id == manifest.parent,
-            };
-            if same_id_and_parent {
+            // Check manifest integrity
+            res.check_integrity().map_err(|x| {
                 let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
                     version,
                     author: author.to_owned(),
                     timestamp,
-                    error: Box::new(DataError::DataInconsistency),
+                    error: Box::new(x),
                 });
-                return Err(CertifValidateManifestError::InvalidManifest(what));
-            }
+                CertifValidateManifestError::InvalidManifest(what)
+            })?;
 
             Ok(res)
         })

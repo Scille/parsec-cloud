@@ -173,28 +173,6 @@ async fn cannot_decrypt(env: &TestbedEnv) {
 
     let alice = env.local_device("alice@dev1");
 
-    let (encrypted, data_error) = match kind {
-        "dummy" => (b"<dummy data>".to_vec(), DataError::Decryption),
-        "parent_pointing_on_itself" => {
-            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
-            let manifest = FolderManifest {
-                author: alice.device_id.clone(),
-                timestamp: now,
-                id: child_id,
-                parent: child_id,
-                version: 1,
-                created: now,
-                updated: now,
-                children: Default::default(),
-            };
-            (
-                manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key),
-                DataError::Serialization,
-            )
-        }
-        unknown => panic!("Unknown kind {}", unknown),
-    };
-
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
@@ -233,7 +211,7 @@ async fn cannot_decrypt(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn cleartext_corrupted(
-    #[values("dummy", "parent_pointing_on_itself")] kind: &str,
+    #[values("dummy", "file_pointing_to_itself", "folder_pointing_to_itself")] kind: &str,
     env: &TestbedEnv,
 ) {
     let realm_id = env
@@ -255,7 +233,23 @@ async fn cleartext_corrupted(
 
     let encrypted = match kind {
         "dummy" => key.encrypt(b"<dummy data>"),
-        "parent_pointing_on_itself" => {
+        "file_pointing_to_itself" => {
+            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
+            let manifest = FileManifest {
+                author: alice.device_id,
+                timestamp: now,
+                id: child_id,
+                parent: child_id,
+                version: 1,
+                created: now,
+                updated: now,
+                blocks: Default::default(),
+                blocksize: Blocksize::try_from(1024).unwrap(),
+                size: 0,
+            };
+            manifest.dump_sign_and_encrypt(&alice.signing_key, &key)
+        },
+        "folder_pointing_to_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FolderManifest {
                 author: alice.device_id,
@@ -317,7 +311,7 @@ async fn cleartext_corrupted(
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn content_corrupted(
+async fn blocks_corrupted(
     #[values(
         "blocks_not_sorted",
         "blocks_overlapping",
@@ -338,10 +332,11 @@ async fn content_corrupted(
             realm_id
         })
         .await;
-    let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
+    let (realm_last_key_derivation, realm_key_index) = env.get_last_realm_key(realm_id);
 
     let child_id = VlobID::default();
     let parent_id = VlobID::default();
+    let key = realm_last_key_derivation.derive_secret_key_from_uuid(*child_id);
 
     let alice = env.local_device("alice@dev1");
     let blocksize = Blocksize::try_from(1024).unwrap();
@@ -431,12 +426,12 @@ async fn content_corrupted(
         blocksize,
         size: 2 * 1024,
     };
-    let encrypted = manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key);
+    let encrypted = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
 
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -454,7 +449,7 @@ async fn content_corrupted(
             realm_id,
             realm_key_index,
             child_id,
-            &alice.device_id,
+            alice.device_id,
             1,
             now,
             &encrypted,
