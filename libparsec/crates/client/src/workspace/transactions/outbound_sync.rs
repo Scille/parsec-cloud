@@ -661,9 +661,8 @@ async fn do_next_reshape_operation(
         }
     }
 
-    if buf_size < buf.len() {
-        buf.extend_from_slice(&vec![0; buf.len() - buf_size]);
-    }
+    // Sanity check: make sure that the buffer is fully filled
+    assert!(buf.len() == reshape.destination().size() as usize);
 
     // 2) Save the manifest with the new chunk in the storage
 
