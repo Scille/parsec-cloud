@@ -365,9 +365,14 @@ pub fn prepare_resize(
     }
 }
 
-pub(crate) struct ReshapeBlockOperation<'a> {
-    manifest_chunks: &'a mut Vec<Chunk>,
-    reshaped_chunk: Chunk,
+pub(crate) enum ReshapeBlockOperation<'a> {
+    ToReshape {
+        manifest_chunks: &'a mut Vec<Chunk>,
+        reshaped_chunk: Chunk,
+    },
+    ToPromote {
+        chunk: &'a mut Chunk,
+    },
 }
 
 impl ReshapeBlockOperation<'_> {
@@ -377,57 +382,70 @@ impl ReshapeBlockOperation<'_> {
             None
         // Already ready for block promotion, we can keep the chunk as it is
         } else if chunks.len() == 1 && chunks[0].is_aligned_with_raw_data() {
-            let reshaped_chunk = chunks[0].clone();
-            Some(ReshapeBlockOperation {
-                manifest_chunks: chunks,
-                reshaped_chunk,
+            Some(ReshapeBlockOperation::ToPromote {
+                chunk: &mut chunks[0],
             })
         // Reshape those chunks as a single block
         } else {
             let start = chunks[0].start;
             let stop = chunks.last().expect("A block cannot be empty").stop;
             let reshaped_chunk = Chunk::new(start, stop);
-            Some(ReshapeBlockOperation {
+            Some(ReshapeBlockOperation::ToReshape {
                 manifest_chunks: chunks,
                 reshaped_chunk,
             })
         }
     }
     pub fn destination(&self) -> &Chunk {
-        &self.reshaped_chunk
+        match self {
+            ReshapeBlockOperation::ToReshape { reshaped_chunk, .. } => reshaped_chunk,
+            ReshapeBlockOperation::ToPromote { chunk } => chunk,
+        }
     }
 
     pub fn source(&self) -> &[Chunk] {
-        self.manifest_chunks
-    }
-
-    pub fn keep_source_data(&self) -> bool {
-        self.manifest_chunks.len() == 1 && self.manifest_chunks[0].is_aligned_with_raw_data()
+        match self {
+            ReshapeBlockOperation::ToReshape {
+                manifest_chunks, ..
+            } => manifest_chunks,
+            ReshapeBlockOperation::ToPromote { chunk } => std::slice::from_ref(chunk),
+        }
     }
 
     pub fn write_back(&self) -> bool {
-        !self.keep_source_data()
+        matches!(self, ReshapeBlockOperation::ToReshape { .. })
     }
 
     pub fn cleanup_ids(&self) -> HashSet<ChunkID> {
-        if self.keep_source_data() {
-            HashSet::new()
-        } else {
-            // Remove duplicate IDs by returning a HashSet
-            self.manifest_chunks.iter().map(|chunk| chunk.id).collect()
+        match self {
+            ReshapeBlockOperation::ToReshape {
+                manifest_chunks, ..
+            } => {
+                // Remove duplicate IDs by returning a HashSet
+                manifest_chunks.iter().map(|chunk| chunk.id).collect()
+            }
+            ReshapeBlockOperation::ToPromote { .. } => HashSet::new(),
         }
     }
 
     pub fn commit(self, chunk_data: &[u8]) {
-        let ReshapeBlockOperation {
-            manifest_chunks: chunks,
-            mut reshaped_chunk,
-        } = self;
-        chunks.clear();
-        reshaped_chunk
-            .promote_as_block(chunk_data)
-            .expect("chunk is block-compatible");
-        chunks.push(reshaped_chunk);
+        match self {
+            ReshapeBlockOperation::ToPromote { chunk } => {
+                chunk
+                    .promote_as_block(chunk_data)
+                    .expect("chunk is block-compatible");
+            }
+            ReshapeBlockOperation::ToReshape {
+                manifest_chunks,
+                mut reshaped_chunk,
+            } => {
+                manifest_chunks.clear();
+                reshaped_chunk
+                    .promote_as_block(chunk_data)
+                    .expect("chunk is block-compatible");
+                manifest_chunks.push(reshaped_chunk);
+            }
+        }
     }
 }
 
