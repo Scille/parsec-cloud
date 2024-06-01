@@ -127,6 +127,7 @@ export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Pro
     value: {
       keyFilePath: 'dummy',
       organizationId: 'dummy_org',
+      userId: 'dummy_user_id',
       deviceId: deviceInfo.id,
       humanHandle: {
         email: 'dummy_email@email.dum',

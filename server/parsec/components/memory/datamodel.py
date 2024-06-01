@@ -224,7 +224,8 @@ class MemoryInvitationDeletedReason(Enum):
 class MemoryInvitation:
     token: InvitationToken
     type: InvitationType
-    created_by: DeviceID
+    created_by_user_id: UserID
+    created_by_device_id: DeviceID
     # Required for when type=USER
     claimer_email: str | None
     created_on: DateTime
@@ -276,7 +277,8 @@ class MemoryPkiEnrollment:
     submitted_on: DateTime
 
     accepter: DeviceID | None = None
-    submitter_accepted_device: DeviceID | None = None
+    submitter_accepted_user_id: UserID | None = None
+    submitter_accepted_device_id: DeviceID | None = None
 
     enrollment_state: MemoryPkiEnrollmentState = MemoryPkiEnrollmentState.SUBMITTED
     info_accepted: MemoryPkiEnrollmentInfoAccepted | None = None

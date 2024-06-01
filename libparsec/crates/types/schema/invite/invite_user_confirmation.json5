@@ -3,6 +3,10 @@
     "type": "invite_user_confirmation",
     "other_fields": [
         {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
             "name": "device_id",
             "type": "DeviceID"
         },

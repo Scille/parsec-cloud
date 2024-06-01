@@ -111,6 +111,7 @@ fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserP
         initial_profile,
         // cspell:disable-next-line
         organization_addr: "parsec3://alice_dev1.example.com:9999/CoolOrg?no_ssl=true&p=xCC-KXZzLOyMqU7tzwqv1BPNFZNj4PrcnmhXLHeh4X2bvQ".parse().unwrap(),
+        user_id: "alice".parse().unwrap(),
         device_id: "alice@dev1".parse().unwrap(),
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: HumanHandle::new("alice@example.com", "Alicey McAliceFace").unwrap(),

@@ -54,6 +54,7 @@ class DeviceFileType(Enum):
 class AvailableDevice(Structure):
     key_file_path: Path
     organization_id: OrganizationID
+    user_id: UserID
     device_id: DeviceID
     human_handle: HumanHandle
     device_label: DeviceLabel

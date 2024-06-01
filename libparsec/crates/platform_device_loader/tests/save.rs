@@ -98,6 +98,9 @@ async fn testbed(env: &TestbedEnv) {
         builder.bootstrap_organization("alice"); // alice@dev1
     })
     .await;
+
+    // Note the key file must be the device nickname, otherwise the testbed won't
+    // understand which device should be loaded.
     let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
 
     // Sanity check to ensure the key file is the one present in testbed

@@ -227,7 +227,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
     u_certif = UserCertificate(
         author=coolorg.alice.device_id,
         timestamp=t1,
-        user_id=UserID("mike"),
+        user_id=UserID.new(),
         human_handle=HumanHandle(
             email=existing_enrollment.submitter_der_x509_certificate_email, label="Mike"
         ),
@@ -249,7 +249,8 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 
     d_certif = DeviceCertificate(
         author=coolorg.alice.device_id,
-        device_id=DeviceID("mike@dev1"),
+        user_id=u_certif.user_id,
+        device_id=DeviceID.new(),
         timestamp=t1,
         device_label=DeviceLabel("Dev1"),
         verify_key=SigningKey.generate().verify_key,
@@ -259,6 +260,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 
     redacted_device_certificate = DeviceCertificate(
         author=d_certif.author,
+        user_id=u_certif.user_id,
         device_id=d_certif.device_id,
         timestamp=d_certif.timestamp,
         device_label=None,
@@ -273,6 +275,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
         author_verify_key=coolorg.alice.signing_key.verify_key,
         enrollment_id=existing_enrollment.enrollment_id,
         accept_payload=PkiEnrollmentAnswerPayload(
+            user_id=u_certif.user_id,
             device_id=d_certif.device_id,
             human_handle=u_certif.human_handle,
             profile=u_certif.profile,

@@ -13,9 +13,9 @@ use crate::prelude::*;
 #[rstest]
 fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     let user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        user_id: bob.user_id().clone(),
+        user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.clone()),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -37,9 +37,10 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.clone()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
-        device_id: bob.device_id.clone(),
+        user_id: bob.user_id,
+        device_id: bob.device_id,
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
@@ -59,9 +60,9 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let revoked_user_certificate = RevokedUserCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
     };
     p_assert_eq!(
         format!("{:?}", revoked_user_certificate),
@@ -75,9 +76,9 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let user_update_certificate = UserUpdateCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
         new_profile: UserProfile::Outsider,
     };
     p_assert_eq!(
@@ -93,9 +94,9 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_role_certificate = RealmRoleCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         role: Some(RealmRole::Owner),
     };
@@ -113,7 +114,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_name = RealmNameCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         key_index: 42,
@@ -133,7 +134,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_key_rotation = RealmKeyRotationCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
@@ -157,7 +158,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_archiving_certificate = RealmArchivingCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
         configuration: RealmArchivingConfiguration::DeletionPlanned {
@@ -177,11 +178,12 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let shamir_recovery_brief_certificate = ShamirRecoveryBriefCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        user_id: alice.user_id,
         threshold: 3.try_into().unwrap(),
         per_recipient_shares: HashMap::from([
-            ((bob.user_id().to_owned()), 2.try_into().unwrap()),
+            ((bob.user_id), 2.try_into().unwrap()),
             ("carl".parse().unwrap(), 1.try_into().unwrap()),
             ("diana".parse().unwrap(), 1.try_into().unwrap()),
         ]),
@@ -200,9 +202,10 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let shamir_recovery_share_certificate = ShamirRecoveryShareCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
-        recipient: bob.user_id().to_owned(),
+        user_id: alice.user_id,
+        recipient: bob.user_id,
         ciphered_share: b"abcd".to_vec(),
     };
     p_assert_eq!(
@@ -293,9 +296,9 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     ));
 
     let expected = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
         human_handle: MaybeRedacted::Real(bob.human_handle.to_owned()),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -315,7 +318,7 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        &CertificateSignerOwned::User(alice.device_id.clone())
+        CertificateSignerOwned::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -385,10 +388,10 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: bob.user_id().to_owned(),
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id())),
+        user_id: bob.user_id,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(bob.user_id)),
         public_key: bob.public_key(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: bob.profile,
@@ -407,7 +410,7 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let unsecure_certif = UserCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        &CertificateSignerOwned::User(alice.device_id.clone())
+        CertificateSignerOwned::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -460,8 +463,9 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+        user_id: alice.user_id,
         device_id: bob.device_id.to_owned(),
         device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
         verify_key: bob.verify_key(),
@@ -480,7 +484,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        &CertificateSignerOwned::User(alice.device_id.clone())
+        CertificateSignerOwned::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -546,12 +550,11 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id.to_owned()),
+        author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+        user_id: alice.user_id,
         device_id: bob.device_id.to_owned(),
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-            bob.device_id.device_name(),
-        )),
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
         verify_key: bob.verify_key(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
@@ -568,7 +571,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     let unsecure_certif = DeviceCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(
         unsecure_certif.author(),
-        &CertificateSignerOwned::User(alice.device_id.clone())
+        CertificateSignerOwned::User(alice.device_id)
     );
     p_assert_eq!(
         unsecure_certif
@@ -614,13 +617,13 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RevokedUserCertificate {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
     };
 
     let unsecure_certif = RevokedUserCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -635,20 +638,16 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     );
 
     let certif =
-        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
+        RevokedUserCertificate::verify_and_load(&data, &alice.verify_key(), alice.device_id, None)
             .unwrap();
     p_assert_eq!(certif, expected);
 
     // Also test serialization round trip
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let certif2 = RevokedUserCertificate::verify_and_load(
-        &data2,
-        &alice.verify_key(),
-        &alice.device_id,
-        None,
-    )
-    .unwrap();
+    let certif2 =
+        RevokedUserCertificate::verify_and_load(&data2, &alice.verify_key(), alice.device_id, None)
+            .unwrap();
     p_assert_eq!(certif2, expected);
 
     // Test invalid data
@@ -660,7 +659,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
         RevokedUserCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -687,14 +686,14 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserUpdateCertificate {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         new_profile: UserProfile::Outsider,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
     };
 
     let unsecure_certif = UserUpdateCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -709,7 +708,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     );
 
     let certif =
-        UserUpdateCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
+        UserUpdateCertificate::verify_and_load(&data, &alice.verify_key(), alice.device_id, None)
             .unwrap();
     p_assert_eq!(certif, expected);
 
@@ -717,7 +716,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 =
-        UserUpdateCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id, None)
+        UserUpdateCertificate::verify_and_load(&data2, &alice.verify_key(), alice.device_id, None)
             .unwrap();
     p_assert_eq!(certif2, expected);
 
@@ -730,7 +729,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
         UserUpdateCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -760,23 +759,23 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let certif = RealmRoleCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
         None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
         role: Some(RealmRole::Owner),
     };
     p_assert_eq!(certif, expected);
 
     let unsecure_certif = RealmRoleCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id,);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id,);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -796,7 +795,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     let certif2 = RealmRoleCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
         None,
     )
@@ -812,7 +811,7 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
         RealmRoleCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None,
             None
         ),
@@ -841,17 +840,17 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let certif = RealmRoleCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
         None,
     )
     .unwrap();
 
     let expected = RealmRoleCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
-        user_id: bob.user_id().to_owned(),
+        user_id: bob.user_id,
         role: None,
         // role: Some(RealmRole::Owner),
     };
@@ -863,7 +862,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     let certif2 = RealmRoleCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
         None,
     )
@@ -892,14 +891,14 @@ fn serde_realm_archiving_certificate_available(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         configuration: RealmArchivingConfiguration::Available,
     };
 
     let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -916,7 +915,7 @@ fn serde_realm_archiving_certificate_available(alice: &Device) {
     let certif = RealmArchivingCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -928,7 +927,7 @@ fn serde_realm_archiving_certificate_available(alice: &Device) {
     let certif2 = RealmArchivingCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -943,7 +942,7 @@ fn serde_realm_archiving_certificate_available(alice: &Device) {
         RealmArchivingCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -971,14 +970,14 @@ fn serde_realm_archiving_certificate_archived(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         configuration: RealmArchivingConfiguration::Archived,
     };
 
     let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -995,7 +994,7 @@ fn serde_realm_archiving_certificate_archived(alice: &Device) {
     let certif = RealmArchivingCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1007,7 +1006,7 @@ fn serde_realm_archiving_certificate_archived(alice: &Device) {
     let certif2 = RealmArchivingCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1022,7 +1021,7 @@ fn serde_realm_archiving_certificate_archived(alice: &Device) {
         RealmArchivingCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -1051,7 +1050,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         configuration: RealmArchivingConfiguration::DeletionPlanned {
@@ -1060,7 +1059,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     };
 
     let unsecure_certif = RealmArchivingCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -1077,7 +1076,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     let certif = RealmArchivingCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1089,7 +1088,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     let certif2 = RealmArchivingCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1104,7 +1103,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
         RealmArchivingCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -1132,7 +1131,7 @@ fn serde_realm_name_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmNameCertificate {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         key_index: 42,
@@ -1140,7 +1139,7 @@ fn serde_realm_name_certificate(alice: &Device) {
     };
 
     let unsecure_certif = RealmNameCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -1155,7 +1154,7 @@ fn serde_realm_name_certificate(alice: &Device) {
     );
 
     let certif =
-        RealmNameCertificate::verify_and_load(&data, &alice.verify_key(), &alice.device_id, None)
+        RealmNameCertificate::verify_and_load(&data, &alice.verify_key(), alice.device_id, None)
             .unwrap();
     p_assert_eq!(certif, expected);
 
@@ -1163,7 +1162,7 @@ fn serde_realm_name_certificate(alice: &Device) {
     let data2 = expected.dump_and_sign(&alice.signing_key);
     // Note we cannot just compare with `data` due to signature and keys order
     let certif2 =
-        RealmNameCertificate::verify_and_load(&data2, &alice.verify_key(), &alice.device_id, None)
+        RealmNameCertificate::verify_and_load(&data2, &alice.verify_key(), alice.device_id, None)
             .unwrap();
     p_assert_eq!(certif2, expected);
 
@@ -1173,12 +1172,7 @@ fn serde_realm_name_certificate(alice: &Device) {
         Err(DataError::Signature)
     );
     p_assert_matches!(
-        RealmNameCertificate::verify_and_load(
-            b"dummy",
-            &alice.verify_key(),
-            &alice.device_id,
-            None
-        ),
+        RealmNameCertificate::verify_and_load(b"dummy", &alice.verify_key(), alice.device_id, None),
         Err(DataError::Signature)
     );
 }
@@ -1208,7 +1202,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmKeyRotationCertificate {
-        author: alice.device_id.to_owned(),
+        author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         key_index: 42,
@@ -1218,7 +1212,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
     };
 
     let unsecure_certif = RealmKeyRotationCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -1235,7 +1229,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
     let certif = RealmKeyRotationCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1247,7 +1241,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
     let certif2 = RealmKeyRotationCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
         None,
     )
     .unwrap();
@@ -1262,7 +1256,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
         RealmKeyRotationCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -1290,14 +1284,15 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = ShamirRecoveryShareCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
-        recipient: bob.user_id().to_owned(),
+        user_id: alice.user_id,
+        recipient: bob.user_id,
         ciphered_share: b"abcd".to_vec(),
     };
 
     let unsecure_certif = ShamirRecoveryShareCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -1314,8 +1309,8 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let certif = ShamirRecoveryShareCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
-        Some(bob.user_id()),
+        alice.device_id,
+        Some(bob.user_id),
     )
     .unwrap();
     p_assert_eq!(certif, expected);
@@ -1325,8 +1320,8 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let err = ShamirRecoveryShareCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
-        Some(alice.user_id()),
+        alice.device_id,
+        Some(alice.user_id),
     )
     .unwrap_err();
     p_assert_matches!(err, DataError::UnexpectedUserID { .. });
@@ -1336,8 +1331,8 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let err = ShamirRecoveryShareCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &bob.device_id,
-        Some(bob.user_id()),
+        bob.device_id,
+        Some(bob.user_id),
     )
     .unwrap_err();
     p_assert_matches!(err, DataError::UnexpectedAuthor { .. });
@@ -1348,8 +1343,8 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let certif2 = ShamirRecoveryShareCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
-        Some(bob.user_id()),
+        alice.device_id,
+        Some(bob.user_id),
     )
     .unwrap();
     p_assert_eq!(certif2, expected);
@@ -1363,7 +1358,7 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
         ShamirRecoveryShareCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
             None
         ),
         Err(DataError::Signature)
@@ -1391,8 +1386,9 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = ShamirRecoveryBriefCertificate {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        user_id: alice.user_id,
         threshold: 3.try_into().unwrap(),
         per_recipient_shares: HashMap::from([
             ("bob".parse().unwrap(), 2.try_into().unwrap()),
@@ -1402,7 +1398,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     };
 
     let unsecure_certif = ShamirRecoveryBriefCertificate::unsecure_load(data.clone()).unwrap();
-    p_assert_eq!(unsecure_certif.author(), &alice.device_id);
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(
         unsecure_certif
             .verify_signature(&alice.verify_key())
@@ -1419,7 +1415,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     let certif = ShamirRecoveryBriefCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
     )
     .unwrap();
     p_assert_eq!(certif, expected);
@@ -1429,7 +1425,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     let err = ShamirRecoveryBriefCertificate::verify_and_load(
         &data,
         &alice.verify_key(),
-        &"dummy@dummy".parse().unwrap(),
+        DeviceID::default(),
     )
     .unwrap_err();
     p_assert_matches!(err, DataError::UnexpectedAuthor { .. });
@@ -1440,7 +1436,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     let certif2 = ShamirRecoveryBriefCertificate::verify_and_load(
         &data2,
         &alice.verify_key(),
-        &alice.device_id,
+        alice.device_id,
     )
     .unwrap();
     p_assert_eq!(certif2, expected);
@@ -1454,7 +1450,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
         ShamirRecoveryBriefCertificate::verify_and_load(
             b"dummy",
             &alice.verify_key(),
-            &alice.device_id,
+            alice.device_id,
         ),
         Err(DataError::Signature)
     );

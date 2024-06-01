@@ -464,6 +464,7 @@ impl UserClaimInProgress3Ctx {
         let payload = self.0.do_claim(payload).await?;
 
         let InviteUserConfirmation {
+            user_id,
             device_id,
             device_label,
             human_handle,
@@ -482,6 +483,7 @@ impl UserClaimInProgress3Ctx {
             profile,
             human_handle,
             device_label,
+            Some(user_id),
             Some(device_id),
             Some(signing_key),
             Some(private_key),
@@ -522,6 +524,7 @@ impl DeviceClaimInProgress3Ctx {
         let payload = self.0.do_claim(payload).await?;
 
         let InviteDeviceConfirmation {
+            user_id,
             device_id,
             device_label,
             human_handle,
@@ -541,6 +544,7 @@ impl DeviceClaimInProgress3Ctx {
 
         let new_local_device = Arc::new(LocalDevice {
             organization_addr,
+            user_id,
             device_id,
             device_label,
             human_handle,
@@ -601,7 +605,8 @@ impl UserClaimFinalizeCtx {
         Ok(AvailableDevice {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
-            device_id: self.new_local_device.device_id.clone(),
+            user_id: self.new_local_device.user_id,
+            device_id: self.new_local_device.device_id,
             device_label: self.new_local_device.device_label.clone(),
             human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),
@@ -642,7 +647,8 @@ impl DeviceClaimFinalizeCtx {
         Ok(AvailableDevice {
             key_file_path,
             organization_id: self.new_local_device.organization_id().to_owned(),
-            device_id: self.new_local_device.device_id.clone(),
+            user_id: self.new_local_device.user_id,
+            device_id: self.new_local_device.device_id,
             device_label: self.new_local_device.device_label.clone(),
             human_handle: self.new_local_device.human_handle.clone(),
             slug: self.new_local_device.slug(),

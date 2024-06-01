@@ -13,7 +13,7 @@ from uuid import UUID
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
 from parsec.client_context import AuthenticatedClientContext
 from parsec.config import BackendConfig
 from parsec.events import (
@@ -347,8 +347,8 @@ class BaseEventsComponent:
                     realms_changed[event.realm_id] = True
 
         self._event_bus.connect(_collect_realm_changes)
-        outcome = await self._get_registration_info_for_author(
-            organization_id=client_ctx.organization_id, author=client_ctx.device_id
+        outcome = await self._get_registration_info_for_user(
+            organization_id=client_ctx.organization_id, user_id=client_ctx.user_id
         )
         match outcome:
             case (initial_organization_config_event, user_profile, realms):
@@ -410,8 +410,8 @@ class BaseEventsComponent:
 
         return initial_organization_config_event, channel_receiver
 
-    async def _get_registration_info_for_author(
-        self, organization_id: OrganizationID, author: DeviceID
+    async def _get_registration_info_for_user(
+        self, organization_id: OrganizationID, user_id: UserID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
         raise NotImplementedError
 

@@ -28,7 +28,7 @@ async def test_invited_invite_1_claimer_wait_peer_ok(
     async def greeter_step_1(cancel_scope: anyio.CancelScope):
         await backend.invite.conduit_exchange(
             organization_id=coolorg.organization_id,
-            greeter=coolorg.alice.device_id.user_id,
+            greeter=coolorg.alice.user_id,
             token=invitation_token,
             state=ConduitState.STATE_1_WAIT_PEERS,
             payload=greeter_private_key.public_key.encode(),

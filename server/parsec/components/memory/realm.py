@@ -87,14 +87,17 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_device = org.devices[author]
         except KeyError:
             return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
 
         assert author_verify_key == author_device.cooked.verify_key
         match realm_create_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -176,14 +179,17 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_device = org.devices[author]
         except KeyError:
             return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmShareStoreBadOutcome.AUTHOR_REVOKED
 
         assert author_verify_key == author_device.cooked.verify_key
         match realm_share_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -221,7 +227,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         else:
             needed_roles = owner_or_manager
 
-        author_role = realm.get_current_role_for(author.user_id)
+        author_role = realm.get_current_role_for(author_user_id)
         if author_role not in needed_roles:
             return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -308,14 +314,17 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_device = org.devices[author]
         except KeyError:
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
 
         assert author_verify_key == author_device.cooked.verify_key
         match realm_unshare_validate(
             now=now,
-            expected_author=author,
+            expected_author_user_id=author_user_id,
+            expected_author_device_id=author,
             author_verify_key=author_verify_key,
             realm_role_certificate=realm_role_certificate,
         ):
@@ -345,7 +354,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         else:
             needed_roles = owner_or_manager
 
-        author_role = realm.get_current_role_for(author.user_id)
+        author_role = realm.get_current_role_for(author_user_id)
         if author_role not in needed_roles:
             return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -419,7 +428,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_device = org.devices[author]
         except KeyError:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
 
@@ -440,7 +451,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
-        if realm.get_current_role_for(author.user_id) != RealmRole.OWNER:
+        if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
             return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         # We only accept the last key
@@ -466,7 +477,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 organization_id=organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=author.user_id,
+                user_id=author_user_id,
                 role_removed=False,
             )
         )
@@ -502,7 +513,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             author_device = org.devices[author]
         except KeyError:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
 
@@ -523,7 +536,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
 
-        if realm.get_current_role_for(author.user_id) != RealmRole.OWNER:
+        if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
         last_index = len(realm.key_rotations)
@@ -556,7 +569,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                 organization_id=organization_id,
                 timestamp=certif.timestamp,
                 realm_id=certif.realm_id,
-                user_id=author.user_id,
+                user_id=author_user_id,
                 role_removed=False,
             )
         )
@@ -578,9 +591,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmGetKeysBundleBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmGetKeysBundleBadOutcome.AUTHOR_REVOKED
 
@@ -589,7 +606,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmGetKeysBundleBadOutcome.REALM_NOT_FOUND
 
-        if realm.get_current_role_for(author.user_id) is None:
+        if realm.get_current_role_for(author_user_id) is None:
             return RealmGetKeysBundleBadOutcome.AUTHOR_NOT_ALLOWED
 
         # `key_index` starts at 1, but the array starts at 0
@@ -607,7 +624,7 @@ class MemoryRealmComponent(BaseRealmComponent):
             return RealmGetKeysBundleBadOutcome.BAD_KEY_INDEX
 
         try:
-            keys_bundle_access = key_rotation.per_participant_keys_bundle_access[author.user_id]
+            keys_bundle_access = key_rotation.per_participant_keys_bundle_access[author_user_id]
         except KeyError:
             return RealmGetKeysBundleBadOutcome.ACCESS_NOT_AVAILABLE_FOR_AUTHOR
 
@@ -628,9 +645,13 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmGetStatsAsUserBadOutcome.ORGANIZATION_EXPIRED
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return RealmGetStatsAsUserBadOutcome.AUTHOR_NOT_FOUND
-        author_user = org.users[author.user_id]
+        author_user_id = author_device.cooked.user_id
+
+        author_user = org.users[author_user_id]
         if author_user.is_revoked:
             return RealmGetStatsAsUserBadOutcome.AUTHOR_REVOKED
 
@@ -639,7 +660,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         except KeyError:
             return RealmGetStatsAsUserBadOutcome.REALM_NOT_FOUND
 
-        if realm.get_current_role_for(author.user_id) is None:
+        if realm.get_current_role_for(author_user_id) is None:
             return RealmGetStatsAsUserBadOutcome.AUTHOR_NOT_ALLOWED
 
         block_size = 0

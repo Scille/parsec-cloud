@@ -1,52 +1,116 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use indexed_db_futures::{prelude::*, web_sys::DomException};
-use js_sys::{wasm_bindgen::JsValue, Array};
+use js_sys::{wasm_bindgen::JsValue, Array, Uint8Array};
 use serde::{Deserialize, Serialize};
 
 use libparsec_types::prelude::*;
 
+use crate::certificates::{FilterKind, GetCertificateQuery};
 use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
-#[derive(Debug, Default, Serialize, Deserialize, Clone)]
-pub(super) struct CertificateFilter {
-    pub certificate_type: String,
-    pub filter1: Option<String>,
-    pub filter2: Option<String>,
-}
+#[derive(Debug, Clone)]
+pub(super) struct CertificateFilter<'a>(pub GetCertificateQuery<'a>);
 
-impl CertificateFilter {
+impl CertificateFilter<'_> {
     fn index(&self) -> &str {
-        match (&self.filter1, &self.filter2) {
-            (None, None) => Certificate::INDEX_CERTIFICATE_TYPE,
-            (Some(_), None) => Certificate::INDEX_FILTER1,
-            (None, Some(_)) => Certificate::INDEX_FILTER2,
-            (Some(_), Some(_)) => Certificate::INDEX_FILTERS,
+        match &self.0 {
+            GetCertificateQuery::NoFilter { .. } => Certificate::INDEX_CERTIFICATE_TYPE,
+            GetCertificateQuery::Filter1 { .. } => Certificate::INDEX_FILTER1,
+            GetCertificateQuery::Filter2 { .. } => Certificate::INDEX_FILTER2,
+            GetCertificateQuery::BothFilters { .. } => Certificate::INDEX_FILTERS,
+            GetCertificateQuery::Filter1EqFilter2WhereFilter1 { .. }
+            | GetCertificateQuery::Filter1EqFilter1WhereFilter2 { .. }
+            | GetCertificateQuery::Filter2EqFilter1WhereFilter2 { .. }
+            | GetCertificateQuery::Filter2EqFilter2WhereFilter1 { .. } => unreachable!(),
         }
     }
 
     fn to_js_array(&self) -> JsValue {
-        let mut len = 1;
-        if self.filter1.is_some() {
-            len += 1;
-        }
-        if self.filter2.is_some() {
-            len += 1;
-        }
+        match &self.0 {
+            GetCertificateQuery::NoFilter { certificate_type } => {
+                let array = Array::new_with_length(1);
+                array.set(0, JsValue::from(*certificate_type));
 
-        let array = Array::new_with_length(len);
+                array.into()
+            }
+            GetCertificateQuery::Filter1 {
+                certificate_type,
+                filter1,
+            } => {
+                let array = Array::new_with_length(2);
+                array.set(0, JsValue::from(*certificate_type));
 
-        array.set(0, JsValue::from(&self.certificate_type));
-        let mut index = 1;
-        if let Some(filter1) = &self.filter1 {
-            array.set(index, JsValue::from(filter1));
-            index += 1
-        }
-        if let Some(filter2) = &self.filter2 {
-            array.set(index, JsValue::from(filter2));
-        }
+                match filter1 {
+                    FilterKind::Null => (),
+                    FilterKind::Bytes(filter) => {
+                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                    FilterKind::U64(filter) => {
+                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                }
 
-        array.into()
+                array.into()
+            }
+            GetCertificateQuery::Filter2 {
+                certificate_type,
+                filter2,
+            } => {
+                let array = Array::new_with_length(2);
+                array.set(0, JsValue::from(*certificate_type));
+
+                match filter2 {
+                    FilterKind::Null => (),
+                    FilterKind::Bytes(filter) => {
+                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                    FilterKind::U64(filter) => {
+                        array.set(1, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                }
+
+                array.into()
+            }
+            GetCertificateQuery::BothFilters {
+                certificate_type,
+                filter1,
+                filter2,
+            } => {
+                let array = Array::new_with_length(3);
+                array.set(0, JsValue::from(*certificate_type));
+
+                let mut index = 1;
+
+                match filter1 {
+                    FilterKind::Null => (),
+                    FilterKind::Bytes(filter) => {
+                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        index += 1;
+                    }
+                    FilterKind::U64(filter) => {
+                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                        index += 1;
+                    }
+                }
+
+                match filter2 {
+                    FilterKind::Null => (),
+                    FilterKind::Bytes(filter) => {
+                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                    FilterKind::U64(filter) => {
+                        array.set(index, JsValue::from(Uint8Array::from(filter.as_ref())));
+                    }
+                }
+
+                array.into()
+            }
+            GetCertificateQuery::Filter1EqFilter2WhereFilter1 { .. }
+            | GetCertificateQuery::Filter1EqFilter1WhereFilter2 { .. }
+            | GetCertificateQuery::Filter2EqFilter1WhereFilter2 { .. }
+            | GetCertificateQuery::Filter2EqFilter2WhereFilter1 { .. } => unreachable!(),
+        }
     }
 }
 
@@ -55,8 +119,8 @@ pub(super) struct Certificate {
     pub certificate_timestamp: Float,
     pub certificate: Bytes,
     pub certificate_type: String,
-    pub filter1: Option<String>,
-    pub filter2: Option<String>,
+    pub filter1: Option<Bytes>,
+    pub filter2: Option<Bytes>,
 }
 
 impl Certificate {
@@ -107,9 +171,161 @@ impl Certificate {
 
     pub(super) async fn get_values(
         conn: &IdbTransaction<'_>,
-        filter: CertificateFilter,
+        filter: CertificateFilter<'_>,
     ) -> anyhow::Result<Vec<Self>> {
-        super::db::get_values(conn, Self::STORE, filter.index(), filter.to_js_array()).await
+        match &filter.0 {
+            GetCertificateQuery::NoFilter { .. }
+            | GetCertificateQuery::Filter1 { .. }
+            | GetCertificateQuery::Filter2 { .. }
+            | GetCertificateQuery::BothFilters { .. } => {
+                super::db::get_values(conn, Self::STORE, filter.index(), filter.to_js_array()).await
+            }
+
+            GetCertificateQuery::Filter1EqFilter2WhereFilter1 {
+                certificate_type,
+                subquery_certificate_type,
+                filter1,
+            } => {
+                let subquery_filter = CertificateFilter(GetCertificateQuery::Filter1 {
+                    certificate_type: subquery_certificate_type,
+                    filter1: filter1.to_owned(),
+                });
+                let sub_query_certifs: Vec<Self> = super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    subquery_filter.index(),
+                    subquery_filter.to_js_array(),
+                )
+                .await?;
+                let sub_query_filter2_result = match sub_query_certifs.get(0) {
+                    Some(certif) => match &certif.filter2 {
+                        Some(filter2) => FilterKind::Bytes(&filter2),
+                        None => return Ok(vec![]),
+                    },
+                    None => return Ok(vec![]),
+                };
+
+                let main_filter = CertificateFilter(GetCertificateQuery::Filter1 {
+                    certificate_type,
+                    filter1: sub_query_filter2_result,
+                });
+                super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    main_filter.index(),
+                    main_filter.to_js_array(),
+                )
+                .await
+            }
+            GetCertificateQuery::Filter1EqFilter1WhereFilter2 {
+                certificate_type,
+                subquery_certificate_type,
+                filter2,
+            } => {
+                let subquery_filter = CertificateFilter(GetCertificateQuery::Filter2 {
+                    certificate_type: subquery_certificate_type,
+                    filter2: filter2.to_owned(),
+                });
+                let sub_query_certifs: Vec<Self> = super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    subquery_filter.index(),
+                    subquery_filter.to_js_array(),
+                )
+                .await?;
+                let sub_query_filter1_result = match sub_query_certifs.get(0) {
+                    Some(certif) => match &certif.filter1 {
+                        Some(filter1) => FilterKind::Bytes(&filter1),
+                        None => return Ok(vec![]),
+                    },
+                    None => return Ok(vec![]),
+                };
+
+                let main_filter = CertificateFilter(GetCertificateQuery::Filter1 {
+                    certificate_type,
+                    filter1: sub_query_filter1_result,
+                });
+                super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    main_filter.index(),
+                    main_filter.to_js_array(),
+                )
+                .await
+            }
+            GetCertificateQuery::Filter2EqFilter1WhereFilter2 {
+                certificate_type,
+                subquery_certificate_type,
+                filter2,
+            } => {
+                let subquery_filter = CertificateFilter(GetCertificateQuery::Filter2 {
+                    certificate_type: subquery_certificate_type,
+                    filter2: filter2.to_owned(),
+                });
+                let sub_query_certifs: Vec<Self> = super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    subquery_filter.index(),
+                    subquery_filter.to_js_array(),
+                )
+                .await?;
+                let sub_query_filter1_result = match sub_query_certifs.get(0) {
+                    Some(certif) => match &certif.filter1 {
+                        Some(filter1) => FilterKind::Bytes(&filter1),
+                        None => return Ok(vec![]),
+                    },
+                    None => return Ok(vec![]),
+                };
+
+                let main_filter = CertificateFilter(GetCertificateQuery::Filter2 {
+                    certificate_type,
+                    filter2: sub_query_filter1_result,
+                });
+                super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    main_filter.index(),
+                    main_filter.to_js_array(),
+                )
+                .await
+            }
+            GetCertificateQuery::Filter2EqFilter2WhereFilter1 {
+                certificate_type,
+                subquery_certificate_type,
+                filter1,
+            } => {
+                let subquery_filter = CertificateFilter(GetCertificateQuery::Filter1 {
+                    certificate_type: subquery_certificate_type,
+                    filter1: filter1.to_owned(),
+                });
+                let sub_query_certifs: Vec<Self> = super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    subquery_filter.index(),
+                    subquery_filter.to_js_array(),
+                )
+                .await?;
+                let sub_query_filter2_result = match sub_query_certifs.get(0) {
+                    Some(certif) => match &certif.filter2 {
+                        Some(filter2) => FilterKind::Bytes(&filter2),
+                        None => return Ok(vec![]),
+                    },
+                    None => return Ok(vec![]),
+                };
+
+                let main_filter = CertificateFilter(GetCertificateQuery::Filter2 {
+                    certificate_type,
+                    filter2: sub_query_filter2_result,
+                });
+                super::db::get_values(
+                    conn,
+                    Self::STORE,
+                    main_filter.index(),
+                    main_filter.to_js_array(),
+                )
+                .await
+            }
+        }
     }
 
     pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {

@@ -424,10 +424,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # organization table until the end of the transaction. Hence
         # preventing concurrent bootstrap operation from going any further.
         match await self._get(conn, id, for_update=True):
+            case Organization() as organization:
+                pass
             case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
                 return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_NOT_FOUND
-            case organization:
-                pass
 
         if organization.is_expired:
             return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED
@@ -460,10 +460,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             user_certificate,
             redacted_user_certificate,
         ):
-            case UserCreateUserStoreBadOutcome():
-                assert False, "The organization is empty, user creation should always succeed"
             case None:
                 pass
+            case UserCreateUserStoreBadOutcome() as err:
+                assert (
+                    False
+                ), f"The organization is empty, user creation should always succeed (got {err})"
 
         match await self.user._create_device(
             conn,
@@ -473,10 +475,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             redacted_device_certificate,
             first_device=True,
         ):
-            case UserCreateDeviceStoreBadOutcome():
-                assert False, "The organization is empty, device creation should always succeed"
             case None:
                 pass
+            case UserCreateDeviceStoreBadOutcome() as err:
+                assert (
+                    False
+                ), f"The organization is empty, device creation should always succeed (got {err})"
 
         sequester_authority_verify_key_der = (
             None if s_certif is None else s_certif.verify_key_der.dump()
@@ -582,10 +586,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         with_minimum_archiving_period = minimum_archiving_period is not Unset
 
         match await self._get(conn, id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as organization:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return OrganizationUpdateBadOutcome.ORGANIZATION_NOT_FOUND
 
         if (
             not with_is_expired
@@ -628,10 +632,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         items = {}
         for org in await conn.fetch(*_q_get_organizations()):
             match await self._get(conn, OrganizationID(org["id"])):
-                case OrganizationGetBadOutcome():
-                    continue
                 case Organization() as org:
                     pass
+                case OrganizationGetBadOutcome():
+                    continue
 
             if org.organization_id.str.endswith("Template") and skip_templates:
                 continue

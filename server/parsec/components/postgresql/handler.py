@@ -26,7 +26,6 @@ P = ParamSpec("P")
 
 logger = get_logger()
 
-CREATE_MIGRATION_TABLE_ID = 2
 MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
 
 # The duration between 1970 and 2000 in microseconds.
@@ -115,10 +114,8 @@ async def _apply_migrations(
 async def _apply_migration(conn: AsyncpgConnection, migration: MigrationItem) -> None:
     async with conn.transaction():
         await conn.execute(migration.sql)
-        if migration.idx >= CREATE_MIGRATION_TABLE_ID:
-            # The migration table is created in the second migration
-            sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-            await conn.execute(sql, migration.idx, migration.name, datetime.now())
+        sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
+        await conn.execute(sql, migration.idx, migration.name, datetime.now())
 
 
 async def _last_migration_row(conn: AsyncpgConnection) -> int:

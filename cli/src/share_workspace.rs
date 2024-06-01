@@ -19,7 +19,7 @@ pub struct ShareWorkspace {
     #[arg(short, long, value_parser = VlobID::from_hex)]
     workspace_id: VlobID,
     /// Recipient id
-    #[arg(short, long)]
+    #[arg(short, long, value_parser = UserID::from_hex)]
     user_id: UserID,
     /// Role (owner/manager/contributor/reader)
     #[arg(short, long)]

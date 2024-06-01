@@ -53,7 +53,7 @@ async def test_authenticated_realm_unshare_ok(
         )
 
     bob_realms = await backend.realm.get_current_realms_for_user(
-        coolorg.organization_id, coolorg.bob.device_id.user_id
+        coolorg.organization_id, coolorg.bob.user_id
     )
     assert isinstance(bob_realms, dict)
     assert coolorg.wksp1_id not in bob_realms
@@ -114,7 +114,7 @@ async def test_authenticated_realm_unshare_recipient_not_found(
 ) -> None:
     match kind:
         case "user_unknown":
-            bad_recipient = UserID("unknown")
+            bad_recipient = UserID.new()
         case "user_revoked":
             bad_recipient = coolorg.bob.user_id
             # Revoke user Bob
@@ -127,7 +127,7 @@ async def test_authenticated_realm_unshare_recipient_not_found(
                 revoked_user_certificate=RevokedUserCertificate(
                     author=coolorg.alice.device_id,
                     timestamp=revoke_timestamp,
-                    user_id=coolorg.bob.device_id.user_id,
+                    user_id=coolorg.bob.user_id,
                 ).dump_and_sign(coolorg.alice.signing_key),
             )
             assert isinstance(outcome, RevokedUserCertificate)

@@ -31,9 +31,7 @@ pub(super) async fn get_current_self_realms_role(
     // TODO: cache !
     let certifs = ops
         .store
-        .for_read(|store| {
-            store.get_user_realms_roles(UpTo::Current, ops.device.user_id().to_owned())
-        })
+        .for_read(|store| store.get_user_realms_roles(UpTo::Current, ops.device.user_id))
         .await??;
 
     // Replay the history of all changes
@@ -64,7 +62,7 @@ pub(super) async fn get_current_self_realm_role(
     let certif = ops
         .store
         .for_read(|store| {
-            store.get_last_user_realm_role(UpTo::Current, ops.device.user_id().to_owned(), realm_id)
+            store.get_last_user_realm_role(UpTo::Current, ops.device.user_id, realm_id)
         })
         .await??;
 
@@ -111,7 +109,7 @@ pub(super) async fn list_users(
             let mut infos = Vec::with_capacity(certifs.len());
             for certif in certifs {
                 let maybe_revoked = store
-                    .get_revoked_user_certificate(UpTo::Current, certif.user_id.clone())
+                    .get_revoked_user_certificate(UpTo::Current, certif.user_id)
                     .await?;
                 if skip_revoked && maybe_revoked.is_some() {
                     continue;
@@ -122,7 +120,7 @@ pub(super) async fn list_users(
                 };
 
                 let maybe_update = store
-                    .get_last_user_update_certificate(UpTo::Current, certif.user_id.clone())
+                    .get_last_user_update_certificate(UpTo::Current, certif.user_id)
                     .await?;
                 let current_profile = match maybe_update {
                     Some(update) => update.new_profile,
@@ -216,18 +214,32 @@ pub(super) async fn get_user_device(
     ops: &CertifOps,
     device_id: DeviceID,
 ) -> Result<(UserInfo, DeviceInfo), CertifGetUserDeviceError> {
-    let user_id = device_id.user_id().to_owned();
-
     ops.store
         .for_read(|store| async move {
-            let user_certif = match store
-                .get_user_certificate(UpTo::Current, user_id.clone())
-                .await
-            {
+            let device_certif = match store.get_device_certificate(UpTo::Current, device_id).await {
                 Ok(certif) => certif,
-                Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
+                Err(GetCertificateError::ExistButTooRecent { .. }) => {
+                    unreachable!("query up to current")
+                }
                 Err(GetCertificateError::NonExisting) => {
                     return Err(CertifGetUserDeviceError::NonExisting)
+                }
+                Err(GetCertificateError::Internal(err)) => {
+                    return Err(CertifGetUserDeviceError::Internal(err))
+                }
+            };
+
+            let user_id = device_certif.user_id;
+            let user_certif = match store.get_user_certificate(UpTo::Current, user_id).await {
+                Ok(certif) => certif,
+                Err(GetCertificateError::ExistButTooRecent { .. }) => {
+                    unreachable!("query up to current")
+                }
+                Err(GetCertificateError::NonExisting) => {
+                    // This should never happen (unless the database is corrupted) since
+                    // we got the user ID from the device certificate.
+                    // TODO: add a warning ?
+                    return Err(CertifGetUserDeviceError::NonExisting);
                 }
                 Err(GetCertificateError::Internal(err)) => {
                     return Err(CertifGetUserDeviceError::Internal(err))
@@ -240,7 +252,7 @@ pub(super) async fn get_user_device(
             };
 
             let maybe_revoked = store
-                .get_revoked_user_certificate(UpTo::Current, user_id.clone())
+                .get_revoked_user_certificate(UpTo::Current, user_id)
                 .await?;
             let (revoked_on, revoked_by) = match maybe_revoked {
                 None => (None, None),
@@ -248,7 +260,7 @@ pub(super) async fn get_user_device(
             };
 
             let maybe_update = store
-                .get_last_user_update_certificate(UpTo::Current, user_id.clone())
+                .get_last_user_update_certificate(UpTo::Current, user_id)
                 .await?;
             let current_profile = match maybe_update {
                 Some(update) => update.new_profile,
@@ -265,10 +277,7 @@ pub(super) async fn get_user_device(
                 revoked_by,
             };
 
-            let device_certif = match store
-                .get_device_certificate(UpTo::Current, device_id.clone())
-                .await
-            {
+            let device_certif = match store.get_device_certificate(UpTo::Current, device_id).await {
                 Ok(certif) => certif,
                 Err(GetCertificateError::ExistButTooRecent { .. }) => unreachable!(),
                 Err(GetCertificateError::NonExisting) => {
@@ -324,20 +333,17 @@ pub(super) async fn list_workspace_users(
                     }
                     Some(role) => role,
                 };
-                let user_id = role_certif.user_id.clone();
+                let user_id = role_certif.user_id;
 
                 // Ignore revoked users
                 let maybe_revoked = store
-                    .get_revoked_user_certificate(UpTo::Current, user_id.clone())
+                    .get_revoked_user_certificate(UpTo::Current, user_id)
                     .await?;
                 if maybe_revoked.is_some() {
                     continue;
                 }
 
-                let user_certif = match store
-                    .get_user_certificate(UpTo::Current, user_id.clone())
-                    .await
-                {
+                let user_certif = match store.get_user_certificate(UpTo::Current, user_id).await {
                     Ok(user_certif) => user_certif,
                     // We got the user ID from the certificate store, it is guaranteed to
                     // be present !
@@ -349,7 +355,7 @@ pub(super) async fn list_workspace_users(
                 };
 
                 let current_profile = match store
-                    .get_last_user_update_certificate(UpTo::Current, user_id.clone())
+                    .get_last_user_update_certificate(UpTo::Current, user_id)
                     .await?
                 {
                     Some(user_update_certif) => user_update_certif.new_profile,
@@ -358,7 +364,7 @@ pub(super) async fn list_workspace_users(
                 };
 
                 let user_info = WorkspaceUserAccessInfo {
-                    user_id: user_id.clone(),
+                    user_id,
                     human_handle: user_certif.human_handle.as_ref().to_owned(),
                     current_profile,
                     current_role,

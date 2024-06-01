@@ -109,7 +109,7 @@ async fn ok_with_changes(
             if wksp.is_bootstrapped {
                 let keys_bundle = env.get_last_realm_keys_bundle(wksp.id);
                 let keys_bundle_access =
-                    env.get_last_realm_keys_bundle_access_for(wksp.id, &"alice".parse().unwrap());
+                    env.get_last_realm_keys_bundle_access_for(wksp.id, "alice".parse().unwrap());
 
                 let alice = env.local_device("alice@dev1");
 

@@ -72,7 +72,8 @@ fn password_protected_device_file(alice: &Device) {
         .into(),
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-        device_id: alice.device_id.to_owned(),
+        user_id: alice.user_id,
+        device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
         algorithm: DeviceFilePasswordAlgorithm::Argon2id {
@@ -146,7 +147,8 @@ fn keyring_device_file(alice: &Device) {
         .into(),
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-        device_id: alice.device_id.to_owned(),
+        user_id: alice.user_id,
+        device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
         keyring_service: "parsec".into(),
@@ -218,7 +220,8 @@ fn recovery_device_file(alice: &Device) {
         .into(),
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-        device_id: alice.device_id.to_owned(),
+        user_id: alice.user_id,
+        device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
         slug: alice.local_device().slug(),
     };
@@ -310,7 +313,8 @@ fn smartcard_device_file(alice: &Device) {
         .into(),
         human_handle: alice.human_handle.clone(),
         device_label: alice.device_label.clone(),
-        device_id: alice.device_id.clone(),
+        user_id: alice.user_id,
+        device_id: alice.device_id,
         organization_id: alice.organization_id().clone(),
         slug: alice.local_device().slug(),
     });
@@ -334,9 +338,8 @@ fn available_device() {
     let available = AvailableDevice {
         key_file_path: "/foo/bar".into(),
         organization_id: org.clone(),
-        device_id: "9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
-            .parse()
-            .unwrap(),
+        user_id: "9c50250fa3b644e29f77eeefa53dc37d".parse().unwrap(),
+        device_id: "9fd3863a3eb240cfaec64904efe5bed3".parse().unwrap(),
         slug:
             "672d515cbb#CoolOrg#9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
                 .to_owned(),

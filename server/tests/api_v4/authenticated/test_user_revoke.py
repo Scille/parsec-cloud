@@ -7,6 +7,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     RevokedUserCertificate,
+    UserID,
     authenticated_cmds,
 )
 from parsec.events import EventUserRevokedOrFrozen
@@ -22,11 +23,11 @@ async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend:
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.device_id.user_id].revoked_on = now
+    expected_dump[coolorg.bob.user_id].revoked_on = now
 
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.user_revoke(
@@ -37,7 +38,7 @@ async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend:
         await spy.wait_event_occurred(
             EventUserRevokedOrFrozen(
                 organization_id=coolorg.organization_id,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
             )
         )
 
@@ -59,7 +60,7 @@ async def test_disconnect_sse(
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     )
 
     async with coolorg.bob.events_listen() as bob_sse:
@@ -93,11 +94,11 @@ async def test_authenticated_user_revoke_author_not_allowed(
     certif = RevokedUserCertificate(
         author=coolorg.bob.device_id,
         timestamp=now,
-        user_id=coolorg.alice.device_id.user_id,
+        user_id=coolorg.alice.user_id,
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.alice.device_id.user_id].revoked_on = None
+    expected_dump[coolorg.alice.user_id].revoked_on = None
 
     rep = await coolorg.bob.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
@@ -115,7 +116,7 @@ async def test_authenticated_user_revoke_user_not_found(
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=now,
-        user_id=DeviceID("mike@new_dev").user_id,
+        user_id=UserID.new(),
     )
     rep = await coolorg.alice.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
@@ -130,7 +131,7 @@ async def test_authenticated_user_revoke_user_already_revoked(
     certif1 = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=t1,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     )
 
     outcome = await backend.user.revoke_user(
@@ -146,7 +147,7 @@ async def test_authenticated_user_revoke_user_already_revoked(
     certif2 = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=t2,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     )
 
     rep = await coolorg.alice.user_revoke(
@@ -179,13 +180,13 @@ async def test_authenticated_user_revoke_invalid_certificate(
             certif = RevokedUserCertificate(
                 author=coolorg.bob.device_id,
                 timestamp=now,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
             ).dump_and_sign(coolorg.alice.signing_key)
         case "revoked_user_certificate_author_device_mismatch":
             certif = RevokedUserCertificate(
-                author=DeviceID("alice@dev2"),
+                author=DeviceID.test_from_nickname("alice@dev2"),
                 timestamp=now,
-                user_id=coolorg.bob.device_id.user_id,
+                user_id=coolorg.bob.user_id,
             ).dump_and_sign(coolorg.alice.signing_key)
         case unknown:
             assert False, unknown
@@ -202,7 +203,7 @@ async def test_authenticated_user_revoke_timestamp_out_of_ballpark(
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=t0,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     ).dump_and_sign(coolorg.alice.signing_key)
 
     rep = await coolorg.alice.user_revoke(revoked_user_certificate=certif)
@@ -251,7 +252,7 @@ async def test_authenticated_user_revoke_require_greater_timestamp(
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
         timestamp=revoked_user_timestamp,
-        user_id=coolorg.bob.device_id.user_id,
+        user_id=coolorg.bob.user_id,
     ).dump_and_sign(coolorg.alice.signing_key)
 
     rep = await coolorg.alice.user_revoke(revoked_user_certificate=certif)

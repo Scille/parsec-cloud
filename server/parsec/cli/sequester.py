@@ -539,7 +539,7 @@ async def _human_accesses(
             filter_split = user_filter.split()
             filtered_users = []
             for user in users:
-                txt = f"{user.human_handle.str if user.human_handle else ''} {user.user_id.str}".lower()
+                txt = f"{user.human_handle.str if user.human_handle else ''} {user.user_id.hex}".lower()
                 if len([True for sq in filter_split if sq in txt]) == len(filter_split):
                     filtered_users.append(user)
             users = filtered_users

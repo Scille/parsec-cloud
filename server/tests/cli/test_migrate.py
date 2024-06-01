@@ -13,7 +13,7 @@ from parsec.components.postgresql import MigrationItem
 
 @pytest.mark.postgresql
 @pytest.mark.skipif(sys.platform == "win32", reason="Hard to test on Windows...")
-def test_migrate(postgresql_url, unused_tcp_port) -> None:
+def test_migrate(postgresql_url) -> None:
     sql = "SELECT current_database();"  # Dummy migration content
     dry_run_args = f"migrate --db {postgresql_url} --dry-run"
     apply_args = f"migrate --db {postgresql_url}"

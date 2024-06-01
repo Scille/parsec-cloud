@@ -31,7 +31,7 @@ async fn ok(env: &TestbedEnv) {
 async fn content_already_exists(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob").customize(|event| {
-            event.device_id = "alice@dev1".parse().unwrap();
+            event.first_device_id = "alice@dev1".parse().unwrap();
         });
     })
     .await;
@@ -96,7 +96,7 @@ async fn older_than_author(env: &TestbedEnv) {
 async fn invalid_timestamp(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
-            let timestamp = builder.new_user("zack").map(|e| e.timestamp);
+            let timestamp = builder.new_user("mike").map(|e| e.timestamp);
             builder.new_user("bob").customize(|event| {
                 event.timestamp = timestamp;
             });

@@ -108,7 +108,7 @@ fn serde_local_file_manifest_ok(alice: &Device) {
         parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
         updated: now,
         base: FileManifest {
-            author: alice.device_id.to_owned(),
+            author: alice.device_id,
             timestamp: now,
             id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
             version: 42,
@@ -269,7 +269,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
             parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
             base: FolderManifest {
-                author: alice.device_id.to_owned(),
+                author: alice.device_id,
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
@@ -331,7 +331,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
             parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
             base: FolderManifest {
-                author: alice.device_id.to_owned(),
+                author: alice.device_id,
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
@@ -435,7 +435,7 @@ fn serde_local_folder_manifest(
             need_sync: true,
             speculative: false,
             base: UserManifest {
-                author: alice.device_id.to_owned(),
+                author: alice.device_id,
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
@@ -510,7 +510,7 @@ fn serde_local_folder_manifest(
             need_sync: false,
             speculative: false,
             base: UserManifest {
-                author: alice.device_id.to_owned(),
+                author: alice.device_id,
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 42,
@@ -563,7 +563,7 @@ fn serde_local_folder_manifest(
             need_sync: true,
             speculative: true,
             base: UserManifest {
-                author: alice.device_id.to_owned(),
+                author: alice.device_id,
                 timestamp: now,
                 id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
                 version: 0,
@@ -725,7 +725,7 @@ fn chunk_is_block() {
 fn local_file_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = VlobID::default();
-    let lfm = LocalFileManifest::new(author.clone(), parent, timestamp);
+    let lfm = LocalFileManifest::new(author, parent, timestamp);
 
     p_assert_eq!(lfm.base.author, author);
     p_assert_eq!(lfm.base.timestamp, timestamp);
@@ -853,7 +853,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     lfm.updated = t2;
 
     let author = DeviceID::default();
-    let fm = lfm.to_remote(author.clone(), t3).unwrap();
+    let fm = lfm.to_remote(author, t3).unwrap();
 
     p_assert_eq!(fm.author, author);
     p_assert_eq!(fm.timestamp, t3);
@@ -871,7 +871,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
 fn local_folder_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let parent = VlobID::default();
-    let lfm = LocalFolderManifest::new(author.clone(), parent, timestamp);
+    let lfm = LocalFolderManifest::new(author, parent, timestamp);
 
     p_assert_eq!(lfm.base.author, author);
     p_assert_eq!(lfm.base.timestamp, timestamp);
@@ -891,7 +891,7 @@ fn local_folder_manifest_new(timestamp: DateTime) {
 fn local_folder_manifest_new_root(timestamp: DateTime) {
     let author = DeviceID::default();
     let realm = VlobID::default();
-    let lfm = LocalFolderManifest::new_root(author.clone(), realm, timestamp, true);
+    let lfm = LocalFolderManifest::new_root(author, realm, timestamp, true);
 
     p_assert_eq!(lfm.base.author, author);
     p_assert_eq!(lfm.base.timestamp, timestamp);
@@ -1082,7 +1082,7 @@ fn local_folder_manifest_to_remote(timestamp: DateTime) {
     lfm.updated = t2;
 
     let author = DeviceID::default();
-    let fm = lfm.to_remote(author.clone(), timestamp);
+    let fm = lfm.to_remote(author, timestamp);
 
     p_assert_eq!(fm.author, author);
     p_assert_eq!(fm.timestamp, timestamp);
@@ -1207,7 +1207,7 @@ fn local_user_manifest_new(timestamp: DateTime) {
     let author = DeviceID::default();
     let id = VlobID::default();
     let speculative = false;
-    let lum = LocalUserManifest::new(author.clone(), timestamp, Some(id), speculative);
+    let lum = LocalUserManifest::new(author, timestamp, Some(id), speculative);
 
     p_assert_eq!(lum.base.id, id);
     p_assert_eq!(lum.base.author, author);
@@ -1252,7 +1252,7 @@ fn local_user_manifest_to_remote(timestamp: DateTime) {
     };
 
     let author = DeviceID::default();
-    let um = lum.to_remote(author.clone(), timestamp);
+    let um = lum.to_remote(author, timestamp);
 
     p_assert_eq!(um.author, author);
     p_assert_eq!(um.timestamp, timestamp);

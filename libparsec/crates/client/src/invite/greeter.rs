@@ -662,12 +662,13 @@ fn create_new_signed_user_certificates(
     verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (Bytes, Bytes, Bytes, Bytes, InviteUserConfirmation) {
+    let user_id = UserID::default();
     let device_id = DeviceID::default();
 
     let user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        user_id: device_id.user_id().clone(),
+        user_id,
         human_handle: MaybeRedacted::Real(human_handle.clone()),
         public_key: public_key.clone(),
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -675,29 +676,31 @@ fn create_new_signed_user_certificates(
     };
 
     let redacted_user_certificate = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        user_id: device_id.user_id().clone(),
-        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(device_id.user_id())),
+        user_id,
+        human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(user_id)),
         public_key,
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile,
     };
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        device_id: device_id.clone(),
+        user_id,
+        device_id,
         device_label: MaybeRedacted::Real(device_label.clone()),
         verify_key: verify_key.clone(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let redacted_device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        device_id: device_id.clone(),
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
+        user_id,
+        device_id,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
         verify_key,
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
@@ -710,6 +713,7 @@ fn create_new_signed_user_certificates(
         redacted_device_certificate.dump_and_sign(&author.signing_key);
 
     let invite_user_confirmation = InviteUserConfirmation {
+        user_id,
         device_id,
         device_label,
         human_handle,
@@ -732,22 +736,24 @@ fn create_new_signed_device_certificates(
     verify_key: VerifyKey,
     timestamp: DateTime,
 ) -> (Bytes, Bytes, DeviceID) {
-    let device_id = author.user_id().to_device_id(DeviceName::default());
+    let device_id = DeviceID::default();
 
     let device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        device_id: device_id.clone(),
+        user_id: author.user_id,
+        device_id,
         device_label: MaybeRedacted::Real(device_label),
         verify_key: verify_key.clone(),
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
 
     let redacted_device_certificate = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id.clone()),
+        author: CertificateSignerOwned::User(author.device_id),
         timestamp,
-        device_id: device_id.clone(),
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id.device_name())),
+        user_id: author.user_id,
+        device_id,
+        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
         verify_key,
         algorithm: SigningKeyAlgorithm::Ed25519,
     };
@@ -979,6 +985,7 @@ impl DeviceGreetInProgress4Ctx {
         // enrollment process to fix this
 
         let payload = InviteDeviceConfirmation {
+            user_id: self.device.user_id,
             device_id,
             device_label,
             human_handle: self.device.human_handle.clone(),

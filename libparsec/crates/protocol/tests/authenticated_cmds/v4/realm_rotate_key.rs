@@ -18,15 +18,15 @@ pub fn req() {
     // Content:
     //   cmd: "realm_rotate_key"
     //   keys_bundle: hex!("666f6f626172")
-    //   per_participant_keys_bundle_access: {"alice":hex!("666f6f626172")}
+    //   per_participant_keys_bundle_access: {hex!("A11CEC00100000000000000000000000"):hex!("666f6f626172")}
     //   realm_key_rotation_certificate: hex!("666f6f626172")
     //
     let raw = hex!(
-        "85a3636d64b07265616c6d5f726f746174655f6b6579be7265616c6d5f6b65795f726f7461"
-        "74696f6e5f6365727469666963617465c406666f6f626172d9227065725f70617274696369"
-        "70616e745f6b6579735f62756e646c655f61636365737381a5616c696365c406666f6f6261"
-        "72ab6b6579735f62756e646c65c406666f6f626172d9206e657665725f6c65676163795f72"
-        "65656e637279707465645f6f725f6661696cc2"
+        "84a3636d64b07265616c6d5f726f746174655f6b6579be7265616c6d5f6b65795f726f"
+        "746174696f6e5f6365727469666963617465c406666f6f626172d9227065725f706172"
+        "7469636970616e745f6b6579735f62756e646c655f61636365737381d802a11cec0010"
+        "0000000000000000000000c406666f6f626172ab6b6579735f62756e646c65c406666f"
+        "6f626172"
     );
 
     let req = authenticated_cmds::realm_rotate_key::Req {
@@ -38,6 +38,7 @@ pub fn req() {
         realm_key_rotation_certificate: Bytes::from_static(b"foobar"),
     };
 
+    println!("{:?}", req.dump());
     let expected = authenticated_cmds::AnyCmdReq::RealmRotateKey(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();

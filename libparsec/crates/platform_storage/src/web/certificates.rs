@@ -10,7 +10,9 @@ use indexed_db_futures::prelude::IdbTransaction;
 use indexed_db_futures::IdbDatabase;
 use libparsec_types::prelude::*;
 
-use crate::certificates::{GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps, UpTo};
+use crate::certificates::{
+    FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps, UpTo,
+};
 use crate::web::model::{Certificate, CertificateFilter};
 use crate::web::DB_VERSION;
 
@@ -49,20 +51,12 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         super::db::commit(self.transaction).await
     }
 
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
-        let certifs = Certificate::get_values(
-            &self.transaction,
-            CertificateFilter {
-                certificate_type: query.certificate_type.into(),
-                filter1: query.filter1.clone(),
-                filter2: query.filter2.clone(),
-            },
-        )
-        .await?;
+        let certifs = Certificate::get_values(&self.transaction, CertificateFilter(query)).await?;
 
         let maybe_certif_timestamp = certifs
             .get(0)
@@ -107,22 +101,14 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
     ) -> anyhow::Result<Vec<(DateTime, Vec<u8>)>> {
-        let certifs = Certificate::get_values(
-            &self.transaction,
-            CertificateFilter {
-                certificate_type: query.certificate_type.into(),
-                filter1: query.filter1,
-                filter2: query.filter2,
-            },
-        )
-        .await?;
+        let certifs = Certificate::get_values(&self.transaction, CertificateFilter(query)).await?;
 
         let mut certifs = if let UpTo::Timestamp(up_to) = up_to {
             certifs
@@ -162,11 +148,23 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     pub async fn add_certificate(
         &mut self,
         certificate_type: &'static str,
-        filter1: Option<String>,
-        filter2: Option<String>,
+        filter1: FilterKind<'_>,
+        filter2: FilterKind<'_>,
         timestamp: DateTime,
         encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
+        let filter1 = match &filter1 {
+            FilterKind::Bytes(filter) => Some(filter.to_vec().into()),
+            FilterKind::U64(filter) => Some(filter.to_vec().into()),
+            FilterKind::Null => None,
+        };
+
+        let filter2 = match &filter2 {
+            FilterKind::Bytes(filter) => Some(filter.to_vec().into()),
+            FilterKind::U64(filter) => Some(filter.to_vec().into()),
+            FilterKind::Null => None,
+        };
+
         Certificate::insert(
             &Certificate {
                 certificate_timestamp: timestamp.get_f64_with_us_precision(),
@@ -189,11 +187,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         for ty in COMMON_CERTIFICATES {
             common_last_timestamp = Certificate::get_values(
                 &self.transaction,
-                CertificateFilter {
-                    certificate_type: ty.into(),
-                    filter1: None,
-                    filter2: None,
-                },
+                CertificateFilter(GetCertificateQuery::NoFilter {
+                    certificate_type: ty,
+                }),
             )
             .await?
             .into_iter()
@@ -205,11 +201,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         for ty in SEQUESTER_CERTIFICATES {
             sequester_last_timestamp = Certificate::get_values(
                 &self.transaction,
-                CertificateFilter {
-                    certificate_type: ty.into(),
-                    filter1: None,
-                    filter2: None,
-                },
+                CertificateFilter(GetCertificateQuery::NoFilter {
+                    certificate_type: ty,
+                }),
             )
             .await?
             .into_iter()
@@ -222,11 +216,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             realm_certifs.extend(
                 Certificate::get_values(
                     &self.transaction,
-                    CertificateFilter {
-                        certificate_type: ty.into(),
-                        filter1: None,
-                        filter2: None,
-                    },
+                    CertificateFilter(GetCertificateQuery::NoFilter {
+                        certificate_type: ty,
+                    }),
                 )
                 .await?
                 .into_iter()
@@ -246,7 +238,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             .map(|x| {
                 x.0.ok_or(anyhow::anyhow!("Missing realm id"))
                     .and_then(|id| {
-                        VlobID::from_hex(&id)
+                        VlobID::try_from(&*id)
                             .map(|id| (id, x.1))
                             .map_err(|e| anyhow::anyhow!(e))
                     })
@@ -256,11 +248,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         for ty in SHAMIR_RECOVERY_CERTIFICATES {
             shamir_recovery_last_timestamp = Certificate::get_values(
                 &self.transaction,
-                CertificateFilter {
-                    certificate_type: ty.into(),
-                    filter1: None,
-                    filter2: None,
-                },
+                CertificateFilter(GetCertificateQuery::NoFilter {
+                    certificate_type: ty,
+                }),
             )
             .await?
             .into_iter()
@@ -340,9 +330,9 @@ impl PlatformCertificatesStorage {
         update.get_last_timestamps().await
     }
 
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
@@ -350,9 +340,9 @@ impl PlatformCertificatesStorage {
         update.get_certificate_encrypted(query, up_to).await
     }
 
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

@@ -122,7 +122,7 @@ impl StateMachineTest for FileOperationStateMachine {
         let time_provider = TimeProvider::default();
         let device_id = DeviceID::default();
         let mut manifest =
-            LocalFileManifest::new(device_id.clone(), VlobID::default(), time_provider.now());
+            LocalFileManifest::new(device_id, VlobID::default(), time_provider.now());
         manifest.blocksize = Blocksize::try_from(8).unwrap();
         manifest.base.blocksize = manifest.blocksize;
         FileOperationStateMachine {
@@ -167,7 +167,7 @@ impl StateMachineTest for FileOperationStateMachine {
         if state.manifest.is_reshaped() {
             let remote = state
                 .manifest
-                .to_remote(state.device_id.clone(), state.time_provider.now())
+                .to_remote(state.device_id, state.time_provider.now())
                 .unwrap();
             LocalFileManifest::from_remote(remote).assert_integrity();
         }

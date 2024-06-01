@@ -84,7 +84,8 @@ class ConduitListenCtx:
 class UserInvitation:
     TYPE = InvitationType.USER
     claimer_email: str
-    created_by: DeviceID
+    created_by_user_id: UserID
+    created_by_device_id: DeviceID
     created_by_human_handle: HumanHandle
     token: InvitationToken
     created_on: DateTime
@@ -94,7 +95,8 @@ class UserInvitation:
 @dataclass(slots=True)
 class DeviceInvitation:
     TYPE = InvitationType.DEVICE
-    created_by: DeviceID
+    created_by_user_id: UserID
+    created_by_device_id: DeviceID
     created_by_human_handle: HumanHandle
     token: InvitationToken
     created_on: DateTime
@@ -714,14 +716,14 @@ class BaseInviteComponent:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.UserOrDeviceUser(
                         claimer_email=invitation.claimer_email,
-                        greeter_user_id=invitation.created_by.user_id,
+                        greeter_user_id=invitation.created_by_user_id,
                         greeter_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.UserOrDeviceDevice(
-                        greeter_user_id=invitation.created_by.user_id,
+                        greeter_user_id=invitation.created_by_user_id,
                         greeter_human_handle=invitation.created_by_human_handle,
                     )
                 )

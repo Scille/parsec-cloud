@@ -147,19 +147,9 @@ macro_rules! impl_crc_hash_for_str_based {
     };
 }
 
-impl_crc_hash_for_str_based!(UserID);
-impl_crc_hash_for_str_based!(DeviceName);
 impl_crc_hash_for_str_based!(HumanHandle);
 impl_crc_hash_for_str_based!(DeviceLabel);
 impl_crc_hash_for_str_based!(EntryName);
-
-impl CrcHash for DeviceID {
-    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
-        hasher.update(b"DeviceID");
-        self.user_id().crc_hash(hasher);
-        self.device_name().crc_hash(hasher);
-    }
-}
 
 macro_rules! impl_crc_hash_for_uuid_based {
     ($name:ident) => {
@@ -172,6 +162,8 @@ macro_rules! impl_crc_hash_for_uuid_based {
     };
 }
 
+impl_crc_hash_for_uuid_based!(UserID);
+impl_crc_hash_for_uuid_based!(DeviceID);
 impl_crc_hash_for_uuid_based!(VlobID);
 impl_crc_hash_for_uuid_based!(BlockID);
 impl_crc_hash_for_uuid_based!(ChunkID);

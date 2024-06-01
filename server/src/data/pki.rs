@@ -13,7 +13,7 @@ use crate::{
     binding_utils::BytesWrapper,
     crypto::{PublicKey, VerifyKey},
     enumerate::UserProfile,
-    ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle},
+    ids::{DeviceID, DeviceLabel, EnrollmentID, HumanHandle, UserID},
     time::DateTime,
 };
 
@@ -30,6 +30,7 @@ crate::binding_utils::gen_proto!(PkiEnrollmentAnswerPayload, __richcmp__, eq);
 impl PkiEnrollmentAnswerPayload {
     #[new]
     fn new(
+        user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
         human_handle: HumanHandle,
@@ -37,6 +38,7 @@ impl PkiEnrollmentAnswerPayload {
         root_verify_key: VerifyKey,
     ) -> Self {
         Self(libparsec_types::PkiEnrollmentAnswerPayload {
+            user_id: user_id.0,
             device_id: device_id.0,
             device_label: device_label.0,
             human_handle: human_handle.0,
@@ -46,8 +48,13 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[getter]
+    fn user_id(&self) -> UserID {
+        UserID(self.0.user_id)
+    }
+
+    #[getter]
     fn device_id(&self) -> DeviceID {
-        DeviceID(self.0.device_id.clone())
+        DeviceID(self.0.device_id)
     }
 
     #[getter]

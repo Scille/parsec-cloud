@@ -16,7 +16,7 @@ use libparsec_serialization_format::parsec_data;
 use crate::{
     self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
     DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecPkiEnrollmentAddr,
-    PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult, UserProfile,
+    PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult, UserID, UserProfile,
 };
 
 fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
@@ -48,6 +48,7 @@ fn dump<T: Serialize>(data: &T) -> Vec<u8> {
     from = "PkiEnrollmentAnswerPayloadData"
 )]
 pub struct PkiEnrollmentAnswerPayload {
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
     pub human_handle: HumanHandle,
@@ -60,6 +61,7 @@ parsec_data!("schema/pki/pki_enrollment_answer_payload.json5");
 impl_transparent_data_format_conversion!(
     PkiEnrollmentAnswerPayload,
     PkiEnrollmentAnswerPayloadData,
+    user_id,
     device_id,
     device_label,
     human_handle,

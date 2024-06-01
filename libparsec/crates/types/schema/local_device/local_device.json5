@@ -10,6 +10,10 @@
             "type": "ParsecOrganizationAddr"
         },
         {
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
             "name": "device_id",
             "type": "DeviceID"
         },

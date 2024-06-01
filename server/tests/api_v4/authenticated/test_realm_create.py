@@ -196,7 +196,7 @@ async def test_authenticated_realm_create_require_greater_timestamp_due_to_commo
         revoked_user_certificate=RevokedUserCertificate(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,
-            user_id=coolorg.mallory.device_id.user_id,
+            user_id=coolorg.mallory.user_id,
         ).dump_and_sign(coolorg.alice.signing_key),
     )
     assert isinstance(outcome, RevokedUserCertificate)

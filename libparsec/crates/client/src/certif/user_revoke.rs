@@ -62,14 +62,14 @@ pub(super) async fn revoke_user(
     ops: &CertifOps,
     user: UserID,
 ) -> Result<CertificateBasedActionOutcome, CertifRevokeUserError> {
-    if *ops.device.device_id.user_id() == user {
+    if ops.device.user_id == user {
         return Err(CertifRevokeUserError::UserIsSelf);
     }
 
     // Loop is needed to deal with server requiring greater timestamp
     let mut timestamp = ops.device.now();
     loop {
-        let outcome = do_server_command(ops, user.clone(), timestamp).await?;
+        let outcome = do_server_command(ops, user, timestamp).await?;
 
         match outcome {
             DoServerCommandOutcome::Done(outcome) => return Ok(outcome),
@@ -94,14 +94,14 @@ async fn do_server_command(
 ) -> Result<DoServerCommandOutcome, CertifRevokeUserError> {
     // 0) Sanity check to prevent generating and invalid certificate
 
-    if recipient == *ops.device.device_id.user_id() {
+    if recipient == ops.device.user_id {
         return Err(CertifRevokeUserError::UserIsSelf);
     }
 
     // 1) Build role certificate
 
     let signed_certificate = RevokedUserCertificate {
-        author: ops.device.device_id.clone(),
+        author: ops.device.device_id,
         timestamp,
         user_id: recipient,
     }

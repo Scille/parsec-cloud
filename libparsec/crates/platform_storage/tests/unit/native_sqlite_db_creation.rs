@@ -8,15 +8,18 @@ use crate::platform::certificates::PlatformCertificatesStorage;
 
 #[parsec_test]
 async fn should_create_db_file_and_reusable(tmp_path: TmpPath) {
+    let user_id = "alice".parse().unwrap();
+    let device_id = "alice@dev1".parse().unwrap();
     let device = LocalDevice::generate_new_device(
         // cspell:disable-next-line
         "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA"
             .parse()
             .unwrap(),
         UserProfile::Admin,
-        HumanHandle::new_redacted(&"alice".parse().unwrap()),
-        DeviceLabel::new_redacted(&"device".parse().unwrap()),
-        None,
+        HumanHandle::new_redacted(user_id),
+        DeviceLabel::new_redacted(device_id),
+        Some(user_id),
+        Some(device_id),
         None,
         None,
     );

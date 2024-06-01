@@ -27,8 +27,9 @@ fn serde_pki_enrollment_answer_payload() {
         "373982442a157c93c10cb7c4e45400b9cd57ac"
     );
     let expected = PkiEnrollmentAnswerPayload {
-        device_id: DeviceID::from_str("alice@dev1").unwrap(),
-        device_label: DeviceLabel::from_str("My dev1 machine").unwrap(),
+        user_id: "alice".parse().unwrap(),
+        device_id: "alice@dev1".parse().unwrap(),
+        device_label: "My dev1 machine".parse().unwrap(),
         human_handle: ("alice@example.com", "Alicey McAliceFace")
             .try_into()
             .unwrap(),

@@ -90,7 +90,8 @@ class MemoryAuthComponent(BaseAuthComponent):
             device = org.devices[device_id]
         except KeyError:
             return AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
-        user = org.users[device_id.user_id]
+        user_id = device.cooked.user_id
+        user = org.users[user_id]
         if user.is_revoked:
             return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
         if user.is_frozen:
@@ -98,6 +99,7 @@ class MemoryAuthComponent(BaseAuthComponent):
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,
+            user_id=user_id,
             device_id=device_id,
             device_verify_key=device.cooked.verify_key,
             organization_internal_id=0,  # Only used by PostgreSQL implementation

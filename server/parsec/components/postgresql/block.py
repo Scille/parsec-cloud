@@ -11,7 +11,6 @@ from parsec._parsec import (
     DeviceID,
     OrganizationID,
     RealmRole,
-    UserProfile,
     VlobID,
 )
 from parsec.components.block import (
@@ -162,20 +161,20 @@ class PGBlockComponent(BaseBlockComponent):
         block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockReadBadOutcome.AUTHOR_NOT_FOUND
-            case (UserProfile(), DateTime()):
-                pass
 
         row = await conn.fetchrow(
             *_q_get_block_info(organization_id=organization_id.str, block_id=block_id)
@@ -186,13 +185,13 @@ class PGBlockComponent(BaseBlockComponent):
         realm_id = VlobID.from_hex(row["realm_id"])
         key_index = row["key_index"]
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (_, _, last_realm_certificate_timestamp):
+                pass
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 assert False, f"Realm not found: {realm_id}"
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), _, last_realm_certificate_timestamp):
-                pass
 
         outcome = await self.blockstore.read(organization_id, block_id)
         match outcome:
@@ -222,44 +221,40 @@ class PGBlockComponent(BaseBlockComponent):
         block: bytes,
     ) -> None | BadKeyIndex | BlockCreateBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization():
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-            case (UserProfile(), DateTime()):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
-            case RealmCheckBadOutcome.REALM_NOT_FOUND:
-                return BlockCreateBadOutcome.REALM_NOT_FOUND
-            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
-                return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as role,
-                current_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (role, current_key_index, last_realm_certificate_timestamp):
                 if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
                     return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
                 if current_key_index != key_index:
                     return BadKeyIndex(
                         last_realm_certificate_timestamp=last_realm_certificate_timestamp,
                     )
+            case RealmCheckBadOutcome.REALM_NOT_FOUND:
+                return BlockCreateBadOutcome.REALM_NOT_FOUND
+            case RealmCheckBadOutcome.USER_NOT_IN_REALM:
+                return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
 
         # Note it's important to check unicity here because blockstore create
         # overwrite existing data !
         ret = await conn.fetchrow(
             *_q_get_block_write_right_and_unicity(
                 organization_id=organization_id.str,
-                user_id=author.user_id.str,
+                user_id=author_user_id,
                 realm_id=realm_id,
                 block_id=block_id,
             )
@@ -284,10 +279,10 @@ class PGBlockComponent(BaseBlockComponent):
         # cancellation, and blockstore create success can be overwritten by another
         # create in case the postgres transaction was cancelled in step 3)
         match await self.blockstore.create(organization_id, block_id, block):
-            case BlockStoreCreateBadOutcome.STORE_UNAVAILABLE:
-                return BlockCreateBadOutcome.STORE_UNAVAILABLE
             case None:
                 pass
+            case BlockStoreCreateBadOutcome.STORE_UNAVAILABLE:
+                return BlockCreateBadOutcome.STORE_UNAVAILABLE
 
         # 3) Insert the block metadata into the database
         try:
@@ -296,7 +291,7 @@ class PGBlockComponent(BaseBlockComponent):
                     organization_id=organization_id.str,
                     block_id=block_id,
                     realm_id=realm_id,
-                    author=author.str,
+                    author=author,
                     size=len(block),
                     created_on=now,
                     key_index=key_index,
@@ -322,7 +317,7 @@ class PGBlockComponent(BaseBlockComponent):
             block_id = BlockID.from_hex(item["block_id"])
             items[block_id] = (
                 item["created_on"],
-                DeviceID(item["author"]),
+                DeviceID.from_hex(item["author"]),
                 VlobID.from_hex(item["realm_id"]),
                 int(item["key_index"]),
                 int(item["size"]),

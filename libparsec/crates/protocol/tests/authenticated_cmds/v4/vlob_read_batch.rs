@@ -72,26 +72,26 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Rust implementation (Parsec 3.0.0-b.6+dev)
     // Content:
     //   status: "ok"
     //   items: [(
-    //      ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5")),
+    //      ext(2, hex!("2b5f314728134a12863da1ce49c112f6")),
     //      8,
-    //      "alice@dev1",
+    //      ext(2, hex!("de10a11cec0010000000000000000000")),
     //      1,
     //      ext(1, 946774800.0),
-    //      hex!("666f6f626172"),
+    //      b"foobar",
     //   )]
     //   needed_common_certificate_timestamp: ext(1, 946774800.0)
     //   needed_realm_certificate_timestamp: ext(1, 946774800.0)
     //
     let raw = hex!(
-        "84a6737461747573a26f6ba56974656d739196d8022b5f314728134a12863da1ce49c112f6"
-        "08aa616c696365406465763101d70141cc375188000000c406666f6f626172d9236e656564"
-        "65645f636f6d6d6f6e5f63657274696669636174655f74696d657374616d70d70141cc3751"
-        "88000000d9226e65656465645f7265616c6d5f63657274696669636174655f74696d657374"
-        "616d70d70141cc375188000000"
+        "84a6737461747573a26f6ba56974656d739196d8022b5f314728134a12863da1ce49c1"
+        "12f608d802de10a11cec001000000000000000000001d70141cc375188000000c40666"
+        "6f6f626172d9236e65656465645f636f6d6d6f6e5f63657274696669636174655f7469"
+        "6d657374616d70d70141cc375188000000d9226e65656465645f7265616c6d5f636572"
+        "74696669636174655f74696d657374616d70d70141cc375188000000"
     );
 
     let expected = authenticated_cmds::vlob_read_batch::Rep::Ok {

@@ -14,8 +14,8 @@ use libparsec_types::prelude::*;
 
 use super::model::get_certificates_storage_db_relative_path;
 use crate::certificates::{
-    GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps, StorableCertificateTopic,
-    UpTo,
+    FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,
+    StorableCertificateTopic, UpTo,
 };
 
 // `concat!` macro only works with literal (i.e. `concat!("foo", "bar")`), here we support
@@ -115,10 +115,10 @@ const SQL_IN_FRAGMENT_REALM_TYPES: &str = build_sql_in_fragment_types!(RealmTopi
 const SQL_IN_FRAGMENT_SHAMIR_RECOVERY_TYPES: &str =
     build_sql_in_fragment_types!(ShamirRecoveryTopicArcCertificate);
 
-fn build_get_certificate_query(
-    query: &GetCertificateQuery,
+fn build_get_certificate_query<'a: 'b, 'b>(
+    query: &'a GetCertificateQuery<'b>,
     up_to: UpTo,
-) -> sqlx::QueryBuilder<'_, sqlx::Sqlite> {
+) -> sqlx::QueryBuilder<'a, sqlx::Sqlite> {
     let mut builder = sqlx::QueryBuilder::new(
         "\
         SELECT \
@@ -129,16 +129,120 @@ fn build_get_certificate_query(
             certificate_type = \
         ",
     );
-    builder.push_bind(query.certificate_type);
 
-    if let Some(filter1) = &query.filter1 {
-        builder.push(" AND filter1 = ");
-        builder.push_bind(filter1);
+    macro_rules! bind_filter_kind {
+        ($builder: expr, $filter: expr) => {
+            match $filter {
+                FilterKind::Null => $builder.push_bind(Option::<&[u8]>::None),
+                FilterKind::Bytes(filter) => $builder.push_bind(filter),
+                FilterKind::U64(filter) => $builder.push_bind(filter.as_ref()),
+            }
+        };
     }
 
-    if let Some(filter2) = &query.filter2 {
-        builder.push(" AND filter2 = ");
-        builder.push_bind(filter2);
+    match query {
+        GetCertificateQuery::NoFilter { certificate_type } => {
+            builder.push_bind(certificate_type);
+        }
+        GetCertificateQuery::Filter1 {
+            certificate_type,
+            filter1,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(" AND filter1 = ");
+            bind_filter_kind!(builder, filter1);
+        }
+        GetCertificateQuery::Filter2 {
+            certificate_type,
+            filter2,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(" AND filter2 = ");
+            bind_filter_kind!(builder, filter2);
+        }
+        GetCertificateQuery::BothFilters {
+            certificate_type,
+            filter1,
+            filter2,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(" AND filter1 = ");
+            bind_filter_kind!(builder, filter1);
+            builder.push(" AND filter2 = ");
+            bind_filter_kind!(builder, filter2);
+        }
+        GetCertificateQuery::Filter1EqFilter2WhereFilter1 {
+            certificate_type,
+            subquery_certificate_type,
+            filter1,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(
+                " AND filter1 = (\
+                SELECT filter2 \
+                FROM certificates \
+                WHERE certificate_type = \
+            ",
+            );
+            builder.push_bind(subquery_certificate_type);
+            builder.push(" AND filter1 = ");
+            bind_filter_kind!(builder, filter1);
+            builder.push(")");
+        }
+        GetCertificateQuery::Filter1EqFilter1WhereFilter2 {
+            certificate_type,
+            subquery_certificate_type,
+            filter2,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(
+                " AND filter1 = (\
+                SELECT filter1 \
+                FROM certificates \
+                WHERE certificate_type = \
+            ",
+            );
+            builder.push_bind(subquery_certificate_type);
+            builder.push(" AND filter2 = ");
+            bind_filter_kind!(builder, filter2);
+            builder.push(")");
+        }
+        GetCertificateQuery::Filter2EqFilter1WhereFilter2 {
+            certificate_type,
+            subquery_certificate_type,
+            filter2,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(
+                " AND filter2 = (\
+                SELECT filter1 \
+                FROM certificates \
+                WHERE certificate_type = \
+            ",
+            );
+            builder.push_bind(subquery_certificate_type);
+            builder.push(" AND filter2 = ");
+            bind_filter_kind!(builder, filter2);
+            builder.push(")");
+        }
+        GetCertificateQuery::Filter2EqFilter2WhereFilter1 {
+            certificate_type,
+            subquery_certificate_type,
+            filter1,
+        } => {
+            builder.push_bind(certificate_type);
+            builder.push(
+                " AND filter2 = (\
+                SELECT filter2 \
+                FROM certificates \
+                WHERE certificate_type = \
+            ",
+            );
+            builder.push_bind(subquery_certificate_type);
+            builder.push(" AND filter1 = ");
+            bind_filter_kind!(builder, filter1);
+            builder.push(")");
+        }
     }
 
     if let UpTo::Timestamp(up_to) = up_to {
@@ -159,9 +263,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         self.transaction.commit().await.map_err(|e| e.into())
     }
 
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // Handling `up_to` with a timestamp is a bit tricky:
@@ -240,9 +344,9 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,
@@ -299,12 +403,12 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     pub async fn add_certificate(
         &mut self,
         certificate_type: &'static str,
-        filter1: Option<String>,
-        filter2: Option<String>,
+        filter1: FilterKind<'_>,
+        filter2: FilterKind<'_>,
         timestamp: DateTime,
         encrypted: Vec<u8>,
     ) -> anyhow::Result<()> {
-        sqlx::query(
+        let builder = sqlx::query(
             "INSERT INTO certificates( \
                 certificate_timestamp, \
                 certificate, \
@@ -323,13 +427,25 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         )
         .bind(timestamp.get_f64_with_us_precision())
         .bind(&encrypted)
-        .bind(certificate_type)
-        .bind(filter1)
-        .bind(filter2)
-        .execute(&mut *self.transaction)
-        .await
-        .map(|_| ())
-        .map_err(|err| err.into())
+        .bind(certificate_type);
+
+        let builder = match &filter1 {
+            FilterKind::Null => builder.bind(Option::<&[u8]>::None),
+            FilterKind::Bytes(filter) => builder.bind(filter),
+            FilterKind::U64(filter) => builder.bind(filter.as_ref()),
+        };
+
+        let builder = match &filter2 {
+            FilterKind::Null => builder.bind(Option::<&[u8]>::None),
+            FilterKind::Bytes(filter) => builder.bind(filter),
+            FilterKind::U64(filter) => builder.bind(filter.as_ref()),
+        };
+
+        builder
+            .execute(&mut *self.transaction)
+            .await
+            .map(|_| ())
+            .map_err(|err| err.into())
     }
 
     pub async fn get_last_timestamps(&mut self) -> anyhow::Result<PerTopicLastTimestamps> {
@@ -396,8 +512,8 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         for row in rows {
             let raw_dt = row.try_get::<f64, _>(0)?;
             let timestamp = DateTime::from_f64_with_us_precision(raw_dt);
-            let raw_realm_id = row.try_get::<&str, _>(1)?;
-            let realm_id = VlobID::from_hex(raw_realm_id).map_err(|err| anyhow::anyhow!(err))?;
+            let raw_realm_id = row.try_get::<&[u8], _>(1)?;
+            let realm_id = VlobID::try_from(raw_realm_id).map_err(|err| anyhow::anyhow!(err))?;
             per_realm_last_timestamps.insert(realm_id, timestamp);
         }
 
@@ -560,9 +676,9 @@ impl PlatformCertificatesStorage {
         update.get_last_timestamps().await
     }
 
-    pub async fn get_certificate_encrypted(
+    pub async fn get_certificate_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
     ) -> Result<(DateTime, Vec<u8>), GetCertificateError> {
         // TODO: transaction shouldn't be needed here (but it's currently easier to implement this way)
@@ -570,9 +686,9 @@ impl PlatformCertificatesStorage {
         update.get_certificate_encrypted(query, up_to).await
     }
 
-    pub async fn get_multiple_certificates_encrypted(
+    pub async fn get_multiple_certificates_encrypted<'b>(
         &mut self,
-        query: GetCertificateQuery,
+        query: GetCertificateQuery<'b>,
         up_to: UpTo,
         offset: Option<u32>,
         limit: Option<u32>,

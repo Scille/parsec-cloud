@@ -159,6 +159,7 @@ impl AsyncStateMachineTest for FileTransactionStateMachine {
             None,
             None,
             None,
+            None,
         );
 
         let realm_id = VlobID::default();

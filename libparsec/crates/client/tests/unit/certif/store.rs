@@ -11,15 +11,15 @@ use super::utils::certificates_store_factory;
 #[parsec_test(testbed = "minimal")]
 async fn add_user_certificate(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let alice_user_id = alice.user_id();
+    let alice_user_id = alice.user_id;
     let store = certificates_store_factory(env, &alice).await;
 
     let (alice_certif, alice_signed) = env.get_user_certificate("alice");
 
     macro_rules! store_get_certif {
         ($store:ident) => {{
-            let alice_user_id = alice_user_id.clone();
-            $store.for_read(|store| async move {
+            let alice_user_id = alice_user_id;
+            $store.for_read(move |store| async move {
                 store
                     .get_user_certificate(UpTo::Current, alice_user_id)
                     .await
@@ -67,15 +67,15 @@ async fn add_user_certificate(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn add_device_certificate(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let alice_device_id = alice.device_id.clone();
+    let alice_device_id = alice.device_id;
     let store = certificates_store_factory(env, &alice).await;
 
     let (alice_dev1_certif, alice_dev1_signed) = env.get_device_certificate("alice@dev1");
 
     macro_rules! store_get_certif {
         ($store:ident) => {{
-            let alice_device_id = alice_device_id.clone();
-            $store.for_read(|store| async move {
+            let alice_device_id = alice_device_id;
+            $store.for_read(move |store| async move {
                 store
                     .get_device_certificate(UpTo::Current, alice_device_id)
                     .await
@@ -131,15 +131,15 @@ async fn add_user_update_certificate(env: &TestbedEnv) {
     .await;
 
     let alice = env.local_device("alice@dev1");
-    let alice_user_id = alice.user_id();
+    let alice_user_id = alice.user_id;
     let store = certificates_store_factory(env, &alice).await;
 
     let (alice_update_certif, alice_update_signed) = env.get_last_user_update_certificate("alice");
 
     macro_rules! store_get_certif {
         ($store:ident) => {{
-            let alice_user_id = alice_user_id.clone();
-            $store.for_read(|store| async move {
+            let alice_user_id = alice_user_id;
+            $store.for_read(move |store| async move {
                 store
                     .get_last_user_update_certificate(UpTo::Current, alice_user_id)
                     .await
@@ -200,8 +200,8 @@ async fn add_revoked_user_certificate(env: &TestbedEnv) {
 
     macro_rules! store_get_certif {
         ($store:ident) => {{
-            let bob_user_id = bob_user_id.clone();
-            $store.for_read(|store| async move {
+            let bob_user_id = bob_user_id;
+            $store.for_read(move |store| async move {
                 store
                     .get_revoked_user_certificate(UpTo::Current, bob_user_id)
                     .await

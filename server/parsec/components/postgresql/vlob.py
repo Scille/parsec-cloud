@@ -11,7 +11,6 @@ from parsec._parsec import (
     OrganizationID,
     RealmRole,
     SequesterServiceID,
-    UserProfile,
     VlobID,
 )
 from parsec.ballpark import (
@@ -32,7 +31,7 @@ from parsec.components.postgresql.utils import (
     q_realm_internal_id,
     transaction,
 )
-from parsec.components.realm import BadKeyIndex, KeyIndex, RealmCheckBadOutcome
+from parsec.components.realm import BadKeyIndex, RealmCheckBadOutcome
 from parsec.components.user import CheckDeviceBadOutcome
 from parsec.components.vlob import (
     BaseVlobComponent,
@@ -253,33 +252,29 @@ class PGVlobComponent(BaseVlobComponent):
         | SequesterInconsistency
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, last_common_certificate_timestamp):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobCreateBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (role, realm_key_index, last_realm_certificate_timestamp):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobCreateBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as role,
-                KeyIndex() as realm_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
-                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
-                    return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
 
         # We only accept the last key
         if realm_key_index != key_index:
@@ -314,7 +309,7 @@ class PGVlobComponent(BaseVlobComponent):
                 *_q_insert_vlob(
                     organization_id=organization_id.str,
                     realm_id=realm_id,
-                    author=author.str,
+                    author=author,
                     key_index=key_index,
                     vlob_id=vlob_id,
                     blob=blob,
@@ -368,39 +363,35 @@ class PGVlobComponent(BaseVlobComponent):
         | SequesterInconsistency
     ):
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, last_common_certificate_timestamp):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobUpdateBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
-                pass
 
         match await self._get_vlob_info(conn, organization_id, vlob_id):
+            case (realm_id, current_version):
+                pass
             case None:
                 return VlobUpdateBadOutcome.VLOB_NOT_FOUND
-            case (VlobID() as realm_id, int() as current_version):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (role, realm_key_index, last_realm_certificate_timestamp):
+                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                    return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 assert False, "Should not happen"
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
-            case (
-                RealmRole() as role,
-                KeyIndex() as realm_key_index,
-                DateTime() as last_realm_certificate_timestamp,
-            ):
-                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
-                    return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
 
         # We only accept the last key
         if realm_key_index != key_index:
@@ -431,7 +422,7 @@ class PGVlobComponent(BaseVlobComponent):
             *_q_insert_vlob(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
-                author=author.str,
+                author=author,
                 key_index=key_index,
                 vlob_id=vlob_id,
                 blob=blob,
@@ -468,30 +459,30 @@ class PGVlobComponent(BaseVlobComponent):
         checkpoint: int,
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobPollChangesAsUserBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
             return VlobPollChangesAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, _):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime()):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (_, _, _):
+                pass
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobPollChangesAsUserBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobPollChangesAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), KeyIndex(), DateTime()):
-                pass
 
         rows = await conn.fetch(
             *_q_poll_changes(
@@ -523,30 +514,30 @@ class PGVlobComponent(BaseVlobComponent):
         at: DateTime | None,
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, last_common_certificate_timestamp):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (_, _, last_realm_certificate_timestamp):
+                pass
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), KeyIndex(), DateTime() as last_realm_certificate_timestamp):
-                pass
 
         output = []
         for vlob_id in vlobs:
@@ -568,7 +559,7 @@ class PGVlobComponent(BaseVlobComponent):
             if row is None:
                 continue
             key_index = row["key_index"]
-            vlob_author = DeviceID(row["author"])
+            vlob_author = DeviceID.from_hex(row["author"])
             version = row["version"]
             created_on = row["created_on"]
             blob = row["blob"]
@@ -600,30 +591,30 @@ class PGVlobComponent(BaseVlobComponent):
         items: list[tuple[VlobID, int]],
     ) -> VlobReadResult | VlobReadAsUserBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return VlobReadAsUserBadOutcome.ORGANIZATION_NOT_FOUND
         if org.is_expired:
             return VlobReadAsUserBadOutcome.ORGANIZATION_EXPIRED
 
         match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, _, last_common_certificate_timestamp):
+                pass
             case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return VlobReadAsUserBadOutcome.AUTHOR_REVOKED
-            case (UserProfile(), DateTime() as last_common_certificate_timestamp):
-                pass
 
-        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author):
+        match await self.realm._check_realm_topic(conn, organization_id, realm_id, author_user_id):
+            case (_, _, last_realm_certificate_timestamp):
+                pass
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return VlobReadAsUserBadOutcome.REALM_NOT_FOUND
             case RealmCheckBadOutcome.USER_NOT_IN_REALM:
                 return VlobReadAsUserBadOutcome.AUTHOR_NOT_ALLOWED
-            case (RealmRole(), KeyIndex(), DateTime() as last_realm_certificate_timestamp):
-                pass
 
         output = []
         for vlob_id, vlob_version in items:
@@ -639,7 +630,7 @@ class PGVlobComponent(BaseVlobComponent):
             if row is None:
                 continue
             key_index = row["key_index"]
-            vlob_author = DeviceID(row["author"])
+            vlob_author = DeviceID.from_hex(row["author"])
             version = row["version"]
             created_on = row["created_on"]
             blob = row["blob"]
@@ -670,11 +661,12 @@ class PGVlobComponent(BaseVlobComponent):
         for row in rows:
             vlob_id = VlobID.from_hex(row["vlob_id"])
             realm_id = VlobID.from_hex(row["realm_id"])
+            author = DeviceID.from_hex(row["author"])
             if vlob_id not in result:
                 result[vlob_id] = []
             result[vlob_id].append(
                 (
-                    DeviceID(row["author"]),
+                    author,
                     row["created_on"],
                     realm_id,
                     row["blob"],

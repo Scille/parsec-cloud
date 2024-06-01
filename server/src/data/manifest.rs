@@ -191,7 +191,7 @@ impl FileManifest {
             encrypted,
             &key.0,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_timestamp.0,
             expected_id.map(|id| id.0),
             expected_version,
@@ -255,7 +255,7 @@ impl FileManifest {
 
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.author.clone()))
+        Ok(DeviceID(self.0.author))
     }
 
     #[getter]
@@ -385,7 +385,7 @@ impl FolderManifest {
             encrypted,
             &key.0,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_timestamp.0,
             expected_id.map(|id| id.0),
             expected_version,
@@ -440,7 +440,7 @@ impl FolderManifest {
 
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.author.clone()))
+        Ok(DeviceID(self.0.author))
     }
 
     #[getter]
@@ -554,7 +554,7 @@ impl UserManifest {
             encrypted,
             &key.0,
             &author_verify_key.0,
-            &expected_author.0,
+            expected_author.0,
             expected_timestamp.0,
             expected_id.map(|id| id.0),
             expected_version,
@@ -601,7 +601,7 @@ impl UserManifest {
 
     #[getter]
     fn author(&self) -> PyResult<DeviceID> {
-        Ok(DeviceID(self.0.author.clone()))
+        Ok(DeviceID(self.0.author))
     }
 
     #[getter]
@@ -646,7 +646,7 @@ pub(crate) fn child_manifest_decrypt_verify_and_load(
         encrypted,
         &key.0,
         &author_verify_key.0,
-        &expected_author.0,
+        expected_author.0,
         expected_timestamp.0,
         expected_id.map(|id| id.0),
         expected_version,
@@ -668,7 +668,7 @@ pub(crate) fn child_manifest_verify_and_load(
     ChildManifest::verify_and_load(
         signed,
         &author_verify_key.0,
-        &expected_author.0,
+        expected_author.0,
         expected_timestamp.0,
         expected_id.map(|id| id.0),
         expected_version,

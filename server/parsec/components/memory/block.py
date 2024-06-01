@@ -33,8 +33,11 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             return BlockReadBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if author.user_id not in org.users:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return BlockReadBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
 
         try:
             block_info = org.blocks[block_id]
@@ -44,7 +47,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         realm = org.realms.get(block_info.realm_id)
         assert realm is not None  # Sanity check, this consistency is enforced by the database
 
-        current_role = realm.get_current_role_for(author.user_id)
+        current_role = realm.get_current_role_for(author_user_id)
         if current_role is None:
             return BlockReadBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -78,15 +81,18 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
 
-        if author not in org.devices:
+        try:
+            author_device = org.devices[author]
+        except KeyError:
             return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
 
         try:
             realm = org.realms[realm_id]
         except KeyError:
             return BlockCreateBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author.user_id):
+        match realm.get_current_role_for(author_user_id):
             case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
                 pass
             case None | RealmRole.READER:

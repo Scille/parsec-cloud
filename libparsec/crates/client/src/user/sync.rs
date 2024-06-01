@@ -497,7 +497,7 @@ async fn fetch_last_remote_user_manifest(
             ops.certificates_ops.validate_user_manifest(
                 *needed_realm_certificate_timestamp,
                 *needed_common_certificate_timestamp,
-                author,
+                *author,
                 *version,
                 *timestamp,
                 blob,
@@ -563,7 +563,7 @@ async fn fetch_old_remote_user_manifest(
             ops.certificates_ops.validate_user_manifest(
                 needed_realm_certificate_timestamp,
                 needed_common_certificate_timestamp,
-                author,
+                *author,
                 *version,
                 *timestamp,
                 blob,

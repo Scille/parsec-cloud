@@ -79,9 +79,13 @@ async fn create_realm_idempotent(
 ) -> Result<CertificateBasedActionOutcome, CertifEnsureRealmCreatedError> {
     let mut timestamp = ops.device.now();
     loop {
-        let certif =
-            RealmRoleCertificate::new_root(ops.device.device_id.to_owned(), timestamp, realm_id)
-                .dump_and_sign(&ops.device.signing_key);
+        let certif = RealmRoleCertificate::new_root(
+            ops.device.user_id,
+            ops.device.device_id,
+            timestamp,
+            realm_id,
+        )
+        .dump_and_sign(&ops.device.signing_key);
 
         use authenticated_cmds::latest::realm_create::{Rep, Req};
 

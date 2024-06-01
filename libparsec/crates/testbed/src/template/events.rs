@@ -9,6 +9,7 @@ use libparsec_types::prelude::*;
 use serde_with::serde_as;
 
 use super::crc_hash::CrcHash;
+use super::utils::user_id_from_device_id;
 use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
 
 #[derive(Default)]
@@ -450,9 +451,10 @@ pub struct TestbedEventBootstrapOrganization {
     pub timestamp: DateTime,
     pub root_signing_key: SigningKey,
     pub sequester_authority: Option<TestbedEventBootstrapOrganizationSequesterAuthority>,
-    pub first_user_device_id: DeviceID,
+    pub first_user_id: UserID,
     pub first_user_human_handle: HumanHandle,
     pub first_user_private_key: PrivateKey,
+    pub first_user_first_device_id: DeviceID,
     pub first_user_first_device_label: DeviceLabel,
     pub first_user_first_device_signing_key: SigningKey,
     pub first_user_user_realm_id: VlobID,
@@ -473,7 +475,7 @@ impl std::fmt::Debug for TestbedEventBootstrapOrganization {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         f.debug_struct("TestbedEventBootstrapOrganization")
             .field("timestamp", &self.timestamp)
-            .field("first_user", &self.first_user_device_id)
+            .field("first_user", &self.first_user_first_device_id)
             .field("sequestered", &self.sequester_authority.is_some())
             .finish()
     }
@@ -490,9 +492,10 @@ impl CrcHash for TestbedEventBootstrapOrganization {
             sequester_authority.signing_key.crc_hash(state);
             sequester_authority.verify_key.crc_hash(state);
         }
-        self.first_user_device_id.crc_hash(state);
+        self.first_user_id.crc_hash(state);
         self.first_user_human_handle.crc_hash(state);
         self.first_user_private_key.crc_hash(state);
+        self.first_user_first_device_id.crc_hash(state);
         self.first_user_first_device_label.crc_hash(state);
         self.first_user_first_device_signing_key.crc_hash(state);
         self.first_user_user_realm_id.crc_hash(state);
@@ -518,30 +521,42 @@ impl TestbedEventBootstrapOrganization {
 
         // 2) Actual creation
 
-        let human_handle = HumanHandle::new(&format!("{}@example.com", first_user_id.as_ref()), &{
-            let mut buff = format!(
-                "{}y Mc{}Face",
-                first_user_id.as_ref(),
-                first_user_id.as_ref()
-            );
-            let name_len = first_user_id.as_ref().len();
-            // "alicey McaliceFace" -> "Alicey McaliceFace"
-            buff[..1].make_ascii_uppercase();
-            // "Alicey McaliceFace" -> "Alicey McAliceFace"
-            buff[name_len + 4..name_len + 5].make_ascii_uppercase();
-            buff
-        })
-        .unwrap();
-        let device_name = "dev1".parse().unwrap();
-        let device_label = "My dev1 machine".parse().unwrap();
+        let (human_handle, device_id) = match first_user_id.test_nickname() {
+            Some(nickname) => {
+                let email = format!("{}@example.com", nickname);
+                let label = {
+                    let mut buff = format!("{}y Mc{}Face", nickname, nickname);
+                    let nickname_len = nickname.len();
+                    // "alicey McaliceFace" -> "Alicey McaliceFace"
+                    buff[..1].make_ascii_uppercase();
+                    // "Alicey McaliceFace" -> "Alicey McAliceFace"
+                    buff[nickname_len + 4..nickname_len + 5].make_ascii_uppercase();
+                    buff
+                };
+                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let device_id = format!("{}@dev1", nickname).parse().unwrap();
+                (human_handle, device_id)
+            }
+            None => {
+                let human_handle = HumanHandle::new_redacted(first_user_id);
+                let device_id = builder.counters.next_device_id();
+                (human_handle, device_id)
+            }
+        };
+
+        let device_label = match device_id.test_nickname() {
+            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            None => DeviceLabel::new_redacted(device_id),
+        };
 
         Self {
             timestamp: builder.counters.next_timestamp(),
             root_signing_key: builder.counters.next_signing_key(),
             sequester_authority: None,
-            first_user_device_id: DeviceID::new(first_user_id, device_name),
+            first_user_id,
             first_user_human_handle: human_handle,
             first_user_private_key: builder.counters.next_private_key(),
+            first_user_first_device_id: device_id,
             first_user_first_device_label: device_label,
             first_user_first_device_signing_key: builder.counters.next_signing_key(),
             first_user_user_realm_id: builder.counters.next_entry_id(),
@@ -590,9 +605,9 @@ impl TestbedEventBootstrapOrganization {
                         let mut certif = UserCertificate {
                             author: CertificateSignerOwned::Root,
                             timestamp: self.timestamp,
-                            user_id: self.first_user_device_id.user_id().to_owned(),
+                            user_id: self.first_user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
-                                self.first_user_device_id.user_id(),
+                                self.first_user_id,
                             )),
                             public_key: self.first_user_private_key.public_key(),
                             algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -620,9 +635,10 @@ impl TestbedEventBootstrapOrganization {
                         let mut certif = DeviceCertificate {
                             author: CertificateSignerOwned::Root,
                             timestamp: self.timestamp,
-                            device_id: self.first_user_device_id.to_owned(),
+                            user_id: self.first_user_id,
+                            device_id: self.first_user_first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                                self.first_user_device_id.device_name(),
+                                self.first_user_first_device_id,
                             )),
                             verify_key: self.first_user_first_device_signing_key.verify_key(),
                             algorithm: SigningKeyAlgorithm::Ed25519,
@@ -822,9 +838,10 @@ impl CrcHash for TestbedEventRevokeSequesterService {
 pub struct TestbedEventNewUser {
     pub timestamp: DateTime,
     pub author: DeviceID,
-    pub device_id: DeviceID,
+    pub user_id: UserID,
     pub human_handle: HumanHandle,
     pub private_key: PrivateKey,
+    pub first_device_id: DeviceID,
     pub first_device_label: DeviceLabel,
     pub first_device_signing_key: SigningKey,
     pub initial_profile: UserProfile,
@@ -841,8 +858,9 @@ impl std::fmt::Debug for TestbedEventNewUser {
         f.debug_struct("TestbedEventNewUser")
             .field("timestamp", &self.timestamp)
             .field("author", &self.author)
-            .field("device_id", &self.device_id)
+            .field("user_id", &self.user_id)
             .field("initial_profile", &self.initial_profile)
+            .field("first_device_id", &self.first_device_id)
             .finish()
     }
 }
@@ -852,9 +870,10 @@ impl CrcHash for TestbedEventNewUser {
         b"NewUser".crc_hash(state);
         self.timestamp.crc_hash(state);
         self.author.crc_hash(state);
-        self.device_id.crc_hash(state);
+        self.user_id.crc_hash(state);
         self.human_handle.crc_hash(state);
         self.private_key.crc_hash(state);
+        self.first_device_id.crc_hash(state);
         self.first_device_label.crc_hash(state);
         self.first_device_signing_key.crc_hash(state);
         self.initial_profile.crc_hash(state);
@@ -871,43 +890,54 @@ impl TestbedEventNewUser {
 
         if builder.check_consistency {
             let already_exist = builder.events.iter().any(|e| match e {
-                TestbedEvent::BootstrapOrganization(x)
-                    if x.first_user_device_id.user_id() == &user_id =>
-                {
-                    true
-                }
-                TestbedEvent::NewUser(x) if x.device_id.user_id() == &user_id => true,
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => true,
+                TestbedEvent::NewUser(x) if x.user_id == user_id => true,
                 _ => false,
             });
             assert!(!already_exist, "User already exist");
         }
 
-        let author = utils::assert_organization_bootstrapped(&builder.events)
-            .first_user_device_id
-            .clone();
+        let author =
+            utils::assert_organization_bootstrapped(&builder.events).first_user_first_device_id;
 
         // 2) Actual creation
 
-        let human_handle = HumanHandle::new(&format!("{}@example.com", user_id.as_ref()), &{
-            let mut buff = format!("{}y Mc{}Face", user_id.as_ref(), user_id.as_ref());
-            let name_len = user_id.as_ref().len();
-            // "alicey McaliceFace" -> "Alicey McaliceFace"
-            buff[..1].make_ascii_uppercase();
-            // "Alicey McaliceFace" -> "Alicey McAliceFace"
-            buff[name_len + 4..name_len + 5].make_ascii_uppercase();
-            buff
-        })
-        .unwrap();
-        let device_name = "dev1".parse().unwrap();
-        let device_label = "My dev1 machine".parse().unwrap();
+        let (human_handle, device_id) = match user_id.test_nickname() {
+            Some(nickname) => {
+                let email = format!("{}@example.com", nickname);
+                let label = {
+                    let mut buff = format!("{}y Mc{}Face", nickname, nickname);
+                    let nickname_len = nickname.len();
+                    // "alicey McaliceFace" -> "Alicey McaliceFace"
+                    buff[..1].make_ascii_uppercase();
+                    // "Alicey McaliceFace" -> "Alicey McAliceFace"
+                    buff[nickname_len + 4..nickname_len + 5].make_ascii_uppercase();
+                    buff
+                };
+                let human_handle = HumanHandle::new(&email, &label).unwrap();
+                let device_id = format!("{}@dev1", nickname).parse().unwrap();
+                (human_handle, device_id)
+            }
+            None => {
+                let human_handle = HumanHandle::new_redacted(user_id);
+                let device_id = builder.counters.next_device_id();
+                (human_handle, device_id)
+            }
+        };
+
+        let device_label = match device_id.test_nickname() {
+            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            None => DeviceLabel::new_redacted(device_id),
+        };
 
         Self {
             timestamp: builder.counters.next_timestamp(),
             author,
             initial_profile: UserProfile::Standard,
-            device_id: DeviceID::new(user_id, device_name),
+            user_id,
             human_handle,
             private_key: builder.counters.next_private_key(),
+            first_device_id: device_id,
             first_device_label: device_label,
             first_device_signing_key: builder.counters.next_signing_key(),
             user_realm_id: builder.counters.next_entry_id(),
@@ -928,14 +958,14 @@ impl TestbedEventNewUser {
                 // User certificate
                 0 => {
                     let populate = || {
-                        let author_signkey = template.device_signing_key(&self.author);
+                        let author_signkey = template.device_signing_key(self.author);
 
                         let mut certif = UserCertificate {
-                            author: CertificateSignerOwned::User(self.author.clone()),
+                            author: CertificateSignerOwned::User(self.author),
                             timestamp: self.timestamp,
-                            user_id: self.device_id.user_id().to_owned(),
+                            user_id: self.user_id,
                             human_handle: MaybeRedacted::Redacted(HumanHandle::new_redacted(
-                                self.device_id.user_id(),
+                                self.user_id,
                             )),
                             public_key: self.private_key.public_key(),
                             algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
@@ -959,14 +989,15 @@ impl TestbedEventNewUser {
                 // First device certificate
                 1 => {
                     let populate = || {
-                        let author_signkey = template.device_signing_key(&self.author);
+                        let author_signkey = template.device_signing_key(self.author);
 
                         let mut certif = DeviceCertificate {
-                            author: CertificateSignerOwned::User(self.author.clone()),
+                            author: CertificateSignerOwned::User(self.author),
                             timestamp: self.timestamp,
-                            device_id: self.device_id.clone(),
+                            user_id: self.user_id,
+                            device_id: self.first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
-                                self.device_id.device_name(),
+                                self.first_device_id,
                             )),
                             verify_key: self.first_device_signing_key.verify_key(),
                             algorithm: SigningKeyAlgorithm::Ed25519,
@@ -1001,6 +1032,7 @@ single_certificate_event!(
     [
         timestamp: DateTime,
         author: DeviceID,
+        user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel,
         signing_key: SigningKey,
@@ -1008,12 +1040,13 @@ single_certificate_event!(
         local_password: String,
     ],
     |e: &TestbedEventNewDevice, t: &TestbedTemplate| {
-        let author_signkey = t.device_signing_key(&e.author);
+        let author_signkey = t.device_signing_key(e.author);
         let mut certif = DeviceCertificate {
-            author: CertificateSignerOwned::User(e.author.clone()),
+            author: CertificateSignerOwned::User(e.author),
             timestamp: e.timestamp,
-            device_id: e.device_id.clone(),
-            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id.device_name())),
+            user_id: e.user_id,
+            device_id: e.device_id,
+            device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id)),
             verify_key: e.signing_key.verify_key(),
             algorithm: SigningKeyAlgorithm::Ed25519,
         };
@@ -1039,26 +1072,30 @@ impl TestbedEventNewDevice {
             utils::assert_organization_bootstrapped(&builder.events);
         }
 
-        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &user) {
-            TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
-            TestbedEvent::NewUser(x) => &x.device_id,
+        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, user) {
+            TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id,
+            TestbedEvent::NewUser(x) => x.first_device_id,
             _ => unreachable!(),
-        }
-        .clone();
+        };
 
         let dev_index = builder.events.iter().fold(2, |c, e| match e {
-            TestbedEvent::NewDevice(x) if x.device_id.user_id() == &user => c + 1,
+            TestbedEvent::NewDevice(x) if x.user_id == user => c + 1,
             _ => c,
         });
-        let device_name = format!("dev{}", dev_index).parse().unwrap();
-        let device_label = format!("My {} machine", device_name).parse().unwrap();
+
+        let device_id = DeviceID::test_from_user_nickname(user, dev_index)
+            .unwrap_or_else(|_| builder.counters.next_device_id());
+        let device_label = match device_id.test_nickname() {
+            Some(nickname) => format!("My {} machine", nickname).parse().unwrap(),
+            None => DeviceLabel::new_redacted(device_id),
+        };
 
         // 2) Actual creation
-        let device_id = DeviceID::new(user, device_name);
 
         Self {
             timestamp: builder.counters.next_timestamp(),
             author,
+            user_id: user,
             device_id,
             device_label,
             signing_key: builder.counters.next_signing_key(),
@@ -1095,11 +1132,11 @@ single_certificate_event!(
         profile: UserProfile,
     ],
     |e: &TestbedEventUpdateUserProfile, t: &TestbedTemplate| {
-        let author_signkey = t.device_signing_key(&e.author);
+        let author_signkey = t.device_signing_key(e.author);
         let certif = UserUpdateCertificate {
-            author: e.author.clone(),
+            author: e.author,
             timestamp: e.timestamp,
-            user_id: e.user.clone(),
+            user_id: e.user,
             new_profile: e.profile,
         };
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
@@ -1121,11 +1158,11 @@ impl TestbedEventUpdateUserProfile {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+            utils::assert_user_exists_and_not_revoked(&builder.events, user);
         }
 
-        let author = utils::non_revoked_admins(&builder.events)
-            .find(|author| author.user_id() != &user)
+        let (_, author) = utils::non_revoked_admins(&builder.events)
+            .find(|(author_user_id, _)| *author_user_id != user)
             .expect("Not available user to act as author (organization with a single user ?)")
             .to_owned();
 
@@ -1153,11 +1190,11 @@ single_certificate_event!(
         user: UserID,
     ],
     |e: &TestbedEventRevokeUser, t: &TestbedTemplate| {
-        let author_signkey = t.device_signing_key(&e.author);
+        let author_signkey = t.device_signing_key(e.author);
         let certif = RevokedUserCertificate {
-            author: e.author.clone(),
+            author: e.author,
             timestamp: e.timestamp,
-            user_id: e.user.clone(),
+            user_id: e.user,
         };
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
         TestbedTemplateEventCertificate {
@@ -1174,11 +1211,11 @@ impl TestbedEventRevokeUser {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+            utils::assert_user_exists_and_not_revoked(&builder.events, user);
         }
 
-        let author = utils::non_revoked_admins(&builder.events)
-            .find(|author| author.user_id() != &user)
+        let (_, author) = utils::non_revoked_admins(&builder.events)
+            .find(|(author_user_id, _)| *author_user_id != user)
             .expect("Not available user to act as author (organization with a single user ?)")
             .to_owned();
 
@@ -1205,11 +1242,24 @@ single_certificate_event!(
         realm_id: VlobID,
     ],
     |e: &TestbedEventNewRealm, t: &TestbedTemplate| {
-        let author_signkey = t.device_signing_key(&e.author);
+        let (user_id, author_signkey) = match t.device_creation_event(e.author) {
+            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                first_user_id: user_id,
+                first_user_first_device_signing_key: signing_key,
+                ..
+            })
+            | TestbedEvent::NewUser(TestbedEventNewUser {
+                user_id,
+                first_device_signing_key: signing_key,
+                ..
+            })
+            | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, signing_key, .. }) => (*user_id, signing_key),
+            _ => unreachable!(),
+        };
         let certif = RealmRoleCertificate {
-            author: e.author.clone(),
+            author: e.author,
             timestamp: e.timestamp,
-            user_id: e.author.user_id().to_owned(),
+            user_id,
             realm_id: e.realm_id,
             role: Some(RealmRole::Owner),
         };
@@ -1230,13 +1280,13 @@ impl TestbedEventNewRealm {
             utils::assert_organization_bootstrapped(&builder.events);
         }
 
-        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &first_owner)
-        {
-            TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
-            TestbedEvent::NewUser(x) => &x.device_id,
-            _ => unreachable!(),
-        }
-        .to_owned();
+        let author =
+            match utils::assert_user_exists_and_not_revoked(&builder.events, first_owner) {
+                TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id,
+                TestbedEvent::NewUser(x) => x.first_device_id,
+                _ => unreachable!(),
+            }
+            .to_owned();
 
         // 2) Actual creation
 
@@ -1319,8 +1369,8 @@ impl TestbedEventShareRealm {
             utils::assert_realm_exists(&builder.events, realm);
         }
 
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
-            .find(|author| author.user_id() != &user)
+        let (_, author) = utils::non_revoked_realm_owners(&builder.events, realm)
+            .find(|(author_user_id, _)| *author_user_id != user)
             .expect("No author available (realm with a single owner ?)")
             .to_owned();
 
@@ -1359,11 +1409,11 @@ impl TestbedEventShareRealm {
         template: &'b TestbedTemplate,
     ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.author);
+            let author_signkey = template.device_signing_key(self.author);
             let certif = RealmRoleCertificate {
-                author: self.author.clone(),
+                author: self.author,
                 timestamp: self.timestamp,
-                user_id: self.user.clone(),
+                user_id: self.user,
                 realm_id: self.realm,
                 role: self.role,
             };
@@ -1408,7 +1458,7 @@ impl TestbedEventShareRealm {
                     .expect("Realm needs to have a key rotation before any sharing !")
             };
 
-            let recipient_public_key = template.user_private_key(&self.user).public_key();
+            let recipient_public_key = template.user_private_key(self.user).public_key();
 
             Some(recipient_public_key.encrypt_for_self(&access).into())
         };
@@ -1472,7 +1522,7 @@ impl TestbedEventRenameRealm {
             utils::assert_realm_exists(&builder.events, realm);
         }
 
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+        let (_, author) = utils::non_revoked_realm_owners(&builder.events, realm)
             .next()
             .expect("At least one owner must be present at anytime")
             .to_owned();
@@ -1499,10 +1549,10 @@ impl TestbedEventRenameRealm {
         template: &'b TestbedTemplate,
     ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.author);
+            let author_signkey = template.device_signing_key(self.author);
             let encrypted_name = self.key.encrypt(self.name.as_ref().as_bytes());
             let certif = RealmNameCertificate {
-                author: self.author.clone(),
+                author: self.author,
                 timestamp: self.timestamp,
                 realm_id: self.realm,
                 key_index: self.key_index,
@@ -1589,7 +1639,7 @@ impl TestbedEventRotateKeyRealm {
             utils::assert_organization_bootstrapped(&builder.events);
         }
 
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+        let (_, author) = utils::non_revoked_realm_owners(&builder.events, realm)
             .next()
             .expect("At least one owner must be present at anytime")
             .to_owned();
@@ -1597,20 +1647,17 @@ impl TestbedEventRotateKeyRealm {
         // 2) Actual creation
 
         let participants = utils::non_revoked_realm_members(&builder.events, realm)
-            .map(|(device, _)| {
-                let participant_user_id = device.user_id();
+            .map(|(participant_user_id, _, _)| {
                 let participant_public_key = builder
                     .events
                     .iter()
                     .find_map(|e| match e {
                         TestbedEvent::BootstrapOrganization(x)
-                            if x.first_user_device_id.user_id() == participant_user_id =>
+                            if x.first_user_id == participant_user_id =>
                         {
                             Some(x.first_user_private_key.public_key())
                         }
-                        TestbedEvent::NewUser(x)
-                            if x.device_id.user_id() == participant_user_id =>
-                        {
+                        TestbedEvent::NewUser(x) if x.user_id == participant_user_id => {
                             Some(x.private_key.public_key())
                         }
                         _ => None,
@@ -1668,9 +1715,9 @@ impl TestbedEventRotateKeyRealm {
                 assert!(self.key_index > 0);
                 self.keys[self.key_index as usize - 1].encrypt(b"")
             });
-            let author_signkey = template.device_signing_key(&self.author);
+            let author_signkey = template.device_signing_key(self.author);
             let certif = RealmKeyRotationCertificate {
-                author: self.author.clone(),
+                author: self.author,
                 timestamp: self.timestamp,
                 realm_id: self.realm,
                 encryption_algorithm: self.encryption_algorithm,
@@ -1694,13 +1741,9 @@ impl TestbedEventRotateKeyRealm {
 
     pub fn keys_bundle(&self, template: &TestbedTemplate) -> Bytes {
         let populate = || {
-            let bundle = RealmKeysBundle::new(
-                self.author.clone(),
-                self.timestamp,
-                self.realm,
-                self.keys.clone(),
-            );
-            let author_signkey = template.device_signing_key(&self.author);
+            let bundle =
+                RealmKeysBundle::new(self.author, self.timestamp, self.realm, self.keys.clone());
+            let author_signkey = template.device_signing_key(self.author);
             let encrypted = self
                 .keys_bundle_access_key
                 .encrypt(&bundle.dump_and_sign(author_signkey));
@@ -1777,7 +1820,7 @@ impl TestbedEventArchiveRealm {
             utils::assert_organization_bootstrapped(&builder.events);
         }
 
-        let author = utils::non_revoked_realm_owners(&builder.events, realm)
+        let (_, author) = utils::non_revoked_realm_owners(&builder.events, realm)
             .next()
             .expect("At least one owner must be present at anytime")
             .to_owned();
@@ -1801,9 +1844,9 @@ impl TestbedEventArchiveRealm {
         template: &'b TestbedTemplate,
     ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.author);
+            let author_signkey = template.device_signing_key(self.author);
             let certif = RealmArchivingCertificate {
-                author: self.author.clone(),
+                author: self.author,
                 timestamp: self.timestamp,
                 realm_id: self.realm,
                 configuration: self.configuration.clone(),
@@ -1867,14 +1910,13 @@ impl TestbedEventNewShamirRecovery {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
         }
-        utils::assert_user_exists_and_not_revoked(&builder.events, &user);
+        utils::assert_user_exists_and_not_revoked(&builder.events, user);
 
-        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, &user) {
-            TestbedEvent::BootstrapOrganization(x) => &x.first_user_device_id,
-            TestbedEvent::NewUser(x) => &x.device_id,
+        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, user) {
+            TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id,
+            TestbedEvent::NewUser(x) => x.first_device_id,
             _ => unreachable!(),
-        }
-        .clone();
+        };
 
         // 2) Actual creation
 
@@ -1901,14 +1943,16 @@ impl TestbedEventNewShamirRecovery {
             let mut guard = self.cache.lock().expect("Mutex is poisoned");
 
             let populate = || {
-                let author_signkey = template.device_signing_key(&self.author);
+                let author_signkey = template.device_signing_key(self.author);
+                let author_user_id = template.device_user_id(self.author);
                 let mut certifs = Vec::with_capacity(certifs);
 
                 // Brief certificate
 
                 let certif = ShamirRecoveryBriefCertificate {
-                    author: self.author.clone(),
+                    author: self.author,
                     timestamp: self.timestamp,
+                    user_id: author_user_id,
                     threshold: self.threshold,
                     per_recipient_shares: self.per_recipient_shares.clone(),
                 };
@@ -1928,8 +1972,9 @@ impl TestbedEventNewShamirRecovery {
                     let ciphered_share = b"".to_vec();
 
                     let certif = ShamirRecoveryShareCertificate {
-                        author: self.author.clone(),
+                        author: self.author,
                         timestamp: self.timestamp,
+                        user_id: author_user_id,
                         recipient: recipient.to_owned(),
                         ciphered_share,
                     };
@@ -1971,7 +2016,7 @@ impl TestbedEventNewDeviceInvitation {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &created_by);
+            utils::assert_device_exists_and_not_revoked(&builder.events, created_by);
         }
 
         // 2) Actual creation
@@ -2007,7 +2052,7 @@ impl TestbedEventNewUserInvitation {
         // 1) Consistency checks
 
         let created_by = utils::assert_organization_bootstrapped(&builder.events)
-            .first_user_device_id
+            .first_user_first_device_id
             .to_owned();
 
         // 2) Actual creation
@@ -2054,17 +2099,15 @@ impl CrcHash for TestbedEventCreateOrUpdateUserManifestVlob {
 
 impl TestbedEventCreateOrUpdateUserManifestVlob {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
-        let (author, id) = builder
+        let (author_device_id, id) = builder
             .events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(x)
-                    if x.first_user_device_id.user_id() == &user =>
-                {
-                    Some((x.first_user_device_id.clone(), x.first_user_user_realm_id))
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user => {
+                    Some((x.first_user_first_device_id, x.first_user_user_realm_id))
                 }
-                TestbedEvent::NewUser(x) if x.device_id.user_id() == &user => {
-                    Some((x.device_id.clone(), x.user_realm_id))
+                TestbedEvent::NewUser(x) if x.user_id == user => {
+                    Some((x.first_device_id, x.user_realm_id))
                 }
                 _ => None,
             })
@@ -2075,7 +2118,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_realm_exists(&builder.events, id);
-            utils::assert_realm_member_has_write_access(&builder.events, id, &user);
+            utils::assert_realm_member_has_write_access(&builder.events, id, user);
         }
 
         // 2) Actual creation
@@ -2085,10 +2128,13 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
             .iter()
             .rev()
             .find_map(|e| match e {
-                TestbedEvent::CreateOrUpdateUserManifestVlob(x)
-                    if x.manifest.author.user_id() == &user =>
-                {
-                    Some(x.manifest.version + 1)
+                TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == id => {
+                    let candidate = user_id_from_device_id(&builder.events, x.manifest.author);
+                    if candidate == user {
+                        Some(x.manifest.version + 1)
+                    } else {
+                        None
+                    }
                 }
                 TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == id && x.vlob_id == id => {
                     Some(x.version + 1)
@@ -2101,7 +2147,7 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
         Self {
             manifest: Arc::new(UserManifest {
                 timestamp,
-                author,
+                author: author_device_id,
                 id,
                 version,
                 created: timestamp,
@@ -2128,8 +2174,8 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
 
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.manifest.author);
-            let local_symkey = template.device_local_symkey(&self.manifest.author);
+            let author_signkey = template.device_signing_key(self.manifest.author);
+            let local_symkey = template.device_local_symkey(self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = local_symkey.encrypt(&signed).into();
@@ -2191,9 +2237,18 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            let author_user_id =
+                match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_id: user_id,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    _ => unreachable!(),
+                };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author_user_id);
         }
 
         let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
@@ -2282,7 +2337,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
 
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.manifest.author);
+            let author_signkey = template.device_signing_key(self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = self.key.encrypt(&signed).into();
@@ -2344,9 +2399,18 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            let author_user_id =
+                match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_id: user_id,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    _ => unreachable!(),
+                };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author_user_id);
         }
 
         let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
@@ -2451,7 +2515,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
 
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
-            let author_signkey = template.device_signing_key(&self.manifest.author);
+            let author_signkey = template.device_signing_key(self.manifest.author);
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
             let encrypted = self.key.encrypt(&signed).into();
@@ -2524,9 +2588,18 @@ impl TestbedEventCreateBlock {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            let author_user_id =
+                match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_id: user_id,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    _ => unreachable!(),
+                };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author_user_id);
         }
 
         let (key_index, key) = utils::realm_keys(&builder.events, realm).last().expect(
@@ -2589,9 +2662,18 @@ impl TestbedEventCreateOpaqueBlock {
 
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
-            utils::assert_device_exists_and_not_revoked(&builder.events, &author);
+            let author_user_id =
+                match utils::assert_device_exists_and_not_revoked(&builder.events, author) {
+                    TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                        first_user_id: user_id,
+                        ..
+                    })
+                    | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                    | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                    _ => unreachable!(),
+                };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_write_access(&builder.events, realm, author.user_id());
+            utils::assert_realm_member_has_write_access(&builder.events, realm, author_user_id);
         }
 
         // 2) Actual creation
@@ -2625,7 +2707,7 @@ impl TestbedEventCertificatesStorageFetchCertificates {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_device_exists(&builder.events, device);
         }
 
         // 2) Actual creation
@@ -2650,38 +2732,48 @@ impl TestbedEventUserStorageFetchUserVlob {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        if builder.check_consistency {
+        let user_id = if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
-        }
+            match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            }
+        } else {
+            user_id_from_device_id(&builder.events, device)
+        };
 
         let user_realm_id = builder
             .events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(x)
-                    if x.first_user_device_id.user_id() == device.user_id() =>
-                {
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
                     Some(x.first_user_user_realm_id)
                 }
-                TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                    Some(x.user_realm_id)
-                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => Some(x.user_realm_id),
                 _ => None,
             })
             .expect("User existence already checked");
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
-            TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_realm_id && x.manifest.author.user_id() == device.user_id() => {
-                Some(Arc::new(LocalUserManifest::from_remote((*x.manifest).clone())))
+            TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_realm_id => {
+                if user_id_from_device_id(&builder.events, x.manifest.author) == user_id {
+                    Some(Arc::new(LocalUserManifest::from_remote((*x.manifest).clone())))
+                } else {
+                    None
+                }
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_realm_id && x.vlob_id == user_realm_id => {
-                panic!("Last user vlob create/update for user {} is opaque, cannot deduce what to put in the local user storage !", device.user_id());
+                panic!("Last user vlob create/update for user {} is opaque, cannot deduce what to put in the local user storage !", user_id);
             }
             _ => None,
-        }).unwrap_or_else( || panic!("User manifest has never been synced for user {}", device.user_id()) );
+        }).unwrap_or_else( || panic!("User manifest has never been synced for user {}", user_id) );
 
         // 2) Actual creation
 
@@ -2709,25 +2801,31 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        if builder.check_consistency {
+        let user_id = if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
-        }
+            match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            }
+        } else {
+            user_id_from_device_id(&builder.events, device)
+        };
 
         let user_realm_id = builder
             .events
             .iter()
             .find_map(|e| match e {
-                TestbedEvent::BootstrapOrganization(x)
-                    if x.first_user_device_id.user_id() == device.user_id() =>
-                {
+                TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
                     Some(x.first_user_user_realm_id)
                 }
-                TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                    Some(x.user_realm_id)
-                }
+                TestbedEvent::NewUser(x) if x.user_id == user_id => Some(x.user_realm_id),
                 _ => None,
             })
             .expect("User existence already checked");
@@ -2735,11 +2833,13 @@ impl TestbedEventUserStorageFetchRealmCheckpoint {
         let mut remote_user_manifest_version = None;
 
         let checkpoint = builder.events.iter().fold(0, |acc, e| match e {
-            TestbedEvent::CreateOrUpdateUserManifestVlob(x)
-                if x.manifest.author.user_id() == device.user_id() =>
-            {
-                remote_user_manifest_version = Some(x.manifest.version);
-                acc + 1
+            TestbedEvent::CreateOrUpdateUserManifestVlob(x) if x.manifest.id == user_realm_id => {
+                if user_id_from_device_id(&builder.events, x.manifest.author) == user_id {
+                    remote_user_manifest_version = Some(x.manifest.version);
+                    acc + 1
+                } else {
+                    acc
+                }
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) if x.realm == user_realm_id => {
                 if x.vlob_id == user_realm_id {
@@ -2777,12 +2877,22 @@ impl TestbedEventUserStorageLocalUpdate {
     pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, device: DeviceID) -> Self {
         // 1) Consistency checks
 
-        if builder.check_consistency {
+        let user_id = if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
-        }
+            match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            }
+        } else {
+            user_id_from_device_id(&builder.events, device)
+        };
 
         let timestamp = builder.counters.next_timestamp();
 
@@ -2806,20 +2916,16 @@ impl TestbedEventUserStorageLocalUpdate {
                     .events
                     .iter()
                     .find_map(|e| match e {
-                        TestbedEvent::BootstrapOrganization(x)
-                            if x.first_user_device_id.user_id() == device.user_id() =>
-                        {
+                        TestbedEvent::BootstrapOrganization(x) if x.first_user_id == user_id => {
                             Some(x.first_user_user_realm_id)
                         }
-                        TestbedEvent::NewUser(x) if x.device_id.user_id() == device.user_id() => {
-                            Some(x.user_realm_id)
-                        }
+                        TestbedEvent::NewUser(x) if x.user_id == user_id => Some(x.user_realm_id),
                         _ => None,
                     })
                     .expect("User existence already checked");
 
                 Arc::new(LocalUserManifest::new(
-                    device.clone(),
+                    device,
                     timestamp,
                     user_realm_id.into(),
                     false,
@@ -2863,9 +2969,17 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            let user_id = match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+            utils::assert_realm_member_has_read_access(&builder.events, realm, user_id);
         }
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
@@ -2923,9 +3037,17 @@ impl TestbedEventWorkspaceDataStorageFetchFileVlob {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            let user_id = match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+            utils::assert_realm_member_has_read_access(&builder.events, realm, user_id);
         }
 
         let local_manifest = builder.events.iter().rev().find_map(|e| match e {
@@ -2982,9 +3104,17 @@ impl TestbedEventWorkspaceDataStorageFetchRealmCheckpoint {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            let user_id = match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+            utils::assert_realm_member_has_read_access(&builder.events, realm, user_id);
         }
 
         let mut changed_vlobs = vec![];
@@ -3053,7 +3183,7 @@ impl TestbedEventWorkspaceDataStorageChunkCreate {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_device_exists(&builder.events, device);
             utils::assert_realm_exists(&builder.events, realm);
             // Changes are in local, so no need to check for realm read/write access
         }
@@ -3100,9 +3230,17 @@ impl TestbedEventWorkspaceCacheStorageFetchBlock {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            let user_id = match utils::assert_device_exists(&builder.events, device) {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: user_id,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser { user_id, .. })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { user_id, .. }) => *user_id,
+                _ => unreachable!(),
+            };
             utils::assert_realm_exists(&builder.events, realm);
-            utils::assert_realm_member_has_read_access(&builder.events, realm, device.user_id());
+            utils::assert_realm_member_has_read_access(&builder.events, realm, user_id);
         }
 
         let cleartext = builder.events.iter().rev().find_map(|e| match e {
@@ -3158,7 +3296,7 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_device_exists(&builder.events, device);
             utils::assert_realm_exists(&builder.events, realm);
             // Changes are in local, so no need to check for realm read/write access
         }
@@ -3204,8 +3342,7 @@ impl TestbedEventWorkspaceDataStorageLocalFolderManifestCreateOrUpdate {
                     Some(parent) => parent,
                     None => panic!("Parameter `parent` is requested for new local manifest"),
                 };
-                let mut local_manifest =
-                    LocalFolderManifest::new(device.clone(), parent, timestamp);
+                let mut local_manifest = LocalFolderManifest::new(device, parent, timestamp);
                 local_manifest.base.id = vlob;
                 Arc::new(local_manifest)
             });
@@ -3253,7 +3390,7 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
             utils::assert_organization_bootstrapped(&builder.events);
             // We don't care that the user is revoked here given we don't modify
             // anything in the server
-            utils::assert_device_exists(&builder.events, &device);
+            utils::assert_device_exists(&builder.events, device);
             utils::assert_realm_exists(&builder.events, realm);
             // Changes are in local, so no need to check for realm read/write access
         }
@@ -3301,7 +3438,7 @@ impl TestbedEventWorkspaceDataStorageLocalFileManifestCreateOrUpdate {
                     Some(parent) => parent,
                     None => panic!("Parameter `parent` is requested for new local manifest"),
                 };
-                let mut local_manifest = LocalFileManifest::new(device.clone(), parent, timestamp);
+                let mut local_manifest = LocalFileManifest::new(device, parent, timestamp);
                 local_manifest.base.id = vlob;
                 Arc::new(local_manifest)
             });

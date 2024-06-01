@@ -67,7 +67,8 @@ fn serde_invite_user_confirmation(bob: &Device) {
     );
 
     let expected = InviteUserConfirmation {
-        device_id: bob.device_id.to_owned(),
+        user_id: bob.user_id,
+        device_id: bob.device_id,
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: "Boby McBobFace <bob@example.com>".parse().unwrap(),
         profile: UserProfile::Standard,
@@ -151,7 +152,8 @@ fn serde_invite_device_confirmation(bob: &Device) {
     );
 
     let expected = InviteDeviceConfirmation {
-        device_id: bob.device_id.to_owned(),
+        user_id: bob.user_id,
+        device_id: bob.device_id,
         device_label: "My dev1 machine".parse().unwrap(),
         human_handle: "Boby McBobFace <bob@example.com>".parse().unwrap(),
         profile: UserProfile::Standard,

@@ -213,7 +213,7 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
     mount_and_test!(as "bob@dev1", env, &tmp_path, |bob_client: Arc<Client>, bob_wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
         // Bob lose access to the workspace while it has it mounted...
 
-        alice_client.share_workspace(bob_wksp1_ops.realm_id(), bob_client.device_id().user_id().to_owned(), None).await.unwrap();
+        alice_client.share_workspace(bob_wksp1_ops.realm_id(), bob_client.user_id(), None).await.unwrap();
 
         // ...and only realized it when trying to communicate with the server
         // (note the monitors are not running in the client, hence no risk of

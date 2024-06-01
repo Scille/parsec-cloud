@@ -41,7 +41,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 protocol::invited_cmds::latest::invite_info::UserOrDevice::User {
                     claimer_email: "john@example.com".to_owned(),
                     greeter_human_handle: alice.human_handle.clone(),
-                    greeter_user_id: alice.user_id().to_owned(),
+                    greeter_user_id: alice.user_id.to_owned(),
                 },
             )
         }
@@ -53,7 +53,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let ctx = match ctx {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
             p_assert_eq!(ctx.claimer_email, "john@example.com");
-            p_assert_eq!(ctx.greeter_user_id(), alice.user_id());
+            p_assert_eq!(ctx.greeter_user_id(), alice.user_id);
             p_assert_eq!(*ctx.greeter_human_handle(), alice.human_handle);
             ctx
         }
@@ -201,7 +201,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         {
             let shared_secret_key = shared_secret_key.clone();
             let root_verify_key = env.organization_addr().root_verify_key().to_owned();
-            let device_id = device_id.clone();
+            let device_id = device_id;
             let device_label = device_label.clone();
             let human_handle = human_handle.clone();
             move |req: protocol::invited_cmds::latest::invite_4_claimer_communicate::Req| {
@@ -257,7 +257,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         AvailableDevice {
             key_file_path: tmp_path.join("device.keys"),
             organization_id: new_local_device.organization_id().to_owned(),
-            device_id: new_local_device.device_id.clone(),
+            device_id: new_local_device.device_id,
             device_label,
             human_handle,
             slug: new_local_device.slug(),

@@ -34,7 +34,7 @@ ENROLLMENT_ID = EnrollmentID.from_hex("be6510e4-3e0b-4144-b3a7-fd5ad2c01fd8")
 VLOB_ID = VlobID.from_hex("cc7dca19-447c-4aca-9c99-b8205655afee")
 DEVICE_ID = DeviceID.new()
 TIMESTAMP = DateTime.from_rfc3339("2024-03-17T08:42:30Z")
-ALICE_USER_ID = UserID("alice")
+ALICE_USER_ID = UserID.test_from_nickname("alice")
 
 
 @pytest.mark.parametrize(
@@ -80,7 +80,11 @@ ALICE_USER_ID = UserID("alice")
                 events.EventShamirRecoveryCertificate,
                 timestamp=TIMESTAMP,
                 # Alice should be in the participants to receive the event.
-                participants=(ALICE_USER_ID, UserID("bob"), UserID("carol")),
+                participants=(
+                    ALICE_USER_ID,
+                    UserID.test_from_nickname("bob"),
+                    UserID.test_from_nickname("mallory"),
+                ),
             ),
             authenticated_cmds.v4.events_listen.APIEventShamirRecoveryCertificate(
                 timestamp=TIMESTAMP
@@ -209,6 +213,7 @@ async def test_http_error_404_not_found(backend: Backend, coolorg: CoolorgRpcCli
     mod_alice = AuthenticatedRpcClient(
         coolorg.alice.raw_client,
         OrganizationID("foobar"),
+        coolorg.alice.user_id,
         coolorg.alice.device_id,
         coolorg.alice.signing_key,
         coolorg.alice.event,
@@ -294,6 +299,7 @@ async def test_receive_event_of_newly_shared_realm(
 
         # Trigger events in two organization to ensure they don't get mixed
         orgs = (OrganizationID("DummyOrg"), minimalorg.organization_id)
+        dummy_user_id = UserID.new()
         for org in orgs:
             # 1) Share for other user, should be ignored
 
@@ -302,7 +308,7 @@ async def test_receive_event_of_newly_shared_realm(
                     organization_id=org,
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
-                    user_id=UserID("DummyUser"),
+                    user_id=dummy_user_id,
                     role_removed=False,
                 )
             )
@@ -328,7 +334,7 @@ async def test_receive_event_of_newly_shared_realm(
                     organization_id=org,
                     timestamp=TIMESTAMP,
                     realm_id=VLOB_ID,
-                    user_id=UserID("DummyUser"),
+                    user_id=dummy_user_id,
                     role_removed=True,
                 )
             )

@@ -106,7 +106,7 @@ def organization_bootstrap_validate(
     if u_data.timestamp != d_data.timestamp:
         return OrganizationBootstrapValidateBadOutcome.TIMESTAMP_MISMATCH
 
-    if u_data.user_id != d_data.device_id.user_id:
+    if u_data.user_id != d_data.user_id:
         return OrganizationBootstrapValidateBadOutcome.USER_ID_MISMATCH
 
     match timestamps_in_the_ballpark(u_data.timestamp, now):

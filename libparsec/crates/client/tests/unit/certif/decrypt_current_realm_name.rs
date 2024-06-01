@@ -33,7 +33,7 @@ async fn ok(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id());
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
     test_register_send_hook(
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
@@ -54,14 +54,14 @@ async fn ok(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 #[case::invalid_keys_bundle(
-    |env: &TestbedEnv, realm_id, user_id: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+    |env: &TestbedEnv, realm_id, user_id: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
         keys_bundle: Bytes::from_static(b""),
         keys_bundle_access: env.get_last_realm_keys_bundle_access_for(realm_id, user_id),
     },
     |err| p_assert_matches!(err, CertifDecryptCurrentRealmNameError::InvalidKeysBundle(_))
 )]
 #[case::invalid_keys_bundle_access(
-    |env: &TestbedEnv, realm_id, _: &UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+    |env: &TestbedEnv, realm_id, _: UserID| authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
         keys_bundle: env.get_last_realm_keys_bundle(realm_id),
         keys_bundle_access: Bytes::from_static(b""),
     },
@@ -71,7 +71,7 @@ async fn invalid_keys_bundle(
     #[case] rep: impl FnOnce(
         &TestbedEnv,
         VlobID,
-        &UserID,
+        UserID,
     ) -> authenticated_cmds::latest::realm_get_keys_bundle::Rep,
     #[case] assert: impl FnOnce(CertifDecryptCurrentRealmNameError),
     env: &TestbedEnv,
@@ -93,7 +93,7 @@ async fn invalid_keys_bundle(
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let rep = rep(env, realm_id, alice.user_id());
+    let rep = rep(env, realm_id, alice.user_id);
     test_register_send_hook(&env.discriminant_dir, {
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
             p_assert_eq!(req.key_index, 1);

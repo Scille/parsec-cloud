@@ -150,7 +150,7 @@ async fn invalid_timestamp(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn not_member(env: &TestbedEnv) {
     env.customize(|builder| {
-        let bob = builder.new_user("bob").map(|event| event.device_id.clone());
+        let bob = builder.new_user("bob").map(|event| event.first_device_id);
         builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
@@ -180,7 +180,7 @@ async fn not_member(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn author_not_owner(env: &TestbedEnv) {
     env.customize(|builder| {
-        let bob = builder.new_user("bob").map(|event| event.device_id.clone());
+        let bob = builder.new_user("bob").map(|event| event.first_device_id);
         let realm_id = builder
             .new_realm("alice")
             .then_do_initial_key_rotation()
@@ -216,7 +216,7 @@ async fn author_not_owner(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal")]
 async fn revoked(env: &TestbedEnv) {
     env.customize(|builder| {
-        let bob = builder.new_user("bob").map(|event| event.device_id.clone());
+        let bob = builder.new_user("bob").map(|event| event.first_device_id);
         let realm_id = builder
             .new_realm("bob")
             .then_do_initial_key_rotation()
@@ -224,7 +224,7 @@ async fn revoked(env: &TestbedEnv) {
 
         builder
             .share_realm(realm_id, "alice", Some(RealmRole::Owner))
-            .customize(|event| event.author = bob.clone());
+            .customize(|event| event.author = bob);
 
         builder.revoke_user("bob");
 

@@ -49,6 +49,7 @@ async fn ok(
     .await;
 
     let alice = env.local_device("alice@dev1");
+    let alice_user_id = alice.user_id;
     let client = client_factory(&env.discriminant_dir, alice).await;
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
@@ -63,7 +64,7 @@ async fn ok(
             p_assert_eq!(wksp1_users.len(), 2);
             let a = &wksp1_users[0];
             let b = &wksp1_users[1];
-            if a.user_id.as_ref() == "alice" {
+            if a.user_id == alice_user_id {
                 (a, Some(b))
             } else {
                 (b, Some(a))

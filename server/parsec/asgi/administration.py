@@ -369,7 +369,7 @@ async def administration_organization_users(
         content={
             "users": [
                 {
-                    "user_id": user.user_id.str,
+                    "user_id": user.user_id.hex,
                     "user_email": user.human_handle.email,
                     "user_name": user.human_handle.label,
                     "frozen": user.frozen,
@@ -395,7 +395,7 @@ class UserFreezeIn(BaseModel):
             case None:
                 return None
             case raw:
-                return UserID(raw)
+                return UserID.from_hex(raw)
 
 
 @administration_router.post("/administration/organizations/{raw_organization_id}/users/freeze")
@@ -431,7 +431,7 @@ async def administration_organization_users_freeze(
     return JSONResponse(
         status_code=200,
         content={
-            "user_id": user.user_id.str,
+            "user_id": user.user_id.hex,
             "user_email": user.human_handle.email,
             "user_name": user.human_handle.label,
             "frozen": user.frozen,

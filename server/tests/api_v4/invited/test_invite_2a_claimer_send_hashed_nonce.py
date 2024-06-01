@@ -29,14 +29,14 @@ async def test_invited_invite_2a_claimer_send_hashed_nonce_ok(
     async def greeter_step_2(cancel_scope: anyio.CancelScope) -> None:
         await backend.invite.conduit_exchange(
             organization_id=coolorg.organization_id,
-            greeter=coolorg.alice.device_id.user_id,
+            greeter=coolorg.alice.user_id,
             token=invitation_token,
             state=ConduitState.STATE_2_1_CLAIMER_HASHED_NONCE,
             payload=b"",
         )
         await backend.invite.conduit_exchange(
             organization_id=coolorg.organization_id,
-            greeter=coolorg.alice.device_id.user_id,
+            greeter=coolorg.alice.user_id,
             token=invitation_token,
             state=ConduitState.STATE_2_2_GREETER_NONCE,
             payload=b"hello-world",

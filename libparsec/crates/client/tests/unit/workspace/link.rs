@@ -25,7 +25,7 @@ async fn generate(env: &TestbedEnv) {
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
                 p_assert_eq!(req.key_index, 1);
@@ -53,7 +53,7 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let keys_bundle_1 = env.get_last_realm_keys_bundle(wksp1_id);
     let keys_bundle_1_access =
-        env.get_last_realm_keys_bundle_access_for(wksp1_id, &"alice".parse().unwrap());
+        env.get_last_realm_keys_bundle_access_for(wksp1_id, "alice".parse().unwrap());
     env.customize(|builder| {
         if !key_in_storage {
             // The link uses a key our client doesn't know about
@@ -124,7 +124,7 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
             {
                 let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
                 let keys_bundle_access =
-                    env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                    env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
                 move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                     p_assert_eq!(req.realm_id, wksp1_id);
                     p_assert_eq!(req.key_index, 2);
@@ -193,7 +193,7 @@ async fn bad_decrypt_realm_unknown_key_index(env: &TestbedEnv) {
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
                 p_assert_eq!(req.key_index, 1);
@@ -243,7 +243,7 @@ async fn decrypt_bad_encryption(env: &TestbedEnv) {
         {
             let keys_bundle = env.get_last_realm_keys_bundle(wksp1_id);
             let keys_bundle_access =
-                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id());
+                env.get_last_realm_keys_bundle_access_for(wksp1_id, alice.user_id);
             move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
                 p_assert_eq!(req.key_index, 1);

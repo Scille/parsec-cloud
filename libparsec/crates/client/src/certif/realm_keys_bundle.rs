@@ -634,7 +634,7 @@ async fn validate_keys_bundle(
                         key_index: certif.key_index,
                         key_rotation_author: certif.author.to_owned(),
                         key_rotation_timestamp: certif.timestamp,
-                        recipient: ops.device.user_id().to_owned(),
+                        recipient: ops.device.user_id,
                         error: DataError::Decryption,
                     },
                 ))
@@ -648,7 +648,7 @@ async fn validate_keys_bundle(
                         key_index: certif.key_index,
                         key_rotation_author: certif.author.to_owned(),
                         key_rotation_timestamp: certif.timestamp,
-                        recipient: ops.device.user_id().to_owned(),
+                        recipient: ops.device.user_id,
                         error: DataError::Serialization,
                     },
                 ))
@@ -667,7 +667,7 @@ async fn validate_keys_bundle(
                     key_index: certif.key_index,
                     key_rotation_author: certif.author.to_owned(),
                     key_rotation_timestamp: certif.timestamp,
-                    recipient: ops.device.user_id().to_owned(),
+                    recipient: ops.device.user_id,
                 },
             ))
         })?;

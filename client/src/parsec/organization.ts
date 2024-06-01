@@ -75,6 +75,7 @@ export async function createOrganization(
       value: {
         keyFilePath: '/path',
         organizationId: 'MyOrg',
+        userId: 'userid',
         deviceId: 'deviceid',
         humanHandle: {
           label: 'A',

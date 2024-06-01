@@ -51,7 +51,7 @@ async fn ok(env: &TestbedEnv) {
     // let mut spy = client.event_bus.spy.start_expecting();
 
     let bob_user_id: UserID = "bob".parse().unwrap();
-    client.revoke_user(bob_user_id.clone()).await.unwrap();
+    client.revoke_user(bob_user_id).await.unwrap();
 
     // TODO: check event !
     // spy.assert_next(|event: &EventUserRevoked| {
@@ -99,10 +99,7 @@ async fn not_found(env: &TestbedEnv) {
 
     let spy = client.event_bus.spy.start_expecting();
 
-    let err = client
-        .revoke_user("dummy".parse().unwrap())
-        .await
-        .unwrap_err();
+    let err = client.revoke_user(UserID::default()).await.unwrap_err();
 
     p_assert_matches!(err, ClientRevokeUserError::UserNotFound);
     spy.assert_no_events();

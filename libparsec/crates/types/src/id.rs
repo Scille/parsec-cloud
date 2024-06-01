@@ -28,10 +28,19 @@ macro_rules! impl_debug_from_display {
  */
 
 macro_rules! new_uuid_type {
+    (pub $name:ident, no_debug) => {
+        #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+        pub struct $name(pub(crate) ::uuid::Uuid);
+
+        new_uuid_type!(pub $name, __internal__);
+    };
     (pub $name:ident) => {
         #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-        pub struct $name(::uuid::Uuid);
+        pub struct $name(pub(crate) ::uuid::Uuid);
 
+        new_uuid_type!(pub $name, __internal__);
+    };
+    (pub $name:ident, __internal__) => {
         impl $name {
             pub fn as_hyphenated(&self) -> &::uuid::fmt::Hyphenated {
                 self.0.as_hyphenated()
@@ -243,22 +252,171 @@ fn match_legacy_id(id: &str) -> bool {
 new_string_based_id_type!(pub OrganizationID, match_legacy_id);
 
 /*
- * UserID
+ * UserID & DeviceID
  */
 
-new_string_based_id_type!(pub UserID, match_legacy_id);
+#[cfg(not(any(test, feature = "test-fixtures")))]
+mod user_device_ids {
+    use super::*;
 
-impl UserID {
-    pub fn to_device_id(&self, device_name: DeviceName) -> DeviceID {
-        DeviceID::new(self.clone(), device_name)
+    new_uuid_type!(pub UserID);
+    new_uuid_type!(pub DeviceID);
+}
+
+#[cfg(any(test, feature = "test-fixtures"))]
+mod user_device_ids {
+    use super::*;
+    use crate::fixtures;
+
+    new_uuid_type!(pub UserID, no_debug);
+    new_uuid_type!(pub DeviceID, no_debug);
+
+    impl std::fmt::Debug for UserID {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self.test_nickname() {
+                Some(nickname) => f
+                    .debug_struct("UserID")
+                    .field("nickname", &nickname)
+                    .field("id", &self.0.as_hyphenated().to_string())
+                    .finish(),
+                None => f
+                    .debug_tuple("UserID")
+                    .field(&self.0.as_hyphenated().to_string())
+                    .finish(),
+            }
+        }
+    }
+
+    impl std::fmt::Debug for DeviceID {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self.test_nickname() {
+                Some(nickname) => f
+                    .debug_struct("DeviceID")
+                    .field("nickname", &nickname)
+                    .field("id", &self.0.as_hyphenated().to_string())
+                    .finish(),
+                None => f
+                    .debug_tuple("DeviceID")
+                    .field(&self.0.as_hyphenated().to_string())
+                    .finish(),
+            }
+        }
+    }
+
+    impl FromStr for UserID {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Self::test_from_nickname(s)
+        }
+    }
+
+    impl TryFrom<&str> for UserID {
+        type Error = String;
+
+        fn try_from(s: &str) -> Result<Self, Self::Error> {
+            Self::test_from_nickname(s)
+        }
+    }
+
+    impl UserID {
+        pub fn test_nickname(&self) -> Option<&'static str> {
+            match *self {
+                fixtures::ALICE_USER_ID => Some("alice"),
+                fixtures::BOB_USER_ID => Some("bob"),
+                fixtures::MALLORY_USER_ID => Some("mallory"),
+                fixtures::MIKE_USER_ID => Some("mike"),
+                fixtures::PHILIP_USER_ID => Some("philip"),
+                _ => None,
+            }
+        }
+
+        pub fn test_from_nickname(nickname: &str) -> Result<Self, String> {
+            match nickname {
+                "alice" => Ok(fixtures::ALICE_USER_ID),
+                "bob" => Ok(fixtures::BOB_USER_ID),
+                "mallory" => Ok(fixtures::MALLORY_USER_ID),
+                "mike" => Ok(fixtures::MIKE_USER_ID),
+                "philip" => Ok(fixtures::PHILIP_USER_ID),
+                _ => Err(format!(
+                    "Invalid nickname `{}`, only a few are allowed (e.g. `alice`)",
+                    nickname
+                )),
+            }
+        }
+    }
+
+    impl FromStr for DeviceID {
+        type Err = String;
+
+        fn from_str(s: &str) -> Result<Self, Self::Err> {
+            Self::test_from_nickname(s)
+        }
+    }
+
+    impl TryFrom<&str> for DeviceID {
+        type Error = String;
+
+        fn try_from(s: &str) -> Result<Self, Self::Error> {
+            Self::test_from_nickname(s)
+        }
+    }
+
+    impl DeviceID {
+        pub fn test_nickname(&self) -> Option<&'static str> {
+            match *self {
+                fixtures::ALICE_DEV1_DEVICE_ID => Some("alice@dev1"),
+                fixtures::BOB_DEV1_DEVICE_ID => Some("bob@dev1"),
+                fixtures::MALLORY_DEV1_DEVICE_ID => Some("mallory@dev1"),
+                fixtures::ALICE_DEV2_DEVICE_ID => Some("alice@dev2"),
+                fixtures::BOB_DEV2_DEVICE_ID => Some("bob@dev2"),
+                fixtures::MALLORY_DEV2_DEVICE_ID => Some("mallory@dev2"),
+                fixtures::ALICE_DEV3_DEVICE_ID => Some("alice@dev3"),
+                fixtures::MIKE_DEV1_DEVICE_ID => Some("mike@dev1"),
+                fixtures::PHILIP_DEV1_DEVICE_ID => Some("philip@dev1"),
+                _ => None,
+            }
+        }
+
+        pub fn test_from_user_nickname(
+            user_nickname: UserID,
+            dev: u8,
+        ) -> Result<DeviceID, &'static str> {
+            match (user_nickname, dev) {
+                (fixtures::ALICE_USER_ID, 1) => Ok(fixtures::ALICE_DEV1_DEVICE_ID),
+                (fixtures::BOB_USER_ID, 1) => Ok(fixtures::BOB_DEV1_DEVICE_ID),
+                (fixtures::MALLORY_USER_ID, 1) => Ok(fixtures::MALLORY_DEV1_DEVICE_ID),
+                (fixtures::ALICE_USER_ID, 2) => Ok(fixtures::ALICE_DEV2_DEVICE_ID),
+                (fixtures::BOB_USER_ID, 2) => Ok(fixtures::BOB_DEV2_DEVICE_ID),
+                (fixtures::MALLORY_USER_ID, 2) => Ok(fixtures::MALLORY_DEV2_DEVICE_ID),
+                (fixtures::ALICE_USER_ID, 3) => Ok(fixtures::ALICE_DEV3_DEVICE_ID),
+                (fixtures::MIKE_USER_ID, 1) => Ok(fixtures::MIKE_DEV1_DEVICE_ID),
+                (fixtures::PHILIP_USER_ID, 1) => Ok(fixtures::PHILIP_DEV1_DEVICE_ID),
+                _ => Err("Invalid couple user/dev"),
+            }
+        }
+
+        pub fn test_from_nickname(nickname: &str) -> Result<Self, String> {
+            match nickname {
+                "alice@dev1" => Ok(fixtures::ALICE_DEV1_DEVICE_ID),
+                "bob@dev1" => Ok(fixtures::BOB_DEV1_DEVICE_ID),
+                "mallory@dev1" => Ok(fixtures::MALLORY_DEV1_DEVICE_ID),
+                "alice@dev2" => Ok(fixtures::ALICE_DEV2_DEVICE_ID),
+                "bob@dev2" => Ok(fixtures::BOB_DEV2_DEVICE_ID),
+                "mallory@dev2" => Ok(fixtures::MALLORY_DEV2_DEVICE_ID),
+                "alice@dev3" => Ok(fixtures::ALICE_DEV3_DEVICE_ID),
+                "mike@dev1" => Ok(fixtures::MIKE_DEV1_DEVICE_ID),
+                "philip@dev1" => Ok(fixtures::PHILIP_DEV1_DEVICE_ID),
+                _ => Err(format!(
+                    "Invalid nickname `{}`, only a few are allowed (e.g. `alice@dev1`)",
+                    nickname
+                )),
+            }
+        }
     }
 }
 
-/*
- * DeviceName
- */
-
-new_string_based_id_type!(pub DeviceName, match_legacy_id);
+pub use user_device_ids::{DeviceID, UserID};
 
 /*
  * DeviceLabel
@@ -276,8 +434,8 @@ fn match_device_label(id: &str) -> bool {
 new_string_based_id_type!(pub DeviceLabel, match_device_label);
 
 impl DeviceLabel {
-    pub fn new_redacted(device_name: &DeviceName) -> Self {
-        Self(device_name.to_string())
+    pub fn new_redacted(device_id: DeviceID) -> Self {
+        Self(device_id.hex())
     }
 }
 impl_from_maybe!(Option<DeviceLabel>);
@@ -307,78 +465,6 @@ impl<T> From<MaybeRedacted<T>> for Option<T> {
             MaybeRedacted::Real(x) => Some(x),
             MaybeRedacted::Redacted(_) => None,
         }
-    }
-}
-
-/*
- * DeviceID
- */
-
-#[derive(Clone, SerializeDisplay, DeserializeFromStr, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct DeviceID {
-    user_id: UserID,
-    device_name: DeviceName,
-}
-
-impl Default for DeviceID {
-    fn default() -> Self {
-        let user_id = Default::default();
-        let device_name = Default::default();
-        Self::new(user_id, device_name)
-    }
-}
-
-impl_debug_from_display!(DeviceID);
-
-// Note: Display is used for Serialization !
-impl std::fmt::Display for DeviceID {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        self.user_id.fmt(f)?;
-        f.write_str("@")?;
-        self.device_name.fmt(f)
-    }
-}
-
-impl TryFrom<&str> for DeviceID {
-    type Error = &'static str;
-
-    fn try_from(s: &str) -> Result<Self, Self::Error> {
-        const ERR: &str = "Invalid DeviceID";
-        let (raw_user_id, raw_device_name) = s.split_once('@').ok_or(ERR)?;
-        let user_id = raw_user_id.parse().map_err(|_| ERR)?;
-        let device_name = raw_device_name.parse().map_err(|_| ERR)?;
-        Ok(Self::new(user_id, device_name))
-    }
-}
-
-// Note: FromStr is used for Deserialization !
-impl FromStr for DeviceID {
-    type Err = &'static str;
-
-    #[inline]
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        DeviceID::try_from(s)
-    }
-}
-
-impl DeviceID {
-    pub fn new(user_id: UserID, device_name: DeviceName) -> Self {
-        Self {
-            user_id,
-            device_name,
-        }
-    }
-    pub fn user_id(&self) -> &UserID {
-        &self.user_id
-    }
-    pub fn device_name(&self) -> &DeviceName {
-        &self.device_name
-    }
-}
-
-impl From<DeviceID> for (UserID, DeviceName) {
-    fn from(item: DeviceID) -> (UserID, DeviceName) {
-        (item.user_id, item.device_name)
     }
 }
 
@@ -445,28 +531,6 @@ impl FromStr for HumanHandle {
     }
 }
 
-/// Convert uppercase to lowercase with `_` escaping, useful to convert to lowercase
-/// while retaining identifier unicity
-/// e.g. "Foo" -> "f_oo", "a_A_a" -> "a__a___a"
-fn uncaseify(input: &str) -> String {
-    let mut output = String::with_capacity(input.len() * 2);
-    for c in input.chars() {
-        match c {
-            '_' => {
-                output.push_str("__");
-            }
-            c if c.is_uppercase() => {
-                output.push('_');
-                for cc in c.to_lowercase() {
-                    output.push(cc);
-                }
-            }
-            c => output.push(c),
-        }
-    }
-    output
-}
-
 impl HumanHandle {
     pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
         // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
@@ -496,17 +560,13 @@ impl HumanHandle {
     /// a best effort one from the user ID:
     ///
     /// - label is user ID unchanged
-    /// - email is `<uncaseify(user_id)>@redacted.invalid``
+    /// - email is `<user ID as hex>@redacted.invalid``
     ///
     /// Note given user_id is case sensitive and email address is not, `uncaseify`
     /// is used to do the conversion while retaining ID unicity.
-    pub fn new_redacted(user_id: &UserID) -> Self {
-        let label = user_id.as_ref().nfc().collect::<String>();
-        let email = format!(
-            "{}@{}",
-            &uncaseify(&label),
-            HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN
-        );
+    pub fn new_redacted(user_id: UserID) -> Self {
+        let label = user_id.hex();
+        let email = format!("{}@{}", &label, HUMAN_HANDLE_RESERVED_REDACTED_DOMAIN);
         let display = format!("{label} <{email}>");
 
         Self {

@@ -67,13 +67,13 @@ fn check_author_allow_root(
             CertificateSignerRef::User(expected_author_id),
         ) if author_id != expected_author_id => {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author_id.clone()),
-                got: Some(Box::new(author_id.clone())),
+                expected: *expected_author_id,
+                got: Some(*author_id),
             })
         }
         (CertificateSignerOwned::Root, CertificateSignerRef::User(expected_author_id)) => {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author_id.clone()),
+                expected: *expected_author_id,
                 got: None,
             })
         }
@@ -103,8 +103,8 @@ macro_rules! impl_unsecure_load {
             }
             impl [< Unsecure $name >] {
                 $(
-                pub fn author(&self) -> &$author_type {
-                    &self.unsecure.author
+                pub fn author(&self) -> $author_type {
+                    self.unsecure.author
                 }
                 )?
                 pub fn timestamp(&self) -> &DateTime {
@@ -197,7 +197,7 @@ impl<'a> From<CertificateSignerRef<'a>> for Option<&'a DeviceID> {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "Option<DeviceID>", try_from = "Option<DeviceID>")]
 pub enum CertificateSignerOwned {
     User(DeviceID),
@@ -261,7 +261,7 @@ impl_dump_and_sign!(UserCertificate);
 
 impl UserCertificate {
     pub fn into_redacted(self) -> Self {
-        let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(&self.user_id));
+        let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(self.user_id));
         Self {
             author: self.author,
             timestamp: self.timestamp,
@@ -277,16 +277,16 @@ impl UserCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: CertificateSignerRef,
-        expected_user_id: Option<&UserID>,
+        expected_user_id: Option<UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
         check_author_allow_root(&r.author, expected_author)?;
 
         if let Some(expected_user_id) = expected_user_id {
-            if &r.user_id != expected_user_id {
+            if r.user_id != expected_user_id {
                 return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id.clone(),
+                    expected: expected_user_id,
                     got: r.user_id,
                 });
             }
@@ -310,7 +310,7 @@ parsec_data!("schema/certif/user_certificate.json5");
 impl From<UserCertificateData> for UserCertificate {
     fn from(data: UserCertificateData) -> Self {
         let human_handle = match data.human_handle {
-            None => MaybeRedacted::Redacted(HumanHandle::new_redacted(&data.user_id)),
+            None => MaybeRedacted::Redacted(HumanHandle::new_redacted(data.user_id)),
             Some(human_handle) => MaybeRedacted::Real(human_handle),
         };
         Self {
@@ -368,22 +368,22 @@ impl RevokedUserCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_user_id: Option<&UserID>,
+        expected_author: DeviceID,
+        expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
         if let Some(expected_user_id) = expected_user_id {
-            if &r.user_id != expected_user_id {
+            if r.user_id != expected_user_id {
                 return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id.clone(),
+                    expected: expected_user_id,
                     got: r.user_id,
                 });
             }
@@ -425,22 +425,22 @@ impl UserUpdateCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_user_id: Option<&UserID>,
+        expected_author: DeviceID,
+        expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
         if let Some(expected_user_id) = expected_user_id {
-            if &r.user_id != expected_user_id {
+            if r.user_id != expected_user_id {
                 return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id.clone(),
+                    expected: expected_user_id,
                     got: r.user_id,
                 });
             }
@@ -471,6 +471,7 @@ pub struct DeviceCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
+    pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: MaybeRedacted<DeviceLabel>,
     pub verify_key: VerifyKey,
@@ -485,11 +486,11 @@ impl_dump_and_sign!(DeviceCertificate);
 
 impl DeviceCertificate {
     pub fn into_redacted(self) -> Self {
-        let device_label =
-            MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id.device_name()));
+        let device_label = MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id));
         Self {
             author: self.author,
             timestamp: self.timestamp,
+            user_id: self.user_id,
             device_id: self.device_id,
             device_label,
             verify_key: self.verify_key,
@@ -501,16 +502,16 @@ impl DeviceCertificate {
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: CertificateSignerRef,
-        expected_device_id: Option<&DeviceID>,
+        expected_device_id: Option<DeviceID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
         check_author_allow_root(&r.author, expected_author)?;
 
         if let Some(expected_device_id) = expected_device_id {
-            if &r.device_id != expected_device_id {
+            if r.device_id != expected_device_id {
                 return Err(DataError::UnexpectedDeviceID {
-                    expected: Box::new(expected_device_id.clone()),
-                    got: Box::new(r.device_id),
+                    expected: expected_device_id,
+                    got: r.device_id,
                 });
             }
         }
@@ -522,14 +523,13 @@ impl DeviceCertificate {
 impl From<DeviceCertificateData> for DeviceCertificate {
     fn from(data: DeviceCertificateData) -> Self {
         let device_label = match data.device_label {
-            None => {
-                MaybeRedacted::Redacted(DeviceLabel::new_redacted(data.device_id.device_name()))
-            }
+            None => MaybeRedacted::Redacted(DeviceLabel::new_redacted(data.device_id)),
             Some(device_label) => MaybeRedacted::Real(device_label),
         };
         Self {
             author: data.author,
             timestamp: data.timestamp,
+            user_id: data.user_id,
             device_id: data.device_id,
             device_label,
             verify_key: data.verify_key,
@@ -548,6 +548,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
             ty: Default::default(),
             author: obj.author,
             timestamp: obj.timestamp,
+            user_id: obj.user_id,
             device_id: obj.device_id,
             device_label,
             verify_key: obj.verify_key,
@@ -577,13 +578,17 @@ impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
-    pub fn new_root(author: DeviceID, timestamp: DateTime, realm_id: VlobID) -> Self {
-        let user_id = author.user_id().to_owned();
+    pub fn new_root(
+        author_user_id: UserID,
+        author_device_id: DeviceID,
+        timestamp: DateTime,
+        realm_id: VlobID,
+    ) -> Self {
         Self {
-            author,
+            author: author_device_id,
             timestamp,
             realm_id,
-            user_id,
+            user_id: author_user_id,
             role: Some(RealmRole::Owner),
         }
     }
@@ -591,16 +596,16 @@ impl RealmRoleCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
-        expected_user_id: Option<&UserID>,
+        expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
@@ -614,9 +619,9 @@ impl RealmRoleCertificate {
         }
 
         if let Some(expected_user_id) = expected_user_id {
-            if &r.user_id != expected_user_id {
+            if r.user_id != expected_user_id {
                 return Err(DataError::UnexpectedUserID {
-                    expected: expected_user_id.clone(),
+                    expected: expected_user_id,
                     got: r.user_id,
                 });
             }
@@ -666,15 +671,15 @@ impl RealmKeyRotationCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
@@ -737,15 +742,15 @@ impl RealmNameCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
@@ -799,15 +804,15 @@ impl RealmArchivingCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
@@ -1007,6 +1012,9 @@ pub struct ShamirRecoveryBriefCertificate {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
+    /// User here must be the one owning the device used as author
+    /// (i.e. it is the user to be recovered).
+    pub user_id: UserID,
     pub threshold: NonZeroU64,
     pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
 }
@@ -1019,14 +1027,14 @@ impl ShamirRecoveryBriefCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
+        expected_author: DeviceID,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
@@ -1041,6 +1049,7 @@ impl_transparent_data_format_conversion!(
     ShamirRecoveryBriefCertificateData,
     author,
     timestamp,
+    user_id,
     threshold,
     per_recipient_shares,
 );
@@ -1058,6 +1067,9 @@ pub struct ShamirRecoveryShareCertificate {
     pub author: DeviceID,
     pub timestamp: DateTime,
 
+    /// User here must be the one owning the device used as author
+    /// (i.e. it is the user to be recovered).
+    pub user_id: UserID,
     pub recipient: UserID,
     pub ciphered_share: Vec<u8>,
 }
@@ -1070,22 +1082,22 @@ impl ShamirRecoveryShareCertificate {
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_recipient: Option<&UserID>,
+        expected_author: DeviceID,
+        expected_recipient: Option<UserID>,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        if &r.author != expected_author {
+        if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
-                expected: Box::new(expected_author.clone()),
-                got: Some(Box::new(r.author)),
+                expected: expected_author,
+                got: Some(r.author),
             });
         }
 
         if let Some(expected_recipient) = expected_recipient {
-            if &r.recipient != expected_recipient {
+            if r.recipient != expected_recipient {
                 return Err(DataError::UnexpectedUserID {
-                    expected: expected_recipient.clone(),
+                    expected: expected_recipient,
                     got: r.recipient,
                 });
             }
@@ -1102,6 +1114,7 @@ impl_transparent_data_format_conversion!(
     ShamirRecoveryShareCertificateData,
     author,
     timestamp,
+    user_id,
     recipient,
     ciphered_share,
 );

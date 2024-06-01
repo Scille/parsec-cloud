@@ -258,19 +258,19 @@ impl AuthenticatedCmds {
 
 /// Return the Bearer token to use for the `Authorization` header.
 ///
-/// Authorization token format: `PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>.<b64_signature>`
+/// Authorization token format: `PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>.<b64_signature>`
 /// with:
-///     <b64_device_id> = base64(<device_id>)
+///     <author_id_hex> = hex(<author's device ID>)
 ///     <timestamp> = str(<seconds since UNIX epoch>)
-///     <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<b64_device_id>.<timestamp>`))
+///     <b64_signature> = base64(ed25519(`PARSEC-SIGN-ED25519.<author_id_hex>.<timestamp>`))
 /// base64() is the URL-safe variant (https://tools.ietf.org/html/rfc4648#section-5).
 fn generate_authorization_header_value(
     author: &DeviceID,
     author_signing_key: &SigningKey,
 ) -> String {
-    let b64_device_id = BASE64URL.encode(author.to_string().as_bytes());
+    let author_id_hex = author.hex();
     let timestamp = chrono::Utc::now().timestamp().to_string();
-    let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, &b64_device_id, &timestamp);
+    let header_and_body = format!("{}.{}.{}", PARSEC_AUTH_METHOD, &author_id_hex, &timestamp);
     let signature = author_signing_key.sign_only_signature(header_and_body.as_bytes());
     let b64_signature = BASE64URL.encode(&signature);
 

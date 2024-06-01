@@ -58,7 +58,7 @@ async fn no_remote_change(
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
-    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
     p_assert_eq!(outcome, MergeLocalFolderManifestOutcome::NoChange);
 }
 
@@ -118,7 +118,7 @@ async fn remote_only_change(env: &TestbedEnv) {
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
-    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
     p_assert_eq!(
         outcome,
         MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
@@ -351,7 +351,7 @@ async fn local_and_remote_changes(
         }
 
         "remote_parent_change_are_ours" => {
-            remote.author = local_author.clone();
+            remote.author = local_author;
 
             let new_remote_parent_id =
                 VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
@@ -372,7 +372,7 @@ async fn local_and_remote_changes(
         }
 
         "remote_children_changes_are_ours" => {
-            remote.author = local_author.clone();
+            remote.author = local_author;
 
             let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
             let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
@@ -396,7 +396,7 @@ async fn local_and_remote_changes(
         }
 
         "remote_changes_are_ours_but_speculative" => {
-            remote.author = local_author.clone();
+            remote.author = local_author;
             local.speculative = true;
 
             let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
@@ -435,7 +435,7 @@ async fn local_and_remote_changes(
         unknown => panic!("Unknown kind: {}", unknown),
     };
 
-    let outcome = merge_local_folder_manifest(&local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
     p_assert_eq!(
         outcome,
         MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))

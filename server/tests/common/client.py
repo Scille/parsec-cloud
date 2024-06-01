@@ -82,13 +82,16 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         self,
         raw_client: AsyncClient,
         organization_id: OrganizationID,
+        user_id: UserID,
         device_id: DeviceID,
         signing_key: SigningKey,
         event: tb.TestbedEventNewUser | tb.TestbedEventBootstrapOrganization | None = None,
     ):
+        assert isinstance(user_id, UserID)
         self.raw_client = raw_client
         self.organization_id = organization_id
         self.device_id = device_id
+        self.user_id = user_id
         self.signing_key = signing_key
         self.event = event
         self.url = f"http://{SERVER_DOMAIN}/authenticated/{organization_id}"
@@ -98,10 +101,6 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
         }
         # Useful to mock the current time
         self.now_factory = DateTime.now
-
-    @property
-    def user_id(self) -> UserID:
-        return self.device_id.user_id
 
     @property
     def human_handle(self) -> HumanHandle:
@@ -114,9 +113,9 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
 
     async def _do_request(self, req: bytes) -> bytes:
         token = AuthenticatedToken.generate_raw(
-            self.device_id,
-            self.now_factory(),
-            self.signing_key,
+            device_id=self.device_id,
+            timestamp=self.now_factory(),
+            key=self.signing_key,
         )
         headers = {
             "Authorization": f"Bearer {token.decode()}",
@@ -133,9 +132,9 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
     ) -> AsyncIterator[EventsListenSSE]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
-            self.device_id,
-            now,
-            self.signing_key,
+            device_id=self.device_id,
+            timestamp=now,
+            key=self.signing_key,
         )
         headers = {
             "Authorization": f"Bearer {token.decode()}",
@@ -152,9 +151,9 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
     def raw_sse_connection(self, now: DateTime | None = None) -> AsyncContextManager[Response]:
         now = now or DateTime.now()
         token = AuthenticatedToken.generate_raw(
-            self.device_id,
-            now,
-            self.signing_key,
+            device_id=self.device_id,
+            timestamp=now,
+            key=self.signing_key,
         )
         return self.raw_client.stream(
             method="GET",
@@ -303,23 +302,26 @@ class CoolorgRpcClients:
         )
 
     def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
         for event in self.testbed_template.events:
             if (
                 isinstance(event, tb.TestbedEventBootstrapOrganization)
-                and event.first_user_device_id.user_id.str == user
+                and event.first_user_id == user_id
             ):
                 return AuthenticatedRpcClient(
                     self.raw_client,
                     self.organization_id,
-                    device_id=event.first_user_device_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
                     signing_key=event.first_user_first_device_signing_key,
                     event=event,
                 )
-            elif isinstance(event, tb.TestbedEventNewUser) and event.device_id.user_id.str == user:
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
                 return AuthenticatedRpcClient(
                     self.raw_client,
                     self.organization_id,
-                    device_id=event.device_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
                     signing_key=event.first_device_signing_key,
                     event=event,
                 )
@@ -348,10 +350,11 @@ class CoolorgRpcClients:
         if self._invited_alice_dev3:
             return self._invited_alice_dev3
 
+        alice_dev1_device_id = DeviceID.test_from_nickname("alice@dev1")
         for event in self.testbed_template.events:
             if (
                 isinstance(event, tb.TestbedEventNewDeviceInvitation)
-                and event.created_by.str == "alice@dev1"
+                and event.created_by == alice_dev1_device_id
             ):
                 self._invited_alice_dev3 = InvitedRpcClient(
                     self.raw_client, self.organization_id, event=event
@@ -405,23 +408,26 @@ class MinimalorgRpcClients:
         return self._alice
 
     def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
         for event in self.testbed_template.events:
             if (
                 isinstance(event, tb.TestbedEventBootstrapOrganization)
-                and event.first_user_device_id.user_id.str == user
+                and event.first_user_id == user_id
             ):
                 return AuthenticatedRpcClient(
                     self.raw_client,
                     self.organization_id,
-                    device_id=event.first_user_device_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
                     signing_key=event.first_user_first_device_signing_key,
                     event=event,
                 )
-            elif isinstance(event, tb.TestbedEventNewUser) and event.device_id.user_id.str == user:
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
                 return AuthenticatedRpcClient(
                     self.raw_client,
                     self.organization_id,
-                    device_id=event.device_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
                     signing_key=event.first_device_signing_key,
                     event=event,
                 )

@@ -9,8 +9,6 @@ import asyncpg
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 from parsec._parsec import (
-    DateTime,
-    DeviceID,
     OrganizationID,
     RealmRole,
     UserID,
@@ -24,7 +22,7 @@ from parsec.components.postgresql.handler import parse_signal, send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.utils import Q, q_realm, q_user_internal_id, transaction
-from parsec.components.user import CheckDeviceBadOutcome
+from parsec.components.user import CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 from parsec.logging import get_logger
@@ -45,7 +43,7 @@ async def query_get_realms_for_user(
     conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
 ) -> dict[VlobID, RealmRole]:
     rep = await conn.fetch(
-        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user.str)
+        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
     )
     return {
         VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
@@ -138,27 +136,25 @@ class PGEventsComponent(BaseEventsComponent):
 
     @override
     @transaction
-    async def _get_registration_info_for_author(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, author: DeviceID
+    async def _get_registration_info_for_user(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> tuple[EventOrganizationConfig, UserProfile, set[VlobID]] | SseAPiEventsListenBadOutcome:
         match await self.organization._get(conn, organization_id):
-            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
-                return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
             case Organization() as org:
                 pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND
 
         if org.is_expired:
             return SseAPiEventsListenBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_device(conn, organization_id, author):
-            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
-                return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_NOT_FOUND:
-                return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
-            case CheckDeviceBadOutcome.USER_REVOKED:
-                return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
-            case (UserProfile() as profile, DateTime()):
+        match await self.user._check_user(conn, organization_id, user_id):
+            case (profile, _):
                 pass
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return SseAPiEventsListenBadOutcome.AUTHOR_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return SseAPiEventsListenBadOutcome.AUTHOR_REVOKED
 
         org_config = EventOrganizationConfig(
             organization_id=org.organization_id,
@@ -166,5 +162,5 @@ class PGEventsComponent(BaseEventsComponent):
             active_users_limit=org.active_users_limit,
         )
 
-        mapping = await query_get_realms_for_user(conn, organization_id, author.user_id)
+        mapping = await query_get_realms_for_user(conn, organization_id, user_id)
         return org_config, profile, set(mapping.keys())
