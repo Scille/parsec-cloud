@@ -158,9 +158,8 @@ async fn reshape(
             continue;
         }
 
-        if buf_size < buf.len() {
-            buf.extend_from_slice(&vec![0; buf.len() - buf_size]);
-        }
+        // Sanity check: make sure that the buffer is fully filled
+        assert!(buf.len() == reshape.destination().size() as usize);
 
         let new_chunk_id = reshape.destination().id;
         // Remove old chunks
