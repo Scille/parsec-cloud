@@ -89,14 +89,11 @@ pub async fn fd_read(
                     None
                 }
             });
-        match found {
-            Some(chunk_data) => {
-                chunk
-                    .copy_between_start_and_stop(chunk_data, offset, buf, &mut buf_size)
-                    .expect("prepare_read/buf/size are consistent");
-            }
+        let chunk_data_bytes: Bytes;
+        let chunk_data = match found {
+            Some(chunk_data) => chunk_data,
             None => {
-                let chunk_data = ops
+                chunk_data_bytes = ops
                     .store
                     .get_chunk_or_block(&chunk, &opened_file.manifest.base)
                     .await
@@ -122,12 +119,12 @@ pub async fn fd_read(
                             err.context("cannot read chunk").into()
                         }
                     })?;
-
-                chunk
-                    .copy_between_start_and_stop(&chunk_data, offset, buf, &mut buf_size)
-                    .expect("prepare_read/buf/size are consistent");
+                chunk_data_bytes.as_ref()
             }
-        }
+        };
+        chunk
+            .copy_between_start_and_stop(chunk_data, offset, buf, &mut buf_size)
+            .expect("prepare_read/buf/size are consistent");
     }
     if buf_size < written_size as usize {
         buf.write_all(&vec![0; written_size as usize - buf_size])
