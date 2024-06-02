@@ -114,12 +114,20 @@ async fn inconsistent_path_parent_mismatch(
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let (patched_parent_id, expected_error) = match kind {
+        "other_entry" => (wksp1_foo_id, ResolvePathError::EntryNotFound),
+        "self_referencing" => (
+            wksp1_bar_txt_id,
+            ResolvePathError::Internal(
+                DataError::FileManifestIntegrity {
+                    invariant: "id and parent are different",
+                }
+                .into(),
+            ),
+        ),
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
     env.customize(|builder| {
-        let patched_parent_id = match kind {
-            "other_entry" => wksp1_foo_id,
-            "self_referencing" => wksp1_bar_txt_id,
-            unknown => panic!("Unknown kind: {}", unknown),
-        };
         builder
             .workspace_data_storage_local_file_manifest_create_or_update(
                 "alice@dev1",
@@ -142,7 +150,14 @@ async fn inconsistent_path_parent_mismatch(
         .resolve_path(&"/bar.txt".parse().unwrap())
         .await
         .unwrap_err();
-    p_assert_matches!(err, ResolvePathError::EntryNotFound);
+
+    match expected_error {
+        ResolvePathError::EntryNotFound => p_assert_matches!(err, ResolvePathError::EntryNotFound),
+        ResolvePathError::Internal(expected) => {
+            p_assert_matches!(err, ResolvePathError::Internal(anyhow_err) if anyhow_err.root_cause().to_string().contains(&expected.to_string()))
+        }
+        _ => unreachable!(),
+    }
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

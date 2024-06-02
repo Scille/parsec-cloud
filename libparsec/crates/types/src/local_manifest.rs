@@ -347,7 +347,15 @@ impl LocalFileManifest {
     /// Also the last block span should not be empty.
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `FileManifest::check_integrity`.
+    /// Also, the id and parent id should be different so the manifest does not point to itself.
     pub fn check_integrity(&self) -> DataResult<()> {
+        // Check that id and parent are different
+        if self.base.id == self.parent {
+            return Err(DataError::FileManifestIntegrity {
+                invariant: "id and parent are different",
+            });
+        }
+
         let mut current = 0;
 
         // Loop over block spans
@@ -553,6 +561,16 @@ impl LocalFolderManifest {
             remote_confinement_points: HashSet::new(),
             speculative: false,
         }
+    }
+
+    pub fn check_integrity_as_child(&self) -> DataResult<()> {
+        // Check that id and parent are different
+        if self.base.id == self.parent {
+            return Err(DataError::FolderManifestIntegrity {
+                invariant: "id and parent are different",
+            });
+        }
+        Ok(())
     }
 
     /// Root folder manifest (aka "workspace manifest" for historical reasons) is a special
@@ -943,13 +961,18 @@ impl LocalChildManifest {
         }
     }
 
+    pub fn check_integrity(&self) -> DataResult<()> {
+        match self {
+            Self::File(manifest) => manifest.check_integrity()?,
+            Self::Folder(manifest) => manifest.check_integrity_as_child()?,
+        }
+        Ok(())
+    }
+
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
         let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
         let result = format_vx_load(&serialized);
-        if let Ok(Self::File(manifest)) = &result {
-            manifest.check_integrity()?;
-        }
-        result
+        result.and_then(|manifest: LocalChildManifest| manifest.check_integrity().map(|_| manifest))
     }
 }
 
