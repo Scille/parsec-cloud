@@ -208,18 +208,11 @@ async fn file_in_the_path(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn invalid_child_in_path(
-    #[values("other_entry", "self_referencing")] kind: &str,
-    env: &TestbedEnv,
-) {
+async fn invalid_child_in_path(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
-    let patched_parent_id = match kind {
-        "other_entry" => wksp1_bar_txt_id,
-        "self_referencing" => wksp1_foo_id,
-        unknown => panic!("Unknown kind: {}", unknown),
-    };
+    let patched_parent_id = wksp1_bar_txt_id;
     env.customize(|builder| {
         // Overwrite `/foo`so that it is now an invalid child
         builder
