@@ -23,6 +23,7 @@
             v-show="entry.isSelected || isHovered || showCheckbox"
             @change="$emit('selectedChange', entry, $event)"
             @click.stop
+            @dblclick.stop
           />
           <!-- eslint-enable vue/no-mutating-props -->
         </div>
@@ -78,6 +79,7 @@
             v-show="isHovered || menuOpened"
             class="options-button"
             @click.stop="onOptionsClick($event)"
+            @dblclick.stop
           >
             <ion-icon
               :icon="ellipsisHorizontal"
