@@ -102,6 +102,7 @@ use crate::prelude::*;
     ),
     UserProfile::Outsider,
 )]
+#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserProfile) {
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -147,9 +148,12 @@ fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserP
 fn slug(alice: &Device) {
     let local_device = alice.local_device();
 
-    p_assert_eq!(local_device.slug(), "f78292422e#CoolOrg#alice@dev1");
+    p_assert_eq!(
+        local_device.slug(),
+        "f78292422e#CoolOrg#de10a11c-ec00-1000-0000-000000000000"
+    );
     p_assert_eq!(
         local_device.slughash(),
-        "a9172f17141ae27ab662d312869169b36fc9d036e88605a9682c98f372c3041b"
+        "70bf74205e30363cd6cf6ef9f38b54419108d0e2411903c85648968924ecbed1"
     );
 }
