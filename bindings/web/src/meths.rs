@@ -214,6 +214,21 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .parse()
             .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
     };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
     let device_id = {
         let js_val = Reflect::get(&obj, &"deviceId".into())?;
         js_val
@@ -222,8 +237,8 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
@@ -265,6 +280,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
     Ok(libparsec::AvailableDevice {
         key_file_path,
         organization_id,
+        user_id,
         device_id,
         human_handle,
         device_label,
@@ -293,10 +309,19 @@ fn struct_available_device_rs_to_js(
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_device_id = JsValue::from_str({
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -456,8 +481,8 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
@@ -469,8 +494,13 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid UserID"))?
     };
     let device_label = {
@@ -532,9 +562,8 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_device_id = JsValue::from_str({
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -542,7 +571,15 @@ fn struct_client_info_rs_to_js(rs_obj: libparsec::ClientInfo) -> Result<JsValue,
         .as_ref()
     });
     Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
-    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
@@ -1004,8 +1041,8 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
             .and_then(|s| s.as_string())
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
-                let custom_from_rs_string = |s: String| -> Result<_, String> {
-                    s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                 };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
@@ -1044,8 +1081,8 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
@@ -1065,9 +1102,8 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
 fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_id = JsValue::from_str({
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -1090,9 +1126,8 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(val) => JsValue::from_str({
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -1970,8 +2005,13 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid UserID"))?
     };
     let human_handle = {
@@ -2012,8 +2052,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
@@ -2048,8 +2088,8 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, String> {
-                            s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                            libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                         };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
@@ -2071,7 +2111,15 @@ fn struct_user_info_js_to_rs(obj: JsValue) -> Result<libparsec::UserInfo, JsValu
 #[allow(dead_code)]
 fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_id = JsValue::from_str(rs_obj.id.as_ref());
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -2090,9 +2138,8 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(val) => JsValue::from_str({
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -2118,9 +2165,8 @@ fn struct_user_info_rs_to_js(rs_obj: libparsec::UserInfo) -> Result<JsValue, JsV
     Reflect::set(&js_obj, &"revokedOn".into(), &js_revoked_on)?;
     let js_revoked_by = match rs_obj.revoked_by {
         Some(val) => JsValue::from_str({
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(val) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
@@ -2238,8 +2284,13 @@ fn struct_workspace_user_access_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid UserID"))?
     };
     let human_handle = {
@@ -2281,7 +2332,15 @@ fn struct_workspace_user_access_info_rs_to_js(
     rs_obj: libparsec::WorkspaceUserAccessInfo,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_user_id = JsValue::from_str(rs_obj.user_id.as_ref());
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
     Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
@@ -5528,8 +5587,13 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid UserID"))?
             };
             let greeter_human_handle = {
@@ -5570,8 +5634,13 @@ fn variant_user_or_device_claim_initial_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid UserID"))?
             };
             let greeter_human_handle = {
@@ -5610,7 +5679,15 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             )?;
             let js_handle = JsValue::from(handle);
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
-            let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
+            let js_greeter_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
             Reflect::set(
@@ -5635,7 +5712,15 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
             Reflect::set(&js_obj, &"handle".into(), &js_handle)?;
             let js_claimer_email = claimer_email.into();
             Reflect::set(&js_obj, &"claimerEmail".into(), &js_claimer_email)?;
-            let js_greeter_user_id = JsValue::from_str(greeter_user_id.as_ref());
+            let js_greeter_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
             Reflect::set(&js_obj, &"greeterUserId".into(), &js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(greeter_human_handle)?;
             Reflect::set(
@@ -7373,8 +7458,8 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
 pub fn clientGetUserDevice(client: u32, device: String) -> Promise {
     future_to_promise(async move {
         let device = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             custom_from_rs_string(device).map_err(|e| TypeError::new(e.as_ref()))
         }?;
@@ -7469,10 +7554,12 @@ pub fn clientListInvitations(client: u32) -> Promise {
 #[wasm_bindgen]
 pub fn clientListUserDevices(client: u32, user: String) -> Promise {
     future_to_promise(async move {
-        let user = user
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
-
+        let user = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret = libparsec::client_list_user_devices(client, user).await;
         Ok(match ret {
             Ok(value) => {
@@ -7701,10 +7788,12 @@ pub fn clientRenameWorkspace(client: u32, realm_id: String, new_name: String) ->
 #[wasm_bindgen]
 pub fn clientRevokeUser(client: u32, user: String) -> Promise {
     future_to_promise(async move {
-        let user = user
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
-
+        let user = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(user).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret = libparsec::client_revoke_user(client, user).await;
         Ok(match ret {
             Ok(value) => {
@@ -7744,10 +7833,12 @@ pub fn clientShareWorkspace(
             };
             custom_from_rs_string(realm_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let recipient = recipient
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid UserID")))?;
-
+        let recipient = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(recipient).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let role = match role {
             Some(role) => {
                 let role = enum_realm_role_js_to_rs(&role)?;

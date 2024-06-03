@@ -81,6 +81,7 @@ export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 export interface AvailableDevice {
     keyFilePath: Path
     organizationId: OrganizationID
+    userId: UserID
     deviceId: DeviceID
     humanHandle: HumanHandle
     deviceLabel: DeviceLabel
