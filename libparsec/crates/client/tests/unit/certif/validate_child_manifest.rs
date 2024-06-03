@@ -460,7 +460,7 @@ async fn blocks_corrupted(
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if matches!(**error, DataError::FileManifestIntegrity { .. }))
+        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if matches!(**error, DataError::Integrity { .. }))
     );
 }
 

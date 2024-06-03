@@ -229,17 +229,20 @@ impl Chunk {
         // As explained above, the following rule applies:
         //   raw_offset <= start < stop <= raw_offset + raw_size
         if !(self.raw_offset <= self.start) {
-            return Err(DataError::ChunkIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "raw_offset <= start",
             });
         }
         if !(self.start < self.stop.get()) {
-            return Err(DataError::ChunkIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "start < stop",
             });
         }
         if !(self.stop.get() <= self.raw_offset + self.raw_size.get()) {
-            return Err(DataError::ChunkIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "stop <= raw_offset + raw_size",
             });
         }
@@ -351,7 +354,8 @@ impl LocalFileManifest {
     pub fn check_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
-            return Err(DataError::FileManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
         }
@@ -369,14 +373,16 @@ impl LocalFileManifest {
 
                 // Check that the chunk belong to the block span
                 if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
-                    return Err(DataError::LocalFileManifestIntegrity {
+                    return Err(DataError::Integrity {
+                        data_type: std::any::type_name::<Self>(),
                         invariant: "Chunk belong to the block span",
                     });
                 }
 
                 // Check that the chunks are ordered and do not overlap
                 if current > chunk.start {
-                    return Err(DataError::LocalFileManifestIntegrity {
+                    return Err(DataError::Integrity {
+                        data_type: std::any::type_name::<Self>(),
                         invariant: "Chunks are ordered and do not overlap",
                     });
                 }
@@ -391,7 +397,8 @@ impl LocalFileManifest {
 
         // Check that the file size is consistent with the last chunk
         if current > self.size {
-            return Err(DataError::LocalFileManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "File size is consistent with the last chunk",
             });
         }
@@ -566,7 +573,8 @@ impl LocalFolderManifest {
     pub fn check_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
-            return Err(DataError::FolderManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
         }

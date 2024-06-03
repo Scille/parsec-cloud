@@ -75,20 +75,11 @@ pub enum DataError {
     #[error("Invalid version: expected `{expected}`, got `{got}`")]
     UnexpectedVersion { expected: u32, got: u32 },
 
-    #[error("Broken invariant in chunk content")]
-    ChunkIntegrity { invariant: &'static str },
-
-    #[error("Broken invariant in file manifest content: {invariant}")]
-    FileManifestIntegrity { invariant: &'static str },
-
-    #[error("Broken invariant in folder manifest content: {invariant}")]
-    FolderManifestIntegrity { invariant: &'static str },
-
-    #[error("Broken invariant in local file manifest content")]
-    LocalFileManifestIntegrity { invariant: &'static str },
-
-    #[error("Broken invariant in local folder manifest content")]
-    LocalFolderManifestIntegrity { invariant: &'static str },
+    #[error("Broken invariant in {data_type} content: {invariant}")]
+    Integrity {
+        data_type: &'static str,
+        invariant: &'static str,
+    },
 }
 
 pub type DataResult<T> = Result<T, DataError>;
