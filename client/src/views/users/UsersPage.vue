@@ -134,6 +134,7 @@ import {
   inviteUser as parsecInviteUser,
   listUsers as parsecListUsers,
   revokeUser as parsecRevokeUser,
+  InvitationStatus,
 } from '@/parsec';
 import { Routes, getCurrentRouteQuery, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -147,6 +148,7 @@ import { IonContent, IonPage, IonText, modalController, popoverController } from
 import { informationCircle, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import BulkRoleAssignmentModal from '@/views/users/BulkRoleAssignmentModal.vue';
+import { EventData, EventDistributor, EventDistributorKey, Events, InvitationUpdatedData } from '@/services/eventDistributor';
 
 const displayView = ref(DisplayState.List);
 const isAdmin = ref(false);
@@ -154,12 +156,14 @@ const clientInfo: Ref<ClientInfo | null> = ref(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
+const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
 const currentUser: Ref<UserModel | null> = ref(null);
 const currentSortProperty = ref();
 const currentSortOrder = ref();
+let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 
@@ -477,6 +481,13 @@ const routeWatchCancel = watchRoute(async () => {
 });
 
 onMounted(async (): Promise<void> => {
+  eventCbId = await eventDistributor.registerCallback(Events.InvitationUpdated, async (event: Events, data?: EventData) => {
+    if (event === Events.InvitationUpdated && data) {
+      if ((data as InvitationUpdatedData).status === InvitationStatus.Finished) {
+        await refreshUserList();
+      }
+    }
+  });
   displayView.value = (
     await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: DisplayState.List })
   ).displayState;
@@ -511,6 +522,9 @@ onMounted(async (): Promise<void> => {
 onUnmounted(async () => {
   if (hotkeys) {
     hotkeyManager.unregister(hotkeys);
+  }
+  if (eventCbId) {
+    await eventDistributor.removeCallback(eventCbId);
   }
   routeWatchCancel();
 });
