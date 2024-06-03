@@ -236,7 +236,6 @@ export class DeviceClaim {
           email: 'a@b.c',
         },
         deviceLabel: 'a@b',
-        slug: 'slug',
         ty: DeviceFileType.Password,
       };
       return { ok: true, value: this.device };

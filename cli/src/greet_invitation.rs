@@ -22,7 +22,7 @@ pub struct GreetInvitation {
     /// Parsec config directory
     #[arg(short, long, default_value_os_t = get_default_config_dir())]
     config_dir: PathBuf,
-    /// Device slughash
+    /// Device ID
     #[arg(short, long)]
     device: Option<String>,
     /// Invitation token

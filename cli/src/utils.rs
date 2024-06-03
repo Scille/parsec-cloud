@@ -17,21 +17,21 @@ pub const YELLOW: &str = "\x1B[33m";
 
 pub fn format_devices(devices: &[AvailableDevice]) {
     let n = devices.len();
-    // Try to shorten the slughash to make it easier to work with
-    let slug_len = 2 + (n + 1).ilog2() as usize;
+    // Try to shorten the device ID to make it easier to work with
+    let short_id_len = 2 + (n + 1).ilog2() as usize;
 
     for device in devices {
-        let slug = &device.slughash()[..slug_len];
+        let short_id = &device.device_id.hex()[..short_id_len];
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
-        println!("{YELLOW}{slug}{RESET} - {organization_id}: {human_handle} @ {device_label}");
+        println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
     }
 }
 
 pub async fn load_device_file_and_run<F, Fut>(
     config_dir: PathBuf,
-    device_slughash: Option<String>,
+    device_short_id: Option<String>,
     function: F,
 ) -> anyhow::Result<()>
 where
@@ -40,25 +40,25 @@ where
 {
     let devices = list_available_devices(&config_dir).await;
 
-    if let Some(device_slughash) = device_slughash {
+    if let Some(device_short_id) = device_short_id {
         let mut possible_devices = vec![];
 
         for device in &devices {
-            if device.slughash().starts_with(&device_slughash) {
+            if device.device_id.hex().starts_with(&device_short_id) {
                 possible_devices.push(device);
             }
         }
 
         match possible_devices.len() {
             0 => {
-                println!("Device `{device_slughash}` not found, available devices:");
+                println!("Device `{device_short_id}` not found, available devices:");
                 format_devices(&devices);
             }
             1 => {
                 function(possible_devices[0].clone()).await?;
             }
             _ => {
-                println!("Multiple devices found for `{device_slughash}`:");
+                println!("Multiple devices found for `{device_short_id}`:");
                 format_devices(&devices);
             }
         }
@@ -73,14 +73,14 @@ where
 
 pub async fn load_device_and_run<F, Fut>(
     config_dir: PathBuf,
-    device_slughash: Option<String>,
+    device_short_id: Option<String>,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_file_and_run(config_dir.clone(), device_slughash, |device| async move {
+    load_device_file_and_run(config_dir.clone(), device_short_id, |device| async move {
         let device = match device.ty {
             DeviceFileType::Keyring => {
                 return Err(anyhow::anyhow!(
@@ -124,14 +124,14 @@ where
 
 pub async fn load_cmds_and_run<F, Fut>(
     config_dir: PathBuf,
-    device_slughash: Option<String>,
+    device_short_id: Option<String>,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir.clone(), device_slughash, |device| async move {
+    load_device_and_run(config_dir.clone(), device_short_id, |device| async move {
         let cmds =
             AuthenticatedCmds::new(&config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
@@ -142,14 +142,14 @@ where
 
 pub async fn load_client_and_run<F, Fut>(
     config_dir: PathBuf,
-    device_slughash: Option<String>,
+    device_short_id: Option<String>,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(Arc<Client>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir, device_slughash, |device| async move {
+    load_device_and_run(config_dir, device_short_id, |device| async move {
         let client = Client::start(
             Arc::new(
                 ClientConfig {

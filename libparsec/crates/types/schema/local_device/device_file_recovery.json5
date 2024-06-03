@@ -25,10 +25,6 @@
         {
             "name": "organization_id",
             "type": "OrganizationID"
-        },
-        {
-            "name": "slug",
-            "type": "String"
         }
     ]
 }

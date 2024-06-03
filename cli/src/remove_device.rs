@@ -12,7 +12,7 @@ pub struct RemoveDevice {
     /// Parsec config directory
     #[arg(short, long, default_value_os_t = get_default_config_dir())]
     config_dir: PathBuf,
-    /// Device slughash
+    /// Device ID
     #[arg(short, long)]
     device: Option<String>,
 }
@@ -21,13 +21,13 @@ pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
     let RemoveDevice { config_dir, device } = remove_device;
 
     load_device_file_and_run(config_dir, device, |device| async move {
-        let slug = &device.slughash()[..3];
+        let short_id = &device.device_id.hex()[..3];
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
 
         println!("You are about to remove the following device:");
-        println!("{YELLOW}{slug}{RESET} - {organization_id}: {human_handle} @ {device_label}");
+        println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
         println!("Are you sure? (y/n)");
 
         let mut input = String::new();

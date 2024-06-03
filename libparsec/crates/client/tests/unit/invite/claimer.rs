@@ -244,7 +244,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let expected_default_file_key = env
         .discriminant_dir
         .join("devices")
-        .join(format!("{}.keys", ctx.new_local_device.slughash()));
+        .join(format!("{}.keys", ctx.new_local_device.device_id.hex()));
     p_assert_eq!(default_file_key, expected_default_file_key);
 
     let new_local_device = ctx.new_local_device.clone();
@@ -260,7 +260,6 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             device_id: new_local_device.device_id,
             device_label,
             human_handle,
-            slug: new_local_device.slug(),
             ty: DeviceFileType::Password,
         }
     );

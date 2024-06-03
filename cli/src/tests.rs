@@ -187,7 +187,7 @@ async fn invite_device(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["invite-device", "--device", &alice.slughash()])
+        .args(["invite-device", "--device", &alice.device_id.hex()])
         .assert()
         .stdout(predicates::str::contains("Invitation URL:"));
 }
@@ -207,7 +207,7 @@ async fn invite_user(tmp_path: TmpPath) {
         .args([
             "invite-user",
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
             "--email",
             "a@b.c",
         ])
@@ -257,7 +257,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         .args([
             "cancel-invitation",
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
             "--token",
             &format!("{}", token.hex()),
         ])
@@ -333,7 +333,7 @@ async fn export_recovery_device(tmp_path: TmpPath) {
         .args([
             "export-recovery-device",
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
             "--output",
             &output.to_string_lossy(),
         ])
@@ -472,7 +472,7 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-invitations", "--device", &alice.slughash()])
+        .args(["list-invitations", "--device", &alice.device_id.hex()])
         .assert()
         .stdout(predicates::str::contains("No invitation."));
 
@@ -504,7 +504,7 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-invitations", "--device", &alice.slughash()])
+        .args(["list-invitations", "--device", &alice.device_id.hex()])
         .assert()
         .stdout(predicates::str::contains(format!(
             "{}\t{YELLOW}idle{RESET}\tdevice",
@@ -528,7 +528,7 @@ async fn create_workspace(tmp_path: TmpPath) {
         .args([
             "create-workspace",
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
             "--name",
             "new-workspace",
         ])
@@ -537,7 +537,7 @@ async fn create_workspace(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-workspaces", "--device", &alice.slughash()])
+        .args(["list-workspaces", "--device", &alice.device_id.hex()])
         .assert()
         .stdout(predicates::str::contains("new-workspace: owner"));
 }
@@ -555,7 +555,7 @@ async fn list_users(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-users", "--device", &alice.slughash()])
+        .args(["list-users", "--device", &alice.device_id.hex()])
         .assert()
         .stdout(
             predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)"))
@@ -569,7 +569,7 @@ async fn list_users(tmp_path: TmpPath) {
 #[tokio::test]
 // This test seems to fail because alice's device ID is no longer stable (it used
 // to be a string, now it's a UUID regenerated at each run), hence the test process
-// and the cli invocation process have different values for `alice.slughash()` !
+// and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn share_workspace(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
@@ -602,7 +602,7 @@ async fn share_workspace(tmp_path: TmpPath) {
                 .args([
                     "share-workspace",
                     "--device",
-                    &alice.slughash(),
+                    &alice.device_id.hex(),
                     "--workspace-id",
                     &wid.hex(),
                     "--user-id",
@@ -621,7 +621,7 @@ async fn share_workspace(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-workspaces", "--device", &bob.slughash()])
+        .args(["list-workspaces", "--device", &bob.device_id.hex()])
         .assert()
         .stdout(predicates::str::contains("new-workspace: contributor"));
 }
@@ -672,7 +672,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
             "--token",
             &format!("{}", token.hex()),
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -776,7 +776,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
             "--token",
             &format!("{}", token.hex()),
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -842,7 +842,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 #[tokio::test]
 // This test seems to fail because alice's device ID is no longer stable (it used
 // to be a string, now it's a UUID regenerated at each run), hence the test process
-// and the cli invocation process have different values for `alice.slughash()` !
+// and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn remove_device(tmp_path: TmpPath) {
     let tmp_path_str = tmp_path.to_str().unwrap();
@@ -861,7 +861,7 @@ async fn remove_device(tmp_path: TmpPath) {
             "--features=testenv",
             "remove-device",
             "--device",
-            &alice.slughash(),
+            &alice.device_id.hex(),
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())

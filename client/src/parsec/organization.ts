@@ -82,7 +82,6 @@ export async function createOrganization(
           email: 'a@b.c',
         },
         deviceLabel: 'a@b',
-        slug: 'slug',
         ty: DeviceFileType.Password,
       },
     };

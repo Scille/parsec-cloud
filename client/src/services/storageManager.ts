@@ -56,13 +56,13 @@ export class StorageManager {
     return storage;
   }
 
-  async storeDevicesData(data: { [slug: string]: StoredDeviceData }): Promise<void> {
-    const serialized: { [slug: string]: object } = {};
+  async storeDevicesData(data: { [deviceId: string]: StoredDeviceData }): Promise<void> {
+    const serialized: { [deviceId: string]: object } = {};
 
-    Object.keys(data).forEach((slug: string, _data) => {
-      if (data[slug] && data[slug].lastLogin) {
-        serialized[slug] = {
-          lastLogin: data[slug].lastLogin.toISO(),
+    Object.keys(data).forEach((deviceId: string, _data) => {
+      if (data[deviceId] && data[deviceId].lastLogin) {
+        serialized[deviceId] = {
+          lastLogin: data[deviceId].lastLogin.toISO(),
         };
       }
     });
@@ -70,19 +70,19 @@ export class StorageManager {
     this.internalStore.set(StorageManager.STORED_DEVICE_DATA_KEY, serialized);
   }
 
-  async retrieveDevicesData(): Promise<{ [slug: string]: StoredDeviceData }> {
+  async retrieveDevicesData(): Promise<{ [deviceId: string]: StoredDeviceData }> {
     const data = await this.internalStore.get(StorageManager.STORED_DEVICE_DATA_KEY);
-    const deviceData: { [slug: string]: StoredDeviceData } = {};
+    const deviceData: { [deviceId: string]: StoredDeviceData } = {};
 
     if (!data) {
       return deviceData;
     }
-    Object.keys(data).forEach((slug, _data) => {
-      if (data[slug] && data[slug].lastLogin) {
-        deviceData[slug] = {
+    Object.keys(data).forEach((deviceId, _data) => {
+      if (data[deviceId] && data[deviceId].lastLogin) {
+        deviceData[deviceId] = {
           // Need to add setZone because Luxon (and JavaScript's date) ignore
           // the timezone part otherwise
-          lastLogin: DateTime.fromISO(data[slug].lastLogin, { setZone: true }),
+          lastLogin: DateTime.fromISO(data[deviceId].lastLogin, { setZone: true }),
         };
       }
     });

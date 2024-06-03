@@ -15,7 +15,7 @@ enum RegisteredHandleItem {
 
 pub(crate) enum HandleItem {
     StartingClient {
-        slug: String,
+        device_id: DeviceID,
         // Concurrent start for the same client will register itself here
         to_wake_on_done: Vec<Event>,
     },

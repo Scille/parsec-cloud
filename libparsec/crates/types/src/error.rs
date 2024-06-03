@@ -93,9 +93,6 @@ pub type PkiEnrollmentLocalPendingResult<T> = Result<T, PkiEnrollmentLocalPendin
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum LocalDeviceError {
-    #[error("Invalid slug")]
-    InvalidSlug,
-
     #[error("{exc}")]
     CryptoError { exc: CryptoError },
 
@@ -119,8 +116,8 @@ pub enum LocalDeviceError {
     Serialization(PathBuf),
 
     #[cfg(target_arch = "wasm32")]
-    #[error("Device not found: {slug}")]
-    NotFound { slug: String },
+    #[error("Device not found: {device_id}")]
+    NotFound { device_id: DeviceID },
 
     #[cfg(target_arch = "wasm32")]
     #[error("LocalStorage is not available")]

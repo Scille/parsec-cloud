@@ -2,7 +2,6 @@
 
 use bytes::Bytes;
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
 use std::path::{Path, PathBuf};
 
 use libparsec_crypto::Password;
@@ -23,7 +22,6 @@ pub struct DeviceFileKeyring {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    pub slug: String,
     pub keyring_service: String,
     pub keyring_user: String,
 }
@@ -39,7 +37,6 @@ impl_transparent_data_format_conversion!(
     user_id,
     device_id,
     organization_id,
-    slug,
     keyring_service,
     keyring_user,
 );
@@ -53,7 +50,6 @@ pub struct DeviceFilePassword {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    pub slug: String,
     pub algorithm: DeviceFilePasswordAlgorithm,
 }
 
@@ -68,7 +64,6 @@ impl_transparent_data_format_conversion!(
     user_id,
     device_id,
     organization_id,
-    slug,
     algorithm,
 );
 
@@ -81,7 +76,6 @@ pub struct DeviceFileRecovery {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    pub slug: String,
 }
 
 parsec_data!("schema/local_device/device_file_recovery.json5");
@@ -95,7 +89,6 @@ impl_transparent_data_format_conversion!(
     user_id,
     device_id,
     organization_id,
-    slug,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -107,7 +100,6 @@ pub struct DeviceFileSmartcard {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub organization_id: OrganizationID,
-    pub slug: String,
 
     pub encrypted_key: Bytes,
     pub certificate_id: String,
@@ -125,7 +117,6 @@ impl_transparent_data_format_conversion!(
     user_id,
     device_id,
     organization_id,
-    slug,
     encrypted_key,
     certificate_id,
     certificate_sha1,
@@ -218,20 +209,8 @@ pub struct AvailableDevice {
     pub device_id: DeviceID,
     pub human_handle: HumanHandle,
     pub device_label: DeviceLabel,
-    pub slug: String,
     #[serde(rename = "type")]
     pub ty: DeviceFileType,
-}
-
-impl AvailableDevice {
-    /// Return a `sha256` hash of device slug as hex string
-    pub fn slughash(&self) -> String {
-        let mut hasher = Sha256::new();
-        hasher.update(self.slug.as_bytes());
-        let hash_digest = hasher.finalize();
-
-        format!("{:x}", hash_digest)
-    }
 }
 
 #[cfg(test)]

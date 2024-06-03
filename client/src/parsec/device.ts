@@ -134,7 +134,6 @@ export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Pro
         label: 'dummy_label',
       },
       deviceLabel: deviceInfo.deviceLabel,
-      slug: 'dummy_slug',
       ty: DeviceFileType.Password,
     },
   };

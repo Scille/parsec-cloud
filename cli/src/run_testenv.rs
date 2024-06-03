@@ -235,7 +235,7 @@ pub async fn initialize_test_organization(
     let access = DeviceAccessStrategy::Password {
         key_file: client_config
             .config_dir
-            .join(format!("devices/{}.keys", alice_device.slughash())),
+            .join(format!("devices/{}.keys", alice_device.device_id.hex())),
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
@@ -487,13 +487,16 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
         println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
         println!(
             "- {YELLOW}{}{RESET} // Alice",
-            &alice_device.slughash()[..3]
+            &alice_device.device_id.hex()[..3]
         );
         println!(
             "- {YELLOW}{}{RESET} // Alice 2nd device",
-            &other_alice_device.slughash()[..3]
+            &other_alice_device.device_id.hex()[..3]
         );
-        println!("- {YELLOW}{}{RESET} // Bob", &bob_device.slughash()[..3]);
+        println!(
+            "- {YELLOW}{}{RESET} // Bob",
+            &bob_device.device_id.hex()[..3]
+        );
     }
 
     Ok(())

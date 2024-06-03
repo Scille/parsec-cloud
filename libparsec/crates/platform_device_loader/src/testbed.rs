@@ -39,9 +39,6 @@ fn store_factory(_env: &TestbedEnv) -> Arc<dyn Any + Send + Sync> {
     })
 }
 
-/// For simplicity we store the key file as `<config_dir>/devices/<device_id>.keys`
-/// This way `device_load` is more explicit than if we use the slughash in the file
-/// name (like it is done in production)
 fn get_device_key_file(config_dir: &Path, device_id: DeviceID) -> PathBuf {
     config_dir.join(format!("devices/{}.keys", device_id))
 }
@@ -165,11 +162,6 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
                 device_id,
                 human_handle: human_handle.clone(),
                 device_label: device_label.clone(),
-                slug: local_device_slug(
-                    &env.organization_id,
-                    device_id,
-                    env.organization_addr().root_verify_key(),
-                ),
                 ty: DeviceFileType::Password,
             };
 

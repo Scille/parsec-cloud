@@ -15,7 +15,7 @@ pub struct InviteUser {
     /// Parsec config directory
     #[arg(short, long, default_value_os_t = get_default_config_dir())]
     config_dir: PathBuf,
-    /// Greeter device slughash
+    /// Greeter device ID
     #[arg(short, long)]
     device: Option<String>,
     /// Claimer email (i.e.: The invitee)

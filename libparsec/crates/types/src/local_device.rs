@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use sha2::Digest;
 
 use libparsec_crypto::prelude::*;
 use libparsec_serialization_format::parsec_data;
@@ -10,19 +9,6 @@ use crate::{
     self as libparsec_types, DateTime, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
     ParsecOrganizationAddr, TimeProvider, UserID, UserProfile, VlobID,
 };
-
-pub fn local_device_slug(
-    organization_id: &OrganizationID,
-    device_id: DeviceID,
-    root_verify_key: &VerifyKey,
-) -> String {
-    // Add a hash to avoid clash when the server is reseted and we recreate
-    // a device with same OrganizationID/DeviceID than a previous one
-    let mut hasher = sha2::Sha256::new();
-    hasher.update(root_verify_key.as_ref());
-    let hashed_rvk = format!("{:x}", hasher.finalize());
-    format!("{}#{}#{}", &hashed_rvk[..10], organization_id, device_id)
-}
 
 #[derive(Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalDeviceData", try_from = "LocalDeviceData")]
@@ -95,31 +81,6 @@ impl LocalDevice {
 
     pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
         key.encrypt(&self.dump())
-    }
-
-    /// The slug is unique identifier for a particular device.
-    ///
-    /// It is composed of a small part of the RVK hash, the organization ID
-    /// and the device ID, although it shouldn't be assumed that this information
-    /// can be recovered from the slug as this might change in the future.
-    ///
-    /// The purpose of the slug is simply to tell whether `LocalDevice` and
-    /// `AvailableDevice` objects corresponds to the same device.
-    pub fn slug(&self) -> String {
-        local_device_slug(
-            self.organization_id(),
-            self.device_id,
-            self.root_verify_key(),
-        )
-    }
-
-    /// Slug is long and not readable enough (given DeviceID is now made of uuids).
-    /// Hence it's often simpler to rely on it hash instead (e.g. select the
-    /// device to use in the CLI by providing the beginning of the hash)
-    pub fn slughash(&self) -> String {
-        let mut hasher = sha2::Sha256::new();
-        hasher.update(self.slug().as_bytes()); // Slug is encoded as utf8
-        format!("{:x}", hasher.finalize())
     }
 
     pub fn root_verify_key(&self) -> &VerifyKey {
