@@ -354,7 +354,7 @@ const filteredDevices = computed(() => {
   height: auto;
   width: 60vw;
   max-width: var(--parsec-max-organization-width);
-  margin: auto;
+  margin: 0 auto;
   box-shadow: none;
   display: flex;
   align-items: center;

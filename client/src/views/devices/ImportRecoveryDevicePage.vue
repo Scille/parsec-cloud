@@ -279,9 +279,8 @@ async function onLoginClick(): Promise<void> {
   width: 60vw;
   max-width: var(--parsec-max-forgotten-pwd-width);
   display: flex;
-  margin: auto;
+  margin: 0 auto;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   gap: 2rem;
 }
