@@ -141,6 +141,9 @@
             "emailLabel": "Email",
             "passwordLabel": "Password",
             "passwordError": "Incorrect password.",
+            "deviceNotFound": "The device file was not found.",
+            "invalidData": "The device file contains invalid data.",
+            "unknownError": "Unknown error.",
             "login": "Log in",
             "loading": "Loading..."
         },

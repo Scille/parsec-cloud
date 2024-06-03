@@ -68,7 +68,7 @@
 <script setup lang="ts">
 import { MsInput, MsPasswordInput, MsSpinner } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AccessStrategy, AvailableDevice, ClientStartError, DeviceAccessStrategyPassword } from '@/parsec';
+import { AccessStrategy, AvailableDevice, ClientStartError, ClientStartErrorTag, DeviceAccessStrategyPassword } from '@/parsec';
 import { IonButton, IonCard, IonCardContent, IonCardHeader, IonFooter, IonIcon, IonTitle } from '@ionic/vue';
 import { logIn } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
@@ -99,8 +99,24 @@ async function onLoginClick(): Promise<void> {
   }
 }
 
-async function setLoginError(_error?: ClientStartError): Promise<void> {
-  errorMessage.value = 'HomePage.organizationLogin.passwordError';
+async function setLoginError(error: ClientStartError): Promise<void> {
+  switch (error.tag) {
+    case ClientStartErrorTag.LoadDeviceDecryptionFailed:
+      errorMessage.value = 'HomePage.organizationLogin.passwordError';
+      break;
+    case ClientStartErrorTag.LoadDeviceInvalidPath:
+      // TODO: Log error to electron
+      errorMessage.value = 'HomePage.organizationLogin.deviceNotFound';
+      break;
+    case ClientStartErrorTag.LoadDeviceInvalidData:
+      // TODO: Log error to electron
+      errorMessage.value = 'HomePage.organizationLogin.deviceInvalidData';
+      break;
+    case ClientStartErrorTag.Internal:
+      // TODO: Log error to electron
+      errorMessage.value = 'HomePage.organizationLogin.unknownError';
+      break;
+  }
   passwordIsInvalid.value = true;
 }
 
