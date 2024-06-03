@@ -18,36 +18,38 @@
             @back-click="backToOrganizations"
             :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
           />
-          <update-banner />
-          <slide-horizontal
-            :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
-            :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
-          >
-            <template v-if="state === HomePageState.OrganizationList">
-              <organization-list-page
-                @create-organization-click="openCreateOrganizationModal"
-                @organization-select="onOrganizationSelected"
-                @join-organization-click="onJoinOrganizationClicked"
-                @join-organization-with-link-click="openJoinByLinkModal"
-              />
-            </template>
-            <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
-              <import-recovery-device-page
-                :device="selectedDevice"
-                @organization-selected="onOrganizationSelected"
-              />
-            </template>
-            <!-- after animation -->
-            <template v-if="state === HomePageState.Login && selectedDevice">
-              <login-page
-                :device="selectedDevice"
-                @login-click="login"
-                @forgotten-password-click="onForgottenPasswordClicked"
-                :login-in-progress="loginInProgress"
-                ref="loginPageRef"
-              />
-            </template>
-          </slide-horizontal>
+          <div class="container">
+            <update-banner class="banner" />
+            <slide-horizontal
+              :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
+              :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
+            >
+              <template v-if="state === HomePageState.OrganizationList">
+                <organization-list-page
+                  @create-organization-click="openCreateOrganizationModal"
+                  @organization-select="onOrganizationSelected"
+                  @join-organization-click="onJoinOrganizationClicked"
+                  @join-organization-with-link-click="openJoinByLinkModal"
+                />
+              </template>
+              <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
+                <import-recovery-device-page
+                  :device="selectedDevice"
+                  @organization-selected="onOrganizationSelected"
+                />
+              </template>
+              <!-- after animation -->
+              <template v-if="state === HomePageState.Login && selectedDevice">
+                <login-page
+                  :device="selectedDevice"
+                  @login-click="login"
+                  @forgotten-password-click="onForgottenPasswordClicked"
+                  :login-in-progress="loginInProgress"
+                  ref="loginPageRef"
+                />
+              </template>
+            </slide-horizontal>
+          </div>
         </div>
         <!-- end of organization -->
       </div>
@@ -437,6 +439,16 @@ async function onJoinOrganizationClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     position: relative;
+
+    .container {
+      gap: 2rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 2rem;
+      margin-top: 5rem;
+    }
   }
 }
 
