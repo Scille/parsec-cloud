@@ -137,10 +137,9 @@ defineExpose({
   height: auto;
   width: 100%;
   max-width: 25rem;
-  margin: auto;
+  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   box-shadow: none;
 
