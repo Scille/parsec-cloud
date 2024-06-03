@@ -33,7 +33,7 @@ class ParsecProxy {
       // eslint-disable-next-line no-prototype-builtins
       if (result && result.hasOwnProperty('ok') && !(result as { ok: boolean }).ok) {
         const resultError = result as { ok: boolean; error: { tag: string; error: string } };
-        console.warn(`Error when calling ${name}: ${resultError.error.tag} (${resultError.error.error})`);
+        window.electronAPI.log('debug', `Error when calling ${name}: ${resultError.error.tag} (${resultError.error.error})`);
       }
       return result;
     };

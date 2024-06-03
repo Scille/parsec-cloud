@@ -8,6 +8,7 @@ export enum PageToWindowChannel {
   UpdateAvailabilityRequest = 'parsec-update-availability-request',
   UpdateApp = 'parsec-update-app',
   PrepareUpdate = 'parsec-prepare-update',
+  Log = 'parsec-log',
 }
 
 export enum WindowToPageChannel {

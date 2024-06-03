@@ -276,6 +276,9 @@ async function setupApp(): Promise<void> {
       prepareUpdate: (): void => {
         console.log('Not available');
       },
+      log: (level: 'debug' | 'info' | 'warn' | 'error', message: string): void => {
+        console.log(`[MOCKED-ELECTRON-LOG] ${level}: ${message}`);
+      },
     };
   }
 }
@@ -380,6 +383,7 @@ declare global {
       getUpdateAvailability: () => void;
       updateApp: () => void;
       prepareUpdate: () => void;
+      log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
     };
   }
 }
