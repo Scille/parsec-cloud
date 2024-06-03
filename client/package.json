@@ -49,7 +49,7 @@
         "@ionic/vue-router": "^7.6.4",
         "@types/luxon": "^3.3.4",
         "luxon": "^3.4.4",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#6477e79f7b2aa3012b7474512465571334b47ff9",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#853a60c7d02865cadc937502dd420daa262682ea",
         "qrcode-vue3": "^1.6.8",
         "uuid": "^9.0.1",
         "vue": "^3.3.8",

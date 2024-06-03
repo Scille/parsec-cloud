@@ -27,10 +27,10 @@
         <ion-text class="element-details__name body">
           {{ shortenFileName(fileCache.name) }}
         </ion-text>
-        <ion-label class="element-details__size body-sm">
-          <span class="default-state">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
+        <ion-label class="element-details-info body-sm">
+          <span class="default-state element-details-info__size">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
           <span
-            class="default-state"
+            class="default-state element-details-info__workspace"
             v-if="workspaceInfo"
           >
             &bull; {{ workspaceInfo.currentName }}
@@ -62,7 +62,7 @@
           <ion-icon
             class="cancel-button__icon"
             slot="icon-only"
-            :icon="close"
+            :icon="closeCircle"
           />
         </ion-button>
       </div>
@@ -78,7 +78,7 @@
         <ion-icon
           class="cancel-button__icon"
           slot="icon-only"
-          :icon="close"
+          :icon="closeCircle"
         />
       </ion-button>
 
@@ -86,7 +86,7 @@
       <ion-icon
         class="checkmark-icon default-state"
         v-show="state === FileOperationState.FileImported"
-        :icon="checkmark"
+        :icon="checkmarkCircle"
       />
       <ion-icon
         class="arrow-icon hover-state"
@@ -131,7 +131,7 @@ import { MsImage, MsInformationTooltip } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
-import { arrowForward, checkmark, close } from 'ionicons/icons';
+import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -174,7 +174,7 @@ defineEmits<{
 
 <style scoped lang="scss">
 .element-container {
-  background: var(--parsec-color-light-secondary-premiere);
+  background: var(--parsec-color-light-secondary-background);
   transition: background 0.2s ease-in-out;
   border-radius: var(--parsec-radius-8);
   position: relative;
@@ -199,13 +199,27 @@ defineEmits<{
     flex-direction: column;
     position: relative;
     margin-left: 0.875rem;
+    max-width: 16rem;
 
     &__name {
       color: var(--parsec-color-light-primary-800);
     }
 
-    &__size {
+    &-info {
       color: var(--parsec-color-light-secondary-grey);
+      display: flex;
+      gap: 0.25rem;
+      overflow: hidden;
+
+      &__size {
+        flex-shrink: 0;
+      }
+
+      &__workspace {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
   }
 
@@ -226,6 +240,7 @@ defineEmits<{
   .cancel-text,
   .failed-content {
     margin-left: auto;
+    flex-shrink: 0;
   }
 }
 
@@ -233,7 +248,7 @@ defineEmits<{
 .waiting,
 .progress {
   .cancel-button {
-    color: var(--parsec-color-light-secondary-text);
+    color: var(--parsec-color-light-secondary-grey);
     --background-hover: var(--parsec-color-light-secondary-disabled);
 
     &::part(native) {
@@ -270,13 +285,13 @@ defineEmits<{
 
 .done {
   cursor: pointer;
-  background: var(--parsec-color-light-primary-50);
-
   .hover-state {
     display: none;
   }
 
   &:hover {
+    background: var(--parsec-color-light-primary-50);
+
     .default-state {
       display: none;
     }
@@ -289,9 +304,13 @@ defineEmits<{
     --progress-background: var(--parsec-color-light-primary-600);
   }
 
-  .arrow-icon,
-  .checkmark-icon {
+  .arrow-icon {
     color: var(--parsec-color-light-primary-600);
+  }
+
+  .checkmark-icon {
+    color: var(--parsec-color-light-success-700);
+    font-size: 1.25rem;
   }
 }
 
@@ -299,7 +318,7 @@ defineEmits<{
   --background: var(--parsec-color-light-danger-500);
 
   .element {
-    opacity: 0.5;
+    opacity: 0.8;
     filter: grayscale(100%);
   }
 
