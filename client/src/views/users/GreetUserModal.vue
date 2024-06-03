@@ -153,7 +153,6 @@
 <script setup lang="ts">
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonText, IonTitle, modalController } from '@ionic/vue';
 
-import { getDefaultDeviceName } from '@/common/device';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
@@ -386,12 +385,7 @@ async function nextStep(): Promise<void> {
     await modalController.dismiss({}, MsModalResult.Confirm);
     return;
   } else if (pageStep.value === GreetUserStep.CheckGuestInfo && profile.value) {
-    const deviceName = await getDefaultDeviceName();
-    const result = await greeter.value.createUser(
-      { label: guestInfoPage.value.fullName, email: guestInfoPage.value.email },
-      deviceName,
-      profile.value,
-    );
+    const result = await greeter.value.createUser({ label: guestInfoPage.value.fullName, email: guestInfoPage.value.email }, profile.value);
     if (!result.ok) {
       await showErrorAndRestart('UsersPage.greet.errors.createUserFailed');
       return;

@@ -179,7 +179,7 @@ export class UserGreet {
     }
   }
 
-  async createUser(humanHandle: HumanHandle, deviceLabel: DeviceLabel, profile: UserProfile): Promise<Result<null, GreetInProgressError>> {
+  async createUser(humanHandle: HumanHandle, profile: UserProfile): Promise<Result<null, GreetInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
@@ -188,7 +188,7 @@ export class UserGreet {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         this.handle!,
         humanHandle,
-        deviceLabel,
+        this.requestedDeviceLabel,
         profile,
       );
       this.canceller = null;
