@@ -51,11 +51,11 @@ export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
 }
 
 export function isDeviceLoggedIn(device: AvailableDevice): boolean {
-  return loggedInDevices.find((info) => info.device.slug === device.slug) !== undefined;
+  return loggedInDevices.find((info) => info.device.deviceId === device.deviceId) !== undefined;
 }
 
 export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | null {
-  const info = loggedInDevices.find((info) => info.device.slug === device.slug);
+  const info = loggedInDevices.find((info) => info.device.deviceId === device.deviceId);
   if (info) {
     return info.handle;
   }
@@ -142,7 +142,7 @@ export async function login(
     }
   }
 
-  const info = loggedInDevices.find((info) => info.device.slug === device.slug);
+  const info = loggedInDevices.find((info) => info.device.deviceId === device.deviceId);
   if (info !== undefined) {
     return { ok: true, value: info.handle };
   }

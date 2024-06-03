@@ -27,10 +27,6 @@
             "type": "OrganizationID"
         },
         {
-            "name": "slug",
-            "type": "String"
-        },
-        {
             "name": "keyring_service",
             "type": "String"
         },

@@ -64,7 +64,6 @@ function assert(outcome: boolean, msg: string): void {
 //   "deviceId": "alice@dev1",
 //   "humanHandle": "Alicey McAliceFace <alice@example.com>",
 //   "deviceLabel": "My dev1 machine",
-//   "slug": "9ff2284ce2#Org20#alice@dev1",
 //   "ty": {
 //     "tag": "Password"
 //   }

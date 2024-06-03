@@ -241,10 +241,6 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
-    let slug = {
-        let js_val: Handle<JsString> = obj.get(cx, "slug")?;
-        js_val.value(cx)
-    };
     let ty = {
         let js_val: Handle<JsString> = obj.get(cx, "ty")?;
         {
@@ -259,7 +255,6 @@ fn struct_available_device_js_to_rs<'a>(
         device_id,
         human_handle,
         device_label,
-        slug,
         ty,
     })
 }
@@ -309,8 +304,6 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "humanHandle", js_human_handle)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
-    let js_slug = JsString::try_new(cx, rs_obj.slug).or_throw(cx)?;
-    js_obj.set(cx, "slug", js_slug)?;
     let js_ty = JsString::try_new(cx, enum_device_file_type_rs_to_js(rs_obj.ty)).or_throw(cx)?;
     js_obj.set(cx, "ty", js_ty)?;
     Ok(js_obj)

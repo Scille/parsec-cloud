@@ -2,7 +2,6 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::fixtures::{alice, Device};
 use crate::prelude::*;
 
 #[rstest]
@@ -142,18 +141,4 @@ fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserP
     // Note we cannot just compare with `data` due to signature and keys order
     let manifest2 = LocalDevice::decrypt_and_load(&data2, &key).unwrap();
     p_assert_eq!(manifest2, expected);
-}
-
-#[rstest]
-fn slug(alice: &Device) {
-    let local_device = alice.local_device();
-
-    p_assert_eq!(
-        local_device.slug(),
-        "f78292422e#CoolOrg#de10a11c-ec00-1000-0000-000000000000"
-    );
-    p_assert_eq!(
-        local_device.slughash(),
-        "70bf74205e30363cd6cf6ef9f38b54419108d0e2411903c85648968924ecbed1"
-    );
 }

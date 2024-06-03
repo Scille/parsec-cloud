@@ -24,7 +24,9 @@ async fn should_create_db_file_and_reusable(tmp_path: TmpPath) {
         None,
     );
 
-    let sqlite_path = tmp_path.join(device.slug()).join("certificates-v1.sqlite");
+    let sqlite_path = tmp_path
+        .join(device.device_id.hex())
+        .join("certificates-v1.sqlite");
 
     assert!(!sqlite_path.exists());
 

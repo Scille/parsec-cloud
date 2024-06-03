@@ -95,7 +95,7 @@
           <ion-row class="organization-list-row">
             <ion-col
               v-for="device in filteredDevices"
-              :key="device.slug"
+              :key="device.deviceId"
               class="organization-list-row__col"
               size="3"
             >
@@ -122,8 +122,8 @@
                         />
                         <ion-text class="body-sm">
                           {{
-                            device.slug in storedDeviceDataDict
-                              ? $msTranslate(formatTimeSince(storedDeviceDataDict[device.slug].lastLogin, '--'))
+                            device.deviceId in storedDeviceDataDict
+                              ? $msTranslate(formatTimeSince(storedDeviceDataDict[device.deviceId].lastLogin, '--'))
                               : '--'
                           }}
                         </ion-text>
@@ -203,7 +203,7 @@ enum SortCriteria {
 }
 
 const deviceList: Ref<AvailableDevice[]> = ref([]);
-const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
+const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const sortBy = ref(SortCriteria.Organization);
@@ -330,12 +330,12 @@ const filteredDevices = computed(() => {
         }
       } else if (sortBy.value === SortCriteria.LastLogin) {
         const aLastLogin =
-          a.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[a.slug].lastLogin !== undefined
-            ? storedDeviceDataDict.value[a.slug].lastLogin
+          a.deviceId in storedDeviceDataDict.value && storedDeviceDataDict.value[a.deviceId].lastLogin !== undefined
+            ? storedDeviceDataDict.value[a.deviceId].lastLogin
             : DateTime.fromMillis(0);
         const bLastLogin =
-          b.slug in storedDeviceDataDict.value && storedDeviceDataDict.value[b.slug].lastLogin !== undefined
-            ? storedDeviceDataDict.value[b.slug].lastLogin
+          b.deviceId in storedDeviceDataDict.value && storedDeviceDataDict.value[b.deviceId].lastLogin !== undefined
+            ? storedDeviceDataDict.value[b.deviceId].lastLogin
             : DateTime.fromMillis(0);
         if (sortByAsc.value) {
           return bLastLogin.diff(aLastLogin).toObject().milliseconds!;

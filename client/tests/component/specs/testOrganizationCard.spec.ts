@@ -17,7 +17,6 @@ describe('Organization Card', () => {
       email: 'freeman.gordon@black-mesa.com',
     },
     deviceLabel: 'hev',
-    slug: '1',
     ty: DeviceFileType.Password,
   };
 

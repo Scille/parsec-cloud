@@ -58,7 +58,6 @@ export interface AvailableDevice {
     deviceId: string
     humanHandle: HumanHandle
     deviceLabel: string
-    slug: string
     ty: DeviceFileType
 }
 

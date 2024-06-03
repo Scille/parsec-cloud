@@ -258,14 +258,6 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .parse()
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
-    let slug = {
-        let js_val = Reflect::get(&obj, &"slug".into())?;
-        js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-    };
     let ty = {
         let js_val = Reflect::get(&obj, &"ty".into())?;
         {
@@ -284,7 +276,6 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
         device_id,
         human_handle,
         device_label,
-        slug,
         ty,
     })
 }
@@ -333,8 +324,6 @@ fn struct_available_device_rs_to_js(
     Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
-    let js_slug = rs_obj.slug.into();
-    Reflect::set(&js_obj, &"slug".into(), &js_slug)?;
     let js_ty = JsValue::from_str(enum_device_file_type_rs_to_js(rs_obj.ty));
     Reflect::set(&js_obj, &"ty".into(), &js_ty)?;
     Ok(js_obj)

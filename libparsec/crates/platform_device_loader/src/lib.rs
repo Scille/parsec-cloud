@@ -29,13 +29,13 @@ pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 /// Return the default keyfile path for a given device.
 ///
 /// Note that the filename does not carry any intrinsic meaning.
-/// Here, we simply use the slughash to avoid name collision.
+/// Here, we simply use the device ID (as it is a UUID) to avoid name collision.
 pub fn get_default_key_file(config_dir: &Path, device: &LocalDevice) -> PathBuf {
     let mut device_path = config_dir.to_path_buf();
 
     device_path.push("devices");
 
-    device_path.push(format!("{}.{DEVICE_FILE_EXT}", device.slughash()));
+    device_path.push(format!("{}.{DEVICE_FILE_EXT}", device.device_id.hex()));
 
     device_path
 }

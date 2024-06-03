@@ -58,7 +58,6 @@ class AvailableDevice(Structure):
     device_id: DeviceID
     human_handle: HumanHandle
     device_label: DeviceLabel
-    slug: str
     ty: DeviceFileType
 
 

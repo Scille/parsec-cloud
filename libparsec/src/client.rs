@@ -79,8 +79,6 @@ pub async fn client_start(
 
     // 2) Make sure another client is not running this device
 
-    let slug = device.slug();
-
     enum RegisterFailed {
         AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
@@ -89,17 +87,17 @@ pub async fn client_start(
     let initializing = loop {
         let outcome = register_handle_with_init(
             HandleItem::StartingClient {
-                slug: slug.clone(),
+                device_id: device.device_id,
                 to_wake_on_done: vec![],
             },
             |handle, item| match item {
-                HandleItem::Client { client, .. } if client.device_slug() == slug => {
+                HandleItem::Client { client, .. } if client.device_id() == device.device_id => {
                     Err(RegisterFailed::AlreadyRegistered(handle))
                 }
                 HandleItem::StartingClient {
-                    slug: x_slug,
+                    device_id: x_device_id,
                     to_wake_on_done,
-                } if *x_slug == slug => {
+                } if *x_device_id == device.device_id => {
                     let event = Event::new();
                     let listener = event.listen();
                     to_wake_on_done.push(event);

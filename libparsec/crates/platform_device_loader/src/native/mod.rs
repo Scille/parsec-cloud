@@ -84,7 +84,7 @@ pub async fn list_available_devices(config_dir: &Path) -> Vec<AvailableDevice> {
 
         // Ignore duplicate files
         for existing in &devices {
-            if existing.slug == device.slug {
+            if existing.device_id == device.device_id {
                 continue;
             }
         }
@@ -113,45 +113,40 @@ fn load_available_device(
     let device_file =
         DeviceFile::load(&content).map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
 
-    let (ty, organization_id, user_id, device_id, human_handle, device_label, slug) =
-        match device_file {
-            DeviceFile::Keyring(device) => (
-                DeviceFileType::Keyring,
-                device.organization_id,
-                device.user_id,
-                device.device_id,
-                device.human_handle,
-                device.device_label,
-                device.slug,
-            ),
-            DeviceFile::Password(device) => (
-                DeviceFileType::Password,
-                device.organization_id,
-                device.user_id,
-                device.device_id,
-                device.human_handle,
-                device.device_label,
-                device.slug,
-            ),
-            DeviceFile::Recovery(device) => (
-                DeviceFileType::Recovery,
-                device.organization_id,
-                device.user_id,
-                device.device_id,
-                device.human_handle,
-                device.device_label,
-                device.slug,
-            ),
-            DeviceFile::Smartcard(device) => (
-                DeviceFileType::Smartcard,
-                device.organization_id,
-                device.user_id,
-                device.device_id,
-                device.human_handle,
-                device.device_label,
-                device.slug,
-            ),
-        };
+    let (ty, organization_id, user_id, device_id, human_handle, device_label) = match device_file {
+        DeviceFile::Keyring(device) => (
+            DeviceFileType::Keyring,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Password(device) => (
+            DeviceFileType::Password,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Recovery(device) => (
+            DeviceFileType::Recovery,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+        DeviceFile::Smartcard(device) => (
+            DeviceFileType::Smartcard,
+            device.organization_id,
+            device.user_id,
+            device.device_id,
+            device.human_handle,
+            device.device_label,
+        ),
+    };
 
     Ok(AvailableDevice {
         key_file_path,
@@ -160,7 +155,6 @@ fn load_available_device(
         device_id,
         human_handle,
         device_label,
-        slug,
         ty,
     })
 }
@@ -350,7 +344,6 @@ pub async fn save_device(
                 user_id: device.user_id,
                 device_id: device.device_id,
                 organization_id: device.organization_id().clone(),
-                slug: device.slug(),
                 keyring_service: KEYRING_SERVICE.into(),
                 keyring_user,
             });
@@ -389,7 +382,6 @@ pub async fn save_device(
                 user_id: device.user_id,
                 device_id: device.device_id,
                 organization_id: device.organization_id().to_owned(),
-                slug: device.slug(),
                 algorithm: DeviceFilePasswordAlgorithm::Argon2id {
                     salt: salt.into(),
                     opslimit: opslimit.into(),
@@ -485,7 +477,6 @@ pub async fn save_recovery_device(
         user_id: device.user_id,
         device_id: device.device_id,
         organization_id: device.organization_id().to_owned(),
-        slug: device.slug(),
     })
     .dump();
 

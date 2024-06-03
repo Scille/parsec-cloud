@@ -241,7 +241,6 @@ impl OrganizationBootstrapFinalizeCtx {
             device_id: self.new_local_device.device_id,
             device_label: self.new_local_device.device_label.clone(),
             human_handle: self.new_local_device.human_handle.clone(),
-            slug: self.new_local_device.slug(),
             ty,
         })
     }

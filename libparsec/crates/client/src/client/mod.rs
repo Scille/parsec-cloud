@@ -249,14 +249,6 @@ impl Client {
         self.device.organization_id()
     }
 
-    pub fn device_slug(&self) -> String {
-        self.device.slug()
-    }
-
-    pub fn device_slughash(&self) -> String {
-        self.device.slughash()
-    }
-
     pub fn device_id(&self) -> DeviceID {
         self.device.device_id
     }

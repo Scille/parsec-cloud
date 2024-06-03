@@ -76,7 +76,6 @@ fn password_protected_device_file(alice: &Device) {
         user_id: alice.user_id,
         device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
-        slug: alice.local_device().slug(),
         algorithm: DeviceFilePasswordAlgorithm::Argon2id {
             salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").as_ref().into(),
             opslimit: 1,
@@ -152,7 +151,6 @@ fn keyring_device_file(alice: &Device) {
         user_id: alice.user_id,
         device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
-        slug: alice.local_device().slug(),
         keyring_service: "parsec".into(),
         keyring_user: "keyring_user".into(),
     };
@@ -226,7 +224,6 @@ fn recovery_device_file(alice: &Device) {
         user_id: alice.user_id,
         device_id: alice.device_id,
         organization_id: alice.organization_id().to_owned(),
-        slug: alice.local_device().slug(),
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFileRecovery>(&filedata).unwrap();
@@ -320,7 +317,6 @@ fn smartcard_device_file(alice: &Device) {
         user_id: alice.user_id,
         device_id: alice.device_id,
         organization_id: alice.organization_id().clone(),
-        slug: alice.local_device().slug(),
     });
 
     let device = DeviceFile::load(&raw).unwrap();
@@ -345,16 +341,13 @@ fn available_device() {
         organization_id: org.clone(),
         user_id: "9c50250fa3b644e29f77eeefa53dc37d".parse().unwrap(),
         device_id: "9fd3863a3eb240cfaec64904efe5bed3".parse().unwrap(),
-        slug:
-            "672d515cbb#CoolOrg#9c50250fa3b644e29f77eeefa53dc37d@9fd3863a3eb240cfaec64904efe5bed3"
-                .to_owned(),
         human_handle: HumanHandle::new("john@example.com", "John Doe").unwrap(),
         device_label: "MyPc".parse().unwrap(),
         ty: DeviceFileType::Password,
     };
 
     p_assert_eq!(
-        available.slughash(),
+        available.device_id.hex(),
         "57f426e7a3cd5dc4a5d19fb8a83addb9112a65d12a13e2f72dd1fdfb9a8a4971"
     );
 }

@@ -97,7 +97,7 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 
 const state = ref(HomePageState.OrganizationList);
-const storedDeviceDataDict = ref<{ [slug: string]: StoredDeviceData }>({});
+const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const selectedDevice: Ref<AvailableDevice | null> = ref(null);
 const loginPageRef = ref();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -254,12 +254,12 @@ async function login(device: AvailableDevice, access: DeviceAccessStrategy): Pro
   loginInProgress.value = true;
   const result = await parsecLogin(eventDistributor, device, access);
   if (result.ok) {
-    if (!storedDeviceDataDict.value[device.slug]) {
-      storedDeviceDataDict.value[device.slug] = {
+    if (!storedDeviceDataDict.value[device.deviceId]) {
+      storedDeviceDataDict.value[device.deviceId] = {
         lastLogin: DateTime.now(),
       };
     } else {
-      storedDeviceDataDict.value[device.slug].lastLogin = DateTime.now();
+      storedDeviceDataDict.value[device.deviceId].lastLogin = DateTime.now();
     }
     await storageManager.storeDevicesData(toRaw(storedDeviceDataDict.value));
 

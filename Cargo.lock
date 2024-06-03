@@ -2229,7 +2229,6 @@ dependencies = [
  "serde_bytes",
  "serde_test",
  "serde_with",
- "sha2",
  "thiserror",
  "unicode-normalization",
  "url",

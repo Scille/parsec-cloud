@@ -46,7 +46,6 @@ thiserror = { workspace = true }
 email-address-parser = { workspace = true }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
 fnmatch-regex = { workspace = true }
-sha2 = { workspace = true, features = ["std"] }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 

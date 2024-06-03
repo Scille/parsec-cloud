@@ -39,12 +39,12 @@ impl PlatformWorkspaceStorage {
         let name = format!(
             "{}-{}-{}-workspace",
             _data_base_dir.to_str().unwrap(),
-            device.slug(),
+            device.device_id.hex(),
             realm_id.hex()
         );
 
         #[cfg(not(feature = "test-with-testbed"))]
-        let name = format!("{}-{}-workspace", device.slug(), realm_id.hex());
+        let name = format!("{}-{}-workspace", device.device_id.hex(), realm_id.hex());
 
         let db_req =
             IdbDatabase::open_u32(&name, DB_VERSION).map_err(|e| anyhow::anyhow!("{e:?}"))?;
