@@ -79,27 +79,27 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //   need_sync: true
     //   size: 500
     let data = hex!(
-        "231b4a42f4d017b8681c4c9704c8ef47e0cedfe10ed934504fce15552418ffdf4f10e1"
-        "4c516af4c9c70193b282c37964371d62b2d544d0d7beccd3878cd9a50e8cf83afbb80b"
-        "546e7b97e6253ef5fb98a45aa85789d5fa62f6109985dd64d4832118ae855f6dcc43a2"
-        "1d8f3cd0256d3dd7235cdb0e999b10b08e6042e80b4df0804a2d31b2579d917959db79"
-        "22b757a0686c1a9f145e16ee9db0e424b29b63f7d8c937c39bc6cadc40a05e6d74cdca"
-        "f1e3535c88d4461c1494fe377c30224d26733e88024e78ffda037be2ba055025645b25"
-        "82ec3527c64128ffeb84407594d89c7d7fb8162b74b44b132c87c44a2dc6932562b768"
-        "0ec18f3e5eaa3bd54a14b89525475560307ca33b25cc4879dc3c92cb8233403948b4af"
-        "081e37d1c56da35a74bf3e4d7bb8c574b9687d4ee7789848f5eba2ff1048a4e57042b6"
-        "ce47da9c808a29b61911693ca62abab710a3e9fe289bfad0292f280980aaefc9fa3e59"
-        "788936cd6083c4b2d702cf093828a5b179061122524df95a27669a1a0c6cc0cad560cf"
-        "43a54db556b4e04b3de3d0175eee80213649284ee99b4488bdeadcf22e175a03cf469a"
-        "7d0daedf7f5e148ef5b76e758e3fc9e778e50470493fc054b6f206c30e15600f682305"
-        "a0eb0d3cadcc06224c15845a3cc983181837d39c3c44cb0abd58d76bcbf89c5e9e8359"
-        "c49f4c06a17fc3e42f13506ef4e9184401832fc6498fce8534ac1e4f412906ee326942"
-        "27a4d5f00414ebb0a6bdab592d70bff9f561b9b413e544d590c9d1f9d73de0abfb63f3"
-        "4c509a4e9c546d3b47c46da43a20368e13607ac73688c832415257b46e999b9b0f60b5"
-        "cc1f5a59a9235d32d7d0f66733142ae147dca1150510b7ac2dbd42734011794d39fbf5"
-        "0090be56ac2562af2b7b94c9935c09aeff0614bfb6db46308e5c5168558d05bb9c6d47"
-        "22396f828d62d81332bbaf9df45878b8f89e435ea9b9ec85e174744948d374f3f4cf13"
-        "e5ac58fc5c73"
+        "7ee31884810dde6a3f2e00eb4f428c2a5b78de5414ac8556b67a94c9d715e17561aabc"
+        "c61bfc81e1b92371c3f6301252874349cf008dcc7a6577d7b18c09331b67dc19fae9ac"
+        "c9ede03c9d4785a7ba16b619e4aa17419cb1ad69489b336ffae00c707d1eb4d718f230"
+        "97c25657985c4d776bae70bb3c91344cdbce0a4598fcc2ac8a4d86692ae6ce9c3137c7"
+        "f96b3b0bedc3b7be3f64e4a6662200042c564dccb33e345471058df09f4f2f3f385c2c"
+        "54fe3ac4556aaf9ca6169fdbf1e8336d630d5edbb02a6b20fdb5c0ae0c09872cf74485"
+        "5b8ccbf7bd5391baa550ecb51f038ec77f708bb080d1a33fbbfbfb400ac7f2f688656b"
+        "f9b38fdbd73d6858860d44bc5b6016830484d72ad2b3aa22457679b00876679a6653ee"
+        "45fff770295237f21c387adc39cb1863e80b7580a4d7b47fe88012b28811c391af2d40"
+        "b83c0bdc73a6115d8733e29f46a0ff31c200a7267aefd588fe9c0379b195d5dad81dbf"
+        "96869053bb7a46d4ef80b1817f94c717447e0c81b8c87c3998482eaf7525c361956535"
+        "325bc7e727fd29173780fdc33333910d0ea6a9071e3ab35ef88612ff7e71bc88956616"
+        "21b689fe6af2e28cdcb07e9f8c08d349f6ea4ce87ac6ce32cc268df8c8e454ba27c5d9"
+        "5bee2e5dccd44242eaac4cdef5fd57d3b35502c17b1a10d05791f67a2461de1dd27038"
+        "7ec3ab2e69ad7cbfcbc76d59ba5bf0eb89b9082585ea9e831777fb9a4086b6b1b8b55a"
+        "464f8c9da40a7748d4f660007fb8438f4464a4e89a8500b2ceb1020a2c496e149c2af0"
+        "1763b6a6d3ab1bf23fb64493890b3a5a641a3c82dbfd25f2d9daef82fe482d77be0e02"
+        "d3055d2734a2a9cb2a89f459c8bc7bb467810183ad312da5440ad06db6602244193dc6"
+        "01da914a9c255034b4a4c27ca2cf0753ff0916bb4cb6fe2d026862c535b85cd3c35b00"
+        "979b84be1202c1b38e5dd7b098492cd1cb42dd4370398c8ecd57f60bb6c1e5a7b9e8a2"
+        "edf6d23e70f8e96c"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
@@ -159,25 +159,24 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                 access: None,
                 raw_offset: 250,
                 raw_size: NonZeroU64::new(250).unwrap(),
-                start: 0,
-                stop: NonZeroU64::new(250).unwrap(),
+                start: 250,
+                stop: NonZeroU64::new(500).unwrap(),
             },
         ]],
         blocksize: Blocksize::try_from(512).unwrap(),
         need_sync: true,
         size: 500,
     };
+    let manifest = LocalChildManifest::decrypt_and_load(&data, &key).unwrap();
 
-    let manifest = LocalFileManifest::decrypt_and_load(&data, &key).unwrap();
-
-    p_assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalFileManifest::decrypt_and_load(&data2, &key).unwrap();
+    let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    p_assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, LocalChildManifest::File(expected));
 }
 
 #[rstest]
@@ -222,7 +221,7 @@ fn serde_local_file_manifest_invalid_blocksize() {
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalFileManifest::decrypt_and_load(&data, &key);
+    let manifest = LocalChildManifest::decrypt_and_load(&data, &key);
 
     assert!(manifest.is_err());
 }
@@ -360,16 +359,16 @@ fn serde_local_folder_manifest(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalFolderManifest::decrypt_and_load(data, &key).unwrap();
+    let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
 
-    p_assert_eq!(manifest, expected);
+    p_assert_eq!(manifest, LocalChildManifest::Folder(expected.clone()));
 
     // Also test serialization round trip
     let data2 = manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
-    let manifest2 = LocalFolderManifest::decrypt_and_load(&data2, &key).unwrap();
+    let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
 
-    p_assert_eq!(manifest2, expected);
+    p_assert_eq!(manifest2, LocalChildManifest::Folder(expected));
 }
 
 #[rstest]
@@ -1311,3 +1310,15 @@ fn local_user_manifest_get_local_workspace_entry(timestamp: DateTime) {
         Some(&lum.local_workspaces[1])
     );
 }
+
+// TODO: Add integrity tests for:
+// - `LocalFileManifest` with the following failing invariants:
+//   * blocks belong to their corresponding block span
+//   * blocks do not overlap
+//   * blocks do not go passed the file size
+//   * blocks do not share the same block span
+//   * blocks not span over multiple block spans
+//   * blocks are  internally consistent
+//   * the manifest ID is different from the parent ID
+// - `LocalFolderManifest` with the following failing invariants:
+//   * the manifest ID is different from the parent ID (when loaded as a child manifest)
