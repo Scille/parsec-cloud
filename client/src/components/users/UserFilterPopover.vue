@@ -81,7 +81,7 @@
 <script setup lang="ts">
 import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserCollection } from '@/components/users/types';
-import { IonContent, IonItem, IonItemGroup, IonList, IonText } from '@ionic/vue';
+import { IonContent, IonItem, IonItemGroup, IonList, IonText, IonLabel } from '@ionic/vue';
 import { MsCheckbox } from 'megashark-lib';
 
 defineProps<{

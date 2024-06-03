@@ -82,6 +82,10 @@ export class UserCollection {
     }
   }
 
+  totalUsersCount(): number {
+    return this.users.length;
+  }
+
   usersCount(): number {
     return this.getUsers().length;
   }

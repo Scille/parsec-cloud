@@ -43,6 +43,9 @@
       :disabled="true"
       :is-current-user="true"
     />
+    <ion-text v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0">
+      {{ $msTranslate('UsersPage.noMatch') }}
+    </ion-text>
     <user-list-item
       v-for="user in users.getUsers()"
       :key="user.id"
@@ -56,7 +59,7 @@
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
-import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
+import { IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { computed } from 'vue';
 import { MsCheckbox } from 'megashark-lib';
 
