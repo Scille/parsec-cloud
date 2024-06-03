@@ -5,6 +5,11 @@
     v-if="updateAvailability !== null"
     class="banner"
   >
+    <!-- TODO: replace LogoIconGradient by a LogoIconWhite when it will be existing in megashark-lib -->
+    <ms-image
+      :image="LogoIconGradient"
+      class="logo-img"
+    />
     <ion-label>{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-label>
     <ion-button @click="update()">{{ $msTranslate('notificationCenter.update') }}</ion-button>
   </div>
@@ -14,7 +19,7 @@
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { IonButton, IonLabel } from '@ionic/vue';
-import { Answer, askQuestion } from 'megashark-lib';
+import { Answer, LogoIconGradient, askQuestion, MsImage } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -50,23 +55,27 @@ async function update(): Promise<void> {
 
 <style scoped lang="scss">
 .banner {
-  width: 600px;
-  height: 64px;
-  color: green;
-  border: 10px dotted purple;
-  background-color: pink;
-  display: flex;
-  font-weight: bold;
-  animation: blinker 0.1s linear infinite;
-}
+  .logo-img {
+    width: 2.5em;
+  }
 
-@keyframes blinker {
-  50% {
-    opacity: 0;
-    background-color: orange;
-    border: 3px dotted red;
-    width: 650px;
-    height: 128px;
+  display: flex;
+  width: 32em;
+  padding: 1em 1.5em;
+  font-weight: bold;
+  color: var(--parsec-color-light-secondary-white);
+  gap: 1em;
+  align-items: center;
+  border-radius: var(--parsec-radius-8);
+  border-left: 3px solid var(--parsec-color-light-secondary-white);
+  background: var(--parsec-color-light-primary-30-opacity15);
+  box-shadow: var(--parsec-shadow-light);
+
+  // TODO: improve :hover colors when mockups will be available
+  ion-button {
+    margin-left: auto;
+    --background: var(--parsec-color-light-secondary-white);
+    --color: var(--parsec-color-light-primary-600);
   }
 }
 </style>
