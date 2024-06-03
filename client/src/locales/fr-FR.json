@@ -1044,7 +1044,7 @@
         "titleActualPassword": "Saisissez votre mot de passe",
         "titleNewPassword": "Choisissez un nouveau mot de passe",
         "password": "Mot de passe",
-        "systemAuthentication": "Votre session est gérée avec le mot de passe de votre appareil.",
+        "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
         "passwordPlaceholder": "••••••••••",

@@ -1044,7 +1044,7 @@
         "titleActualPassword": "Enter your current password",
         "titleNewPassword": "Choose a new password",
         "password": "Password",
-        "systemAuthentication": "TBW",
+        "systemAuthentication": "This session is handled with the authentication of your system.",
         "cancelButton": "Cancel",
         "nextButton": "Confirm",
         "passwordPlaceholder": "••••••••••",
