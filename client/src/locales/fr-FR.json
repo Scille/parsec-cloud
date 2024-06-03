@@ -124,7 +124,8 @@
             "sortByLastLogin": "Dernière connexion",
             "labelSortBy": "Trier par",
             "search": "Rechercher",
-            "loggedIn": "Connecté"
+            "loggedIn": "Connecté",
+            "noMatch": "Aucune organisation trouvé qui correspond à la recherche '{query}'."
         },
         "noExistingOrganization": {
             "createOrJoin": "Créer ou rejoindre",
@@ -269,7 +270,8 @@
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         },
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
-        "owner": "propriétaire"
+        "owner": "propriétaire",
+        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'."
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
@@ -851,6 +853,7 @@
             "profile": "Choix du profil :"
         },
         "emptyList": "Aucun utilisateur à afficher.",
+        "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
         "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
         "userContextMenu": {

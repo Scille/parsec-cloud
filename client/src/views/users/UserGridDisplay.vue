@@ -16,9 +16,13 @@
     @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     ref="userGridItemRefs"
   />
+  <ion-text v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0">
+    {{ $msTranslate('UsersPage.noMatch') }}
+  </ion-text>
 </template>
 
 <script setup lang="ts">
+import { IonText } from '@ionic/vue';
 import { UserCard, UserCollection, UserModel } from '@/components/users';
 import { UserInfo } from '@/parsec';
 import { computed, ref } from 'vue';

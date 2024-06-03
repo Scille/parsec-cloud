@@ -45,9 +45,12 @@
             :client-role="ownRole"
             class="current-user"
           />
+          <ion-text v-show="userRoles.length > 0 && filteredUserRoles.length === 0">
+            {{ $msTranslate({ key: 'WorkspaceSharing.noMatch', data: { query: search } }) }}
+          </ion-text>
           <workspace-user-role
+            v-for="entry in filteredUserRoles"
             :disabled="isSelectDisabled(entry[1])"
-            v-for="entry in userRoles"
             :key="entry[0].id"
             :user="entry[0]"
             :role="entry[1]"
@@ -78,7 +81,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
-import { Ref, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Ref, onMounted, ref, computed } from 'vue';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
@@ -91,11 +94,14 @@ const props = defineProps<{
 }>();
 
 const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
-
-// Would prefere to use a computed instead of a watch but
-// Vue doesn't handle async in computed.
-const unwatchSearch = watch(search, async () => {
-  await refreshSharingInfo(search.value);
+const filteredUserRoles = computed(() => {
+  const searchString = search.value.toLocaleLowerCase();
+  return userRoles.value.filter((item) => {
+    return (
+      item[0].humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+      item[0].humanHandle.label.toLocaleLowerCase().includes(searchString)
+    );
+  });
 });
 
 function isSelectDisabled(role: WorkspaceRole | null): boolean {
@@ -119,23 +125,11 @@ function isSelectDisabled(role: WorkspaceRole | null): boolean {
   return false;
 }
 
-async function refreshSharingInfo(searchString = ''): Promise<void> {
+async function refreshSharingInfo(): Promise<void> {
   const result = await getWorkspaceSharing(props.workspaceId, true);
 
   if (result.ok) {
-    if (searchString !== '') {
-      const roles: Array<[UserTuple, WorkspaceRole | null]> = [];
-      const lowerCaseSearch = search.value.toLocaleLowerCase();
-
-      for (const entry of result.value) {
-        if (entry[0].humanHandle.label.toLocaleLowerCase().includes(lowerCaseSearch)) {
-          roles.push(entry);
-        }
-      }
-      userRoles.value = roles;
-    } else {
-      userRoles.value = result.value;
-    }
+    userRoles.value = result.value;
   } else {
     props.informationManager.present(
       new Information({
@@ -150,10 +144,6 @@ async function refreshSharingInfo(searchString = ''): Promise<void> {
 onMounted(async () => {
   ownProfile = await getClientProfile();
   await refreshSharingInfo();
-});
-
-onUnmounted(() => {
-  unwatchSearch();
 });
 
 function isOnlyOwner(): boolean {

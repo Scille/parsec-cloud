@@ -124,7 +124,8 @@
             "sortByLastLogin": "Last login",
             "labelSortBy": "Sort by",
             "search": "Search",
-            "loggedIn": "Logged in"
+            "loggedIn": "Logged in",
+            "noMatch": "No organization found that matches '{query}'."
         },
         "noExistingOrganization": {
             "createOrJoin": "Create or join",
@@ -269,7 +270,8 @@
             "alreadyHasRole": "{user} is already {role} on this workspace."
         },
         "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
-        "owner": "owner"
+        "owner": "owner",
+        "noMatch": "No user found that matches '{query}'."
     },
     "SettingsModal": {
         "pageTitle": "Settings",
@@ -851,6 +853,7 @@
             "profile": "Profile choice:"
         },
         "emptyList": "No user to display.",
+        "noMatch": "No users matching your filters.",
         "listUsersFailed": "Failed to retrieve the users list. Please make sure you are online.",
         "userSelectedCount": "No user selected | One user selected | {count} users selected",
         "userContextMenu": {
