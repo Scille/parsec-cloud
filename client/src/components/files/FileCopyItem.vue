@@ -4,7 +4,7 @@
   <div
     class="element-container"
     :class="{
-      waiting: state === FileOperationState.FileAdded,
+      waiting: state === FileOperationState.CopyAdded,
       progress: state === FileOperationState.OperationProgress,
       done: state === FileOperationState.EntryCopied,
       cancelled: state === FileOperationState.Cancelled,
@@ -18,82 +18,68 @@
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image
-            :image="getFileIcon('')"
+            :image="Copy"
             class="file-icon"
           />
         </div>
       </div>
       <div class="element-details">
         <ion-text class="element-details__name body">
-          COPY {{ shortenFileName(operationData.srcPath, { maxLength: 40, prefixLength: 8, suffixLength: 32 }) }}
+          {{
+            $msTranslate({
+              key: 'FoldersPage.CopyFile.copy',
+              data: { name: shortenFileName(operationData.srcPath, { maxLength: 40, prefixLength: 8, suffixLength: 32 }) },
+            })
+          }}
         </ion-text>
-        <ion-label class="element-details__size body-sm">
-          <span
-            class="default-state"
-            v-if="workspaceInfo"
-          >
-            &bull; {{ workspaceInfo.currentName }}
-          </span>
-          <span
-            class="hover-state"
-            v-show="[FileOperationState.EntryCopied].includes(state)"
-          >
-            {{ $msTranslate('FoldersPage.CopyFile.browse') }}
-          </span>
+        <ion-label
+          class="element-details__workspace body-sm"
+          v-if="workspaceInfo"
+        >
+          {{ workspaceInfo.currentName }}
         </ion-label>
+        <div
+          class="element-details-progress-container"
+          v-show="state === FileOperationState.OperationProgress"
+        >
+          <ion-progress-bar
+            class="progress-bar"
+            :value="getProgress() / 100"
+          />
+          <ion-icon
+            class="cancel-icon"
+            type="button"
+            :icon="closeCircle"
+            @click="$emit('cancel', operationData.id)"
+          />
+        </div>
       </div>
 
       <!-- waiting -->
-      <div class="waiting-info">
-        <ion-text
-          class="waiting-text body"
-          v-if="state === FileOperationState.CopyAdded"
-        >
+      <div
+        class="waiting-info"
+        v-if="state === FileOperationState.CopyAdded"
+      >
+        <ion-text class="waiting-text body">
           {{ $msTranslate('FoldersPage.CopyFile.waiting') }}
         </ion-text>
-        <ion-button
-          fill="clear"
-          size="small"
-          class="cancel-button"
-          v-if="state === FileOperationState.CopyAdded"
-          @click="$emit('cancel', operationData.id)"
-        >
-          <ion-icon
-            class="cancel-button__icon"
-            slot="icon-only"
-            :icon="close"
-          />
-        </ion-button>
-      </div>
-
-      <!-- in progress -->
-      <ion-button
-        fill="clear"
-        size="small"
-        class="cancel-button"
-        v-if="state === FileOperationState.OperationProgress"
-        @click="$emit('cancel', operationData.id)"
-      >
         <ion-icon
-          class="cancel-button__icon"
+          class="cancel-icon"
+          @click="$emit('cancel', operationData.id)"
+          type="button"
+          :icon="closeCircle"
           slot="icon-only"
-          :icon="close"
         />
-      </ion-button>
+      </div>
 
       <!-- done -->
       <ion-icon
-        class="checkmark-icon default-state"
+        class="checkmark-icon"
         v-show="state === FileOperationState.EntryCopied"
-        :icon="checkmark"
-      />
-      <ion-icon
-        class="arrow-icon hover-state"
-        v-show="state === FileOperationState.EntryCopied"
-        :icon="arrowForward"
+        :icon="checkmarkCircle"
       />
 
-      <!-- cancel -->
+      <!-- cancelled -->
       <ion-text
         class="cancel-text body"
         v-if="state === FileOperationState.Cancelled"
@@ -117,16 +103,12 @@
         />
       </div>
     </ion-item>
-    <ion-progress-bar
-      class="element-progress-bar"
-      :value="getProgress() / 100"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip, Translatable } from 'megashark-lib';
+import { shortenFileName } from '@/common/file';
+import { MsImage, MsInformationTooltip, Translatable, Copy } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
 import {
   CopyData,
@@ -136,8 +118,8 @@ import {
   OperationProgressStateData,
   StateData,
 } from '@/services/fileOperationManager';
-import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
-import { arrowForward, checkmark, close } from 'ionicons/icons';
+import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
+import { closeCircle, checkmarkCircle } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const props = defineProps<{
@@ -193,13 +175,14 @@ function getFailureReason(): Translatable {
 
 <style scoped lang="scss">
 .element-container {
-  background: var(--parsec-color-light-secondary-premiere);
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
   transition: background 0.2s ease-in-out;
   border-radius: var(--parsec-radius-8);
   position: relative;
 
   &:hover {
-    background: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-premiere);
   }
 }
 
@@ -218,55 +201,89 @@ function getFailureReason(): Translatable {
     flex-direction: column;
     position: relative;
     margin-left: 0.875rem;
+    flex-grow: 1;
+    overflow: hidden;
 
     &__name {
-      color: var(--parsec-color-light-primary-800);
+      color: var(--parsec-color-light-primary-700);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
-    &__size {
+    &__workspace {
       color: var(--parsec-color-light-secondary-grey);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-  }
 
-  &-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-500);
-    --background: var(--parsec-color-light-secondary-medium);
-    border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
-    position: absolute;
-    bottom: 0;
-    width: 100%;
+    &-progress-container {
+      display: flex;
+      align-items: center;
+      margin-top: 0.25rem;
+      gap: 0.5rem;
+
+      .progress-bar {
+        --progress-background: var(--parsec-color-light-primary-500);
+        --background: var(--parsec-color-light-secondary-medium);
+        border-radius: var(--parsec-radius-8);
+        width: 100%;
+      }
+
+      .cancel-icon {
+        color: var(--parsec-color-light-secondary-grey);
+        font-size: 1.125rem;
+        padding: 0.25rem;
+        border-radius: var(--parsec-radius-4);
+
+        &:hover {
+          color: var(--parsec-color-light-secondary-text);
+          background: var(--parsec-color-light-secondary-disabled);
+        }
+      }
+    }
   }
 
   .checkmark-icon,
-  .arrow-icon,
   .waiting-info,
-  .cancel-button,
   .failed-text,
   .cancel-text,
   .failed-content {
     margin-left: auto;
+    padding-left: 0.5rem;
+    flex-shrink: 0;
   }
 }
 
 // states of the element-container
 .waiting,
 .progress {
-  .cancel-button {
-    color: var(--parsec-color-light-secondary-text);
-    --background-hover: var(--parsec-color-light-secondary-disabled);
+  .cancel-icon {
+    color: var(--parsec-color-light-secondary-grey);
+    font-size: 1.125rem;
+    padding: 0.25rem;
+    border-radius: var(--parsec-radius-4);
+    cursor: pointer;
 
-    &::part(native) {
-      padding: 0.25rem;
+    &:hover {
+      color: var(--parsec-color-light-secondary-text);
+      background: var(--parsec-color-light-secondary-disabled);
     }
   }
 }
 
 .waiting {
+  .waiting-info {
+    display: flex;
+    align-items: center;
+  }
+
   .waiting-text {
     color: var(--parsec-color-light-primary-700);
   }
 
-  .cancel-button {
+  .cancel-icon {
     display: none;
   }
 
@@ -275,42 +292,16 @@ function getFailureReason(): Translatable {
       display: none;
     }
 
-    .cancel-button {
+    .cancel-icon {
       display: block;
     }
-  }
-}
-
-.progress {
-  .element-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-300);
   }
 }
 
 .done {
-  cursor: pointer;
-  background: var(--parsec-color-light-primary-50);
-
-  .hover-state {
-    display: none;
-  }
-
-  &:hover {
-    .default-state {
-      display: none;
-    }
-    .hover-state {
-      display: block;
-    }
-  }
-
-  .element-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-600);
-  }
-
-  .arrow-icon,
   .checkmark-icon {
-    color: var(--parsec-color-light-primary-600);
+    color: var(--parsec-color-light-success-700);
+    font-size: 1.25rem;
   }
 }
 
@@ -318,16 +309,12 @@ function getFailureReason(): Translatable {
   --background: var(--parsec-color-light-danger-500);
 
   .element {
-    opacity: 0.5;
+    opacity: 0.8;
     filter: grayscale(100%);
   }
 
   .cancel-text {
-    color: var(--parsec-color-light-secondary-text);
-  }
-
-  .element-progress-bar {
-    --progress-background: var(--parsec-color-light-secondary-light);
+    color: var(--parsec-color-light-secondary-hard-grey);
   }
 }
 
@@ -339,15 +326,12 @@ function getFailureReason(): Translatable {
     gap: 0.375rem;
 
     .information-icon {
-      font-size: 1.375rem;
+      font-size: 1.25rem;
 
       &:hover {
         color: var(--parsec-color-light-danger-700);
       }
     }
-  }
-  .element-progress-bar {
-    --progress-background: var(--parsec-color-light-danger-500);
   }
 }
 </style>

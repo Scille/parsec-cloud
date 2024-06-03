@@ -486,7 +486,7 @@
         "ImportFile": {
             "importFilesAction": "Import files",
             "importFolderAction": "Import a folder",
-            "title": "Importation",
+            "title": "Background tasks",
             "waiting": "waiting",
             "cancelled": "cancelled",
             "failed": "failed",
@@ -503,12 +503,14 @@
             "dropInstructions": "Drag & drop your files to import them"
         },
         "CopyFile": {
+            "copy": "Copy of {name}",
             "waiting": "waiting",
             "cancelled": "cancelled",
             "failed": "failed",
             "browse": "Go to location"
         },
         "MoveFile": {
+            "move": "Move of {name}",
             "waiting": "waiting",
             "cancelled": "cancelled",
             "failed": "failed",

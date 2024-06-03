@@ -308,7 +308,8 @@ async function onFileOperationEvent(
 <style scoped lang="scss">
 .upload-menu {
   display: flex;
-  min-width: 25rem;
+  min-width: 28rem;
+  max-width: 25rem;
   position: absolute;
   border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
   box-shadow: var(--parsec-shadow-strong);
@@ -331,24 +332,16 @@ async function onFileOperationEvent(
 
   &-tabs {
     display: flex;
-    padding: 0.375rem 0.5rem 0rem 0.5rem;
-    background-color: var(--parsec-color-light-secondary-premiere);
+    padding: 0;
     overflow: hidden;
 
     &__item {
-      --background: none;
       color: var(--parsec-color-light-secondary-grey);
       cursor: pointer;
-      width: 100%;
-      border-radius: var(--parsec-radius-8) var(--parsec-radius-8) 0 0;
 
       &::part(native) {
-        padding: 0.5rem 0rem;
+        padding: 1rem 0.75rem 0.5rem 0.75rem;
         --inner-padding-end: 0px;
-      }
-
-      &:hover {
-        color: var(--parsec-color-light-primary-500);
       }
 
       .item-container {
@@ -356,7 +349,7 @@ async function onFileOperationEvent(
         justify-content: center;
         align-items: center;
         width: 100%;
-        gap: 0.5rem;
+        gap: 0.375rem;
 
         .text-counter {
           display: flex;
@@ -369,9 +362,15 @@ async function onFileOperationEvent(
         }
       }
 
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+
+        .text-counter {
+          background: var(--parsec-color-light-secondary-disabled);
+        }
+      }
+
       &.active {
-        box-shadow: var(--parsec-shadow-light);
-        --background: var(--parsec-color-light-secondary-white);
         color: var(--parsec-color-light-primary-500);
 
         .text-counter {
@@ -382,7 +381,6 @@ async function onFileOperationEvent(
   }
 
   &-list {
-    background-color: none;
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
