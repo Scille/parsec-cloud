@@ -2,7 +2,6 @@
 
 import type { CustomPublishOptions, ProgressInfo, UpdateInfo, XElement } from 'builder-util-runtime';
 import { newError, parseXml } from 'builder-util-runtime';
-import type { Logger } from 'electron-log';
 import type { BaseUpdater, AppUpdater as _AppUpdater } from 'electron-updater';
 import { CancellationToken } from 'electron-updater';
 import { GitHubProvider, computeReleaseNotes } from 'electron-updater/out/providers/GitHubProvider';
@@ -384,9 +383,6 @@ export default class AppUpdater {
     }
 
     this.updater.logger = require('electron-log/node');
-
-    (this.updater.logger as Logger).transports.file.level = 'debug';
-    (this.updater.logger as Logger).transports.console.level = 'debug';
 
     publishOption.nightlyBuild = (process.env.FORCE_NIGHTLY || '0') === '1' || publishOption.nightlyBuild;
 

@@ -120,6 +120,7 @@ export async function login(
         });
         break;
       case ClientEventTag.IncompatibleServer:
+        window.electronAPI.log('warn', `IncompatibleServerEvent: ${event.detail}`);
         distributor.dispatchEvent(Events.Offline);
         distributor.dispatchEvent(Events.IncompatibleServer);
         break;
@@ -136,7 +137,7 @@ export async function login(
         eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       default:
-        console.log(`Unhandled event ${event.tag}`);
+        window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
         break;
     }
   }

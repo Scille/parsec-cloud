@@ -142,3 +142,7 @@ ipcMain.on(PageToWindowChannel.PrepareUpdate, async () => {
     myCapacitorApp.sendEvent(WindowToPageChannel.CleanUpBeforeUpdate);
   }
 });
+
+ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'warn' | 'error', message: string) => {
+  myCapacitorApp.log(level, message);
+});

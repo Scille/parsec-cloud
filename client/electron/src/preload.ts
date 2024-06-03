@@ -35,5 +35,8 @@ process.once('loaded', () => {
     prepareUpdate: () => {
       ipcRenderer.send(PageToWindowChannel.PrepareUpdate);
     },
+    log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => {
+      ipcRenderer.send(PageToWindowChannel.Log, level, message);
+    },
   });
 });

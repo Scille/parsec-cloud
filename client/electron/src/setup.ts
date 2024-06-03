@@ -5,6 +5,7 @@ import { CapElectronEventEmitter, CapacitorSplashScreen, setupCapacitorElectronP
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
+import type { Logger } from 'electron-log';
 import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
@@ -65,6 +66,7 @@ export class ElectronCapacitorApp {
   public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
+  private logger: Logger;
   updater?: AppUpdater;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
@@ -88,6 +90,9 @@ export class ElectronCapacitorApp {
     if (!electronIsDev) {
       Object.assign(console, log.functions);
     }
+    this.logger = require('electron-log/node');
+    this.logger.transports.file.level = 'warn';
+    this.logger.transports.console.level = 'warn';
 
     if (appMenuBarMenuTemplate) {
       this.AppMenuBarMenuTemplate = appMenuBarMenuTemplate;
@@ -135,6 +140,27 @@ export class ElectronCapacitorApp {
 
   sendEvent(event: WindowToPageChannel, ...args: any[]): void {
     this.MainWindow.webContents.send(event, ...args);
+  }
+
+  log(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
+    switch (level) {
+      case 'debug': {
+        this.logger.debug(message);
+        break;
+      }
+      case 'info': {
+        this.logger.info(message);
+        break;
+      }
+      case 'warn': {
+        this.logger.warn(message);
+        break;
+      }
+      case 'error': {
+        this.logger.error(message);
+        break;
+      }
+    }
   }
 
   getCustomURLScheme(): string {
@@ -405,11 +431,18 @@ export class ElectronCapacitorApp {
         }
         CapElectronEventEmitter.emit('CAPELECTRON_DeeplinkListenerInitialized', '');
         // Send process arguments to renderer
-        if (process.argv.length > 0) {
-          const lastArg = process.argv.at(-1);
+
+        for (let i = 1; i < process.argv.length; i++) {
+          const arg = process.argv.at(i);
+
           // We're only interested in potential Parsec links
-          if (lastArg.startsWith('parsec3://')) {
-            this.sendEvent(WindowToPageChannel.OpenLink, lastArg);
+          if (arg.startsWith('parsec://')) {
+            this.sendEvent(WindowToPageChannel.OpenLink, arg);
+            break;
+          } else if (arg === '--log-debug') {
+            this.logger.transports.file.level = 'debug';
+            this.logger.transports.console.level = 'debug';
+            this.logger.debug('Setting log level to DEBUG');
           }
         }
       }, 400);
