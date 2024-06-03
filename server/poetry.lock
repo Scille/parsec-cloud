@@ -146,13 +146,13 @@ crt = ["botocore[crt] (>=1.21.0,<2.0a0)"]
 
 [[package]]
 name = "boto3-stubs"
-version = "1.34.113"
-description = "Type annotations for boto3 1.34.113 generated with mypy-boto3-builder 7.24.0"
+version = "1.34.117"
+description = "Type annotations for boto3 1.34.117 generated with mypy-boto3-builder 7.24.0"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "boto3_stubs-1.34.113-py3-none-any.whl", hash = "sha256:14b59f9db03fb19c1cbca5fbef58e70787345ae9db6845a2ec7eb796d43a790c"},
-    {file = "boto3_stubs-1.34.113.tar.gz", hash = "sha256:16aaf8d0979cfd65f850536a2ccf4344d00f12638aa377a65b76c00338f35c50"},
+    {file = "boto3_stubs-1.34.117-py3-none-any.whl", hash = "sha256:f2cf09536486d08dd6e132b742de17df16ab635f7bdc8106a56abce55583a62a"},
+    {file = "boto3_stubs-1.34.117.tar.gz", hash = "sha256:d9ac034dd943d545d1f067ad7976cdbc729c689d16c961b8bc26ec595838beac"},
 ]
 
 [package.dependencies]
@@ -202,7 +202,7 @@ bedrock-agent = ["mypy-boto3-bedrock-agent (>=1.34.0,<1.35.0)"]
 bedrock-agent-runtime = ["mypy-boto3-bedrock-agent-runtime (>=1.34.0,<1.35.0)"]
 bedrock-runtime = ["mypy-boto3-bedrock-runtime (>=1.34.0,<1.35.0)"]
 billingconductor = ["mypy-boto3-billingconductor (>=1.34.0,<1.35.0)"]
-boto3 = ["boto3 (==1.34.113)", "botocore (==1.34.113)"]
+boto3 = ["boto3 (==1.34.117)", "botocore (==1.34.117)"]
 braket = ["mypy-boto3-braket (>=1.34.0,<1.35.0)"]
 budgets = ["mypy-boto3-budgets (>=1.34.0,<1.35.0)"]
 ce = ["mypy-boto3-ce (>=1.34.0,<1.35.0)"]
@@ -1416,13 +1416,13 @@ testing = ["pytest", "pytest-benchmark"]
 
 [[package]]
 name = "poetry-lock-package"
-version = "0.5.0"
+version = "0.5.1"
 description = "Poetry lock package generator"
 optional = false
-python-versions = ">=3.6.2,<4.0.0"
+python-versions = "<4.0.0,>=3.8.0"
 files = [
-    {file = "poetry-lock-package-0.5.0.tar.gz", hash = "sha256:a6735bbb8d3fa33c091e7dcd426a52b82757b34f1b43804ca3d81d27f0451425"},
-    {file = "poetry_lock_package-0.5.0-py3-none-any.whl", hash = "sha256:73fbb8d2415fad0cabcca14b193f70e496e1830f9e32fa5b744ca7681ccba73e"},
+    {file = "poetry_lock_package-0.5.1-py3-none-any.whl", hash = "sha256:102c0b1921d28528e37aaf62b51c6a167cf569bdd72e978e9d19c743c7fe8a53"},
+    {file = "poetry_lock_package-0.5.1.tar.gz", hash = "sha256:9cdae3aaea6c22e05cbaec7f4d47f140cd1b0d314c7cc1714a21d963031a2a2f"},
 ]
 
 [package.dependencies]
@@ -2033,17 +2033,17 @@ full = ["httpx (>=0.22.0)", "itsdangerous", "jinja2", "python-multipart (>=0.0.7
 
 [[package]]
 name = "structlog"
-version = "24.1.0"
+version = "24.2.0"
 description = "Structured Logging for Python"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "structlog-24.1.0-py3-none-any.whl", hash = "sha256:3f6efe7d25fab6e86f277713c218044669906537bb717c1807a09d46bca0714d"},
-    {file = "structlog-24.1.0.tar.gz", hash = "sha256:41a09886e4d55df25bdcb9b5c9674bccfab723ff43e0a86a1b7b236be8e57b16"},
+    {file = "structlog-24.2.0-py3-none-any.whl", hash = "sha256:983bd49f70725c5e1e3867096c0c09665918936b3db27341b41d294283d7a48a"},
+    {file = "structlog-24.2.0.tar.gz", hash = "sha256:0e3fe74924a6d8857d3f612739efb94c72a7417d7c7c008d12276bca3b5bf13b"},
 ]
 
 [package.extras]
-dev = ["structlog[tests,typing]"]
+dev = ["freezegun (>=0.2.8)", "mypy (>=1.4)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "rich", "simplejson", "twisted"]
 docs = ["furo", "myst-parser", "sphinx", "sphinx-notfound-page", "sphinxcontrib-mermaid", "sphinxext-opengraph", "twisted"]
 tests = ["freezegun (>=0.2.8)", "pretend", "pytest (>=6.0)", "pytest-asyncio (>=0.17)", "simplejson"]
 typing = ["mypy (>=1.4)", "rich", "twisted"]
@@ -2257,13 +2257,13 @@ socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
 name = "uvicorn"
-version = "0.29.0"
+version = "0.30.1"
 description = "The lightning-fast ASGI server."
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "uvicorn-0.29.0-py3-none-any.whl", hash = "sha256:2c2aac7ff4f4365c206fd773a39bf4ebd1047c238f8b8268ad996829323473de"},
-    {file = "uvicorn-0.29.0.tar.gz", hash = "sha256:6a69214c0b6a087462412670b3ef21224fa48cae0e452b5883e8e8bdfdd11dd0"},
+    {file = "uvicorn-0.30.1-py3-none-any.whl", hash = "sha256:cd17daa7f3b9d7a24de3617820e634d0933b69eed8e33a516071174427238c81"},
+    {file = "uvicorn-0.30.1.tar.gz", hash = "sha256:d46cd8e0fd80240baffbcd9ec1012a712938754afcf81bce56c024c1656aece8"},
 ]
 
 [package.dependencies]
@@ -2495,4 +2495,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.12.0"
-content-hash = "ca77e9d5721846410e35b74e02e8ee7792bb078bd39c5a0efd83a6df5ea6388a"
+content-hash = "501d008b3eb5245f9bf64b6d41844022d477776ec2beeed373f36c61cac24ab6"
