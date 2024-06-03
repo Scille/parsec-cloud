@@ -32,7 +32,8 @@ macro_rules! impl_local_manifest_dump_load {
                 key: &SecretKey,
             ) -> libparsec_types::DataResult<Self> {
                 let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-                format_vx_load(&serialized)
+                let result = format_vx_load(&serialized);
+                result.and_then(|manifest: Self| manifest.check_integrity().map(|_| manifest))
             }
         }
     };
@@ -570,6 +571,10 @@ impl LocalFolderManifest {
         }
     }
 
+    pub fn check_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn check_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
@@ -876,6 +881,10 @@ impl LocalUserManifest {
             local_workspaces: vec![],
             speculative,
         }
+    }
+
+    pub fn check_integrity(&self) -> DataResult<()> {
+        Ok(())
     }
 
     pub fn get_local_workspace_entry(
