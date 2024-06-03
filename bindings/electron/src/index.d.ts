@@ -54,6 +54,7 @@ export enum UserProfile {
 export interface AvailableDevice {
     keyFilePath: string
     organizationId: string
+    userId: string
     deviceId: string
     humanHandle: HumanHandle
     deviceLabel: string

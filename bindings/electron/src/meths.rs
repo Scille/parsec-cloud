@@ -204,11 +204,23 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
+    let user_id = {
+        let js_val: Handle<JsString> = obj.get(cx, "userId")?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -243,6 +255,7 @@ fn struct_available_device_js_to_rs<'a>(
     Ok(libparsec::AvailableDevice {
         key_file_path,
         organization_id,
+        user_id,
         device_id,
         human_handle,
         device_label,
@@ -272,10 +285,19 @@ fn struct_available_device_rs_to_js<'a>(
     js_obj.set(cx, "keyFilePath", js_key_file_path)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
+    js_obj.set(cx, "userId", js_user_id)?;
     let js_device_id = JsString::try_new(cx, {
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
@@ -422,8 +444,8 @@ fn struct_client_info_js_to_rs<'a>(
     let device_id = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceId")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -434,7 +456,10 @@ fn struct_client_info_js_to_rs<'a>(
     let user_id = {
         let js_val: Handle<JsString> = obj.get(cx, "userId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -497,9 +522,8 @@ fn struct_client_info_rs_to_js<'a>(
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_device_id = JsString::try_new(cx, {
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.device_id) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
@@ -507,7 +531,15 @@ fn struct_client_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "deviceId", js_device_id)?;
-    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "userId", js_user_id)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
@@ -946,8 +978,8 @@ fn struct_device_info_js_to_rs<'a>(
     let id = {
         let js_val: Handle<JsString> = obj.get(cx, "id")?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
@@ -985,8 +1017,8 @@ fn struct_device_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -1011,9 +1043,8 @@ fn struct_device_info_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_id = JsString::try_new(cx, {
-        let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-            Ok(device_id.to_string())
-        };
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
         match custom_to_rs_string(rs_obj.id) {
             Ok(ok) => ok,
             Err(err) => return cx.throw_type_error(err),
@@ -1035,9 +1066,8 @@ fn struct_device_info_rs_to_js<'a>(
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(elem) => JsString::try_new(cx, {
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
                 Err(err) => return cx.throw_type_error(err),
@@ -1860,7 +1890,10 @@ fn struct_user_info_js_to_rs<'a>(
     let id = {
         let js_val: Handle<JsString> = obj.get(cx, "id")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1898,8 +1931,8 @@ fn struct_user_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -1937,8 +1970,8 @@ fn struct_user_info_js_to_rs<'a>(
             } else {
                 let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
                 Some({
-                    let custom_from_rs_string = |s: String| -> Result<_, String> {
-                        s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                        libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
                     };
                     match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
@@ -1965,7 +1998,15 @@ fn struct_user_info_rs_to_js<'a>(
     rs_obj: libparsec::UserInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_id = JsString::try_new(cx, rs_obj.id).or_throw(cx)?;
+    let js_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
@@ -1984,9 +2025,8 @@ fn struct_user_info_rs_to_js<'a>(
     js_obj.set(cx, "createdOn", js_created_on)?;
     let js_created_by = match rs_obj.created_by {
         Some(elem) => JsString::try_new(cx, {
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
                 Err(err) => return cx.throw_type_error(err),
@@ -2013,9 +2053,8 @@ fn struct_user_info_rs_to_js<'a>(
     js_obj.set(cx, "revokedOn", js_revoked_on)?;
     let js_revoked_by = match rs_obj.revoked_by {
         Some(elem) => JsString::try_new(cx, {
-            let custom_to_rs_string = |device_id: libparsec::DeviceID| -> Result<_, &'static str> {
-                Ok(device_id.to_string())
-            };
+            let custom_to_rs_string =
+                |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
             match custom_to_rs_string(elem) {
                 Ok(ok) => ok,
                 Err(err) => return cx.throw_type_error(err),
@@ -2122,7 +2161,10 @@ fn struct_workspace_user_access_info_js_to_rs<'a>(
     let user_id = {
         let js_val: Handle<JsString> = obj.get(cx, "userId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -2160,7 +2202,15 @@ fn struct_workspace_user_access_info_rs_to_js<'a>(
     rs_obj: libparsec::WorkspaceUserAccessInfo,
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
-    let js_user_id = JsString::try_new(cx, rs_obj.user_id).or_throw(cx)?;
+    let js_user_id = JsString::try_new(cx, {
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    })
+    .or_throw(cx)?;
     js_obj.set(cx, "userId", js_user_id)?;
     let js_human_handle = struct_human_handle_rs_to_js(cx, rs_obj.human_handle)?;
     js_obj.set(cx, "humanHandle", js_human_handle)?;
@@ -4986,7 +5036,10 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
             let greeter_user_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5021,7 +5074,10 @@ fn variant_user_or_device_claim_initial_info_js_to_rs<'a>(
             let greeter_user_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "greeterUserId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5060,7 +5116,15 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
             let js_handle = JsNumber::new(cx, handle as f64);
             js_obj.set(cx, "handle", js_handle)?;
-            let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
+            let js_greeter_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
@@ -5078,7 +5142,15 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
             js_obj.set(cx, "handle", js_handle)?;
             let js_claimer_email = JsString::try_new(cx, claimer_email).or_throw(cx)?;
             js_obj.set(cx, "claimerEmail", js_claimer_email)?;
-            let js_greeter_user_id = JsString::try_new(cx, greeter_user_id).or_throw(cx)?;
+            let js_greeter_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(greeter_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
             js_obj.set(cx, "greeterUserId", js_greeter_user_id)?;
             let js_greeter_human_handle = struct_human_handle_rs_to_js(cx, greeter_human_handle)?;
             js_obj.set(cx, "greeterHumanHandle", js_greeter_human_handle)?;
@@ -7142,8 +7214,8 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let device = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            let custom_from_rs_string = |s: String| -> Result<_, String> {
-                s.parse::<libparsec::DeviceID>().map_err(|e| e.to_string())
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
             };
             match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
@@ -7317,7 +7389,10 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let user = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -7762,7 +7837,10 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let user = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -7836,7 +7914,10 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let recipient = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
