@@ -119,7 +119,8 @@ async fn inconsistent_path_parent_mismatch(
         "self_referencing" => (
             wksp1_bar_txt_id,
             ResolvePathError::Internal(
-                DataError::FileManifestIntegrity {
+                DataError::Integrity {
+                    data_type: "libparsec_types::local_manifest::LocalFileManifest",
                     invariant: "id and parent are different",
                 }
                 .into(),
@@ -151,6 +152,9 @@ async fn inconsistent_path_parent_mismatch(
         .await
         .unwrap_err();
 
+    if let ResolvePathError::Internal(x) = &expected_error {
+        println!("Expected error: {:?}", x.to_string());
+    }
     match expected_error {
         ResolvePathError::EntryNotFound => p_assert_matches!(err, ResolvePathError::EntryNotFound),
         ResolvePathError::Internal(expected) => {

@@ -285,7 +285,8 @@ impl FileManifest {
     pub fn check_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
-            return Err(DataError::FileManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
         }
@@ -296,7 +297,8 @@ impl FileManifest {
         for block in &self.blocks {
             // Check that blocks are ordered and not overlapping
             if current_offset > block.offset {
-                return Err(DataError::FileManifestIntegrity {
+                return Err(DataError::Integrity {
+                    data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are ordered and not overlapping",
                 });
             }
@@ -305,7 +307,8 @@ impl FileManifest {
             // Check that blocks are not sharing the same block span
             let block_index = block.offset / self.blocksize.inner();
             if current_block_index > block_index {
-                return Err(DataError::FileManifestIntegrity {
+                return Err(DataError::Integrity {
+                    data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are not sharing the same block span",
                 });
             }
@@ -314,14 +317,16 @@ impl FileManifest {
             // Check that blocks are not spanning over multiple block spans
             let last_block_index = (block.offset + block.size.get() - 1) / self.blocksize.inner();
             if last_block_index != block_index {
-                return Err(DataError::FileManifestIntegrity {
+                return Err(DataError::Integrity {
+                    data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are not spanning over multiple block spans",
                 });
             }
         }
         // Check that the file size is not exceeded
         if current_offset > self.size {
-            return Err(DataError::FileManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "file size is not exceeded",
             });
         }
@@ -390,7 +395,8 @@ impl FolderManifest {
     pub fn check_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
-            return Err(DataError::FolderManifestIntegrity {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
         }
