@@ -105,15 +105,15 @@ async function setLoginError(error: ClientStartError): Promise<void> {
       errorMessage.value = 'HomePage.organizationLogin.passwordError';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidPath:
-      // TODO: Log error to electron
+      window.electronAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceNotFound';
       break;
     case ClientStartErrorTag.LoadDeviceInvalidData:
-      // TODO: Log error to electron
+      window.electronAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceInvalidData';
       break;
     case ClientStartErrorTag.Internal:
-      // TODO: Log error to electron
+      window.electronAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.unknownError';
       break;
   }
