@@ -141,6 +141,9 @@
             "emailLabel": "Email",
             "passwordLabel": "Mot de passe",
             "passwordError": "Le mot de passe est invalide.",
+            "deviceNotFound": "Le fichier de l'appareil n'a pas été trouvé.",
+            "invalidData": "Le fichier de l'appareil contient des données invalides.",
+            "unknownError": "Erreur inconnue.",
             "login": "Se connecter",
             "loading": "Chargement..."
         },
