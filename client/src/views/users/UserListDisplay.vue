@@ -43,7 +43,10 @@
       :disabled="true"
       :is-current-user="true"
     />
-    <ion-text v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0">
+    <ion-text
+      class="no-match-result body"
+      v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0"
+    >
       {{ $msTranslate('UsersPage.noMatch') }}
     </ion-text>
     <user-list-item

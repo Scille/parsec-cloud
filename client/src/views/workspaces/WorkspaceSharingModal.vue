@@ -31,21 +31,20 @@
         />
         <ion-list class="user-list">
           <workspace-user-role
+            v-if="clientInfo"
+            v-show="currentUserMatchSearch()"
             :disabled="true"
-            :user="{
-              id: 'FAKE',
-              humanHandle: {
-                label: $msTranslate('WorkspaceSharing.currentUserLabel'),
-                email: '',
-              },
-              profile: UserProfile.Outsider,
-            }"
+            :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
             :role="ownRole"
             :client-profile="ownProfile"
             :client-role="ownRole"
+            :is-current-user="true"
             class="current-user"
           />
-          <ion-text v-show="userRoles.length > 0 && filteredUserRoles.length === 0">
+          <ion-text
+            class="no-match-result body"
+            v-show="userRoles.length > 0 && filteredUserRoles.length === 0 && !currentUserMatchSearch()"
+          >
             {{ $msTranslate({ key: 'WorkspaceSharing.noMatch', data: { query: search } }) }}
           </ion-text>
           <workspace-user-role
@@ -68,12 +67,14 @@
 import { MsModal, MsSearchInput } from 'megashark-lib';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import {
+  ClientInfo,
   UserProfile,
   UserTuple,
   WorkspaceID,
   WorkspaceName,
   WorkspaceRole,
   getClientProfile,
+  getClientInfo,
   getWorkspaceSharing,
   shareWorkspace,
 } from '@/parsec';
@@ -82,6 +83,7 @@ import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref, computed } from 'vue';
+import { c } from 'vitest/dist/reporters-5f784f42';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
@@ -93,6 +95,8 @@ const props = defineProps<{
   informationManager: InformationManager;
 }>();
 
+const clientInfo: Ref<ClientInfo | null> = ref(null);
+
 const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
 const filteredUserRoles = computed(() => {
   const searchString = search.value.toLocaleLowerCase();
@@ -103,6 +107,17 @@ const filteredUserRoles = computed(() => {
     );
   });
 });
+
+function currentUserMatchSearch(): boolean {
+  const searchString = search.value.toLocaleLowerCase();
+  if (!clientInfo.value) {
+    return false;
+  }
+  return (
+    clientInfo.value.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+    clientInfo.value.humanHandle.label.toLocaleLowerCase().includes(searchString)
+  );
+}
 
 function isSelectDisabled(role: WorkspaceRole | null): boolean {
   // Outsider should not be able to change anything
@@ -142,6 +157,10 @@ async function refreshSharingInfo(): Promise<void> {
 }
 
 onMounted(async () => {
+  const result = await getClientInfo();
+  if (result.ok) {
+    clientInfo.value = result.value;
+  }
   ownProfile = await getClientProfile();
   await refreshSharingInfo();
 });

@@ -91,3 +91,10 @@
 .drop-zone .folders-container-grid .drop-zone-active::before {
   border-radius: var(--parsec-radius-12);
 }
+
+// no search result matching
+.no-match-result {
+  display: block;
+  margin: 0.5rem 0;
+  color: var(--parsec-color-light-secondary-soft-text);
+}

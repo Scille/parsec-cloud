@@ -93,7 +93,10 @@
         </ion-card-title>
         <ion-grid class="organization-list">
           <ion-row class="organization-list-row">
-            <ion-text v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0">
+            <ion-text
+              class="no-match-result body"
+              v-show="searchQuery.length > 0 && filteredDevices.length === 0 && deviceList.length > 0"
+            >
               {{ $msTranslate({ key: 'HomePage.organizationList.noMatch', data: { query: searchQuery } }) }}
             </ion-text>
             <ion-col
