@@ -2,6 +2,7 @@
     "type": "object",
     "required": [
         "label",
+        "type",
         "other_fields"
     ],
     "additionalProperties": false,
