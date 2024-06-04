@@ -29,13 +29,13 @@ describe('User List Item', () => {
       revokedBy: null,
       isRevoked: () => false,
       isSelected: false,
+      isCurrent: false,
     };
 
     const wrapper = mount(UserListItem, {
       props: {
         user: USER,
         showCheckbox: true,
-        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

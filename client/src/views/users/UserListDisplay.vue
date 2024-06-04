@@ -36,16 +36,9 @@
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-space" />
     </ion-list-header>
-    <!-- prettier-ignore -->
-    <user-list-item
-      :user="(currentUser as UserModel)"
-      :show-checkbox="false"
-      :disabled="true"
-      :is-current-user="true"
-    />
     <ion-text
       class="no-match-result body"
-      v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0"
+      v-show="users.getUsers().length === 0"
     >
       {{ $msTranslate('UsersPage.noMatch') }}
     </ion-text>
@@ -53,6 +46,7 @@
       v-for="user in users.getUsers()"
       :key="user.id"
       :user="user"
+      :disabled="user.isCurrent"
       :show-checkbox="someSelected"
       @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     />
@@ -61,14 +55,12 @@
 
 <script setup lang="ts">
 import { UserCollection, UserListItem, UserModel } from '@/components/users';
-import { UserInfo } from '@/parsec';
 import { IonLabel, IonList, IonListHeader, IonText } from '@ionic/vue';
 import { computed } from 'vue';
 import { MsCheckbox } from 'megashark-lib';
 
 const props = defineProps<{
   users: UserCollection;
-  currentUser: UserInfo;
 }>();
 
 defineEmits<{

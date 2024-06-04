@@ -11,7 +11,7 @@
   >
     <div
       class="user-card-checkbox"
-      v-if="!user.isRevoked()"
+      v-if="!user.isRevoked() && !user.isCurrent"
     >
       <!-- eslint-disable vue/no-mutating-props -->
       <ms-checkbox
@@ -44,7 +44,7 @@
         <ion-text class="user-card-info__name body">
           <span>{{ user.humanHandle.label }}</span>
           <span
-            v-if="isCurrentUser"
+            v-if="user.isCurrent"
             class="body name-you"
           >
             {{ $msTranslate('UsersPage.currentUser') }}
@@ -83,7 +83,6 @@ const emits = defineEmits<{
 const props = defineProps<{
   user: UserModel;
   showCheckbox: boolean;
-  isCurrentUser?: boolean;
 }>();
 
 defineExpose({

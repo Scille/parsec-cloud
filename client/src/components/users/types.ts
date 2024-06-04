@@ -17,6 +17,7 @@ export enum InvitationAction {
 
 export interface UserModel extends UserInfo {
   isSelected: boolean;
+  isCurrent: boolean;
 }
 
 function compareUserProfiles(profile1: UserProfile, profile2: UserProfile): number {
@@ -62,7 +63,7 @@ export class UserCollection {
 
   selectAll(selected: boolean): void {
     for (const entry of this.users) {
-      if (this.userIsVisible(entry) && !entry.isRevoked()) {
+      if (this.userIsVisible(entry) && !entry.isRevoked() && !entry.isCurrent) {
         entry.isSelected = selected;
       }
     }
@@ -109,7 +110,7 @@ export class UserCollection {
   }
 
   selectableUsersCount(): number {
-    return this.users.filter((user) => this.userIsVisible(user) && !user.isRevoked()).length;
+    return this.users.filter((user) => this.userIsVisible(user) && !user.isRevoked() && !user.isCurrent).length;
   }
 
   selectedCount(): number {
@@ -118,6 +119,13 @@ export class UserCollection {
 
   sort(property: SortProperty, ascending: boolean): void {
     this.users.sort((user1, user2) => {
+      // Arbitrary value to keep the current user always at the top of the list
+      if (user1.isCurrent) {
+        return -42;
+      } else if (user2.isCurrent) {
+        return 42;
+      }
+
       let diff = 0;
       const profile1 = ascending ? user1.currentProfile : user2.currentProfile;
       const profile2 = ascending ? user2.currentProfile : user1.currentProfile;
@@ -152,6 +160,11 @@ export class UserCollection {
           return 0;
       }
     });
+  }
+
+  getCurrentUser(): UserModel | undefined {
+    const users = this.users.filter((u) => u.isCurrent);
+    return users.length ? users[0] : undefined;
   }
 
   clear(): void {

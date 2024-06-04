@@ -20,7 +20,7 @@
       <ms-checkbox
         v-model="user.isSelected"
         v-show="user.isSelected || isHovered || showCheckbox"
-        v-if="!user.isRevoked()"
+        v-if="!user.isRevoked() && !user.isCurrent"
         @click.stop
         @change="$emit('select', user, $event)"
       />
@@ -36,7 +36,7 @@
           :user-name="user.humanHandle.label"
         />
         <span
-          v-if="isCurrentUser"
+          v-if="user.isCurrent"
           class="body user-name__you"
         >
           {{ $msTranslate('UsersPage.currentUser') }}
@@ -77,7 +77,7 @@
     <!-- options -->
     <div class="user-options ion-item-child-clickable">
       <ion-button
-        v-show="(isHovered || menuOpened) && !isCurrentUser"
+        v-show="(isHovered || menuOpened) && !user.isCurrent"
         fill="clear"
         class="options-button"
         @click.stop="onOptionsClick($event)"
@@ -108,7 +108,6 @@ const menuOpened = ref(false);
 const props = defineProps<{
   user: UserModel;
   showCheckbox: boolean;
-  isCurrentUser?: boolean;
 }>();
 
 const emits = defineEmits<{
