@@ -69,7 +69,7 @@
       <!-- users -->
       <div class="users-container scroll">
         <div
-          v-show="users.usersCount() === 0 && !currentUser"
+          v-show="users.totalUsersCount() === 0"
           class="no-active body-lg"
         >
           <div class="no-active-content">
@@ -79,23 +79,21 @@
             </ion-text>
           </div>
         </div>
-        <div v-show="users.usersCount() > 0 || currentUser">
-          <div v-if="displayView === DisplayState.List && currentUser">
+        <div v-show="users.totalUsersCount() > 0">
+          <div v-if="displayView === DisplayState.List">
             <!-- prettier-ignore -->
             <user-list-display
               :users="(users as UserCollection)"
-              :current-user="currentUser"
               @menu-click="openUserContextMenu"
             />
           </div>
           <div
-            v-else-if="currentUser"
+            v-else
             class="users-container-grid"
           >
             <!-- prettier-ignore -->
             <user-grid-display
               :users="(users as UserCollection)"
-              :current-user="currentUser"
               @menu-click="openUserContextMenu"
             />
           </div>
@@ -160,7 +158,6 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
-const currentUser: Ref<UserModel | null> = ref(null);
 const currentSortProperty = ref();
 const currentSortOrder = ref();
 let eventCbId: string | null = null;
@@ -229,11 +226,7 @@ async function revokeUser(user: UserInfo): Promise<void> {
 }
 
 function getUsersCount(): number {
-  if (users.value.usersCount() === 0 && !currentUser.value) {
-    return 0;
-  }
-  // + 1 for current user
-  return users.value.usersCount() + 1;
+  return users.value.usersCount();
 }
 
 async function revokeSelectedUsers(): Promise<void> {
@@ -366,7 +359,7 @@ async function assignWorkspaceRoles(user: UserInfo): Promise<void> {
     cssClass: 'role-assignment-modal',
     componentProps: {
       sourceUser: user,
-      currentUser: currentUser.value,
+      currentUser: users.value.getCurrentUser(),
       informationManager: informationManager,
     },
   });
@@ -453,11 +446,8 @@ async function refreshUserList(): Promise<void> {
   if (result.ok) {
     for (const user of result.value) {
       (user as UserModel).isSelected = false;
-      if (!isCurrentUser(user.id)) {
-        newUsers.push(user as UserModel);
-      } else {
-        currentUser.value = user as UserModel;
-      }
+      (user as UserModel).isCurrent = isCurrentUser(user.id);
+      newUsers.push(user as UserModel);
     }
     users.value.replace(newUsers);
   } else {

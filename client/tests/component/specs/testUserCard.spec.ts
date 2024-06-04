@@ -19,13 +19,13 @@ describe('User Card', () => {
       revokedBy: null,
       isRevoked: () => false,
       isSelected: false,
+      isCurrent: false,
     };
 
     const wrapper = mount(UserCard, {
       props: {
         user: USER,
         showCheckbox: true,
-        showOptions: true,
       },
       global: {
         provide: getDefaultProvideConfig(),

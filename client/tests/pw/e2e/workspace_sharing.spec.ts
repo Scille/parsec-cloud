@@ -57,33 +57,36 @@ msTest('Unshare workspace', async ({ workspaceSharingModal }) => {
 msTest('Filter users', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  // cspell:disable-next-line
+  // cspell:disable
   await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
     'Gordon Freeman',
     'Korgan Bloodaxe',
     'Jaheira',
   ]);
+  // cspell:enable
   await fillIonInput(searchInput, 'or');
   // cspell:disable-next-line
   await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Gordon Freeman', 'Korgan Bloodaxe']);
   await searchInput.locator('.input-clear-icon').click();
-  // cspell:disable-next-line
+  // cspell:disable
   await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
     'Gordon Freeman',
     'Korgan Bloodaxe',
     'Jaheira',
   ]);
+  // cspell:enable
 });
 
 msTest('Filter users no match', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
-  // cspell:disable-next-line
+  // cspell:disable
   await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
     'Gordon Freeman',
     'Korgan Bloodaxe',
     'Jaheira',
   ]);
+  // cspell:enable
   await fillIonInput(searchInput, 'nomatch');
   // cspell:disable-next-line
   await expect(content.locator('.user-list').locator('.content')).toBeHidden();

@@ -2,23 +2,17 @@
 
 <template>
   <user-card
-    :disabled="true"
-    :user="currentUser as UserModel"
-    :show-checkbox="false"
-    :show-options="false"
-    :is-current-user="true"
-  />
-  <user-card
     v-for="user in users.getUsers()"
     :key="user.id"
     :user="user"
+    :disabled="user.isCurrent"
     :show-checkbox="someSelected"
     @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     ref="userGridItemRefs"
   />
   <ion-text
     class="no-match-result body"
-    v-show="users.getUsers().length === 0 && users.totalUsersCount() > 0"
+    v-show="users.getUsers().length === 0"
   >
     {{ $msTranslate('UsersPage.noMatch') }}
   </ion-text>
@@ -27,12 +21,10 @@
 <script setup lang="ts">
 import { IonText } from '@ionic/vue';
 import { UserCard, UserCollection, UserModel } from '@/components/users';
-import { UserInfo } from '@/parsec';
 import { computed, ref } from 'vue';
 
 defineProps<{
   users: UserCollection;
-  currentUser: UserInfo;
 }>();
 
 defineEmits<{
