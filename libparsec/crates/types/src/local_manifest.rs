@@ -13,17 +13,17 @@ use libparsec_crypto::{HashDigest, SecretKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, BlockAccess, BlockID,
-    Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName, FileManifest,
-    FolderManifest, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
+    self as libparsec_types, impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    BlockAccess, BlockID, Blocksize, ChunkID, DataError, DataResult, DateTime, DeviceID, EntryName,
+    FileManifest, FolderManifest, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
 };
 
 macro_rules! impl_local_manifest_dump_load {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
-                let serialized =
-                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
+                let serialized = format_v0_dump(&self);
                 key.encrypt(&serialized)
             }
 
@@ -31,11 +31,8 @@ macro_rules! impl_local_manifest_dump_load {
                 encrypted: &[u8],
                 key: &SecretKey,
             ) -> libparsec_types::DataResult<Self> {
-                let serialized = key
-                    .decrypt(encrypted)
-                    .map_err(|_| libparsec_types::DataError::Decryption)?;
-                ::rmp_serde::from_slice(&serialized)
-                    .map_err(|_| libparsec_types::DataError::Serialization)
+                let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
+                format_vx_load(&serialized)
             }
         }
     };
@@ -847,7 +844,7 @@ impl LocalChildManifest {
 
     pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
         let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-        rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
+        format_vx_load(&serialized)
     }
 }
 

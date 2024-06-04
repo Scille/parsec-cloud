@@ -1779,7 +1779,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::Corrupted {
             hint,
-            error: DataError::Serialization,
+            error: DataError::DataInconsistency,
         });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }

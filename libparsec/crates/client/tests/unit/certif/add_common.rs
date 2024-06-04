@@ -35,7 +35,7 @@ async fn corrupted_signature(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn corrupted_compression(env: &TestbedEnv) {
+async fn corrupted_serialization(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
@@ -52,42 +52,7 @@ async fn corrupted_compression(env: &TestbedEnv) {
         if matches!(
             *boxed,
             InvalidCertificateError::Corrupted {
-                error: DataError::Compression,
-                ..
-            }
-        )
-    );
-}
-
-#[parsec_test(testbed = "minimal")]
-async fn corrupted_serialization(env: &TestbedEnv) {
-    let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(env, &alice).await;
-    let now = DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap();
-
-    let manifest = UserManifest {
-        author: alice.device_id,
-        timestamp: now,
-        id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
-        version: 0,
-        created: now,
-        updated: now,
-    };
-
-    let signed = Bytes::from(manifest.dump_and_sign(&alice.signing_key));
-
-    let err = ops
-        .add_certificates_batch(&[signed], &[], &[], &HashMap::default())
-        .await
-        .unwrap_err();
-
-    p_assert_matches!(
-        err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(
-            *boxed,
-            InvalidCertificateError::Corrupted {
-                error: DataError::Serialization,
+                error: DataError::BadSerialization { .. },
                 ..
             }
         )

@@ -40,7 +40,6 @@ regex = { workspace = true, features = ["std", "perf", "unicode"] }
 regex-syntax = { workspace = true, features = ["unicode-perl"] }
 unicode-normalization = { workspace = true, features = ["std"] }
 paste = { workspace = true }
-flate2 = { workspace = true, features = ["rust_backend"] }
 rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true }
 email-address-parser = { workspace = true }
@@ -48,6 +47,10 @@ anyhow = { workspace = true, features = ["std", "backtrace"] }
 fnmatch-regex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
+zstd = { workspace = true }
+# TODO: temporary to fix parquet wasm build
+# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
+zstd-sys = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }

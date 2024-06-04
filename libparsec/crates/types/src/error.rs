@@ -28,14 +28,18 @@ pub enum DataError {
     #[error("Invalid encryption")]
     Decryption,
 
-    #[error("Invalid compression")]
-    Compression,
+    #[error("Invalid serialization: format {} step {step}", match .format { Some(format) => format!("{}", format), None => "<unknown>".to_string() })]
+    BadSerialization {
+        format: Option<u8>,
+        step: &'static str,
+    },
 
     #[error("Invalid signature")]
     Signature,
 
-    #[error("Invalid serialization")]
-    Serialization,
+    // vxgmichel is going to improve this ;-p
+    #[error("Inconsistent data")]
+    DataInconsistency,
 
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
     UnexpectedAuthor {

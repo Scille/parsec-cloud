@@ -232,7 +232,7 @@ pub(super) async fn validate_workspace_manifest(
                     version,
                     author: author.to_owned(),
                     timestamp,
-                    error: Box::new(DataError::Serialization),
+                    error: Box::new(DataError::DataInconsistency),
                 });
                 return Err(CertifValidateManifestError::InvalidManifest(what));
             }
@@ -348,7 +348,7 @@ pub(super) async fn validate_child_manifest(
                     version,
                     author: author.to_owned(),
                     timestamp,
-                    error: Box::new(DataError::Serialization),
+                    error: Box::new(DataError::DataInconsistency),
                 });
                 return Err(CertifValidateManifestError::InvalidManifest(what));
             }

@@ -83,38 +83,6 @@ fn with_default_field() {
     assert_eq!(data, expected)
 }
 
-// Supporting empty type is currently disabled (as all our schemes have a `type` field).
-// This code is kept just in case we eventually have an exotic need for it...
-
-// #[test]
-// fn empty_type_field() {
-//     parsec_data_from_contents!(
-//         r#"{
-//             "label": "FooManifest",
-//             "other_fields": [
-//                 {
-//                     "name": "author",
-//                     "type": "DeviceID"
-//                 },
-//                 {
-//                     "name": "version",
-//                     "type": "Integer"
-//                 }
-//             ]
-//         }"#
-//     );
-
-//     // Check round-trip serialize/deserialize
-
-//     let data = FooManifestData {
-//         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
-//         version: 1,
-//     };
-//     let dumped = rmp_serde::to_vec_named(&data).unwrap();
-//     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
-//     assert_eq!(reloaded, data,);
-// }
-
 #[test]
 fn introduce_in_field() {
     parsec_data_from_contents!(

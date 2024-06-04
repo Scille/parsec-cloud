@@ -1,13 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::collections::HashMap;
-use std::io::{Read, Write};
 use std::num::NonZeroU64;
 use std::sync::Arc;
 
 use bytes::Bytes;
-use flate2::read::ZlibDecoder;
-use flate2::write::ZlibEncoder;
 use paste::paste;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -21,40 +18,20 @@ use libparsec_serialization_format::parsec_data;
 use crate::data_macros::impl_transparent_data_format_conversion;
 use crate::{self as libparsec_types, IndexInt};
 use crate::{
+    serialization::{format_v0_dump, format_vx_load},
     DataError, DataResult, DateTime, DeviceID, DeviceLabel, HumanHandle, MaybeRedacted, RealmRole,
     SequesterServiceID, UserID, UserProfile, VlobID,
 };
-
-fn load<T>(compressed: &[u8]) -> DataResult<T>
-where
-    T: for<'a> Deserialize<'a>,
-{
-    let mut serialized = vec![];
-    ZlibDecoder::new(compressed)
-        .read_to_end(&mut serialized)
-        .map_err(|_| DataError::Compression)?;
-    rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)
-}
 
 fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
 where
     T: for<'a> Deserialize<'a>,
 {
-    let compressed = author_verify_key
+    let serialized = author_verify_key
         .verify(signed)
         .map_err(|_| DataError::Signature)?;
-    load::<T>(compressed)
-}
 
-fn dump<T>(obj: &T) -> Vec<u8>
-where
-    T: Serialize,
-{
-    let serialized = ::rmp_serde::to_vec_named(obj).expect("object should be serializable");
-    let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-    e.write_all(&serialized)
-        .and_then(|_| e.finish())
-        .expect("in-memory buffer should not fail")
+    format_vx_load(serialized)
 }
 
 fn check_author_allow_root(
@@ -131,8 +108,8 @@ macro_rules! impl_unsecure_load {
 
             impl $name {
                 pub fn unsecure_load(signed: Bytes) -> DataResult<[< Unsecure $name >]> {
-                    let (_, compressed) = VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-                    let unsecure = load::<$name>(compressed)?;
+                    let (_, serialized) = VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
+                    let unsecure = $crate::serialization::format_vx_load::<$name>(&serialized)?;
                     Ok([< Unsecure $name >] {
                         signed,
                         unsecure,
@@ -148,7 +125,7 @@ macro_rules! impl_unsecure_dump {
     ($name:ident) => {
         impl $name {
             pub fn unsecure_dump(&self) -> Vec<u8> {
-                dump::<Self>(self)
+                $crate::serialization::format_v0_dump(self)
             }
         }
     };
@@ -913,11 +890,11 @@ impl_unsecure_dump!(SequesterServiceCertificate);
 
 impl SequesterServiceCertificate {
     pub fn dump(&self) -> Vec<u8> {
-        dump::<Self>(self)
+        format_v0_dump(self)
     }
 
     pub fn load(buf: &[u8]) -> DataResult<Self> {
-        load::<Self>(buf)
+        format_vx_load(buf)
     }
 
     pub fn verify_and_load(
@@ -966,11 +943,11 @@ impl_unsecure_dump!(SequesterRevokedServiceCertificate);
 
 impl SequesterRevokedServiceCertificate {
     pub fn dump(&self) -> Vec<u8> {
-        dump::<Self>(self)
+        format_v0_dump(self)
     }
 
     pub fn load(buf: &[u8]) -> DataResult<Self> {
-        load::<Self>(buf)
+        format_vx_load(buf)
     }
 
     pub fn verify_and_load(
@@ -1175,9 +1152,9 @@ pub enum UnsecureAnyCertificate {
 
 impl AnyCertificate {
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
-        let (_, compressed) =
+        let (_, serialized) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<Self>(compressed)?;
+        let unsecure = format_vx_load::<Self>(serialized)?;
         Ok(match unsecure {
             AnyCertificate::User(unsecure) => {
                 UnsecureAnyCertificate::User(UnsecureUserCertificate { signed, unsecure })
@@ -1303,9 +1280,9 @@ pub enum UnsecureCommonTopicCertificate {
 
 impl CommonTopicCertificate {
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureCommonTopicCertificate, DataError> {
-        let (_, compressed) =
+        let (_, serialized) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<Self>(compressed)?;
+        let unsecure = format_vx_load::<Self>(serialized)?;
         Ok(match unsecure {
             CommonTopicCertificate::User(unsecure) => {
                 UnsecureCommonTopicCertificate::User(UnsecureUserCertificate { signed, unsecure })
@@ -1398,9 +1375,9 @@ impl SequesterTopicCertificate {
     pub fn unsecure_load_authority(
         signed: Bytes,
     ) -> Result<UnsecureSequesterAuthorityCertificate, DataError> {
-        let (_, compressed) =
+        let (_, serialized) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<SequesterAuthorityCertificate>(compressed)?;
+        let unsecure = format_vx_load::<SequesterAuthorityCertificate>(serialized)?;
         Ok(UnsecureSequesterAuthorityCertificate { signed, unsecure })
     }
 }
@@ -1436,9 +1413,9 @@ pub enum UnsecureRealmTopicCertificate {
 
 impl RealmTopicCertificate {
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureRealmTopicCertificate, DataError> {
-        let (_, compressed) =
+        let (_, serialized) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<Self>(compressed)?;
+        let unsecure = format_vx_load::<Self>(serialized)?;
         Ok(match unsecure {
             RealmTopicCertificate::RealmRole(unsecure) => {
                 UnsecureRealmTopicCertificate::RealmRole(UnsecureRealmRoleCertificate {
@@ -1514,9 +1491,9 @@ impl ShamirRecoveryTopicCertificate {
     pub fn unsecure_load(
         signed: Bytes,
     ) -> Result<UnsecureShamirRecoveryTopicCertificate, DataError> {
-        let (_, compressed) =
+        let (_, serialized) =
             VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = load::<Self>(compressed)?;
+        let unsecure = format_vx_load::<Self>(serialized)?;
         Ok(match unsecure {
             ShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
                 UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(

@@ -1,39 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::io::{Read, Write};
-
 use bytes::Bytes;
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use paste::paste;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use serde_with::*;
 
 use libparsec_crypto::{SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
-    DataResult, DateTime, DeviceID, IndexInt, UnsecureSkipValidationReason, VlobID,
+    self as libparsec_types,
+    data_macros::impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    DataError, DataResult, DateTime, DeviceID, IndexInt, UnsecureSkipValidationReason, VlobID,
 };
-
-fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
-    let mut decompressed = vec![];
-
-    ZlibDecoder::new(raw)
-        .read_to_end(&mut decompressed)
-        .map_err(|_| DataError::Compression)?;
-
-    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
-}
-
-fn dump<T: Serialize>(data: &T) -> Vec<u8> {
-    let serialized = rmp_serde::to_vec_named(data).expect("Unreachable");
-
-    let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-    e.write_all(&serialized).expect("Unreachable");
-
-    e.finish().expect("Unreachable")
-}
 
 /*
  * RealmKeysBundle
@@ -136,9 +116,9 @@ impl_transparent_data_format_conversion!(
 
 impl RealmKeysBundleAccess {
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        load(raw)
+        format_vx_load(raw)
     }
     pub fn dump(&self) -> Vec<u8> {
-        dump(&self)
+        format_v0_dump(&self)
     }
 }

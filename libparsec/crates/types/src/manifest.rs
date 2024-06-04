@@ -1,13 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    collections::HashMap,
-    io::{Read, Write},
-    num::NonZeroU64,
-    ops::Deref,
-};
+use std::{collections::HashMap, num::NonZeroU64, ops::Deref};
 
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
@@ -15,8 +9,10 @@ use libparsec_crypto::{HashDigest, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, BlockID,
-    DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
+    self as libparsec_types,
+    data_macros::impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    BlockID, DataError, DataResult, DateTime, DeviceID, EntryName, SizeInt, VersionInt, VlobID,
 };
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
@@ -27,14 +23,8 @@ macro_rules! impl_manifest_dump_load {
             /// Dump and sign [Self], this doesn't encrypt the data compared to [Self::dump_sign_and_encrypt]
             /// This enabled you to encrypt the data with another method than the one provided by [SecretKey]
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
-                let serialized =
-                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
-                let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-                let compressed = e
-                    .write_all(&serialized)
-                    .and_then(|_| e.finish())
-                    .expect("in-memory buffer should not fail");
-                author_signkey.sign(&compressed)
+                let serialized = format_v0_dump(&self);
+                author_signkey.sign(&serialized)
             }
 
             /// Dump and sign itself, then encrypt the resulting data using the provided [SecretKey]
@@ -79,17 +69,11 @@ macro_rules! impl_manifest_dump_load {
                 expected_id: Option<VlobID>,
                 expected_version: Option<VersionInt>,
             ) -> DataResult<Self> {
-                let compressed = author_verify_key
+                let serialized = author_verify_key
                     .verify(&signed)
                     .map_err(|_| DataError::Signature)?;
-                let mut serialized = vec![];
 
-                ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
-
-                let obj = rmp_serde::from_slice::<Self>(&serialized)
-                    .map_err(|_| DataError::Serialization)?;
+                let obj: Self = format_vx_load(&serialized)?;
 
                 obj.verify(
                     expected_author,
@@ -97,6 +81,7 @@ macro_rules! impl_manifest_dump_load {
                     expected_id,
                     expected_version,
                 )?;
+
                 Ok(obj)
             }
 
@@ -441,11 +426,11 @@ impl ChildManifest {
         expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,
     ) -> DataResult<Self> {
-        let compressed = author_verify_key
+        let serialized = author_verify_key
             .verify(signed)
             .map_err(|_| DataError::Signature)?;
 
-        let obj = Self::deserialize_data(compressed)?;
+        let obj = Self::deserialize_data(serialized)?;
 
         macro_rules! internal_verify {
             ($obj:ident) => {{
@@ -467,14 +452,8 @@ impl ChildManifest {
         Ok(obj)
     }
 
-    fn deserialize_data(data: &[u8]) -> DataResult<Self> {
-        let mut deserialized = Vec::new();
-
-        ZlibDecoder::new(data)
-            .read_to_end(&mut deserialized)
-            .map_err(|_| DataError::Compression)?;
-
-        rmp_serde::from_slice(&deserialized).map_err(|_| DataError::Serialization)
+    fn deserialize_data(raw: &[u8]) -> DataResult<Self> {
+        format_vx_load(raw)
     }
 }
 
