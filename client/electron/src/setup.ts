@@ -392,6 +392,7 @@ export class ElectronCapacitorApp {
           'https://my.parsec.cloud/',
           'https://parsec.cloud/',
           'https://github.com/Scille/',
+          'https://raw.githubusercontent.com/Scille/',
           'https://spdx.org/licenses/',
           'https://docs.parsec.cloud/',
         ].some((prefix) => url.startsWith(prefix));
