@@ -46,7 +46,7 @@ jobs:
     timeout-minutes: 60
     # All linux jobs must run the same ubuntu version to avoid Rust caching issues !
     # 20.04 is required to install PostgreSQL 12
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
         timeout-minutes: 5
@@ -110,7 +110,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=libparsec-ubuntu-20.04-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-ubuntu-22.04-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified

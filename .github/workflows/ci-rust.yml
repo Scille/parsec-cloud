@@ -53,7 +53,7 @@ jobs:
     name: "🐧 Linux: 🦀 Rust tests"
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 30
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     # Testbed server comes as a Docker image, so it will eventually goes out of sync
     # with the tests (typically a new API is introduced in the Parsec server, or a new
     # testbed template is introduced).
@@ -99,14 +99,6 @@ jobs:
       - uses: taiki-e/install-action@60784cb1f434ce8a3cc04670ea753e1c8868e17e # pin v2.33.34
         with:
           tool: nextest@0.9.54, wasm-pack@0.11.0, cargo-deny@0.14.3
-
-      - name: Build CLI binary
-        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec_cli --features testenv
-        timeout-minutes: 5
-
-      - name: Test CLI
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli --features testenv
-        timeout-minutes: 10
 
       - name: Categorize workspace crates
         id: crates
@@ -158,6 +150,14 @@ jobs:
       - name: Test platform-storage on wasm
         if: inputs.run-wasm-tests
         run: wasm-pack test --headless --firefox libparsec/crates/platform_storage
+        timeout-minutes: 10
+
+      - name: Build CLI binary
+        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec_cli --features testenv
+        timeout-minutes: 5
+
+      - name: Test CLI
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli --features testenv
         timeout-minutes: 10
 
       # Clippy basically compile the project, hence it's faster to run it in

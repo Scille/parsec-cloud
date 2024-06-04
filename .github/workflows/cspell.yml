@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   cspell:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
