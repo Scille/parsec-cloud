@@ -38,7 +38,7 @@
         {{ workspace.currentName }}
       </ion-title>
 
-      <ion-text class="card-content-last-update caption-caption">
+      <ion-text class="card-content-last-update subtitles-sm">
         <ion-icon
           :icon="time"
           class="time"

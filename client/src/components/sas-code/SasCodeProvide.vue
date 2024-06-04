@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="container caption-code">
+  <div class="container code">
     {{ code }}
   </div>
 </template>

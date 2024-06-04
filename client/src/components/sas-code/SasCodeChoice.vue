@@ -5,7 +5,7 @@
     <ion-row>
       <ion-col class="column">
         <ion-button
-          class="button-choice caption-code"
+          class="button-choice code"
           fill="outline"
           @click="$emit('select', choices[0])"
         >
@@ -14,7 +14,7 @@
       </ion-col>
       <ion-col class="column">
         <ion-button
-          class="button-choice caption-code"
+          class="button-choice code"
           fill="outline"
           @click="$emit('select', choices[1])"
         >
@@ -25,7 +25,7 @@
     <ion-row>
       <ion-col class="column">
         <ion-button
-          class="button-choice caption-code"
+          class="button-choice code"
           fill="outline"
           @click="$emit('select', choices[2])"
         >
@@ -34,7 +34,7 @@
       </ion-col>
       <ion-col class="column">
         <ion-button
-          class="button-choice caption-code"
+          class="button-choice code"
           fill="outline"
           @click="$emit('select', choices[3])"
         >

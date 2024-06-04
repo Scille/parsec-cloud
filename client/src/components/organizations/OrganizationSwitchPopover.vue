@@ -31,7 +31,7 @@
           </div>
 
           <ion-text
-            class="badge caption-caption"
+            class="badge subtitles-sm"
             v-show="org.active"
             :outline="true"
           >

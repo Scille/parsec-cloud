@@ -7,7 +7,7 @@
         class="list-group"
         v-if="!isRevoked && clientIsAdmin"
       >
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleRemove') }}
           </ion-label>
@@ -26,7 +26,7 @@
       </ion-item-group>
 
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleDetails') }}
           </ion-label>
@@ -44,7 +44,7 @@
       </ion-item-group>
 
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('UsersPage.userContextMenu.titleAssignRoles') }}
           </ion-label>

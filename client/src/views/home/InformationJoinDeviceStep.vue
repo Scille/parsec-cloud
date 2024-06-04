@@ -13,7 +13,7 @@
       <ion-text class="body content__text">
         {{ $msTranslate('ClaimDeviceModal.currentDevice') }}
       </ion-text>
-      <ion-text class="caption-caption content__subtext">
+      <ion-text class="subtitles-sm content__subtext">
         {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
@@ -28,7 +28,7 @@
       <ion-text class="body content__text">
         {{ $msTranslate('ClaimDeviceModal.newDevice') }}
       </ion-text>
-      <ion-text class="caption-caption content__subtext">
+      <ion-text class="subtitles-sm content__subtext">
         {{ $msTranslate('ClaimDeviceModal.connected') }}
       </ion-text>
     </div>
