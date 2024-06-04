@@ -354,11 +354,14 @@ msTest('Filter users list', async ({ usersPage }) => {
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.filter((u) => (u.profile !== 'Outsider' && u.active === true) || u.currentUser).map((u) => u.name),
   );
+  await expect(usersPage.locator('.no-match-result')).toBeHidden();
   // Also hide active users
   await toggleFilter(usersPage, 'Active');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.filter((u) => u.currentUser).map((u) => u.name),
   );
+  await expect(usersPage.locator('.no-match-result')).toBeVisible();
+  await expect(usersPage.locator('.no-match-result')).toHaveText('No users matching your filters.');
 });
 
 msTest('Remove selection on filtering', async ({ usersPage }) => {
