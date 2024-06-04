@@ -136,13 +136,11 @@ import {
   FileOperationState,
   StateData,
   FileOperationDataType,
-  CopyData,
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { Component } from 'vue';
-import { entryStat, Path } from '@/parsec';
 import { DateTime } from 'luxon';
 
 interface OperationItem {
@@ -256,25 +254,11 @@ function updateImportState(id: string, state: FileOperationState, stateData?: St
 }
 
 async function onOperationFinishedClick(operationData: FileOperationData, state: FileOperationState): Promise<void> {
-  if (state !== FileOperationState.FileImported && state !== FileOperationState.EntryCopied) {
+  if (state !== FileOperationState.FileImported) {
     return;
   }
   if (operationData.getDataType() === FileOperationDataType.Import) {
     await navigateToWorkspace(operationData.workspaceHandle, (operationData as ImportData).path, (operationData as ImportData).file.name);
-  } else if (operationData.getDataType() === FileOperationDataType.Copy) {
-    const dstPath = (operationData as CopyData).dstPath;
-    const statResult = await entryStat(operationData.workspaceHandle, dstPath);
-    if (statResult.ok) {
-      if (statResult.value.isFile()) {
-        const parentPath = await Path.parent(dstPath);
-        const fileName = await Path.filename(dstPath);
-        if (fileName) {
-          await navigateToWorkspace(operationData.workspaceHandle, parentPath, fileName);
-        }
-      } else {
-        await navigateToWorkspace(operationData.workspaceHandle, dstPath);
-      }
-    }
   }
   menu.minimize();
 }
