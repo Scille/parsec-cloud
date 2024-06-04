@@ -83,40 +83,44 @@ fn with_default_field() {
     assert_eq!(data, expected)
 }
 
-#[test]
-fn empty_type_field() {
-    parsec_data_from_contents!(
-        r#"{
-            "label": "FooManifest",
-            "other_fields": [
-                {
-                    "name": "author",
-                    "type": "DeviceID"
-                },
-                {
-                    "name": "version",
-                    "type": "Integer"
-                }
-            ]
-        }"#
-    );
+// Supporting empty type is currently disabled (as all our schemes have a `type` field).
+// This code is kept just in case we eventually have an exotic need for it...
 
-    // Check round-trip serialize/deserialize
+// #[test]
+// fn empty_type_field() {
+//     parsec_data_from_contents!(
+//         r#"{
+//             "label": "FooManifest",
+//             "other_fields": [
+//                 {
+//                     "name": "author",
+//                     "type": "DeviceID"
+//                 },
+//                 {
+//                     "name": "version",
+//                     "type": "Integer"
+//                 }
+//             ]
+//         }"#
+//     );
 
-    let data = FooManifestData {
-        author: libparsec_types::DeviceID("alice@pc1".to_owned()),
-        version: 1,
-    };
-    let dumped = rmp_serde::to_vec_named(&data).unwrap();
-    let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
-    assert_eq!(reloaded, data,);
-}
+//     // Check round-trip serialize/deserialize
+
+//     let data = FooManifestData {
+//         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
+//         version: 1,
+//     };
+//     let dumped = rmp_serde::to_vec_named(&data).unwrap();
+//     let reloaded: FooManifestData = rmp_serde::from_slice(&dumped).unwrap();
+//     assert_eq!(reloaded, data,);
+// }
 
 #[test]
 fn introduce_in_field() {
     parsec_data_from_contents!(
         r#"{
             "label": "FooManifest",
+            "type": "foo_manifest",
             "other_fields": [
                 {
                     "name": "author",
@@ -132,10 +136,12 @@ fn introduce_in_field() {
     );
 
     let data_with = FooManifestData {
+        ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
         is_cool_guy: libparsec_types::Maybe::Present(true),
     };
     let data_without = FooManifestData {
+        ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
         is_cool_guy: libparsec_types::Maybe::Absent,
     };
@@ -166,6 +172,7 @@ fn deprecate_in_field() {
     parsec_data_from_contents!(
         r#"{
             "label": "FooManifest",
+            "type": "foo_manifest",
             "other_fields": [
                 {
                     "name": "author",
@@ -181,6 +188,7 @@ fn deprecate_in_field() {
     );
 
     let data = FooManifestData {
+        ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
     };
 
@@ -206,6 +214,7 @@ fn introduce_then_deprecate_in_field() {
     parsec_data_from_contents!(
         r#"{
             "label": "FooManifest",
+            "type": "foo_manifest",
             "other_fields": [
                 {
                     "name": "author",
@@ -222,6 +231,7 @@ fn introduce_then_deprecate_in_field() {
     );
 
     let data = FooManifestData {
+        ty: FooManifestDataType,
         author: libparsec_types::DeviceID("alice@pc1".to_owned()),
     };
 
@@ -247,6 +257,7 @@ fn introduce_deprecate_in_root() {
     parsec_data_from_contents!(
         r#"{
             "label": "FooManifest",
+            "type": "foo_manifest",
             "other_fields": [],
             "introduced_in_revision": 115,
             "deprecated_in_revision": 300
@@ -260,6 +271,7 @@ fn nested_type() {
     parsec_data_from_contents!(
         r#"{
             "label": "FooManifest",
+            "type": "foo_manifest",
             "other_fields": [
                 {"name": "e", "type": "EnumNestedType"},
                 {"name": "u", "type": "UnionNestedType"},
@@ -314,6 +326,7 @@ fn nested_type() {
     );
 
     let data = FooManifestData {
+        ty: FooManifestDataType,
         e: EnumNestedType::E1,
         u: UnionNestedType::U1 { f: 42 },
         s: StructNestedType { f: 42 },

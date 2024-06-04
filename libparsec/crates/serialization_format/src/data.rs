@@ -21,7 +21,7 @@ pub(crate) fn generate_data(data: JsonData) -> TokenStream {
 pub(crate) struct JsonData {
     label: String,
     #[serde(rename = "type")]
-    ty: Option<String>,
+    ty: String,
     other_fields: Vec<JsonDataField>,
     nested_types: Option<Vec<JsonNestedType>>,
     // Field is only required if the data always had it
@@ -146,7 +146,9 @@ impl GenData {
 
         GenData {
             label: data.label,
-            ty: data.ty,
+            // `GenData` can represent a structure without type, however we currently
+            // require type for all data schemes.
+            ty: Some(data.ty),
             fields: data.other_fields.into_iter().map(convert_field).collect(),
             nested_types: gen_nested_types,
             introduced_in_revision: data.introduced_in_revision,
