@@ -3,10 +3,12 @@
 <template>
   <ion-item
     button
-    class="workspace-list-item"
+    class="workspace-list-item no-padding-end"
     :detail="false"
-    :class="{ selected: isSelected, 'no-padding-end': !isSelected }"
+    :class="{ 'workspace-hovered': isHovered || menuOpened }"
     @click="$emit('click', workspace, $event)"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <!-- workspace name -->
     <div class="workspace-name">
@@ -88,10 +90,9 @@
     <!-- options -->
     <div class="workspace-options">
       <ion-button
-        v-if="!isSelected"
         fill="clear"
         class="options-button"
-        @click.stop="$emit('menuClick', workspace, $event)"
+        @click.stop="onOptionsClick($event)"
       >
         <ion-icon
           :icon="ellipsisHorizontal"
@@ -113,20 +114,28 @@ import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
 import { ref } from 'vue';
 
-const isSelected = ref(false);
+const isHovered = ref(false);
+const menuOpened = ref(false);
 
-defineProps<{
+const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
-  (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
+
+async function onOptionsClick(event: Event): Promise<void> {
+  menuOpened.value = true;
+  emits('menuClick', event, props.workspace, () => {
+    menuOpened.value = false;
+  });
+}
 </script>
 
 <style lang="scss" scoped>

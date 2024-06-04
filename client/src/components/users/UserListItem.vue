@@ -131,9 +131,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.user-hovered {
-  background-color: red;
-}
 .user-selected {
   min-width: 4rem;
   justify-content: end;
