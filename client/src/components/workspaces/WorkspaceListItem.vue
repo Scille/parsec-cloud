@@ -25,6 +25,18 @@
       <ion-label class="workspace-name__label cell">
         {{ workspace.currentName }}
       </ion-label>
+
+      <!-- favorites -->
+      <div
+        class="workspace-favorite-icon"
+        :class="{
+          'workspace-favorite-icon__on': isFavorite,
+          'workspace-favorite-icon__off': !isFavorite,
+        }"
+        @click.stop="$emit('favoriteClick', workspace, $event)"
+      >
+        <ion-icon :icon="star" />
+      </div>
     </div>
 
     <!-- role user -->
@@ -71,18 +83,6 @@
       <ion-label class="label-size cell">
         {{ $msTranslate(formatFileSize(workspace.size)) }}
       </ion-label>
-    </div>
-
-    <!-- favorites -->
-    <div
-      class="card-favorite"
-      :class="{
-        'card-favorite-on': isFavorite,
-        'card-favorite-off': !isFavorite,
-      }"
-      @click.stop="$emit('favoriteClick', workspace, $event)"
-    >
-      <ion-icon :icon="star" />
     </div>
 
     <!-- options -->
@@ -249,19 +249,31 @@ defineEmits<{
   color: var(--parsec-color-light-secondary-grey);
 }
 
-.card-favorite {
-  position: absolute;
+.workspace-favorite-icon {
+  display: flex;
   align-items: center;
-  right: 3rem;
-  font-size: 1.5rem;
-  &-on {
-    color: var(--parsec-color-light-primary-500);
+  font-size: 1.25rem;
+  margin-left: auto;
+  padding: 0.25rem;
+  border-radius: var(--parsec-radius-6);
+  transition: color 150ms ease-out;
+
+  &__on {
+    color: var(--parsec-color-light-primary-600);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-700);
+    }
   }
-  &-off {
+
+  &__off {
     color: var(--parsec-color-light-secondary-disabled);
-  }
-  &:hover {
-    color: var(--parsec-color-light-primary-300);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 }
 </style>

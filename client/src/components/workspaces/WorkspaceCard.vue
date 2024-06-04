@@ -5,11 +5,12 @@
     class="card"
     @click="$emit('click', workspace, $event)"
   >
+    <!-- favorites -->
     <div
-      class="card-favorite"
+      class="workspace-favorite-icon"
       :class="{
-        'card-favorite-on': isFavorite,
-        'card-favorite-off': !isFavorite,
+        'workspace-favorite-icon__on': isFavorite,
+        'workspace-favorite-icon__off': !isFavorite,
       }"
       @click.stop="$emit('favoriteClick', workspace, $event)"
     >
@@ -127,23 +128,35 @@ defineEmits<{
   }
 }
 
-.card-favorite {
-  text-align: left;
-  position: absolute;
+.workspace-favorite-icon {
   display: flex;
   align-items: center;
-  top: 0;
-  left: 0.5rem;
-  font-size: 1.5rem;
-  padding: 0.75rem;
-  &-on {
+  font-size: 1.25rem;
+  margin-left: auto;
+  padding: 0.25rem;
+  border-radius: var(--parsec-radius-6);
+  transition: color 150ms ease-out;
+  position: absolute;
+  text-align: left;
+  left: 0.75rem;
+  top: 0.75rem;
+
+  &__on {
     color: var(--parsec-color-light-primary-600);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-700);
+    }
   }
-  &-off {
-    color: var(--parsec-color-light-secondary-light);
-  }
-  &:hover {
-    color: var(--parsec-color-light-secondary-grey);
+
+  &__off {
+    color: var(--parsec-color-light-secondary-disabled);
+
+    &:hover {
+      background: var(--parsec-color-light-primary-50);
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 }
 

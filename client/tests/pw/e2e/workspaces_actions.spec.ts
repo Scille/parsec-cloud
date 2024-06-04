@@ -125,7 +125,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
       wk = connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0);
       await expect(wk.locator('.workspace-name')).toHaveText('Trademeet');
     }
-    await expect(wk.locator('.card-favorite')).toHaveTheClass('card-favorite-on');
+    await expect(wk.locator('.workspace-favorite-icon')).toHaveTheClass('workspace-favorite-icon__on');
   });
 
   msTest(`Open workspace sharing ${mode}`, async ({ connected }) => {

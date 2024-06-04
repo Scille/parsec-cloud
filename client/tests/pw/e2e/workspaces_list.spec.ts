@@ -124,8 +124,8 @@ async function ensureFavorite(page: Page, favoritesCount: number): Promise<void>
     } else {
       item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(i);
     }
-    const expectedClass = `card-favorite-${i < favoritesCount ? 'on' : 'off'}`;
-    await expect(item.locator('.card-favorite')).toHaveTheClass(expectedClass);
+    const expectedClass = `workspace-favorite-icon__${i < favoritesCount ? 'on' : 'off'}`;
+    await expect(item.locator('.workspace-favorite-icon')).toHaveTheClass(expectedClass);
   }
   const sidebarFavorites = page.locator('.sidebar').locator('.organization-workspaces').locator('.favorites');
   if (favoritesCount > 0) {
@@ -143,7 +143,7 @@ msTest('Checks favorites', async ({ connected }) => {
     "Watcher's Keep",
   ]);
   await ensureFavorite(connected, 0);
-  await connected.locator('.workspaces-grid-item').nth(1).locator('.card-favorite').click();
+  await connected.locator('.workspaces-grid-item').nth(1).locator('.workspace-favorite-icon').click();
   // Put favorite in first
   await expect(connected.locator('.workspaces-grid-item').locator('.card-content__title')).toHaveText([
     'Trademeet',
@@ -155,7 +155,7 @@ msTest('Checks favorites', async ({ connected }) => {
   await toggleViewMode(connected);
   await ensureFavorite(connected, 1);
 
-  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1).locator('.card-favorite').click();
+  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1).locator('.workspace-favorite-icon').click();
   await expect(connected.locator('.workspace-list-item').locator('.workspace-name__label')).toHaveText([
     'The Copper Coronet',
     'Trademeet',
@@ -166,10 +166,10 @@ msTest('Checks favorites', async ({ connected }) => {
   await toggleViewMode(connected);
   await ensureFavorite(connected, 2);
 
-  await connected.locator('.workspaces-grid-item').nth(1).locator('.card-favorite').click();
+  await connected.locator('.workspaces-grid-item').nth(1).locator('.workspace-favorite-icon').click();
   await ensureFavorite(connected, 1);
   await toggleViewMode(connected);
 
-  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0).locator('.card-favorite').click();
+  await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0).locator('.workspace-favorite-icon').click();
   await ensureFavorite(connected, 0);
 });
