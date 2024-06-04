@@ -40,16 +40,17 @@ pub fn req() {
 }
 
 // Responses
-
 pub fn rep_ok() {
     // Generated from Python implementation (Parsec v2.6.0+dev)
     // Content:
-    //   block: hex!("666f6f626172")
-    //   status: "ok"
+    //  status: "ok"
+    //  block: b'foobar'
+    //  key_index: 2
+    //  needed_realm_certificate_timestamp: ExtType(code=1, data=b'\x00\x03]\x01;7\xe0\x00')}
     let raw = hex!(
         "84a6737461747573a26f6ba5626c6f636bc406666f6f626172a96b65795f696e646578"
         "02d9226e65656465645f7265616c6d5f63657274696669636174655f74696d65737461"
-        "6d70d70141cc36a1c0000000"
+        "6d70d70100035d013b37e000"
     );
     let expected = authenticated_cmds::block_read::Rep::Ok {
         block: bytes::Bytes::from_static(b"foobar"),
