@@ -127,6 +127,14 @@ ion-item:has(.file-list-item),
   cursor: default !important;
 }
 
+// Allow to keep hover when context menu is open
+.file-hovered,
+.workspace-hovered,
+.user-hovered {
+  --background: var(--parsec-color-light-primary-30) !important;
+  background-color: var(--parsec-color-light-primary-30) !important;
+}
+
 // List of files/folders
 .folder-container {
   .file-list-item {

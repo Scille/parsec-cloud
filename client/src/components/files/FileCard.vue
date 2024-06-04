@@ -108,9 +108,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.file-hovered {
-  background-color: red;
-}
 .file-card-item {
   position: relative;
   cursor: default;

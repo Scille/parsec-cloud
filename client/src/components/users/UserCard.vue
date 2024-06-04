@@ -103,9 +103,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.user-hovered {
-  background-color: red;
-}
 .user-card-item {
   --background: none;
   --background-hover: none;

@@ -3,7 +3,10 @@
 <template>
   <div
     class="card"
+    :class="{ 'workspace-hovered': isHovered || menuOpened }"
     @click="$emit('click', workspace, $event)"
+    @mouseenter="isHovered = true"
+    @mouseleave="isHovered = false"
   >
     <!-- favorites -->
     <div
@@ -18,7 +21,7 @@
     </div>
     <div
       class="card-option"
-      @click.stop="$emit('menuClick', workspace, $event)"
+      @click.stop="onOptionsClick($event)"
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
@@ -82,19 +85,30 @@ import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time } from 'ionicons/icons';
+import { ref } from 'vue';
 
-defineProps<{
+const isHovered = ref(false);
+const menuOpened = ref(false);
+
+const props = defineProps<{
   workspace: WorkspaceInfo;
   clientProfile: UserProfile;
   isFavorite: boolean;
 }>();
 
-defineEmits<{
+const emits = defineEmits<{
   (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
-  (e: 'menuClick', workspace: WorkspaceInfo, event: Event): void;
+  (e: 'menuClick', event: Event, workspace: WorkspaceInfo, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
+
+async function onOptionsClick(event: Event): Promise<void> {
+  menuOpened.value = true;
+  emits('menuClick', event, props.workspace, () => {
+    menuOpened.value = false;
+  });
+}
 </script>
 
 <style lang="scss" scoped>

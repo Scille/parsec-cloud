@@ -498,9 +498,12 @@ async function onWorkspaceShareClick(workspace: WorkspaceInfo): Promise<void> {
   await refreshWorkspacesList();
 }
 
-async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event): Promise<void> {
+async function onOpenWorkspaceContextMenu(event: Event, workspace: WorkspaceInfo, onFinished?: () => void): Promise<void> {
   await openWorkspaceContextMenu(event, workspace, favorites.value, eventDistributor, informationManager, storageManager);
   await refreshWorkspacesList();
+  if (onFinished) {
+    onFinished();
+  }
 }
 </script>
 

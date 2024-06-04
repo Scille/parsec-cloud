@@ -148,10 +148,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.file-hovered {
-  background-color: red;
-}
-
 .file-name {
   .file-icon {
     width: 2rem;
