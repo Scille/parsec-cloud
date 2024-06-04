@@ -17,6 +17,7 @@
       <ion-button
         slot="icon-only"
         @click="cancelModal()"
+        v-show="pageStep !== GreetDeviceStep.Summary"
         class="closeBtn"
       >
         <ion-icon

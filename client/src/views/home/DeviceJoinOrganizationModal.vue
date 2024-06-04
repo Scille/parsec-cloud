@@ -21,6 +21,7 @@
       <ion-button
         slot="icon-only"
         @click="cancelModal()"
+        v-show="pageStep !== DeviceJoinOrganizationStep.Finish"
         class="closeBtn"
       >
         <ion-icon
