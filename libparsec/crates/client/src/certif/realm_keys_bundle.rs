@@ -641,7 +641,7 @@ async fn validate_keys_bundle(
             })?;
 
         let keys_bundle_access = RealmKeysBundleAccess::load(&cleartext_keys_bundle_access)
-            .map_err(|_| {
+            .map_err(|error| {
                 ValidateKeysBundleError::InvalidKeysBundle(Box::new(
                     InvalidKeysBundleError::CorruptedAccess {
                         realm: realm_id,
@@ -649,7 +649,7 @@ async fn validate_keys_bundle(
                         key_rotation_author: certif.author.to_owned(),
                         key_rotation_timestamp: certif.timestamp,
                         recipient: ops.device.user_id,
-                        error: DataError::Serialization,
+                        error,
                     },
                 ))
             })?;

@@ -9,8 +9,10 @@ use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, data_macros::impl_transparent_data_format_conversion, DataError,
-    DeviceID, DeviceLabel, HumanHandle, UserID, UserProfile, VlobID,
+    self as libparsec_types,
+    data_macros::impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    DataError, DeviceID, DeviceLabel, HumanHandle, UserID, UserProfile, VlobID,
 };
 
 /*
@@ -66,16 +68,8 @@ macro_rules! impl_dump_and_encrypt {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &::libparsec_crypto::SecretKey) -> Vec<u8> {
-                let serialized =
-                    ::rmp_serde::to_vec_named(&self).expect("object should be serializable");
-                let mut e =
-                    ::flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-                use std::io::Write;
-                let compressed = e
-                    .write_all(&serialized)
-                    .and_then(|_| e.finish())
-                    .expect("in-memory buffer should not fail");
-                key.encrypt(&compressed)
+                let serialized = format_v0_dump(&self);
+                key.encrypt(&serialized)
             }
         }
     };
@@ -88,15 +82,8 @@ macro_rules! impl_decrypt_and_load {
                 encrypted: &[u8],
                 key: &::libparsec_crypto::SecretKey,
             ) -> Result<$name, DataError> {
-                let compressed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-                let mut serialized = vec![];
-                use std::io::Read;
-                ::flate2::read::ZlibDecoder::new(&compressed[..])
-                    .read_to_end(&mut serialized)
-                    .map_err(|_| DataError::Compression)?;
-                let obj: $name =
-                    ::rmp_serde::from_slice(&serialized).map_err(|_| DataError::Serialization)?;
-                Ok(obj)
+                let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
+                format_vx_load(&serialized)
             }
         }
     };

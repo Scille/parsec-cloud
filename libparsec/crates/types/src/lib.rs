@@ -60,6 +60,7 @@ mod protocol;
 mod realm;
 mod regex;
 mod sas_code;
+mod serialization;
 mod time;
 mod token;
 

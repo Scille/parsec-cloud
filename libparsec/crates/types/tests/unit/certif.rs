@@ -1598,9 +1598,13 @@ fn serde_sequester_service_certificate() {
     p_assert_eq!(certif2, expected);
 
     // Test invalid data
-    p_assert_matches!(
-        SequesterServiceCertificate::load(b"dummy"),
-        Err(DataError::Compression)
+    let outcome = SequesterServiceCertificate::load(b"dummy");
+    assert_eq!(
+        outcome,
+        Err(DataError::BadSerialization {
+            format: Some(0),
+            step: "format detection"
+        })
     );
 }
 

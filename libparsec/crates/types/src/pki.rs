@@ -2,41 +2,22 @@
 
 use std::{
     collections::HashMap,
-    io::{Read, Write},
     path::{Path, PathBuf},
 };
 
 use bytes::Bytes;
-use flate2::{read::ZlibDecoder, write::ZlibEncoder, Compression};
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
 use libparsec_crypto::{PublicKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
-    self as libparsec_types, impl_transparent_data_format_conversion, DataError, DataResult,
-    DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle, ParsecPkiEnrollmentAddr,
-    PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult, UserID, UserProfile,
+    self as libparsec_types, impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    DataResult, DateTime, DeviceID, DeviceLabel, EnrollmentID, HumanHandle,
+    ParsecPkiEnrollmentAddr, PkiEnrollmentLocalPendingError, PkiEnrollmentLocalPendingResult,
+    UserID, UserProfile,
 };
-
-fn load<T: DeserializeOwned>(raw: &[u8]) -> DataResult<T> {
-    let mut decompressed = vec![];
-
-    ZlibDecoder::new(raw)
-        .read_to_end(&mut decompressed)
-        .map_err(|_| DataError::Compression)?;
-
-    rmp_serde::from_slice(&decompressed).map_err(|_| DataError::Serialization)
-}
-
-fn dump<T: Serialize>(data: &T) -> Vec<u8> {
-    let serialized = rmp_serde::to_vec_named(data).expect("Unreachable");
-
-    let mut e = ZlibEncoder::new(Vec::new(), Compression::default());
-    e.write_all(&serialized).expect("Unreachable");
-
-    e.finish().expect("Unreachable")
-}
 
 /*
  * PkiEnrollmentAnswerPayload
@@ -71,10 +52,10 @@ impl_transparent_data_format_conversion!(
 
 impl PkiEnrollmentAnswerPayload {
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        load(raw)
+        format_vx_load(raw)
     }
     pub fn dump(&self) -> Vec<u8> {
-        dump(&self)
+        format_v0_dump(&self)
     }
 }
 
@@ -105,10 +86,10 @@ impl_transparent_data_format_conversion!(
 
 impl PkiEnrollmentSubmitPayload {
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        load(raw)
+        format_vx_load(raw)
     }
     pub fn dump(&self) -> Vec<u8> {
-        dump(&self)
+        format_v0_dump(&self)
     }
 }
 
@@ -178,11 +159,11 @@ impl LocalPendingEnrollment {
     }
 
     pub fn load(raw: &[u8]) -> DataResult<Self> {
-        rmp_serde::from_slice(raw).map_err(|_| DataError::Serialization)
+        format_vx_load(raw)
     }
 
     pub fn dump(&self) -> Vec<u8> {
-        rmp_serde::to_vec_named(&self).expect("Unreachable")
+        format_v0_dump(&self)
     }
 
     pub fn save(&self, config_dir: &Path) -> PkiEnrollmentLocalPendingResult<PathBuf> {
