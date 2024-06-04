@@ -4,7 +4,7 @@
   <ion-content id="file-context-menu">
     <ion-list class="menu-list">
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleManage') }}
           </ion-label>
@@ -105,7 +105,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleCollaboration') }}
           </ion-label>

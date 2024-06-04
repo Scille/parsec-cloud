@@ -17,7 +17,7 @@
         class="list-group"
         v-show="false"
       >
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleOffline') }}
           </ion-label>
@@ -38,7 +38,7 @@
         class="list-group"
         v-show="isDesktop() || clientRole === WorkspaceRole.Owner"
       >
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleManage') }}
           </ion-label>
@@ -93,7 +93,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleCollaboration') }}
           </ion-label>
@@ -122,7 +122,7 @@
         </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
-        <ion-item class="list-group-title caption-caption">
+        <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('WorkspacesPage.workspaceContextMenu.titleMisc') }}
           </ion-label>

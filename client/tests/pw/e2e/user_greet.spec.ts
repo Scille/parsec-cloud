@@ -22,14 +22,14 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
 
   await expect(title).toHaveText('Share your code');
   await expect(subtitle).toHaveText('Give the code below to the guest.');
-  await expect(modalContent.locator('.caption-code:visible')).toHaveText('2EDF');
+  await expect(modalContent.locator('.code:visible')).toHaveText('2EDF');
   await expect(nextButton).toBeHidden();
   await userGreetModal.page().waitForTimeout(200);
 
   await expect(userGreetModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 1);
   await expect(title).toHaveText('Get guest code');
   await expect(subtitle).toHaveText('Click on the code given to you by the guest.');
-  const choices = modalContent.locator('.caption-code:visible');
+  const choices = modalContent.locator('.code:visible');
   await expect(choices).toHaveText(['1ABC', '2DEF', '3GHI', '4JKL']);
   await expect(nextButton).toBeHidden();
   await choices.nth(1).click();
@@ -79,7 +79,7 @@ msTest('User join select invalid SAS code', async ({ userGreetModal }) => {
   await nextButton.click();
 
   await expect(title).toHaveText('Get guest code');
-  const choices = userGreetModal.locator('.modal-content').locator('.caption-code:visible');
+  const choices = userGreetModal.locator('.modal-content').locator('.code:visible');
   await choices.nth(0).click();
 
   await expect(userGreetModal.page()).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
@@ -119,7 +119,7 @@ msTest('Close user greet process', async ({ userGreetModal }) => {
     expectedNegativeText: 'Resume',
   });
 
-  await modalContent.locator('.caption-code:visible').nth(1).click();
+  await modalContent.locator('.code:visible').nth(1).click();
 
   await closeButton.click();
   await answerQuestion(userGreetModal.page(), false, {

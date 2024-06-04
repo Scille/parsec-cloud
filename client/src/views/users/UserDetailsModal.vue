@@ -27,7 +27,7 @@
               class="revoked__icon"
               :icon="ellipse"
             />
-            <ion-label class="caption-caption">
+            <ion-label class="subtitles-sm">
               {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revoked') }}
             </ion-label>
           </ion-chip>

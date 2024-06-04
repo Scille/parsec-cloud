@@ -65,13 +65,13 @@ describe('Greet a new device', () => {
     cy.get('.greet-organization-modal').find('.ms-wizard-stepper').as('stepper');
     checkStepper(0);
     cy.get('@title').contains('Share your code');
-    cy.get('.greet-organization-modal').find('.caption-code').contains('2DEF');
+    cy.get('.greet-organization-modal').find('.code').contains('2DEF');
     cy.get('@nextButton').should('not.be.visible');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
-    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
+    cy.get('.greet-organization-modal').find('ion-grid').find('.code').should('have.length', 4);
     checkStepper(1);
-    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(1).click();
+    cy.get('.greet-organization-modal').find('ion-grid').find('.code').eq(1).click();
     cy.get('@title').contains('Waiting for device information');
     cy.get('@footer').find('.spinner').should('be.visible');
     cy.get('@nextButton').should('not.be.visible');
@@ -93,8 +93,8 @@ describe('Greet a new device', () => {
     cy.get('@title').contains('Share your code');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Get guest code');
-    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').should('have.length', 4);
-    cy.get('.greet-organization-modal').find('ion-grid').find('.caption-code').eq(0).click();
+    cy.get('.greet-organization-modal').find('ion-grid').find('.code').should('have.length', 4);
+    cy.get('.greet-organization-modal').find('ion-grid').find('.code').eq(0).click();
     cy.checkToastMessage('error', 'You did not select the correct code. Please restart the onboarding process.');
     cy.wait(WAIT_TIME);
     cy.get('@title').contains('Create a new device');

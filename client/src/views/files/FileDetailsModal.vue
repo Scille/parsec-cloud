@@ -32,7 +32,7 @@
         <div class="file-info-details">
           <!-- Created -->
           <div class="file-info-details-item">
-            <ion-label class="file-info-details-item__title caption-caption">
+            <ion-label class="file-info-details-item__title subtitles-sm">
               {{ $msTranslate('FileDetails.stats.created') }}
             </ion-label>
             <ion-text class="file-info-details-item__value body">
@@ -44,14 +44,14 @@
             class="file-info-details-item"
             v-if="entry.isFile()"
           >
-            <ion-label class="file-info-details-item__title caption-caption">
+            <ion-label class="file-info-details-item__title subtitles-sm">
               {{ $msTranslate('FileDetails.stats.size') }}
             </ion-label>
             <span class="file-info-details-item__value body">{{ $msTranslate(formatFileSize((entry as EntryStatFile).size)) }}</span>
           </div>
           <!-- Version -->
           <div class="file-info-details-item">
-            <ion-label class="file-info-details-item__title caption-caption">
+            <ion-label class="file-info-details-item__title subtitles-sm">
               {{ $msTranslate('FileDetails.stats.version') }}
             </ion-label>
             <ion-text class="file-info-details-item__value body">
@@ -62,7 +62,7 @@
 
         <!-- Path -->
         <div class="file-info-path">
-          <ion-label class="file-info-path__title caption-caption">
+          <ion-label class="file-info-path__title subtitles-sm">
             {{ $msTranslate('FileDetails.stats.path') }}
             {{ entry.isFile() ? $msTranslate('FileDetails.stats.file') : $msTranslate('FileDetails.stats.folder') }}
           </ion-label>

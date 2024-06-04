@@ -14,6 +14,6 @@ describe('Sas code provide', () => {
   });
 
   it('should display the sas code', async () => {
-    expect(wrapper.get('.caption-code').text()).to.equal('ABCD');
+    expect(wrapper.get('.code').text()).to.equal('ABCD');
   });
 });
