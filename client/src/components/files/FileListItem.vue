@@ -10,7 +10,7 @@
       button
       lines="full"
       :detail="false"
-      :class="{ selected: entry.isSelected }"
+      :class="{ selected: entry.isSelected, 'file-hovered': isHovered || menuOpened }"
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
@@ -148,6 +148,10 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.file-hovered {
+  background-color: red;
+}
+
 .file-name {
   .file-icon {
     width: 2rem;

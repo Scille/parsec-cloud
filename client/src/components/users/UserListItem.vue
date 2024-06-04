@@ -10,6 +10,7 @@
       selected: user.isSelected && !user.isRevoked(),
       revoked: user.isRevoked(),
       'no-padding-end': !user.isSelected,
+      'user-hovered': isHovered || menuOpened,
     }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
@@ -129,6 +130,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.user-hovered {
+  background-color: red;
+}
 .user-selected {
   min-width: 4rem;
   justify-content: end;

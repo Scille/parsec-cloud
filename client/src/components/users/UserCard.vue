@@ -4,7 +4,12 @@
   <ion-item
     class="user-card-item ion-no-padding"
     :detail="false"
-    :class="{ selected: user.isSelected, 'no-padding-end': !user.isSelected, revoked: user.isRevoked() }"
+    :class="{
+      selected: user.isSelected,
+      'no-padding-end': !user.isSelected,
+      revoked: user.isRevoked(),
+      'user-hovered': isHovered || menuOpened,
+    }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -98,6 +103,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style scoped lang="scss">
+.user-hovered {
+  background-color: red;
+}
 .user-card-item {
   --background: none;
   --background-hover: none;
