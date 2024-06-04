@@ -46,7 +46,7 @@ if (!lock) {
 
   // Run Application
   (async (): Promise<any> => {
-    let sigintProcessed = false;
+    let sigProcessed = false;
     // Wait for electron app to be ready.
     await app.whenReady();
     // Security - Set Content-Security-Policy based on whether or not we are in dev mode.
@@ -56,11 +56,18 @@ if (!lock) {
     // Check for updates if we are in a packaged app.
     // autoUpdater.checkForUpdatesAndNotify();
     process.on('SIGINT', () => {
-      if (!sigintProcessed) {
+      if (!sigProcessed) {
         console.log('Killed by SIGINT, cleaning up Parsec...');
         myCapacitorApp.sendEvent(WindowToPageChannel.CloseRequest, true);
       }
-      sigintProcessed = true;
+      sigProcessed = true;
+    });
+    process.on('SIGTERM', () => {
+      if (!sigProcessed) {
+        console.log('Killed by SIGTERM, cleaning up Parsec...');
+        myCapacitorApp.sendEvent(WindowToPageChannel.CloseRequest, true);
+      }
+      sigProcessed = true;
     });
   })();
 
