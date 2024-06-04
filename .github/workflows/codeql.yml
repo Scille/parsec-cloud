@@ -29,7 +29,7 @@ permissions:
 jobs:
   python-analyze:
     name: 🐍 Python static code Analysis
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       poetry-version: 1.5.1
     steps:
@@ -95,7 +95,7 @@ jobs:
   # see issue: #4395
   # java-analyze:
   #   name: ☕ Java static code Analysis
-  #   runs-on: ubuntu-20.04
+  #   runs-on: ubuntu-22.04
   #   env:
   #     NDK_VERSION: 23.2.8568313
   #     SDK_VERSION: 30.0.3
@@ -168,7 +168,7 @@ jobs:
 
   javascript-analyze:
     name: 🌐 Javascript static code Analysis
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
