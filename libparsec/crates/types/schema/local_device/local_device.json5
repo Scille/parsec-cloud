@@ -1,5 +1,6 @@
 {
     "label": "LocalDevice",
+    "type": "local_device",
     "other_fields": [
         {
             // cspell:disable-next-line
