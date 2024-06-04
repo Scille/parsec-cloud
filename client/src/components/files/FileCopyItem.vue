@@ -11,10 +11,7 @@
       failed: state === FileOperationState.CopyFailed,
     }"
   >
-    <ion-item
-      class="element ion-no-padding"
-      @click="$emit('click', operationData, state)"
-    >
+    <ion-item class="element ion-no-padding">
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image

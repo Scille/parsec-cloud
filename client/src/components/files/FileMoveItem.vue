@@ -11,10 +11,7 @@
       failed: state === FileOperationState.MoveFailed,
     }"
   >
-    <ion-item
-      class="element ion-no-padding"
-      @click="$emit('click', operationData, state)"
-    >
+    <ion-item class="element ion-no-padding">
       <div class="element-type">
         <div class="element-type__icon">
           <ms-image
@@ -118,7 +115,7 @@ import { shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip, Move } from 'megashark-lib';
 import { StartedWorkspaceInfo, getWorkspaceInfo, Path, EntryName } from '@/parsec';
 import { MoveData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
-import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText, IonButton } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
