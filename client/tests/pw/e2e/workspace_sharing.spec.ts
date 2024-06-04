@@ -12,7 +12,7 @@ msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }
   const users = content.locator('.user-list').locator('.content');
   await expect(users).toHaveCount(3);
   // cspell:disable-next-line
-  await expect(users.locator('.person-name')).toHaveText(['Me', 'Korgan Bloodaxe', 'Jaheira']);
+  await expect(users.locator('.person-name')).toHaveText(['Gordon Freeman', 'Korgan Bloodaxe', 'Jaheira']);
   await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader', 'Not shared']);
   await expect(users.nth(0).locator('.filter-button')).toHaveDisabledAttribute();
 });
@@ -58,11 +58,35 @@ msTest('Filter users', async ({ workspaceSharingModal }) => {
   const content = workspaceSharingModal.locator('.ms-modal-content');
   const searchInput = content.locator('.ms-search-input');
   // cspell:disable-next-line
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Me', 'Korgan Bloodaxe', 'Jaheira']);
+  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
+    'Gordon Freeman',
+    'Korgan Bloodaxe',
+    'Jaheira',
+  ]);
   await fillIonInput(searchInput, 'or');
   // cspell:disable-next-line
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Me', 'Korgan Bloodaxe']);
+  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Gordon Freeman', 'Korgan Bloodaxe']);
   await searchInput.locator('.input-clear-icon').click();
   // cspell:disable-next-line
-  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText(['Me', 'Korgan Bloodaxe', 'Jaheira']);
+  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
+    'Gordon Freeman',
+    'Korgan Bloodaxe',
+    'Jaheira',
+  ]);
+});
+
+msTest('Filter users no match', async ({ workspaceSharingModal }) => {
+  const content = workspaceSharingModal.locator('.ms-modal-content');
+  const searchInput = content.locator('.ms-search-input');
+  // cspell:disable-next-line
+  await expect(content.locator('.user-list').locator('.content').locator('.person-name')).toHaveText([
+    'Gordon Freeman',
+    'Korgan Bloodaxe',
+    'Jaheira',
+  ]);
+  await fillIonInput(searchInput, 'nomatch');
+  // cspell:disable-next-line
+  await expect(content.locator('.user-list').locator('.content')).toBeHidden();
+  await expect(content.locator('.no-match-result')).toBeVisible();
+  await expect(content.locator('.no-match-result')).toHaveText("No user found that matches 'nomatch'.");
 });

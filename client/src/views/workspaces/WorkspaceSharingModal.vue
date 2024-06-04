@@ -83,7 +83,6 @@ import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref, computed } from 'vue';
-import { c } from 'vitest/dist/reporters-5f784f42';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;

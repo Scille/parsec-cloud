@@ -52,6 +52,16 @@ msTest('Filter devices', async ({ home }) => {
   );
 });
 
+msTest('Filter devices no match', async ({ home }) => {
+  const cards = home.locator('.organization-list').locator('.organization-card');
+  const searchInput = home.locator('#ms-search-input').locator('ion-input');
+  await expect(cards.locator('.organization-info').locator('.subtitles-sm')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
+  await fillIonInput(searchInput, 'nomatch');
+  await expect(cards).toBeHidden();
+  await expect(home.locator('.no-match-result')).toBeVisible();
+  await expect(home.locator('.no-match-result')).toHaveText("No organization found that matches 'nomatch'.");
+});
+
 msTest('Check join link', async ({ home }) => {
   const LINKS = [
     {
