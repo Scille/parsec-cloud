@@ -2,11 +2,18 @@
 
 <template>
   <div class="content">
-    <user-avatar-name
-      class="user"
-      :user-avatar="user.humanHandle.label"
-      :user-name="user.humanHandle.label"
-    />
+    <div class="content-user">
+      <user-avatar-name
+        :user-avatar="user.humanHandle.label"
+        :user-name="user.humanHandle.label"
+      />
+      <span
+        v-if="isCurrentUser"
+        class="body content-user__you"
+      >
+        {{ $msTranslate('UsersPage.currentUser') }}
+      </span>
+    </div>
 
     <ms-dropdown
       ref="dropdownRef"
@@ -34,6 +41,7 @@ const props = defineProps<{
   disabled?: boolean;
   clientProfile: UserProfile;
   clientRole: WorkspaceRole | null;
+  isCurrentUser?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -84,6 +92,16 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
     border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
     bottom: 0;
     right: 0;
+  }
+}
+
+.content-user {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &__you {
+    color: var(--parsec-color-light-primary-600);
   }
 }
 </style>
