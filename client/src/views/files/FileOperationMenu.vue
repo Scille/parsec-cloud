@@ -143,11 +143,13 @@ import { chevronDown, close } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { Component } from 'vue';
 import { entryStat, Path } from '@/parsec';
+import { DateTime } from 'luxon';
 
 interface OperationItem {
   data: FileOperationData;
   state: FileOperationState;
   stateData?: StateData;
+  finishedDate?: DateTime;
 }
 
 const menu = useUploadMenu();
@@ -178,17 +180,30 @@ const inProgressItems = computed(() => {
 });
 
 const doneItems = computed(() => {
-  return fileOperations.value.filter((op) =>
-    [FileOperationState.FileImported, FileOperationState.Cancelled, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(
-      op.state,
-    ),
-  );
+  return fileOperations.value
+    .filter((op) =>
+      [
+        FileOperationState.FileImported,
+        FileOperationState.Cancelled,
+        FileOperationState.EntryMoved,
+        FileOperationState.EntryCopied,
+      ].includes(op.state),
+    )
+    .sort((op1, op2) => {
+      const op1Date: DateTime = op1.finishedDate || DateTime.fromSeconds(0);
+      const op2Date: DateTime = op2.finishedDate || DateTime.fromSeconds(0);
+      return op2Date.diff(op1Date).milliseconds || 0;
+    });
 });
 
 const errorItems = computed(() => {
-  return fileOperations.value.filter((op) =>
-    [FileOperationState.CreateFailed, FileOperationState.MoveFailed, FileOperationState.CopyFailed].includes(op.state),
-  );
+  return fileOperations.value
+    .filter((op) => [FileOperationState.CreateFailed, FileOperationState.MoveFailed, FileOperationState.CopyFailed].includes(op.state))
+    .sort((op1, op2) => {
+      const op1Date: DateTime = op1.finishedDate || DateTime.fromSeconds(0);
+      const op2Date: DateTime = op2.finishedDate || DateTime.fromSeconds(0);
+      return op2Date.diff(op1Date).milliseconds || 0;
+    });
 });
 
 function toggleMenu(): void {
@@ -221,6 +236,20 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
 function updateImportState(id: string, state: FileOperationState, stateData?: StateData): void {
   const operation = fileOperations.value.find((op) => op.data.id === id);
   if (operation) {
+    if (
+      [
+        FileOperationState.FileImported,
+        FileOperationState.EntryMoved,
+        FileOperationState.EntryCopied,
+        FileOperationState.CreateFailed,
+        FileOperationState.MoveFailed,
+        FileOperationState.CopyFailed,
+        FileOperationState.Cancelled,
+      ].includes(state)
+    ) {
+      operation.finishedDate = DateTime.now();
+    }
+
     operation.state = state;
     operation.stateData = stateData;
   }
