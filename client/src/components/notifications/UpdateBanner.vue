@@ -10,8 +10,13 @@
       :image="LogoIconGradient"
       class="logo-img"
     />
-    <ion-label>{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-label>
-    <ion-button @click="update()">{{ $msTranslate('notificationCenter.update') }}</ion-button>
+    <ion-label class="subtitles-normal">{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-label>
+    <ion-button
+      fill="outline"
+      @click="update()"
+    >
+      {{ $msTranslate('notificationCenter.update') }}
+    </ion-button>
   </div>
 </template>
 
@@ -55,14 +60,9 @@ async function update(): Promise<void> {
 
 <style scoped lang="scss">
 .banner {
-  .logo-img {
-    width: 2.5em;
-  }
-
   display: flex;
   width: 32em;
-  padding: 1em 1.5em;
-  font-weight: bold;
+  padding: 0.75em 1.5em;
   color: var(--parsec-color-light-secondary-white);
   gap: 1em;
   align-items: center;
@@ -71,11 +71,18 @@ async function update(): Promise<void> {
   background: var(--parsec-color-light-primary-30-opacity15);
   box-shadow: var(--parsec-shadow-light);
 
+  .logo-img {
+    width: 2.5em;
+  }
+
   // TODO: improve :hover colors when mockups will be available
   ion-button {
     margin-left: auto;
-    --background: var(--parsec-color-light-secondary-white);
-    --color: var(--parsec-color-light-primary-600);
+    --color: var(--parsec-color-light-secondary-white);
+    --color-hover: var(--parsec-color-light-secondary-white);
+    --border-color: var(--parsec-color-light-secondary-white);
+    --background-hover: var(--parsec-color-light-secondary-background);
+    --background-hover-opacity: 0.2;
   }
 }
 </style>
