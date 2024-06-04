@@ -733,4 +733,5 @@ xored
 Xsalsa
 xvfb
 yieldfrom
+zstd
 zxcvbn
