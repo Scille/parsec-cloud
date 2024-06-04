@@ -145,6 +145,7 @@ impl TryFrom<LocalDeviceData> for LocalDevice {
 impl From<LocalDevice> for LocalDeviceData {
     fn from(obj: LocalDevice) -> Self {
         Self {
+            ty: Default::default(),
             organization_addr: obj.organization_addr,
             user_id: obj.user_id,
             device_id: obj.device_id,
