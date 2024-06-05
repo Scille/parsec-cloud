@@ -18,7 +18,11 @@
           class="list-group-item ion-no-padding"
           id="filter-check-active"
         >
-          <user-status-tag :revoked="false" />
+          <user-status-tag
+            :revoked="false"
+            class="status-tag"
+            @click="users.filters.statusActive = !users.filters.statusActive"
+          />
           <ms-checkbox
             v-model="users.filters.statusActive"
             @change="users.unselectHiddenUsers()"
@@ -28,7 +32,11 @@
           class="list-group-item ion-no-padding"
           id="filter-check-revoked"
         >
-          <user-status-tag :revoked="true" />
+          <user-status-tag
+            :revoked="true"
+            class="status-tag"
+            @click="users.filters.statusRevoked = !users.filters.statusRevoked"
+          />
           <ms-checkbox
             v-model="users.filters.statusRevoked"
             @change="users.unselectHiddenUsers()"
@@ -46,7 +54,12 @@
           class="list-group-item ion-no-padding"
           id="filter-check-admin"
         >
-          <ion-label class="body">{{ $msTranslate('UsersPage.filter.admin') }}</ion-label>
+          <ion-label
+            class="body"
+            @click="users.filters.profileAdmin = !users.filters.profileAdmin"
+          >
+            {{ $msTranslate('UsersPage.filter.admin') }}
+          </ion-label>
           <ms-checkbox
             v-model="users.filters.profileAdmin"
             @change="users.unselectHiddenUsers()"
@@ -56,7 +69,12 @@
           class="list-group-item ion-no-padding"
           id="filter-check-standard"
         >
-          <ion-label class="body">{{ $msTranslate('UsersPage.filter.standard') }}</ion-label>
+          <ion-label
+            class="body"
+            @click="users.filters.profileStandard = !users.filters.profileStandard"
+          >
+            {{ $msTranslate('UsersPage.filter.standard') }}
+          </ion-label>
           <ms-checkbox
             v-model="users.filters.profileStandard"
             @ion-change="users.unselectHiddenUsers()"
@@ -66,7 +84,12 @@
           class="list-group-item ion-no-padding"
           id="filter-check-outsider"
         >
-          <ion-label class="body">{{ $msTranslate('UsersPage.filter.outsider') }}</ion-label>
+          <ion-label
+            class="body"
+            @click="users.filters.profileOutsider = !users.filters.profileOutsider"
+          >
+            {{ $msTranslate('UsersPage.filter.outsider') }}
+          </ion-label>
           <ms-checkbox
             v-model="users.filters.profileOutsider"
             @ion-change="users.unselectHiddenUsers()"
@@ -89,4 +112,8 @@ defineProps<{
 }>();
 </script>
 
-<style lang="scss" scoped></style>
+<style lang="scss" scoped>
+.status-tag > * {
+  cursor: pointer;
+}
+</style>

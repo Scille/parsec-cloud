@@ -98,7 +98,10 @@
 
   .list-group-item {
     --inner-padding-end: 0;
-    padding: 0.375rem 0.5rem;
+    --padding-start: 0.5rem;
+    --padding-end: 0.5rem;
+    --padding-top: 0.375rem;
+    --padding-bottom: 0.375rem;
     color: var(--parsec-color-light-secondary-grey);
     border-radius: var(--parsec-radius-6);
     cursor: pointer;
@@ -123,6 +126,10 @@
       margin-right: 0.75em;
       color: var(--parsec-color-light-secondary-grey);
     }
+  }
+
+  ion-label {
+    margin: 0;
   }
 }
 
