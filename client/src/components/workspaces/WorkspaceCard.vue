@@ -99,13 +99,13 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'click', workspace: WorkspaceInfo, event?: Event): void;
   (e: 'favoriteClick', workspace: WorkspaceInfo, event?: Event): void;
-  (e: 'menuClick', event: Event, workspace: WorkspaceInfo, onFinished: () => void): void;
+  (e: 'menuClick', workspace: WorkspaceInfo, event: Event, onFinished: () => void): void;
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
 async function onOptionsClick(event: Event): Promise<void> {
   menuOpened.value = true;
-  emits('menuClick', event, props.workspace, () => {
+  emits('menuClick', props.workspace, event, () => {
     menuOpened.value = false;
   });
 }
