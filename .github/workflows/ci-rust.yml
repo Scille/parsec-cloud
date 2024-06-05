@@ -70,6 +70,11 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
       - uses: actions-rust-lang/setup-rust-toolchain@1fbea72663f6d4c03efaab13560c8a24cfd2a7cc # pin v1.9.0
         with:
           # We setup the cache by hand, see below
@@ -84,6 +89,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
+          key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
       # Install fuse
@@ -196,6 +202,11 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
       - uses: actions-rust-lang/setup-rust-toolchain@1fbea72663f6d4c03efaab13560c8a24cfd2a7cc # pin v1.9.0
         with:
           # We setup the cache by hand, see below
@@ -210,6 +221,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
+          key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
       # Building OpenSSL requires a perl interpreter.
@@ -247,7 +259,7 @@ jobs:
           set -x
           NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
           cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
-        timeout-minutes: 10 # It can be very slow if cache has missed
+        timeout-minutes: 15 # It can be very slow if cache has missed
         env:
           RUST_LOG: debug
 
