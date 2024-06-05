@@ -482,6 +482,7 @@ const filteredDevices = computed(() => {
   gap: 0;
   padding: 0;
   overflow: hidden;
+  margin: auto;
 
   .create-orga {
     display: flex;
