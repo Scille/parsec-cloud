@@ -3,7 +3,7 @@
 // TODO: implement web
 #![cfg(not(target_arch = "wasm32"))]
 
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use libparsec_platform_device_loader::{load_device, save_device};
 use libparsec_tests_fixtures::{tmp_path, TmpPath};
@@ -11,15 +11,7 @@ use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
 #[parsec_test]
-#[case::keyring(|key_file| DeviceAccessStrategy::Keyring { key_file })]
-#[case::password(|key_file| DeviceAccessStrategy::Password {
-    key_file,
-    password: "P@ssw0rd.".to_string().into()
-})]
-async fn save_load(
-    tmp_path: TmpPath,
-    #[case] key_file_to_access: impl FnOnce(PathBuf) -> DeviceAccessStrategy,
-) {
+async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPath) {
     let key_file = tmp_path.join("keyring_file");
 
     let device = LocalDevice::generate_new_device(
@@ -36,12 +28,56 @@ async fn save_load(
         None,
     );
 
-    let access = key_file_to_access(key_file.clone());
+    let (access, expected_available_device) = match kind {
+        "keyring" => {
+            let access = DeviceAccessStrategy::Keyring {
+                key_file: key_file.clone(),
+            };
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_url: "http://127.0.0.1:6770/".to_string(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                ty: DeviceFileType::Keyring,
+            };
+            (access, expected_available_device)
+        }
+        "password" => {
+            let access = DeviceAccessStrategy::Password {
+                key_file: key_file.clone(),
+                password: "P@ssw0rd.".to_string().into(),
+            };
+            let expected_available_device = AvailableDevice {
+                key_file_path: key_file.clone(),
+                created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+                server_url: "http://127.0.0.1:6770/".to_string(),
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
+                ty: DeviceFileType::Password,
+            };
+            (access, expected_available_device)
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
 
     assert!(!key_file.exists());
 
-    save_device(&tmp_path, &access, &device).await.unwrap();
+    device
+        .time_provider
+        .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
+    let available_device = save_device(&tmp_path, &access, &device).await.unwrap();
+    device.time_provider.unmock_time();
 
+    p_assert_eq!(available_device, expected_available_device);
     assert!(key_file.exists());
 
     let res = load_device(Path::new(""), &access).await.unwrap();

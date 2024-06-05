@@ -32,21 +32,39 @@ async fn same_key_file(tmp_path: TmpPath) {
     // Sanity check
     assert!(!key_file.exists());
 
-    save_device(Path::new(""), &access, &device).await.unwrap();
+    TimeProvider::root_provider().mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
+    let available1 = save_device(Path::new(""), &access, &device).await.unwrap();
+    TimeProvider::root_provider().unmock_time();
 
     // Sanity check
     assert!(key_file.exists());
+    p_assert_eq!(
+        available1.created_on,
+        "2000-01-01T00:00:00Z".parse().unwrap()
+    );
+    p_assert_eq!(
+        available1.protected_on,
+        "2000-01-01T00:00:00Z".parse().unwrap()
+    );
 
     let new_access = DeviceAccessStrategy::Password {
         key_file: key_file.clone(),
         password: "P@ssw0rd1.".to_owned().into(),
     };
-    change_authentication(Path::new(""), &access, &new_access)
+    TimeProvider::root_provider().mock_time_frozen("2000-01-02T00:00:00Z".parse().unwrap());
+    let available2 = change_authentication(Path::new(""), &access, &new_access)
         .await
         .unwrap();
+    TimeProvider::root_provider().unmock_time();
 
     // Sanity check
     assert!(key_file.exists());
+    let expected_available2 = {
+        let mut expected = available1.clone();
+        expected.protected_on = "2000-01-02T00:00:00Z".parse().unwrap();
+        expected
+    };
+    p_assert_eq!(available2, expected_available2);
 
     p_assert_eq!(
         *load_device(Path::new(""), &new_access).await.unwrap(),
