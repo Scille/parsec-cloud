@@ -331,7 +331,7 @@ const canGoForward = asyncComputed(async () => {
   return true;
 });
 
-async function cancelModal(): Promise<boolean> {
+async function cancelModal(): Promise<void> {
   const answer = await askQuestion('JoinOrganization.cancelConfirm', 'JoinOrganization.cancelConfirmSubtitle', {
     keepMainModalHiddenOnYes: true,
     yesText: 'JoinOrganization.cancelYes',
@@ -342,9 +342,8 @@ async function cancelModal(): Promise<boolean> {
   if (answer === Answer.Yes) {
     cancelled.value = true;
     await claimer.value.abort();
-    return modalController.dismiss(null, MsModalResult.Cancel);
+    modalController.dismiss(null, MsModalResult.Cancel);
   }
-  return false;
 }
 
 async function nextStep(): Promise<void> {
@@ -404,7 +403,11 @@ async function nextStep(): Promise<void> {
       pageStep.value += 1;
       userInfoPage.value.setFocus();
     } else {
-      await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
+      if (result.error.tag === ClaimInProgressErrorTag.PeerReset) {
+        await showErrorAndRestart('JoinOrganization.errors.peerResetCode');
+      } else {
+        await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
+      }
     }
   }
 }
@@ -454,8 +457,12 @@ async function startProcess(): Promise<void> {
       case ClaimInProgressErrorTag.ActiveUsersLimitReached:
         message = 'JoinOrganization.errors.usersLimitReached';
         break;
+      case ClaimInProgressErrorTag.PeerReset:
+        message = 'JoinOrganization.errors.peerReset';
+        break;
       default:
         message = { key: 'JoinOrganization.errors.unexpected', data: { reason: waitResult.error.tag } };
+        break;
     }
 
     await props.informationManager.present(

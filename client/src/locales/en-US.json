@@ -808,7 +808,9 @@
             "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
             "unexpected": "An unexpected error occured (reason: {reason}).",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
-            "usersLimitReached": "The user limit for this organization has been reached."
+            "usersLimitReached": "The user limit for this organization has been reached.",
+            "peerReset": "The host has cancelled the process.",
+            "peerResetCode": "The host has cancelled the process or has selected the wrong code."
         },
         "cancelConfirm": "Cancel the onboarding",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
@@ -893,7 +895,9 @@
                 "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
                 "unexpected": "An unexpected error occured (reason: {reason}).",
                 "startFailed": "Failed to start the onboarding process. Please make sure you are online.",
-                "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the onboarding process."
+                "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the onboarding process.",
+                "peerReset": "The invitee cancelled the process.",
+                "peerResetCode": "The invitee cancelled the process or has selected the wrong code."
             },
             "success": "{user} can now access to the organization.",
             "cancelConfirm": "Cancel the onboarding",
