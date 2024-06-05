@@ -195,6 +195,38 @@ fn struct_available_device_js_to_rs<'a>(
             }
         }
     };
+    let created_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let protected_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "protectedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let server_url = {
+        let js_val: Handle<JsString> = obj.get(cx, "serverUrl")?;
+        js_val.value(cx)
+    };
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         {
@@ -250,6 +282,9 @@ fn struct_available_device_js_to_rs<'a>(
     };
     Ok(libparsec::AvailableDevice {
         key_file_path,
+        created_on,
+        protected_on,
+        server_url,
         organization_id,
         user_id,
         device_id,
@@ -278,6 +313,28 @@ fn struct_available_device_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "keyFilePath", js_key_file_path)?;
+    let js_created_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "createdOn", js_created_on)?;
+    let js_protected_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.protected_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "protectedOn", js_protected_on)?;
+    let js_server_url = JsString::try_new(cx, rs_obj.server_url).or_throw(cx)?;
+    js_obj.set(cx, "serverUrl", js_server_url)?;
     let js_organization_id = JsString::try_new(cx, rs_obj.organization_id).or_throw(cx)?;
     js_obj.set(cx, "organizationId", js_organization_id)?;
     let js_user_id = JsString::try_new(cx, {

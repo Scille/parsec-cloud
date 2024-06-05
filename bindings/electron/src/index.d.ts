@@ -53,6 +53,9 @@ export enum UserProfile {
 
 export interface AvailableDevice {
     keyFilePath: string
+    createdOn: number
+    protectedOn: number
+    serverUrl: string
     organizationId: string
     userId: string
     deviceId: string

@@ -80,6 +80,9 @@ export type { DateTime } from 'luxon'; import type { DateTime } from 'luxon';
 
 export interface AvailableDevice {
     keyFilePath: Path
+    createdOn: DateTime
+    protectedOn: DateTime
+    serverUrl: string
     organizationId: OrganizationID
     userId: UserID
     deviceId: DeviceID

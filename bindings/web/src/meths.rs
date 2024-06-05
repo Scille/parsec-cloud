@@ -204,6 +204,38 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
+    let created_on = {
+        let js_val = Reflect::get(&obj, &"createdOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let protected_on = {
+        let js_val = Reflect::get(&obj, &"protectedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let server_url = {
+        let js_val = Reflect::get(&obj, &"serverUrl".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))?
+    };
     let organization_id = {
         let js_val = Reflect::get(&obj, &"organizationId".into())?;
         js_val
@@ -271,6 +303,9 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
     };
     Ok(libparsec::AvailableDevice {
         key_file_path,
+        created_on,
+        protected_on,
+        server_url,
         organization_id,
         user_id,
         device_id,
@@ -298,6 +333,30 @@ fn struct_available_device_rs_to_js(
         .as_ref()
     });
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
+    let js_created_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+    let js_protected_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.protected_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"protectedOn".into(), &js_protected_on)?;
+    let js_server_url = rs_obj.server_url.into();
+    Reflect::set(&js_obj, &"serverUrl".into(), &js_server_url)?;
     let js_organization_id = JsValue::from_str(rs_obj.organization_id.as_ref());
     Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
     let js_user_id = JsValue::from_str({
