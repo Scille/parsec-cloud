@@ -597,20 +597,7 @@ impl UserClaimFinalizeCtx {
             &self.new_local_device,
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
-
-        let key_file_path = access.key_file().to_owned();
-        let ty = access.ty();
-
-        Ok(AvailableDevice {
-            key_file_path,
-            organization_id: self.new_local_device.organization_id().to_owned(),
-            user_id: self.new_local_device.user_id,
-            device_id: self.new_local_device.device_id,
-            device_label: self.new_local_device.device_label.clone(),
-            human_handle: self.new_local_device.human_handle.clone(),
-            ty,
-        })
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
     }
 }
 
@@ -638,19 +625,6 @@ impl DeviceClaimFinalizeCtx {
             &self.new_local_device,
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
-
-        let key_file_path = access.key_file().to_owned();
-        let ty = access.ty();
-
-        Ok(AvailableDevice {
-            key_file_path,
-            organization_id: self.new_local_device.organization_id().to_owned(),
-            user_id: self.new_local_device.user_id,
-            device_id: self.new_local_device.device_id,
-            device_label: self.new_local_device.device_label.clone(),
-            human_handle: self.new_local_device.human_handle.clone(),
-            ty,
-        })
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
     }
 }

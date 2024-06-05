@@ -80,12 +80,31 @@ async fn ok(tmp_path: TmpPath, #[case] kind: OkKind, env: &TestbedEnv) {
     };
 
     let access = DeviceAccessStrategy::Password {
-        key_file,
+        key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
     let alice_device = env.local_device("alice@dev1");
-    let outcome = save_device(&tmp_path, &access, &alice_device).await;
-    p_assert_matches!(outcome, Ok(()));
+    alice_device
+        .time_provider
+        .mock_time_frozen("2000-01-01T00:00:00Z".parse().unwrap());
+    let outcome = save_device(&tmp_path, &access, &alice_device)
+        .await
+        .unwrap();
+    p_assert_eq!(
+        outcome,
+        AvailableDevice {
+            key_file_path: key_file,
+            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            server_url: format!("https://{}/", alice_device.organization_addr.hostname()),
+            organization_id: alice_device.organization_id().clone(),
+            user_id: alice_device.user_id,
+            device_id: alice_device.device_id,
+            human_handle: alice_device.human_handle.clone(),
+            device_label: alice_device.device_label.clone(),
+            ty: DeviceFileType::Password,
+        }
+    );
 
     // Roundtrip check
     let loaded = load_device(&tmp_path, &access).await.unwrap();

@@ -71,11 +71,14 @@ fn password_protected_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.clone(),
-        device_label: alice.device_label.clone(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: alice.organization_id().to_owned(),
         user_id: alice.user_id,
         device_id: alice.device_id,
-        organization_id: alice.organization_id().to_owned(),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
         algorithm: DeviceFilePasswordAlgorithm::Argon2id {
             salt: hex!("2ae6167f0f7472b8565c390df3af4a8b").as_ref().into(),
             opslimit: 1,
@@ -146,11 +149,14 @@ fn keyring_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.clone(),
-        device_label: alice.device_label.clone(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: alice.organization_id().to_owned(),
         user_id: alice.user_id,
         device_id: alice.device_id,
-        organization_id: alice.organization_id().to_owned(),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
         keyring_service: "parsec".into(),
         keyring_user: "keyring_user".into(),
     };
@@ -219,11 +225,14 @@ fn recovery_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.clone(),
-        device_label: alice.device_label.clone(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: alice.organization_id().to_owned(),
         user_id: alice.user_id,
         device_id: alice.device_id,
-        organization_id: alice.organization_id().to_owned(),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
     };
 
     let file_device = rmp_serde::from_slice::<DeviceFileRecovery>(&filedata).unwrap();
@@ -312,11 +321,14 @@ fn smartcard_device_file(alice: &Device) {
         )
         .as_ref()
         .into(),
-        human_handle: alice.human_handle.clone(),
-        device_label: alice.device_label.clone(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
+        organization_id: alice.organization_id().to_owned(),
         user_id: alice.user_id,
         device_id: alice.device_id,
-        organization_id: alice.organization_id().clone(),
+        human_handle: alice.human_handle.clone(),
+        device_label: alice.device_label.clone(),
     });
 
     let device = DeviceFile::load(&raw).unwrap();
@@ -338,6 +350,9 @@ fn available_device() {
 
     let available = AvailableDevice {
         key_file_path: "/foo/bar".into(),
+        created_on: "2010-01-01T00:00:00Z".parse().unwrap(),
+        protected_on: "2010-01-10T00:00:00Z".parse().unwrap(),
+        server_url: "https://parsec.invalid".to_string(),
         organization_id: org.clone(),
         user_id: "9c50250fa3b644e29f77eeefa53dc37d".parse().unwrap(),
         device_id: "9fd3863a3eb240cfaec64904efe5bed3".parse().unwrap(),

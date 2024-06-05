@@ -116,8 +116,9 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
         .events
         .iter()
         .filter_map(|e| {
-            let (user_id, device_id, human_handle, device_label) = match e {
+            let (created_on, user_id, device_id, human_handle, device_label) = match e {
                 TestbedEvent::BootstrapOrganization(x) => (
+                    x.timestamp,
                     x.first_user_id,
                     x.first_user_first_device_id,
                     &x.first_user_human_handle,
@@ -125,6 +126,7 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
                 ),
 
                 TestbedEvent::NewUser(x) => (
+                    x.timestamp,
                     x.user_id,
                     x.first_device_id,
                     &x.human_handle,
@@ -149,14 +151,25 @@ fn populate_available_devices(config_dir: &Path, env: &TestbedEnv) -> Vec<Availa
                             _ => None,
                         })
                         .expect("Must exist");
-                    (user_id, x.device_id, user_human_handle, &x.device_label)
+                    (
+                        x.timestamp,
+                        user_id,
+                        x.device_id,
+                        user_human_handle,
+                        &x.device_label,
+                    )
                 }
 
                 _ => return None,
             };
 
+            let server_url = env.server_addr.to_http_url(None).to_string();
+
             let available_device = AvailableDevice {
                 key_file_path: get_device_key_file(config_dir, device_id),
+                created_on,
+                protected_on: created_on,
+                server_url,
                 organization_id: env.organization_id.clone(),
                 user_id,
                 device_id,
@@ -260,7 +273,7 @@ pub(crate) fn maybe_save_device(
     config_dir: &Path,
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
-) -> Option<Result<(), SaveDeviceError>> {
+) -> Option<Result<AvailableDevice, SaveDeviceError>> {
     test_get_testbed_component_store::<ComponentStore>(config_dir, STORE_ENTRY_KEY, store_factory)
         .map(|store| {
             let key_file = access.key_file();
@@ -278,7 +291,32 @@ pub(crate) fn maybe_save_device(
             cache
                 .available
                 .push((access.to_owned(), Arc::new(device.to_owned())));
-            Ok(())
+
+            // Note that we currently don't support listing a newly saved device (i.e.
+            // `available_devices` never gets updated).
+            let created_on = device.now();
+            let server_url = {
+                ParsecAddr::new(
+                    device.organization_addr.hostname().to_owned(),
+                    Some(device.organization_addr.port()),
+                    device.organization_addr.use_ssl(),
+                )
+                .to_http_url(None)
+                .to_string()
+            };
+
+            Ok(AvailableDevice {
+                key_file_path: access.key_file().to_owned(),
+                server_url,
+                created_on,
+                protected_on: created_on,
+                organization_id: device.organization_id().to_owned(),
+                user_id: device.user_id,
+                device_id: device.device_id,
+                device_label: device.device_label.clone(),
+                human_handle: device.human_handle.clone(),
+                ty: access.ty(),
+            })
         })
 }
 
@@ -286,18 +324,18 @@ pub(crate) fn maybe_change_authentication(
     config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Option<Result<(), ChangeAuthentificationError>> {
+) -> Option<Result<AvailableDevice, ChangeAuthentificationError>> {
     if let Some(result) = maybe_load_device(config_dir, current_access) {
         let device = match result {
             Ok(device) => device,
             Err(e) => return Some(Err(ChangeAuthentificationError::from(e))),
         };
 
-        match maybe_save_device(config_dir, new_access, &device) {
-            Some(Ok(())) => (),
+        let available_device = match maybe_save_device(config_dir, new_access, &device) {
+            Some(Ok(available_device)) => available_device,
             Some(Err(e)) => return Some(Err(ChangeAuthentificationError::from(e))),
             None => return None,
-        }
+        };
 
         let key_file = current_access.key_file();
         let new_key_file = new_access.key_file();
@@ -315,11 +353,12 @@ pub(crate) fn maybe_change_authentication(
                     let c_key_file = c_access.key_file();
                     c_key_file != key_file
                 });
-                Ok(())
+
+                Ok(available_device)
             });
         }
 
-        return Some(Ok(()));
+        return Some(Ok(available_device));
     }
 
     None

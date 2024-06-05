@@ -153,6 +153,9 @@ async fn list_devices(tmp_path: TmpPath) {
     let expected_devices = Vec::from([
         AvailableDevice {
             key_file_path: alice_file_path,
+            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
+            server_url: "https://parsec.invalid".to_string(),
             organization_id: "CoolOrg".parse().unwrap(),
             user_id: "alice".parse().unwrap(),
             device_id: "alice@dev1".parse().unwrap(),
@@ -162,6 +165,9 @@ async fn list_devices(tmp_path: TmpPath) {
         },
         AvailableDevice {
             key_file_path: bob_file_path,
+            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
+            server_url: "https://parsec.invalid".to_string(),
             organization_id: "CoolOrg".parse().unwrap(),
             user_id: "cc2578be6a174c9590a98b7d0d2c7e4f".parse().unwrap(),
             device_id: "cc2578be6a174c9590a98b7d0d2c7e4f@6b92acd628294292a4b126b3e875c686"
@@ -173,6 +179,9 @@ async fn list_devices(tmp_path: TmpPath) {
         },
         AvailableDevice {
             key_file_path: mallory_file_path,
+            created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
+            protected_on: "2000-01-10T00:00:00Z".parse().unwrap(),
+            server_url: "https://parsec.invalid".to_string(),
             organization_id: "CoolOrg".parse().unwrap(),
             user_id: "mallory".parse().unwrap(),
             device_id: "mallory@dev3".parse().unwrap(),

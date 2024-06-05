@@ -113,9 +113,22 @@ fn load_available_device(
     let device_file =
         DeviceFile::load(&content).map_err(|_| LoadAvailableDeviceFileError::InvalidData)?;
 
-    let (ty, organization_id, user_id, device_id, human_handle, device_label) = match device_file {
+    let (
+        ty,
+        created_on,
+        protected_on,
+        server_url,
+        organization_id,
+        user_id,
+        device_id,
+        human_handle,
+        device_label,
+    ) = match device_file {
         DeviceFile::Keyring(device) => (
             DeviceFileType::Keyring,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
             device.organization_id,
             device.user_id,
             device.device_id,
@@ -124,6 +137,9 @@ fn load_available_device(
         ),
         DeviceFile::Password(device) => (
             DeviceFileType::Password,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
             device.organization_id,
             device.user_id,
             device.device_id,
@@ -132,6 +148,9 @@ fn load_available_device(
         ),
         DeviceFile::Recovery(device) => (
             DeviceFileType::Recovery,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
             device.organization_id,
             device.user_id,
             device.device_id,
@@ -140,6 +159,9 @@ fn load_available_device(
         ),
         DeviceFile::Smartcard(device) => (
             DeviceFileType::Smartcard,
+            device.created_on,
+            device.protected_on,
+            device.server_url,
             device.organization_id,
             device.user_id,
             device.device_id,
@@ -150,6 +172,9 @@ fn load_available_device(
 
     Ok(AvailableDevice {
         key_file_path,
+        created_on,
+        protected_on,
+        server_url,
         organization_id,
         user_id,
         device_id,
@@ -165,8 +190,8 @@ fn load_available_device(
 
 pub async fn load_device(
     access: &DeviceAccessStrategy,
-) -> Result<Arc<LocalDevice>, LoadDeviceError> {
-    let device = match access {
+) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
+    let (device, created_on) = match access {
         DeviceAccessStrategy::Keyring { key_file } => {
             // TODO: make file access on a worker thread !
             let content =
@@ -193,7 +218,7 @@ pub async fn load_device(
 
                 cleartext.zeroize();
 
-                device
+                (device, x.created_on)
             } else {
                 return Err(LoadDeviceError::InvalidData);
             }
@@ -242,7 +267,8 @@ pub async fn load_device(
                     let device =
                         LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
                     cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
-                    device
+
+                    (device, x.created_on)
                 }
                 // We are not expecting other type of device file
                 _ => return Err(LoadDeviceError::InvalidData),
@@ -255,7 +281,7 @@ pub async fn load_device(
         }
     };
 
-    Ok(Arc::new(device))
+    Ok((Arc::new(device), created_on))
 }
 
 fn save_content(key_file: &PathBuf, file_content: &[u8]) -> Result<(), SaveDeviceError> {
@@ -313,7 +339,19 @@ fn generate_keyring_user(
 pub async fn save_device(
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
-) -> Result<(), SaveDeviceError> {
+    created_on: DateTime,
+) -> Result<AvailableDevice, SaveDeviceError> {
+    let protected_on = device.now();
+    let server_url = {
+        ParsecAddr::new(
+            device.organization_addr.hostname().to_owned(),
+            Some(device.organization_addr.port()),
+            device.organization_addr.use_ssl(),
+        )
+        .to_http_url(None)
+        .to_string()
+    };
+
     match access {
         DeviceAccessStrategy::Keyring { key_file } => {
             let keyring_user_path = get_default_data_dir().join("keyring_user.txt");
@@ -337,20 +375,24 @@ pub async fn save_device(
 
             let cleartext = device.dump();
             let ciphertext = key.encrypt(&cleartext);
+
             let file_content = DeviceFile::Keyring(DeviceFileKeyring {
-                ciphertext: ciphertext.into(),
-                human_handle: device.human_handle.clone(),
-                device_label: device.device_label.clone(),
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().clone(),
                 user_id: device.user_id,
                 device_id: device.device_id,
-                organization_id: device.organization_id().clone(),
+                human_handle: device.human_handle.clone(),
+                device_label: device.device_label.clone(),
                 keyring_service: KEYRING_SERVICE.into(),
                 keyring_user,
+                ciphertext: ciphertext.into(),
             });
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content)
+            save_content(key_file, &file_content)?;
         }
 
         DeviceAccessStrategy::Password { key_file, password } => {
@@ -376,23 +418,26 @@ pub async fn save_device(
             };
 
             let file_content = DeviceFile::Password(DeviceFilePassword {
-                ciphertext,
-                human_handle: device.human_handle.to_owned(),
-                device_label: device.device_label.to_owned(),
+                created_on,
+                protected_on,
+                server_url: server_url.clone(),
+                organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
-                organization_id: device.organization_id().to_owned(),
+                human_handle: device.human_handle.to_owned(),
+                device_label: device.device_label.to_owned(),
                 algorithm: DeviceFilePasswordAlgorithm::Argon2id {
                     salt: salt.into(),
                     opslimit: opslimit.into(),
                     memlimit_kb: memlimit_kb.into(),
                     parallelism: parallelism.into(),
                 },
+                ciphertext,
             });
 
             let file_content = file_content.dump();
 
-            save_content(key_file, &file_content)
+            save_content(key_file, &file_content)?;
         }
 
         DeviceAccessStrategy::Smartcard { .. } => {
@@ -400,15 +445,28 @@ pub async fn save_device(
             todo!()
         }
     }
+
+    Ok(AvailableDevice {
+        key_file_path: access.key_file().to_owned(),
+        server_url,
+        created_on,
+        protected_on,
+        organization_id: device.organization_id().to_owned(),
+        user_id: device.user_id,
+        device_id: device.device_id,
+        device_label: device.device_label.clone(),
+        human_handle: device.human_handle.clone(),
+        ty: access.ty(),
+    })
 }
 
 pub async fn change_authentication(
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<(), ChangeAuthentificationError> {
-    let device = load_device(current_access).await?;
+) -> Result<AvailableDevice, ChangeAuthentificationError> {
+    let (device, created_on) = load_device(current_access).await?;
 
-    save_device(new_access, &device).await?;
+    let available_device = save_device(new_access, &device, created_on).await?;
 
     let key_file = current_access.key_file();
     let new_key_file = new_access.key_file();
@@ -418,7 +476,7 @@ pub async fn change_authentication(
             .map_err(|_| ChangeAuthentificationError::CannotRemoveOldDevice)?;
     }
 
-    Ok(())
+    Ok(available_device)
 }
 
 /*
@@ -461,6 +519,17 @@ pub async fn save_recovery_device(
     key_file: &Path,
     device: &LocalDevice,
 ) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
+    let created_on = device.now();
+    let server_url = {
+        ParsecAddr::new(
+            device.organization_addr.hostname().to_owned(),
+            Some(device.organization_addr.port()),
+            device.organization_addr.use_ssl(),
+        )
+        .to_http_url(None)
+        .to_string()
+    };
+
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
     let ciphertext = {
@@ -471,12 +540,16 @@ pub async fn save_recovery_device(
     };
 
     let file_content = DeviceFile::Recovery(DeviceFileRecovery {
-        ciphertext,
-        human_handle: device.human_handle.to_owned(),
-        device_label: device.device_label.to_owned(),
+        created_on,
+        // Note recovery device is not supposed to change its protection
+        protected_on: created_on,
+        server_url,
+        organization_id: device.organization_id().to_owned(),
         user_id: device.user_id,
         device_id: device.device_id,
-        organization_id: device.organization_id().to_owned(),
+        human_handle: device.human_handle.to_owned(),
+        device_label: device.device_label.to_owned(),
+        ciphertext,
     })
     .dump();
 

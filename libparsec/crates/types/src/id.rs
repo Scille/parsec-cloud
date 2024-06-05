@@ -94,6 +94,13 @@ macro_rules! new_uuid_type {
             }
         }
 
+        impl ::std::convert::AsRef<[u8;16]> for $name {
+            #[inline]
+            fn as_ref(&self) -> &[u8;16] {
+                self.0.as_bytes()
+            }
+        }
+
         impl ::std::convert::From<::uuid::Uuid> for $name {
             #[inline]
             fn from(id: ::uuid::Uuid) -> Self {
