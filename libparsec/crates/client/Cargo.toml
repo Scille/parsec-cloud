@@ -27,3 +27,10 @@ libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 proptest = { workspace = true, features = ["default"] }
 proptest-state-machine = { workspace = true }
+
+[target.'cfg(any(not(target_arch = "wasm32"), target_os = "linux"))'.dependencies]
+# TODO: `use-zstd-in-serialization-format` is a temporary feature to disable the
+#       use of zstd, as its compilation with WASM is buggy on some host (e.g.
+#       MacOS/Windows/Ubuntu 20.04).
+#       TL;DR: ALWAYS ENABLE `use-zstd-in-serialization-format` FOR PRODUCTION !!!
+libparsec_types = { workspace = true, features = ["use-zstd-in-serialization-format"] }
