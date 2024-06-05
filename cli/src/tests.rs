@@ -101,7 +101,7 @@ async fn list_devices(tmp_path: TmpPath) {
         .unwrap();
     set_env(&tmp_path_str, &url);
 
-    let path = tmp_path.join("config").join("parsec-v3-alpha");
+    let path = tmp_path.join("config/parsec3/libparsec");
     let path_str = path.to_string_lossy();
 
     Command::cargo_bin("parsec_cli")
@@ -874,9 +874,7 @@ async fn remove_device(tmp_path: TmpPath) {
     let mut buf = String::new();
 
     let alice_device_file = tmp_path
-        .join("config")
-        .join("parsec-v3-alpha")
-        .join("devices")
+        .join("config/parsec3/libparsec/devices")
         .join(format!("{}.keys", alice.device_id.hex()));
 
     assert!(alice_device_file.exists());
