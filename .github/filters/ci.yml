@@ -19,6 +19,11 @@ rust-platform-crates: &rust-platform-crates libparsec/crates/platform_*/**
 
 rust-cli: &rust-cli cli/**
 
+rust-test-wasm: &rust-test-wasm
+  - *rust-platform-crates
+  - *rust-toolchain
+  - *rust-dependencies-workspace
+
 rust-changes: &rust-changes
   - *rust-dependencies-workspace
   - *rust-libparsec

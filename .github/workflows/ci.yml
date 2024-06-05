@@ -30,7 +30,7 @@ jobs:
       rust: ${{ steps.need-check.outputs.rust }}
       python: ${{ steps.need-check.outputs.python }}
       python-style-only: ${{ steps.need-check.outputs.python_style_only }}
-      rust-platform-crates: ${{ steps.need-check.outputs.rust_platform_crates }}
+      rust-test-wasm: ${{ steps.need-check.outputs.rust_test_wasm }}
       rust-dependencies: ${{ steps.need-check.outputs.rust_dependencies }}
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
@@ -61,7 +61,7 @@ jobs:
           # Basically we want to only check the python code style when we modify a file that ins't related to the parsec server (e.g.: bindings/generator/generate.py)
           # Thus don't require to run the python test.
           NEED_CHECK_python_style_only: ${{ steps.changes.outputs.python-jobs == 'false' && steps.changes.outputs.any-python-files == 'true' }}
-          NEED_CHECK_rust_platform_crates: ${{ steps.changes.outputs.rust-platform-crates == 'true' }}
+          NEED_CHECK_rust_test_wasm: ${{ steps.changes.outputs.rust-test-wasm == 'true' }}
           NEED_CHECK_rust_dependencies: ${{ steps.changes.outputs.rust-dependencies-workspace == 'true' }}
           NEED_CHECK_docs: ${{ steps.changes.outputs.docs-jobs == 'true' }}
 
@@ -87,7 +87,7 @@ jobs:
           import os
           import json
 
-          NOT_A_JOB = ('python-style-only', 'rust-platform-crates')
+          NOT_A_JOB = ('python-style-only', 'rust-test-wasm')
 
           needs = json.loads(os.environ["NEEDS"])
 
@@ -202,7 +202,7 @@ jobs:
     if: needs.dispatch.outputs.rust == 'true'
     uses: ./.github/workflows/ci-rust.yml
     with:
-      run-wasm-tests: ${{ needs.dispatch.outputs.rust-platform-crates == 'true' }}
+      run-wasm-tests: ${{ needs.dispatch.outputs.rust-test-wasm == 'true' }}
       check-cargo-deny: ${{ needs.dispatch.outputs.rust-dependencies == 'true' }}
 
   web:
