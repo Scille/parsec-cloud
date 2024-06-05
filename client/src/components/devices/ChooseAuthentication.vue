@@ -151,7 +151,7 @@ async function areFieldsCorrect(): Promise<boolean> {
   }
 
   &.radio-checked {
-    background: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-premiere);
   }
 
   &:first-of-type {

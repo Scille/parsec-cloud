@@ -111,6 +111,7 @@
           class="step org-loading"
           v-show="pageStep === CreateOrganizationStep.SpinnerStep"
         >
+          <ms-image :image="LogoIconGradient" />
           <ms-spinner :title="'CreateOrganization.loading'" />
         </div>
 
@@ -195,8 +196,10 @@ import {
   MsModalResult,
   askQuestion,
   IValidator,
+  LogoIconGradient,
   MsInformativeText,
   MsInput,
+  MsImage,
   asyncComputed,
   Validity,
   Translatable,
@@ -510,5 +513,19 @@ function onUpdateRequested(info: OrgInfo): void {
   align-items: center;
   text-align: center;
   gap: 1rem;
+}
+
+.SpinnerStep {
+  .modal-header {
+    display: none;
+  }
+
+  .step {
+    gap: 1rem;
+  }
+
+  .svg-container {
+    width: 3rem;
+  }
 }
 </style>
