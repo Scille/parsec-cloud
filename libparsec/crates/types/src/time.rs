@@ -297,11 +297,27 @@ mod time_provider {
 
     impl TimeProviderAgent {
         pub fn new(parent: Option<Arc<Mutex<TimeProviderAgent>>>) -> Self {
+            let parent = parent.unwrap_or_else(Self::root_provider);
             Self {
-                parent,
+                parent: Some(parent),
                 time: MockedTime::RealTime,
                 sleeping_stats: 0,
             }
+        }
+
+        /// Root provider allows to globally mock time
+        pub fn root_provider() -> Arc<Mutex<TimeProviderAgent>> {
+            static ROOT_PROVIDER: std::sync::OnceLock<Arc<Mutex<TimeProviderAgent>>> =
+                std::sync::OnceLock::new();
+            ROOT_PROVIDER
+                .get_or_init(|| {
+                    Arc::new(Mutex::new(TimeProviderAgent {
+                        parent: None,
+                        time: MockedTime::RealTime,
+                        sleeping_stats: 0,
+                    }))
+                })
+                .to_owned()
         }
 
         pub fn get_speed_factor(&self) -> Option<f64> {
@@ -399,6 +415,11 @@ mod time_provider {
     impl TimeProvider {
         pub fn now(&self) -> DateTime {
             self.0.lock().expect("Mutex is poisoned").now()
+        }
+
+        /// Root provider allows to globally mock time
+        pub fn root_provider() -> Self {
+            Self(TimeProviderAgent::root_provider())
         }
 
         fn parent_now_or_realtime(&self) -> DateTime {
