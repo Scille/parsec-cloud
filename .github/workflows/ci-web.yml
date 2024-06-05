@@ -40,6 +40,11 @@ jobs:
         ports:
           - 6777:6777
     steps:
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: kenchan0130/actions-system-info@b98fe44bc35efcc60a9828cf4a04783a8b370bde # pin v1.3.0
+        timeout-minutes: 1
+
       - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
         timeout-minutes: 5
 
@@ -107,6 +112,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
+          key: ${{ steps.runner-specs.outputs.platform }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
       # Install wasm-pack command
