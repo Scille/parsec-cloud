@@ -51,6 +51,11 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
       - name: Set apt mirror
         if: (!inputs.style-only)
         # GitHub Actions apt proxy is super unstable
@@ -113,7 +118,7 @@ jobs:
       # Hence if we have a cache hit we know that there is no need for a rebuild !
       - name: Setup cache-key
         id: cache-key
-        run: echo "key=libparsec-ubuntu-22.04-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
+        run: echo "key=libparsec-${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}-${{ hashFiles('make.py', 'server/build.py', 'server/src/**', 'server/Cargo.toml', 'libparsec/**', 'rust-toolchain.toml', 'Cargo.toml', 'Cargo.lock') }}-no-bundle-extra-shared-libraries" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Restore libparsec if Rust hasn't been modified
@@ -145,6 +150,7 @@ jobs:
           # So we only save the cache on master build given it's the ones that are the
           # most likely to be reused.
           save-if: ${{ github.ref == 'refs/heads/master' }}
+          key: ${{ steps.runner-specs.outputs.os }}-${{ steps.runner-specs.outputs.release }}
         timeout-minutes: 5
 
       - name: Install python deps

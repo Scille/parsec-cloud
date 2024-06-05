@@ -1,0 +1,24 @@
+name: system-info
+description: Get system information
+
+outputs:
+  platform:
+    description: The platform name (e.g. linux, win32, darwin)
+    value: ${{ steps.system-info.outputs.platform }}
+  id:
+    description: The system ID (e.g. ubuntu-22.04, windows-10, ...)
+    value: ${{ steps.system-info.outputs.id }}
+  os:
+    description: The OS name (e.g. ubuntu, windows, macos)
+    value: ${{ steps.system-info.outputs.os }}
+  release:
+    description: The release version of the OS (e.g. 22.04, 10, 12.7.5, ...)
+    value: ${{ steps.system-info.outputs.release }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get system info
+      id: system-info
+      shell: bash
+      run: python $GITHUB_ACTION_PATH/system-info.py | tee $GITHUB_OUTPUT
