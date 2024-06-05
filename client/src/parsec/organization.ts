@@ -66,6 +66,9 @@ export async function createOrganization(
     if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
       result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
       result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
+    } else if (result.ok) {
+      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
     }
     return result;
   } else {

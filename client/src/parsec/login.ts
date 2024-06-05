@@ -36,6 +36,7 @@ import {
 } from '@/parsec/types';
 import { getConnectionHandle } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
+import { DateTime } from 'luxon';
 
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
@@ -97,7 +98,12 @@ export async function getOrganizationHandles(orgId: OrganizationID): Promise<Arr
 }
 
 export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
-  return await libparsec.listAvailableDevices(window.getConfigDir());
+  const devices = await libparsec.listAvailableDevices(window.getConfigDir());
+  return devices.map((d) => {
+    d.createdOn = DateTime.fromSeconds(d.createdOn as any as number);
+    d.protectedOn = DateTime.fromSeconds(d.protectedOn as any as number);
+    return d;
+  });
 }
 
 export async function login(
