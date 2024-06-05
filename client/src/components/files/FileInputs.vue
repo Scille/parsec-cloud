@@ -67,6 +67,7 @@ async function onInputChange(event: any): Promise<void> {
       await onFilesImport(files);
     }
   }
+  elem.value = '';
 }
 
 async function importFiles(): Promise<void> {
