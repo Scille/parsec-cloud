@@ -140,10 +140,10 @@ defineProps<{
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
 }
 
 .summary-item {
+  padding: 0.75rem 0;
   display: flex;
   align-items: center;
   flex: 1;
@@ -156,7 +156,8 @@ defineProps<{
     position: absolute;
     width: 100%;
     height: 1px;
-    bottom: -0.5rem;
+    bottom: 0;
+    left: 7.5rem;
     background: var(--parsec-color-light-secondary-disabled);
     z-index: 2;
   }
@@ -175,6 +176,10 @@ defineProps<{
   }
   &__button {
     margin-left: auto;
+
+    &::part(native) {
+      padding: 0.5rem;
+    }
   }
 }
 </style>
