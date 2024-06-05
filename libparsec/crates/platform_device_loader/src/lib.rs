@@ -43,8 +43,7 @@ pub fn get_default_data_base_dir() -> PathBuf {
             dirs::data_dir().expect("Could not determine base data directory")
         };
 
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3");
+        path.push("parsec3");
         path
     }
 }
@@ -59,12 +58,10 @@ pub fn get_default_config_dir() -> PathBuf {
         let mut path = if let Ok(config_dir) = std::env::var(PARSEC_CONFIG_DIR) {
             PathBuf::from(config_dir)
         } else {
-            // TODO: check MacOS path correspond to Parsec v2
             dirs::config_dir().expect("Could not determine base config directory")
         };
 
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3");
+        path.push("parsec3/libparsec");
         path
     }
 }
@@ -82,8 +79,7 @@ pub fn get_default_mountpoint_base_dir() -> PathBuf {
             dirs::home_dir().expect("Could not determine home directory")
         };
 
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("Parsec v3");
+        path.push("Parsec3");
         path
     }
 }
