@@ -23,7 +23,7 @@ const SECTOR_SIZE: u16 = 512;
 #[derive(Debug)]
 pub struct Mountpoint {
     path: std::path::PathBuf,
-    filesystem: FileSystem<ParsecFileSystemContext>,
+    filesystem: Option<FileSystem<ParsecFileSystemContext>>,
 }
 
 impl Mountpoint {
@@ -112,13 +112,30 @@ impl Mountpoint {
 
         Ok(Self {
             path: mountpoint_path,
-            filesystem,
+            filesystem: Some(filesystem),
         })
     }
 
-    pub async fn unmount(self) -> anyhow::Result<()> {
-        self.filesystem.stop();
+    pub async fn unmount(mut self) -> anyhow::Result<()> {
+        if let Some(filesystem) = self.filesystem.take() {
+            filesystem.stop();
+        }
         Ok(())
+    }
+}
+
+impl Drop for Mountpoint {
+    fn drop(&mut self) {
+        // `unmount` hasn't been called, the two reasons for that are:
+        // - a panic occurred
+        // - WorkspaceOps is stopped from libparsec high level API (in that case,
+        //   all the workspace's mountpoints are dropped as a fast-close mechanism)
+        //
+        // In both cases, we must unmount the filesystem in best effort (i.e. we
+        // cannot do anything if errors occur).
+        if let Some(filesystem) = self.filesystem.take() {
+            filesystem.stop();
+        }
     }
 }
 
