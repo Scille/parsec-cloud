@@ -3,16 +3,25 @@
     "type": "keyring",
     "other_fields": [
         {
-            "name": "ciphertext",
-            "type": "Bytes"
+            // This refers to when the device file has been originally created.
+            "name": "created_on",
+            "type": "DateTime"
         },
         {
-            "name": "human_handle",
-            "type": "HumanHandle"
+            // This field gets updated every time the device file changes its protection.
+            "name": "protected_on",
+            "type": "DateTime"
         },
         {
-            "name": "device_label",
-            "type": "DeviceLabel"
+            // Url to the server in the format `https://parsec.example.com:443`.
+            // Note we don't use the `parsec3://` scheme here to avoid compatibility
+            // issue if we later decide to change the scheme.
+            "name": "server_url",
+            "type": "String"
+        },
+        {
+            "name": "organization_id",
+            "type": "OrganizationID"
         },
         {
             "name": "user_id",
@@ -23,8 +32,12 @@
             "type": "DeviceID"
         },
         {
-            "name": "organization_id",
-            "type": "OrganizationID"
+            "name": "human_handle",
+            "type": "HumanHandle"
+        },
+        {
+            "name": "device_label",
+            "type": "DeviceLabel"
         },
         {
             "name": "keyring_service",
@@ -33,6 +46,10 @@
         {
             "name": "keyring_user",
             "type": "String"
+        },
+        {
+            "name": "ciphertext",
+            "type": "Bytes"
         }
     ]
 }

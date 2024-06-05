@@ -9,21 +9,24 @@ use libparsec_serialization_format::parsec_data;
 
 use crate as libparsec_types;
 use crate::{
-    impl_transparent_data_format_conversion, DeviceID, DeviceLabel, HumanHandle, OrganizationID,
-    UserID,
+    impl_transparent_data_format_conversion, DateTime, DeviceID, DeviceLabel, HumanHandle,
+    OrganizationID, UserID,
 };
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileKeyringData", from = "DeviceFileKeyringData")]
 pub struct DeviceFileKeyring {
-    pub ciphertext: Bytes,
-    pub human_handle: HumanHandle,
-    pub device_label: DeviceLabel,
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
-    pub organization_id: OrganizationID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub keyring_service: String,
     pub keyring_user: String,
+    pub ciphertext: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_keyring.json5");
@@ -31,26 +34,32 @@ parsec_data!("schema/local_device/device_file_keyring.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileKeyring,
     DeviceFileKeyringData,
-    ciphertext,
-    human_handle,
-    device_label,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
     user_id,
     device_id,
-    organization_id,
+    human_handle,
+    device_label,
     keyring_service,
     keyring_user,
+    ciphertext,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFilePasswordData", from = "DeviceFilePasswordData")]
 pub struct DeviceFilePassword {
-    pub ciphertext: Bytes,
-    pub human_handle: HumanHandle,
-    pub device_label: DeviceLabel,
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
-    pub organization_id: OrganizationID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub algorithm: DeviceFilePasswordAlgorithm,
+    pub ciphertext: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_password.json5");
@@ -58,24 +67,30 @@ parsec_data!("schema/local_device/device_file_password.json5");
 impl_transparent_data_format_conversion!(
     DeviceFilePassword,
     DeviceFilePasswordData,
-    ciphertext,
-    human_handle,
-    device_label,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
     user_id,
     device_id,
-    organization_id,
+    human_handle,
+    device_label,
     algorithm,
+    ciphertext,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileRecoveryData", from = "DeviceFileRecoveryData")]
 pub struct DeviceFileRecovery {
-    pub ciphertext: Bytes,
-    pub human_handle: HumanHandle,
-    pub device_label: DeviceLabel,
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
-    pub organization_id: OrganizationID,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
+    pub ciphertext: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_recovery.json5");
@@ -83,27 +98,32 @@ parsec_data!("schema/local_device/device_file_recovery.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileRecovery,
     DeviceFileRecoveryData,
-    ciphertext,
-    human_handle,
-    device_label,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
     user_id,
     device_id,
-    organization_id,
+    human_handle,
+    device_label,
+    ciphertext,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceFileSmartcardData", from = "DeviceFileSmartcardData")]
 pub struct DeviceFileSmartcard {
-    pub ciphertext: Bytes,
-    pub human_handle: HumanHandle,
-    pub device_label: DeviceLabel,
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
+    pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,
-    pub organization_id: OrganizationID,
-
-    pub encrypted_key: Bytes,
+    pub human_handle: HumanHandle,
+    pub device_label: DeviceLabel,
     pub certificate_id: String,
     pub certificate_sha1: Option<Bytes>,
+    pub encrypted_key: Bytes,
+    pub ciphertext: Bytes,
 }
 
 parsec_data!("schema/local_device/device_file_smartcard.json5");
@@ -111,15 +131,18 @@ parsec_data!("schema/local_device/device_file_smartcard.json5");
 impl_transparent_data_format_conversion!(
     DeviceFileSmartcard,
     DeviceFileSmartcardData,
-    ciphertext,
-    human_handle,
-    device_label,
+    created_on,
+    protected_on,
+    server_url,
+    organization_id,
     user_id,
     device_id,
-    organization_id,
-    encrypted_key,
+    human_handle,
+    device_label,
     certificate_id,
     certificate_sha1,
+    encrypted_key,
+    ciphertext,
 );
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -204,6 +227,9 @@ impl DeviceAccessStrategy {
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize)]
 pub struct AvailableDevice {
     pub key_file_path: PathBuf,
+    pub created_on: DateTime,
+    pub protected_on: DateTime,
+    pub server_url: String,
     pub organization_id: OrganizationID,
     pub user_id: UserID,
     pub device_id: DeviceID,

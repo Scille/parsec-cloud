@@ -23,21 +23,22 @@ pub async fn list_available_devices(_config_dir: &Path) -> Vec<AvailableDevice> 
 
 pub async fn load_device(
     _access: &DeviceAccessStrategy,
-) -> Result<Arc<LocalDevice>, LoadDeviceError> {
+) -> Result<(Arc<LocalDevice>, DateTime), LoadDeviceError> {
     todo!()
 }
 
 pub async fn save_device(
     _access: &DeviceAccessStrategy,
     _device: &LocalDevice,
-) -> Result<(), SaveDeviceError> {
+    _created_on: DateTime,
+) -> Result<AvailableDevice, SaveDeviceError> {
     todo!()
 }
 
 pub async fn change_authentication(
     _current_access: &DeviceAccessStrategy,
     _new_access: &DeviceAccessStrategy,
-) -> Result<(), ChangeAuthentificationError> {
+) -> Result<AvailableDevice, ChangeAuthentificationError> {
     todo!()
 }
 

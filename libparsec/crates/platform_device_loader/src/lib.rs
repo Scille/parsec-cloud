@@ -73,7 +73,9 @@ pub async fn load_device(
         return result;
     }
 
-    platform::load_device(access).await
+    platform::load_device(access)
+        .await
+        .map(|(device, _)| device)
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -90,13 +92,13 @@ pub async fn save_device(
     config_dir: &Path,
     access: &DeviceAccessStrategy,
     device: &LocalDevice,
-) -> Result<(), SaveDeviceError> {
+) -> Result<AvailableDevice, SaveDeviceError> {
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) = testbed::maybe_save_device(config_dir, access, device) {
         return result;
     }
 
-    platform::save_device(access, device).await
+    platform::save_device(access, device, device.now()).await
 }
 
 #[derive(Debug, thiserror::Error)]
@@ -138,7 +140,7 @@ pub async fn change_authentication(
     #[allow(unused)] config_dir: &Path,
     current_access: &DeviceAccessStrategy,
     new_access: &DeviceAccessStrategy,
-) -> Result<(), ChangeAuthentificationError> {
+) -> Result<AvailableDevice, ChangeAuthentificationError> {
     #[cfg(feature = "test-with-testbed")]
     if let Some(result) =
         testbed::maybe_change_authentication(config_dir, current_access, new_access)
