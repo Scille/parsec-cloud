@@ -23,7 +23,7 @@ import {
 
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
-import luxon from 'luxon';
+import { DateTime } from 'luxon';
 
 export class UserClaim {
   handle: ConnectionHandle | null;
@@ -231,8 +231,8 @@ export class UserClaim {
       this.device = {
         keyFilePath: '/path',
         serverUrl: 'https://parsec.invalid',
-        createdOn: luxon.DateTime.utc(),
-        protectedOn: luxon.DateTime.utc(),
+        createdOn: DateTime.utc(),
+        protectedOn: DateTime.utc(),
         organizationId: 'MyOrg',
         userId: 'userid',
         deviceId: 'deviceid',
