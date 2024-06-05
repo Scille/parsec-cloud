@@ -19,12 +19,6 @@ use crate::{
 
 const KEYRING_SERVICE: &str = "parsec";
 
-fn get_default_data_dir() -> PathBuf {
-    dirs::data_dir()
-        .expect("Could not determine base data directory")
-        .join("parsec-v3-alpha")
-}
-
 impl From<keyring::Error> for LoadDeviceError {
     fn from(value: keyring::Error) -> Self {
         Self::Internal(anyhow::anyhow!(value))
@@ -316,7 +310,7 @@ pub async fn save_device(
 ) -> Result<(), SaveDeviceError> {
     match access {
         DeviceAccessStrategy::Keyring { key_file } => {
-            let keyring_user_path = get_default_data_dir().join("keyring_user.txt");
+            let keyring_user_path = crate::get_default_data_base_dir().join("keyring_user.txt");
 
             let (key, keyring_user) = std::fs::read_to_string(&keyring_user_path)
                 .ok()

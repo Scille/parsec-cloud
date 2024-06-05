@@ -5,11 +5,11 @@ use std::{path::PathBuf, sync::Arc};
 pub use libparsec_client::{
     MountpointMountStrategy, ProxyConfig, ServerConfig, WorkspaceStorageCacheSize,
 };
+pub use libparsec_platform_device_loader::{
+    get_default_config_dir, get_default_data_base_dir, get_default_mountpoint_base_dir,
+    PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+};
 pub use libparsec_types::prelude::*;
-
-pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
-pub const PARSEC_DATA_DIR: &str = "PARSEC_DATA_DIR";
-pub const PARSEC_HOME_DIR: &str = "PARSEC_HOME_DIR";
 
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
@@ -48,63 +48,5 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             proxy: ProxyConfig::default(),
             with_monitors: config.with_monitors,
         }
-    }
-}
-
-pub fn get_default_data_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_DATA_DIR) {
-            PathBuf::from(data_dir)
-        } else {
-            dirs::data_dir().expect("Could not determine base data directory")
-        };
-
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3-alpha");
-        path
-    }
-}
-
-pub fn get_default_config_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(config_dir) = std::env::var(PARSEC_CONFIG_DIR) {
-            PathBuf::from(config_dir)
-        } else {
-            // TODO: check MacOS path correspond to Parsec v2
-            dirs::config_dir().expect("Could not determine base config directory")
-        };
-
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3-alpha");
-        path
-    }
-}
-
-pub fn get_default_mountpoint_base_dir() -> PathBuf {
-    #[cfg(target_arch = "wasm32")]
-    {
-        PathBuf::from("")
-    }
-    #[cfg(not(target_arch = "wasm32"))]
-    {
-        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_HOME_DIR) {
-            PathBuf::from(home_dir)
-        } else {
-            dirs::home_dir().expect("Could not determine home directory")
-        };
-
-        // TODO: temporary name to avoid clashing with stable parsec
-        path.push("Parsec v3 Alpha");
-        path
     }
 }
