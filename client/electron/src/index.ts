@@ -8,8 +8,13 @@ import unhandled from 'electron-unhandled';
 import { electronIsDev } from './utils';
 // import { autoUpdater } from 'electron-updater';
 
+import fs from 'fs';
+import path from 'path';
 import { PageToWindowChannel, WindowToPageChannel } from './communicationChannels';
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
+
+const PARSEC_CONFIG_DIR_NAME = 'parsec3';
+const ELECTRON_CONFIG_DIR_NAME = 'app';
 
 // Graceful handling of unhandled errors.
 unhandled();
@@ -19,6 +24,15 @@ const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
   { role: process.platform === 'darwin' ? 'appMenu' : 'fileMenu' },
   { role: 'viewMenu' },
 ];
+
+const configDir = app.getPath('appData');
+const newConfigDir = path.join(configDir, PARSEC_CONFIG_DIR_NAME, ELECTRON_CONFIG_DIR_NAME);
+try {
+  fs.mkdirSync(newConfigDir, { recursive: true });
+  app.setPath('userData', newConfigDir);
+} catch (e: any) {
+  console.log(`Failed to set config path to '{$newConfigDir}'`);
+}
 
 // Get Config options from capacitor.config
 const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
