@@ -808,7 +808,9 @@
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "usersLimitReached": "La limite d'utilisateurs pour cette organisation a été atteinte."
+            "usersLimitReached": "La limite d'utilisateurs pour cette organisation a été atteinte.",
+            "peerReset": "L'hôte a annulé le processus.",
+            "peerResetCode": "L'hôte a annulé le processus ou a sélectionné un code incorrect."
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
@@ -893,7 +895,9 @@
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "unexpected": "Une erreur imprévue est survenue (raison : {reason}).",
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
-                "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus."
+                "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus.",
+                "peerReset": "L'invité a annulé le processus.",
+                "peerResetCode": "L'invité a annulé le processus ou a sélectionné un code incorrect."
             },
             "success": "{user} peut maintenant se connecter à l'organisation.",
             "cancelConfirm": "Annulation",

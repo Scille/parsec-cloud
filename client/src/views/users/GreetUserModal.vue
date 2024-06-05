@@ -158,7 +158,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { UserGreet, UserInvitation, UserProfile } from '@/parsec';
+import { GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
   Answer,
@@ -194,6 +194,7 @@ const guestInfoPage = ref();
 const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
+const cancelled = ref(false);
 
 const profileOptions: MsOptions = new MsOptions([
   {
@@ -335,25 +336,28 @@ const nextButtonIsVisible = computed(() => {
   return true;
 });
 
-async function cancelModal(): Promise<boolean> {
-  if (pageStep.value === GreetUserStep.Summary || pageStep.value === GreetUserStep.WaitForGuest) {
-    return await modalController.dismiss(null, MsModalResult.Cancel);
+async function cancelModal(): Promise<void> {
+  let answer = Answer.Yes;
+  if (pageStep.value !== GreetUserStep.Summary && pageStep.value !== GreetUserStep.WaitForGuest) {
+    answer = await askQuestion('UsersPage.greet.cancelConfirm', 'UsersPage.greet.cancelConfirmSubtitle', {
+      yesIsDangerous: true,
+      keepMainModalHiddenOnYes: true,
+      yesText: 'UsersPage.greet.cancelYes',
+      noText: 'UsersPage.greet.cancelNo',
+    });
   }
-  const answer = await askQuestion('UsersPage.greet.cancelConfirm', 'UsersPage.greet.cancelConfirmSubtitle', {
-    yesIsDangerous: true,
-    keepMainModalHiddenOnYes: true,
-    yesText: 'UsersPage.greet.cancelYes',
-    noText: 'UsersPage.greet.cancelNo',
-  });
 
   if (answer === Answer.Yes) {
+    cancelled.value = true;
     await greeter.value.abort();
-    return await modalController.dismiss(null, MsModalResult.Cancel);
+    await modalController.dismiss(null, MsModalResult.Cancel);
   }
-  return false;
 }
 
 async function showErrorAndRestart(message: Translatable): Promise<void> {
+  if (cancelled.value) {
+    return;
+  }
   props.informationManager.present(
     new Information({
       message: message,
@@ -403,7 +407,11 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      if (result.error.tag === GreetInProgressErrorTag.PeerReset) {
+        await showErrorAndRestart('UsersPage.greet.errors.peerResetCode');
+      } else {
+        await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      }
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
