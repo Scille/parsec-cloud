@@ -44,7 +44,7 @@ pub fn get_default_data_base_dir() -> PathBuf {
         };
 
         // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3-alpha");
+        path.push("parsec-v3");
         path
     }
 }
@@ -64,7 +64,7 @@ pub fn get_default_config_dir() -> PathBuf {
         };
 
         // TODO: temporary name to avoid clashing with stable parsec
-        path.push("parsec-v3-alpha");
+        path.push("parsec-v3");
         path
     }
 }
@@ -83,7 +83,7 @@ pub fn get_default_mountpoint_base_dir() -> PathBuf {
         };
 
         // TODO: temporary name to avoid clashing with stable parsec
-        path.push("Parsec v3 Alpha");
+        path.push("Parsec v3");
         path
     }
 }
