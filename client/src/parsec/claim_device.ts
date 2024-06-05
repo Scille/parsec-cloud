@@ -221,6 +221,8 @@ export class DeviceClaim {
         saveStrategy,
       );
       if (result.ok) {
+        result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+        result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
         this.device = result.value;
       }
       this.handle = null;
