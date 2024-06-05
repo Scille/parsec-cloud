@@ -183,8 +183,7 @@ impl Client {
 
         let mut workspaces = self.workspaces.lock().await;
 
-        // 2) First stop the running workspaces (this also stop their monitors and
-        // any mountpoint they expose).
+        // 2) First stop the running workspaces (this also stop their monitors).
 
         for workspace_ops in workspaces.drain(..) {
             if let Err(error) = workspace_ops.stop().await {

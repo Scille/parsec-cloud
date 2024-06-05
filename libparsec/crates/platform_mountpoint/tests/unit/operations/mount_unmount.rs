@@ -7,7 +7,11 @@ use super::utils::start_client_with_mountpoint_base_dir;
 use crate::Mountpoint;
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
+async fn mount_and_unmount(
+    #[values(false, true)] drop_as_umount: bool,
+    tmp_path: TmpPath,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let mountpoint_base_dir = tmp_path.join("base");
     let client =
@@ -21,7 +25,9 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
 
         let mountpoint_dir = mountpoint.path().to_owned();
 
-        mountpoint.unmount().await.unwrap();
+        if !drop_as_umount {
+            mountpoint.unmount().await.unwrap();
+        }
 
         mountpoint_dir
     };
@@ -45,7 +51,9 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
         let new_mountpoint_dir = mountpoint.path().to_owned();
         p_assert_eq!(new_mountpoint_dir, mountpoint_dir);
 
-        mountpoint.unmount().await.unwrap();
+        if !drop_as_umount {
+            mountpoint.unmount().await.unwrap();
+        }
     }
 
     // Mountpoint base dir should exist but be empty
@@ -66,7 +74,11 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
     let actual_mountpoint_dir = {
         let mountpoint = Mountpoint::mount(wksp1_ops.clone()).await.unwrap();
         let actual_mountpoint_dir = mountpoint.path().to_owned();
-        mountpoint.unmount().await.unwrap();
+
+        if !drop_as_umount {
+            mountpoint.unmount().await.unwrap();
+        }
+
         actual_mountpoint_dir
     };
 
@@ -116,7 +128,9 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
         let new_mountpoint_dir = mountpoint.path().to_owned();
         p_assert_eq!(new_mountpoint_dir, mountpoint_base_dir.join("wksp1 (2)"));
 
-        mountpoint.unmount().await.unwrap();
+        if !drop_as_umount {
+            mountpoint.unmount().await.unwrap();
+        }
 
         new_mountpoint_dir
     };
@@ -147,7 +161,9 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
 
         p_assert_eq!(mountpoint.path(), mountpoint_base_dir.join("wksp1 (2)"));
 
-        mountpoint.unmount().await.unwrap();
+        if !drop_as_umount {
+            mountpoint.unmount().await.unwrap();
+        }
     }
 
     // Our data should still be there
@@ -170,8 +186,10 @@ async fn mount_and_unmount(tmp_path: TmpPath, env: &TestbedEnv) {
         let new_mountpoint_dir = mountpoint2.path().to_owned();
         p_assert_eq!(new_mountpoint_dir, mountpoint_base_dir.join("wksp1 (2)"));
 
-        mountpoint2.unmount().await.unwrap();
-        mountpoint1.unmount().await.unwrap();
+        if !drop_as_umount {
+            mountpoint2.unmount().await.unwrap();
+            mountpoint1.unmount().await.unwrap();
+        }
     };
 
     // Mountpoint base dir should exist but be empty
