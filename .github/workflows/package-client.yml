@@ -280,10 +280,14 @@ jobs:
         timeout-minutes: 30
 
       - name: Build Electron apps
+        # What's about the extra `--` in `-- --nightly`?
+        # The reason is for npm to pass the flag `--nightly` to the underlying npm script.
+        # But since the base npm script `npm run electron:release` call another npm script,
+        # we need to escape the flag another time by adding another `--`.
         run: >-
           npm run electron:release
           ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
-          ${{ inputs.nightly_build && '--nightly' || '' }}
+          ${{ inputs.nightly_build && '-- --nightly' || '' }}
         working-directory: client
         timeout-minutes: 5
 
