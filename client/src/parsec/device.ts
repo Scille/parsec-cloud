@@ -13,7 +13,7 @@ import {
   UserID,
 } from '@/parsec/types';
 import { AvailableDevice, libparsec } from '@/plugins/libparsec';
-import luxon, { DateTime } from 'luxon';
+import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
 
@@ -127,8 +127,8 @@ export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Pro
     value: {
       keyFilePath: 'dummy',
       serverUrl: 'https://parsec.invalid',
-      createdOn: luxon.DateTime.utc(),
-      protectedOn: luxon.DateTime.utc(),
+      createdOn: DateTime.utc(),
+      protectedOn: DateTime.utc(),
       organizationId: 'dummy_org',
       userId: 'dummy_user_id',
       deviceId: deviceInfo.id,

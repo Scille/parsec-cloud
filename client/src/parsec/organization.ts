@@ -30,7 +30,7 @@ import {
   UserProfile,
 } from '@/parsec/types';
 import { listUsers } from '@/parsec/user';
-import luxon, { DateTime } from 'luxon';
+import { DateTime } from 'luxon';
 
 export async function createOrganization(
   serverAddr: ParsecAddr,
@@ -75,8 +75,8 @@ export async function createOrganization(
       value: {
         keyFilePath: '/path',
         serverUrl: 'https://parsec.invalid',
-        createdOn: luxon.DateTime.utc(),
-        protectedOn: luxon.DateTime.utc(),
+        createdOn: DateTime.utc(),
+        protectedOn: DateTime.utc(),
         organizationId: 'MyOrg',
         userId: 'userid',
         deviceId: 'deviceid',
