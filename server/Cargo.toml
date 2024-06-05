@@ -28,7 +28,11 @@ test-utils = [
 libparsec_crypto = { workspace = true }
 libparsec_protocol = { workspace = true }
 libparsec_serialization_format = { workspace = true, features = ["python-bindings-support"] }
-libparsec_types = { workspace = true }
+# TODO: `use-zstd-in-serialization-format` is a temporary feature to disable the
+#       use of zstd, as its compilation with WASM is buggy on some host (e.g.
+#       MacOS/Windows/Ubuntu 20.04).
+#       TL;DR: ALWAYS ENABLE `use-zstd-in-serialization-format` FOR PRODUCTION !!!
+libparsec_types = { workspace = true, features = ["use-zstd-in-serialization-format"] }
 libparsec_testbed = { workspace = true, optional = true }
 
 regex = { workspace = true, features = ["std", "perf", "unicode"] }
