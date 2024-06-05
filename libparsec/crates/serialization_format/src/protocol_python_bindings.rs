@@ -807,6 +807,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
         FieldType::PrivateKey => quote! { crate::crypto::PrivateKey },
         FieldType::SecretKey => quote! { crate::crypto::SecretKey },
+        FieldType::KeyDerivation => quote! { crate::crypto::KeyDerivation },
         FieldType::HashDigest => quote! { crate::crypto::HashDigest },
         FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
         FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
@@ -918,6 +919,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::VerifyKey => quote! { crate::crypto::VerifyKey(#field_path.to_owned()) },
         FieldType::PrivateKey => quote! { crate::crypto::PrivateKey(#field_path.to_owned()) },
         FieldType::SecretKey => quote! { crate::crypto::SecretKey(#field_path.to_owned()) },
+        FieldType::KeyDerivation => quote! { crate::crypto::KeyDerivation(#field_path.to_owned()) },
         FieldType::HashDigest => quote! { crate::crypto::HashDigest(#field_path.to_owned()) },
         FieldType::SequesterVerifyKeyDer => {
             quote! { crate::crypto::SequesterVerifyKeyDer(#field_path.to_owned()) }
@@ -1025,6 +1027,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
         FieldType::PrivateKey => quote! { crate::crypto::PrivateKey },
         FieldType::SecretKey => quote! { crate::crypto::SecretKey },
+        FieldType::KeyDerivation => quote! { crate::crypto::KeyDerivation },
         FieldType::HashDigest => quote! { crate::crypto::HashDigest },
         FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
         FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
@@ -1147,6 +1150,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::VerifyKey
         | FieldType::PrivateKey
         | FieldType::SecretKey
+        | FieldType::KeyDerivation
         | FieldType::HashDigest
         | FieldType::SequesterVerifyKeyDer
         | FieldType::SequesterPublicKeyDer

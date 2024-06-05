@@ -20,7 +20,7 @@ const SALTBYTES: usize = 16;
 
 #[derive(Clone, PartialEq, Eq, Deserialize, Hash)]
 #[serde(try_from = "&Bytes")]
-pub struct SecretKey(Key);
+pub struct SecretKey(pub(crate) Key);
 
 impl SecretKey {
     pub const ALGORITHM: &'static str = "xsalsa20poly1305";

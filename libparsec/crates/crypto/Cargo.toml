@@ -43,6 +43,7 @@ serde_bytes = { workspace = true, features = ["std"] }
 hex = { workspace = true, features = ["std"] }
 thiserror = { workspace = true }
 data-encoding = { workspace = true, features = ["alloc"] }
+uuid = { workspace = true }
 # `alloc` feature is required to properly erase struct containing vec/string
 zeroize = { workspace = true, features = ["alloc"] }
 

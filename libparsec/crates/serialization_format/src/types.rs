@@ -220,6 +220,7 @@ generate_field_type_enum!(
     VerifyKey => libparsec_types::VerifyKey,
     PrivateKey => libparsec_types::PrivateKey,
     SecretKey => libparsec_types::SecretKey,
+    KeyDerivation => libparsec_types::KeyDerivation,
     HashDigest => libparsec_types::HashDigest,
     SequesterVerifyKeyDer => libparsec_types::SequesterVerifyKeyDer,
     SequesterPublicKeyDer => libparsec_types::SequesterPublicKeyDer,

@@ -1,10 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 mod error;
+mod key_derivation;
 mod secret;
 mod sequester;
 
 pub use error::*;
+pub(crate) use key_derivation::*;
 pub(crate) use secret::*;
 pub use sequester::*;
 
