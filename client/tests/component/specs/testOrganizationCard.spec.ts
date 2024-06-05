@@ -3,7 +3,7 @@
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
 import { VueWrapper, mount } from '@vue/test-utils';
-import luxon from 'luxon';
+import { DateTime } from 'luxon';
 
 describe('Organization Card', () => {
   let wrapper: VueWrapper;
@@ -11,8 +11,8 @@ describe('Organization Card', () => {
   const DEVICE: AvailableDevice = {
     keyFilePath: '/path',
     serverUrl: 'https://parsec.invalid',
-    createdOn: luxon.DateTime.utc(),
-    protectedOn: luxon.DateTime.utc(),
+    createdOn: DateTime.utc(),
+    protectedOn: DateTime.utc(),
     organizationId: 'Black Mesa',
     userId: '5ada1b25e8904e9ba238834227a40abf',
     deviceId: '9700f0fd005e4752a13bcba0042d4703',
