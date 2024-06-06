@@ -249,7 +249,7 @@ async fn cleartext_corrupted(
             };
             (
                 manifest.dump_sign_and_encrypt(&alice.signing_key, &key),
-                DataError::Integrity {
+                DataError::DataIntegrity {
                     data_type: "libparsec_types::manifest::FileManifest",
                     invariant: "id and parent are different",
                 },
@@ -269,7 +269,7 @@ async fn cleartext_corrupted(
             };
             (
                 manifest.dump_sign_and_encrypt(&alice.signing_key, &key),
-                DataError::Integrity {
+                DataError::DataIntegrity {
                     data_type: "libparsec_types::manifest::FolderManifest",
                     invariant: "id and parent are different for child manifest",
                 },
@@ -465,7 +465,7 @@ async fn blocks_corrupted(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
         if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. }
-            if matches!(**error, DataError::Integrity { data_type: "libparsec_types::manifest::FileManifest", .. })),
+            if matches!(**error, DataError::DataIntegrity { data_type: "libparsec_types::manifest::FileManifest", .. })),
     );
 }
 

@@ -983,7 +983,7 @@ impl_unsecure_dump!(ShamirRecoveryBriefCertificate);
 impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
 
 impl ShamirRecoveryBriefCertificate {
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         let total_shares = {
             let mut total_shares: u64 = 0;
             for shares in self.per_recipient_shares.values() {
@@ -992,7 +992,7 @@ impl ShamirRecoveryBriefCertificate {
             total_shares
         };
         if u64::from(self.threshold) > total_shares {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "threshold <= total_shares",
             });
@@ -1007,7 +1007,7 @@ impl ShamirRecoveryBriefCertificate {
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
 
-        r.check_integrity()?;
+        r.check_data_integrity()?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {

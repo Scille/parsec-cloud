@@ -261,7 +261,7 @@ pub(super) async fn validate_workspace_manifest(
             .await?;
 
             // Check manifest integrity
-            res.check_integrity_as_root().map_err(|x| {
+            res.check_data_integrity_as_root().map_err(|x| {
                 let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
@@ -382,7 +382,7 @@ pub(super) async fn validate_child_manifest(
             .await?;
 
             // Check manifest integrity
-            res.check_integrity().map_err(|x| {
+            res.check_data_integrity().map_err(|x| {
                 let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
