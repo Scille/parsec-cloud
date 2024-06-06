@@ -112,7 +112,7 @@ async def test_authenticated_vlob_create_bad_key_index(
                 timestamp=t0,
                 realm_id=coolorg.wksp1_id,
                 key_index=2,
-                encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+                encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
                 hash_algorithm=HashAlgorithm.SHA256,
                 key_canary=b"<dummy canary>",
             )
@@ -311,7 +311,7 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
             author=author,
             timestamp=last_certificate_timestamp,
             hash_algorithm=HashAlgorithm.SHA256,
-            encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+            encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
             key_index=2,
             realm_id=realm_id,
             key_canary=b"",

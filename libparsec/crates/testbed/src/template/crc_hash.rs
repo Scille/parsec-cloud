@@ -213,6 +213,13 @@ impl CrcHash for RealmRole {
     }
 }
 
+impl CrcHash for KeyDerivation {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(b"KeyDerivation");
+        hasher.update(self.as_ref());
+    }
+}
+
 impl CrcHash for SecretKey {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"SecretKey");
@@ -518,7 +525,9 @@ impl CrcHash for SecretKeyAlgorithm {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"SecretKeyAlgorithm");
         match self {
-            SecretKeyAlgorithm::Xsalsa20Poly1305 => hasher.update(b"Xsalsa20Poly1305"),
+            SecretKeyAlgorithm::Blake2bXsalsa20Poly1305 => {
+                hasher.update(b"Blake2bXsalsa20Poly1305")
+            }
         }
     }
 }

@@ -32,7 +32,7 @@ pub use realm_create::CertifEnsureRealmCreatedError;
 pub use realm_decrypt_name::{CertifDecryptCurrentRealmNameError, InvalidEncryptedRealmNameError};
 pub use realm_key_rotation::CertifRotateRealmKeyError;
 pub use realm_keys_bundle::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, InvalidKeysBundleError,
+    CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage, InvalidKeysBundleError,
 };
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
@@ -281,12 +281,13 @@ impl CertifOps {
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
     pub async fn encrypt_for_realm(
         &self,
+        usage: EncrytionUsage,
         realm_id: VlobID,
         data: &[u8],
     ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
         self.store
             .for_read(|store| async move {
-                realm_keys_bundle::encrypt_for_realm(self, store, realm_id, data).await
+                realm_keys_bundle::encrypt_for_realm(self, store, usage, realm_id, data).await
             })
             .await
             .map_err(|e| match e {
@@ -304,6 +305,7 @@ impl CertifOps {
     /// Be aware this function potentially do server accesses (to fetch the keys bundle).
     pub async fn decrypt_opaque_data_for_realm(
         &self,
+        usage: EncrytionUsage,
         realm_id: VlobID,
         key_index: IndexInt,
         encrypted: &[u8],
@@ -311,8 +313,10 @@ impl CertifOps {
         let outcome = self
             .store
             .for_read(|store| async move {
-                realm_keys_bundle::decrypt_for_realm(self, store, realm_id, key_index, encrypted)
-                    .await
+                realm_keys_bundle::decrypt_for_realm(
+                    self, store, usage, realm_id, key_index, encrypted,
+                )
+                .await
             })
             .await
             .map_err(|e| match e {
@@ -341,8 +345,10 @@ impl CertifOps {
 
         self.store
             .for_read(|store| async move {
-                realm_keys_bundle::decrypt_for_realm(self, store, realm_id, key_index, encrypted)
-                    .await
+                realm_keys_bundle::decrypt_for_realm(
+                    self, store, usage, realm_id, key_index, encrypted,
+                )
+                .await
             })
             .await
             .map_err(|e| match e {

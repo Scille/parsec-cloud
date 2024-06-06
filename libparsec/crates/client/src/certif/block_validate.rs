@@ -3,7 +3,10 @@
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
-use crate::certif::realm_keys_bundle::{self, KeyFromIndexError, LoadLastKeysBundleError};
+use crate::{
+    certif::realm_keys_bundle::{self, EncrytionUsage},
+    CertifDecryptForRealmError,
+};
 
 use super::{
     store::CertifForReadWithRequirementsError, CertifOps, InvalidCertificateError,
@@ -75,17 +78,22 @@ pub(super) async fn validate_block(
 
     ops.store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
-            // 1) Retrieve the realm key
-
-            let realm_keys = realm_keys_bundle::load_last_realm_keys_bundle(ops, store, realm_id)
-                .await
-                .map_err(|e| match e {
-                    LoadLastKeysBundleError::Offline => CertifValidateBlockError::Offline,
-                    LoadLastKeysBundleError::NotAllowed => CertifValidateBlockError::NotAllowed,
-                    LoadLastKeysBundleError::NoKey => {
-                        // TODO: FileManifest should check the block accesses' key indexes as
-                        // part of it validation process ?
-                        let err = Box::new(InvalidBlockAccessError::NonExistentKeyIndex {
+            realm_keys_bundle::decrypt_for_realm(
+                ops,
+                store,
+                EncrytionUsage::Block(access.id),
+                realm_id,
+                key_index,
+                encrypted,
+            )
+            .await
+            .map_err(|err| match err {
+                CertifDecryptForRealmError::Stopped => CertifValidateBlockError::Stopped,
+                CertifDecryptForRealmError::Offline => CertifValidateBlockError::Offline,
+                CertifDecryptForRealmError::NotAllowed => CertifValidateBlockError::NotAllowed,
+                CertifDecryptForRealmError::KeyNotFound => {
+                    CertifValidateBlockError::InvalidBlockAccess(Box::new(
+                        InvalidBlockAccessError::NonExistentKeyIndex {
                             realm_id,
                             manifest_id: manifest.id,
                             manifest_version: manifest.version,
@@ -93,33 +101,12 @@ pub(super) async fn validate_block(
                             manifest_author: manifest.author,
                             block_id: access.id,
                             key_index,
-                        });
-                        CertifValidateBlockError::InvalidBlockAccess(err)
-                    }
-                    LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                        CertifValidateBlockError::InvalidKeysBundle(err)
-                    }
-                    LoadLastKeysBundleError::Internal(err) => err.into(),
-                })?;
-
-            let key = realm_keys
-                .key_from_index(key_index, Some(manifest.timestamp))
-                .map_err(|e| match e {
-                    KeyFromIndexError::CorruptedKey => {
-                        CertifValidateBlockError::InvalidBlockAccess(Box::new(
-                            InvalidBlockAccessError::CorruptedKey {
-                                realm_id,
-                                manifest_id: manifest.id,
-                                manifest_version: manifest.version,
-                                manifest_timestamp: manifest.timestamp,
-                                manifest_author: manifest.author,
-                                block_id: access.id,
-                                key_index,
-                            },
-                        ))
-                    }
-                    KeyFromIndexError::KeyNotFound => CertifValidateBlockError::InvalidBlockAccess(
-                        Box::new(InvalidBlockAccessError::NonExistentKeyIndex {
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedKey => {
+                    CertifValidateBlockError::InvalidBlockAccess(Box::new(
+                        InvalidBlockAccessError::CorruptedKey {
                             realm_id,
                             manifest_id: manifest.id,
                             manifest_version: manifest.version,
@@ -127,23 +114,29 @@ pub(super) async fn validate_block(
                             manifest_author: manifest.author,
                             block_id: access.id,
                             key_index,
-                        }),
-                    ),
-                })?;
-
-            // 2) Do the actual decryption
-
-            key.decrypt(encrypted).map_err(|_| {
-                let err = Box::new(InvalidBlockAccessError::CannotDecrypt {
-                    realm_id,
-                    manifest_id: manifest.id,
-                    manifest_version: manifest.version,
-                    manifest_timestamp: manifest.timestamp,
-                    manifest_author: manifest.author,
-                    block_id: access.id,
-                    key_index,
-                });
-                CertifValidateBlockError::InvalidBlockAccess(err)
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedData => {
+                    CertifValidateBlockError::InvalidBlockAccess(Box::new(
+                        InvalidBlockAccessError::CannotDecrypt {
+                            realm_id,
+                            manifest_id: manifest.id,
+                            manifest_version: manifest.version,
+                            manifest_timestamp: manifest.timestamp,
+                            manifest_author: manifest.author,
+                            block_id: access.id,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::InvalidCertificate(err) => {
+                    CertifValidateBlockError::InvalidCertificate(err)
+                }
+                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifValidateBlockError::InvalidKeysBundle(err)
+                }
+                CertifDecryptForRealmError::Internal(err) => err.into(),
             })
         })
         .await

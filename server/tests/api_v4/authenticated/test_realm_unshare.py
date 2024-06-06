@@ -260,7 +260,7 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,
             hash_algorithm=HashAlgorithm.SHA256,
-            encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+            encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
             key_index=2,
             realm_id=coolorg.wksp1_id,
             key_canary=SecretKey.generate().encrypt(b""),

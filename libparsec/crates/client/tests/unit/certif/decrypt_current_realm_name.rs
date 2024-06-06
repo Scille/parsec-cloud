@@ -12,8 +12,8 @@ use crate::certif::CertifDecryptCurrentRealmNameError;
 use super::utils::certificates_ops_factory;
 
 #[parsec_test(testbed = "minimal")]
-async fn ok(env: &TestbedEnv) {
-    let (realm_id, name, timestamp) = env
+async fn ok(#[values("last_key_index", "old_key_index")] kind: &str, env: &TestbedEnv) {
+    let (realm_id, name, timestamp, expected_key_index_fetched) = env
         .customize(|builder| {
             let realm_id = builder
                 .new_realm("alice")
@@ -24,9 +24,18 @@ async fn ok(env: &TestbedEnv) {
                 .rename_realm(realm_id, "wkp1")
                 .map(|event| (event.name.clone(), event.timestamp));
 
+            let expected_key_index_fetched = match kind {
+                "old_key_index" => {
+                    builder.rotate_key_realm(realm_id);
+                    2
+                }
+                "last_key_index" => 1,
+                unknown => panic!("Unknown kind: {}", unknown),
+            };
+
             builder.certificates_storage_fetch_certificates("alice@dev1");
 
-            (realm_id, name, timestamp)
+            (realm_id, name, timestamp, expected_key_index_fetched)
         })
         .await;
     let alice = env.local_device("alice@dev1");
@@ -37,7 +46,9 @@ async fn ok(env: &TestbedEnv) {
     test_register_send_hook(
         &env.discriminant_dir,
         move |req: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            p_assert_eq!(req.key_index, 1);
+            // Remember: the last keys bundle is fetched but it also contains the previous
+            // keys (in our case, it's the first key that is going to be used).
+            p_assert_eq!(req.key_index, expected_key_index_fetched);
             p_assert_eq!(req.realm_id, realm_id);
 
             authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {

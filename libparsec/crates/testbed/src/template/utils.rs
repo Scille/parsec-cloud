@@ -175,7 +175,7 @@ pub(super) fn non_revoked_realm_members(
 pub(super) fn realm_keys(
     events: &[TestbedEvent],
     realm: VlobID,
-) -> impl Iterator<Item = (IndexInt, &SecretKey)> {
+) -> impl Iterator<Item = (IndexInt, &KeyDerivation)> {
     events.iter().filter_map(move |e| match e {
         TestbedEvent::RotateKeyRealm(x) if x.realm == realm => Some((
             x.key_index,

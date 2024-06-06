@@ -2,16 +2,21 @@
 
 use libparsec_types::prelude::*;
 
-use super::{
-    realm_keys_bundle::{KeyFromIndexError, LoadLastKeysBundleError},
-    store::CertifStoreError,
-    CertifOps, InvalidKeysBundleError, UpTo,
-};
+use crate::{CertifDecryptForRealmError, EncrytionUsage};
+
+use super::{realm_keys_bundle, store::CertifStoreError, CertifOps, InvalidKeysBundleError, UpTo};
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidEncryptedRealmNameError {
-    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}) is corrupted: {error}")]
-    Corrupted {
+    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !")]
+    CannotDecrypt {
+        realm: VlobID,
+        author: DeviceID,
+        timestamp: DateTime,
+        key_index: IndexInt,
+    },
+    #[error("Realm name certificate (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}")]
+    CleartextCorrupted {
         realm: VlobID,
         author: DeviceID,
         timestamp: DateTime,
@@ -68,79 +73,68 @@ pub(super) async fn decrypt_current_realm_name(
                 Some(certif) => certif,
             };
 
-            // 2) Retrieve the corresponding realm key
+            // 2) Decrypt the realm name
 
-            let realm_keys =
-                super::realm_keys_bundle::load_last_realm_keys_bundle(ops, store, realm_id)
-                    .await
-                    .map_err(|e| match e {
-                        LoadLastKeysBundleError::Offline => {
-                            CertifDecryptCurrentRealmNameError::Offline
-                        }
-                        LoadLastKeysBundleError::NotAllowed => {
-                            CertifDecryptCurrentRealmNameError::NotAllowed
-                        }
-                        LoadLastKeysBundleError::NoKey => {
-                            CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                                InvalidEncryptedRealmNameError::NonExistentKeyIndex {
-                                    realm: realm_id,
-                                    author: certif.author.to_owned(),
-                                    timestamp: certif.timestamp,
-                                    key_index: certif.key_index,
-                                },
-                            ))
-                        }
-                        LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                            CertifDecryptCurrentRealmNameError::InvalidKeysBundle(err)
-                        }
-                        LoadLastKeysBundleError::Internal(err) => err.into(),
-                    })?;
-            let key = match realm_keys.key_from_index(certif.key_index, Some(certif.timestamp)) {
-                Ok(key) => key,
-                Err(KeyFromIndexError::CorruptedKey) => {
-                    return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                            InvalidEncryptedRealmNameError::CorruptedKey {
-                                realm: realm_id,
-                                author: certif.author.to_owned(),
-                                timestamp: certif.timestamp,
-                                key_index: certif.key_index,
-                            },
-                        )),
-                    )
-                }
-                Err(KeyFromIndexError::KeyNotFound) => {
-                    return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                            InvalidEncryptedRealmNameError::NonExistentKeyIndex {
-                                realm: realm_id,
-                                author: certif.author.to_owned(),
-                                timestamp: certif.timestamp,
-                                key_index: certif.key_index,
-                            },
-                        )),
-                    )
-                }
-            };
+            let author = certif.author;
+            let key_index = certif.key_index;
+            let timestamp = certif.timestamp;
+            let encrypted = &certif.encrypted_name;
 
-            // 3) Finally decrypt & parse the realm name
-
-            let decrypted = match key.decrypt(&certif.encrypted_name) {
-                Ok(decrypted) => decrypted,
-                Err(_) => {
-                    return Err(
-                        CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                            InvalidEncryptedRealmNameError::Corrupted {
-                                realm: realm_id,
-                                author: certif.author.to_owned(),
-                                timestamp: certif.timestamp,
-                                key_index: certif.key_index,
-                                error: Box::new(DataError::Decryption),
-                            },
-                        )),
-                    )
+            let decrypted = realm_keys_bundle::decrypt_for_realm(
+                ops,
+                store,
+                EncrytionUsage::RealmRename,
+                realm_id,
+                key_index,
+                encrypted,
+            )
+            .await
+            .map_err(|err| match err {
+                CertifDecryptForRealmError::Stopped => CertifDecryptCurrentRealmNameError::Stopped,
+                CertifDecryptForRealmError::Offline => CertifDecryptCurrentRealmNameError::Offline,
+                CertifDecryptForRealmError::NotAllowed => {
+                    CertifDecryptCurrentRealmNameError::NotAllowed
                 }
-            };
+                CertifDecryptForRealmError::KeyNotFound => {
+                    CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
+                        InvalidEncryptedRealmNameError::NonExistentKeyIndex {
+                            realm: realm_id,
+                            author,
+                            timestamp,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedKey => {
+                    CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
+                        InvalidEncryptedRealmNameError::CorruptedKey {
+                            realm: realm_id,
+                            author,
+                            timestamp,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedData => {
+                    CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
+                        InvalidEncryptedRealmNameError::CannotDecrypt {
+                            realm: realm_id,
+                            author,
+                            timestamp,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifDecryptCurrentRealmNameError::InvalidKeysBundle(err)
+                }
+                CertifDecryptForRealmError::Internal(err) => err.into(),
+                // Error not actually used by `decrypt_for_realm`
+                CertifDecryptForRealmError::InvalidCertificate(_) => unreachable!(),
+            })?;
+
+            // 3) Finally parse the realm name
+
             let name = match std::str::from_utf8(&decrypted)
                 .ok()
                 .and_then(|decrypted_str| decrypted_str.parse().ok())
@@ -149,7 +143,7 @@ pub(super) async fn decrypt_current_realm_name(
                 None => {
                     return Err(
                         CertifDecryptCurrentRealmNameError::InvalidEncryptedRealmName(Box::new(
-                            InvalidEncryptedRealmNameError::Corrupted {
+                            InvalidEncryptedRealmNameError::CleartextCorrupted {
                                 realm: realm_id,
                                 author: certif.author.to_owned(),
                                 timestamp: certif.timestamp,

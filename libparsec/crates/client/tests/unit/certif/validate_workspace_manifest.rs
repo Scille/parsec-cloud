@@ -96,7 +96,8 @@ async fn non_existent_author(env: &TestbedEnv) {
         })
         .await;
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
-    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+    let (key_derivation, realm_key_index) = env.get_last_realm_key(realm_id);
+    let key = key_derivation.derive_secret_key_from_uuid(*realm_id);
 
     let alice = env.local_device("alice@dev1");
 
@@ -123,7 +124,8 @@ async fn non_existent_author(env: &TestbedEnv) {
             "alice@dev2".parse().unwrap(),
             0,
             now,
-            b"",
+            // Decryption is done first, only then the user is searched for
+            &key.encrypt(b""),
         )
         .await
         .unwrap_err();
@@ -136,7 +138,60 @@ async fn non_existent_author(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn corrupted(
+async fn cannot_decrypt(env: &TestbedEnv) {
+    let realm_id = env
+        .customize(|builder| {
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|event| event.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+    let (_, realm_key_index) = env.get_last_realm_key(realm_id);
+
+    let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
+    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
+    test_register_send_hook(
+        &env.discriminant_dir,
+        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
+            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
+                keys_bundle,
+                keys_bundle_access,
+            }
+        },
+    );
+
+    let err = ops
+        .validate_workspace_manifest(
+            env.get_last_realm_certificate_timestamp(realm_id),
+            env.get_last_common_certificate_timestamp(),
+            realm_id,
+            realm_key_index,
+            alice.device_id,
+            0,
+            now,
+            b"<dummy data>",
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(*boxed, InvalidManifestError::CannotDecrypt { .. })
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn cleartext_corrupted(
     #[values("dummy", "parent_not_pointing_on_itself")] kind: &str,
     env: &TestbedEnv,
 ) {
@@ -150,14 +205,15 @@ async fn corrupted(
             realm_id
         })
         .await;
-    let (realm_last_key, realm_key_index) = env.get_last_realm_key(realm_id);
+    let (realm_last_key_derivation, realm_key_index) = env.get_last_realm_key(realm_id);
+    let key = realm_last_key_derivation.derive_secret_key_from_uuid(*realm_id);
 
     let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
 
     let alice = env.local_device("alice@dev1");
 
     let encrypted = match kind {
-        "dummy" => b"<dummy data>".to_vec(),
+        "dummy" => key.encrypt(b"<dummy data>"),
         "parent_not_pointing_on_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FolderManifest {
@@ -171,7 +227,7 @@ async fn corrupted(
                 updated: now,
                 children: Default::default(),
             };
-            manifest.dump_sign_and_encrypt(&alice.signing_key, realm_last_key)
+            manifest.dump_sign_and_encrypt(&alice.signing_key, &key)
         }
         unknown => panic!("Unknown kind {}", unknown),
     };
@@ -207,7 +263,7 @@ async fn corrupted(
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(*boxed, InvalidManifestError::Corrupted { .. })
+        if matches!(*boxed, InvalidManifestError::CleartextCorrupted { .. })
     );
 }
 

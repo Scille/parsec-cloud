@@ -39,7 +39,8 @@ async fn generate(env: &TestbedEnv) {
 
     let link = ops.generate_path_addr(&target_path).await.unwrap();
 
-    let (key, expected_key_index) = env.get_last_realm_key(wksp1_id);
+    let (key_derivation, expected_key_index) = env.get_last_realm_key(wksp1_id);
+    let key = key_derivation.derive_secret_key_from_uuid(PATH_URL_KEY_DERIVATION_UUID);
 
     p_assert_eq!(link.workspace_id(), wksp1_id);
     p_assert_eq!(link.key_index(), expected_key_index);
@@ -66,7 +67,8 @@ async fn decrypt_path(#[values(true, false)] key_in_storage: bool, env: &Testbed
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let link = {
-        let (key, key_index) = env.get_last_realm_key(wksp1_id);
+        let (key_derivation, key_index) = env.get_last_realm_key(wksp1_id);
+        let key = key_derivation.derive_secret_key_from_uuid(PATH_URL_KEY_DERIVATION_UUID);
         let encrypted_path = key.encrypt(b"/foo/bar.txt");
         ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),
@@ -154,7 +156,8 @@ async fn decrypt_missing_key_and_offline(env: &TestbedEnv) {
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let link = {
-        let (key, key_index) = env.get_last_realm_key(wksp1_id);
+        let (key_derivation, key_index) = env.get_last_realm_key(wksp1_id);
+        let key = key_derivation.derive_secret_key_from_uuid(PATH_URL_KEY_DERIVATION_UUID);
         let encrypted_path = key.encrypt(b"/foo/bar.txt");
         ParsecWorkspacePathAddr::new(
             alice.organization_addr.clone(),

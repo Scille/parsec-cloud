@@ -110,8 +110,11 @@ async fn realm_initial_key_rotation_idempotent(
     ops: &CertifOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
-    let key = SecretKey::generate();
-    let key_canary = key.encrypt(b"");
+    let key = KeyDerivation::generate();
+    let key_canary = {
+        let key = key.derive_secret_key_from_uuid(CANARY_KEY_DERIVATION_UUID);
+        key.encrypt(b"")
+    };
     let mut timestamp = ops.device.now();
     loop {
         let certif = RealmKeyRotationCertificate {
@@ -119,7 +122,7 @@ async fn realm_initial_key_rotation_idempotent(
             timestamp,
             realm_id,
             key_index: 1,
-            encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+            encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
             hash_algorithm: HashAlgorithm::Sha256,
             key_canary: key_canary.clone(),
         }

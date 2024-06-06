@@ -29,7 +29,7 @@ def wksp1_key_rotation_certificate(coolorg: CoolorgRpcClients) -> RealmKeyRotati
         timestamp=DateTime.now(),
         realm_id=coolorg.wksp1_id,
         key_index=2,
-        encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
         hash_algorithm=HashAlgorithm.SHA256,
         key_canary=SecretKey.generate().encrypt(b""),
     )
@@ -48,7 +48,7 @@ def patch_realm_key_rotation_certificate(
         timestamp=timestamp or certif.timestamp,
         realm_id=realm_id or certif.realm_id,
         key_index=key_index if key_index is not None else certif.key_index,
-        encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+        encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
         hash_algorithm=HashAlgorithm.SHA256,
         key_canary=SecretKey.generate().encrypt(b""),
     )
@@ -352,7 +352,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,
             hash_algorithm=HashAlgorithm.SHA256,
-            encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+            encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
             key_index=2,
             realm_id=coolorg.wksp1_id,
             key_canary=SecretKey.generate().encrypt(b""),

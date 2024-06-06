@@ -3,7 +3,7 @@
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::prelude::*;
 
-use crate::certif::realm_keys_bundle::{self, KeyFromIndexError, LoadLastKeysBundleError};
+use crate::{certif::realm_keys_bundle, CertifDecryptForRealmError, EncrytionUsage};
 
 use super::{
     store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
@@ -12,8 +12,17 @@ use super::{
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidManifestError {
-    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}) is corrupted: {error}")]
-    Corrupted {
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}): cannot be decrypted by key index {key_index} !")]
+    CannotDecrypt {
+        realm: VlobID,
+        vlob: VlobID,
+        version: VersionInt,
+        author: DeviceID,
+        timestamp: DateTime,
+        key_index: IndexInt,
+    },
+    #[error("Manifest from vlob `{vlob}` version {version} (in realm `{realm}`, create by `{author}` on {timestamp}) can be decrypted but its content is corrupted: {error}")]
+    CleartextCorrupted {
         realm: VlobID,
         vlob: VlobID,
         version: VersionInt,
@@ -101,6 +110,9 @@ pub(super) async fn validate_user_manifest(
     timestamp: DateTime,
     encrypted: &[u8],
 ) -> Result<UserManifest, CertifValidateManifestError> {
+    let realm_id = ops.device.user_realm_id;
+    let vlob_id = ops.device.user_realm_id;
+
     let needed_timestamps = PerTopicLastTimestamps::new_for_common_and_realm(
         needed_common_certificate_timestamp,
         ops.device.user_realm_id,
@@ -109,18 +121,33 @@ pub(super) async fn validate_user_manifest(
 
     ops.store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
-            // Do the actual validation
+            // 1) Decrypt the vlob
+
+            let cleartext = &ops.device.user_realm_key.decrypt(encrypted).map_err(|_| {
+                CertifValidateManifestError::InvalidManifest(Box::new(
+                    InvalidManifestError::CannotDecrypt {
+                        realm: realm_id,
+                        vlob: vlob_id,
+                        version,
+                        author: author.to_owned(),
+                        timestamp,
+                        // User realm never use key rotation
+                        key_index: 0,
+                    },
+                ))
+            })?;
+
+            // 2) Deserialize the manifest and do the additional validations
 
             let res = validate_manifest(
                 store,
-                ops.device.user_realm_id,
-                &ops.device.user_realm_key,
-                ops.device.user_realm_id,
+                realm_id,
+                vlob_id,
                 author,
                 version,
                 timestamp,
-                encrypted,
-                UserManifest::decrypt_verify_and_load,
+                cleartext,
+                UserManifest::verify_and_load,
             )
             .await?;
 
@@ -159,74 +186,83 @@ pub(super) async fn validate_workspace_manifest(
 
     ops.store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
-            // 1) Retrieve the realm key
+            // 1) Decrypt the vlob
 
-            let realm_keys = realm_keys_bundle::load_last_realm_keys_bundle(ops, store, realm_id)
-                .await
-                .map_err(|e| match e {
-                    LoadLastKeysBundleError::Offline => CertifValidateManifestError::Offline,
-                    LoadLastKeysBundleError::NotAllowed => CertifValidateManifestError::NotAllowed,
-                    LoadLastKeysBundleError::NoKey => {
-                        let err = Box::new(InvalidManifestError::NonExistentKeyIndex {
+            let cleartext = realm_keys_bundle::decrypt_for_realm(
+                ops,
+                store,
+                EncrytionUsage::Vlob(realm_id),
+                realm_id,
+                key_index,
+                encrypted,
+            )
+            .await
+            .map_err(|err| match err {
+                CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
+                CertifDecryptForRealmError::Offline => CertifValidateManifestError::Offline,
+                CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::KeyNotFound => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        });
-                        CertifValidateManifestError::InvalidManifest(err)
-                    }
-                    LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                        CertifValidateManifestError::InvalidKeysBundle(err)
-                    }
-                    LoadLastKeysBundleError::Internal(err) => err.into(),
-                })?;
-            let key = realm_keys
-                .key_from_index(key_index, Some(timestamp))
-                .map_err(|e| match e {
-                    KeyFromIndexError::CorruptedKey => {
-                        CertifValidateManifestError::InvalidManifest(Box::new(
-                            InvalidManifestError::CorruptedKey {
-                                realm: realm_id,
-                                vlob: vlob_id,
-                                version,
-                                author: author.to_owned(),
-                                timestamp,
-                                key_index,
-                            },
-                        ))
-                    }
-                    KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
-                        Box::new(InvalidManifestError::NonExistentKeyIndex {
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedKey => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::CorruptedKey {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        }),
-                    ),
-                })?;
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedData => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::CannotDecrypt {
+                            realm: realm_id,
+                            vlob: vlob_id,
+                            version,
+                            author: author.to_owned(),
+                            timestamp,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::InvalidCertificate(err) => {
+                    CertifValidateManifestError::InvalidCertificate(err)
+                }
+                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifValidateManifestError::InvalidKeysBundle(err)
+                }
+                CertifDecryptForRealmError::Internal(err) => err.into(),
+            })?;
 
-            // 2) Do the actual validation
+            // 2) Deserialize the manifest and do the additional validations
 
             let res = validate_manifest(
                 store,
                 realm_id,
-                key,
                 vlob_id,
                 author,
                 version,
                 timestamp,
-                encrypted,
-                FolderManifest::decrypt_verify_and_load,
+                &cleartext,
+                FolderManifest::verify_and_load,
             )
             .await?;
 
             // Last check: root folder's parent must point to itself
             if res.parent != res.id {
-                let what = Box::new(InvalidManifestError::Corrupted {
+                let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
                     version,
@@ -271,68 +307,77 @@ pub(super) async fn validate_child_manifest(
 
     ops.store
         .for_read_with_requirements(ops, &needed_timestamps, |store| async move {
-            // 1) Retrieve the realm key
+            // 1) Decrypt the vlob
 
-            let realm_keys = realm_keys_bundle::load_last_realm_keys_bundle(ops, store, realm_id)
-                .await
-                .map_err(|e| match e {
-                    LoadLastKeysBundleError::Offline => CertifValidateManifestError::Offline,
-                    LoadLastKeysBundleError::NotAllowed => CertifValidateManifestError::NotAllowed,
-                    LoadLastKeysBundleError::NoKey => {
-                        let err = Box::new(InvalidManifestError::NonExistentKeyIndex {
+            let cleartext = realm_keys_bundle::decrypt_for_realm(
+                ops,
+                store,
+                EncrytionUsage::Vlob(vlob_id),
+                realm_id,
+                key_index,
+                encrypted,
+            )
+            .await
+            .map_err(|err| match err {
+                CertifDecryptForRealmError::Stopped => CertifValidateManifestError::Stopped,
+                CertifDecryptForRealmError::Offline => CertifValidateManifestError::Offline,
+                CertifDecryptForRealmError::NotAllowed => CertifValidateManifestError::NotAllowed,
+                CertifDecryptForRealmError::KeyNotFound => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::NonExistentKeyIndex {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        });
-                        CertifValidateManifestError::InvalidManifest(err)
-                    }
-                    LoadLastKeysBundleError::InvalidKeysBundle(err) => {
-                        CertifValidateManifestError::InvalidKeysBundle(err)
-                    }
-                    LoadLastKeysBundleError::Internal(err) => err.into(),
-                })?;
-            let key = realm_keys
-                .key_from_index(key_index, Some(timestamp))
-                .map_err(|e| match e {
-                    KeyFromIndexError::CorruptedKey => {
-                        CertifValidateManifestError::InvalidManifest(Box::new(
-                            InvalidManifestError::CorruptedKey {
-                                realm: realm_id,
-                                vlob: vlob_id,
-                                version,
-                                author: author.to_owned(),
-                                timestamp,
-                                key_index,
-                            },
-                        ))
-                    }
-                    KeyFromIndexError::KeyNotFound => CertifValidateManifestError::InvalidManifest(
-                        Box::new(InvalidManifestError::NonExistentKeyIndex {
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedKey => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::CorruptedKey {
                             realm: realm_id,
                             vlob: vlob_id,
                             version,
                             author: author.to_owned(),
                             timestamp,
                             key_index,
-                        }),
-                    ),
-                })?;
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::CorruptedData => {
+                    CertifValidateManifestError::InvalidManifest(Box::new(
+                        InvalidManifestError::CannotDecrypt {
+                            realm: realm_id,
+                            vlob: vlob_id,
+                            version,
+                            author: author.to_owned(),
+                            timestamp,
+                            key_index,
+                        },
+                    ))
+                }
+                CertifDecryptForRealmError::InvalidCertificate(err) => {
+                    CertifValidateManifestError::InvalidCertificate(err)
+                }
+                CertifDecryptForRealmError::InvalidKeysBundle(err) => {
+                    CertifValidateManifestError::InvalidKeysBundle(err)
+                }
+                CertifDecryptForRealmError::Internal(err) => err.into(),
+            })?;
 
-            // 2) Do the actual validation
+            // 2) Deserialize the manifest and do the additional validations
 
             let res = validate_manifest(
                 store,
                 realm_id,
-                key,
                 vlob_id,
                 author,
                 version,
                 timestamp,
-                encrypted,
-                ChildManifest::decrypt_verify_and_load,
+                &cleartext,
+                ChildManifest::verify_and_load,
             )
             .await?;
 
@@ -342,7 +387,7 @@ pub(super) async fn validate_child_manifest(
                 ChildManifest::Folder(manifest) => manifest.id == manifest.parent,
             };
             if same_id_and_parent {
-                let what = Box::new(InvalidManifestError::Corrupted {
+                let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
                     version,
@@ -370,15 +415,13 @@ pub(super) async fn validate_child_manifest(
 async fn validate_manifest<M>(
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
-    key: &SecretKey,
     vlob_id: VlobID,
     author: DeviceID,
     version: VersionInt,
     timestamp: DateTime,
-    encrypted: &[u8],
-    decrypt_verify_and_load: impl FnOnce(
+    cleartext: &[u8],
+    verify_and_load: impl FnOnce(
         &[u8],
-        &SecretKey,
         &VerifyKey,
         DeviceID,
         DateTime,
@@ -443,9 +486,8 @@ async fn validate_manifest<M>(
 
     // 2) Actually validate the manifest
 
-    let manifest = decrypt_verify_and_load(
-        encrypted,
-        key,
+    let manifest = verify_and_load(
+        cleartext,
         &author_certif.verify_key,
         author,
         timestamp,
@@ -453,7 +495,7 @@ async fn validate_manifest<M>(
         Some(version),
     )
     .map_err(|error| {
-        let what = Box::new(InvalidManifestError::Corrupted {
+        let what = Box::new(InvalidManifestError::CleartextCorrupted {
             realm: realm_id,
             vlob: vlob_id,
             version,

@@ -664,9 +664,9 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     SecretKeyAlgorithm,
     libparsec_types::SecretKeyAlgorithm,
     [
-        "XSALSA20_POLY1305",
-        xsalsa20_poly1305,
-        libparsec_types::SecretKeyAlgorithm::Xsalsa20Poly1305
+        "BLAKE2B_XSALSA20_POLY1305",
+        blake2b_xsalsa20_poly1305,
+        libparsec_types::SecretKeyAlgorithm::Blake2bXsalsa20Poly1305
     ],
 );
 

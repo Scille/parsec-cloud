@@ -10,17 +10,44 @@ use crate::InvalidCertificateError;
 
 use super::{encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertifOps};
 
+#[derive(Debug, Clone, Copy)]
+pub enum EncrytionUsage {
+    /// Canary is the encrypted payload within the key rotation certificate used to
+    /// validate the key from the keys bundle is correct.
+    Canary,
+    /// Encrypted path in a `ParsecWorkspacePathAddr` URL.
+    PathUrl,
+    /// Encrypted realm name in a realm name certificate.
+    RealmRename,
+    /// Encrypted manifest.
+    Vlob(VlobID),
+    /// Encrypted block.
+    Block(BlockID),
+}
+
+impl EncrytionUsage {
+    pub fn key_derivation_uuid(&self) -> uuid::Uuid {
+        match self {
+            EncrytionUsage::Canary => CANARY_KEY_DERIVATION_UUID,
+            EncrytionUsage::RealmRename => REALM_RENAME_KEY_DERIVATION_UUID,
+            EncrytionUsage::PathUrl => PATH_URL_KEY_DERIVATION_UUID,
+            EncrytionUsage::Vlob(id) => **id,
+            EncrytionUsage::Block(id) => **id,
+        }
+    }
+}
+
 #[derive(Debug)]
 enum ValidatedKey {
     Valid {
-        key: SecretKey,
+        key: KeyDerivation,
         timestamp: DateTime,
     },
     /// Key has failed to decrypt the canary of the corresponding key rotation certificate.
     /// As its name implies, the corrupted key should not be used. But we need to keep it
     /// nevertheless to be able to generate the next keys bundle.
     Corrupted {
-        corrupted_key_dont_use_me: SecretKey,
+        corrupted_key_dont_use_me: KeyDerivation,
     },
 }
 
@@ -58,7 +85,7 @@ impl RealmKeys {
     }
 
     /// Return `None` if no valid key exists :(
-    pub fn last_valid_key(&self) -> Option<(&SecretKey, IndexInt)> {
+    pub fn last_valid_key(&self) -> Option<(&KeyDerivation, IndexInt)> {
         self.keys
             .iter()
             .enumerate()
@@ -73,7 +100,7 @@ impl RealmKeys {
         &self,
         key_index: IndexInt,
         up_to: Option<DateTime>,
-    ) -> Result<&SecretKey, KeyFromIndexError> {
+    ) -> Result<&KeyDerivation, KeyFromIndexError> {
         let key = (key_index as usize)
             .checked_sub(1)
             .and_then(|index| self.keys.get(index))
@@ -95,7 +122,7 @@ impl RealmKeys {
         &self,
         author: DeviceID,
         timestamp: DateTime,
-        next_key: SecretKey,
+        next_key: KeyDerivation,
     ) -> RealmKeysBundle {
         let keys = {
             let mut keys = Vec::with_capacity(self.keys.len() + 1);
@@ -119,7 +146,7 @@ impl RealmKeys {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub(super) enum LoadLastKeysBundleError {
+enum LoadLastKeysBundleError {
     #[error("Cannot reach the server")]
     Offline,
     #[error("Not allowed to access this realm")]
@@ -149,7 +176,7 @@ impl From<ConnectionError> for LoadLastKeysBundleError {
 /// The idea here is to trust the last keys bundle author of having done his best to
 /// provide us with valid keys (and if something is corrupted, an OWNER should do
 /// a healing key rotation soon enough in theory).
-pub(super) async fn load_last_realm_keys_bundle(
+async fn load_last_realm_keys_bundle(
     ops: &CertifOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
@@ -785,17 +812,18 @@ async fn validate_keys_bundle(
         .keys()
         .iter()
         .zip(key_canaries)
-        .map(
-            |(key, (canary, certif_timestamp))| match key.decrypt(canary) {
+        .map(|(key_derivation, (canary, certif_timestamp))| {
+            let key = key_derivation.derive_secret_key_from_uuid(CANARY_KEY_DERIVATION_UUID);
+            match key.decrypt(canary) {
                 Ok(_) => ValidatedKey::Valid {
-                    key: key.to_owned(),
+                    key: key_derivation.to_owned(),
                     timestamp: certif_timestamp,
                 },
                 Err(_) => ValidatedKey::Corrupted {
-                    corrupted_key_dont_use_me: key.to_owned(),
+                    corrupted_key_dont_use_me: key_derivation.to_owned(),
                 },
-            },
-        )
+            }
+        })
         .collect();
 
     // Sanity check to ensure the correct number of canaries has been provided
@@ -830,6 +858,7 @@ pub enum CertifEncryptForRealmError {
 pub(super) async fn encrypt_for_realm(
     ops: &CertifOps,
     store: &mut CertificatesStoreReadGuard<'_>,
+    usage: EncrytionUsage,
     realm_id: VlobID,
     data: &[u8],
 ) -> Result<(Vec<u8>, IndexInt), CertifEncryptForRealmError> {
@@ -847,9 +876,11 @@ pub(super) async fn encrypt_for_realm(
             }
         })?;
 
-    let (key, key_index) = realm_keys
+    let (key_derivation, key_index) = realm_keys
         .last_valid_key()
         .ok_or(CertifEncryptForRealmError::NoKey)?;
+
+    let key = key_derivation.derive_secret_key_from_uuid(usage.key_derivation_uuid());
 
     let encrypted = key.encrypt(data);
 
@@ -872,6 +903,9 @@ pub enum CertifDecryptForRealmError {
     CorruptedKey,
     #[error("Cannot decrypt data")]
     CorruptedData,
+    // Note this error is not used here, but in `CertifOps::decrypt_opaque_data_for_realm`
+    // that is a wrapper around `decrypt_for_realm`, so it's convenient to have it here
+    // in order to avoid yet another error type conversion.
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
@@ -883,6 +917,7 @@ pub enum CertifDecryptForRealmError {
 pub(super) async fn decrypt_for_realm(
     ops: &CertifOps,
     store: &mut CertificatesStoreReadGuard<'_>,
+    usage: EncrytionUsage,
     realm_id: VlobID,
     key_index: IndexInt,
     encrypted: &[u8],
@@ -899,12 +934,21 @@ pub(super) async fn decrypt_for_realm(
             LoadLastKeysBundleError::Internal(err) => err.into(),
         })?;
 
-    let key = realm_keys
+    let key_derivation = realm_keys
         .key_from_index(key_index, None)
         .map_err(|err| match err {
             KeyFromIndexError::CorruptedKey => CertifDecryptForRealmError::CorruptedKey,
             KeyFromIndexError::KeyNotFound => CertifDecryptForRealmError::KeyNotFound,
         })?;
+
+    let key = key_derivation.derive_secret_key_from_uuid(usage.key_derivation_uuid());
+    println!(
+        "key deriv: {:?} // {:?} // {:?}",
+        key_derivation.as_ref(),
+        usage,
+        usage.key_derivation_uuid()
+    );
+    println!("key: {:?}", key.as_ref());
 
     key.decrypt(encrypted)
         .map_err(|_| CertifDecryptForRealmError::CorruptedData)

@@ -63,7 +63,7 @@ async def test_authenticated_vlob_read_versions_ok(
             author=coolorg.alice.device_id,
             timestamp=dt2,
             hash_algorithm=HashAlgorithm.SHA256,
-            encryption_algorithm=SecretKeyAlgorithm.XSALSA20_POLY1305,
+            encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
             key_index=2,
             realm_id=coolorg.wksp1_id,
             key_canary=b"",

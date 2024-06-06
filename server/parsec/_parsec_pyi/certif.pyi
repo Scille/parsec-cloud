@@ -255,7 +255,7 @@ class RealmNameCertificate:
         ...
 
 class SecretKeyAlgorithm:
-    XSALSA20_POLY1305: SecretKeyAlgorithm
+    BLAKE2B_XSALSA20_POLY1305: SecretKeyAlgorithm
     VALUES: tuple[SecretKeyAlgorithm, ...]
 
     @classmethod
