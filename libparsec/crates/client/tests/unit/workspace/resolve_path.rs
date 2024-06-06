@@ -119,7 +119,7 @@ async fn inconsistent_path_parent_mismatch(
         "self_referencing" => (
             wksp1_bar_txt_id,
             ResolvePathError::Internal(
-                DataError::Integrity {
+                DataError::DataIntegrity {
                     data_type: "libparsec_types::local_manifest::LocalFileManifest",
                     invariant: "id and parent are different",
                 }

@@ -160,7 +160,7 @@ impl StateMachineTest for FileOperationStateMachine {
         ref_state: &<Self::Reference as ReferenceStateMachine>::State,
     ) {
         // 1. Manifest integrity
-        state.manifest.check_integrity().unwrap();
+        state.manifest.check_data_integrity().unwrap();
         // 2. Same size for the manifest and the cursor
         assert_eq!(ref_state.cursor.position(), state.manifest.size);
         // 3. Remote conversion is OK
@@ -170,7 +170,7 @@ impl StateMachineTest for FileOperationStateMachine {
                 .to_remote(state.device_id, state.time_provider.now())
                 .unwrap();
             LocalFileManifest::from_remote(remote)
-                .check_integrity()
+                .check_data_integrity()
                 .unwrap();
         }
         // 3. No corruption or leaks in the storage

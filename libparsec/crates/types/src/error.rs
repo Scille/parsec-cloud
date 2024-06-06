@@ -72,7 +72,7 @@ pub enum DataError {
     UnexpectedVersion { expected: u32, got: u32 },
 
     #[error("Broken invariant in {data_type} content: {invariant}")]
-    Integrity {
+    DataIntegrity {
         data_type: &'static str,
         invariant: &'static str,
     },

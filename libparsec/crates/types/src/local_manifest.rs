@@ -39,7 +39,7 @@ macro_rules! impl_local_manifest_load {
             ) -> libparsec_types::DataResult<Self> {
                 let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
                 let result = format_vx_load(&serialized);
-                result.and_then(|manifest: Self| manifest.check_integrity().map(|_| manifest))
+                result.and_then(|manifest: Self| manifest.check_data_integrity().map(|_| manifest))
             }
         }
     };
@@ -126,7 +126,7 @@ impl Chunk {
             access: None,
         };
         // Sanity check
-        chunk.check_integrity().expect("Chunk integrity");
+        chunk.check_data_integrity().expect("Chunk integrity");
         chunk
     }
 
@@ -232,23 +232,23 @@ impl Chunk {
     }
 
     #[allow(clippy::nonminimal_bool)]
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         // As explained above, the following rule applies:
         //   raw_offset <= start < stop <= raw_offset + raw_size
         if !(self.raw_offset <= self.start) {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "raw_offset <= start",
             });
         }
         if !(self.start < self.stop.get()) {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "start < stop",
             });
         }
         if !(self.stop.get() <= self.raw_offset + self.raw_size.get()) {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "stop <= raw_offset + raw_size",
             });
@@ -356,12 +356,12 @@ impl LocalFileManifest {
     /// - be internally consistent
     /// Also the last block span should not be empty.
     /// Note that they do not have to be contiguous.
-    /// Those checks have to remain compatible with `FileManifest::check_integrity`.
+    /// Those checks have to remain compatible with `FileManifest::check_data_integrity`.
     /// Also, the id and parent id should be different so the manifest does not point to itself.
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
@@ -376,11 +376,11 @@ impl LocalFileManifest {
 
             for chunk in chunks {
                 // Check that the chunk is internally consistent
-                chunk.check_integrity()?;
+                chunk.check_data_integrity()?;
 
                 // Check that the chunk belong to the block span
                 if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
-                    return Err(DataError::Integrity {
+                    return Err(DataError::DataIntegrity {
                         data_type: std::any::type_name::<Self>(),
                         invariant: "Chunk belong to the block span",
                     });
@@ -388,7 +388,7 @@ impl LocalFileManifest {
 
                 // Check that the chunks are ordered and do not overlap
                 if current > chunk.start {
-                    return Err(DataError::Integrity {
+                    return Err(DataError::DataIntegrity {
                         data_type: std::any::type_name::<Self>(),
                         invariant: "Chunks are ordered and do not overlap",
                     });
@@ -404,7 +404,7 @@ impl LocalFileManifest {
 
         // Check that the file size is consistent with the last chunk
         if current > self.size {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "File size is consistent with the last chunk",
             });
@@ -442,7 +442,7 @@ impl LocalFileManifest {
         // Remote manifests comes from the certificate ops, so they are expected
         // to be validated using `CertifOps::validate_child_manifest`.
         // However, we still check the content integrity of the local manifest just in case.
-        manifest.check_integrity().expect("Manifest integrity");
+        manifest.check_data_integrity().expect("Manifest integrity");
         manifest
     }
 
@@ -452,7 +452,7 @@ impl LocalFileManifest {
         timestamp: DateTime,
     ) -> Result<FileManifest, LocalFileManifestToRemoteError> {
         // Sanity check: make sure we don't upload an invalid manifest
-        self.check_integrity()
+        self.check_data_integrity()
             .expect("Local file manifest content integrity");
 
         let blocks = self
@@ -491,7 +491,7 @@ impl LocalFileManifest {
         };
         // The content integrity check is also done on the remote manifest, just in case
         manifest
-            .check_integrity()
+            .check_data_integrity()
             .expect("File manifest content integrity");
         Ok(manifest)
     }
@@ -577,10 +577,10 @@ impl LocalFolderManifest {
         }
     }
 
-    pub fn check_integrity_as_child(&self) -> DataResult<()> {
+    pub fn check_data_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different for child manifest",
             });
@@ -588,10 +588,10 @@ impl LocalFolderManifest {
         Ok(())
     }
 
-    pub fn check_integrity_as_root(&self) -> DataResult<()> {
+    pub fn check_data_integrity_as_root(&self) -> DataResult<()> {
         // Check that id and parent are the same
         if self.base.id != self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are the same for root manifest",
             });
@@ -897,7 +897,7 @@ impl LocalUserManifest {
         }
     }
 
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -987,10 +987,10 @@ impl LocalChildManifest {
         }
     }
 
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         match self {
-            Self::File(manifest) => manifest.check_integrity()?,
-            Self::Folder(manifest) => manifest.check_integrity_as_child()?,
+            Self::File(manifest) => manifest.check_data_integrity()?,
+            Self::Folder(manifest) => manifest.check_data_integrity_as_child()?,
         }
         Ok(())
     }
@@ -1045,8 +1045,8 @@ impl LocalWorkspaceManifest {
         ))
     }
 
-    fn check_integrity(&self) -> DataResult<()> {
-        self.0.check_integrity_as_root()
+    fn check_data_integrity(&self) -> DataResult<()> {
+        self.0.check_data_integrity_as_root()
     }
 }
 

@@ -280,12 +280,12 @@ impl FileManifest {
     /// - not share the same block span
     /// - not span over multiple block spans
     /// Note that they do not have to be contiguous.
-    /// Those checks have to remain compatible with `LocalFileManifest::check_integrity`.
+    /// Those checks have to remain compatible with `LocalFileManifest::check_data_integrity`.
     /// Also, the id and parent id should be different so the manifest does not point to itself.
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different",
             });
@@ -297,7 +297,7 @@ impl FileManifest {
         for block in &self.blocks {
             // Check that blocks are ordered and not overlapping
             if current_offset > block.offset {
-                return Err(DataError::Integrity {
+                return Err(DataError::DataIntegrity {
                     data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are ordered and not overlapping",
                 });
@@ -307,7 +307,7 @@ impl FileManifest {
             // Check that blocks are not sharing the same block span
             let block_index = block.offset / self.blocksize.inner();
             if current_block_index > block_index {
-                return Err(DataError::Integrity {
+                return Err(DataError::DataIntegrity {
                     data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are not sharing the same block span",
                 });
@@ -317,7 +317,7 @@ impl FileManifest {
             // Check that blocks are not spanning over multiple block spans
             let last_block_index = (block.offset + block.size.get() - 1) / self.blocksize.inner();
             if last_block_index != block_index {
-                return Err(DataError::Integrity {
+                return Err(DataError::DataIntegrity {
                     data_type: std::any::type_name::<Self>(),
                     invariant: "blocks are not spanning over multiple block spans",
                 });
@@ -325,7 +325,7 @@ impl FileManifest {
         }
         // Check that the file size is not exceeded
         if current_offset > self.size {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "file size is not exceeded",
             });
@@ -392,10 +392,10 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
-    pub fn check_integrity_as_child(&self) -> DataResult<()> {
+    pub fn check_data_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are different for child manifest",
             });
@@ -403,10 +403,10 @@ impl FolderManifest {
         Ok(())
     }
 
-    pub fn check_integrity_as_root(&self) -> DataResult<()> {
+    pub fn check_data_integrity_as_root(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id != self.parent {
-            return Err(DataError::Integrity {
+            return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "id and parent are the same for root manifest",
             });
@@ -481,10 +481,10 @@ pub enum ChildManifest {
 }
 
 impl ChildManifest {
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
         match self {
-            Self::File(file) => file.check_integrity(),
-            Self::Folder(folder) => folder.check_integrity_as_child(),
+            Self::File(file) => file.check_data_integrity(),
+            Self::Folder(folder) => folder.check_data_integrity_as_child(),
         }
     }
 

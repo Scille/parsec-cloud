@@ -1773,7 +1773,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 
     // 0) Small sanity check: ensure there is enough shares for the threshold
 
-    if let Err(err) = cooked.check_integrity() {
+    if let Err(err) = cooked.check_data_integrity() {
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::Corrupted { hint, error: err });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
