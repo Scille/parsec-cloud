@@ -67,6 +67,7 @@ if (!lock) {
     setupContentSecurityPolicy(myCapacitorApp.getCustomURLScheme());
     // Initialize our app, build windows, and load content.
     await myCapacitorApp.init();
+
     // Check for updates if we are in a packaged app.
     // autoUpdater.checkForUpdatesAndNotify();
     process.on('SIGINT', () => {
@@ -174,4 +175,8 @@ ipcMain.on(PageToWindowChannel.PrepareUpdate, async () => {
 
 ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'warn' | 'error', message: string) => {
   myCapacitorApp.log(level, message);
+});
+
+ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
+  myCapacitorApp.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
 });

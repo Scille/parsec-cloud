@@ -9,6 +9,7 @@ export enum PageToWindowChannel {
   UpdateApp = 'parsec-update-app',
   PrepareUpdate = 'parsec-prepare-update',
   Log = 'parsec-log',
+  PageIsInitialized = 'parsec-page-is-initialized',
 }
 
 export enum WindowToPageChannel {
@@ -17,4 +18,5 @@ export enum WindowToPageChannel {
   OpenLink = 'parsec-open-link',
   CloseRequest = 'parsec-close-request',
   CleanUpBeforeUpdate = 'parsec-clean-up-before-update',
+  IsDevMode = 'parsec-is-dev-mode',
 }

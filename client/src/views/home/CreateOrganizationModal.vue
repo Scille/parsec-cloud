@@ -221,7 +221,8 @@ enum CreateOrganizationStep {
   FinishStep = 7,
 }
 
-const DEFAULT_SAAS_ADDR = 'parsec3://saas-demo-v3-mightyfairy.parsec.cloud/';
+const DEFAULT_SAAS_ADDR = 'parsec3://saas-v3.parsec.cloud/';
+const TEST_SERVER_ADDR = 'parsec3://saas-demo-v3-mightyfairy.parsec.cloud/';
 
 const pageStep = ref(CreateOrganizationStep.OrgNameStep);
 const orgName = ref('');
@@ -333,6 +334,13 @@ function canClose(): boolean {
   return ![CreateOrganizationStep.SpinnerStep, CreateOrganizationStep.FinishStep].includes(pageStep.value);
 }
 
+function getSaasServer(): string {
+  if (window.isDev()) {
+    return TEST_SERVER_ADDR;
+  }
+  return DEFAULT_SAAS_ADDR;
+}
+
 const canGoForward = asyncComputed(async () => {
   // No reason other than making vue watch the variable so that this function is called
   if (fieldsUpdated.value) {
@@ -401,7 +409,7 @@ async function nextStep(): Promise<void> {
     }
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
-    const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.serverAddr;
+    const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? getSaasServer() : serverChoice.value.serverAddr;
 
     const deviceName = await getDefaultDeviceName();
     const strategy = authChoice.value.getSaveStrategy();
