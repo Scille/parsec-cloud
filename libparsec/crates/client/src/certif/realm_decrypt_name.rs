@@ -150,7 +150,10 @@ pub(super) async fn decrypt_current_realm_name(
                                 author: certif.author.to_owned(),
                                 timestamp: certif.timestamp,
                                 key_index: certif.key_index,
-                                error: Box::new(DataError::DataInconsistency),
+                                error: Box::new(DataError::BadSerialization {
+                                    format: None,
+                                    step: "cleartext entry name deserialization",
+                                }),
                             },
                         )),
                     )

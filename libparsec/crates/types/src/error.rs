@@ -37,10 +37,6 @@ pub enum DataError {
     #[error("Invalid signature")]
     Signature,
 
-    // vxgmichel is going to improve this ;-p
-    #[error("Inconsistent data")]
-    DataInconsistency,
-
     #[error("Invalid author: expected `{expected}`, got `{}`", match .got { Some(got) => got.to_string(), None => "None".to_string() })]
     UnexpectedAuthor {
         expected: DeviceID,

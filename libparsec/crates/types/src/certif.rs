@@ -983,12 +983,31 @@ impl_unsecure_dump!(ShamirRecoveryBriefCertificate);
 impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
 
 impl ShamirRecoveryBriefCertificate {
+    pub fn check_integrity(&self) -> DataResult<()> {
+        let total_shares = {
+            let mut total_shares: u64 = 0;
+            for shares in self.per_recipient_shares.values() {
+                total_shares += u64::from(*shares);
+            }
+            total_shares
+        };
+        if u64::from(self.threshold) > total_shares {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
+                invariant: "threshold <= total_shares",
+            });
+        }
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
     ) -> DataResult<Self> {
         let r = verify_and_load::<Self>(signed, author_verify_key)?;
+
+        r.check_integrity()?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {

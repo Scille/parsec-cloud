@@ -1773,19 +1773,9 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 
     // 0) Small sanity check: ensure there is enough shares for the threshold
 
-    let total_shares = {
-        let mut total_shares: u64 = 0;
-        for shares in cooked.per_recipient_shares.values() {
-            total_shares += u64::from(*shares);
-        }
-        total_shares
-    };
-    if u64::from(cooked.threshold) > total_shares {
+    if let Err(err) = cooked.check_integrity() {
         let hint = mk_hint();
-        let what = Box::new(InvalidCertificateError::Corrupted {
-            hint,
-            error: DataError::DataInconsistency,
-        });
+        let what = Box::new(InvalidCertificateError::Corrupted { hint, error: err });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
