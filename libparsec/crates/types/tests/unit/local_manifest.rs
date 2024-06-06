@@ -172,7 +172,8 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
 
     // Also test serialization round trip
-    let data2 = manifest.dump_and_encrypt(&key);
+    let file_manifest: LocalFileManifest = manifest.try_into().unwrap();
+    let data2 = file_manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
 
@@ -364,7 +365,8 @@ fn serde_local_folder_manifest(
     p_assert_eq!(manifest, LocalChildManifest::Folder(expected.clone()));
 
     // Also test serialization round trip
-    let data2 = manifest.dump_and_encrypt(&key);
+    let folder_manifest: LocalFolderManifest = manifest.try_into().unwrap();
+    let data2 = folder_manifest.dump_and_encrypt(&key);
     // Note we cannot just compare with `data` due to encryption and keys order
     let manifest2 = LocalChildManifest::decrypt_and_load(&data2, &key).unwrap();
 
