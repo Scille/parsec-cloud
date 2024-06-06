@@ -51,7 +51,9 @@
             "label": "Owner",
             "description": "Owns the workspace, can manage user rights and re-encrypt the workspace."
         },
-        "none": "Not shared"
+        "none": "Not shared",
+        "members": "Member ({count}) | Members ({count})",
+        "suggestion": "Suggested users"
     },
     "link": {
         "invalid": "The provided link is invalid.",

@@ -155,6 +155,8 @@
   --max-height: var(--parsec-modal-max-height);
 
   &::part(content) {
+    min-width: var(--parsec-modal-width-md);
+    max-width: var(--parsec-modal-width-md);
     height: 100%;
   }
 
