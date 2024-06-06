@@ -90,6 +90,7 @@ async function setupApp(): Promise<void> {
     window.getMountpointBaseDir = (): string => mountpointBaseDir;
     window.getPlatform = (): Platform => platform;
     window.isDesktop = (): boolean => isDesktop;
+    window.isDev = (): boolean => false;
     window.isLinux = (): boolean => isLinux;
 
     if (configPath) {
@@ -118,6 +119,8 @@ async function setupApp(): Promise<void> {
         await cleanBeforeQuitting(injectionProvider);
       });
     }
+
+    window.electronAPI.pageIsInitialized();
   };
 
   // We can start the app with different cases :
@@ -240,6 +243,9 @@ async function setupApp(): Promise<void> {
       await cleanBeforeQuitting(injectionProvider);
       window.electronAPI.updateApp();
     });
+    window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
+      window.isDev = (): boolean => devMode;
+    });
   } else {
     window.electronAPI = {
       // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -278,6 +284,10 @@ async function setupApp(): Promise<void> {
       },
       log: (level: 'debug' | 'info' | 'warn' | 'error', message: string): void => {
         console.log(`[MOCKED-ELECTRON-LOG] ${level}: ${message}`);
+      },
+      pageIsInitialized: (): void => {
+        console.log('Page is initialized');
+        window.isDev = (): boolean => needsMocks();
       },
     };
   }
@@ -374,6 +384,7 @@ declare global {
     getPlatform: () => Platform;
     isDesktop: () => boolean;
     isLinux: () => boolean;
+    isDev: () => boolean;
     electronAPI: {
       sendConfig: (config: Config) => void;
       closeApp: () => void;
@@ -384,6 +395,7 @@ declare global {
       updateApp: () => void;
       prepareUpdate: () => void;
       log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
+      pageIsInitialized: () => void;
     };
   }
 }
