@@ -4,7 +4,7 @@ import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
 import { answerQuestion, fillIonInput, sortBy } from '@tests/pw/helpers/utils';
 
-const USER_NAMES = ['Alicey McAliceFace', 'Alicey McAliceFace', 'Boby McBobFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
+const USER_NAMES = ['Alicey McAliceFace', 'Boby McBobFace', 'Malloryy McMalloryFace'];
 
 msTest('Home default state with devices', async ({ home }) => {
   await expect(home.locator('.organization-title')).toHaveText('Your organizations');
@@ -46,7 +46,7 @@ msTest('Filter devices', async ({ home }) => {
     USER_NAMES.filter((u) => u.includes('cey')),
   );
   await fillIonInput(searchInput, 'al');
-  await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveCount(3);
+  await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveCount(2);
   await expect(cards.locator('.organization-info:visible').locator('.subtitles-sm')).toHaveText(
     USER_NAMES.filter((u) => u.toLowerCase().includes('al')),
   );

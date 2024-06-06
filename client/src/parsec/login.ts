@@ -97,13 +97,28 @@ export async function getOrganizationHandles(orgId: OrganizationID): Promise<Arr
   return loggedInDevices.filter((item) => item.device.organizationId === orgId).map((item) => item.handle);
 }
 
-export async function listAvailableDevices(): Promise<Array<AvailableDevice>> {
-  const devices = await libparsec.listAvailableDevices(window.getConfigDir());
-  return devices.map((d) => {
-    d.createdOn = DateTime.fromSeconds(d.createdOn as any as number);
-    d.protectedOn = DateTime.fromSeconds(d.protectedOn as any as number);
-    return d;
-  });
+export async function listAvailableDevices(filter = true): Promise<Array<AvailableDevice>> {
+  const availableDevices = await libparsec.listAvailableDevices(window.getConfigDir());
+
+  if (!filter) {
+    return availableDevices;
+  }
+  // Sort them by creation date
+  const sortedDevices = availableDevices.sort((d1, d2) => (d2.createdOn as any as number) - (d1.createdOn as any as number));
+  const devices: Array<AvailableDevice> = [];
+
+  for (const ad of sortedDevices) {
+    // If one is already in, it will have been created more recently since we ordered the devices by creation time
+    const found = devices.find((d) => {
+      return d.organizationId === ad.organizationId && ad.serverUrl === d.serverUrl && ad.humanHandle.email === d.humanHandle.email;
+    });
+    if (!found) {
+      ad.createdOn = DateTime.fromSeconds(ad.createdOn as any as number);
+      ad.protectedOn = DateTime.fromSeconds(ad.protectedOn as any as number);
+      devices.push(ad);
+    }
+  }
+  return devices;
 }
 
 export async function login(
