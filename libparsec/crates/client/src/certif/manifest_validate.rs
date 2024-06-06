@@ -260,18 +260,18 @@ pub(super) async fn validate_workspace_manifest(
             )
             .await?;
 
-            // Last check: root folder's parent must point to itself
-            if res.parent != res.id {
+            // Check manifest integrity
+            res.check_integrity_as_root().map_err(|x| {
                 let what = Box::new(InvalidManifestError::CleartextCorrupted {
                     realm: realm_id,
                     vlob: vlob_id,
                     version,
                     author: author.to_owned(),
                     timestamp,
-                    error: Box::new(DataError::DataInconsistency),
+                    error: Box::new(x),
                 });
-                return Err(CertifValidateManifestError::InvalidManifest(what));
-            }
+                CertifValidateManifestError::InvalidManifest(what)
+            })?;
 
             Ok(res)
         })

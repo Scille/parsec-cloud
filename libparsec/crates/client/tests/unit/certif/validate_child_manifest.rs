@@ -231,8 +231,8 @@ async fn cleartext_corrupted(
 
     let alice = env.local_device("alice@dev1");
 
-    let encrypted = match kind {
-        "dummy" => key.encrypt(b"<dummy data>"),
+    let (encrypted, data_error) = match kind {
+        "dummy" => (key.encrypt(b"<dummy data>"), DataError::Signature),
         "file_pointing_to_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FileManifest {
@@ -247,8 +247,14 @@ async fn cleartext_corrupted(
                 blocksize: Blocksize::try_from(1024).unwrap(),
                 size: 0,
             };
-            manifest.dump_sign_and_encrypt(&alice.signing_key, &key)
-        },
+            (
+                manifest.dump_sign_and_encrypt(&alice.signing_key, &key),
+                DataError::Integrity {
+                    data_type: "libparsec_types::manifest::FileManifest",
+                    invariant: "id and parent are different",
+                },
+            )
+        }
         "folder_pointing_to_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FolderManifest {
@@ -261,7 +267,13 @@ async fn cleartext_corrupted(
                 updated: now,
                 children: Default::default(),
             };
-            manifest.dump_sign_and_encrypt(&alice.signing_key, &key)
+            (
+                manifest.dump_sign_and_encrypt(&alice.signing_key, &key),
+                DataError::Integrity {
+                    data_type: "libparsec_types::manifest::FolderManifest",
+                    invariant: "id and parent are different for child manifest",
+                },
+            )
         }
         unknown => panic!("Unknown kind {}", unknown),
     };
@@ -288,26 +300,18 @@ async fn cleartext_corrupted(
             realm_key_index,
             child_id,
             alice.device_id,
-            0,
+            1,
             now,
             &encrypted,
         )
         .await
         .unwrap_err();
 
-    match kind {
-        "dummy" => p_assert_matches!(
-            err,
-            CertifValidateManifestError::InvalidManifest(boxed)
-            if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == DataError::Decryption)
-        ),
-        "parent_pointing_on_itself" => p_assert_matches!(
-            err,
-            CertifValidateManifestError::InvalidManifest(boxed)
-            if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if matches!(**error, DataError::BadSerialization { .. }))
-        ),
-        unknown => panic!("Unknown kind {}", unknown),
-    }
+    p_assert_matches!(
+        err,
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == data_error)
+    )
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -415,7 +419,7 @@ async fn blocks_corrupted(
 
     let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
     let manifest = FileManifest {
-        author: alice.device_id.clone(),
+        author: alice.device_id,
         timestamp: now,
         id: child_id,
         parent: parent_id,
@@ -460,7 +464,8 @@ async fn blocks_corrupted(
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if matches!(**error, DataError::Integrity { .. }))
+        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. }
+            if matches!(**error, DataError::Integrity { data_type: "libparsec_types::manifest::FileManifest", .. })),
     );
 }
 

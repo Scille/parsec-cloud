@@ -392,12 +392,23 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
-    pub fn check_integrity(&self) -> DataResult<()> {
+    pub fn check_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
             return Err(DataError::Integrity {
                 data_type: std::any::type_name::<Self>(),
-                invariant: "id and parent are different",
+                invariant: "id and parent are different for child manifest",
+            });
+        }
+        Ok(())
+    }
+
+    pub fn check_integrity_as_root(&self) -> DataResult<()> {
+        // Check that id and parent are different
+        if self.id != self.parent {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
+                invariant: "id and parent are the same for root manifest",
             });
         }
         Ok(())
@@ -473,7 +484,7 @@ impl ChildManifest {
     pub fn check_integrity(&self) -> DataResult<()> {
         match self {
             Self::File(file) => file.check_integrity(),
-            Self::Folder(folder) => folder.check_integrity(),
+            Self::Folder(folder) => folder.check_integrity_as_child(),
         }
     }
 
