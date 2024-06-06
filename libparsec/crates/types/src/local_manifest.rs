@@ -19,14 +19,20 @@ use crate::{
     FileManifest, FolderManifest, Regex, UserManifest, VlobID, DEFAULT_BLOCK_SIZE,
 };
 
-macro_rules! impl_local_manifest_dump_load {
+macro_rules! impl_local_manifest_dump {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
                 let serialized = format_v0_dump(&self);
                 key.encrypt(&serialized)
             }
+        }
+    };
+}
 
+macro_rules! impl_local_manifest_load {
+    ($name:ident) => {
+        impl $name {
             pub fn decrypt_and_load(
                 encrypted: &[u8],
                 key: &SecretKey,
@@ -299,7 +305,7 @@ impl From<LocalFileManifest> for LocalFileManifestData {
     }
 }
 
-impl_local_manifest_dump_load!(LocalFileManifest);
+impl_local_manifest_dump!(LocalFileManifest);
 
 impl LocalFileManifest {
     pub fn new(author: DeviceID, parent: VlobID, timestamp: DateTime) -> Self {
@@ -546,7 +552,7 @@ impl_transparent_data_format_conversion!(
     speculative,
 );
 
-impl_local_manifest_dump_load!(LocalFolderManifest);
+impl_local_manifest_dump!(LocalFolderManifest);
 
 impl LocalFolderManifest {
     pub fn new(author: DeviceID, parent: VlobID, timestamp: DateTime) -> Self {
@@ -571,16 +577,23 @@ impl LocalFolderManifest {
         }
     }
 
-    pub fn check_integrity(&self) -> DataResult<()> {
-        Ok(())
-    }
-
     pub fn check_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
             return Err(DataError::Integrity {
                 data_type: std::any::type_name::<Self>(),
-                invariant: "id and parent are different",
+                invariant: "id and parent are different for child manifest",
+            });
+        }
+        Ok(())
+    }
+
+    pub fn check_integrity_as_root(&self) -> DataResult<()> {
+        // Check that id and parent are the same
+        if self.base.id != self.parent {
+            return Err(DataError::Integrity {
+                data_type: std::any::type_name::<Self>(),
+                invariant: "id and parent are the same for root manifest",
             });
         }
         Ok(())
@@ -846,7 +859,8 @@ pub struct LocalUserManifest {
     pub speculative: bool,
 }
 
-impl_local_manifest_dump_load!(LocalUserManifest);
+impl_local_manifest_dump!(LocalUserManifest);
+impl_local_manifest_load!(LocalUserManifest);
 
 parsec_data!("schema/local_manifest/local_user_manifest.json5");
 
@@ -949,6 +963,8 @@ pub enum LocalChildManifest {
     Folder(LocalFolderManifest),
 }
 
+impl_local_manifest_load!(LocalChildManifest);
+
 impl LocalChildManifest {
     pub fn id(&self) -> VlobID {
         match self {
@@ -971,25 +987,12 @@ impl LocalChildManifest {
         }
     }
 
-    pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
-        match self {
-            Self::File(manifest) => manifest.dump_and_encrypt(key),
-            Self::Folder(manifest) => manifest.dump_and_encrypt(key),
-        }
-    }
-
     pub fn check_integrity(&self) -> DataResult<()> {
         match self {
             Self::File(manifest) => manifest.check_integrity()?,
             Self::Folder(manifest) => manifest.check_integrity_as_child()?,
         }
         Ok(())
-    }
-
-    pub fn decrypt_and_load(encrypted: &[u8], key: &SecretKey) -> DataResult<Self> {
-        let serialized = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
-        let result = format_vx_load(&serialized);
-        result.and_then(|manifest: LocalChildManifest| manifest.check_integrity().map(|_| manifest))
     }
 }
 
@@ -1002,6 +1005,60 @@ impl From<LocalFileManifest> for LocalChildManifest {
 impl From<LocalFolderManifest> for LocalChildManifest {
     fn from(value: LocalFolderManifest) -> Self {
         Self::Folder(value)
+    }
+}
+
+impl TryFrom<LocalChildManifest> for LocalFileManifest {
+    type Error = ();
+
+    fn try_from(value: LocalChildManifest) -> Result<Self, Self::Error> {
+        match value {
+            LocalChildManifest::File(manifest) => Ok(manifest),
+            _ => Err(()),
+        }
+    }
+}
+
+impl TryFrom<LocalChildManifest> for LocalFolderManifest {
+    type Error = ();
+
+    fn try_from(value: LocalChildManifest) -> Result<Self, Self::Error> {
+        match value {
+            LocalChildManifest::Folder(manifest) => Ok(manifest),
+            _ => Err(()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize)]
+pub struct LocalWorkspaceManifest(pub LocalFolderManifest);
+
+impl_local_manifest_load!(LocalWorkspaceManifest);
+
+impl LocalWorkspaceManifest {
+    pub fn new(author: DeviceID, realm: VlobID, timestamp: DateTime, speculative: bool) -> Self {
+        Self(LocalFolderManifest::new_root(
+            author,
+            realm,
+            timestamp,
+            speculative,
+        ))
+    }
+
+    fn check_integrity(&self) -> DataResult<()> {
+        self.0.check_integrity_as_root()
+    }
+}
+
+impl From<LocalFolderManifest> for LocalWorkspaceManifest {
+    fn from(value: LocalFolderManifest) -> Self {
+        Self(value)
+    }
+}
+
+impl From<LocalWorkspaceManifest> for LocalFolderManifest {
+    fn from(value: LocalWorkspaceManifest) -> Self {
+        value.0
     }
 }
 

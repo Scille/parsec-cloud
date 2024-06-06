@@ -141,7 +141,7 @@ impl WorkspaceStore {
             Some(encrypted) => {
                 // TODO: if we cannot load this user manifest, should we fallback on
                 //       a new speculative manifest ?
-                LocalFolderManifest::decrypt_and_load(&encrypted, &device.local_symkey)
+                LocalWorkspaceManifest::decrypt_and_load(&encrypted, &device.local_symkey)
                     .context("Cannot load workspace manifest from local storage")?
             }
             // It is possible to lack the workspace manifest in local if our
@@ -155,16 +155,16 @@ impl WorkspaceStore {
             None => {
                 let timestamp = device.now();
                 let manifest =
-                    LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, true);
+                    LocalWorkspaceManifest::new(device.device_id, realm_id, timestamp, true);
 
                 // We must store the speculative manifest in local storage, otherwise there
                 // is no way for the outbound sync monitors to realize a synchronization is
                 // needed here !
                 let update_data = UpdateManifestData {
-                    entry_id: manifest.base.id,
-                    base_version: manifest.base.version,
-                    need_sync: manifest.need_sync,
-                    encrypted: manifest.dump_and_encrypt(&device.local_symkey),
+                    entry_id: manifest.0.base.id,
+                    base_version: manifest.0.base.version,
+                    need_sync: manifest.0.need_sync,
+                    encrypted: manifest.0.dump_and_encrypt(&device.local_symkey),
                 };
                 storage.update_manifest(&update_data).await?;
 
@@ -179,7 +179,7 @@ impl WorkspaceStore {
             device,
             cmds,
             certificates_ops,
-            current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest))),
+            current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest.into()))),
             storage: AsyncMutex::new(Some(storage)),
         })
     }

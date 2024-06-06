@@ -181,8 +181,11 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
             .await
             .unwrap()
             .unwrap();
-        let file_manifest =
-            LocalFileManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
+        let file_manifest: LocalFileManifest =
+            LocalChildManifest::decrypt_and_load(&encrypted, &alice.local_symkey)
+                .unwrap()
+                .try_into()
+                .unwrap();
         p_assert_eq!(file_manifest.base.version, expected_version);
         let expected_need_sync = match fetch_strategy {
             FetchStrategy::No => true,
@@ -199,8 +202,11 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
             .await
             .unwrap()
             .unwrap();
-        let folder_manifest =
-            LocalFolderManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
+        let folder_manifest: LocalFolderManifest =
+            LocalChildManifest::decrypt_and_load(&encrypted, &alice.local_symkey)
+                .unwrap()
+                .try_into()
+                .unwrap();
         p_assert_eq!(folder_manifest.base.version, expected_version);
         let expected_need_sync = match fetch_strategy {
             FetchStrategy::No => true,
@@ -1019,8 +1025,10 @@ async fn non_speculative_init(env: &TestbedEnv) {
     p_assert_eq!(storage.get_realm_checkpoint().await.unwrap(), 0);
 
     let encrypted = storage.get_manifest(realm_id).await.unwrap().unwrap();
-    let workspace_manifest =
-        LocalFolderManifest::decrypt_and_load(&encrypted, &alice.local_symkey).unwrap();
+    let workspace_manifest: LocalFolderManifest =
+        LocalWorkspaceManifest::decrypt_and_load(&encrypted, &alice.local_symkey)
+            .unwrap()
+            .into();
 
     let expected = LocalFolderManifest {
         base: FolderManifest {
