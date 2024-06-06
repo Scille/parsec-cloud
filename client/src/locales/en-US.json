@@ -505,7 +505,8 @@
             "noImportInProgress": "No import in progress",
             "noImportDone": "No import done",
             "noImportFailed": "No import failed",
-            "dropInstructions": "Drag & drop your files to import them"
+            "dropInstructions": "Drag & drop your files to import them",
+            "noDropForReader": "You are a Reader on this workspace and cannot import files."
         },
         "CopyFile": {
             "copy": "Copy of {name}",

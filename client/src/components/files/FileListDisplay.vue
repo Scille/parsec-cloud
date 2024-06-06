@@ -7,6 +7,7 @@
       :current-path="currentPath"
       @files-added="$emit('filesAdded', $event)"
       :show-drop-message="true"
+      :is-reader="ownRole === WorkspaceRole.Reader"
     >
       <ion-list class="list">
         <ion-list-header
@@ -47,6 +48,7 @@
             @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
             @selected-change="onSelectedChange"
             @files-added="onFilesAdded"
+            :is-workspace-reader="ownRole === WorkspaceRole.Reader"
           />
           <file-list-item
             v-for="file in files.getEntries()"
@@ -76,7 +78,7 @@ import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/FileListItemProcessing.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
-import { FsPath } from '@/parsec';
+import { FsPath, WorkspaceRole } from '@/parsec';
 import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
 import { computed, ref } from 'vue';
 import { MsCheckbox } from 'megashark-lib';
@@ -86,6 +88,7 @@ const props = defineProps<{
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
   currentPath: FsPath;
+  ownRole: WorkspaceRole;
 }>();
 
 const emits = defineEmits<{

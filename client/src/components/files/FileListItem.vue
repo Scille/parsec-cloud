@@ -5,6 +5,7 @@
     :disabled="entry.isFile()"
     :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
+    :is-reader="isWorkspaceReader"
   >
     <ion-item
       button
@@ -111,6 +112,7 @@ const menuOpened = ref(false);
 const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
+  isWorkspaceReader?: boolean;
 }>();
 
 const emits = defineEmits<{

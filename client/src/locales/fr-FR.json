@@ -505,7 +505,8 @@
             "noImportInProgress": "Pas d'import en cours",
             "noImportDone": "Pas d'import terminé",
             "noImportFailed": "Pas d'import échoué",
-            "dropInstructions": "Glissez & déposez vos fichiers pour les importer"
+            "dropInstructions": "Glissez & déposez vos fichiers pour les importer",
+            "noDropForReader": "Vous êtes Lecteur sur cet espace de travail et ne pouvez pas importer des fichiers."
         },
         "CopyFile": {
             "copy": "Copie de {name}",
