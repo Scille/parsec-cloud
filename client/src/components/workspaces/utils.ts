@@ -57,10 +57,6 @@ export function canChangeRole(
   if (clientRole === null || clientRole === WorkspaceRole.Contributor || clientRole === WorkspaceRole.Reader) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.insufficientRole' };
   }
-  // Cannot change role of an Owner
-  if (userRole === WorkspaceRole.Owner) {
-    return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.ownerImmunity' };
-  }
   // Managers cannot update the role of other Managers
   if (clientRole === WorkspaceRole.Manager && userRole === WorkspaceRole.Manager) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.managerCannotUpdateManagers' };

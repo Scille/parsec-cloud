@@ -127,12 +127,8 @@ function isSelectDisabled(role: WorkspaceRole | null): boolean {
   if (props.ownRole === null || props.ownRole === WorkspaceRole.Reader || props.ownRole === WorkspaceRole.Contributor) {
     return true;
   }
-  // If the user's role is Owner, can't change it
-  if (role === WorkspaceRole.Owner) {
-    return true;
-  }
-  // If our own role is Manager and the user's role is Manager, can't change it
-  if (role === WorkspaceRole.Manager && props.ownRole === WorkspaceRole.Manager) {
+  // If our own role is Manager and the user's role is Manager or owner, can't change it
+  if ((role === WorkspaceRole.Manager || role === WorkspaceRole.Owner) && props.ownRole === WorkspaceRole.Manager) {
     return true;
   }
 
