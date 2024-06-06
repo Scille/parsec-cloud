@@ -12,6 +12,7 @@
       :disabled="entry.isFile()"
       :current-path="currentPath"
       @files-added="$emit('filesAdded', $event)"
+      :is-reader="isWorkspaceReader"
     >
       <div class="card-checkbox">
         <!-- eslint-disable vue/no-mutating-props -->
@@ -83,6 +84,7 @@ onMounted(async () => {
 const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
+  isWorkspaceReader?: boolean;
 }>();
 
 const emits = defineEmits<{

@@ -139,6 +139,7 @@
             :current-path="currentPath"
             :show-drop-message="true"
             @files-added="startImportFiles"
+            :is-reader="ownRole === parsec.WorkspaceRole.Reader"
           >
             <div class="no-files-content">
               <ms-image :image="EmptyFolder" />
@@ -158,6 +159,7 @@
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
+              :own-role="ownRole"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -169,6 +171,7 @@
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
+              :own-role="ownRole"
             />
           </div>
         </div>

@@ -6,6 +6,7 @@
     :current-path="currentPath"
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
+    :is-reader="ownRole === WorkspaceRole.Reader"
   >
     <div class="folders-container-grid">
       <file-card
@@ -17,6 +18,7 @@
         @click="$emit('click', folder, $event)"
         @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
         @files-added="onFilesAdded"
+        :is-workspace-reader="ownRole === WorkspaceRole.Reader"
       />
       <file-card
         class="folder-grid-item"
@@ -45,7 +47,7 @@ import FileCardProcessing from '@/components/files/FileCardProcessing.vue';
 import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
-import { FsPath } from '@/parsec';
+import { FsPath, WorkspaceRole } from '@/parsec';
 import { ref } from 'vue';
 
 const props = defineProps<{
@@ -53,6 +55,7 @@ const props = defineProps<{
   files: EntryCollection<FileModel>;
   folders: EntryCollection<FolderModel>;
   currentPath: FsPath;
+  ownRole: WorkspaceRole;
 }>();
 
 const fileDropZoneRef = ref();
