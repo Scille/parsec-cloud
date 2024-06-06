@@ -6,9 +6,16 @@
       :title="'WorkspaceSharing.title'"
       :close-button="{ visible: true }"
     >
-      <ion-text class="modal-title">
-        {{ workspaceName }}
-      </ion-text>
+      <div class="modal-head-content">
+        <ion-text class="modal-title title-h4">
+          {{ workspaceName }}
+        </ion-text>
+        <ms-search-input
+          class="modal-head-content__search"
+          v-model="search"
+          :placeholder="'WorkspaceSharing.searchPlaceholder'"
+        />
+      </div>
       <ms-report-text
         :theme="MsReportTheme.Info"
         v-if="isOnlyOwner()"
@@ -25,38 +32,69 @@
       </ms-report-text>
       <!-- content -->
       <div class="modal-container">
-        <ms-search-input
-          v-model="search"
-          :placeholder="'WorkspaceSharing.searchPlaceholder'"
-        />
         <ion-list class="user-list">
-          <workspace-user-role
-            v-if="clientInfo"
-            v-show="currentUserMatchSearch()"
-            :disabled="true"
-            :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
-            :role="ownRole"
-            :client-profile="ownProfile"
-            :client-role="ownRole"
-            :is-current-user="true"
-            class="current-user"
-          />
+          <!-- prettier-ignore -->
           <ion-text
             class="no-match-result body"
-            v-show="userRoles.length > 0 && filteredUserRoles.length === 0 && !currentUserMatchSearch()"
+            v-show="
+              userRoles.length > 0 &&
+                filteredSharedUserRoles.length === 0 &&
+                filteredNotSharedUserRoles.length === 0 &&
+                !currentUserMatchSearch()
+            "
           >
             {{ $msTranslate({ key: 'WorkspaceSharing.noMatch', data: { query: search } }) }}
           </ion-text>
-          <workspace-user-role
-            v-for="entry in filteredUserRoles"
-            :disabled="isSelectDisabled(entry[1])"
-            :key="entry[0].id"
-            :user="entry[0]"
-            :role="entry[1]"
-            :client-profile="ownProfile"
-            :client-role="ownRole"
-            @role-update="updateUserRole"
-          />
+
+          <!-- workspaces members -->
+          <div
+            class="user-list-members"
+            v-show="currentUserMatchSearch() || filteredSharedUserRoles.length > 0"
+          >
+            <ion-text class="user-list__title title-h5">
+              {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
+            </ion-text>
+            <workspace-user-role
+              v-if="clientInfo"
+              v-show="currentUserMatchSearch()"
+              :disabled="true"
+              :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
+              :role="ownRole"
+              :client-profile="ownProfile"
+              :client-role="ownRole"
+              :is-current-user="true"
+              class="current-user"
+            />
+
+            <workspace-user-role
+              v-for="entry in filteredSharedUserRoles"
+              :disabled="isSelectDisabled(entry[1])"
+              :key="entry[0].id"
+              :user="entry[0]"
+              :role="entry[1]"
+              :client-profile="ownProfile"
+              :client-role="ownRole"
+              @role-update="updateUserRole"
+            />
+          </div>
+
+          <!-- user suggestions -->
+          <div
+            class="user-list-suggestions"
+            v-if="filteredNotSharedUserRoles.length > 0"
+          >
+            <ion-text class="user-list__title title-h5">{{ $msTranslate('workspaceRoles.suggestion') }}</ion-text>
+            <workspace-user-role
+              v-for="entry in filteredNotSharedUserRoles"
+              :disabled="isSelectDisabled(entry[1])"
+              :key="entry[0].id"
+              :user="entry[0]"
+              :role="entry[1]"
+              :client-profile="ownProfile"
+              :client-role="ownRole"
+              @role-update="updateUserRole"
+            />
+          </div>
         </ion-list>
       </div>
     </ms-modal>
@@ -97,15 +135,33 @@ const props = defineProps<{
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 
 const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
-const filteredUserRoles = computed(() => {
+const filteredSharedUserRoles = computed(() => {
   const searchString = search.value.toLocaleLowerCase();
-  return userRoles.value.filter((item) => {
-    return (
-      item[0].humanHandle.email.toLocaleLowerCase().includes(searchString) ||
-      item[0].humanHandle.label.toLocaleLowerCase().includes(searchString)
-    );
-  });
+  return userRoles.value
+    .filter(([user, role]) => {
+      const isSharedUser = role !== null;
+      const matchesSearch =
+        user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+        user.humanHandle.label.toLocaleLowerCase().includes(searchString);
+      return isSharedUser && matchesSearch;
+    })
+    .sort((item1, item2) => item1[0].humanHandle.label.localeCompare(item2[0].humanHandle.label));
 });
+
+const filteredNotSharedUserRoles = computed(() => {
+  const searchString = search.value.toLocaleLowerCase();
+  return userRoles.value
+    .filter(([user, role]) => {
+      const isNotSharedUser = role === null;
+      const matchesSearch =
+        user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+        user.humanHandle.label.toLocaleLowerCase().includes(searchString);
+      return isNotSharedUser && matchesSearch;
+    })
+    .sort((item1, item2) => item1[0].humanHandle.label.localeCompare(item2[0].humanHandle.label));
+});
+
+const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
 
 function currentUserMatchSearch(): boolean {
   const searchString = search.value.toLocaleLowerCase();
@@ -269,15 +325,17 @@ async function updateUserRole(
   .inner-content {
     height: 100%;
   }
+
+  &-header {
+    padding: 0 !important;
+  }
 }
 
 .modal-title {
-  font-weight: 500;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  padding-bottom: 1.5rem;
-  color: var(--parsec-color-light-secondary-text);
+  color: var(--parsec-color-light-secondary-hard-grey);
 }
 
 .only-owner-warning {
@@ -286,16 +344,46 @@ async function updateUserRole(
 </style>
 
 <style scoped lang="scss">
+.modal-head-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+
+  &__search {
+    max-height: 2.25rem;
+    max-width: 15rem;
+    margin: 0;
+  }
+}
+
 .modal-container {
   height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .user-list {
-  margin-top: 0.5rem;
-  padding-right: 0.5rem;
+  padding: 0;
+  margin-top: 1rem;
   overflow-y: auto;
   height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-radius: var(--parsec-radius-6);
+  position: relative;
+
+  &__title {
+    color: var(--parsec-color-light-secondary-grey);
+    background: var(--parsec-color-light-secondary-premiere);
+    border-radius: var(--parsec-radius-6);
+    padding: 0.375rem 0.5rem;
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
 }
 </style>

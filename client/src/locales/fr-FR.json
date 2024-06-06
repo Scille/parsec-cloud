@@ -52,7 +52,9 @@
             "label": "Propriétaire",
             "description": "Possède l'espace de travail, peut gérer les droits des utilisateurs et rechiffrer l'espace."
         },
-        "none": "Non partagé"
+        "none": "Non partagé",
+        "members": "Membre ({count}) | Membres ({count})",
+        "suggestion": "Suggestions d'utilisateurs"
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
