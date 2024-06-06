@@ -94,16 +94,8 @@ describe('Workspace role', () => {
       false,
       'Managers cannot change the role of other managers',
     ],
-    // both are owners, cannot change role
-    [
-      UserProfile.Standard,
-      WorkspaceRole.Owner,
-      UserProfile.Admin,
-      WorkspaceRole.Owner,
-      WorkspaceRole.Contributor,
-      false,
-      'Cannot change the role of an Owner',
-    ],
+    // both are owners, change to contributor
+    [UserProfile.Standard, WorkspaceRole.Owner, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Contributor, true, ''],
     // client is outsider, can't do anything
     [
       UserProfile.Standard,
