@@ -45,8 +45,12 @@
             "name": "SecretKeyAlgorithm",
             "variants": [
                 {
-                    "name": "Xsalsa20Poly1305",
-                    "discriminant_value": "XSALSA20_POLY1305"
+                    // This is libsodium kdf key derivation + libsodium secretbox encryption
+                    // 1) Blake2b to derivate the key (using the document ID as subkey seed)
+                    // 2) XSalsa20 for encryption
+                    // 3) Poly1305 for MAC
+                    "name": "Blake2bXsalsa20Poly1305",
+                    "discriminant_value": "BLAKE2_XSALSA20_POLY1305"
                 }
             ]
         },

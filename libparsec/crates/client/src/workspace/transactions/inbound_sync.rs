@@ -791,7 +791,8 @@ async fn fetch_remote_manifest_with_self_heal<M: RemoteManifest>(
             // Try to find the last valid version of the manifest and continue
             // from there
             let last_version = match *err {
-                InvalidManifestError::Corrupted { version, .. } => version,
+                InvalidManifestError::CannotDecrypt { version, .. } => version,
+                InvalidManifestError::CleartextCorrupted { version, .. } => version,
                 InvalidManifestError::NonExistentKeyIndex { version, .. } => version,
                 InvalidManifestError::CorruptedKey { version, .. } => version,
                 InvalidManifestError::NonExistentAuthor { version, .. } => version,

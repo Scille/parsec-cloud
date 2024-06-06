@@ -80,7 +80,8 @@ async fn non_existent_author(env: &TestbedEnv) {
             "alice@dev2".parse().unwrap(),
             0,
             now,
-            b"",
+            // Decryption is done first, only then the user is searched for
+            &alice.user_realm_key.encrypt(b""),
         )
         .await
         .unwrap_err();
@@ -93,7 +94,7 @@ async fn non_existent_author(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn corrupted(env: &TestbedEnv) {
+async fn cannot_decrypt(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user_realm("alice");
         builder.certificates_storage_fetch_certificates("alice@dev1");
@@ -113,7 +114,7 @@ async fn corrupted(env: &TestbedEnv) {
             alice.device_id,
             0,
             now,
-            b"",
+            b"<dummy data>",
         )
         .await
         .unwrap_err();
@@ -121,7 +122,40 @@ async fn corrupted(env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(*boxed, InvalidManifestError::Corrupted { .. })
+        if matches!(*boxed, InvalidManifestError::CannotDecrypt { .. })
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn cleartext_corrupted(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.new_user_realm("alice");
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+    })
+    .await;
+
+    let now = DateTime::from_ymd_hms_us(2020, 1, 1, 0, 0, 0, 0).unwrap();
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let err = ops
+        .validate_user_manifest(
+            env.get_last_realm_certificate_timestamp(alice.user_realm_id),
+            env.get_last_common_certificate_timestamp(),
+            alice.device_id,
+            0,
+            now,
+            &alice.local_symkey.encrypt(b"<dummy data>"),
+        )
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifValidateManifestError::InvalidManifest(boxed)
+        if matches!(*boxed, InvalidManifestError::CleartextCorrupted { .. })
     );
 }
 
@@ -167,7 +201,7 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(*boxed, InvalidManifestError::Corrupted { .. })
+        if matches!(*boxed, InvalidManifestError::CleartextCorrupted { .. })
     );
 }
 

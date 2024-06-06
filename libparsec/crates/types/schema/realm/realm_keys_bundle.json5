@@ -19,7 +19,7 @@
         {
             "name": "keys",
             // Keys ordered by index
-            "type": "List<SecretKey>"
+            "type": "List<KeyDerivation>"
         }
     ]
 }

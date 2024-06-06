@@ -3,8 +3,8 @@
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertifDecryptForRealmError, CertifEncryptForRealmError, InvalidCertificateError,
-    InvalidKeysBundleError, WorkspaceOps,
+    CertifDecryptForRealmError, CertifEncryptForRealmError, EncrytionUsage,
+    InvalidCertificateError, InvalidKeysBundleError, WorkspaceOps,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -35,7 +35,7 @@ pub async fn generate_path_addr(
 
     let (encrypted, key_index) = ops
         .certificates_ops
-        .encrypt_for_realm(ops.realm_id, cleartext)
+        .encrypt_for_realm(EncrytionUsage::PathUrl, ops.realm_id, cleartext)
         .await
         .map_err(|err| match err {
             CertifEncryptForRealmError::Stopped => WorkspaceGeneratePathAddrError::Stopped,
@@ -89,7 +89,12 @@ pub async fn decrypt_path_addr(
 ) -> Result<FsPath, WorkspaceDecryptPathAddrError> {
     let cleartext = ops
         .certificates_ops
-        .decrypt_opaque_data_for_realm(ops.realm_id, link.key_index(), link.encrypted_path())
+        .decrypt_opaque_data_for_realm(
+            EncrytionUsage::PathUrl,
+            ops.realm_id,
+            link.key_index(),
+            link.encrypted_path(),
+        )
         .await
         .map_err(|err| match err {
             CertifDecryptForRealmError::Stopped => WorkspaceDecryptPathAddrError::Stopped,

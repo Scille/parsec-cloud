@@ -246,7 +246,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 key_index: 0,
                 // Not meaningful for the test
                 author: device_id,
-                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
             },
@@ -672,7 +672,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 key_index: 0,
                 // Not meaningful for the test
                 author: device_id,
-                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
             },
@@ -690,7 +690,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 key_index: 1,
                 // Not meaningful for the test
                 author: device_id,
-                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
             },
@@ -1190,7 +1190,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 key_index: 0,
                 // Not meaningful for the test
                 author: device_id,
-                encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+                encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
                 hash_algorithm: HashAlgorithm::Sha256,
                 key_canary: b"key_canary".to_vec(),
             },

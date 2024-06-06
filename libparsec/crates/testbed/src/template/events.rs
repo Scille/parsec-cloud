@@ -1538,7 +1538,7 @@ impl TestbedEventRenameRealm {
             author,
             realm,
             name,
-            key: key.to_owned(),
+            key: key.derive_secret_key_from_uuid(REALM_RENAME_KEY_DERIVATION_UUID),
             key_index,
             cache: Arc::default(),
         }
@@ -1590,7 +1590,7 @@ pub struct TestbedEventRotateKeyRealm {
     pub author: DeviceID,
     pub realm: VlobID,
     pub key_index: IndexInt,
-    pub keys: Vec<SecretKey>,
+    pub keys: Vec<KeyDerivation>,
     pub keys_bundle_access_key: SecretKey,
     pub encryption_algorithm: SecretKeyAlgorithm,
     pub hash_algorithm: HashAlgorithm,
@@ -1608,7 +1608,7 @@ impl_event_debug!(
         author: DeviceID,
         realm: VlobID,
         key_index: IndexInt,
-        keys: Vec<SecretKey>,
+        keys: Vec<KeyDerivation>,
         keys_bundle_access_key: SecretKey,
         encryption_algorithm: SecretKeyAlgorithm,
         hash_algorithm: HashAlgorithm,
@@ -1623,7 +1623,7 @@ impl_event_crc_hash!(
         author: DeviceID,
         realm: VlobID,
         key_index: IndexInt,
-        keys: Vec<SecretKey>,
+        keys: Vec<KeyDerivation>,
         keys_bundle_access_key: SecretKey,
         encryption_algorithm: SecretKeyAlgorithm,
         hash_algorithm: HashAlgorithm,
@@ -1674,12 +1674,12 @@ impl TestbedEventRotateKeyRealm {
             .find_map(|e| match e {
                 TestbedEvent::RotateKeyRealm(x) if x.realm == realm => {
                     let mut keys = x.keys.clone();
-                    keys.push(builder.counters.next_secret_key());
+                    keys.push(builder.counters.next_key_derivation());
                     Some((x.key_index + 1, keys))
                 }
                 _ => None,
             })
-            .unwrap_or((1, vec![builder.counters.next_secret_key()]));
+            .unwrap_or((1, vec![builder.counters.next_key_derivation()]));
 
         let keys_bundle_access_key = builder.counters.next_secret_key();
 
@@ -1691,7 +1691,7 @@ impl TestbedEventRotateKeyRealm {
             keys,
             keys_bundle_access_key,
             custom_key_canary: None,
-            encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+            encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
             hash_algorithm: HashAlgorithm::Sha256,
             participants,
             cache: Arc::default(),
@@ -1713,7 +1713,9 @@ impl TestbedEventRotateKeyRealm {
             // they are two separate processes).
             let key_canary = self.custom_key_canary.clone().unwrap_or_else(|| {
                 assert!(self.key_index > 0);
-                self.keys[self.key_index as usize - 1].encrypt(b"")
+                let key_derivation = &self.keys[self.key_index as usize - 1];
+                let key = key_derivation.derive_secret_key_from_uuid(CANARY_KEY_DERIVATION_UUID);
+                key.encrypt(b"")
             });
             let author_signkey = template.device_signing_key(self.author);
             let certif = RealmKeyRotationCertificate {
@@ -2305,7 +2307,7 @@ impl TestbedEventCreateOrUpdateFolderManifestVlob {
         Self {
             realm,
             key_index,
-            key: key.to_owned(),
+            key: key.derive_secret_key_from_uuid(*vlob),
             manifest: Arc::new(FolderManifest {
                 timestamp,
                 author,
@@ -2481,7 +2483,7 @@ impl TestbedEventCreateOrUpdateFileManifestVlob {
         Self {
             realm,
             key_index,
-            key: key.to_owned(),
+            key: key.derive_secret_key_from_uuid(*vlob),
             manifest: Arc::new(FileManifest {
                 timestamp,
                 author,
@@ -2617,7 +2619,7 @@ impl TestbedEventCreateBlock {
             realm,
             block_id,
             key_index,
-            key: key.to_owned(),
+            key: key.derive_secret_key_from_uuid(*block_id),
             cleartext,
             cache: Arc::default(),
         }

@@ -5,7 +5,7 @@ use paste::paste;
 use serde::{Deserialize, Serialize};
 use serde_with::*;
 
-use libparsec_crypto::{SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{KeyDerivation, SecretKey, SigningKey, VerifyKey};
 use libparsec_serialization_format::parsec_data;
 
 use crate::{
@@ -28,7 +28,7 @@ pub struct RealmKeysBundle {
     pub realm_id: VlobID,
     /// The keys used to encrypt the realm, ordered from the oldest to the newest.
     /// Guaranteed to be > 1
-    keys: Vec<SecretKey>,
+    keys: Vec<KeyDerivation>,
 }
 
 impl RealmKeysBundle {
@@ -36,7 +36,7 @@ impl RealmKeysBundle {
         author: DeviceID,
         timestamp: DateTime,
         realm_id: VlobID,
-        keys: Vec<SecretKey>,
+        keys: Vec<KeyDerivation>,
     ) -> Self {
         assert!(!keys.is_empty(), "keys must not be empty");
         Self {
@@ -51,11 +51,11 @@ impl RealmKeysBundle {
         self.keys.len() as IndexInt
     }
 
-    pub fn keys(&self) -> &[SecretKey] {
+    pub fn keys(&self) -> &[KeyDerivation] {
         &self.keys
     }
 
-    pub fn last_key(&self) -> &SecretKey {
+    pub fn last_key(&self) -> &KeyDerivation {
         self.keys
             .last()
             .expect("Realm keys bundle should not be empty")

@@ -206,6 +206,9 @@ impl TestbedTemplateBuilderCounters {
             .expect("No more items, your template is too big :(");
         &self.current_256bits_key
     }
+    pub fn next_key_derivation(&mut self) -> KeyDerivation {
+        (*self.next_256bits_key()).into()
+    }
     pub fn next_secret_key(&mut self) -> SecretKey {
         (*self.next_256bits_key()).into()
     }

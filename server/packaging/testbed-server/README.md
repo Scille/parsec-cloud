@@ -36,7 +36,7 @@ For example, `https://github.com/Scille/parsec-cloud/blob/master/.github/workflo
 ```yaml
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.0.0-b.6.dev.19878.c5f5996
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.0.0-b.6.dev.19880.184fd49
 ```
 
 ## Build and Publish a new testbed server Docker image

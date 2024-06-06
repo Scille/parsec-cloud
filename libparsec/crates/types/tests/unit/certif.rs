@@ -138,7 +138,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
         author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
-        encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+        encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
         hash_algorithm: HashAlgorithm::Sha256,
         key_index: 42,
         key_canary: b"012345".to_vec(),
@@ -1220,7 +1220,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
         key_index: 42,
-        encryption_algorithm: SecretKeyAlgorithm::Xsalsa20Poly1305,
+        encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
         hash_algorithm: HashAlgorithm::Sha256,
         key_canary: b"12345".to_vec(),
     };

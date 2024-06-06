@@ -7,7 +7,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::certif::CertifEncryptForRealmError;
+use crate::{certif::CertifEncryptForRealmError, EncrytionUsage};
 
 use super::utils::certificates_ops_factory;
 
@@ -42,7 +42,10 @@ async fn ok(env: &TestbedEnv) {
         },
     );
 
-    let res = ops.encrypt_for_realm(realm_id, b"data").await.unwrap();
+    let res = ops
+        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .await
+        .unwrap();
 
     p_assert_eq!(res.1, 1);
 }
@@ -95,7 +98,10 @@ async fn invalid_keys_bundle(
         }
     });
 
-    let err = ops.encrypt_for_realm(realm_id, b"data").await.unwrap_err();
+    let err = ops
+        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .await
+        .unwrap_err();
 
     assert(err);
 }
@@ -146,7 +152,10 @@ async fn server_error(
         },
     );
 
-    let err = ops.encrypt_for_realm(realm_id, b"data").await.unwrap_err();
+    let err = ops
+        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .await
+        .unwrap_err();
 
     assert(err);
 }
@@ -157,7 +166,7 @@ async fn unknown_realm(env: &TestbedEnv) {
     let ops = certificates_ops_factory(env, &alice).await;
 
     let err = ops
-        .encrypt_for_realm(VlobID::default(), b"data")
+        .encrypt_for_realm(EncrytionUsage::Canary, VlobID::default(), b"data")
         .await
         .unwrap_err();
 
@@ -188,7 +197,10 @@ async fn invalid_response(env: &TestbedEnv) {
         )))
     });
 
-    let err = ops.encrypt_for_realm(realm_id, b"data").await.unwrap_err();
+    let err = ops
+        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .await
+        .unwrap_err();
 
     p_assert_matches!(err, CertifEncryptForRealmError::Internal(_));
 }
@@ -211,7 +223,10 @@ async fn stopped(env: &TestbedEnv) {
 
     ops.stop().await.unwrap();
 
-    let err = ops.encrypt_for_realm(realm_id, b"data").await.unwrap_err();
+    let err = ops
+        .encrypt_for_realm(EncrytionUsage::Canary, realm_id, b"data")
+        .await
+        .unwrap_err();
 
     p_assert_matches!(err, CertifEncryptForRealmError::Stopped);
 }

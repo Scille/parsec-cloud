@@ -400,7 +400,58 @@ impl TestbedEnv {
             .expect("Realm has had no key rotation involving this user")
     }
 
-    pub fn get_realm_keys(&self, realm_id: VlobID) -> &Vec<SecretKey> {
+    pub fn get_realm_keys_bundle(&self, realm_id: VlobID, key_index: IndexInt) -> Bytes {
+        let event = self
+            .template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x)
+                    if x.realm == realm_id && x.key_index == key_index =>
+                {
+                    Some(x)
+                }
+                _ => None,
+            })
+            .expect("Realm has had no key rotation with this key index");
+        event.keys_bundle(&self.template)
+    }
+
+    pub fn get_keys_bundle_access_for(
+        &self,
+        realm_id: VlobID,
+        user: UserID,
+        key_index: IndexInt,
+    ) -> Bytes {
+        self.template
+            .events
+            .iter()
+            .rev()
+            .find_map(|event| match event {
+                TestbedEvent::RotateKeyRealm(x)
+                    if x.realm == realm_id && x.key_index == key_index =>
+                {
+                    Some(
+                        x.per_participant_keys_bundle_access()
+                            .remove(&user)
+                            .expect("No keys bundle access for user"),
+                    )
+                }
+                TestbedEvent::ShareRealm(x)
+                    if x.realm == realm_id && x.user == user && x.key_index == Some(key_index) =>
+                {
+                    Some(
+                        x.recipient_keys_bundle_access(&self.template)
+                            .expect("No keys bundle access for user"),
+                    )
+                }
+                _ => None,
+            })
+            .expect("Realm has had no key rotation with this index involving this user")
+    }
+
+    pub fn get_realm_keys(&self, realm_id: VlobID) -> &Vec<KeyDerivation> {
         self.template
             .events
             .iter()
@@ -412,7 +463,7 @@ impl TestbedEnv {
             .expect("Realm has had no key rotation")
     }
 
-    pub fn get_last_realm_key(&self, realm_id: VlobID) -> (&SecretKey, IndexInt) {
+    pub fn get_last_realm_key(&self, realm_id: VlobID) -> (&KeyDerivation, IndexInt) {
         self.template
             .events
             .iter()

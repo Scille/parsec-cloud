@@ -409,7 +409,8 @@ async fn inbound_sync(ops: &UserOps) -> Result<(), UserSyncError> {
             // from there
 
             let last_version = match *err {
-                InvalidManifestError::Corrupted { version, .. } => version,
+                InvalidManifestError::CannotDecrypt { version, .. } => version,
+                InvalidManifestError::CleartextCorrupted { version, .. } => version,
                 InvalidManifestError::NonExistentKeyIndex { version, .. } => version,
                 InvalidManifestError::CorruptedKey { version, .. } => version,
                 InvalidManifestError::NonExistentAuthor { version, .. } => version,

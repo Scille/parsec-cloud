@@ -9,7 +9,7 @@ use super::{
     realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError, CertifOps,
     CertificateBasedActionOutcome, InvalidCertificateError, InvalidKeysBundleError, UpTo,
 };
-use crate::{certif::CertifPollServerError, EventTooMuchDriftWithServerClock};
+use crate::{certif::CertifPollServerError, EncrytionUsage, EventTooMuchDriftWithServerClock};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifRenameRealmError {
@@ -77,7 +77,11 @@ async fn rename_realm_internal(
         // 1) Encrypt the new name
 
         let (encrypted_name, key_index) = ops
-            .encrypt_for_realm(realm_id, new_name.as_ref().as_bytes())
+            .encrypt_for_realm(
+                EncrytionUsage::RealmRename,
+                realm_id,
+                new_name.as_ref().as_bytes(),
+            )
             .await
             .map_err(|e| match e {
                 CertifEncryptForRealmError::Stopped => CertifRenameRealmError::Stopped,

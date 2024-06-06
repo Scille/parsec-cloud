@@ -32,9 +32,21 @@ pub use anyhow;
 pub use bytes;
 pub use bytes::Bytes;
 pub use thiserror;
+pub use uuid;
 
 // Re-expose crypto so that `use libparsec_types::prelude::*` is the single-no-brainer-one-liner™
 pub use libparsec_crypto::*;
+// The realm keys bundle contains a key derivation secret that cannot be used as-is,
+// the idea is instead to use the ID of the vlob/block to derivate the key to encrypt
+// them with.
+// However we also need to derivate keys for other purposes where no ID is available,
+// hence those constants.
+pub const CANARY_KEY_DERIVATION_UUID: uuid::Uuid =
+    uuid::uuid!("00000000-0000-0000-0000-000000000001");
+pub const REALM_RENAME_KEY_DERIVATION_UUID: uuid::Uuid =
+    uuid::uuid!("00000000-0000-0000-0000-000000000002");
+pub const PATH_URL_KEY_DERIVATION_UUID: uuid::Uuid =
+    uuid::uuid!("00000000-0000-0000-0000-000000000003");
 
 #[cfg(any(test, feature = "test-fixtures"))]
 /// We define test fixtures here and not in a different crate to prevent cyclic dependencies.

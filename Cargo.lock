@@ -2006,6 +2006,7 @@ dependencies = [
  "sha2",
  "sodiumoxide",
  "thiserror",
+ "uuid",
  "x25519-dalek",
  "zeroize",
 ]

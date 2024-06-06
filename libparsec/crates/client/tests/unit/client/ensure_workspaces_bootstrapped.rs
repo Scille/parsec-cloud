@@ -344,9 +344,9 @@ async fn partially_bootstrapped(
         },
         // 5) Actual rename
         {
-            let access_key = env
-                .get_last_realm_keys_bundle_access_key(wksp1_id)
-                .to_owned();
+            let (key_derivation, expected_key_index) = env.get_last_realm_key(wksp1_id);
+            let expected_key =
+                key_derivation.derive_secret_key_from_uuid(REALM_RENAME_KEY_DERIVATION_UUID);
             move |req: authenticated_cmds::latest::realm_rename::Req| {
                 let certif = RealmNameCertificate::verify_and_load(
                     &req.realm_name_certificate,
@@ -355,7 +355,8 @@ async fn partially_bootstrapped(
                     Some(wksp1_id),
                 )
                 .unwrap();
-                let name = access_key.decrypt(&certif.encrypted_name).unwrap();
+                p_assert_eq!(certif.key_index, expected_key_index);
+                let name = expected_key.decrypt(&certif.encrypted_name).unwrap();
                 p_assert_eq!(name, b"wksp1");
                 authenticated_cmds::latest::realm_rename::Rep::Ok
             }

@@ -16,6 +16,7 @@ use crate::certif::{
 use crate::workspace::store::{
     ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
 };
+use crate::EncrytionUsage;
 
 pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
 
@@ -359,13 +360,15 @@ async fn upload_manifest<M: RemoteManifest>(
     ops: &WorkspaceOps,
     mut to_upload: M,
 ) -> Result<UploadManifestOutcome<M>, WorkspaceSyncError> {
+    let vlob_id = to_upload.id();
+
     loop {
         // Build vlob
 
         let signed = to_upload.dump_and_sign(&ops.device.signing_key);
         let (encrypted, key_index) = ops
             .certificates_ops
-            .encrypt_for_realm(ops.realm_id(), &signed)
+            .encrypt_for_realm(EncrytionUsage::Vlob(vlob_id), ops.realm_id(), &signed)
             .await
             .map_err(|e| match e {
                 CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
@@ -400,7 +403,7 @@ async fn upload_manifest<M: RemoteManifest>(
             let req = Req {
                 realm_id: ops.realm_id,
                 key_index,
-                vlob_id: to_upload.id(),
+                vlob_id,
                 timestamp: to_upload.timestamp(),
                 blob: encrypted,
                 sequester_blob,
@@ -722,7 +725,8 @@ async fn upload_blocks(
         assert!(block.len() == 1); // Sanity check: the manifest is guaranteed to be reshaped
         let chunk = &block[0];
         let block_access = chunk.access.as_ref().expect("already reshaped");
-        assert_eq!(block_access.id, chunk.id.into()); // Sanity check
+        let block_id = block_access.id;
+        assert_eq!(block_id, chunk.id.into()); // Sanity check
 
         // 1) Get back the block's data
 
@@ -748,7 +752,7 @@ async fn upload_blocks(
         loop {
             let (encrypted, key_index) = ops
                 .certificates_ops
-                .encrypt_for_realm(ops.realm_id(), &data)
+                .encrypt_for_realm(EncrytionUsage::Block(block_id), ops.realm_id(), &data)
                 .await
                 .map_err(|e| match e {
                     CertifEncryptForRealmError::Stopped => WorkspaceSyncError::Stopped,
@@ -767,7 +771,7 @@ async fn upload_blocks(
             let req = Req {
                 realm_id: ops.realm_id,
                 key_index,
-                block_id: block_access.id,
+                block_id,
                 block: encrypted.into(),
             };
             let rep = ops.cmds.send(req).await?;
