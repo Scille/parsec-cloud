@@ -272,6 +272,44 @@ export class ElectronCapacitorApp {
           ],
         }),
       );
+      menu.append(
+        new MenuItem({
+          label: locale === 'fr-FR' ? 'Edition' : 'Edit',
+          submenu: [
+            {
+              label: locale === 'fr-FR' ? 'Annuler' : 'Undo',
+              accelerator: 'Cmd+Z',
+              role: 'undo',
+            },
+            {
+              label: locale === 'fr-FR' ? 'Rétablir' : 'Redo',
+              accelerator: 'Shift+Cmd+Z',
+              role: 'redo',
+            },
+            { type: 'separator' },
+            {
+              label: locale === 'fr-FR' ? 'Couper' : 'Cut',
+              accelerator: 'Cmd+X',
+              role: 'cut',
+            },
+            {
+              label: locale === 'fr-FR' ? 'Copier' : 'Copy',
+              accelerator: 'Cmd+C',
+              role: 'copy',
+            },
+            {
+              label: locale === 'fr-FR' ? 'Coller' : 'Paste',
+              accelerator: 'Cmd+V',
+              role: 'paste',
+            },
+            {
+              label: locale === 'fr-FR' ? 'Tout sélectionner' : 'Select All',
+              accelerator: 'Cmd+A',
+              role: 'selectAll',
+            },
+          ],
+        }),
+      );
       Menu.setApplicationMenu(menu);
     }
   }
