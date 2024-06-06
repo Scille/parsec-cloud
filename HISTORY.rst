@@ -14,24 +14,19 @@ No significant changes.
 Parsec v3.0.0-b.1 (2024-03-26)
 ------------------------------
 
-Improved Documentation
-~~~~~~~~~~~~~~~~~~~~~~
+The 3.0 release is a major rewrite of Parsec Client from Python to Rust.
+Parsec Client is now based on a Rust core library (libparsec) and a
+Vue/Ionic GUI. Parsec Server is still written in Python but includes some
+major changes required to support Parsec APIv4.
 
-* Add documentation for the ``recovery device`` feature. This feature was
-  introduced in v2.6.0 and it was not documented until now.
-  (`#5630 <https://github.com/Scille/parsec-cloud/issues/5630>`__)
+These changes were motivated by the need to make Parsec more easily portable
+to web and mobile platforms as well as to enable integrations with external
+services.
 
-* Add SBOM (Software Bills Of Materials) generation on software packaging. This
-  provides the list of dependencies used to build the software.
-  (`#4770 <https://github.com/Scille/parsec-cloud/issues/4770>`__)
-
-
-Client/Backend API evolutions
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Drop support for API v2
-  (`#4546 <https://github.com/Scille/parsec-cloud/issues/4546>`__)
-
+This version has no backward compatibility with the v2.x branch. Also, some
+features are still to be ported to v3 (see
+`v3-porting <https://github.com/Scille/parsec-cloud/issues?q=is%3Aissue+is%3Aopen+sort%3Aupdated-desc+label%3Av3-porting>`__
+issues)
 
 
 Parsec v2.16.0-a.0 (2023-06-07)
