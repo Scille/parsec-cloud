@@ -5,8 +5,8 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, AnonymousCmds, HeaderMap, HeaderValue, ProxyConfig,
-    ResponseMock, StatusCode,
+    test_register_low_level_send_hook, AnonymousCmds, ConnectionError, HeaderMap, HeaderValue,
+    ProxyConfig, ResponseMock, StatusCode,
 };
 use libparsec_protocol::anonymous_cmds::latest as anonymous_cmds;
 use libparsec_tests_fixtures::prelude::*;
@@ -76,3 +76,41 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
         }
     );
 }
+
+// Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
+// only accept a static closure (i.e. `fn`, not `FnMut`).
+macro_rules! register_http_hook {
+    ($test_name: ident, $response_status_code: expr) => {
+        #[parsec_test(testbed = "minimal")]
+        async fn $test_name(env: &TestbedEnv) {
+            let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
+                env.server_addr.clone(),
+                env.organization_id.to_owned(),
+            ));
+            let cmds =
+                AnonymousCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+
+            test_register_low_level_send_hook(
+                &env.discriminant_dir,
+                move |_request_builder| async {
+                    Ok(ResponseMock::Mocked((
+                        $response_status_code,
+                        HeaderMap::new(),
+                        "".into(),
+                    )))
+                },
+            );
+
+            let rep = cmds
+                .send(anonymous_cmds::ping::Req {
+                    ping: "foo".to_owned(),
+                })
+                .await;
+            p_assert_eq!(rep.unwrap_err(), ConnectionError::NoResponse(None));
+        }
+    };
+}
+
+register_http_hook!(no_response_http_codes_502, StatusCode::BAD_GATEWAY);
+register_http_hook!(no_response_http_codes_503, StatusCode::SERVICE_UNAVAILABLE);
+register_http_hook!(no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
