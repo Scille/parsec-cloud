@@ -142,3 +142,43 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
         .await;
     p_assert_matches!(rep, Err(ConnectionError::BadAuthenticationInfo));
 }
+
+// Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
+// only accept a static closure (i.e. `fn`, not `FnMut`).
+macro_rules! register_http_hook {
+    ($test_name: ident, $response_status_code: expr) => {
+        #[parsec_test(testbed = "minimal")]
+        async fn $test_name(env: &TestbedEnv) {
+            let addr = ParsecInvitationAddr::new(
+                env.server_addr.clone(),
+                env.organization_id.to_owned(),
+                InvitationType::User,
+                InvitationToken::default(),
+            );
+            let cmds =
+                InvitedCmds::new(&env.discriminant_dir, addr, ProxyConfig::default()).unwrap();
+
+            test_register_low_level_send_hook(
+                &env.discriminant_dir,
+                move |_request_builder| async {
+                    Ok(ResponseMock::Mocked((
+                        $response_status_code,
+                        HeaderMap::new(),
+                        "".into(),
+                    )))
+                },
+            );
+
+            let rep = cmds
+                .send(invited_cmds::ping::Req {
+                    ping: "foo".to_owned(),
+                })
+                .await;
+            p_assert_eq!(rep.unwrap_err(), ConnectionError::NoResponse(None));
+        }
+    };
+}
+
+register_http_hook!(no_response_http_codes_502, StatusCode::BAD_GATEWAY);
+register_http_hook!(no_response_http_codes_503, StatusCode::SERVICE_UNAVAILABLE);
+register_http_hook!(no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);

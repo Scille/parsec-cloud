@@ -108,6 +108,9 @@ impl AnonymousCmds {
                 let response_body = resp.bytes().await?;
                 Ok(response_body)
             }
+
+            // HTTP codes used by Parsec
+
             // No 401: no authentication here
             // No 403: no authentication here
             404 => Err(ConnectionError::OrganizationNotFound),
@@ -120,9 +123,21 @@ impl AnonymousCmds {
             460 => Err(ConnectionError::ExpiredOrganization),
             // No 461&462: no user here
             // No 498: no authentication here
+
+            // Other HTTP codes
+
             // We typically use HTTP 503 in the tests to simulate server offline,
             // so it should behave just like if we were not able to connect
-            503 => Err(ConnectionError::NoResponse(None)),
+            // On top of that we should also handle 502 and 504 as they are related
+            // to a gateway.
+            #[allow(clippy::manual_range_patterns)]
+            502 // Bad Gateway
+            | 503 // Service Unavailable
+            | 504 // Gateway Timeout
+            => Err(ConnectionError::NoResponse(None)),
+
+            // Finally all other HTTP codes are not supposed to occur (well except if
+            // an HTTP proxy starts modifying the response, but that's another story...)
             _ => Err(ConnectionError::InvalidResponseStatus(resp.status())),
         }
     }
