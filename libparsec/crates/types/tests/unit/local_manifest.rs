@@ -17,9 +17,8 @@ type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], Local
 type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUserManifest)>;
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_local_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.6+dev
+    // Generated from Parsec v3.0.0-b.7+dev
     // Content:
     //   type: "local_file_manifest"
     //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
@@ -79,27 +78,21 @@ fn serde_local_file_manifest_ok(alice: &Device) {
     //   need_sync: true
     //   size: 500
     let data = hex!(
-        "7ee31884810dde6a3f2e00eb4f428c2a5b78de5414ac8556b67a94c9d715e17561aabc"
-        "c61bfc81e1b92371c3f6301252874349cf008dcc7a6577d7b18c09331b67dc19fae9ac"
-        "c9ede03c9d4785a7ba16b619e4aa17419cb1ad69489b336ffae00c707d1eb4d718f230"
-        "97c25657985c4d776bae70bb3c91344cdbce0a4598fcc2ac8a4d86692ae6ce9c3137c7"
-        "f96b3b0bedc3b7be3f64e4a6662200042c564dccb33e345471058df09f4f2f3f385c2c"
-        "54fe3ac4556aaf9ca6169fdbf1e8336d630d5edbb02a6b20fdb5c0ae0c09872cf74485"
-        "5b8ccbf7bd5391baa550ecb51f038ec77f708bb080d1a33fbbfbfb400ac7f2f688656b"
-        "f9b38fdbd73d6858860d44bc5b6016830484d72ad2b3aa22457679b00876679a6653ee"
-        "45fff770295237f21c387adc39cb1863e80b7580a4d7b47fe88012b28811c391af2d40"
-        "b83c0bdc73a6115d8733e29f46a0ff31c200a7267aefd588fe9c0379b195d5dad81dbf"
-        "96869053bb7a46d4ef80b1817f94c717447e0c81b8c87c3998482eaf7525c361956535"
-        "325bc7e727fd29173780fdc33333910d0ea6a9071e3ab35ef88612ff7e71bc88956616"
-        "21b689fe6af2e28cdcb07e9f8c08d349f6ea4ce87ac6ce32cc268df8c8e454ba27c5d9"
-        "5bee2e5dccd44242eaac4cdef5fd57d3b35502c17b1a10d05791f67a2461de1dd27038"
-        "7ec3ab2e69ad7cbfcbc76d59ba5bf0eb89b9082585ea9e831777fb9a4086b6b1b8b55a"
-        "464f8c9da40a7748d4f660007fb8438f4464a4e89a8500b2ceb1020a2c496e149c2af0"
-        "1763b6a6d3ab1bf23fb64493890b3a5a641a3c82dbfd25f2d9daef82fe482d77be0e02"
-        "d3055d2734a2a9cb2a89f459c8bc7bb467810183ad312da5440ad06db6602244193dc6"
-        "01da914a9c255034b4a4c27ca2cf0753ff0916bb4cb6fe2d026862c535b85cd3c35b00"
-        "979b84be1202c1b38e5dd7b098492cd1cb42dd4370398c8ecd57f60bb6c1e5a7b9e8a2"
-        "edf6d23e70f8e96c"
+    "8532379b73c11d0b4466427afa62198e32d69a04c0218627c371a7dc933a8bcd2af1d3"
+    "3e3b83e1e3972e0e80249f1f526e2f92d71487d3495ee17becfbc5165a5a52c3c3213b"
+    "852d639235fd37f8477af942064b16124aa4f4f522c25ca7ef132845d92d1ceb47971f"
+    "dc460bfab187a61d4735d9ffa68d6e13d61a968ed0af65ab9451cd8eadf197345aeb5a"
+    "f29f763483a72c277654f1465a60dca866a1c591d9cfbc78088c63eec31037d2be0a8b"
+    "46fdfa7776704f602981e1909f30ebc2ab404555d5334a2c220ae42418a6a46f7fb2a2"
+    "1cef66dc43e4f8cc3959def32b40cd458572023ae9cc09fde5aadb0da442c43f892c62"
+    "e09ecb4c0b098cbc07ec9b14fcafa8e55352d861f007221b8d5c527a307cda5d5f113e"
+    "ca12e3fee0dd2e89314563a514ed0935903b6b11c09d90bd7ad622238e8f4e49672162"
+    "2178680ff2a70cbba92b314d62046930c7614b68bd5449cd0b6a698a7044b204a54ece"
+    "e65b8f18b0195c6f2f28de8064408c2b2ccba0063a7cb72b6632d8c0fc5c43c21f510d"
+    "cc209093b35e8738dcdc35c290ebec0c2f7ca10c67edc6dc7bd5040ba1999a2098f693"
+    "af7e6c1740ec4991e7d72650cf97cd490d4dcb1bc93bf98ee5374e325feb2cc031c34f"
+    "77d48f1f1d33fe667185b8fd6e832944b2b59b72c010b6e7a776844d75bfd61298af71"
+    "08a5c0c8b29913715df21f3d92df"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
