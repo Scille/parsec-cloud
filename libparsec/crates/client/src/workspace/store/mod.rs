@@ -16,7 +16,7 @@ use std::{
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_storage::workspace::WorkspaceStorage;
+use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
 use libparsec_types::prelude::*;
 
 use crate::{
@@ -154,7 +154,21 @@ impl WorkspaceStore {
             // corrected by the merge during sync).
             None => {
                 let timestamp = device.now();
-                LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, true)
+                let manifest =
+                    LocalFolderManifest::new_root(device.device_id, realm_id, timestamp, true);
+
+                // We must store the speculative manifest in local storage, otherwise there
+                // is no way for the outbound sync monitors to realize a synchronization is
+                // needed here !
+                let update_data = UpdateManifestData {
+                    entry_id: manifest.base.id,
+                    base_version: manifest.base.version,
+                    need_sync: manifest.need_sync,
+                    encrypted: manifest.dump_and_encrypt(&device.local_symkey),
+                };
+                storage.update_manifest(&update_data).await?;
+
+                manifest
             }
         };
 
