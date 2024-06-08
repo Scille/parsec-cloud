@@ -175,9 +175,10 @@ async fn non_placeholder(
                         )
                         .customize(|e| {
                             let manifest = Arc::make_mut(&mut e.local_manifest);
-                            manifest
-                                .children
-                                .insert("bar (2).txt".parse().unwrap(), wksp1_bar2_txt_id);
+                            manifest.children.insert(
+                                "bar (Parsec sync conflict 2).txt".parse().unwrap(),
+                                wksp1_bar2_txt_id,
+                            );
                         });
                 }
             }
@@ -217,7 +218,8 @@ async fn non_placeholder(
                 unreachable!()
             }
         }
-    });
+    })
+    .await;
 
     // Get back last workspace manifest version synced in server
     let (wksp1_bar_txt_last_remote_manifest, wksp1_bar_txt_last_encrypted) = env
@@ -325,10 +327,13 @@ async fn non_placeholder(
         wksp1_bar_txt_id,
     );
 
-    if matches!(&local_modification, LocalModification::Conflicting) {
+    // Reparenting doesn't lead to a conflict
+    if matches!(&local_modification, LocalModification::Conflicting)
+        && !matches!(&remote_modification, RemoteModification::ReParented)
+    {
         let conflicted_id = *parent_manifest
             .children
-            .get(&"bar (2).txt".parse().unwrap())
+            .get(&"bar (Parsec sync conflict 2).txt".parse().unwrap())
             .unwrap();
         p_assert_ne!(conflicted_id, wksp1_bar_txt_id);
         let conflicted_manifest = match wksp1_ops.store.get_manifest(conflicted_id).await.unwrap() {
@@ -378,13 +383,13 @@ async fn non_placeholder(
 
         let name_clash_id = *parent_manifest
             .children
-            .get(&"bar (2).txt".parse().unwrap())
+            .get(&"bar (Parsec sync conflict 2).txt".parse().unwrap())
             .unwrap();
         p_assert_eq!(name_clash_id, wksp1_bar2_txt_id);
 
         let conflicted_id = *parent_manifest
             .children
-            .get(&"bar (3).txt".parse().unwrap())
+            .get(&"bar (Parsec sync conflict 3).txt".parse().unwrap())
             .unwrap();
         p_assert_ne!(conflicted_id, wksp1_bar_txt_id);
         p_assert_ne!(conflicted_id, wksp1_bar2_txt_id);

@@ -447,7 +447,7 @@ impl<'a> SyncConflictUpdater<'a> {
                 conflicting_new_child_manifest.id(),
                 self.original_child_manifest.id()
             );
-            assert_ne!(
+            assert_eq!(
                 conflicting_new_child_manifest.parent(),
                 self.original_parent_manifest.base.id
             );
@@ -461,12 +461,8 @@ impl<'a> SyncConflictUpdater<'a> {
                 .iter()
                 .any(|(_, id)| *id == child_manifest.id()));
             match (&self.original_child_manifest, &child_manifest) {
-                (ArcLocalChildManifest::File(om), ArcLocalChildManifest::File(m)) => {
-                    assert_eq!(om.base, m.base);
-                }
-                (ArcLocalChildManifest::Folder(om), ArcLocalChildManifest::Folder(m)) => {
-                    assert_eq!(om.base, m.base);
-                }
+                (ArcLocalChildManifest::File(_), ArcLocalChildManifest::File(_)) => (),
+                (ArcLocalChildManifest::Folder(_), ArcLocalChildManifest::Folder(_)) => (),
                 _ => panic!("Type has changed !"),
             }
         }
