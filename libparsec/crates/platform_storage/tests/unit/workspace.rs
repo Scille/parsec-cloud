@@ -1072,3 +1072,4 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
 }
 
 // TODO: test get/set blocks
+// TODO: test inbound / outbound need sync

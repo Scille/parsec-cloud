@@ -756,7 +756,7 @@ async fn db_remove_chunk(
     Ok(())
 }
 
-async fn db_get_inbound_need_sync(
+async fn db_get_outbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
@@ -778,7 +778,7 @@ async fn db_get_inbound_need_sync(
         .collect()
 }
 
-async fn db_get_outbound_need_sync(
+async fn db_get_inbound_need_sync(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     limit: u32,
 ) -> anyhow::Result<Vec<VlobID>> {
