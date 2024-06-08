@@ -5,12 +5,10 @@
 #![allow(clippy::unwrap_used)]
 
 use crate::{
-    test_register_low_level_send_hook, AuthenticatedCmds, Bytes, ConnectionError, HeaderMap,
-    HeaderValue, InvitedCmds, ProxyConfig, ResponseMock, StatusCode,
+    test_register_low_level_send_hook, Bytes, ConnectionError, HeaderMap, HeaderValue, InvitedCmds,
+    ProxyConfig, ResponseMock, StatusCode,
 };
-use libparsec_protocol::{
-    authenticated_cmds::latest as authenticated_cmds, invited_cmds::latest as invited_cmds,
-};
+use libparsec_protocol::invited_cmds::latest as invited_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -28,24 +26,9 @@ async fn ok_with_server(env: &TestbedEnv) {
 }
 
 async fn ok(env: &TestbedEnv, mocked: bool) {
-    let alice = env.local_device("alice@dev1");
-
-    // Create an invitation on the server
-    let invitation_token = if mocked {
-        InvitationToken::default()
-    } else {
-        let cmds =
-            AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
-                .unwrap();
-
-        let rep = cmds
-            .send(authenticated_cmds::invite_new_device::Req { send_email: false })
-            .await;
-        match rep.unwrap() {
-            authenticated_cmds::invite_new_device::Rep::Ok { token, .. } => token,
-            rep => panic!("unexpected reply: {:?}", rep),
-        }
-    };
+    let invitation_token = env
+        .customize(|builder| builder.new_device_invitation("alice@dev1").map(|e| e.token))
+        .await;
 
     // Good request
 
