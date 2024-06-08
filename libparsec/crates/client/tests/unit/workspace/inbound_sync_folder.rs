@@ -232,7 +232,8 @@ async fn non_placeholder(
                 unreachable!()
             }
         }
-    });
+    })
+    .await;
 
     // Get back last workspace manifest version synced in server
     let (wksp1_foo_last_remote_manifest, wksp1_foo_last_encrypted) = env
@@ -301,12 +302,7 @@ async fn non_placeholder(
     );
 
     wksp1_ops.inbound_sync(wksp1_foo_id).await.unwrap();
-    let foo_manifest = match wksp1_ops
-        .store
-        .get_child_manifest(wksp1_foo_id)
-        .await
-        .unwrap()
-    {
+    let foo_manifest = match wksp1_ops.store.get_manifest(wksp1_foo_id).await.unwrap() {
         ArcLocalChildManifest::Folder(m) => m,
         m => panic!(
             "Invalid manifest type for `/foo`, expecting folder and got: {:?}",

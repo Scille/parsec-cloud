@@ -167,7 +167,8 @@ async fn non_placeholder(
                 unreachable!()
             }
         }
-    });
+    })
+    .await;
 
     // Get back last workspace manifest version synced in server
     let (wksp1_last_remote_manifest, wksp1_last_encrypted) = env
@@ -236,7 +237,7 @@ async fn non_placeholder(
     );
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
-    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_root_manifest();
 
     // 4) Check the outcome
 
@@ -319,45 +320,47 @@ async fn placeholder(
     #[values(false, true)] local_change: bool,
     env: &TestbedEnv,
 ) {
-    let (env, (wksp1_id, wksp1_foo_id)) = env.customize(|builder| {
-        builder.new_device("alice"); // alice@dev2
+    let (wksp1_id, wksp1_foo_id) = env
+        .customize(|builder| {
+            builder.new_device("alice"); // alice@dev2
 
-        // Alice has access to a realm, alice@dev2 has synchronized the initial workspace
-        // manifest while alice@dev1 is still using a placeholder.
+            // Alice has access to a realm, alice@dev2 has synchronized the initial workspace
+            // manifest while alice@dev1 is still using a placeholder.
 
-        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
-        builder.rotate_key_realm(wksp1_id);
-        // We skip the initial rename part of the workspace bootstrap as it is not needed here
-        builder.create_or_update_workspace_manifest_vlob("alice@dev2", wksp1_id);
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            builder.rotate_key_realm(wksp1_id);
+            // We skip the initial rename part of the workspace bootstrap as it is not needed here
+            builder.create_or_update_workspace_manifest_vlob("alice@dev2", wksp1_id);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        builder.user_storage_fetch_realm_checkpoint("alice@dev1");
-        // Note alice@dev1 doesn't fetch anything related to wksp1 here !
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            builder.user_storage_fetch_realm_checkpoint("alice@dev1");
+            // Note alice@dev1 doesn't fetch anything related to wksp1 here !
 
-        let foo_id = builder
-            .workspace_data_storage_local_file_manifest_create_or_update(
-                "alice@dev1",
-                wksp1_id,
-                None,
-                wksp1_id,
-            )
-            .map(|e| e.local_manifest.base.id);
-        builder
-            .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
-            .customize(|e| {
-                let manifest = std::sync::Arc::make_mut(&mut e.local_manifest);
-                manifest.speculative = is_speculative;
-                if local_change {
-                    manifest.need_sync = true;
-                    manifest.children.insert("foo".parse().unwrap(), foo_id);
-                }
-            });
+            let foo_id = builder
+                .workspace_data_storage_local_file_manifest_create_or_update(
+                    "alice@dev1",
+                    wksp1_id,
+                    None,
+                    wksp1_id,
+                )
+                .map(|e| e.local_manifest.base.id);
+            builder
+                .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
+                .customize(|e| {
+                    let manifest = std::sync::Arc::make_mut(&mut e.local_manifest);
+                    manifest.speculative = is_speculative;
+                    if local_change {
+                        manifest.need_sync = true;
+                        manifest.children.insert("foo".parse().unwrap(), foo_id);
+                    }
+                });
 
-        (wksp1_id, foo_id)
-    });
+            (wksp1_id, foo_id)
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
@@ -421,7 +424,7 @@ async fn placeholder(
 
     wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
 
-    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_root_manifest();
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.base, *wksp1_last_remote_manifest);
     if local_change {
@@ -436,6 +439,35 @@ async fn placeholder(
             wksp1_last_remote_manifest.children
         );
     }
+
+    wksp1_ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn detect_need_sync_with_placeholder(env: &TestbedEnv) {
+    let wksp1_id = env
+        .customize(|builder| {
+            // Alice has access to a realm, which has no workspace manifest yet
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            builder.rotate_key_realm(wksp1_id);
+
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            builder.user_storage_fetch_realm_checkpoint("alice@dev1");
+            // At this point, alice@dev1 knowns about the workspace but has data on it.
+
+            wksp1_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    // Starting the workspace should create a speculative workspace manifest
+    let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
+
+    let outbound_syncs = wksp1_ops.get_need_outbound_sync(u32::MAX).await.unwrap();
+    p_assert_eq!(outbound_syncs, [wksp1_id],);
 
     wksp1_ops.stop().await.unwrap();
 }
