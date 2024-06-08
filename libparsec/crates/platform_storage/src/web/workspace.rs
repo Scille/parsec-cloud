@@ -107,7 +107,7 @@ impl PlatformWorkspaceStorage {
         Ok(())
     }
 
-    pub async fn get_inbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
+    pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         Vlob::get_need_sync(&self.conn)
             .await?
             .into_iter()
@@ -116,7 +116,7 @@ impl PlatformWorkspaceStorage {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    pub async fn get_outbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
+    pub async fn get_inbound_need_sync(&mut self, limit: u32) -> anyhow::Result<Vec<VlobID>> {
         Vlob::get_all(&self.conn)
             .await?
             .into_iter()
