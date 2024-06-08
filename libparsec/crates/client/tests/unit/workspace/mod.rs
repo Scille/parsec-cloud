@@ -13,7 +13,7 @@ mod file_operations;
 mod file_operations_stateful;
 mod file_transactions_stateful;
 mod folder_transactions;
-// mod inbound_sync_file;
+mod inbound_sync_file;
 mod inbound_sync_folder;
 mod inbound_sync_root;
 mod link;
