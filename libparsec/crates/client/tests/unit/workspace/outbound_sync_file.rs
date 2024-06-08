@@ -19,7 +19,7 @@ async fn non_placeholder(env: &TestbedEnv) {
     let get_file_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
         async move {
-            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
+            let child_manifest = wksp1_ops.store.get_manifest(entry_id).await.unwrap();
             match child_manifest {
                 ArcLocalChildManifest::File(m) => m,
                 ArcLocalChildManifest::Folder(m) => panic!("Expected file, got {:?}", m),
@@ -85,7 +85,7 @@ async fn non_placeholder(env: &TestbedEnv) {
     // Mock server commands and do the sync
 
     let expected_base_blocks = std::sync::Arc::new(std::sync::Mutex::new(vec![]));
-    let (key, key_index) = env.get_last_realm_key(wksp1_id);
+    let (key_derivation, key_index) = env.get_last_realm_key(wksp1_id);
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
         // 1) Fetch last workspace keys bundle to encrypt the new manifest
@@ -105,10 +105,11 @@ async fn non_placeholder(env: &TestbedEnv) {
         // 3) `block_create`
         {
             let expected_base_blocks = expected_base_blocks.clone();
-            let key = key.to_owned();
+            let key_derivation = key_derivation.to_owned();
             move |req: authenticated_cmds::latest::block_create::Req| {
                 p_assert_eq!(req.realm_id, wksp1_id);
                 p_assert_eq!(req.key_index, key_index);
+                let key = key_derivation.derive_secret_key_from_uuid(*req.block_id);
                 p_assert_eq!(key.decrypt(&req.block).unwrap(), NEW_DATA);
                 expected_base_blocks.lock().unwrap().push(BlockAccess {
                     id: req.block_id,
@@ -159,7 +160,8 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     env.customize(|builder| {
         // New version of the file that we our client doesn't know about
         builder.create_or_update_file_manifest_vlob("alice@dev1", wksp1_id, wksp1_bar_txt_id, None);
-    });
+    })
+    .await;
 
     let alice = env.local_device("alice@dev1");
     let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
@@ -167,7 +169,7 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     let get_file_manifest = |entry_id| {
         let wksp1_ops = &wksp1_ops;
         async move {
-            let child_manifest = wksp1_ops.store.get_child_manifest(entry_id).await.unwrap();
+            let child_manifest = wksp1_ops.store.get_manifest(entry_id).await.unwrap();
             match child_manifest {
                 ArcLocalChildManifest::File(m) => m,
                 ArcLocalChildManifest::Folder(m) => panic!("Expected file, got {:?}", m),

@@ -104,7 +104,8 @@ async fn non_placeholder(
                 .create_or_update_workspace_manifest_vlob("alice@dev2", wksp1_id)
                 .customize_children([("dont_mind_me", Some(dont_mind_me_id))].into_iter());
         }
-    });
+    })
+    .await;
 
     // Get back last workspace manifest version synced in server
     let (wksp1_last_remote_manifest, wksp1_last_encrypted) = env
@@ -281,7 +282,7 @@ async fn non_placeholder(
     };
 
     // Check the user manifest is not longer need sync
-    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_root_manifest();
     p_assert_eq!(workspace_manifest.need_sync, false);
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.children, expected_children);
@@ -293,36 +294,38 @@ async fn non_placeholder(
 
 #[parsec_test(testbed = "minimal")]
 async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedEnv) {
-    let wksp1_id = env.customize(|builder| {
-        // Alice has access to a workspace partially bootstrapped: only the realm creation has been done
-        let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
+    let wksp1_id = env
+        .customize(|builder| {
+            // Alice has access to a workspace partially bootstrapped: only the realm creation has been done
+            let wksp1_id = builder.new_realm("alice").map(|e| e.realm_id);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-        builder
-            .user_storage_local_update("alice@dev1")
-            .update_local_workspaces_with_fetched_certificates();
-        builder.user_storage_fetch_realm_checkpoint("alice@dev1");
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder
+                .user_storage_local_update("alice@dev1")
+                .update_local_workspaces_with_fetched_certificates();
+            builder.user_storage_fetch_realm_checkpoint("alice@dev1");
 
-        // new_realm_event.then_add_workspace_entry_to_user_manifest_vlob();
-        // builder.store_stuff("wksp1_id", &wksp1_id);
-        // builder.store_stuff("wksp1_key", &wksp1_key);
+            // new_realm_event.then_add_workspace_entry_to_user_manifest_vlob();
+            // builder.store_stuff("wksp1_id", &wksp1_id);
+            // builder.store_stuff("wksp1_key", &wksp1_key);
 
-        // builder.user_storage_fetch_user_vlob("alice@dev1");
-        builder
-            .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
-            .customize(|e| {
-                let manifest = std::sync::Arc::make_mut(&mut e.local_manifest);
-                manifest.speculative = is_speculative;
-            });
+            // builder.user_storage_fetch_user_vlob("alice@dev1");
+            builder
+                .workspace_data_storage_local_workspace_manifest_update("alice@dev1", wksp1_id)
+                .customize(|e| {
+                    let manifest = std::sync::Arc::make_mut(&mut e.local_manifest);
+                    manifest.speculative = is_speculative;
+                });
 
-        wksp1_id
-    });
+            wksp1_id
+        })
+        .await;
 
     let alice = env.local_device("alice@dev1");
     let wksp1_ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     // Check the workspace manifest is need sync
-    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_root_manifest();
     p_assert_eq!(workspace_manifest.need_sync, true);
     p_assert_eq!(workspace_manifest.speculative, is_speculative);
     p_assert_eq!(workspace_manifest.base.version, 0);
@@ -432,7 +435,7 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
     p_assert_matches!(outcome, OutboundSyncOutcome::Done);
 
     // Check the workspace manifest is no longer need sync
-    let workspace_manifest = wksp1_ops.store.get_workspace_manifest();
+    let workspace_manifest = wksp1_ops.store.get_root_manifest();
     p_assert_eq!(workspace_manifest.need_sync, false);
     p_assert_eq!(workspace_manifest.speculative, false);
     p_assert_eq!(workspace_manifest.base.version, 1);
