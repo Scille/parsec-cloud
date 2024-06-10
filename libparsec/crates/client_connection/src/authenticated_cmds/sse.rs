@@ -138,6 +138,8 @@ impl From<SSEConnectionError> for ConnectionError {
             SSEConnectionError::InvalidContentType(_) => ConnectionError::BadContent,
             // All statuses except 200
             SSEConnectionError::InvalidStatusCode(code) => match code.as_u16() {
+                // HTTP codes used by Parsec
+
                 401 => ConnectionError::MissingAuthenticationInfo,
                 403 => ConnectionError::BadAuthenticationInfo,
                 404 => ConnectionError::OrganizationNotFound,
@@ -152,9 +154,21 @@ impl From<SSEConnectionError> for ConnectionError {
                 461 => ConnectionError::RevokedUser,
                 462 => ConnectionError::FrozenUser,
                 498 => ConnectionError::AuthenticationTokenExpired,
+
+                // Other HTTP codes
+
                 // We typically use HTTP 503 in the tests to simulate server offline,
                 // so it should behave just like if we were not able to connect
-                503 => ConnectionError::NoResponse(None),
+                // On top of that we should also handle 502 and 504 as they are related
+                // to a gateway.
+                #[allow(clippy::manual_range_patterns)]
+                502 // Bad Gateway
+                | 503 // Service Unavailable
+                | 504 // Gateway Timeout
+                => ConnectionError::NoResponse(None),
+
+                // Finally all other HTTP codes are not supposed to occur (well except if
+                // an HTTP proxy starts modifying the response, but that's another story...)
                 _ => ConnectionError::InvalidResponseStatus(code),
             },
         }
