@@ -729,6 +729,49 @@ macro_rules! register_http_hook {
     };
 }
 
-register_http_hook!(no_response_http_codes_502, StatusCode::BAD_GATEWAY);
-register_http_hook!(no_response_http_codes_503, StatusCode::SERVICE_UNAVAILABLE);
-register_http_hook!(no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
+register_http_hook!(rpc_no_response_http_codes_502, StatusCode::BAD_GATEWAY);
+register_http_hook!(
+    rpc_no_response_http_codes_503,
+    StatusCode::SERVICE_UNAVAILABLE
+);
+register_http_hook!(rpc_no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
+
+// Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
+// only accept a static closure (i.e. `fn`, not `FnMut`).
+macro_rules! register_sse_http_hook {
+    ($test_name: ident, $response_status_code: expr) => {
+        // TODO: SSE not implemented in web yet
+        #[cfg(not(target_arch = "wasm32"))]
+        #[parsec_test(testbed = "minimal")]
+        async fn $test_name(env: &TestbedEnv) {
+            let alice = env.local_device("alice@dev1");
+            let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice, ProxyConfig::default())
+                .unwrap();
+
+            test_register_low_level_send_hook(
+                &env.discriminant_dir,
+                move |_request_builder| async {
+                    Ok(ResponseMock::Mocked((
+                        $response_status_code,
+                        HeaderMap::new(),
+                        "".into(),
+                    )))
+                },
+            );
+
+            p_assert_eq!(
+                cmds.start_sse::<authenticated_cmds::events_listen::Req>(None)
+                    .await
+                    .unwrap_err(),
+                ConnectionError::NoResponse(None)
+            );
+        }
+    };
+}
+
+register_sse_http_hook!(sse_no_response_http_codes_502, StatusCode::BAD_GATEWAY);
+register_sse_http_hook!(
+    sse_no_response_http_codes_503,
+    StatusCode::SERVICE_UNAVAILABLE
+);
+register_sse_http_hook!(sse_no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
