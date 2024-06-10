@@ -217,10 +217,13 @@ jobs:
 
   publish:
     needs: releaser
-    if: >-
-      (github.event_name == 'schedule' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
-      && needs.releaser.result == 'success'
-      && always()
+    # FIXME: We currently cannot publish the release, we need additional snap track that are in discussion to be added
+    # (https://forum.snapcraft.io/t/track-request-for-parsec-snap/40471)
+    if: false
+    # if: >-
+    #   (github.event_name == 'schedule' || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')))
+    #   && needs.releaser.result == 'success'
+    #   && always()
     uses: ./.github/workflows/publish.yml
     permissions:
       contents: read
