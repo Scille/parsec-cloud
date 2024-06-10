@@ -47,6 +47,9 @@
       :key="user.id"
       :user="user"
       :disabled="user.isCurrent"
+      :class="{
+        'current-user': user.isCurrent,
+      }"
       :show-checkbox="someSelected"
       @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
     />

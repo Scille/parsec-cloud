@@ -10,7 +10,7 @@
       selected: user.isSelected && !user.isRevoked(),
       revoked: user.isRevoked(),
       'no-padding-end': !user.isSelected,
-      'user-hovered': isHovered || menuOpened,
+      'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
