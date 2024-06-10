@@ -3,8 +3,8 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pyfunction, pymethods,
-    types::{PyBytes, PyDict, PyTuple, PyType},
-    IntoPy, PyObject, PyResult, Python,
+    types::{PyBytes, PyDict, PyDictMethods, PyTuple, PyType},
+    Bound, IntoPy, PyObject, PyResult, Python,
 };
 use std::{collections::HashMap, num::NonZeroU64};
 
@@ -62,7 +62,7 @@ impl BlockAccess {
     }
 
     #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [id: BlockID, "id"],
@@ -159,8 +159,11 @@ impl FileManifest {
         &self,
         py: Python<'p>,
         author_signkey: &SigningKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
+            py,
+            &self.0.dump_and_sign(&author_signkey.0),
+        ))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -168,8 +171,8 @@ impl FileManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
         key: &SecretKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -178,7 +181,7 @@ impl FileManifest {
     #[classmethod]
     #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         encrypted: &[u8],
         key: &SecretKey,
         author_verify_key: &VerifyKey,
@@ -201,7 +204,7 @@ impl FileManifest {
     }
 
     #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -299,14 +302,14 @@ impl FileManifest {
     }
 
     #[getter]
-    fn blocks<'p>(&self, py: Python<'p>) -> PyResult<&'p PyTuple> {
+    fn blocks<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyTuple>> {
         let elements: Vec<PyObject> = self
             .0
             .blocks
             .iter()
             .map(|x| BlockAccess(x.clone()).into_py(py))
             .collect();
-        Ok(PyTuple::new(py, elements))
+        Ok(PyTuple::new_bound(py, elements))
     }
 }
 
@@ -353,8 +356,11 @@ impl FolderManifest {
         &self,
         py: Python<'p>,
         author_signkey: &SigningKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
+            py,
+            &self.0.dump_and_sign(&author_signkey.0),
+        ))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -362,8 +368,8 @@ impl FolderManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
         key: &SecretKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -372,7 +378,7 @@ impl FolderManifest {
     #[classmethod]
     #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         encrypted: &[u8],
         key: &SecretKey,
         author_verify_key: &VerifyKey,
@@ -395,7 +401,7 @@ impl FolderManifest {
     }
 
     #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],
@@ -474,8 +480,8 @@ impl FolderManifest {
     }
 
     #[getter]
-    fn children<'p>(&self, py: Python<'p>) -> PyResult<&'p PyDict> {
-        let d = PyDict::new(py);
+    fn children<'p>(&self, py: Python<'p>) -> PyResult<Bound<'p, PyDict>> {
+        let d = PyDict::new_bound(py);
 
         for (k, v) in &self.0.children {
             let en = EntryName(k.clone()).into_py(py);
@@ -522,8 +528,11 @@ impl UserManifest {
         &self,
         py: Python<'p>,
         author_signkey: &SigningKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0)))
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
+            py,
+            &self.0.dump_and_sign(&author_signkey.0),
+        ))
     }
 
     fn dump_sign_and_encrypt<'p>(
@@ -531,8 +540,8 @@ impl UserManifest {
         py: Python<'p>,
         author_signkey: &SigningKey,
         key: &SecretKey,
-    ) -> PyResult<&'p PyBytes> {
-        Ok(PyBytes::new(
+    ) -> PyResult<Bound<'p, PyBytes>> {
+        Ok(PyBytes::new_bound(
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
@@ -541,7 +550,7 @@ impl UserManifest {
     #[classmethod]
     #[allow(clippy::too_many_arguments)]
     fn decrypt_verify_and_load(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         encrypted: &[u8],
         key: &SecretKey,
         author_verify_key: &VerifyKey,
@@ -564,7 +573,7 @@ impl UserManifest {
     }
 
     #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [author: DeviceID, "author"],

@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyNotImplementedError,
     pyclass::CompareOp,
-    types::{PyByteArray, PyBytes, PyTuple},
+    types::{PyAnyMethods, PyByteArray, PyBytes, PyTuple},
     FromPyObject, IntoPy, PyObject, PyResult,
 };
 use std::{
@@ -18,14 +18,14 @@ impl IntoPy<PyObject> for PathWrapper {
     fn into_py(self, py: pyo3::Python) -> pyo3::PyObject {
         // Pathlib is part of the standard library
         let pathlib_module = py
-            .import("pathlib")
+            .import_bound("pathlib")
             .expect("import `pathlib` module failed.");
         let path_ctor = pathlib_module
             .getattr("Path")
             .expect("can't get `Path` from `pathlib`.");
 
         path_ctor
-            .call1(PyTuple::new(py, [self.0]))
+            .call1(PyTuple::new_bound(py, [self.0]))
             .expect("call to `Path` constructor failed.")
             .into_py(py)
     }
@@ -139,6 +139,7 @@ macro_rules! parse_kwargs_optional {
         $(let mut $var = None;)*
         if let Some($kwargs) = $kwargs {
             for arg in $kwargs {
+                use pyo3::prelude::PyAnyMethods;
                 match arg.0.extract::<&str>()? {
                     $($name => $var = {
                         let temp = arg.1;
@@ -307,7 +308,7 @@ macro_rules! gen_py_wrapper_class_for_enum {
                 lazy_static::lazy_static! {
                     static ref VALUES: PyObject = {
                         Python::with_gil(|py| {
-                            PyTuple::new(py, [
+                            PyTuple::new_bound(py, [
                                 $(
                                     $class :: $fn_name ()
                                 ),*
@@ -320,7 +321,7 @@ macro_rules! gen_py_wrapper_class_for_enum {
             }
 
             #[classmethod]
-            fn from_str(_cls: &PyType, value: &str) -> PyResult<&'static PyObject> {
+            fn from_str(_cls: &::pyo3::Bound<'_, PyType>, value: &str) -> PyResult<&'static PyObject> {
                 Ok(match value {
                         $($pyo3_name => Self:: $fn_name ()),*,
                     _ => return Err(PyValueError::new_err(format!("Invalid value `{}`", value))),

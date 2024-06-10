@@ -6,6 +6,7 @@ use pyo3::{
     exceptions::{PyAttributeError, PyValueError},
     prelude::*,
     types::{PyBytes, PyDict, PyTuple, PyType},
+    Bound,
 };
 
 use libparsec_types::{
@@ -73,7 +74,7 @@ impl UserCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
@@ -94,12 +95,16 @@ impl UserCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::UserCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -236,7 +241,7 @@ impl DeviceCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: Option<&DeviceID>,
@@ -255,12 +260,16 @@ impl DeviceCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::DeviceCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -366,7 +375,7 @@ impl RevokedUserCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -382,12 +391,16 @@ impl RevokedUserCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::RevokedUserCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -439,7 +452,7 @@ impl UserUpdateCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -455,12 +468,16 @@ impl UserUpdateCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::UserUpdateCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -519,7 +536,7 @@ impl RealmRoleCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -537,12 +554,16 @@ impl RealmRoleCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::RealmRoleCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -606,7 +627,7 @@ impl RealmNameCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -622,12 +643,16 @@ impl RealmNameCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::RealmNameCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -655,8 +680,8 @@ impl RealmNameCertificate {
     }
 
     #[getter]
-    fn encrypted_name<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.encrypted_name)
+    fn encrypted_name<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.encrypted_name)
     }
 }
 
@@ -713,7 +738,7 @@ impl RealmKeyRotationCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -729,12 +754,16 @@ impl RealmKeyRotationCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::RealmKeyRotationCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -772,8 +801,8 @@ impl RealmKeyRotationCertificate {
     }
 
     #[getter]
-    fn key_canary<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.key_canary)
+    fn key_canary<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.key_canary)
     }
 }
 
@@ -789,7 +818,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl RealmArchivingConfiguration {
     #[classmethod]
-    pub(crate) fn deletion_planned(_cls: &PyType, deletion_date: DateTime) -> Self {
+    pub(crate) fn deletion_planned(_cls: &Bound<'_, PyType>, deletion_date: DateTime) -> Self {
         Self(
             libparsec_types::RealmArchivingConfiguration::DeletionPlanned {
                 deletion_date: deletion_date.0,
@@ -867,7 +896,7 @@ impl RealmArchivingCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -883,12 +912,16 @@ impl RealmArchivingCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::RealmArchivingCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -952,7 +985,7 @@ impl ShamirRecoveryBriefCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -966,12 +999,16 @@ impl ShamirRecoveryBriefCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::ShamirRecoveryBriefCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -999,8 +1036,8 @@ impl ShamirRecoveryBriefCertificate {
     }
 
     #[getter]
-    fn per_recipient_shares<'py>(&self, py: Python<'py>) -> &'py PyDict {
-        let d = PyDict::new(py);
+    fn per_recipient_shares<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
+        let d = PyDict::new_bound(py);
 
         for (k, v) in &self.0.per_recipient_shares {
             let py_k = UserID(*k).into_py(py);
@@ -1045,7 +1082,7 @@ impl ShamirRecoveryShareCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: &DeviceID,
@@ -1061,12 +1098,16 @@ impl ShamirRecoveryShareCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[classmethod]
-    fn unsecure_load(_cls: &PyType, signed: &[u8]) -> PyResult<Self> {
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
         libparsec_types::ShamirRecoveryShareCertificate::unsecure_load(signed.to_vec().into())
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
@@ -1094,8 +1135,8 @@ impl ShamirRecoveryShareCertificate {
     }
 
     #[getter]
-    fn ciphered_share<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.ciphered_share)
+    fn ciphered_share<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.ciphered_share)
     }
 }
 
@@ -1120,7 +1161,7 @@ impl SequesterAuthorityCertificate {
 
     #[classmethod]
     fn verify_and_load(
-        _cls: &PyType,
+        _cls: &Bound<'_, PyType>,
         signed: &[u8],
         author_verify_key: &VerifyKey,
     ) -> PyResult<Self> {
@@ -1132,8 +1173,12 @@ impl SequesterAuthorityCertificate {
         .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump_and_sign<'py>(&self, author_signkey: &SigningKey, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump_and_sign(&author_signkey.0))
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
     }
 
     #[getter]
@@ -1174,14 +1219,14 @@ impl SequesterServiceCertificate {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
+    fn load(_cls: &Bound<'_, PyType>, data: &[u8]) -> PyResult<Self> {
         libparsec_types::SequesterServiceCertificate::load(data)
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump())
     }
 
     #[getter]
@@ -1227,14 +1272,14 @@ impl SequesterRevokedServiceCertificate {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, data: &[u8]) -> PyResult<Self> {
+    fn load(_cls: &Bound<'_, PyType>, data: &[u8]) -> PyResult<Self> {
         libparsec_types::SequesterRevokedServiceCertificate::load(data)
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(|x| Self(Arc::new(x)))
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump())
     }
 
     #[getter]

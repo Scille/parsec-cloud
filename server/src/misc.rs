@@ -4,7 +4,7 @@ use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
     types::{PyBytes, PyType},
-    PyResult, Python,
+    Bound, PyResult, Python,
 };
 
 crate::binding_utils::gen_py_wrapper_class!(
@@ -24,8 +24,8 @@ impl ApiVersion {
         Self(libparsec_types::ApiVersion { version, revision })
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-        Ok(PyBytes::new(
+    fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+        Ok(PyBytes::new_bound(
             py,
             &self
                 .0
@@ -36,7 +36,7 @@ impl ApiVersion {
     }
 
     #[classmethod]
-    fn from_bytes(_cls: &PyType, bytes: &[u8]) -> PyResult<Self> {
+    fn from_bytes(_cls: Bound<'_, PyType>, bytes: &[u8]) -> PyResult<Self> {
         Ok(Self(
             libparsec_types::ApiVersion::load(bytes)
                 .map_err(|err| PyValueError::new_err(err.to_string()))?,
@@ -44,7 +44,7 @@ impl ApiVersion {
     }
 
     #[classmethod]
-    fn from_str(_cls: &PyType, version_str: &str) -> PyResult<Self> {
+    fn from_str(_cls: Bound<'_, PyType>, version_str: &str) -> PyResult<Self> {
         libparsec_types::ApiVersion::try_from(version_str)
             .map(Self)
             .map_err(PyValueError::new_err)

@@ -41,9 +41,9 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
             #(
             #versioned_cmds_items
             )*
-            pub(super) fn #populate_mod_fn_name(py: Python, m: &PyModule) -> PyResult<()> {
-                let family_mod = PyModule::new(py, #family_mod_name_as_str)?;
-                m.add_submodule(family_mod)?;
+            pub(super) fn #populate_mod_fn_name(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
+                let family_mod = PyModule::new_bound(py, #family_mod_name_as_str)?;
+                m.add_submodule(&family_mod)?;
                 #(#versioned_cmds_populates)*
 
                 // Version modules are returned ordered
@@ -74,7 +74,7 @@ fn quote_versioned_cmds(
         .unzip();
 
     let populate_code = quote! {
-        let versioned_cmds_mod = PyModule::new(py, #versioned_cmds_mod_name_as_str)?;
+        let versioned_cmds_mod = PyModule::new_bound(py, #versioned_cmds_mod_name_as_str)?;
         family_mod.add_submodule(&versioned_cmds_mod)?;
         versioned_cmds_mod.add_class::<#versioned_cmds_mod_name::AnyCmdReq>()?;
         #(#cmds_populate_codes)*
@@ -168,7 +168,7 @@ fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream
                 quote_reps(reps, &protocol_path, py_module_path_as_str);
 
             let populate_code = quote! {
-                let cmd_mod = PyModule::new(py, #cmd_mod_name_as_str)?;
+                let cmd_mod = PyModule::new_bound(py, #cmd_mod_name_as_str)?;
                 versioned_cmds_mod.add_submodule(&cmd_mod)?;
                 cmd_mod.add_class::<#version_name::#cmd_mod_name::Req>()?;
                 #(cmd_mod.add_class::<#version_name::#cmd_mod_name::#nested_types_names>()?;)*
@@ -347,8 +347,8 @@ fn quote_reps(
                 })
             }
 
-            fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-                Ok(PyBytes::new(
+            fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+                Ok(PyBytes::new_bound(
                     py,
                     &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                 ))
@@ -430,8 +430,8 @@ fn quote_req(
                         #nested_type_name::from_raw(py, self.0.0.clone())
                     }
 
-                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-                        Ok(PyBytes::new(
+                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+                        Ok(PyBytes::new_bound(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -507,8 +507,8 @@ fn quote_req(
                 impl Req {
                     #fn_new_and_getters_iml
 
-                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<&'py PyBytes> {
-                        Ok(PyBytes::new(
+                    fn dump<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+                        Ok(PyBytes::new_bound(
                             py,
                             &self.0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
                         ))
@@ -549,8 +549,8 @@ fn quote_nested_type(
                 );
 
                 impl #nested_type_name {
-                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<PyObject> {
-                        Ok(Self::convert(raw).as_ref(py).into())
+                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<Bound<'_, PyAny>> {
+                        Ok(Self::convert(raw).bind(py).to_owned())
                     }
                 }
             };
@@ -786,15 +786,15 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
             quote! { Option<#nested> }
         }
         FieldType::Tuple(_) => {
-            quote! { &'py PyTuple }
+            quote! { Bound<'py, PyTuple> }
         }
         FieldType::Custom(nested) => {
             let nested = format_ident!("{}", nested);
             quote! { #nested }
         }
         FieldType::Boolean => quote! { bool },
-        FieldType::String => quote! { &'py PyString },
-        FieldType::Bytes => quote! { &'py PyBytes },
+        FieldType::String => quote! { Bound<'py, PyString> },
+        FieldType::Bytes => quote! { Bound<'py, PyBytes> },
         FieldType::Integer => quote! { i64 },
         FieldType::Float => quote! { f64 },
         FieldType::Version => quote! { u32 },
@@ -894,7 +894,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             quote! {
                 {
                     let (#(#items_names),*) = #field_path;
-                    PyTuple::new(py, [
+                    PyTuple::new_bound(py, [
                         #(#items_conversions.into_py(py)),*
                     ])
                 }
@@ -904,8 +904,8 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let nested_name = format_ident!("{}", nested);
             quote! { #nested_name(#field_path.to_owned()) }
         }
-        FieldType::String => quote! { PyString::new(py, #field_path) },
-        FieldType::Bytes => quote! { PyBytes::new(py, #field_path) },
+        FieldType::String => quote! { PyString::new_bound(py, #field_path) },
+        FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path) },
         FieldType::Boolean => quote! { bool::from(*#field_path) },
         FieldType::Integer => quote! { i64::from(*#field_path) },
         FieldType::Float => quote! { f64::from(*#field_path) },

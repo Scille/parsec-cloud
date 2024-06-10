@@ -8,9 +8,12 @@ pub(crate) use certif::*;
 pub(crate) use manifest::*;
 pub(crate) use pki::*;
 
-use pyo3::{types::PyModule, wrap_pyfunction, PyResult};
+use pyo3::{
+    types::{PyModule, PyModuleMethods},
+    wrap_pyfunction, Bound, PyResult,
+};
 
-pub(crate) fn add_mod(m: &PyModule) -> PyResult<()> {
+pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     // Certif
     m.add_class::<PrivateKeyAlgorithm>()?;
     m.add_class::<UserCertificate>()?;
