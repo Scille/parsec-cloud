@@ -9,14 +9,20 @@ macro_rules! gen_uuid {
         #[pymethods]
         impl $class {
             #[classmethod]
-            fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
+            fn from_bytes(
+                _cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                bytes: &[u8],
+            ) -> PyResult<Self> {
                 libparsec_types::$class::try_from(bytes)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
             }
 
             #[classmethod]
-            fn from_hex(_cls: &::pyo3::types::PyType, hex: &str) -> PyResult<Self> {
+            fn from_hex(
+                _cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                hex: &str,
+            ) -> PyResult<Self> {
                 libparsec_types::$class::from_hex(hex)
                     .map(Self)
                     .map_err(::pyo3::exceptions::PyValueError::new_err)
@@ -24,7 +30,7 @@ macro_rules! gen_uuid {
 
             #[classmethod]
             #[pyo3(name = "new")]
-            fn default(_cls: &::pyo3::types::PyType) -> Self {
+            fn default(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>) -> Self {
                 Self(libparsec_types::$class::default())
             }
 
@@ -93,7 +99,7 @@ gen_uuid!(ChunkID);
 #[pymethods]
 impl ChunkID {
     #[classmethod]
-    fn from_block_id(_cls: &PyType, id: BlockID) -> Self {
+    fn from_block_id(_cls: Bound<'_, PyType>, id: BlockID) -> Self {
         Self(libparsec_types::ChunkID::from(*id.0))
     }
 }
@@ -138,7 +144,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 #[pymethods]
 impl OrganizationID {
     #[new]
-    fn new(organization_id: &PyAny) -> PyResult<Self> {
+    fn new(organization_id: Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(organization_id) = organization_id.extract::<Self>() {
             Ok(organization_id)
         } else if let Ok(organization_id) = organization_id.extract::<&str>() {
@@ -199,7 +205,7 @@ crate::binding_utils::gen_py_wrapper_class_for_id!(
 #[pymethods]
 impl DeviceLabel {
     #[new]
-    fn new(device_label: &PyAny) -> PyResult<Self> {
+    fn new(device_label: Bound<'_, PyAny>) -> PyResult<Self> {
         if let Ok(device_label) = device_label.extract::<Self>() {
             Ok(device_label)
         } else if let Ok(device_label) = device_label.extract::<&str>() {

@@ -3,8 +3,8 @@
 use pyo3::{
     exceptions::PyValueError,
     pyclass, pymethods,
-    types::{IntoPyDict, PyBytes, PyDict, PyType},
-    PyAny, PyObject, PyResult, Python,
+    types::{IntoPyDict, PyAnyMethods, PyBytes, PyDict, PyType},
+    Bound, PyAny, PyObject, PyResult, Python,
 };
 use std::{collections::HashMap, path::Path};
 
@@ -78,14 +78,14 @@ impl PkiEnrollmentAnswerPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+    fn load(_cls: Bound<'_, PyType>, raw: &[u8]) -> PyResult<Self> {
         libparsec_types::PkiEnrollmentAnswerPayload::load(raw)
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(Self)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump())
     }
 }
 
@@ -129,14 +129,14 @@ impl PkiEnrollmentSubmitPayload {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+    fn load(_cls: Bound<'_, PyType>, raw: &[u8]) -> PyResult<Self> {
         libparsec_types::PkiEnrollmentSubmitPayload::load(raw)
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(Self)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump())
     }
 }
 
@@ -170,7 +170,7 @@ impl X509Certificate {
     }
 
     #[pyo3(signature = (**py_kwargs))]
-    fn evolve(&self, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
             py_kwargs,
             [issuer: HashMap<String, String>, "issuer"],
@@ -222,23 +222,23 @@ impl X509Certificate {
     }
 
     #[getter]
-    fn issuer<'py>(&self, py: Python<'py>) -> &'py PyDict {
-        self.0.issuer.clone().into_py_dict(py)
+    fn issuer<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
+        self.0.issuer.clone().into_py_dict_bound(py)
     }
 
     #[getter]
-    fn subject<'py>(&self, py: Python<'py>) -> &'py PyDict {
-        self.0.subject.clone().into_py_dict(py)
+    fn subject<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
+        self.0.subject.clone().into_py_dict_bound(py)
     }
 
     #[getter]
-    fn der_x509_certificate<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.der_x509_certificate)
+    fn der_x509_certificate<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.der_x509_certificate)
     }
 
     #[getter]
-    fn certificate_sha1<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.certificate_sha1)
+    fn certificate_sha1<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.certificate_sha1)
     }
 
     #[getter]
@@ -281,20 +281,21 @@ impl LocalPendingEnrollment {
     }
 
     #[classmethod]
-    fn load(_cls: &PyType, raw: &[u8]) -> PyResult<Self> {
+    fn load(_cls: Bound<'_, PyType>, raw: &[u8]) -> PyResult<Self> {
         libparsec_types::LocalPendingEnrollment::load(raw)
             .map_err(|e| PyValueError::new_err(e.to_string()))
             .map(Self)
     }
 
-    fn dump<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.dump())
+    fn dump<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump())
     }
 
-    fn save(&self, config_dir: &PyAny) -> PyResult<String> {
-        let config_dir = config_dir
+    fn save(&self, config_dir: Bound<'_, PyAny>) -> PyResult<String> {
+        let config_dir_pyobj = config_dir
             .call_method0("__str__")
-            .expect("config_dir should be a Path")
+            .expect("config_dir should be a Path");
+        let config_dir = config_dir_pyobj
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
@@ -309,10 +310,9 @@ impl LocalPendingEnrollment {
     }
 
     #[classmethod]
-    fn load_from_path(_cls: &PyType, path: &PyAny) -> PyResult<Self> {
-        let path = path
-            .call_method0("__str__")
-            .expect("path should be a Path")
+    fn load_from_path(_cls: Bound<'_, PyType>, path: Bound<'_, PyAny>) -> PyResult<Self> {
+        let path_pyobj = path.call_method0("__str__").expect("path should be a Path");
+        let path = path_pyobj
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
@@ -323,13 +323,14 @@ impl LocalPendingEnrollment {
 
     #[classmethod]
     fn load_from_enrollment_id(
-        _cls: &PyType,
-        config_dir: &PyAny,
+        _cls: Bound<'_, PyType>,
+        config_dir: Bound<'_, PyAny>,
         enrollment_id: EnrollmentID,
     ) -> PyResult<Self> {
-        let config_dir = config_dir
+        let config_dir_pyobj = config_dir
             .call_method0("__str__")
-            .expect("config_dir should be a Path")
+            .expect("config_dir should be a Path");
+        let config_dir = config_dir_pyobj
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
@@ -343,13 +344,14 @@ impl LocalPendingEnrollment {
 
     #[classmethod]
     fn remove_from_enrollment_id(
-        _cls: &PyType,
-        config_dir: &PyAny,
+        _cls: Bound<'_, PyType>,
+        config_dir: Bound<'_, PyAny>,
         enrollment_id: EnrollmentID,
     ) -> PyResult<()> {
-        let config_dir = config_dir
+        let config_dir_pyobj = config_dir
             .call_method0("__str__")
-            .expect("config_dir should be a Path")
+            .expect("config_dir should be a Path");
+        let config_dir = config_dir_pyobj
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
@@ -361,10 +363,11 @@ impl LocalPendingEnrollment {
     }
 
     #[classmethod]
-    fn list(_cls: &PyType, config_dir: &PyAny) -> Vec<Self> {
-        let config_dir = config_dir
+    fn list(_cls: Bound<'_, PyType>, config_dir: Bound<'_, PyAny>) -> Vec<Self> {
+        let config_dir_pyobj = config_dir
             .call_method0("__str__")
-            .expect("config_dir should be a Path")
+            .expect("config_dir should be a Path");
+        let config_dir = config_dir_pyobj
             .extract::<&str>()
             .map(Path::new)
             .expect("Unreachable");
@@ -400,12 +403,12 @@ impl LocalPendingEnrollment {
     }
 
     #[getter]
-    fn encrypted_key<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.encrypted_key)
+    fn encrypted_key<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.encrypted_key)
     }
 
     #[getter]
-    fn ciphertext<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, &self.0.ciphertext)
+    fn ciphertext<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.ciphertext)
     }
 }

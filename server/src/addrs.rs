@@ -3,7 +3,8 @@
 use pyo3::{
     exceptions::PyValueError,
     prelude::{pyclass, pymethods, IntoPy, PyObject, PyResult, Python, ToPyObject},
-    types::{PyBytes, PyDict, PyType},
+    types::{PyAnyMethods, PyBytes, PyDict, PyDictMethods, PyType},
+    Bound,
 };
 use std::str::FromStr;
 
@@ -69,7 +70,11 @@ impl ParsecAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -100,19 +105,19 @@ impl ParsecOrganizationAddr {
     fn new(
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
-        py_kwargs: Option<&PyDict>,
+        py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
-                match dict.get_item("hostname") {
+                match dict.get_item("hostname")? {
                     Some(hostname) => hostname.to_string(),
                     None => String::from(""),
                 },
-                match dict.get_item("port") {
+                match dict.get_item("port")? {
                     Some(port) => port.extract::<u16>().ok(),
                     None => None,
                 },
-                match dict.get_item("use_ssl") {
+                match dict.get_item("use_ssl")? {
                     Some(use_ssl) => use_ssl
                         .extract::<bool>()
                         .expect("`use_ssl` should be a boolean value"),
@@ -184,7 +189,11 @@ impl ParsecOrganizationAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecOrganizationAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -199,7 +208,7 @@ impl ParsecOrganizationAddr {
 
     #[classmethod]
     fn build(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
         root_verify_key: VerifyKey,
@@ -220,7 +229,7 @@ impl ParsecActionAddr {
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
     fn from_url(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         py: Python,
         url: &str,
         allow_http_redirection: bool,
@@ -281,19 +290,19 @@ impl ParsecOrganizationBootstrapAddr {
     fn new(
         organization_id: OrganizationID,
         token: Option<BootstrapToken>,
-        py_kwargs: Option<&PyDict>,
+        py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
-                match dict.get_item("hostname") {
+                match dict.get_item("hostname")? {
                     Some(hostname) => hostname.to_string(),
                     None => String::from(""),
                 },
-                match dict.get_item("port") {
+                match dict.get_item("port")? {
                     Some(port) => port.extract::<u16>().ok(),
                     None => None,
                 },
-                match dict.get_item("use_ssl") {
+                match dict.get_item("use_ssl")? {
                     Some(use_ssl) => use_ssl
                         .extract::<bool>()
                         .expect("`use_ssl` should be a boolean value"),
@@ -369,7 +378,11 @@ impl ParsecOrganizationBootstrapAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecOrganizationBootstrapAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -384,7 +397,7 @@ impl ParsecOrganizationBootstrapAddr {
 
     #[classmethod]
     fn build(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
         token: Option<BootstrapToken>,
@@ -416,20 +429,20 @@ impl ParsecWorkspacePathAddr {
         workspace_id: VlobID,
         key_index: libparsec_types::IndexInt,
         encrypted_path: BytesWrapper,
-        py_kwargs: Option<&PyDict>,
+        py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         crate::binding_utils::unwrap_bytes!(encrypted_path);
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
-                match dict.get_item("hostname") {
+                match dict.get_item("hostname")? {
                     Some(hostname) => hostname.to_string(),
                     None => String::from(""),
                 },
-                match dict.get_item("port") {
+                match dict.get_item("port")? {
                     Some(port) => port.extract::<u16>().ok(),
                     None => None,
                 },
-                match dict.get_item("use_ssl") {
+                match dict.get_item("use_ssl")? {
                     Some(use_ssl) => use_ssl
                         .extract::<bool>()
                         .expect("`use_ssl` should be a boolean value"),
@@ -487,8 +500,8 @@ impl ParsecWorkspacePathAddr {
     }
 
     #[getter]
-    fn encrypted_path<'py>(&self, py: Python<'py>) -> &'py PyBytes {
-        PyBytes::new(py, self.0.encrypted_path().as_slice())
+    fn encrypted_path<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, self.0.encrypted_path().as_slice())
     }
 
     fn get_server_addr(&self) -> ParsecAddr {
@@ -513,7 +526,11 @@ impl ParsecWorkspacePathAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecWorkspacePathAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -529,7 +546,7 @@ impl ParsecWorkspacePathAddr {
     #[classmethod]
     #[pyo3(signature = (organization_addr, workspace_id, key_index, encrypted_path))]
     fn build(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         organization_addr: ParsecOrganizationAddr,
         workspace_id: VlobID,
         key_index: libparsec_types::IndexInt,
@@ -564,19 +581,19 @@ impl ParsecInvitationAddr {
         organization_id: OrganizationID,
         invitation_type: &InvitationType,
         token: InvitationToken,
-        py_kwargs: Option<&PyDict>,
+        py_kwargs: Option<Bound<'_, PyDict>>,
     ) -> PyResult<Self> {
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
-                match dict.get_item("hostname") {
+                match dict.get_item("hostname")? {
                     Some(hostname) => hostname.to_string(),
                     None => String::from(""),
                 },
-                match dict.get_item("port") {
+                match dict.get_item("port")? {
                     Some(port) => port.extract::<u16>().ok(),
                     None => None,
                 },
-                match dict.get_item("use_ssl") {
+                match dict.get_item("use_ssl")? {
                     Some(use_ssl) => use_ssl
                         .extract::<bool>()
                         .expect("`use_ssl` should be a boolean value"),
@@ -658,7 +675,11 @@ impl ParsecInvitationAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecInvitationAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -673,7 +694,7 @@ impl ParsecInvitationAddr {
 
     #[classmethod]
     fn build(
-        _cls: &PyType,
+        _cls: Bound<'_, PyType>,
         server_addr: ParsecAddr,
         organization_id: OrganizationID,
         invitation_type: InvitationType,
@@ -702,18 +723,21 @@ crate::binding_utils::gen_py_wrapper_class!(
 impl ParsecPkiEnrollmentAddr {
     #[new]
     #[pyo3(signature = (organization_id, **py_kwargs))]
-    fn new(organization_id: OrganizationID, py_kwargs: Option<&PyDict>) -> PyResult<Self> {
+    fn new(
+        organization_id: OrganizationID,
+        py_kwargs: Option<Bound<'_, PyDict>>,
+    ) -> PyResult<Self> {
         let addr = match py_kwargs {
             Some(dict) => ParsecAddr::new(
-                match dict.get_item("hostname") {
+                match dict.get_item("hostname")? {
                     Some(hostname) => hostname.to_string(),
                     None => String::from(""),
                 },
-                match dict.get_item("port") {
+                match dict.get_item("port")? {
                     Some(port) => port.extract::<u16>().ok(),
                     None => None,
                 },
-                match dict.get_item("use_ssl") {
+                match dict.get_item("use_ssl")? {
                     Some(use_ssl) => use_ssl
                         .extract::<bool>()
                         .expect("`use_ssl` should be a boolean value"),
@@ -783,7 +807,11 @@ impl ParsecPkiEnrollmentAddr {
 
     #[classmethod]
     #[pyo3(signature = (url, allow_http_redirection = false))]
-    fn from_url(_cls: &PyType, url: &str, allow_http_redirection: bool) -> PyResult<Self> {
+    fn from_url(
+        _cls: Bound<'_, PyType>,
+        url: &str,
+        allow_http_redirection: bool,
+    ) -> PyResult<Self> {
         match allow_http_redirection {
             true => match libparsec_types::ParsecPkiEnrollmentAddr::from_any(url) {
                 Ok(addr) => Ok(Self(addr)),
@@ -797,7 +825,11 @@ impl ParsecPkiEnrollmentAddr {
     }
 
     #[classmethod]
-    fn build(_cls: &PyType, server_addr: ParsecAddr, organization_id: OrganizationID) -> Self {
+    fn build(
+        _cls: Bound<'_, PyType>,
+        server_addr: ParsecAddr,
+        organization_id: OrganizationID,
+    ) -> Self {
         Self(libparsec_types::ParsecPkiEnrollmentAddr::new(
             server_addr.0,
             organization_id.0,

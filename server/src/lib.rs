@@ -1,8 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use pyo3::{
+    exceptions::PyException,
     prelude::{pymodule, PyModule, PyResult, Python},
-    AsPyPointer, FromPyPointer, IntoPyPointer,
+    types::PyAnyMethods,
+    types::PyTuple,
+    Bound,
 };
 
 mod addrs;
@@ -32,16 +35,16 @@ pub(crate) use token::*;
 /// A Python module implemented in Rust.
 #[pymodule]
 #[pyo3(name = "_parsec")]
-fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
-    crate::crypto::add_mod(py, m)?;
-    crate::data::add_mod(m)?;
-    crate::protocol::add_mod(py, m)?;
+fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
+    crate::crypto::add_mod(py, &m)?;
+    crate::data::add_mod(&m)?;
+    crate::protocol::add_mod(py, &m)?;
 
     patch_panic_exception_to_inherit_exception(py);
     // Useful to expose `PanicException` for testing
     m.add(
         "PanicException",
-        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py),
+        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object_bound(py),
     )?;
 
     m.add_class::<ParsecAddr>()?;
@@ -83,12 +86,12 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
     {
         use pyo3::wrap_pyfunction;
 
-        let tm = PyModule::new(py, "testbed")?;
-        m.add_submodule(tm)?;
+        let tm = PyModule::new_bound(py, "testbed")?;
+        m.add_submodule(&tm)?;
         // tm.add_function(wrap_pyfunction!(test_new_testbed, tm)?)?;
         // tm.add_function(wrap_pyfunction!(test_drop_testbed, tm)?)?;
-        tm.add_function(wrap_pyfunction!(test_get_testbed_template, tm)?)?;
-        tm.add_function(wrap_pyfunction!(test_load_testbed_customization, tm)?)?;
+        tm.add_function(wrap_pyfunction!(test_get_testbed_template, &tm)?)?;
+        tm.add_function(wrap_pyfunction!(test_load_testbed_customization, &tm)?)?;
         tm.add_class::<TestbedTemplateContent>()?;
         tm.add_class::<TestbedEventBootstrapOrganization>()?;
         tm.add_class::<TestbedEventNewSequesterService>()?;
@@ -119,20 +122,24 @@ fn entrypoint(py: Python, m: &PyModule) -> PyResult<()> {
 /// see https://github.com/PyO3/pyo3/issues/2783
 /// TODO: remove me once (if ?) https://github.com/PyO3/pyo3/pull/3057 is merged
 fn patch_panic_exception_to_inherit_exception(py: Python) {
-    let panic_exception_cls = <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object(py)
-        .as_ptr() as *mut pyo3::ffi::PyTypeObject;
-    let exception_cls = <pyo3::exceptions::PyException as pyo3::PyTypeInfo>::type_object(py);
-    let new_bases = pyo3::types::PyTuple::new(py, [exception_cls]);
+    let panic_exception_cls =
+        <pyo3::panic::PanicException as pyo3::PyTypeInfo>::type_object_bound(py).as_ptr()
+            as *mut pyo3::ffi::PyTypeObject;
+    let exception_cls = <PyException as pyo3::PyTypeInfo>::type_object_bound(py);
+    let new_bases = PyTuple::new_bound(py, [exception_cls.clone()]);
     // SAFETY: `tp_mro` is a pointer to a tuple once the exception structure has been
     // initialized (which is done lazily the first time pyo3 accesses `PanicException`)
-    let mro = unsafe { pyo3::types::PyTuple::from_borrowed_ptr(py, (*panic_exception_cls).tp_mro) };
-    let new_mro = pyo3::types::PyTuple::new(
+    let mro_any = unsafe { Bound::from_borrowed_ptr(py, (*panic_exception_cls).tp_mro) };
+    let mro = mro_any
+        .downcast::<PyTuple>()
+        .expect("PanicException.tp_mro is a tuple");
+    let new_mro = PyTuple::new_bound(
         py,
         [
             // 1. Take `PanicException`
             mro.get_item(0).expect("PanicException has 3 items mro"),
             // 2. Add `Exception`
-            exception_cls,
+            exception_cls.as_any().to_owned(),
             // 3. Take `BaseException` (as `Exception` inherits from it)
             mro.get_item(1).expect("PanicException has 3 items mro"),
             // 4. Take `<class 'object'>`

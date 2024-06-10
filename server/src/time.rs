@@ -75,7 +75,7 @@ impl DateTime {
     }
 
     #[classmethod]
-    fn now(_cls: &PyType) -> PyResult<Self> {
+    fn now(_cls: Bound<'_, PyType>) -> PyResult<Self> {
         Ok(Self(chrono::Utc::now().into()))
     }
 
@@ -84,7 +84,7 @@ impl DateTime {
     }
 
     #[classmethod]
-    fn from_timestamp_micros(_cls: &PyType, ts: i64) -> PyResult<Self> {
+    fn from_timestamp_micros(_cls: Bound<'_, PyType>, ts: i64) -> PyResult<Self> {
         libparsec_types::DateTime::from_timestamp_micros(ts)
             .map(Self)
             .map_err(|e| PyValueError::new_err(format!("Invalid datetime `{}`: {}", ts, e)))
@@ -95,14 +95,14 @@ impl DateTime {
     }
 
     #[classmethod]
-    fn from_timestamp_seconds(_cls: &PyType, ts: i64) -> PyResult<Self> {
+    fn from_timestamp_seconds(_cls: Bound<'_, PyType>, ts: i64) -> PyResult<Self> {
         libparsec_types::DateTime::from_timestamp_seconds(ts)
             .map(Self)
             .map_err(|e| PyValueError::new_err(format!("Invalid datetime `{}`: {}", ts, e)))
     }
 
     #[classmethod]
-    fn from_rfc3339(_cls: &PyType, value: &str) -> PyResult<Self> {
+    fn from_rfc3339(_cls: Bound<'_, PyType>, value: &str) -> PyResult<Self> {
         libparsec_types::DateTime::from_rfc3339(value)
             .map(Self)
             .map_err(|e| PyValueError::new_err(format!("Invalid rfc3339 date `{}`: {}", value, e)))

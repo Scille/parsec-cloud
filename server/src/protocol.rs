@@ -2,9 +2,10 @@
 
 use pyo3::{
     exceptions::PyValueError,
+    prelude::PyModuleMethods,
     pyclass, pymethods,
     types::{PyModule, PyType},
-    IntoPy, PyAny, PyObject, PyResult, Python,
+    Bound, IntoPy, PyObject, PyResult, Python,
 };
 
 use libparsec_serialization_format::python_bindings_parsec_protocol_cmds_family;
@@ -25,7 +26,7 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl ActiveUsersLimit {
     #[classmethod]
-    fn limited_to(_cls: &PyType, user_count_limit: u64) -> Self {
+    fn limited_to(_cls: Bound<'_, PyType>, user_count_limit: u64) -> Self {
         Self(libparsec_types::ActiveUsersLimit::LimitedTo(
             user_count_limit,
         ))
@@ -47,10 +48,14 @@ impl ActiveUsersLimit {
     }
 
     #[classmethod]
-    fn from_maybe_int<'py>(cls: &'py PyType, py: Python<'py>, count: Option<u64>) -> &'py PyAny {
+    fn from_maybe_int<'py>(
+        cls: Bound<'py, PyType>,
+        py: Python<'py>,
+        count: Option<u64>,
+    ) -> PyObject {
         match count {
-            Some(x) => Self::limited_to(cls, x).into_py(py).into_ref(py),
-            None => Self::no_limit().as_ref(py),
+            Some(x) => Self::limited_to(cls, x).into_py(py),
+            None => Self::no_limit().to_owned(),
         }
     }
 
@@ -70,7 +75,7 @@ python_bindings_parsec_protocol_cmds_family!(
 );
 python_bindings_parsec_protocol_cmds_family!("../libparsec/crates/protocol/schema/anonymous_cmds");
 
-pub(crate) fn add_mod(py: Python, m: &PyModule) -> PyResult<()> {
+pub(crate) fn add_mod(py: Python, m: &Bound<'_, PyModule>) -> PyResult<()> {
     invited_cmds_populate_mod(py, m)?;
     authenticated_cmds_populate_mod(py, m)?;
     anonymous_cmds_populate_mod(py, m)?;

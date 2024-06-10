@@ -7,14 +7,20 @@ macro_rules! gen_token {
         #[pymethods]
         impl $class {
             #[classmethod]
-            fn from_bytes(_cls: &::pyo3::types::PyType, bytes: &[u8]) -> PyResult<Self> {
+            fn from_bytes(
+                _cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                bytes: &[u8],
+            ) -> PyResult<Self> {
                 libparsec_types::$class::try_from(bytes)
                     .map(Self)
                     .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
             }
 
             #[classmethod]
-            fn from_hex(_cls: &::pyo3::types::PyType, hex: &str) -> PyResult<Self> {
+            fn from_hex(
+                _cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>,
+                hex: &str,
+            ) -> PyResult<Self> {
                 libparsec_types::$class::from_hex(hex)
                     .map(Self)
                     .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
@@ -22,7 +28,7 @@ macro_rules! gen_token {
 
             #[classmethod]
             #[pyo3(name = "new")]
-            fn default(_cls: &::pyo3::types::PyType) -> Self {
+            fn default(_cls: ::pyo3::Bound<'_, ::pyo3::types::PyType>) -> Self {
                 Self(libparsec_types::$class::default())
             }
 
