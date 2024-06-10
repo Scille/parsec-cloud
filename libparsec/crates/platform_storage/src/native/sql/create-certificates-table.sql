@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS certificates (
     certificate_type TEXT NOT NULL,
     filter1 BLOB,
     filter2 BLOB
-);
+) STRICT;
 
 CREATE INDEX IF NOT EXISTS certificates_type_filter1 ON certificates (certificate_type, filter1);
 CREATE INDEX IF NOT EXISTS certificates_type_filter2 ON certificates (certificate_type, filter2);

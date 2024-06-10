@@ -3,4 +3,4 @@
 CREATE TABLE IF NOT EXISTS realm_checkpoint (
     _id INTEGER PRIMARY KEY NOT NULL,
     checkpoint INTEGER NOT NULL
-);
+) STRICT;
