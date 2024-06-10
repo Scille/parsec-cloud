@@ -85,7 +85,7 @@ fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig
 const options = {
   appId: 'cloud.parsec.parsec-v3',
   artifactName: 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}',
-  buildVersion: '3.0.0-b.6+dev',
+  buildVersion: '3.0.0-b.10',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],
