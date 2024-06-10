@@ -2,5 +2,5 @@
 
 CREATE TABLE IF NOT EXISTS remanence (
     _id INTEGER PRIMARY KEY NOT NULL,
-    block_remanent BOOL NOT NULL
-)
+    block_remanent INTEGER NOT NULL -- Boolean
+) STRICT;

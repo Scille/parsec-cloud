@@ -3,5 +3,5 @@
 CREATE TABLE IF NOT EXISTS prevent_sync_pattern (
     _id INTEGER PRIMARY KEY NOT NULL,
     pattern TEXT NOT NULL,
-    fully_applied BOOLEAN NOT NULL
-);
+    fully_applied INTEGER NOT NULL -- Boolean
+) STRICT;

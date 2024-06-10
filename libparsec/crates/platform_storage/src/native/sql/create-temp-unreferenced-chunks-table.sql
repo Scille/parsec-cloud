@@ -2,4 +2,4 @@
 
 CREATE TEMP TABLE unreferenced_chunks(
     chunk_id BLOB PRIMARY KEY -- UUID
-);
+) STRICT;

@@ -4,6 +4,6 @@ CREATE TABLE IF NOT EXISTS vlobs (
     vlob_id BLOB PRIMARY KEY NOT NULL, -- UUID
     base_version INTEGER NOT NULL,
     remote_version INTEGER NOT NULL,
-    need_sync BOOLEAN NOT NULL,
+    need_sync INTEGER NOT NULL, -- Boolean
     blob BLOB NOT NULL
-);
+) STRICT;
