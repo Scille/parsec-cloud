@@ -19,7 +19,7 @@
       <ion-button
         slot="icon-only"
         @click="cancelModal()"
-        v-if="pageStep !== UserJoinOrganizationStep.Finish"
+        v-if="pageStep !== UserJoinOrganizationStep.Finish && pageStep !== UserJoinOrganizationStep.GetAuthentication"
         class="closeBtn"
       >
         <ion-icon
