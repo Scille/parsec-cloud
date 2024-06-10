@@ -11,7 +11,10 @@
       button
       lines="full"
       :detail="false"
-      :class="{ selected: entry.isSelected, 'file-hovered': isHovered || menuOpened }"
+      :class="{
+        selected: entry.isSelected,
+        'file-hovered': !entry.isSelected && (menuOpened || isHovered),
+      }"
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"

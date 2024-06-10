@@ -19,20 +19,15 @@ ion-item:has(.file-list-item),
     cursor: default;
   }
 
-  &.item-disabled {
-    &::after {
-      opacity: 0 !important;
-    }
-  }
-
-  &:not(.selected)::after {
+  &:not(.selected)::after,
+  .current-user::after {
     content: '';
     position: absolute;
     bottom: 0;
     left: 0;
     width: 100%;
     height: 1px;
-    background: var(--parsec-color-light-secondary-medium);
+    background: var(--parsec-color-light-secondary-premiere);
     z-index: 1;
     cursor: default;
   }
@@ -72,7 +67,7 @@ ion-item:has(.file-list-item),
     opacity: 1;
     position: relative;
 
-    &::after {
+    &:not(.current-user)::after {
       content: '';
       position: absolute;
       top: 0;

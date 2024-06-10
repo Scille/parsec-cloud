@@ -8,7 +8,7 @@
       selected: user.isSelected,
       'no-padding-end': !user.isSelected,
       revoked: user.isRevoked(),
-      'user-hovered': isHovered || menuOpened,
+      'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
@@ -122,12 +122,6 @@ async function onOptionsClick(event: Event): Promise<void> {
 
     .user-card-info__email {
       color: var(--parsec-color-light-secondary-text);
-    }
-  }
-
-  &.item-disabled {
-    &::after {
-      opacity: 0 !important;
     }
   }
 

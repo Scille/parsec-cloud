@@ -8,6 +8,9 @@
     :disabled="user.isCurrent"
     :show-checkbox="someSelected"
     @menu-click="(event, user, onFinished) => $emit('menuClick', event, user, onFinished)"
+    :class="{
+      'current-user': user.isCurrent,
+    }"
     ref="userGridItemRefs"
   />
   <ion-text
