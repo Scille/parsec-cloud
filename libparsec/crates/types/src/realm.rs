@@ -32,6 +32,10 @@ pub struct RealmKeysBundle {
 }
 
 impl RealmKeysBundle {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn new(
         author: DeviceID,
         timestamp: DateTime,
@@ -92,6 +96,7 @@ impl From<RealmKeysBundle> for RealmKeysBundleData {
     }
 }
 
+super::certif::impl_base_load!(RealmKeysBundle);
 super::certif::impl_unsecure_load!(RealmKeysBundle -> DeviceID);
 super::certif::impl_unsecure_dump!(RealmKeysBundle);
 super::certif::impl_dump_and_sign!(RealmKeysBundle);
