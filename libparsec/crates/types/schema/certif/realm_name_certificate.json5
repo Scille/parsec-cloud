@@ -5,6 +5,12 @@
     "type": "realm_name_certificate",
     "other_fields": [
         {
+            // SHA256 digest of the raw content (i.e. serialized and signed) of the
+            // previous certificate in the topic.
+            "name": "previous_in_topic",
+            "type": "HashDigest"
+        },
+        {
             "name": "author",
             "type": "DeviceID"
         },

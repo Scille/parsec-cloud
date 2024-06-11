@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use serde_with::*;
 
 use libparsec_crypto::{
-    CryptoError, PublicKey, SecretKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey,
-    VerifyKey,
+    CryptoError, HashDigest, PublicKey, SecretKey, SequesterPublicKeyDer, SequesterVerifyKeyDer,
+    SigningKey, VerifyKey,
 };
 use libparsec_serialization_format::parsec_data;
 
@@ -222,6 +222,9 @@ impl<'a> std::cmp::PartialEq<CertificateSignerRef<'a>> for CertificateSignerOwne
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserCertificateData", from = "UserCertificateData")]
 pub struct UserCertificate {
+    /// `None` in case the certificate is the first in the topic
+    /// (in which case `author` must be the root verify key).
+    pub previous_in_topic: Option<HashDigest>,
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
@@ -240,6 +243,7 @@ impl UserCertificate {
     pub fn into_redacted(self) -> Self {
         let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(self.user_id));
         Self {
+            previous_in_topic: self.previous_in_topic,
             author: self.author,
             timestamp: self.timestamp,
             user_id: self.user_id,
@@ -291,6 +295,7 @@ impl From<UserCertificateData> for UserCertificate {
             Some(human_handle) => MaybeRedacted::Real(human_handle),
         };
         Self {
+            previous_in_topic: data.previous_in_topic,
             author: data.author,
             timestamp: data.timestamp,
             user_id: data.user_id,
@@ -310,6 +315,7 @@ impl From<UserCertificate> for UserCertificateData {
         };
         Self {
             ty: Default::default(),
+            previous_in_topic: obj.previous_in_topic,
             author: obj.author,
             timestamp: obj.timestamp,
             user_id: obj.user_id,
@@ -331,6 +337,7 @@ impl From<UserCertificate> for UserCertificateData {
     from = "RevokedUserCertificateData"
 )]
 pub struct RevokedUserCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -375,6 +382,7 @@ parsec_data!("schema/certif/revoked_user_certificate.json5");
 impl_transparent_data_format_conversion!(
     RevokedUserCertificate,
     RevokedUserCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     user_id,
@@ -387,6 +395,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "UserUpdateCertificateData", from = "UserUpdateCertificateData")]
 pub struct UserUpdateCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -432,6 +441,7 @@ parsec_data!("schema/certif/user_update_certificate.json5");
 impl_transparent_data_format_conversion!(
     UserUpdateCertificate,
     UserUpdateCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     user_id,
@@ -445,6 +455,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "DeviceCertificateData", from = "DeviceCertificateData")]
 pub struct DeviceCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
@@ -465,6 +476,7 @@ impl DeviceCertificate {
     pub fn into_redacted(self) -> Self {
         let device_label = MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id));
         Self {
+            previous_in_topic: self.previous_in_topic,
             author: self.author,
             timestamp: self.timestamp,
             user_id: self.user_id,
@@ -504,6 +516,7 @@ impl From<DeviceCertificateData> for DeviceCertificate {
             Some(device_label) => MaybeRedacted::Real(device_label),
         };
         Self {
+            previous_in_topic: data.previous_in_topic,
             author: data.author,
             timestamp: data.timestamp,
             user_id: data.user_id,
@@ -523,6 +536,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
         };
         Self {
             ty: Default::default(),
+            previous_in_topic: obj.previous_in_topic,
             author: obj.author,
             timestamp: obj.timestamp,
             user_id: obj.user_id,
@@ -541,6 +555,9 @@ impl From<DeviceCertificate> for DeviceCertificateData {
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmRoleCertificateData", from = "RealmRoleCertificateData")]
 pub struct RealmRoleCertificate {
+    /// `None` in case the certificate is the first in the topic
+    /// (in which case `author` must be the root verify key).
+    pub previous_in_topic: Option<HashDigest>,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -562,6 +579,7 @@ impl RealmRoleCertificate {
         realm_id: VlobID,
     ) -> Self {
         Self {
+            previous_in_topic: None,
             author: author_device_id,
             timestamp,
             realm_id,
@@ -613,6 +631,7 @@ parsec_data!("schema/certif/realm_role_certificate.json5");
 impl_transparent_data_format_conversion!(
     RealmRoleCertificate,
     RealmRoleCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     realm_id,
@@ -630,6 +649,7 @@ impl_transparent_data_format_conversion!(
     from = "RealmKeyRotationCertificateData"
 )]
 pub struct RealmKeyRotationCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -687,6 +707,7 @@ parsec_data!("schema/certif/realm_key_rotation_certificate.json5");
 impl_transparent_data_format_conversion!(
     RealmKeyRotationCertificate,
     RealmKeyRotationCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     realm_id,
@@ -703,6 +724,7 @@ impl_transparent_data_format_conversion!(
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "RealmNameCertificateData", from = "RealmNameCertificateData")]
 pub struct RealmNameCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -749,6 +771,7 @@ parsec_data!("schema/certif/realm_name_certificate.json5");
 impl_transparent_data_format_conversion!(
     RealmNameCertificate,
     RealmNameCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     realm_id,
@@ -766,6 +789,7 @@ impl_transparent_data_format_conversion!(
     from = "RealmArchivingCertificateData"
 )]
 pub struct RealmArchivingCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -811,6 +835,7 @@ parsec_data!("schema/certif/realm_archiving_certificate.json5");
 impl_transparent_data_format_conversion!(
     RealmArchivingCertificate,
     RealmArchivingCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     realm_id,
@@ -880,6 +905,7 @@ impl From<SequesterAuthorityCertificate> for SequesterAuthorityCertificateData {
     from = "SequesterServiceCertificateData"
 )]
 pub struct SequesterServiceCertificate {
+    pub previous_in_topic: HashDigest,
     pub timestamp: DateTime,
     pub service_id: SequesterServiceID,
     pub service_label: String,
@@ -919,6 +945,7 @@ parsec_data!("schema/certif/sequester_service_certificate.json5");
 impl_transparent_data_format_conversion!(
     SequesterServiceCertificate,
     SequesterServiceCertificateData,
+    previous_in_topic,
     timestamp,
     service_id,
     service_label,
@@ -935,6 +962,7 @@ impl_transparent_data_format_conversion!(
     from = "SequesterRevokedServiceCertificateData"
 )]
 pub struct SequesterRevokedServiceCertificate {
+    pub previous_in_topic: HashDigest,
     pub timestamp: DateTime,
     pub service_id: SequesterServiceID,
 }
@@ -972,6 +1000,7 @@ parsec_data!("schema/certif/sequester_revoked_service_certificate.json5");
 impl_transparent_data_format_conversion!(
     SequesterRevokedServiceCertificate,
     SequesterRevokedServiceCertificateData,
+    previous_in_topic,
     timestamp,
     service_id,
 );
@@ -986,6 +1015,8 @@ impl_transparent_data_format_conversion!(
     from = "ShamirRecoveryBriefCertificateData"
 )]
 pub struct ShamirRecoveryBriefCertificate {
+    // `None` in case the certificate is the first in the topic.
+    pub previous_in_topic: Option<HashDigest>,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -1024,6 +1055,7 @@ parsec_data!("schema/certif/shamir_recovery_brief_certificate.json5");
 impl_transparent_data_format_conversion!(
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryBriefCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     user_id,
@@ -1041,6 +1073,7 @@ impl_transparent_data_format_conversion!(
     from = "ShamirRecoveryShareCertificateData"
 )]
 pub struct ShamirRecoveryShareCertificate {
+    pub previous_in_topic: HashDigest,
     pub author: DeviceID,
     pub timestamp: DateTime,
 
@@ -1089,6 +1122,7 @@ parsec_data!("schema/certif/shamir_recovery_share_certificate.json5");
 impl_transparent_data_format_conversion!(
     ShamirRecoveryShareCertificate,
     ShamirRecoveryShareCertificateData,
+    previous_in_topic,
     author,
     timestamp,
     user_id,

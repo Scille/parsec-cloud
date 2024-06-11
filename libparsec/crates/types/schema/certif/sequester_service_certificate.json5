@@ -2,6 +2,12 @@
     "label": "SequesterServiceCertificate",
     "type": "sequester_service_certificate",
     "other_fields": [
+        {
+            // SHA256 digest of the raw content (i.e. serialized and signed) of the
+            // previous certificate in the topic.
+            "name": "previous_in_topic",
+            "type": "HashDigest"
+        },
         // No author field here given we are signed by the sequester authority
         {
             "name": "timestamp",

@@ -3,6 +3,14 @@
     "type": "user_certificate",
     "other_fields": [
         {
+            // SHA256 digest of the raw content (i.e. serialized and signed) of the
+            // previous certificate in the topic.
+            // `None` in case the certificate is the first in the topic
+            // (in which case `author` must be the root verify key).
+            "name": "previous_in_topic",
+            "type": "RequiredOption<HashDigest>"
+        },
+        {
             "name": "author",
             "type": "CertificateSignerOwned"
         },

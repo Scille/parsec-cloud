@@ -14,6 +14,8 @@ use crate::prelude::*;
 #[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     let user_certificate = UserCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
@@ -38,6 +40,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let device_certificate = DeviceCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
@@ -61,6 +64,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let revoked_user_certificate = RevokedUserCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp,
         user_id: bob.user_id,
@@ -77,6 +81,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let user_update_certificate = UserUpdateCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp,
         user_id: bob.user_id,
@@ -95,6 +100,8 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_role_certificate = RealmRoleCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: alice.device_id,
         timestamp,
         user_id: bob.user_id,
@@ -115,6 +122,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_name = RealmNameCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
@@ -135,6 +143,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_key_rotation = RealmKeyRotationCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
@@ -159,6 +168,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let realm_archiving_certificate = RealmArchivingCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp,
         realm_id: VlobID::from_hex("604784450642426b91eb89242f54fa52").unwrap(),
@@ -179,6 +189,8 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let shamir_recovery_brief_certificate = ShamirRecoveryBriefCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -203,6 +215,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let shamir_recovery_share_certificate = ShamirRecoveryShareCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -245,6 +258,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     );
 
     let sequester_service_certificate = SequesterServiceCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         timestamp,
         service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
         service_label: "foo".into(),
@@ -298,6 +312,8 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
     ));
 
     let expected = UserCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
@@ -391,6 +407,8 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
@@ -467,6 +485,7 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -555,6 +574,7 @@ fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = DeviceCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -623,6 +643,7 @@ fn serde_revoked_user_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RevokedUserCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         user_id: bob.user_id,
@@ -693,6 +714,7 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = UserUpdateCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         new_profile: UserProfile::Outsider,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
@@ -774,6 +796,8 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     .unwrap();
 
     let expected = RealmRoleCertificate {
+        // TODO: test for `previous_in_topic` None and Some
+        previous_in_topic: None,
         author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -856,6 +880,7 @@ fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     .unwrap();
 
     let expected = RealmRoleCertificate {
+        previous_in_topic: None,
         author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -901,6 +926,7 @@ fn serde_realm_archiving_certificate_available(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -981,6 +1007,7 @@ fn serde_realm_archiving_certificate_archived(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -1062,6 +1089,7 @@ fn serde_realm_archiving_certificate_deletion_planned(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmArchivingCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -1144,6 +1172,7 @@ fn serde_realm_name_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmNameCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -1216,6 +1245,7 @@ fn serde_realm_key_rotation_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = RealmKeyRotationCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
         realm_id: VlobID::from_hex("4486e7cf02d747bd9126679ba58e0474").unwrap(),
@@ -1299,6 +1329,7 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = ShamirRecoveryShareCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -1402,6 +1433,7 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     let data = Bytes::from(data.as_ref().to_vec());
 
     let expected = ShamirRecoveryBriefCertificate {
+        previous_in_topic: None,
         author: alice.device_id,
         timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         user_id: alice.user_id,
@@ -1575,6 +1607,7 @@ fn serde_sequester_service_certificate() {
     let certif = SequesterServiceCertificate::load(&data).unwrap();
 
     let expected = SequesterServiceCertificate {
+        previous_in_topic: HashDigest::from_data(b"<previous certificate>"),
         timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),
         service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
         service_label: "foo".into(),

@@ -7,7 +7,7 @@
 use hex_literal::hex;
 use rstest::fixture;
 
-use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
+use libparsec_crypto::{HashDigest, PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
     CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, Duration, HumanHandle,
@@ -218,6 +218,7 @@ pub fn timestamps(timestamp: DateTime) -> TimestampGenerator {
 #[once]
 pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
+        previous_in_topic: None,
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
@@ -233,6 +234,7 @@ pub fn user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Ve
 #[once]
 pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
     UserCertificate {
+        previous_in_topic: None,
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
@@ -246,8 +248,14 @@ pub fn redacted_user_certificate(alice: &Device, bob: &Device, timestamp: DateTi
 
 #[fixture]
 #[once]
-pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+pub fn device_certificate(
+    user_certificate: &[u8],
+    alice: &Device,
+    bob: &Device,
+    timestamp: DateTime,
+) -> Vec<u8> {
     DeviceCertificate {
+        previous_in_topic: HashDigest::from_data(user_certificate),
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
@@ -261,8 +269,14 @@ pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> 
 
 #[fixture]
 #[once]
-pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> Vec<u8> {
+pub fn redacted_device_certificate(
+    redacted_user_certificate: &[u8],
+    alice: &Device,
+    bob: &Device,
+    timestamp: DateTime,
+) -> Vec<u8> {
     DeviceCertificate {
+        previous_in_topic: HashDigest::from_data(redacted_user_certificate),
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
         user_id: bob.user_id,
