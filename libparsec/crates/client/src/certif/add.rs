@@ -1771,14 +1771,6 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 ) -> Result<(), CertifAddCertificatesBatchError> {
     let mk_hint = || format!("{:?}", cooked);
 
-    // 0) Small sanity check: ensure there is enough shares for the threshold
-
-    if let Err(err) = cooked.check_data_integrity() {
-        let hint = mk_hint();
-        let what = Box::new(InvalidCertificateError::Corrupted { hint, error: err });
-        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
-    }
-
     // 1) Certificate must be the newest among the ones in shamir recovery topic.
     // Note we also reject same timestamp given, while shamir recovery brief
     // certificate is created along with it related shamir recovery share certificates,

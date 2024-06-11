@@ -23,17 +23,6 @@ use crate::{
     SequesterServiceID, UserID, UserProfile, VlobID,
 };
 
-fn verify_and_load<T>(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<T>
-where
-    T: for<'a> Deserialize<'a>,
-{
-    let serialized = author_verify_key
-        .verify(signed)
-        .map_err(|_| DataError::Signature)?;
-
-    format_vx_load(serialized)
-}
-
 fn check_author_allow_root(
     author: &CertificateSignerOwned,
     expected_author: CertificateSignerRef,
@@ -69,6 +58,34 @@ pub enum UnsecureSkipValidationReason {
     #[cfg(feature = "test-fixtures")]
     Test,
 }
+
+macro_rules! impl_base_load {
+    ($name:ident) => {
+        impl $name {
+            pub fn base_verify_and_load(
+                signed: &[u8],
+                author_verify_key: &VerifyKey,
+            ) -> DataResult<Self> {
+                let serialized = author_verify_key
+                    .verify(signed)
+                    .map_err(|_| DataError::Signature)?;
+
+                let result: Self = format_vx_load(serialized)?;
+                result.check_data_integrity()?;
+                Ok(result)
+            }
+
+            pub fn base_unsecure_load(signed: &[u8]) -> DataResult<Self> {
+                let (_, serialized) = VerifyKey::unsecure_unwrap(signed.as_ref())
+                    .map_err(|_| DataError::Signature)?;
+                let unsecure = $crate::serialization::format_vx_load::<$name>(&serialized)?;
+                unsecure.check_data_integrity()?;
+                Ok(unsecure)
+            }
+        }
+    };
+}
+pub(super) use impl_base_load;
 
 macro_rules! impl_unsecure_load {
     ($name:ident $( -> $author_type:ty )? ) => {
@@ -108,8 +125,7 @@ macro_rules! impl_unsecure_load {
 
             impl $name {
                 pub fn unsecure_load(signed: Bytes) -> DataResult<[< Unsecure $name >]> {
-                    let (_, serialized) = VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-                    let unsecure = $crate::serialization::format_vx_load::<$name>(&serialized)?;
+                    let unsecure = Self::base_unsecure_load(signed.as_ref())?;
                     Ok([< Unsecure $name >] {
                         signed,
                         unsecure,
@@ -235,8 +251,13 @@ pub struct UserCertificate {
 impl_unsecure_load!(UserCertificate -> CertificateSignerOwned);
 impl_unsecure_dump!(UserCertificate);
 impl_dump_and_sign!(UserCertificate);
+impl_base_load!(UserCertificate);
 
 impl UserCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn into_redacted(self) -> Self {
         let human_handle = MaybeRedacted::Redacted(HumanHandle::new_redacted(self.user_id));
         Self {
@@ -257,7 +278,7 @@ impl UserCertificate {
         expected_user_id: Option<UserID>,
         expected_human_handle: Option<&HumanHandle>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
         check_author_allow_root(&r.author, expected_author)?;
 
         if let Some(expected_user_id) = expected_user_id {
@@ -340,15 +361,20 @@ pub struct RevokedUserCertificate {
 impl_unsecure_load!(RevokedUserCertificate -> DeviceID);
 impl_unsecure_dump!(RevokedUserCertificate);
 impl_dump_and_sign!(RevokedUserCertificate);
+impl_base_load!(RevokedUserCertificate);
 
 impl RevokedUserCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -397,15 +423,20 @@ pub struct UserUpdateCertificate {
 impl_unsecure_load!(UserUpdateCertificate -> DeviceID);
 impl_unsecure_dump!(UserUpdateCertificate);
 impl_dump_and_sign!(UserUpdateCertificate);
+impl_base_load!(UserUpdateCertificate);
 
 impl UserUpdateCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -460,8 +491,12 @@ parsec_data!("schema/certif/device_certificate.json5");
 impl_unsecure_load!(DeviceCertificate -> CertificateSignerOwned);
 impl_unsecure_dump!(DeviceCertificate);
 impl_dump_and_sign!(DeviceCertificate);
+impl_base_load!(DeviceCertificate);
 
 impl DeviceCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
     pub fn into_redacted(self) -> Self {
         let device_label = MaybeRedacted::Redacted(DeviceLabel::new_redacted(self.device_id));
         Self {
@@ -481,7 +516,7 @@ impl DeviceCertificate {
         expected_author: CertificateSignerRef,
         expected_device_id: Option<DeviceID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
         check_author_allow_root(&r.author, expected_author)?;
 
         if let Some(expected_device_id) = expected_device_id {
@@ -553,8 +588,13 @@ pub struct RealmRoleCertificate {
 impl_unsecure_load!(RealmRoleCertificate -> DeviceID);
 impl_unsecure_dump!(RealmRoleCertificate);
 impl_dump_and_sign!(RealmRoleCertificate);
+impl_base_load!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn new_root(
         author_user_id: UserID,
         author_device_id: DeviceID,
@@ -577,7 +617,7 @@ impl RealmRoleCertificate {
         expected_realm_id: Option<VlobID>,
         expected_user_id: Option<UserID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -643,15 +683,20 @@ pub struct RealmKeyRotationCertificate {
 impl_unsecure_load!(RealmKeyRotationCertificate -> DeviceID);
 impl_unsecure_dump!(RealmKeyRotationCertificate);
 impl_dump_and_sign!(RealmKeyRotationCertificate);
+impl_base_load!(RealmKeyRotationCertificate);
 
 impl RealmKeyRotationCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -714,15 +759,20 @@ pub struct RealmNameCertificate {
 impl_unsecure_load!(RealmNameCertificate -> DeviceID);
 impl_unsecure_dump!(RealmNameCertificate);
 impl_dump_and_sign!(RealmNameCertificate);
+impl_base_load!(RealmNameCertificate);
 
 impl RealmNameCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -776,15 +826,20 @@ pub struct RealmArchivingCertificate {
 impl_unsecure_load!(RealmArchivingCertificate -> DeviceID);
 impl_unsecure_dump!(RealmArchivingCertificate);
 impl_dump_and_sign!(RealmArchivingCertificate);
+impl_base_load!(RealmArchivingCertificate);
 
 impl RealmArchivingCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_realm_id: Option<VlobID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -836,10 +891,15 @@ pub struct SequesterAuthorityCertificate {
 impl_unsecure_load!(SequesterAuthorityCertificate);
 impl_unsecure_dump!(SequesterAuthorityCertificate);
 impl_dump_and_sign!(SequesterAuthorityCertificate);
+impl_base_load!(SequesterAuthorityCertificate);
 
 impl SequesterAuthorityCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(signed: &[u8], author_verify_key: &VerifyKey) -> DataResult<Self> {
-        verify_and_load::<Self>(signed, author_verify_key)
+        Self::base_verify_and_load(signed, author_verify_key)
     }
 }
 
@@ -871,6 +931,10 @@ pub struct SequesterServiceCertificate {
 impl_unsecure_dump!(SequesterServiceCertificate);
 
 impl SequesterServiceCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn dump(&self) -> Vec<u8> {
         format_v0_dump(self)
     }
@@ -924,6 +988,10 @@ pub struct SequesterRevokedServiceCertificate {
 impl_unsecure_dump!(SequesterRevokedServiceCertificate);
 
 impl SequesterRevokedServiceCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn dump(&self) -> Vec<u8> {
         format_v0_dump(self)
     }
@@ -981,6 +1049,7 @@ pub struct ShamirRecoveryBriefCertificate {
 impl_unsecure_load!(ShamirRecoveryBriefCertificate -> DeviceID);
 impl_unsecure_dump!(ShamirRecoveryBriefCertificate);
 impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
+impl_base_load!(ShamirRecoveryBriefCertificate);
 
 impl ShamirRecoveryBriefCertificate {
     pub fn check_data_integrity(&self) -> DataResult<()> {
@@ -1005,7 +1074,7 @@ impl ShamirRecoveryBriefCertificate {
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         r.check_data_integrity()?;
 
@@ -1055,15 +1124,20 @@ pub struct ShamirRecoveryShareCertificate {
 impl_unsecure_load!(ShamirRecoveryShareCertificate -> DeviceID);
 impl_unsecure_dump!(ShamirRecoveryShareCertificate);
 impl_dump_and_sign!(ShamirRecoveryShareCertificate);
+impl_base_load!(ShamirRecoveryShareCertificate);
 
 impl ShamirRecoveryShareCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     pub fn verify_and_load(
         signed: &[u8],
         author_verify_key: &VerifyKey,
         expected_author: DeviceID,
         expected_recipient: Option<UserID>,
     ) -> DataResult<Self> {
-        let r = verify_and_load::<Self>(signed, author_verify_key)?;
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
@@ -1151,11 +1225,29 @@ pub enum UnsecureAnyCertificate {
     SequesterAuthority(UnsecureSequesterAuthorityCertificate),
 }
 
+impl_base_load!(AnyCertificate);
+
 impl AnyCertificate {
+    fn check_data_integrity(&self) -> DataResult<()> {
+        match self {
+            AnyCertificate::User(c) => c.check_data_integrity(),
+            AnyCertificate::Device(c) => c.check_data_integrity(),
+            AnyCertificate::UserUpdate(c) => c.check_data_integrity(),
+            AnyCertificate::RevokedUser(c) => c.check_data_integrity(),
+            AnyCertificate::RealmRole(c) => c.check_data_integrity(),
+            AnyCertificate::RealmName(c) => c.check_data_integrity(),
+            AnyCertificate::RealmArchiving(c) => c.check_data_integrity(),
+            AnyCertificate::RealmKeyRotation(c) => c.check_data_integrity(),
+            AnyCertificate::ShamirRecoveryBrief(c) => c.check_data_integrity(),
+            AnyCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
+            AnyCertificate::SequesterAuthority(c) => c.check_data_integrity(),
+            AnyCertificate::SequesterService(c) => c.check_data_integrity(),
+            AnyCertificate::SequesterRevokedService(c) => c.check_data_integrity(),
+        }
+    }
+
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureAnyCertificate, DataError> {
-        let (_, serialized) =
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = format_vx_load::<Self>(serialized)?;
+        let unsecure = Self::base_unsecure_load(&signed)?;
         Ok(match unsecure {
             AnyCertificate::User(unsecure) => {
                 UnsecureAnyCertificate::User(UnsecureUserCertificate { signed, unsecure })
@@ -1279,11 +1371,20 @@ pub enum UnsecureCommonTopicCertificate {
     RevokedUser(UnsecureRevokedUserCertificate),
 }
 
+impl_base_load!(CommonTopicCertificate);
+
 impl CommonTopicCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        match self {
+            CommonTopicCertificate::User(c) => c.check_data_integrity(),
+            CommonTopicCertificate::Device(c) => c.check_data_integrity(),
+            CommonTopicCertificate::RevokedUser(c) => c.check_data_integrity(),
+            CommonTopicCertificate::UserUpdate(c) => c.check_data_integrity(),
+        }
+    }
+
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureCommonTopicCertificate, DataError> {
-        let (_, serialized) =
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = format_vx_load::<Self>(serialized)?;
+        let unsecure = Self::base_unsecure_load(&signed)?;
         Ok(match unsecure {
             CommonTopicCertificate::User(unsecure) => {
                 UnsecureCommonTopicCertificate::User(UnsecureUserCertificate { signed, unsecure })
@@ -1412,11 +1513,20 @@ pub enum UnsecureRealmTopicCertificate {
     RealmArchiving(UnsecureRealmArchivingCertificate),
 }
 
+impl_base_load!(RealmTopicCertificate);
+
 impl RealmTopicCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        match self {
+            RealmTopicCertificate::RealmRole(c) => c.check_data_integrity(),
+            RealmTopicCertificate::RealmName(c) => c.check_data_integrity(),
+            RealmTopicCertificate::RealmKeyRotation(c) => c.check_data_integrity(),
+            RealmTopicCertificate::RealmArchiving(c) => c.check_data_integrity(),
+        }
+    }
+
     pub fn unsecure_load(signed: Bytes) -> Result<UnsecureRealmTopicCertificate, DataError> {
-        let (_, serialized) =
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = format_vx_load::<Self>(serialized)?;
+        let unsecure = Self::base_unsecure_load(&signed)?;
         Ok(match unsecure {
             RealmTopicCertificate::RealmRole(unsecure) => {
                 UnsecureRealmTopicCertificate::RealmRole(UnsecureRealmRoleCertificate {
@@ -1488,13 +1598,20 @@ pub enum UnsecureShamirRecoveryTopicCertificate {
     ShamirRecoveryBrief(UnsecureShamirRecoveryBriefCertificate),
 }
 
+impl_base_load!(ShamirRecoveryTopicCertificate);
+
 impl ShamirRecoveryTopicCertificate {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        match self {
+            ShamirRecoveryTopicCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
+            ShamirRecoveryTopicCertificate::ShamirRecoveryBrief(c) => c.check_data_integrity(),
+        }
+    }
+
     pub fn unsecure_load(
         signed: Bytes,
     ) -> Result<UnsecureShamirRecoveryTopicCertificate, DataError> {
-        let (_, serialized) =
-            VerifyKey::unsecure_unwrap(signed.as_ref()).map_err(|_| DataError::Signature)?;
-        let unsecure = format_vx_load::<Self>(serialized)?;
+        let unsecure = Self::base_unsecure_load(&signed)?;
         Ok(match unsecure {
             ShamirRecoveryTopicCertificate::ShamirRecoveryShare(unsecure) => {
                 UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryShare(
