@@ -107,7 +107,7 @@ fn dump_load(alice: &Device) {
         .is_ok());
 
     p_assert_eq!(
-        FileManifest::verify_and_load(
+        ChildManifest::verify_and_load(
             &signed,
             &alice.verify_key(),
             alice.device_id,
@@ -115,24 +115,11 @@ fn dump_load(alice: &Device) {
             Some(id),
             Some(0),
         )
+        .unwrap()
+        .into_file_manifest()
         .unwrap(),
         expected_file_manifest
     );
-    p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
-            &signed_encrypted,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0),
-        )
-        .unwrap(),
-        expected_file_manifest
-    );
-
-    // Also test ChildManifest
     p_assert_eq!(
         ChildManifest::decrypt_verify_and_load(
             &signed_encrypted,
@@ -143,13 +130,15 @@ fn dump_load(alice: &Device) {
             Some(id),
             Some(0),
         )
+        .unwrap()
+        .into_file_manifest()
         .unwrap(),
-        ChildManifest::File(expected_file_manifest.clone())
+        expected_file_manifest
     );
 
     // Also test round trip
     p_assert_eq!(
-        FileManifest::verify_and_load(
+        ChildManifest::verify_and_load(
             &expected_file_manifest.dump_and_sign(&alice.signing_key),
             &alice.verify_key(),
             alice.device_id,
@@ -157,11 +146,13 @@ fn dump_load(alice: &Device) {
             Some(id),
             Some(0),
         )
+        .unwrap()
+        .into_file_manifest()
         .unwrap(),
         expected_file_manifest
     );
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &expected_file_manifest.dump_sign_and_encrypt(&alice.signing_key, &alice.local_symkey),
             &alice.local_symkey,
             &alice.verify_key(),
@@ -170,6 +161,8 @@ fn dump_load(alice: &Device) {
             Some(id),
             Some(0),
         )
+        .unwrap()
+        .into_file_manifest()
         .unwrap(),
         expected_file_manifest
     );
@@ -224,7 +217,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the compression is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &dummy_without_compression,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -241,7 +234,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the serialization is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &dummy,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -258,7 +251,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the encryption is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &SecretKey::generate(),
             &alice.verify_key(),
@@ -272,7 +265,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the signature is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
             &SigningKey::generate().verify_key(),
@@ -286,7 +279,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the author is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -303,7 +296,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the timestamp is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -320,7 +313,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the id is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -337,7 +330,7 @@ fn invalid_load(alice: &Device) {
 
     // Check that the version is incorrect
     p_assert_eq!(
-        FileManifest::decrypt_verify_and_load(
+        ChildManifest::decrypt_verify_and_load(
             &data,
             &alice.local_symkey,
             &alice.verify_key(),
@@ -432,7 +425,7 @@ fn serde_file_manifest_ok(alice: &Device) {
         ],
     };
 
-    let manifest = FileManifest::decrypt_verify_and_load(
+    let manifest = ChildManifest::decrypt_verify_and_load(
         &data,
         &key,
         &alice.verify_key(),
@@ -441,6 +434,8 @@ fn serde_file_manifest_ok(alice: &Device) {
         None,
         None,
     )
+    .unwrap()
+    .into_file_manifest()
     .unwrap();
 
     p_assert_eq!(manifest, expected);
@@ -448,7 +443,7 @@ fn serde_file_manifest_ok(alice: &Device) {
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let manifest2 = FileManifest::decrypt_verify_and_load(
+    let manifest2 = ChildManifest::decrypt_verify_and_load(
         &data2,
         &key,
         &alice.verify_key(),
@@ -457,6 +452,8 @@ fn serde_file_manifest_ok(alice: &Device) {
         None,
         None,
     )
+    .unwrap()
+    .into_file_manifest()
     .unwrap();
     p_assert_eq!(manifest2, expected);
 }
@@ -492,7 +489,7 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let outcome = FileManifest::decrypt_verify_and_load(
+    let outcome = ChildManifest::decrypt_verify_and_load(
         &data,
         &key,
         &alice.verify_key(),
@@ -563,7 +560,7 @@ fn serde_folder_manifest(alice: &Device) {
         ]),
     };
 
-    let manifest = FolderManifest::decrypt_verify_and_load(
+    let manifest = ChildManifest::decrypt_verify_and_load(
         &data,
         &key,
         &alice.verify_key(),
@@ -572,6 +569,8 @@ fn serde_folder_manifest(alice: &Device) {
         None,
         None,
     )
+    .unwrap()
+    .into_folder_manifest()
     .unwrap();
 
     p_assert_eq!(manifest, expected);
@@ -579,7 +578,7 @@ fn serde_folder_manifest(alice: &Device) {
     // Also test serialization round trip
     let data2 = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
     // Note we cannot just compare with `data` due to signature and keys order
-    let manifest2 = FolderManifest::decrypt_verify_and_load(
+    let manifest2 = ChildManifest::decrypt_verify_and_load(
         &data2,
         &key,
         &alice.verify_key(),
@@ -588,6 +587,8 @@ fn serde_folder_manifest(alice: &Device) {
         None,
         None,
     )
+    .unwrap()
+    .into_folder_manifest()
     .unwrap();
     p_assert_eq!(manifest2, expected);
 }

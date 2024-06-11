@@ -17,7 +17,7 @@ use crate::{
 
 pub const DEFAULT_BLOCK_SIZE: Blocksize = Blocksize(512 * 1024); // 512 KB
 
-macro_rules! impl_manifest_dump_load {
+macro_rules! impl_manifest_dump {
     ($name:ident) => {
         impl $name {
             /// Dump and sign [Self], this doesn't encrypt the data compared to [Self::dump_sign_and_encrypt]
@@ -37,7 +37,13 @@ macro_rules! impl_manifest_dump_load {
 
                 key.encrypt(&signed)
             }
+        }
+    };
+}
 
+macro_rules! impl_manifest_load {
+    ($name:ident) => {
+        impl $name {
             pub fn decrypt_verify_and_load(
                 encrypted: &[u8],
                 key: &SecretKey,
@@ -75,6 +81,8 @@ macro_rules! impl_manifest_dump_load {
 
                 let obj: Self = format_vx_load(&serialized)?;
 
+                obj.check_data_integrity()?;
+
                 obj.verify(
                     expected_author,
                     expected_timestamp,
@@ -84,7 +92,13 @@ macro_rules! impl_manifest_dump_load {
 
                 Ok(obj)
             }
+        }
+    };
+}
 
+macro_rules! impl_manifest_verify {
+    ($name:ident) => {
+        impl $name {
             /// Verify the manifest against a set of expected values
             pub fn verify(
                 &self,
@@ -268,7 +282,8 @@ pub struct FileManifest {
     pub blocks: Vec<BlockAccess>,
 }
 
-impl_manifest_dump_load!(FileManifest);
+impl_manifest_dump!(FileManifest);
+impl_manifest_verify!(FileManifest);
 
 parsec_data!("schema/manifest/file_manifest.json5");
 
@@ -419,7 +434,8 @@ impl FolderManifest {
     }
 }
 
-impl_manifest_dump_load!(FolderManifest);
+impl_manifest_dump!(FolderManifest);
+impl_manifest_verify!(FolderManifest);
 
 parsec_data!("schema/manifest/folder_manifest.json5");
 
@@ -456,7 +472,9 @@ pub struct UserManifest {
 
 parsec_data!("schema/manifest/user_manifest.json5");
 
-impl_manifest_dump_load!(UserManifest);
+impl_manifest_dump!(UserManifest);
+impl_manifest_load!(UserManifest);
+impl_manifest_verify!(UserManifest);
 
 impl_transparent_data_format_conversion!(
     UserManifest,
@@ -469,6 +487,12 @@ impl_transparent_data_format_conversion!(
     updated,
 );
 
+impl UserManifest {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+}
+
 /*
  * ChildManifest
  */
@@ -480,6 +504,8 @@ pub enum ChildManifest {
     Folder(FolderManifest),
 }
 
+impl_manifest_load!(ChildManifest);
+
 impl ChildManifest {
     pub fn check_data_integrity(&self) -> DataResult<()> {
         match self {
@@ -488,63 +514,101 @@ impl ChildManifest {
         }
     }
 
-    pub fn decrypt_verify_and_load(
-        encrypted: &[u8],
-        key: &SecretKey,
-        author_verify_key: &VerifyKey,
+    pub fn verify(
+        &self,
         expected_author: DeviceID,
         expected_timestamp: DateTime,
         expected_id: Option<VlobID>,
         expected_version: Option<VersionInt>,
-    ) -> DataResult<Self> {
-        let signed = key.decrypt(encrypted).map_err(|_| DataError::Decryption)?;
+    ) -> DataResult<()> {
+        match self {
+            Self::File(file) => file.verify(
+                expected_author,
+                expected_timestamp,
+                expected_id,
+                expected_version,
+            ),
+            Self::Folder(folder) => folder.verify(
+                expected_author,
+                expected_timestamp,
+                expected_id,
+                expected_version,
+            ),
+        }
+    }
 
-        Self::verify_and_load(
-            &signed,
-            author_verify_key,
+    // Test methods
+
+    pub fn into_file_manifest(self) -> Option<FileManifest> {
+        match self {
+            Self::File(file) => Some(file),
+            _ => None,
+        }
+    }
+
+    pub fn into_folder_manifest(self) -> Option<FolderManifest> {
+        match self {
+            Self::Folder(folder) => Some(folder),
+            _ => None,
+        }
+    }
+
+    pub fn deserialize_data(raw: &[u8]) -> DataResult<Self> {
+        format_vx_load(raw)
+    }
+}
+
+impl From<FileManifest> for ChildManifest {
+    fn from(value: FileManifest) -> Self {
+        Self::File(value)
+    }
+}
+
+impl From<FolderManifest> for ChildManifest {
+    fn from(value: FolderManifest) -> Self {
+        Self::Folder(value)
+    }
+}
+
+/*
+ * WorkspaceManifest
+ */
+
+#[derive(Debug, Deserialize, PartialEq, Eq)]
+pub struct WorkspaceManifest(FolderManifest);
+
+impl_manifest_load!(WorkspaceManifest);
+
+impl WorkspaceManifest {
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        self.0.check_data_integrity_as_root()
+    }
+
+    pub fn verify(
+        &self,
+        expected_author: DeviceID,
+        expected_timestamp: DateTime,
+        expected_id: Option<VlobID>,
+        expected_version: Option<VersionInt>,
+    ) -> DataResult<()> {
+        self.0.verify(
             expected_author,
             expected_timestamp,
             expected_id,
             expected_version,
         )
     }
+}
 
-    pub fn verify_and_load(
-        signed: &[u8],
-        author_verify_key: &VerifyKey,
-        expected_author: DeviceID,
-        expected_timestamp: DateTime,
-        expected_id: Option<VlobID>,
-        expected_version: Option<VersionInt>,
-    ) -> DataResult<Self> {
-        let serialized = author_verify_key
-            .verify(signed)
-            .map_err(|_| DataError::Signature)?;
-
-        let obj = Self::deserialize_data(serialized)?;
-
-        macro_rules! internal_verify {
-            ($obj:ident) => {{
-                $obj.verify(
-                    expected_author,
-                    expected_timestamp,
-                    expected_id,
-                    expected_version,
-                )?;
-            }};
-        }
-
-        match &obj {
-            Self::File(file) => internal_verify!(file),
-            Self::Folder(folder) => {
-                internal_verify!(folder)
-            }
-        }
-        Ok(obj)
+impl From<FolderManifest> for WorkspaceManifest {
+    fn from(value: FolderManifest) -> Self {
+        Self(value)
     }
+}
 
-    fn deserialize_data(raw: &[u8]) -> DataResult<Self> {
-        format_vx_load(raw)
+impl From<WorkspaceManifest> for FolderManifest {
+    fn from(value: WorkspaceManifest) -> Self {
+        value.0
     }
 }
 

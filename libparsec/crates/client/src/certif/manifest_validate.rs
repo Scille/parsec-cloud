@@ -256,24 +256,11 @@ pub(super) async fn validate_workspace_manifest(
                 version,
                 timestamp,
                 &cleartext,
-                FolderManifest::verify_and_load,
+                WorkspaceManifest::verify_and_load,
             )
             .await?;
 
-            // Check manifest integrity
-            res.check_data_integrity_as_root().map_err(|x| {
-                let what = Box::new(InvalidManifestError::CleartextCorrupted {
-                    realm: realm_id,
-                    vlob: vlob_id,
-                    version,
-                    author: author.to_owned(),
-                    timestamp,
-                    error: Box::new(x),
-                });
-                CertifValidateManifestError::InvalidManifest(what)
-            })?;
-
-            Ok(res)
+            Ok(res.into())
         })
         .await
         .map_err(|err| match err {
@@ -380,19 +367,6 @@ pub(super) async fn validate_child_manifest(
                 ChildManifest::verify_and_load,
             )
             .await?;
-
-            // Check manifest integrity
-            res.check_data_integrity().map_err(|x| {
-                let what = Box::new(InvalidManifestError::CleartextCorrupted {
-                    realm: realm_id,
-                    vlob: vlob_id,
-                    version,
-                    author: author.to_owned(),
-                    timestamp,
-                    error: Box::new(x),
-                });
-                CertifValidateManifestError::InvalidManifest(what)
-            })?;
 
             Ok(res)
         })
