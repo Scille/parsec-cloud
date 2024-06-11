@@ -178,31 +178,6 @@ impl FileManifest {
         ))
     }
 
-    #[classmethod]
-    #[allow(clippy::too_many_arguments)]
-    fn decrypt_verify_and_load(
-        _cls: Bound<'_, PyType>,
-        encrypted: &[u8],
-        key: &SecretKey,
-        author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_timestamp: DateTime,
-        expected_id: Option<VlobID>,
-        expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec_types::FileManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
-        )
-        .map_err(|e| PyValueError::new_err(e.to_string()))
-        .map(Self)
-    }
-
     #[pyo3(signature = (**py_kwargs))]
     fn evolve(&self, py_kwargs: Option<Bound<'_, PyDict>>) -> PyResult<Self> {
         crate::binding_utils::parse_kwargs_optional!(
@@ -373,31 +348,6 @@ impl FolderManifest {
             py,
             &self.0.dump_sign_and_encrypt(&author_signkey.0, &key.0),
         ))
-    }
-
-    #[classmethod]
-    #[allow(clippy::too_many_arguments)]
-    fn decrypt_verify_and_load(
-        _cls: Bound<'_, PyType>,
-        encrypted: &[u8],
-        key: &SecretKey,
-        author_verify_key: &VerifyKey,
-        expected_author: &DeviceID,
-        expected_timestamp: DateTime,
-        expected_id: Option<VlobID>,
-        expected_version: Option<u32>,
-    ) -> PyResult<Self> {
-        libparsec_types::FolderManifest::decrypt_verify_and_load(
-            encrypted,
-            &key.0,
-            &author_verify_key.0,
-            expected_author.0,
-            expected_timestamp.0,
-            expected_id.map(|id| id.0),
-            expected_version,
-        )
-        .map_err(|e| PyValueError::new_err(e.to_string()))
-        .map(Self)
     }
 
     #[pyo3(signature = (**py_kwargs))]
