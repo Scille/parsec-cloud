@@ -675,43 +675,64 @@ def generate_target(
 
 
 def generate(what: str, api_specs: ApiSpecs) -> str | None:
-    if what == "client":
-        return generate_target(
-            api_specs,
-            template="client_plugin_definitions.ts.j2",
-            dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.ts",
-        )
-    elif what == "electron":
-        return generate_target(
-            api_specs,
-            template="binding_electron_meths.rs.j2",
-            dest=BASEDIR / "../electron/src/meths.rs",
-            modified_crate="libparsec_bindings_electron",
-        )
+    match what:
+        case "client":
+            return generate_target(
+                api_specs,
+                template="client_plugin_definitions.ts.j2",
+                dest=BASEDIR / "../../client/src/plugins/libparsec/definitions.ts",
+            )
 
-    elif what == "electron_client":
-        return generate_target(
-            api_specs,
-            template="binding_electron_index.d.ts.j2",
-            dest=BASEDIR / "../electron/src/index.d.ts",
-        )
-    elif what == "web":
-        return generate_target(
-            api_specs,
-            template="binding_web_meths.rs.j2",
-            dest=BASEDIR / "../web/src/meths.rs",
-            modified_crate="libparsec_bindings_web",
-        )
-    elif what == "android":
-        # TODO !
-        raise NotImplementedError("Android isn't ready yet")
-    else:
-        raise ValueError(f"Unknown generator `{what}`")
+        case "python":
+            return generate_target(
+                api_specs,
+                template="binding_python_meths.rs.j2",
+                dest=BASEDIR / "../python/src/meths.rs",
+            )
+
+        case "python_pyi":
+            return generate_target(
+                api_specs,
+                template="binding_python_libparsec.pyi.j2",
+                dest=BASEDIR / "../python/libparsec.pyi",
+            )
+
+        case "electron":
+            return generate_target(
+                api_specs,
+                template="binding_electron_meths.rs.j2",
+                dest=BASEDIR / "../electron/src/meths.rs",
+                modified_crate="libparsec_bindings_electron",
+            )
+
+        case "electron_client":
+            return generate_target(
+                api_specs,
+                template="binding_electron_index.d.ts.j2",
+                dest=BASEDIR / "../electron/src/index.d.ts",
+            )
+
+        case "web":
+            return generate_target(
+                api_specs,
+                template="binding_web_meths.rs.j2",
+                dest=BASEDIR / "../web/src/meths.rs",
+                modified_crate="libparsec_bindings_web",
+            )
+
+        case "android":
+            # TODO !
+            raise NotImplementedError("Android isn't ready yet")
+
+        case unknown:
+            raise ValueError(f"Unknown generator `{unknown}`")
 
 
 if __name__ == "__main__":
     TEMPLATE_CHOICES = [
         "client",
+        "python",
+        "python_pyi",
         "electron",
         "electron_client",
         "web",

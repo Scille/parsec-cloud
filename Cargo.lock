@@ -1902,6 +1902,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_bindings_python"
+version = "3.0.0-b.6+dev"
+dependencies = [
+ "env_logger",
+ "lazy_static",
+ "libparsec",
+ "pyo3",
+ "tokio",
+]
+
+[[package]]
 name = "libparsec_bindings_web"
 version = "3.0.0-b.6+dev"
 dependencies = [

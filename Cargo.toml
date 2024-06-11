@@ -16,6 +16,7 @@ members = [
     "libparsec/crates/tests_lite",
     "libparsec/crates/tests_macros",
     "libparsec/crates/types",
+    "bindings/python",
     "bindings/web",
     "bindings/electron",
     "bindings/android/libparsec/rust",
