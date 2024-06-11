@@ -845,30 +845,12 @@ impl SequesterAuthorityCertificate {
 
 parsec_data!("schema/certif/sequester_authority_certificate.json5");
 
-impl TryFrom<SequesterAuthorityCertificateData> for SequesterAuthorityCertificate {
-    type Error = DataError;
-    fn try_from(data: SequesterAuthorityCertificateData) -> Result<Self, Self::Error> {
-        if let Some(author) = data.author {
-            return Err(DataError::UnexpectedNonRootAuthor(author));
-        }
-
-        Ok(Self {
-            timestamp: data.timestamp,
-            verify_key_der: data.verify_key_der,
-        })
-    }
-}
-
-impl From<SequesterAuthorityCertificate> for SequesterAuthorityCertificateData {
-    fn from(obj: SequesterAuthorityCertificate) -> Self {
-        Self {
-            ty: Default::default(),
-            author: None,
-            timestamp: obj.timestamp,
-            verify_key_der: obj.verify_key_der,
-        }
-    }
-}
+impl_transparent_data_format_conversion!(
+    SequesterAuthorityCertificate,
+    SequesterAuthorityCertificateData,
+    timestamp,
+    verify_key_der,
+);
 
 /*
  * SequesterServiceCertificate
