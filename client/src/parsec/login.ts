@@ -98,13 +98,17 @@ export async function getOrganizationHandles(orgId: OrganizationID): Promise<Arr
 }
 
 export async function listAvailableDevices(filter = true): Promise<Array<AvailableDevice>> {
-  const availableDevices = await libparsec.listAvailableDevices(window.getConfigDir());
+  const availableDevices = (await libparsec.listAvailableDevices(window.getConfigDir())).map((d) => {
+    d.createdOn = DateTime.fromSeconds(d.createdOn as any as number);
+    d.protectedOn = DateTime.fromSeconds(d.protectedOn as any as number);
+    return d;
+  });
 
   if (!filter) {
     return availableDevices;
   }
   // Sort them by creation date
-  const sortedDevices = availableDevices.sort((d1, d2) => (d2.createdOn as any as number) - (d1.createdOn as any as number));
+  const sortedDevices = availableDevices.sort((d1, d2) => d2.createdOn.toMillis() - d1.createdOn.toMillis());
   const devices: Array<AvailableDevice> = [];
 
   for (const ad of sortedDevices) {
@@ -113,8 +117,6 @@ export async function listAvailableDevices(filter = true): Promise<Array<Availab
       return d.organizationId === ad.organizationId && ad.serverUrl === d.serverUrl && ad.humanHandle.email === d.humanHandle.email;
     });
     if (!found) {
-      ad.createdOn = DateTime.fromSeconds(ad.createdOn as any as number);
-      ad.protectedOn = DateTime.fromSeconds(ad.protectedOn as any as number);
       devices.push(ad);
     }
   }
