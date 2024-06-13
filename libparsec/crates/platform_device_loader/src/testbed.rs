@@ -88,6 +88,22 @@ fn load_local_device(key_file: &Path, env: &TestbedEnv) -> Option<Arc<LocalDevic
         })),
         TestbedEvent::NewDevice(d) if d.device_id == device_id => {
             env.template.events.iter().find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(u) if u.first_user_id == d.user_id => {
+                    Some(Arc::new(LocalDevice {
+                        organization_addr: (*env.organization_addr()).clone(),
+                        device_id,
+                        user_id: u.first_user_id,
+                        device_label: d.device_label.clone(),
+                        human_handle: u.first_user_human_handle.clone(),
+                        signing_key: d.signing_key.clone(),
+                        private_key: u.first_user_private_key.clone(),
+                        initial_profile: UserProfile::Admin,
+                        user_realm_id: u.first_user_user_realm_id,
+                        user_realm_key: u.first_user_user_realm_key.clone(),
+                        local_symkey: d.local_symkey.clone(),
+                        time_provider: TimeProvider::default(),
+                    }))
+                }
                 TestbedEvent::NewUser(u) if u.user_id == d.user_id => Some(Arc::new(LocalDevice {
                     organization_addr: (*env.organization_addr()).clone(),
                     device_id,

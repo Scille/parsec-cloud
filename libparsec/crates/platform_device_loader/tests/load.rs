@@ -111,13 +111,57 @@ async fn invalid_salt_size(tmp_path: TmpPath, #[case] content: &[u8]) {
 async fn testbed(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.bootstrap_organization("alice"); // alice@dev1
+        builder.new_user("bob"); // bob@dev1
+        builder.new_device("alice"); // alice@dev2
     })
     .await;
-    let key_file = env.discriminant_dir.join("devices/alice@dev1.keys");
+
+    // Ok (device created during organization bootstrap)
+
     let access = DeviceAccessStrategy::Password {
-        key_file,
+        key_file: env.discriminant_dir.join("devices/alice@dev1.keys"),
         password: "P@ssw0rd.".to_owned().into(),
     };
     let device = load_device(&env.discriminant_dir, &access).await.unwrap();
     p_assert_eq!(device.device_id, "alice@dev1".parse().unwrap());
+
+    // Ok (device created during user creation)
+
+    let access = DeviceAccessStrategy::Password {
+        key_file: env.discriminant_dir.join("devices/bob@dev1.keys"),
+        password: "P@ssw0rd.".to_owned().into(),
+    };
+    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    p_assert_eq!(device.device_id, "bob@dev1".parse().unwrap());
+
+    // Ok (new device for an existing user)
+
+    let access = DeviceAccessStrategy::Password {
+        key_file: env.discriminant_dir.join("devices/alice@dev2.keys"),
+        password: "P@ssw0rd.".to_owned().into(),
+    };
+    let device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    p_assert_eq!(device.device_id, "alice@dev2".parse().unwrap());
+
+    // Bad password
+
+    let bad_password_access = DeviceAccessStrategy::Password {
+        key_file: env.discriminant_dir.join("devices/alice@dev1.keys"),
+        password: "dummy".to_owned().into(),
+    };
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_password_access).await,
+        Err(LoadDeviceError::DecryptionFailed)
+    );
+
+    // Bad path
+
+    let bad_path_access = DeviceAccessStrategy::Password {
+        key_file: env.discriminant_dir.join("devices/dummy.keys"),
+        password: "P@ssw0rd.".to_owned().into(),
+    };
+    p_assert_matches!(
+        load_device(&env.discriminant_dir, &bad_path_access).await,
+        Err(LoadDeviceError::InvalidPath(_))
+    );
 }
