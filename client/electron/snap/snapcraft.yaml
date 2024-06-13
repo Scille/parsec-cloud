@@ -9,19 +9,21 @@ type: app
 
 apps:
   parsec:
-    plugs:
-      - desktop
-      - desktop-legacy
-      - home
-      - wayland
-      - x11
-      - opengl
-      - browser-support
-      - network
-      - gsettings
-      - audio-playback
-      - pulseaudio
-      - password-manager-service
+    # Since we use `classic` confinement,
+    # We don't need to specify a list of plugs.
+    # plugs:
+    #   - desktop
+    #   - desktop-legacy
+    #   - home
+    #   - wayland
+    #   - x11
+    #   - opengl
+    #   - browser-support
+    #   - network
+    #   - gsettings
+    #   - audio-playback
+    #   - pulseaudio
+    #   - password-manager-service
     desktop: usr/share/applications/parsec.desktop
     command: bin/desktop-launch
 
