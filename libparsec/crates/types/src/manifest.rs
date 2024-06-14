@@ -288,6 +288,35 @@ impl_manifest_verify!(FileManifest);
 parsec_data!("schema/manifest/file_manifest.json5");
 
 impl FileManifest {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        id: VlobID,
+        parent: VlobID,
+        version: VersionInt,
+        created: DateTime,
+        updated: DateTime,
+        size: SizeInt,
+        blocksize: Blocksize,
+        blocks: Vec<BlockAccess>,
+    ) -> Self {
+        let manifest = Self {
+            author,
+            timestamp,
+            id,
+            parent,
+            version,
+            created,
+            updated,
+            size,
+            blocksize,
+            blocks,
+        };
+        manifest.check_data_integrity().expect("Invalid manifest");
+        manifest
+    }
+
     /// The blocks in a file manifest should:
     /// - be ordered by offset
     /// - not overlap
@@ -297,7 +326,12 @@ impl FileManifest {
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `LocalFileManifest::check_data_integrity`.
     /// Also, the id and parent id should be different so the manifest does not point to itself.
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    ///
+    /// Note about this method being private:
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
+    fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
             return Err(DataError::DataIntegrity {
@@ -407,7 +441,7 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
-    pub fn check_data_integrity_as_child(&self) -> DataResult<()> {
+    fn check_data_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
             return Err(DataError::DataIntegrity {
@@ -418,7 +452,7 @@ impl FolderManifest {
         Ok(())
     }
 
-    pub fn check_data_integrity_as_root(&self) -> DataResult<()> {
+    fn check_data_integrity_as_root(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id != self.parent {
             return Err(DataError::DataIntegrity {
@@ -488,7 +522,10 @@ impl_transparent_data_format_conversion!(
 );
 
 impl UserManifest {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 }
@@ -507,7 +544,10 @@ pub enum ChildManifest {
 impl_manifest_load!(ChildManifest);
 
 impl ChildManifest {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
+    fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             Self::File(file) => file.check_data_integrity(),
             Self::Folder(folder) => folder.check_data_integrity_as_child(),
@@ -580,7 +620,10 @@ pub struct WorkspaceManifest(FolderManifest);
 impl_manifest_load!(WorkspaceManifest);
 
 impl WorkspaceManifest {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
+    fn check_data_integrity(&self) -> DataResult<()> {
         self.0.check_data_integrity_as_root()
     }
 

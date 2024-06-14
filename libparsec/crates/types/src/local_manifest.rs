@@ -477,22 +477,19 @@ impl LocalFileManifest {
             .cloned()
             .collect();
 
-        let manifest = FileManifest {
+        let manifest = FileManifest::new(
             author,
             timestamp,
-            id: self.base.id,
-            version: self.base.version + 1,
-            created: self.base.created,
-            parent: self.parent,
-            updated: self.updated,
-            size: self.size,
-            blocksize: self.blocksize,
+            self.base.id,
+            self.parent,
+            self.base.version + 1,
+            self.base.created,
+            self.updated,
+            self.size,
+            self.blocksize,
             blocks,
-        };
-        // The content integrity check is also done on the remote manifest, just in case
-        manifest
-            .check_data_integrity()
-            .expect("File manifest content integrity");
+        );
+
         Ok(manifest)
     }
 
