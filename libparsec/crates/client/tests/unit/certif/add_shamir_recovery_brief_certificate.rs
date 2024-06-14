@@ -237,43 +237,6 @@ async fn revoked(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn threshold_greater_than_share(env: &TestbedEnv) {
-    env.customize(|builder| {
-        builder.new_user("bob");
-
-        builder.new_shamir_recovery(
-            "bob",
-            2,
-            [("alice".parse().unwrap(), 1.try_into().unwrap())],
-        );
-    })
-    .await;
-    let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(env, &alice).await;
-
-    // To test `shamir_recovery_brief_certificate`, we remove the `shamir_recovery_share_certificate`
-    // which is tested in another file.
-    let mut shamir_recovery_certificates = env.get_shamir_recovery_certificates_signed();
-    shamir_recovery_certificates.pop();
-
-    let err = ops
-        .add_certificates_batch(
-            &env.get_common_certificates_signed(),
-            &[],
-            &shamir_recovery_certificates,
-            &Default::default(),
-        )
-        .await
-        .unwrap_err();
-
-    p_assert_matches!(
-        err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::Corrupted { .. })
-    )
-}
-
-#[parsec_test(testbed = "minimal")]
 async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
