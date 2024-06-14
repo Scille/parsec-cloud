@@ -70,7 +70,7 @@ macro_rules! impl_base_load {
                     .verify(signed)
                     .map_err(|_| DataError::Signature)?;
 
-                let result: Self = format_vx_load(serialized)?;
+                let result: Self = $crate::serialization::format_vx_load(serialized)?;
                 result.check_data_integrity()?;
                 Ok(result)
             }
@@ -254,7 +254,7 @@ impl_dump_and_sign!(UserCertificate);
 impl_base_load!(UserCertificate);
 
 impl UserCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -364,7 +364,7 @@ impl_dump_and_sign!(RevokedUserCertificate);
 impl_base_load!(RevokedUserCertificate);
 
 impl RevokedUserCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -426,7 +426,7 @@ impl_dump_and_sign!(UserUpdateCertificate);
 impl_base_load!(UserUpdateCertificate);
 
 impl UserUpdateCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -494,7 +494,7 @@ impl_dump_and_sign!(DeviceCertificate);
 impl_base_load!(DeviceCertificate);
 
 impl DeviceCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
     pub fn into_redacted(self) -> Self {
@@ -591,7 +591,7 @@ impl_dump_and_sign!(RealmRoleCertificate);
 impl_base_load!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -686,7 +686,7 @@ impl_dump_and_sign!(RealmKeyRotationCertificate);
 impl_base_load!(RealmKeyRotationCertificate);
 
 impl RealmKeyRotationCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -762,7 +762,7 @@ impl_dump_and_sign!(RealmNameCertificate);
 impl_base_load!(RealmNameCertificate);
 
 impl RealmNameCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -829,7 +829,7 @@ impl_dump_and_sign!(RealmArchivingCertificate);
 impl_base_load!(RealmArchivingCertificate);
 
 impl RealmArchivingCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -894,7 +894,7 @@ impl_dump_and_sign!(SequesterAuthorityCertificate);
 impl_base_load!(SequesterAuthorityCertificate);
 
 impl SequesterAuthorityCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -931,7 +931,7 @@ pub struct SequesterServiceCertificate {
 impl_unsecure_dump!(SequesterServiceCertificate);
 
 impl SequesterServiceCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -988,7 +988,7 @@ pub struct SequesterRevokedServiceCertificate {
 impl_unsecure_dump!(SequesterRevokedServiceCertificate);
 
 impl SequesterRevokedServiceCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -1052,7 +1052,7 @@ impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
 impl_base_load!(ShamirRecoveryBriefCertificate);
 
 impl ShamirRecoveryBriefCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         let total_shares = {
             let mut total_shares: u64 = 0;
             for shares in self.per_recipient_shares.values() {
@@ -1127,7 +1127,7 @@ impl_dump_and_sign!(ShamirRecoveryShareCertificate);
 impl_base_load!(ShamirRecoveryShareCertificate);
 
 impl ShamirRecoveryShareCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
 
@@ -1374,7 +1374,7 @@ pub enum UnsecureCommonTopicCertificate {
 impl_base_load!(CommonTopicCertificate);
 
 impl CommonTopicCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             CommonTopicCertificate::User(c) => c.check_data_integrity(),
             CommonTopicCertificate::Device(c) => c.check_data_integrity(),
@@ -1516,7 +1516,7 @@ pub enum UnsecureRealmTopicCertificate {
 impl_base_load!(RealmTopicCertificate);
 
 impl RealmTopicCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             RealmTopicCertificate::RealmRole(c) => c.check_data_integrity(),
             RealmTopicCertificate::RealmName(c) => c.check_data_integrity(),
@@ -1601,7 +1601,7 @@ pub enum UnsecureShamirRecoveryTopicCertificate {
 impl_base_load!(ShamirRecoveryTopicCertificate);
 
 impl ShamirRecoveryTopicCertificate {
-    pub fn check_data_integrity(&self) -> DataResult<()> {
+    fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             ShamirRecoveryTopicCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
             ShamirRecoveryTopicCertificate::ShamirRecoveryBrief(c) => c.check_data_integrity(),
