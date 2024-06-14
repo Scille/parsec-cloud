@@ -146,7 +146,7 @@ const options = {
   afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'electron-builder-notarize',
 
   mac: {
-    target: 'dmg',
+    target: 'default',
     category: 'public.app-category.productivity',
     hardenedRuntime: true,
     entitlements: './macOS/entitlements.plist',
