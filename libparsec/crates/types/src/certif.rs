@@ -254,6 +254,9 @@ impl_dump_and_sign!(UserCertificate);
 impl_base_load!(UserCertificate);
 
 impl UserCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -364,6 +367,9 @@ impl_dump_and_sign!(RevokedUserCertificate);
 impl_base_load!(RevokedUserCertificate);
 
 impl RevokedUserCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -426,6 +432,9 @@ impl_dump_and_sign!(UserUpdateCertificate);
 impl_base_load!(UserUpdateCertificate);
 
 impl UserUpdateCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -494,6 +503,9 @@ impl_dump_and_sign!(DeviceCertificate);
 impl_base_load!(DeviceCertificate);
 
 impl DeviceCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -591,6 +603,9 @@ impl_dump_and_sign!(RealmRoleCertificate);
 impl_base_load!(RealmRoleCertificate);
 
 impl RealmRoleCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -686,6 +701,9 @@ impl_dump_and_sign!(RealmKeyRotationCertificate);
 impl_base_load!(RealmKeyRotationCertificate);
 
 impl RealmKeyRotationCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -762,6 +780,9 @@ impl_dump_and_sign!(RealmNameCertificate);
 impl_base_load!(RealmNameCertificate);
 
 impl RealmNameCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -829,6 +850,9 @@ impl_dump_and_sign!(RealmArchivingCertificate);
 impl_base_load!(RealmArchivingCertificate);
 
 impl RealmArchivingCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -894,6 +918,9 @@ impl_dump_and_sign!(SequesterAuthorityCertificate);
 impl_base_load!(SequesterAuthorityCertificate);
 
 impl SequesterAuthorityCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -931,6 +958,9 @@ pub struct SequesterServiceCertificate {
 impl_unsecure_dump!(SequesterServiceCertificate);
 
 impl SequesterServiceCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -988,6 +1018,9 @@ pub struct SequesterRevokedServiceCertificate {
 impl_unsecure_dump!(SequesterRevokedServiceCertificate);
 
 impl SequesterRevokedServiceCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -1052,6 +1085,9 @@ impl_dump_and_sign!(ShamirRecoveryBriefCertificate);
 impl_base_load!(ShamirRecoveryBriefCertificate);
 
 impl ShamirRecoveryBriefCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         let total_shares = {
             let mut total_shares: u64 = 0;
@@ -1127,6 +1163,9 @@ impl_dump_and_sign!(ShamirRecoveryShareCertificate);
 impl_base_load!(ShamirRecoveryShareCertificate);
 
 impl ShamirRecoveryShareCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -1228,6 +1267,9 @@ pub enum UnsecureAnyCertificate {
 impl_base_load!(AnyCertificate);
 
 impl AnyCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             AnyCertificate::User(c) => c.check_data_integrity(),
@@ -1374,6 +1416,9 @@ pub enum UnsecureCommonTopicCertificate {
 impl_base_load!(CommonTopicCertificate);
 
 impl CommonTopicCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             CommonTopicCertificate::User(c) => c.check_data_integrity(),
@@ -1516,6 +1561,9 @@ pub enum UnsecureRealmTopicCertificate {
 impl_base_load!(RealmTopicCertificate);
 
 impl RealmTopicCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             RealmTopicCertificate::RealmRole(c) => c.check_data_integrity(),
@@ -1601,6 +1649,9 @@ pub enum UnsecureShamirRecoveryTopicCertificate {
 impl_base_load!(ShamirRecoveryTopicCertificate);
 
 impl ShamirRecoveryTopicCertificate {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             ShamirRecoveryTopicCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
