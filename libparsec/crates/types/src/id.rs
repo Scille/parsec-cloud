@@ -342,6 +342,8 @@ mod user_device_ids {
             match nickname {
                 "alice" => Ok(fixtures::ALICE_USER_ID),
                 "bob" => Ok(fixtures::BOB_USER_ID),
+                "carl" => Ok(fixtures::CARL_USER_ID),
+                "diana" => Ok(fixtures::DIANA_USER_ID),
                 "mallory" => Ok(fixtures::MALLORY_USER_ID),
                 "mike" => Ok(fixtures::MIKE_USER_ID),
                 "philip" => Ok(fixtures::PHILIP_USER_ID),

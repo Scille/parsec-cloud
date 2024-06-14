@@ -141,6 +141,8 @@ macro_rules! impl_unsecure_dump {
     ($name:ident) => {
         impl $name {
             pub fn unsecure_dump(&self) -> Vec<u8> {
+                self.check_data_integrity()
+                    .expect("Data integrity check failed");
                 $crate::serialization::format_v0_dump(self)
             }
         }
@@ -152,6 +154,8 @@ macro_rules! impl_dump_and_sign {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+                self.check_data_integrity()
+                    .expect("Data integrity check failed");
                 author_signkey.sign(&self.unsecure_dump())
             }
         }

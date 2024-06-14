@@ -1381,7 +1381,6 @@ fn serde_shamir_recovery_share_certificate(alice: &Device, bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     // Generated from Rust implementation (Parsec v2.16.1+dev)
     // Content:
@@ -1392,12 +1391,14 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
     //   threshold: 3
     //
     let data = hex!(
-        "3ea699e81d7c26fe7ee8b128ab80dfb9c3f11886fa78f0aa24bcb24c4b1efad23a6d4f"
-        "75fb1376dbcc5954bb31af23dd7150e2a7a649410abc482d6e86088607789c1dcd410a"
-        "c2301046e1564fe211bc413d4998247fc940d284c958e856f12456a1aebd4bf1262e2d"
-        "ae1fbcef36eb54f039d44089c5085c1e2193b1c2e88d8328f7ec48f1a4b3862c2f8aec"
-        "d0798cc74539a12aa5b2b6a7f5f2ed9aa65934086ac8d1efdf05ff1f17c6a06603b672"
-        "bddb6c770fcf34503b3b92d8fe0028ca35f9"
+        "1e9d752322f4185a97a3328325c043ffb4f3ebee4e9aac4e9078af5e6c047a2be3be61"
+        "996fc6ed1ffa4643b75c3655537c45ff2b083306f2d9a3ae17e5818b050028b52ffd00"
+        "58cd04009208212a9045e90f3e85633d86a08cced60feb85ed10043f91a559d250d981"
+        "2412bb5c5b85ff212076c370db5b06ec3160da6c0f469b4c550f97361bf2fca074adf8"
+        "c67dac04a20405e519f6a5da66b48e2f2b8a3e01960144a02c13a7d7f2d3f6a58e0210"
+        "22cea64da660576ff27ed04adb7cc8495f46388bbfa0a0b3e39d1e9405cda3d5124706"
+        "00e02836920b31063416804fc9ac2fd803"
+
     );
     let data = Bytes::from(data.as_ref().to_vec());
 
@@ -1469,6 +1470,38 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
             alice.device_id,
         ),
         Err(DataError::Signature)
+    );
+
+    // Test threshold greater than shares
+    let data = hex!(
+        "d524e93060fbdcd68b0d48903a669742839704df18fd5ba753aaf5ac343a70ca4fae30"
+        "19b36351a50bbc2cfb6fb14bd69a58a593d64a153abd66ecdf54cf50070028b52ffd00"
+        "58c5040082c8202a9045e90f3e85633d86a08cced60feb85ed10043f91a559d250d981"
+        "246ebb5c5b85ff212076030c37910110c1c26653a8b0c954b5a1607321cf0ecad6886f"
+        "dcc789131d2828cfb02f5536a36d7c5949140aa0041c8e369738b9969fb62f7d1440f0"
+        "78326c3205bb7291b77b2b6df35f93be6c68163f41bd73e39d1c9403cca3d510460600"
+        "402e36920b31063416804fc9ac2fd803"
+
+    );
+    let data = Bytes::from(data.as_ref().to_vec());
+
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::unsecure_load(data.clone()),
+        Err(DataError::DataIntegrity {
+            data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
+            invariant: "threshold <= total_shares"
+        })
+    );
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::verify_and_load(
+            &data,
+            &alice.verify_key(),
+            alice.device_id,
+        ),
+        Err(DataError::DataIntegrity {
+            data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
+            invariant: "threshold <= total_shares"
+        })
     );
 }
 
