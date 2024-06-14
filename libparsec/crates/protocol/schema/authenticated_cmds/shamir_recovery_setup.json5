@@ -46,10 +46,6 @@
                 "status": "missing_share_for_recipient"
             },
             {
-                // Threshold is greater than total number of weighted shares
-                "status": "threshold_greater_than_total_shares"
-            },
-            {
                 // A share has a timestamp different than the brief timestamp.
                 "status": "share_incoherent_timestamp"
             },

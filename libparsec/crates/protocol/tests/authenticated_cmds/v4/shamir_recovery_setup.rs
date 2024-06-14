@@ -131,17 +131,6 @@ pub fn rep_share_incoherent_timestamp() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
-pub fn rep_threshold_greater_than_total_shares() {
-    // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
-    // Content:
-    //   status: "threshold_greater_than_total_shares"
-    test_roundtrip_serialization!(
-        "81a6737461747573d9237468726573686f6c645f677265617465725f7468616e5f746f"
-        "74616c5f736861726573",
-        authenticated_cmds::shamir_recovery_setup::Rep::ThresholdGreaterThanTotalShares,
-        authenticated_cmds::shamir_recovery_setup::Rep::load
-    );
-}
 pub fn rep_timestamp_out_of_ballpark() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
