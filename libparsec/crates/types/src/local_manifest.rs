@@ -232,6 +232,11 @@ impl Chunk {
     }
 
     #[allow(clippy::nonminimal_bool)]
+    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
     pub fn check_data_integrity(&self) -> DataResult<()> {
         // As explained above, the following rule applies:
         //   raw_offset <= start < stop <= raw_offset + raw_size
@@ -358,6 +363,13 @@ impl LocalFileManifest {
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `FileManifest::check_data_integrity`.
     /// Also, the id and parent id should be different so the manifest does not point to itself.
+    ///
+    /// A note about this method being public:
+    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
     pub fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
@@ -574,7 +586,7 @@ impl LocalFolderManifest {
         }
     }
 
-    pub fn check_data_integrity_as_child(&self) -> DataResult<()> {
+    fn check_data_integrity_as_child(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.base.id == self.parent {
             return Err(DataError::DataIntegrity {
@@ -585,7 +597,7 @@ impl LocalFolderManifest {
         Ok(())
     }
 
-    pub fn check_data_integrity_as_root(&self) -> DataResult<()> {
+    fn check_data_integrity_as_root(&self) -> DataResult<()> {
         // Check that id and parent are the same
         if self.base.id != self.parent {
             return Err(DataError::DataIntegrity {
@@ -894,6 +906,11 @@ impl LocalUserManifest {
         }
     }
 
+    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
     pub fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
@@ -984,6 +1001,11 @@ impl LocalChildManifest {
         }
     }
 
+    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
     pub fn check_data_integrity(&self) -> DataResult<()> {
         match self {
             Self::File(manifest) => manifest.check_data_integrity()?,
@@ -1042,6 +1064,11 @@ impl LocalWorkspaceManifest {
         ))
     }
 
+    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
     fn check_data_integrity(&self) -> DataResult<()> {
         self.0.check_data_integrity_as_root()
     }
