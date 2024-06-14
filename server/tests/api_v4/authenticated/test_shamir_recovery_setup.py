@@ -372,7 +372,7 @@ async def test_authenticated_shamir_recovery_setup_threshold_greater_than_total_
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepThresholdGreaterThanTotalShares()
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepBriefInvalidData()
 
 
 async def test_authenticated_shamir_recovery_setup_share_recipient_not_in_brief(

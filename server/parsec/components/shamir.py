@@ -70,8 +70,6 @@ class BaseShamirComponent:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepAuthorIncludedAsRecipient()
                 case ShamirAddRecoverySetupValidateBadOutcome.MISSING_SHARE_FOR_RECIPIENT:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepMissingShareForRecipient()
-                case ShamirAddRecoverySetupValidateBadOutcome.THRESHOLD_GREATER_THAN_TOTAL_SHARES:
-                    return authenticated_cmds.latest.shamir_recovery_setup.RepThresholdGreaterThanTotalShares()
                 case ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCOHERENT_TIMESTAMP:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepShareIncoherentTimestamp()
 
@@ -122,7 +120,6 @@ class ShamirAddRecoverySetupValidateBadOutcome(BadOutcomeEnum):
     DUPLICATE_SHARE_FOR_RECIPIENT = auto()
     AUTHOR_INCLUDED_AS_RECIPIENT = auto()
     MISSING_SHARE_FOR_RECIPIENT = auto()
-    THRESHOLD_GREATER_THAN_TOTAL_SHARES = auto()
     SHARE_INCOHERENT_TIMESTAMP = auto()
 
 
@@ -183,7 +180,4 @@ def shamir_add_recovery_setup_validate(
     # some recipient specified in brief has no share
     if delta:
         return ShamirAddRecoverySetupValidateBadOutcome.MISSING_SHARE_FOR_RECIPIENT
-    # threshold is less than total number of shares
-    if brief_certificate.threshold > sum(brief_certificate.per_recipient_shares.values()):
-        return ShamirAddRecoverySetupValidateBadOutcome.THRESHOLD_GREATER_THAN_TOTAL_SHARES
     return brief_certificate, share_certificates

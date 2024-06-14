@@ -140,10 +140,6 @@ Authenticated API:
                 "status": "missing_share_for_recipient"
             },
             {
-                // Threshold is greater than total number of weighted shares
-                "status": "threshold_greater_than_total_shares"
-            },
-            {
                 // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
                 "status": "shamir_setup_already_exists"
             },
