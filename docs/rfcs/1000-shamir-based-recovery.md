@@ -87,7 +87,7 @@ To use the Shamir recovery:
    secret `SK` and decrypt `SK(alice@shamir1)`.
 6) Alice uses `alice@shamir1` to re-create a new device (the recovered device).
 
-## 1 - Create & update a Shamir recovery setup
+## 1 - Create a Shamir recovery setup
 
 Authenticated API:
 
@@ -102,8 +102,7 @@ Authenticated API:
             "fields": [
                 {
                     "name": "setup",
-                    // Set to `None` to clear previous Shamir recovery setup
-                    "type": "RequiredOption<ShamirRecoverySetup>"
+                    "type": "ShamirRecoverySetup"
                 }
             ]
         },
@@ -228,6 +227,8 @@ Consistency between `brief` and `shares` must be checked by the Parsec server:
 > **_Future evolution 2:_** Check the Shamir recovery setup against some
 > organization-specific rules (e.g. the number of shares, the recipient's
 > profiles, max number of share per recipient, etc.). See "Bonus" section below.
+
+To update the setup, the previous setup must be deleted first.
 
 And the related certificates:
 
@@ -704,6 +705,121 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
 Then `ciphered_data` can be decrypted with `data_key`. From then on, the recovery works
 just like the recovery device system (see `parsec core import_recovery_device` CLI).
 
+## 4 - Delete a shamir setup
+
+Authenticated API:
+
+```json5
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "shamir_recovery_deletion",
+            "fields": [
+                {
+                    "name": "certificate",
+                    // Contains a ShamirRecoveryDeletionCertificate
+                    "type": "bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Cannot deserialize data into the expected certificate
+                "status": "invalid_data"
+            },
+            {
+                // Given timestamp does not match previous timestamps
+                "status": "incoherent_previous_timestamp"
+            }
+            {
+                // Nothing to delete
+                "status": "no_setup_to_delete"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate or vlob in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ],
+    }
+]
+```
+The deletion certificate
+
+```json5
+{
+    "label": "ShamirRecoveryDeletionCertificate",
+    "type": "shamir_recovery_deletion_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "previous_timestamp",
+            "type": "DateTime"
+        },
+        {
+            "name": "share_recipients",
+            "type": "List<UserId>"
+        }
+    ]
+}
+```
+
+The certificate needs to include the previous certificate timestamp in the deletion certificateto link both certificates together.
+
+> Future evolution: link the certificates with 1/ the brief signature 2/ a certificate id. This kind of link can be done between the share and brief certificate too.
+
+Who need witch certificate ?
+
+| certificate | author | share recipient |
+|-------------|--------|-----------------|
+| brief       | x      |                 |
+| share       |        | x               |
+| deletion    | x      | x               |
+
+
+
 ## Bonus
 
 ### **Future evolution 1**: Only Admin can clear Shamir recovery
@@ -803,3 +919,16 @@ On the other hand, approach 1) allow things like "recovery requires Alice, Bob a
 requires Alice and Bob, or Adam alone". However given we cannot trust the server
 on such precise configuration, a new certificate type must be introduced which is cumbersome :(
 Also we should be able to provide approach 2) as part of approach 1).
+
+### **Future evolution 3**: notify shamir author when shamir secret become irrecoverable
+
+If Alice has setup a shamir with Bob, Mallory and John, each of then having one share and a threshold of two.
+Then Bob and Mallory leave the organization. So this setup becomes unusable.
+
+The goal would be to have a notification to prompt the user to setup a new shamir.
+Depending on the configuration, if any of the share recipient is deleted a warning could be sent first
+event if the shamir could still be used.
+
+Two propositions could mitigate that:
+- each time a user is deleted, if they were a share recipient a notification could be sent to users on the other end of this shamir setup.
+- at each connection, check if share recipients are still valid.
