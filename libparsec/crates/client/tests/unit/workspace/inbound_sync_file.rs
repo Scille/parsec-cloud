@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::sync::Arc;
+
 use libparsec_client_connection::{
     protocol::authenticated_cmds, test_register_sequence_of_send_hooks,
 };
@@ -7,6 +9,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
+use crate::EventWorkspaceOpsInboundSyncDone;
 
 enum RemoteModification {
     Nothing,
@@ -40,8 +43,6 @@ async fn non_placeholder(
     local_modification: LocalModification,
     env: &TestbedEnv,
 ) {
-    use std::sync::Arc;
-
     if matches!(
         (&local_modification, &remote_modification),
         (
@@ -299,7 +300,14 @@ async fn non_placeholder(
         },
     );
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
     wksp1_ops.inbound_sync(wksp1_bar_txt_id).await.unwrap();
+    if matches!(&remote_modification, RemoteModification::Nothing) {
+        spy.assert_no_events();
+    } else {
+        spy.assert_next(|e| p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id,entry_id } if *realm_id == wksp1_id && *entry_id == wksp1_bar_txt_id));
+    }
+
     let bar_txt_manifest = match wksp1_ops
         .store
         .get_manifest(wksp1_bar_txt_id)

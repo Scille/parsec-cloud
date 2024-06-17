@@ -7,6 +7,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
+use crate::EventWorkspaceOpsInboundSyncDone;
 
 enum RemoteModification {
     Nothing,
@@ -301,7 +302,14 @@ async fn non_placeholder(
         },
     );
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
     wksp1_ops.inbound_sync(wksp1_foo_id).await.unwrap();
+    if matches!(&remote_modification, RemoteModification::Nothing) {
+        spy.assert_no_events();
+    } else {
+        spy.assert_next(|e| p_assert_matches!(e, EventWorkspaceOpsInboundSyncDone { realm_id,entry_id } if *realm_id == wksp1_id && *entry_id == wksp1_foo_id));
+    }
+
     let foo_manifest = match wksp1_ops.store.get_manifest(wksp1_foo_id).await.unwrap() {
         ArcLocalChildManifest::Folder(m) => m,
         m => panic!(
