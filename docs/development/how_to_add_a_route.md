@@ -1,11 +1,21 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-The goal of this document is to cover all the necessary steps to add an api route in the current architecture.
+The goal of this document is to cover all the necessary steps to add an API route to Parsec.
 
+In summary:
+1. Add the schema describing the new API route
+2. Generate binding code and serialization tests
+3. Implement server-side code (In-memory & PostgreSQL) and tests
+4. Implement client-side code and tests
+
+> Note that you will need a working development environment. See (./README.md).
 ## Schema generation
 
-In `libparsec/crates/protocol/schema/xxxxxx_cmds/dummy.json5
+Let's add a new `dummy` route to `invited_cmds`.
 
+> API routes are also called "commands" in Parsec. There are three command families: `anonymous_cmds` (authentication not required), `authenticated_cmds` (authentication required) and `invited_cmds` (invitation required).
+
+In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add a `dummy.json5` schema describing the API route.
 
 ```json5
 [
@@ -44,19 +54,29 @@ For a full description of the accepted format see [the parsing/generating script
 
 > Note that the files are .json5. This is to allow for comments inside these files. But the parser we are using only supports .json files and we're removing the comments ourselves. So don't use any other specific feature of the json5 format (trailing commas, I'm looking at you 👀).
 
-Then run the following scripts
-- `python make.py r` (see [here](../../make.py)) to rebuild the bindings (use option `i` to install). The modified files are :
+Then from the root directory, run the following scripts to generate binding code.
+
+```shell
+python make.py r
+```
+
+This will rebuild the bindings (use option `i` to install) and modify the following files:
     - `server/parsec/_parsec_pyi/protocol/__init__.pyi`
     - `server/parsec/_parsec_pyi/protocol/xxxxxx_cmds/v4/__init__.pyi`
     - `server/tests/common/rpc.py`
-- `python misc/gen_protocol_typings.py` (see [here](../../misc/gen_protocol_typings.py)) to generate the .pyi files and some helpers for the tests. The generated code is in `/target`
+
+```shell
+python misc/gen_protocol_typings.py
+```
+
+This will generate the .pyi files and some helpers for the tests. The generated code is in `/target` directory.
 
 
 ## Serialization tests
 
 After bindings generation, the serialization tests become required.
 
-In `libparsec/crates/protocol/tests/xxxxx_cmds/v4/dummy.rs` for each req and rep variant, there must be a a public function named req or rep _ the variant name. You'll have this kind of error.
+In `libparsec/crates/protocol/tests/xxxxx_cmds/v4/dummy.rs` for each req and rep variant, there must be a public function named `req` or `rep_{variant name}`. Otherwise, you'll have this kind of error:
 
 ```shell
 error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dummy`
@@ -66,14 +86,16 @@ error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dum
    | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ not found in `dummy`
 ```
 
-As for the content the goal is to go from bytes to the tested type, assert it's ok and back to bytes and assert it's adding up. On how to generate the bytes see [here](generate_blob.md) and [there](../rfcs/1009-hexstring-format.md)
+As for the content, the goal of these serialization tests is to go from bytes to the tested type, assert it's OK and back to bytes and assert it's adding up.
+
+On how to generate the bytes see [here](generate_blob.md) and [there](../rfcs/1009-hexstring-format.md)
 
 
-## Server side implementation
+## Server-side implementation
 
 ### Optional: the route introduces a new component
 
-In `server/parsec/components` you define a base component. It will need to have the corresponding memory component and postgresql component in their respective folder.
+In `server/parsec/components` you define a base component. It will need to have a corresponding memory and postgresql components in their respective folder.
 
 Add your component to `class Backend` in `server/parsec/backend.py`
 
@@ -100,9 +122,9 @@ In a component (maybe the one defined just before), you'll need to define this k
             client_ctx.organization_not_found_abort()
 ```
 
-This function will mostly contain error management logic. The component will also contain a generic method, that will be overrode in the memory and postgresql implementations.
+This function will mostly contain error management logic. The component will also contain a generic method, that will be overridden in the memory and postgresql implementations.
 
-> Note that some common error like organization not found have helpers that return the appropriate error.
+> Note that some common errors, like organization not found, have helpers that return the appropriate error.
 
 ```python
     async def do_dummy(
@@ -112,9 +134,9 @@ This function will mostly contain error management logic. The component will als
         raise NotImplementedError
 ```
 
-Your errors must inherit from `BadOutcomeEnum`
+Your errors must inherit from `BadOutcomeEnum`.
 
-The real implementation will happen in a Memory or postgresql component.
+The actual implementation will happen in the memory and postgresql components.
 
 ```python
 class MemoryDummyComponent(BaseDummyComponent):
@@ -132,15 +154,22 @@ class MemoryDummyComponent(BaseDummyComponent):
 ```
 
 
-## Server tests
+### Server tests
+Add the new test file `server/tests/api_v4/xxxxx/dummy.py`. It should contain a test function for each response status (see other command's tests as a guide on how to write them).
 
-In import the new test file in `server/tests/api_v4/xxxxx/init.py`. It must be named `test_{new command name}`
+Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`. It must be named `test_{new command name}` (e.g. `test_dummy`).
 
-Start a new testbed
+Start a new testbed :
 
-`test_each_cmd_req_rep_has_dedicated_test` will fail if a test per output are missing
+```shell
+python make.py rts
+```
+
+For more information on se testbed see [here](README.md/#starting-the-testbed-server).
+
+`test_each_cmd_req_rep_has_dedicated_test` will fail if a test function is missing
 
 
-## Client side
+## Client-side implementation
 
 TODO
