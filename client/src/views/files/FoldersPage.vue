@@ -292,6 +292,9 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
 
+const sortProperty = ref(SortProperty.Name);
+const sortAsc = ref(true);
+
 const fileOperations: Ref<Array<FileOperationProgress>> = ref([]);
 const currentPath = ref('/');
 const folders = ref(new EntryCollection<FolderModel>());
@@ -507,6 +510,8 @@ async function onDisplayStateChange(): Promise<void> {
 function onSortChange(event: MsSorterChangeEvent): void {
   folders.value.sort(event.option.key, event.sortByAsc);
   files.value.sort(event.option.key, event.sortByAsc);
+  sortProperty.value = event.option.key;
+  sortAsc.value = event.sortByAsc;
 }
 
 async function onFileOperationState(state: FileOperationState, operationData?: FileOperationData, stateData?: StateData): Promise<void> {
@@ -556,6 +561,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
           existing.updated = statResult.value.updated;
           existing.isSelected = false;
         }
+        files.value.sort(sortProperty.value, sortAsc.value);
       }
     }
   } else if (state === FileOperationState.EntryMoved && operationData) {
@@ -592,6 +598,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
           if (!folders.value.getEntries().find((entry) => entry.id === statResult.value.id)) {
             (statResult.value as FolderModel).isSelected = false;
             folders.value.append(statResult.value as FolderModel);
+            folders.value.sort(sortProperty.value, sortAsc.value);
           }
         }
       }
@@ -708,6 +715,8 @@ async function listFolder(): Promise<void> {
     }
     folders.value.smartUpdate(newFolders);
     files.value.smartUpdate(newFiles);
+    folders.value.sort(sortProperty.value, sortAsc.value);
+    files.value.sort(sortProperty.value, sortAsc.value);
   } else {
     informationManager.present(
       new Information({
