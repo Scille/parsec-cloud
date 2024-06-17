@@ -14,6 +14,7 @@ androidx
 anext
 anyio
 appendleft
+appimage
 aqtbot
 archivings
 archs
@@ -25,7 +26,6 @@ arrowleft
 arrowright
 arrowup
 arwx
-appimage
 asar
 Asas
 asend
@@ -189,7 +189,6 @@ fsyncdir
 fusepy
 fusermount
 fuzzer
-hexstring
 gdce
 generichash
 genindex
@@ -215,6 +214,7 @@ hatin'
 headerlink
 helloerror
 Hellow
+hexstring
 hicolor
 HKCR
 HKCU
@@ -242,6 +242,7 @@ iodepth
 ioengine
 ionicons
 ionicstorage
+ipinfo
 iqmp
 itemsoverlay
 JAVACMD

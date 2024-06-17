@@ -56,11 +56,14 @@ jobs:
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
         run: |
-          set -e -o pipefail
+          set -eux -o pipefail
+          COUNTRY=$(curl ipinfo.io | jq -r .country)
+          MIRROR_FILE=$(mktemp)
+          curl "http://mirrors.ubuntu.com/$COUNTRY.txt" > $MIRROR_FILE
           (
             # make sure there is a `\t` between URL and `priority:*` attributes
             printf 'http://azure.archive.ubuntu.com/ubuntu	priority:1\n';
-            curl http://mirrors.ubuntu.com/mirrors.txt | grep https
+            grep -e '^https' $MIRROR_FILE
           ) | sudo tee /etc/apt/mirrors.txt
           sudo sed -i 's/http:\/\/azure.archive.ubuntu.com\/ubuntu\//mirror+file:\/etc\/apt\/mirrors.txt/' /etc/apt/sources.list
 
