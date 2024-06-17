@@ -126,30 +126,30 @@ macro_rules! impl_events {
     };
 
     // e.g. Foo
-    (@munch ( $event:ident, $($tail:tt)* ) -> ($($output:tt)*)) => {
+    (@munch ( $(#[$event_attr:meta])* $event:ident, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
             #[derive(Debug, Clone)]
-            pub struct [< Event $event >];
+            $(#[$event_attr])* pub struct [< Event $event >];
             impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
             impl_events!(@munch ($($tail)*) -> ($($output)* [$event, [< Event $event >], [< on_ $event:lower _cbs >]]));
         }
     };
 
     // e.g. Foo(u64)
-    (@munch ( $event:ident ( $($ty:ty),* $(,)? ), $($tail:tt)* ) -> ($($output:tt)*)) => {
+    (@munch ( $(#[$event_attr:meta])* $event:ident ( $($ty:ty),* $(,)? ), $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
             #[derive(Debug, Clone)]
-            pub struct [< Event $event>]( $(pub $ty),* );
+            $(#[$event_attr])* pub struct [< Event $event>]( $(pub $ty),* );
             impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
             impl_events!(@munch ($($tail)*) -> ($($output)* [$event, [< Event $event >], [< on_ $event:lower _cbs >]]));
         }
     };
 
     // e.g. Foo{ bar: u64 }
-    (@munch ( $event:ident { $($id:ident: $ty:ty),* $(,)? }, $($tail:tt)* ) -> ($($output:tt)*)) => {
+    (@munch ( $(#[$event_attr:meta])* $event:ident { $($id:ident: $ty:ty),* $(,)? }, $($tail:tt)* ) -> ($($output:tt)*)) => {
         paste!{
             #[derive(Debug, Clone)]
-            pub struct [< Event $event>] {
+            $(#[$event_attr])* pub struct [< Event $event>] {
                 $(pub $id:$ty),*
             }
             impl_broadcastable!($event, [< Event $event >], [< on_ $event:lower _cbs >]);
