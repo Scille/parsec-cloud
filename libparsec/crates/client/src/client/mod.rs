@@ -421,7 +421,7 @@ impl Client {
         workspace_refresh_list::refresh_workspaces_list(self).await
     }
 
-    /// Refresh the server configuration, typically after the server have send a
+    /// Refresh the server configuration, typically after the server have sent a
     /// `ServerConfig` SSE event.
     ///
     /// This method is typically used by a monitor.

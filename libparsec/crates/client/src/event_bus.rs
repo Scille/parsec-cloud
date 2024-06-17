@@ -247,6 +247,14 @@ impl_events!(
         realm_id: VlobID,
         entry_id: VlobID,
     },
+    WorkspaceOpsInboundSyncDone {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    WorkspaceWatchedEntryChanged {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
     // Events related to monitors
     MonitorCrashed{
         monitor: &'static str,
@@ -276,6 +284,8 @@ impl_events!(
         status: InvitationStatus,
         token: InvitationToken,
     },
+    // Event triggered when the server notify us of a change, see `WorkspaceOpsInboundSyncDone`
+    // for the event triggered when the change is actually integrated.
     RealmVlobUpdated {
         author: DeviceID,
         blob: Option<Bytes>,

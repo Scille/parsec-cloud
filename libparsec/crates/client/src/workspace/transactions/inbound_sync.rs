@@ -92,7 +92,7 @@ use crate::{
             WorkspaceStoreOperationError,
         },
     },
-    InvalidBlockAccessError,
+    EventWorkspaceOpsInboundSyncDone, InvalidBlockAccessError,
 };
 
 pub type WorkspaceGetNeedInboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -208,6 +208,9 @@ pub enum InboundSyncOutcome {
 ///
 /// If the client contains local changes, an outbound sync is still needed to
 /// have the client fully synchronized with the server.
+///
+/// If `InboundSyncOutcome::Updated` is returned (the sync operation has led to local
+/// changes), an `EventWorkspaceOpsInboundSyncDone` event is sent accordingly.
 pub async fn inbound_sync(
     ops: &WorkspaceOps,
     entry_id: VlobID,
@@ -281,7 +284,18 @@ pub async fn inbound_sync(
         }
     };
 
-    merge_manifest_and_update_store(ops, updater, local_manifest, remote_manifest).await
+    let outcome =
+        merge_manifest_and_update_store(ops, updater, local_manifest, remote_manifest).await;
+
+    if matches!(outcome, Ok(InboundSyncOutcome::Updated)) {
+        let event = EventWorkspaceOpsInboundSyncDone {
+            realm_id: ops.realm_id,
+            entry_id,
+        };
+        ops.event_bus.send(&event);
+    }
+
+    outcome
 }
 
 async fn merge_manifest_and_update_store(
