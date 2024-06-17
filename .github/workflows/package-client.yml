@@ -66,7 +66,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -91,7 +91,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@d0c2bb4cffa2484ea6862a142a14b7ac5057c74a # pin v2.38.0
+      - uses: taiki-e/install-action@47943d5b8d7736809817cbcd80f31e7c7d6538ad # pin v2.39.1
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -118,7 +118,7 @@ jobs:
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -173,7 +173,7 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@d0c2bb4cffa2484ea6862a142a14b7ac5057c74a # pin v2.38.0
+      - uses: taiki-e/install-action@47943d5b8d7736809817cbcd80f31e7c7d6538ad # pin v2.39.1
         with:
           tool: syft@0.84.0
 
@@ -219,7 +219,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -292,7 +292,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@d0c2bb4cffa2484ea6862a142a14b7ac5057c74a # pin v2.38.0
+      - uses: taiki-e/install-action@47943d5b8d7736809817cbcd80f31e7c7d6538ad # pin v2.39.1
         with:
           tool: syft@0.84.0
 

@@ -35,7 +35,7 @@ jobs:
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
@@ -129,7 +129,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
