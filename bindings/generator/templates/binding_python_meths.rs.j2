@@ -1,0 +1,831 @@
+// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+{# Macros -#}
+
+{#-
+ # Types conversions macros
+ #}
+
+
+{%- macro py_type(type) -%}
+{%- if type.kind == "ref" -%}
+{{ py_type(type.elem) }}
+{%- elif type.kind == "list" -%}
+PyList
+{%- elif type.kind == "tuple" -%}
+PyTuple
+{%- elif type.kind == "optional" -%}
+PyAny
+{%- elif type.kind == "none" -%}
+PyNone
+{%- elif type.kind == "bool" -%}
+PyBool
+{%- elif type.kind in ("i32_based", "u32_based", "i64_based", "u64_based") -%}
+PyInt
+{%- elif type.kind in ("f64_based", "float") -%}
+PyFloat
+{%- elif type.kind in ("str", "str_based") -%}
+PyString
+{%- elif type.kind in ("bytes", "bytes_based") -%}
+PyBytes
+{%- elif type.kind == "struct" -%}
+PyDict
+{%- elif type.kind == "variant" -%}
+PyDict
+{%- elif type.kind == "result" -%}
+PyAny
+{%- elif type.kind == "OnClientEventCallback" -%}
+PyFunction
+{%- elif type.kind == "enum" -%}
+PyString
+{%- else -%}
+{{ raise("Unsupported type %r" % type) }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{%- macro maybe_ref(py_val, type) -%}
+{%- if type.kind == "ref" and type.elem.kind == "list" -%}
+{{ py_val }}.as_slice()
+{%- elif type.kind == "optional" and type.elem.kind == "ref" -%}
+{{ py_val }}.as_ref()
+{%- elif type.kind == "ref" -%}
+&{{ py_val }}
+{%- else -%}
+{{ py_val }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{%- macro render_downcasted_py_to_rs(py_val, type, mut_py_ref="py") -%}
+{%- if type.kind == "ref" -%}
+{{ render_downcasted_py_to_rs(py_val, type.elem, mut_py_ref) }}
+{%- elif type.kind == "list" -%}
+{
+    let py_val_list: &Bound<'_, PyList> = {{ py_val }};
+    let size = py_val_list.len();
+    let mut v = Vec::with_capacity(size);
+    for i in 0..size {
+        let py_item_any = py_val_list.get_item(i)?;
+        let py_item = py_item_any.downcast::<{{ py_type(type.elem) }}>()?;
+        v.push({{ render_downcasted_py_to_rs("py_item", type.elem, mut_py_ref) }});
+    }
+    v
+}
+{%- elif type.kind == "tuple" -%}
+{
+    let py_val_tuple: &Bound<'_, PyTuple> = {{ py_val }};
+    let size = py_val_tuple.len();
+    (
+{%- for value in type.values -%}
+        {
+            let py_item_any = {{ py_val }}.get_item({{ loop.index0 }})?;
+            let py_item = py_item_any.downcast::<{{ py_type(value) }}>()?;
+            {{ render_downcasted_py_to_rs("py_item", value, mut_py_ref) }}
+        }
+        {{ ", " if not loop.last else "" -}}
+{%- endfor -%}
+    )
+}
+{%- elif type.kind == "optional" -%}
+{
+    if {{ py_val }}.is_none() {
+        None
+    } else {
+        let py_val_nested = {{ py_val }}.downcast::<{{ py_type(type.elem) }}>()?;
+        Some(
+            {{ render_downcasted_py_to_rs("py_val_nested", type.elem, mut_py_ref) }}
+        )
+    }
+}
+{%- elif type.kind == "result" -%}
+{
+    if {{ py_val }}.get::<JsBoolean, _, _>({{ mut_py_ref }}, "ok")?.value() {
+        let py_val = {{ py_val }}.get::<{{ py_type(type.ok) }}, _, _>({{ mut_py_ref }}, "value")?;
+        {{ render_downcasted_py_to_rs("py_val", type.ok, mut_py_ref) }}
+    } else {
+        let py_val = {{ py_val }}.get::<{{ py_type(type.err) }}, _, _>({{ mut_py_ref }}, "error")?;
+        {{ render_downcasted_py_to_rs("py_val", type.err, mut_py_ref) }}
+    }
+}
+{%- elif type.kind == "none" -%}
+{
+    let _ = {{ py_val }};
+    ()
+}
+{%- elif type.kind == "i32_based" -%}
+{
+    {% if type.custom_from_rs_i32 -%}
+    let v = {{ py_val }}.extract::<i32>()?;
+    let custom_from_rs_i32 = {{ type.custom_from_rs_i32 }};
+    match custom_from_rs_i32(v) {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+    {%- else -%}
+    {{ py_val }}.extract::<i32>()?
+    {%- endif %}
+}
+{%- elif type.kind == "u32_based" -%}
+{
+    {% if type.custom_from_rs_u32 -%}
+    let v = {{ py_val }}.extract::<u32>()?;
+    let custom_from_rs_u32 = {{ type.custom_from_rs_u32 }};
+    match custom_from_rs_u32(v) {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+    {%- else -%}
+    {{ py_val }}.extract::<u32>()?
+    {%- endif %}
+}
+{%- elif type.kind == "i64_based" -%}
+{
+    {% if type.custom_from_rs_i64 -%}
+    let v = {{ py_val }}.extract::<i64>()?;
+    let custom_from_rs_i64 = {{ type.custom_from_rs_i64 }};
+    match custom_from_rs_i64(v) {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+    {%- else -%}
+    {{ py_val }}.extract::<i64>()?
+    {%- endif %}
+}
+{%- elif type.kind == "u64_based" -%}
+{
+    {% if type.custom_from_rs_u64 -%}
+    let v = {{ py_val }}.extract::<u64>()?;
+    let custom_from_rs_u64 = {{ type.custom_from_rs_u64 }};
+    match custom_from_rs_u64(v) {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+    {%- else -%}
+    {{ py_val }}.extract::<u64>()?
+    {%- endif %}
+}
+{%- elif type.kind == "f64_based" -%}
+{
+    {% if type.custom_from_rs_f64 -%}
+    let v = {{ py_val }}.extract::<f64>()?;
+    let custom_from_rs_f64 = {{ type.custom_from_rs_f64 }};
+    match custom_from_rs_f64(v) {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+    {%- else -%}
+    {{ py_val }}.extract::<f64>()?
+    {%- endif %}
+}
+{%- elif type.kind == "str" -%}
+{
+    let py_val_str: &Bound<'_, PyString> = {{ py_val }};
+    py_val_str.to_str()?.to_owned()
+}
+{%- elif type.kind == "str_based" -%}
+{
+    let py_val_str: &Bound<'_, PyString> = {{ py_val }};
+    {% if type.custom_from_rs_string -%}
+    let custom_from_rs_string = {{ type.custom_from_rs_string }};
+    match custom_from_rs_string(py_val_str.to_str()?.to_owned())
+    {%- else -%}
+    match py_val_str.to_str()?.parse()
+    {%- endif %}
+    {
+        Ok(val) => val,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- elif type.kind == "bytes" -%}
+{
+    let py_val_bytes: &Bound<'_, PyBytes> = {{ py_val }};
+    py_val_bytes.as_bytes().to_owned()
+}
+{%- elif type.kind == "bytes_based" -%}
+{
+    let py_val_bytes: &Bound<'_, PyBytes> = {{ py_val }};
+    {% if type.custom_from_rs_bytes -%}
+    let custom_from_rs_bytes = {{ type.custom_from_rs_bytes }};
+    #[allow(clippy::unnecessary_mut_passed)]
+    match custom_from_rs_bytes(py_val_bytes.as_bytes())
+    {%- else -%}
+    #[allow(clippy::unnecessary_mut_passed)]
+    match py_val_bytes.as_bytes().try_into()
+    {%- endif %}
+    {
+        Ok(val) => val,
+        // err can't infer type in some case, because of the previous `try_into`
+        Err(err) => return Err(PyTypeError::new_err(format!("{}", err))),
+    }
+}
+{%- elif type.kind == "struct" -%}
+{
+    let py_val_dict: &Bound<'_, PyDict> = {{ py_val }};
+    {{ struct_py_to_rs_function_name(type) }}({{ mut_py_ref }}, py_val_dict)?
+}
+{%- elif type.kind == "variant" -%}
+{
+    let py_val_dict: &Bound<'_, PyDict> = {{ py_val }};
+    {{ variant_py_to_rs_function_name(type) }}({{ mut_py_ref }}, py_val_dict)?
+}
+{%- elif type.kind == "OnClientEventCallback" -%}
+{
+// Wrap the Python callback so that its reference counter is decreased on drop.
+struct Callback {
+    py_fn: Option<Py<PyFunction>>,
+}
+impl Drop for Callback {
+    fn drop(&mut self) {
+        if let Some(py_fn) = self.py_fn.take() {
+            Python::with_gil(|py| {
+                // Return the py object to the py runtime to avoid memory leak
+                py_fn.drop_ref(py);
+            });
+        }
+    }
+}
+{# let py_fn = {{ py_val }}.downcast::<PyFunction>()?.unbind(); #}
+let py_fn: &Bound<'_, PyFunction> = {{ py_val }};
+let callback = Callback{py_fn: Some(py_fn.to_owned().unbind())};
+std::sync::Arc::new(
+    move |event: libparsec::ClientEvent| {
+        if let Some(ref py_fn) = callback.py_fn {
+            Python::with_gil(|py| {
+                // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                // the current task if an unrelated event handler has a bug...)
+                let py_event = {{ variant_rs_to_py_function_name(type.event_type) }}(py, event).expect("event conversion failed");
+                py_fn.call1(py, (py_event,)).expect("event callback call failed");
+            });
+        }
+    }
+) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+}
+{%- elif type.kind == "enum" -%}
+{
+    let raw_value = {{ py_val }}.extract::<&str>()?;
+    {{ enum_py_to_rs_function_name(type) }}({{ mut_py_ref }}, raw_value)?
+}
+{%- else -%}
+{{ py_val }}.extract()?
+{%- endif %}
+{%- endmacro -%}
+
+
+{%- macro render_rs_to_py(rs_value, type, mut_py_ref="py") -%}
+{%- if type.kind == "ref" -%}
+{{ render_rs_to_py(rs_value, type.elem, mut_py_ref) }}
+{%- elif type.kind == "list" -%}
+{
+    let py_list = PyList::empty_bound({{ mut_py_ref }});
+    for rs_elem in {{ rs_value }}.into_iter() {
+        let py_elem = {{ render_rs_to_py("rs_elem", type.elem, mut_py_ref) }};
+        py_list.append(py_elem)?;
+    }
+    py_list.to_owned().into_any()
+}
+{%- elif type.kind == "tuple" -%}
+{
+    let (
+    {%- for value in type.values -%}
+        {% set rs_value_var_name = "x" ~ loop.index0 %}
+        {{- rs_value_var_name }}{{ ", " if not loop.last else "" -}}
+    {%- endfor -%}
+    ) = {{ rs_value }};
+{% for value in type.values -%}
+    {% set rs_value_var_name = "x" ~ loop.index0 %}
+    {% set py_value_var_name = "py_x" ~ loop.index0 %}
+    let {{ py_value_var_name }} = {{ render_rs_to_py(rs_value_var_name, value, mut_py_ref) }};
+{% endfor %}
+    PyTuple::new_bound(
+        {{ mut_py_ref }},
+        [
+{% for value in type.values -%}
+    {% set py_value_var_name = "py_x" ~ loop.index0 %}
+    {{ py_value_var_name }},
+{% endfor %}
+        ]
+    ).into_any()
+}
+{%- elif type.kind == "optional" -%}
+match {{ rs_value }} {
+    Some(elem) => {
+        {{ render_rs_to_py("elem", type.elem, mut_py_ref) }}
+    }
+    None => PyNone::get_bound({{ mut_py_ref }}).to_owned().into_any(),
+}
+{%- elif type.kind == "result" -%}
+match {{ rs_value }} {
+    Ok(ok) => {
+        let py_obj = PyDict::new_bound({{ mut_py_ref }});
+        py_obj.set_item("ok", true)?;
+        let py_value = {{ render_rs_to_py("ok", type.ok, mut_py_ref) }};
+        py_obj.set_item("value", py_value)?;
+        py_obj.into_any()
+    }
+    Err(err) => {
+        let py_obj = PyDict::new_bound({{ mut_py_ref }});
+        py_obj.set_item("ok", false)?;
+        let py_err = {{ render_rs_to_py("err", type.err, mut_py_ref) }};
+        py_obj.set_item("error", py_err)?;
+        py_obj.into_any()
+    }
+}
+{%- elif type.kind == "none" -%}
+{
+    #[allow(clippy::let_unit_value)]
+    let _ = {{ rs_value }};
+    PyNone::get_bound({{ mut_py_ref }}).to_owned().into_any()
+}
+{%- elif type.kind == "bool" -%}
+PyBool::new_bound({{ mut_py_ref }}, {{ rs_value }}).to_owned().into_any()
+{%- elif type.kind == "i32_based" -%}
+(
+{%- if type.custom_to_rs_i32 -%}
+{
+    let custom_to_rs_i32 = {{ type.custom_to_rs_i32 }};
+    match custom_to_rs_i32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+).to_object(py).into_bound(py)
+{%- elif type.kind == "u32_based" -%}
+(
+{%- if type.custom_to_rs_u32 -%}
+{
+    let custom_to_rs_u32 = {{ type.custom_to_rs_u32 }};
+    match custom_to_rs_u32({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+).to_object(py).into_bound(py)
+{%- elif type.kind == "u64_based" -%}
+(
+{%- if type.custom_to_rs_u64 -%}
+{
+    let custom_to_rs_u64 = {{ type.custom_to_rs_u64 }};
+    match custom_to_rs_u64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+).to_object(py).into_bound(py)
+{%- elif type.kind == "i64_based" -%}
+(
+{%- if type.custom_to_rs_i64 -%}
+{
+    let custom_to_rs_i64 = {{ type.custom_to_rs_i64 }};
+    match custom_to_rs_i64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif %}
+).to_object(py).into_bound(py)
+{%- elif type.kind == "f64_based" -%}
+PyFloat::new_bound(
+{{ mut_py_ref }},
+{%- if type.custom_to_rs_f64 -%}
+{
+    let custom_to_rs_f64 = {{ type.custom_to_rs_f64 }};
+    match custom_to_rs_f64({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}
+{%- endif -%}
+).into_any()
+{%- elif type.kind == "float" -%}
+PyFloat::new_bound({{ mut_py_ref }}, {{ rs_value }}).into_any()
+{%- elif type.kind == "str" -%}
+PyString::new_bound({{ mut_py_ref }}, {{ rs_value }}.as_ref()).into_any()
+{%- elif type.kind == "str_based" -%}
+PyString::new_bound({{ mut_py_ref }},
+{%- if type.custom_to_rs_string -%}
+&{
+    let custom_to_rs_string = {{ type.custom_to_rs_string }};
+    match custom_to_rs_string({{ rs_value }}) {
+        Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+    }
+}
+{%- else -%}
+{{ rs_value }}.as_ref()
+{%- endif -%}
+).into_any()
+{%- elif type.kind == "bytes" -%}
+PyBytes::new_bound({{ mut_py_ref }}, &{{ rs_value }}).into_any()
+{%- elif type.kind == "bytes_based" -%}
+{
+    let rs_buff = {
+        {%- if type.custom_to_rs_bytes -%}
+        let custom_to_rs_bytes = {{ type.custom_to_rs_bytes }};
+        match custom_to_rs_bytes({{ rs_value }}) {
+            Ok(ok) => ok,
+        Err(err) => return Err(PyTypeError::new_err(err)),
+        }
+        {%- else -%}
+        {{ rs_value }}
+        {%- endif -%}
+    };
+    PyBytes::new_bound({{ mut_py_ref }}, &rs_buff).into_any()
+}
+{%- elif type.kind == "struct" -%}
+{{ struct_rs_to_py_function_name(type) }}({{ mut_py_ref }}, {{ rs_value }})?.into_any()
+{%- elif type.kind == "variant" -%}
+{{ variant_rs_to_py_function_name(type) }}({{ mut_py_ref }}, {{ rs_value }})?.into_any()
+{%- elif type.kind == "enum" %}
+PyString::new_bound({{ mut_py_ref }}, {{ enum_rs_to_py_function_name(type) }}({{ rs_value }})).into_any()
+{%- else -%}
+{{ raise("Unsupported type %r" % type) }}
+{%- endif -%}
+{%- endmacro -%}
+
+
+{#-
+ # Structure-related macros
+ #}
+
+
+{%- macro struct_py_to_rs_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_py_to_rs{% endmacro -%}
+{%- macro struct_rs_to_py_function_name(struct) %}struct_{{ struct.name | pascal2snake }}_rs_to_py{% endmacro -%}
+
+
+{%- macro render_struct_py_to_rs(struct) %}
+#[allow(dead_code, unused_variables)]
+fn {{ struct_py_to_rs_function_name(struct) }}<'a>(
+    py: Python<'a>,
+    obj: &Bound<'a, PyDict>,
+) -> PyResult<libparsec::{{ struct.name }}> {
+{% for attr_name, attr_type in struct.attributes.items() %}
+    let {{ attr_name }} = {
+        let py_val_any = obj
+            .get_item("{{ attr_name }}")?
+            .ok_or_else(|| PyKeyError::new_err("{{ attr_name }}"))?;
+        let py_val_downcasted = py_val_any.downcast::<{{ py_type(attr_type) }}>()?;
+        {{ render_downcasted_py_to_rs("py_val_downcasted", attr_type, mut_py_ref="py") }}
+    };
+{% endfor %}
+{% if struct.custom_init is none %}
+    Ok(libparsec::{{ struct.name }} {
+        {{ struct.list_attributes() }}
+    })
+{% else %}
+    {
+        let custom_init = {{ struct.custom_init }};
+        custom_init({{ struct.list_attributes() }}).map_err(|e| PyValueError::new_err(e))
+    }
+{% endif%}
+}
+{% endmacro -%}
+
+
+{%- macro render_struct_rs_to_py(struct) %}
+#[allow(dead_code, unused_variables)]
+fn {{ struct_rs_to_py_function_name(struct) }}<'a>(
+    py: Python<'a>,
+    rs_obj: libparsec::{{ struct.name }},
+) -> PyResult<Bound<'a, PyDict>> {
+    let py_obj = PyDict::new_bound(py);
+{% for attr_name, attr_type in struct.attributes.items() %}
+{% set custom_getter = struct.custom_getters.get(attr_name) %}
+{% if custom_getter is none %}
+    let py_{{ attr_name }} = {{ render_rs_to_py("rs_obj.%s" % attr_name, attr_type, mut_py_ref="py") }};
+{% else %}
+    let py_{{ attr_name }} = {
+        let custom_getter = {{ custom_getter }};
+        {{ render_rs_to_py("custom_getter(&rs_obj)", attr_type, mut_py_ref="py") }}
+    };
+{% endif %}
+    py_obj.set_item("{{ attr_name }}", py_{{ attr_name }})?;
+{% endfor %}
+    Ok(py_obj)
+}
+{% endmacro -%}
+
+
+{#-
+ # Variant-related macros
+ #}
+
+
+{%- macro variant_py_to_rs_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_py_to_rs{% endmacro -%}
+{%- macro variant_rs_to_py_function_name(variant) %}variant_{{ variant.name | pascal2snake }}_rs_to_py{% endmacro -%}
+
+
+{%- macro render_variant_py_to_rs(variant) %}
+#[allow(dead_code, unused_variables)]
+fn {{ variant_py_to_rs_function_name(variant) }}<'a>(
+    py: Python<'a>,
+    obj: &Bound<'a, PyDict>,
+) -> PyResult<libparsec::{{ variant.name }}> {
+    let tag = obj
+        .get_item("tag")?
+        .ok_or_else(|| PyKeyError::new_err("tag"))?;
+    match tag.downcast::<PyString>()?.to_str()? {
+{% for value in variant.values %}
+        "{{ variant.name }}{{ value.name }}" => {
+{% if value.is_struct %}
+{% for attr_name, attr_type in value.struct.attributes.items() %}
+            let {{ attr_name }} = {
+                let py_val_any = obj
+                    .get_item("{{ attr_name }}")?
+                    .ok_or_else(|| PyKeyError::new_err("{{ attr_name }}"))?;
+                let py_val_downcasted = py_val_any.downcast::<{{ py_type(attr_type) }}>()?;
+                {{ render_downcasted_py_to_rs("py_val_downcasted", attr_type, mut_py_ref="py") }}
+            };
+{% endfor %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }} {
+                {{ value.struct.list_attributes() }}
+            })
+{% elif value.is_tuple %}
+{% for attr_type in value.tuple %}
+            let x{{ loop.index0 }} = {
+                let py_val_any = obj
+                    .get_item("x{{ loop.index0 }}")?
+                    .ok_or_else(|| PyKeyError::new_err("x{{ loop.index0 }}"))?;
+                let py_val_downcasted = py_val_any.downcast::<{{ py_type(attr_type) }}>()?;
+                {{ render_downcasted_py_to_rs("py_val_downcasted", attr_type, mut_py_ref="py") }}
+            };
+{% endfor %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }} (
+{% for _ in value.tuple %}
+                x{{ loop.index0 }},
+{% endfor %}
+            ))
+{% else %}
+            Ok(libparsec::{{ variant.name }}::{{ value.name }})
+{% endif %}
+        },
+{% endfor %}
+        _ => Err(PyTypeError::new_err("Object is not a {{ variant.name }}")),
+    }
+}
+{% endmacro -%}
+
+
+{%- macro render_variant_rs_to_py(variant) %}
+#[allow(dead_code, unused_variables)]
+fn {{ variant_rs_to_py_function_name(variant) }}<'a>(
+    py: Python<'a>,
+    rs_obj: libparsec::{{ variant.name }},
+) -> PyResult<Bound<'a, PyDict>> {
+    let py_obj = PyDict::new_bound(py);
+{% if variant.is_error_variant %}
+    let py_display = PyString::new_bound(py, &rs_obj.to_string());
+    py_obj.set_item("error", py_display)?;
+{% endif %}
+    match rs_obj {
+{% for value in variant.values %}
+{% if value.is_struct %}
+        libparsec::{{ variant.name }}::{{ value.name }}{ {{ value.struct.list_attributes() }} .. } => {
+            let py_tag = PyString::new_bound(py, "{{ variant.name }}{{ value.name }}");
+            py_obj.set_item("tag", py_tag)?;
+{% for attr_name, attr_type in value.struct.attributes.items() %}
+        let py_{{ attr_name }} = {{ render_rs_to_py(attr_name, attr_type, mut_py_ref="py") }};
+        py_obj.set_item("{{ attr_name }}", py_{{ attr_name }})?;
+{% endfor %}
+        }
+{% elif value.is_tuple %}
+        libparsec::{{ variant.name }}::{{ value.name }}( {% for _ in value.tuple %}x{{ loop.index0 }},{% endfor %} .. ) => {
+            let py_tag = PyString::new_bound(py, "{{ value.name }}");
+            py_obj.set_item("tag", py_tag)?;
+{% for attr_type in value.tuple %}
+            let py_x{{ loop.index0 }} = {{ render_rs_to_py("x%s" % loop.index0, attr_type, mut_py_ref="py") }};
+            py_obj.set_item("x{{ loop.index0 }}", py_x{{ loop.index0 }})?;
+{% endfor %}
+        }
+{% else %}
+        libparsec::{{ variant.name }}::{{ value.name }} => {
+            let py_tag = PyString::new_bound(py, "{{ value.name }}");
+            py_obj.set_item("tag", py_tag)?;
+        }
+{% endif %}
+{% endfor %}
+    }
+    Ok(py_obj)
+}
+{% endmacro -%}
+
+{%- macro enum_py_to_rs_function_name(type) %}enum_{{ type.name | pascal2snake }}_py_to_rs{% endmacro -%}
+{%- macro enum_rs_to_py_function_name(type) %}enum_{{ type.name | pascal2snake }}_rs_to_py{% endmacro -%}
+
+{%- macro render_enum_rs_to_py(enum) %}
+#[allow(dead_code, unused_variables)]
+fn {{ enum_rs_to_py_function_name(enum) }}(value: libparsec::{{ enum.name }}) -> &'static str {
+    match value {
+{% for variant in enum.member_names %}
+        libparsec::{{ enum.name }}::{{ variant }} => "{{ enum.name + variant }}",
+{% endfor %}
+    }
+}
+{% endmacro -%}
+
+{%- macro render_enum_py_to_rs(enum) %}
+#[allow(dead_code, unused_variables)]
+fn {{ enum_py_to_rs_function_name(enum) }}<'a>(py: Python<'a>, raw_value: &str) -> PyResult<libparsec::{{ enum.name }}> {
+    match raw_value {
+{% for variant in enum.member_names %}
+        "{{ enum.name + variant }}" => Ok(libparsec::{{ enum.name }}::{{ variant}}),
+{% endfor %}
+        _ => Err(PyValueError::new_err("Invalid value `{raw_value}` for enum {{ enum.name }}")),
+    }
+}
+{% endmacro -%}
+{#-
+ # Function-related macros
+ #}
+
+
+{%- macro render_async_function(meth) %}
+#[pyfunction]
+fn {{ meth.name }}<'py>(
+    py: Python<'py>,
+{%- for param_name, param_type in meth.params.items() -%}
+    {{ param_name }}: &Bound<'py, {{ py_type(param_type) }}>{{ "" if loop.last else ", " }}
+{%- endfor -%}
+) -> PyResult<Bound<'py, PyAny>> {
+{# Convert params #}
+{% for param_name, param_type in meth.params.items() %}
+{% if param_type.kind == "optional" %}
+    let {{ param_name }} = if {{ param_name }}.is_none() {
+        let py_val_nested = {{ param_name }}.downcast::<{{ py_type(param_type.elem) }}>()?;
+        Some({{ render_downcasted_py_to_rs("py_val_nested", param_type.elem) }})
+    } else {
+        None
+    };
+{% else %}
+    let {{ param_name }} = {{ render_downcasted_py_to_rs(param_name, param_type) }};
+{% endif %}
+{% endfor %}
+{# Call actual function #}
+    let future = crate::asyncio(py).call_method0(intern!(py, "Future"))?;
+    let future_in_tokio = future.to_object(py);
+
+    // TODO: Support cancellation ?
+    let _handle = crate::tokio_runtime().spawn(async move {
+
+{% if meth.return_type is none %}
+        libparsec::{{ meth.name }}(
+{% else %}
+        let ret = libparsec::{{ meth.name }}(
+{% endif %}
+{% for param_name, param_type in meth.params.items() %}
+            {{ maybe_ref(param_name, param_type) }},
+{% endfor %}
+        ).await;
+
+        Python::with_gil(|py| {
+            (move || -> PyResult<Bound<'_, PyAny>> {
+{% if meth.return_type is none %}
+                let py_ret = PyNone::get_bound(py).to_owned().into_any();
+{% else %}
+                let py_ret = {{ render_rs_to_py("ret", meth.return_type) }};
+{% endif %}
+                let future = future_in_tokio.bind(py);
+                let future_set_result = future.getattr(intern!(py, "set_result"))?;
+                let asyncio_loop = future.call_method0(intern!(py, "get_loop"))?;
+                asyncio_loop.call_method(intern!(py, "call_soon_threadsafe"), (future_set_result, py_ret), None)
+            })().expect("future callback call has failed");
+        });
+    });
+
+    Ok(future)
+}
+{% endmacro -%}
+
+
+{%- macro render_sync_function(meth) %}
+#[pyfunction]
+fn {{ meth.name }}<'py>(
+    py: Python<'py>,
+{%- for param_name, param_type in meth.params.items() -%}
+    {{ param_name }}: &Bound<'py, {{ py_type(param_type) }}>{{ "" if loop.last else ", " }}
+{%- endfor -%}
+) -> PyResult<Bound<'py, PyAny>> {
+{# Convert params #}
+{% for param_name, param_type in meth.params.items() %}
+{% if param_type.kind == "optional" %}
+    let {{ param_name }} = if {{ param_name }}.is_none() {
+        let py_val_nested = {{ py_name }}.downcast::<{{ py_type(param_type.elem) }}>()?;
+        Some({{ render_downcasted_py_to_rs("py_val_nested", param_type.elem) }})
+    } else {
+        None
+    };
+{% else %}
+    let {{ param_name }} = {{ render_downcasted_py_to_rs(param_name, param_type) }};
+{% endif %}
+{% endfor %}
+{# Call actual function #}
+
+
+{% if meth.return_type is not none %}
+    let ret =
+{% endif %}
+    py.allow_threads(|| {
+        libparsec::{{ meth.name }}(
+{% for param_name, param_type in meth.params.items() %}
+            {{ maybe_ref(param_name, param_type) }},
+{% endfor %}
+        )
+
+    });
+
+{% if meth.return_type is none %}
+    let py_ret = PyNone::get_bound(py).to_owned().into_any();
+{% else %}
+    let py_ret = {{ render_rs_to_py("ret", meth.return_type) }};
+{% endif %}
+
+    Ok(py_ret)
+}
+{% endmacro -%}
+
+
+{#- End of macros #}
+
+/*
+ * /!\ Auto-generated code (see `bindings/generator`), any modification will be lost ! /!\
+ */
+
+#![allow(
+    clippy::redundant_closure,
+    clippy::needless_lifetimes,
+    clippy::too_many_arguments,
+    clippy::useless_asref,
+)]
+
+{% if api.rust_code_to_inject is not none %}
+{{ api.rust_code_to_inject }}
+{% endif %}
+
+#[allow(unused_imports)]
+use pyo3::{
+    intern,
+    prelude::*,
+    types::*,
+    exceptions::*,
+    conversion::ToPyObject,
+};
+
+{# Enum #}
+{% for enum in api.enums %}
+
+// {{ enum.name}}
+
+{{ render_enum_py_to_rs(enum) }}
+
+{{ render_enum_rs_to_py(enum) }}
+
+{% endfor %}
+{# Structures #}
+{% for struct in api.structs %}
+
+// {{ struct.name }}
+
+{{ render_struct_py_to_rs(struct) }}
+
+{{ render_struct_rs_to_py(struct) }}
+{% endfor %}
+{# Variants #}
+{% for variant in api.variants %}
+
+// {{ variant.name }}
+
+{% if not variant.is_error_variant %}
+{{ render_variant_py_to_rs(variant) }}
+{% endif %}
+
+{{ render_variant_rs_to_py(variant) }}
+{% endfor %}
+
+{% for meth in api.meths %}
+
+// {{ meth.name }}
+{% if meth.is_async %}
+{{ render_async_function(meth) }}
+{% else %}
+{{ render_sync_function(meth) }}
+{% endif %}
+{% endfor %}
+
+pub fn register_meths(m: &Bound<'_, PyModule>) -> PyResult<()> {
+{% for meth in api.meths %}
+    m.add_function(wrap_pyfunction!({{ meth.name }}, m)?)?;
+{% endfor %}
+    Ok(())
+}

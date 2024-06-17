@@ -30,6 +30,7 @@ asar
 Asas
 asend
 asgi
+asref
 assetimporters
 asynchronousness
 asyncness

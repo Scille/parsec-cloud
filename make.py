@@ -55,6 +55,7 @@ BASE_DIR = Path(__file__).parent.resolve()
 SERVER_DIR = BASE_DIR / "server"
 BINDINGS_ELECTRON_DIR = BASE_DIR / "bindings/electron"
 BINDINGS_WEB_DIR = BASE_DIR / "bindings/web"
+BINDINGS_CLIENT_PYTHON_DIR = BASE_DIR / "bindings/python"
 
 
 CYAN = "\x1b[36m"
@@ -182,6 +183,23 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     ("python-release-libparsec-cargo-flags",): Echo(PYTHON_RELEASE_CARGO_FLAGS),
     # Flags used in poetry's `server/build.py` when generating the dev wheel
     ("python-dev-libparsec-cargo-flags",): Echo(PYTHON_DEV_CARGO_FLAGS),
+    #
+    # Python bindings
+    #
+    ("python-client-dev-rebuild", "pcr"): (
+        Cwd(BINDINGS_CLIENT_PYTHON_DIR),
+        Cmd(
+            # Use maturin from server's virtual env
+            cmd=f"poetry -C {SERVER_DIR} run maturin develop --locked {PYTHON_DEV_CARGO_FLAGS}",
+        ),
+    ),
+    ("python-client-release-rebuild",): (
+        Cwd(BINDINGS_CLIENT_PYTHON_DIR),
+        Cmd(
+            # Use maturin from server's virtual env
+            cmd=f"poetry -C {SERVER_DIR} run maturin release {PYTHON_RELEASE_CARGO_FLAGS}",
+        ),
+    ),
     #
     # Electron bindings
     #

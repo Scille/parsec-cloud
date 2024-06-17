@@ -1,0 +1,27 @@
+[package]
+name = "libparsec_bindings_python"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lib]
+name = "libparsec"
+crate-type = ["cdylib"]
+
+[lints]
+workspace = true
+
+[features]
+test-utils = ["libparsec/test-utils"]
+
+[dependencies]
+libparsec = { workspace = true }
+
+pyo3 = { workspace = true, features = ["multiple-pymethods", "extension-module", "macros"] }
+lazy_static = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
