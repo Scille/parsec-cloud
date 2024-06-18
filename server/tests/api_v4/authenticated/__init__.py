@@ -34,3 +34,4 @@ from .test_vlob_read_batch import *  # noqa
 from .test_vlob_read_versions import *  # noqa
 from .test_vlob_update import *  # noqa
 from .test_shamir_recovery_setup import *  # noqa
+from .test_shamir_self_info import *  # noqa

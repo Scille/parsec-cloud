@@ -91,6 +91,20 @@ class BaseShamirComponent:
                         )
                     )
 
+    @api
+    async def api_shamir_self_info(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.shamir_recovery_self_info.Req,
+    ) -> authenticated_cmds.latest.shamir_recovery_self_info.Rep:
+        match await self.get_brief_certificate(client_ctx.organization_id, client_ctx.user_id):
+            case None:
+                return authenticated_cmds.latest.shamir_recovery_self_info.RepOk(None)
+            case ShamirGetRecoverySetupStoreBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case brief:
+                return authenticated_cmds.latest.shamir_recovery_self_info.RepOk(brief)
+
     async def remove_recovery_setup(
         self,
         organization_id: OrganizationID,
@@ -114,6 +128,13 @@ class BaseShamirComponent:
     ):
         raise NotImplementedError
 
+    async def get_brief_certificate(
+        self,
+        organization_id: OrganizationID,
+        author: UserID,
+    ) -> bytes | None | ShamirGetRecoverySetupStoreBadOutcome:
+        raise NotImplementedError
+
 
 class ShamirAddRecoverySetupValidateBadOutcome(BadOutcomeEnum):
     BRIEF_INVALID_DATA = auto()
@@ -133,6 +154,10 @@ class ShamirAddOrDeleteRecoverySetupStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_REVOKED = auto()
     INVALID_RECIPIENT = auto()
     ALREADY_SET = auto()
+
+
+class ShamirGetRecoverySetupStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
 
 
 # Check internal consistency of certificate

@@ -375,7 +375,7 @@ Authenticated API:
             4
         ],
         "req": {
-            "cmd": "shamir_recovery_others_list",
+            "cmd": "shamir_recovery_others_list"
         },
         "reps": [
             {
@@ -392,8 +392,8 @@ Authenticated API:
                         "type": "List<Bytes>"
                     }
                 ]
-            },
-        ],
+            }
+        ]
     }
 ]
 ```
