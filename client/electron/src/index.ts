@@ -14,7 +14,7 @@ import { PageToWindowChannel, WindowToPageChannel } from './communicationChannel
 import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } from './setup';
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
-const ELECTRON_CONFIG_DIR_NAME = 'app';
+const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
 
 // Graceful handling of unhandled errors.
 unhandled();

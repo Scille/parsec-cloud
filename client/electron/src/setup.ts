@@ -87,12 +87,15 @@ export class ElectronCapacitorApp {
     ];
 
     log.initialize();
-    if (!electronIsDev) {
-      Object.assign(console, log.functions);
-    }
     this.logger = require('electron-log/node');
-    this.logger.transports.file.level = 'warn';
-    this.logger.transports.console.level = 'warn';
+    Object.assign(console, log.functions);
+    if (!electronIsDev) {
+      this.logger.transports.file.level = 'warn';
+      this.logger.transports.console.level = 'warn';
+    } else {
+      this.logger.transports.file.level = 'debug';
+      this.logger.transports.console.level = 'debug';
+    }
 
     if (appMenuBarMenuTemplate) {
       this.AppMenuBarMenuTemplate = appMenuBarMenuTemplate;
@@ -145,19 +148,19 @@ export class ElectronCapacitorApp {
   log(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
     switch (level) {
       case 'debug': {
-        this.logger.debug(message);
+        console.debug(message);
         break;
       }
       case 'info': {
-        this.logger.info(message);
+        console.info(message);
         break;
       }
       case 'warn': {
-        this.logger.warn(message);
+        console.warn(message);
         break;
       }
       case 'error': {
-        this.logger.error(message);
+        console.error(message);
         break;
       }
     }
