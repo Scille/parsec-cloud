@@ -232,7 +232,7 @@ impl Chunk {
     }
 
     #[allow(clippy::nonminimal_bool)]
-    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
     /// Hence this `check_data_integrity`'s main goal is during deserialization.
     /// However it is also useful as sanity check:
     /// - Right before serialization
@@ -365,7 +365,7 @@ impl LocalFileManifest {
     /// Also, the id and parent id should be different so the manifest does not point to itself.
     ///
     /// A note about this method being public:
-    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
     /// Hence this `check_data_integrity`'s main goal is during deserialization.
     /// However it is also useful as sanity check:
     /// - Right before serialization
@@ -906,7 +906,7 @@ impl LocalUserManifest {
         }
     }
 
-    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
     /// Hence this `check_data_integrity`'s main goal is during deserialization.
     /// However it is also useful as sanity check:
     /// - Right before serialization
@@ -1001,7 +1001,7 @@ impl LocalChildManifest {
         }
     }
 
-    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
     /// Hence this `check_data_integrity`'s main goal is during deserialization.
     /// However it is also useful as sanity check:
     /// - Right before serialization
@@ -1064,7 +1064,7 @@ impl LocalWorkspaceManifest {
         ))
     }
 
-    /// This structure represent mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
     /// Hence this `check_data_integrity`'s main goal is during deserialization.
     /// However it is also useful as sanity check:
     /// - Right before serialization
