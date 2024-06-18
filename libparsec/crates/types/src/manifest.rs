@@ -23,6 +23,7 @@ macro_rules! impl_manifest_dump {
             /// Dump and sign [Self], this doesn't encrypt the data compared to [Self::dump_sign_and_encrypt]
             /// This enabled you to encrypt the data with another method than the one provided by [SecretKey]
             pub fn dump_and_sign(&self, author_signkey: &SigningKey) -> Vec<u8> {
+                self.check_data_integrity().expect("Invalid manifest");
                 let serialized = format_v0_dump(&self);
                 author_signkey.sign(&serialized)
             }
@@ -33,6 +34,7 @@ macro_rules! impl_manifest_dump {
                 author_signkey: &SigningKey,
                 key: &SecretKey,
             ) -> Vec<u8> {
+                self.check_data_integrity().expect("Invalid manifest");
                 let signed = self.dump_and_sign(author_signkey);
 
                 key.encrypt(&signed)
@@ -329,8 +331,8 @@ impl FileManifest {
     ///
     /// Note about this method being private:
     /// This structure represent immutable data (as it is created once, signed, and never updated).
-    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
-    /// right before serialization) and not exposed publicly.
+    /// Hence this `check_data_integrity` is only used as sanity check right before serialization
+    /// and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
         // Check that id and parent are different
         if self.id == self.parent {
@@ -441,7 +443,19 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
+    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used as sanity check right before serialization)
+    /// and not exposed publicly.
+    ///
+    /// Note that this method does not perform data integrity check related to the manifest being a
+    /// child or root manifest.
+    fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     fn check_data_integrity_as_child(&self) -> DataResult<()> {
+        self.check_data_integrity()?;
+
         // Check that id and parent are different
         if self.id == self.parent {
             return Err(DataError::DataIntegrity {
@@ -453,6 +467,8 @@ impl FolderManifest {
     }
 
     fn check_data_integrity_as_root(&self) -> DataResult<()> {
+        self.check_data_integrity()?;
+
         // Check that id and parent are different
         if self.id != self.parent {
             return Err(DataError::DataIntegrity {
