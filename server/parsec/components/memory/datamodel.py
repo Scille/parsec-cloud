@@ -432,3 +432,5 @@ class MemoryShamirSetup:
     # The shares provided as a `ShamirRecoveryShareCertificate` since
     # each share is aimed at a specific recipient.
     shares: dict[UserID, bytes]
+    # keep brief bytes
+    brief_bytes: bytes

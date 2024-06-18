@@ -2,7 +2,13 @@
 
 from typing import override
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, VerifyKey, authenticated_cmds
+from parsec._parsec import (
+    DeviceID,
+    OrganizationID,
+    UserID,
+    VerifyKey,
+    authenticated_cmds,
+)
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -15,6 +21,7 @@ from parsec.components.shamir import (
     BaseShamirComponent,
     ShamirAddOrDeleteRecoverySetupStoreBadOutcome,
     ShamirAddRecoverySetupValidateBadOutcome,
+    ShamirGetRecoverySetupStoreBadOutcome,
     shamir_add_recovery_setup_validate,
 )
 
@@ -112,7 +119,23 @@ class MemoryShamirComponent(BaseShamirComponent):
 
         if self._data.organizations[organization_id].shamir_setup.get(author) is None:
             self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
-                setup.ciphered_data, setup.reveal_token, brief, shares
+                setup.ciphered_data, setup.reveal_token, brief, shares, setup.brief
             )
         else:
             return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ALREADY_SET
+
+    @override
+    async def get_brief_certificate(
+        self,
+        organization_id: OrganizationID,
+        author: UserID,
+    ) -> bytes | None | ShamirGetRecoverySetupStoreBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return ShamirGetRecoverySetupStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        try:
+            setup = org.shamir_setup[author]
+        except KeyError:
+            return None
+        return setup.brief_bytes
