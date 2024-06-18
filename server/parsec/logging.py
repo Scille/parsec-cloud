@@ -187,7 +187,8 @@ def _structlog_to_sentry_processor(
         else:
             sentry_event = {}
 
-        sentry_event["level"] = logging.getLevelName(std_level)
+        # structlog's level is type-compatible with sentry_sdk's LogLevelStr (see sentry_sdk._types)
+        sentry_event["level"] = level
         sentry_event["logger"] = logger_name
         sentry_event["timestamp"] = timestamp
         # sentry_sdk's stdlib logging integration stores the message under
