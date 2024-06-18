@@ -330,7 +330,7 @@ impl FileManifest {
     /// Also, the id and parent id should be different so the manifest does not point to itself.
     ///
     /// Note about this method being private:
-    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
     /// Hence this `check_data_integrity` is only used as sanity check right before serialization
     /// and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
@@ -443,7 +443,7 @@ pub struct FolderManifest {
 }
 
 impl FolderManifest {
-    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
     /// Hence this `check_data_integrity` is only used as sanity check right before serialization)
     /// and not exposed publicly.
     ///
@@ -538,7 +538,7 @@ impl_transparent_data_format_conversion!(
 );
 
 impl UserManifest {
-    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
     /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
     /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
@@ -560,7 +560,7 @@ pub enum ChildManifest {
 impl_manifest_load!(ChildManifest);
 
 impl ChildManifest {
-    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
     /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
     /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
@@ -636,7 +636,7 @@ pub struct WorkspaceManifest(FolderManifest);
 impl_manifest_load!(WorkspaceManifest);
 
 impl WorkspaceManifest {
-    /// This structure represent immutable data (as it is created once, signed, and never updated).
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
     /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
     /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
