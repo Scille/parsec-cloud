@@ -4,7 +4,7 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use super::{store::CertifStoreError, CertifOps, CertificateBasedActionOutcome, UpTo};
+use super::{store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps, UpTo};
 use crate::EventTooMuchDriftWithServerClock;
 
 #[derive(Debug, thiserror::Error)]
@@ -46,7 +46,7 @@ impl From<CertifStoreError> for CertifEnsureRealmCreatedError {
 }
 
 pub(super) async fn ensure_realm_created(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifEnsureRealmCreatedError> {
     let is_created = ops
@@ -74,7 +74,7 @@ pub(super) async fn ensure_realm_created(
 }
 
 async fn create_realm_idempotent(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifEnsureRealmCreatedError> {
     let mut timestamp = ops.device.now();

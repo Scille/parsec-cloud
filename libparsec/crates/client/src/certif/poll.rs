@@ -7,7 +7,7 @@ use libparsec_types::prelude::*;
 
 use super::{
     store::{CertifStoreError, CertificatesStoreWriteGuard},
-    CertifAddCertificatesBatchError, CertifOps, InvalidCertificateError, MaybeRedactedSwitch,
+    CertifAddCertificatesBatchError, CertificateOps, InvalidCertificateError, MaybeRedactedSwitch,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -60,7 +60,7 @@ impl From<CertifStoreError> for CertifPollServerError {
 /// to avoid concurrency access changing certificates and breaking the deterministic
 /// order certificates must be added on.
 pub(super) async fn poll_server_for_new_certificates(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     requirements: Option<&PerTopicLastTimestamps>,
 ) -> Result<(), CertifPollServerError> {
@@ -94,7 +94,7 @@ pub(super) async fn poll_server_for_new_certificates(
 }
 
 async fn poll_server_and_add_certificates(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     last_stored_timestamps: PerTopicLastTimestamps,
 ) -> Result<MaybeRedactedSwitch, CertifPollServerError> {

@@ -5,8 +5,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifOps, CertificateBasedActionOutcome, InvalidCertificateError,
-    InvalidKeysBundleError,
+    store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps,
+    InvalidCertificateError, InvalidKeysBundleError,
 };
 use crate::EventTooMuchDriftWithServerClock;
 
@@ -59,7 +59,7 @@ impl From<CertifStoreError> for CertifRevokeUserError {
 }
 
 pub(super) async fn revoke_user(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     user: UserID,
 ) -> Result<CertificateBasedActionOutcome, CertifRevokeUserError> {
     if ops.device.user_id == user {
@@ -88,7 +88,7 @@ enum DoServerCommandOutcome {
 }
 
 async fn do_server_command(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     recipient: UserID,
     timestamp: DateTime,
 ) -> Result<DoServerCommandOutcome, CertifRevokeUserError> {

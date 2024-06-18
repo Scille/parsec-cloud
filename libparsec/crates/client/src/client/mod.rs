@@ -26,7 +26,7 @@ pub use self::{
     workspace_share::ClientShareWorkspaceError, workspace_start::ClientStartWorkspaceError,
 };
 use crate::{
-    certif::{CertifOps, CertifPollServerError},
+    certif::{CertifPollServerError, CertificateOps},
     config::{ClientConfig, ServerConfig},
     event_bus::EventBus,
     monitors::{
@@ -64,7 +64,7 @@ pub struct Client {
     pub(crate) device: Arc<LocalDevice>,
     pub(crate) event_bus: EventBus,
     pub(crate) cmds: Arc<AuthenticatedCmds>,
-    certificates_ops: Arc<CertifOps>,
+    certificates_ops: Arc<CertificateOps>,
     user_ops: Arc<UserOps>,
     /// Workspace ops gets added or removed from this list when they are started or stopped.
     ///
@@ -103,7 +103,7 @@ impl Client {
 
         // TODO: error handling
         let certificates_ops = Arc::new(
-            CertifOps::start(
+            CertificateOps::start(
                 config.clone(),
                 device.clone(),
                 event_bus.clone(),

@@ -8,7 +8,9 @@ use libparsec_types::prelude::*;
 
 use crate::InvalidCertificateError;
 
-use super::{encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertifOps};
+use super::{
+    encrypt::CertifEncryptForUserError, store::CertificatesStoreReadGuard, CertificateOps,
+};
 
 #[derive(Debug, Clone, Copy)]
 pub enum EncrytionUsage {
@@ -177,7 +179,7 @@ impl From<ConnectionError> for LoadLastKeysBundleError {
 /// provide us with valid keys (and if something is corrupted, an OWNER should do
 /// a healing key rotation soon enough in theory).
 async fn load_last_realm_keys_bundle(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
 ) -> Result<Arc<RealmKeys>, LoadLastKeysBundleError> {
@@ -313,7 +315,7 @@ impl From<ConnectionError> for AttemptRealmKeysBundleHealingError {
 // ///
 // /// This method is typically used by a monitor.
 // pub(super) async fn attempt_realm_keys_bundle_healing<'a>(
-//     ops: &CertifOps,
+//     ops: &CertificateOps,
 //     realm_id: VlobID,
 // ) -> Result<KeysBundleHealingOutcome, AttemptRealmKeysBundleHealingError> {
 //     loop {
@@ -331,7 +333,7 @@ impl From<ConnectionError> for AttemptRealmKeysBundleHealingError {
 // TODO: finish key bundle healing !
 #[allow(dead_code)]
 async fn recover_realm_keys_from_previous_bundles(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
 ) -> Result<KeysBundleHealingOutcome, AttemptRealmKeysBundleHealingError> {
@@ -511,7 +513,7 @@ pub enum EncryptRealmKeysBundleAccessForUserError {
 }
 
 pub(super) async fn encrypt_realm_keys_bundle_access_for_user(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
     user_id: UserID,
@@ -639,7 +641,7 @@ pub enum ValidateKeysBundleError {
 
 #[allow(clippy::too_many_arguments)]
 async fn validate_keys_bundle(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     realm_id: VlobID,
     keys_bundle: &[u8],
@@ -856,7 +858,7 @@ pub enum CertifEncryptForRealmError {
 }
 
 pub(super) async fn encrypt_for_realm(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     usage: EncrytionUsage,
     realm_id: VlobID,
@@ -903,7 +905,7 @@ pub enum CertifDecryptForRealmError {
     CorruptedKey,
     #[error("Cannot decrypt data")]
     CorruptedData,
-    // Note this error is not used here, but in `CertifOps::decrypt_opaque_data_for_realm`
+    // Note this error is not used here, but in `CertificateOps::decrypt_opaque_data_for_realm`
     // that is a wrapper around `decrypt_for_realm`, so it's convenient to have it here
     // in order to avoid yet another error type conversion.
     #[error(transparent)]
@@ -915,7 +917,7 @@ pub enum CertifDecryptForRealmError {
 }
 
 pub(super) async fn decrypt_for_realm(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
     usage: EncrytionUsage,
     realm_id: VlobID,

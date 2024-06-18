@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 
 use super::{
     store::{CertificatesStoreWriteGuard, GetCertificateError},
-    CertifOps, UpTo,
+    CertificateOps, UpTo,
 };
 use crate::{event_bus::EventInvalidCertificate, EventNewCertificates};
 
@@ -132,7 +132,7 @@ pub enum MaybeRedactedSwitch {
 }
 
 pub(super) async fn add_certificates_batch(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     common_certificates: &[Bytes],
     sequester_certificates: &[Bytes],
@@ -379,7 +379,7 @@ macro_rules! verify_certificate_signature {
 /// Validate the given certificate by both checking it content (format, signature, etc.)
 /// and it global consistency with the others certificates.
 async fn validate_common_certificate(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     signed: Bytes,
 ) -> Result<CommonTopicArcCertificate, CertifAddCertificatesBatchError> {
@@ -442,7 +442,7 @@ async fn validate_common_certificate(
 /// Validate the given certificate by both checking it content (format, signature, etc.)
 /// and it global consistency with the others certificates.
 async fn validate_realm_certificate(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     realm_id: VlobID,
     signed: Bytes,
@@ -552,7 +552,7 @@ async fn validate_realm_certificate(
 /// Validate the given certificate by both checking it content (format, signature, etc.)
 /// and it global consistency with the others certificates.
 async fn validate_shamir_recovery_certificate(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     signed: Bytes,
 ) -> Result<ShamirRecoveryTopicArcCertificate, CertifAddCertificatesBatchError> {
@@ -613,7 +613,7 @@ async fn validate_shamir_recovery_certificate(
 /// Validate the given certificate by both checking it content (format, signature, etc.)
 /// and it global consistency with the others certificates.
 async fn validate_sequester_certificate(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     signed: Bytes,
 ) -> Result<SequesterTopicArcCertificate, CertifAddCertificatesBatchError> {
@@ -634,7 +634,7 @@ async fn validate_sequester_certificate(
 }
 
 async fn validate_sequester_authority_certificate(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     signed: Bytes,
 ) -> Result<Arc<SequesterAuthorityCertificate>, CertifAddCertificatesBatchError> {
@@ -799,7 +799,7 @@ async fn check_user_not_revoked(
 /// Admin existence has already been checked while fetching it device's verify key,
 /// so what's left is checking it is not revoked and (optionally) it profile
 async fn check_author_not_revoked_and_profile(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     up_to: DateTime,
     author: UserID,
@@ -886,7 +886,7 @@ async fn get_user_profile(
 }
 
 async fn check_user_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &UserCertificate,
     author_user_id: Option<UserID>,
@@ -1008,7 +1008,7 @@ async fn check_user_certificate_consistency(
 }
 
 async fn check_device_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &DeviceCertificate,
     author_user_id: Option<UserID>,
@@ -1162,7 +1162,7 @@ async fn check_device_certificate_consistency(
 }
 
 async fn check_user_update_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &UserUpdateCertificate,
     author_user_id: UserID,
@@ -1273,7 +1273,7 @@ async fn check_user_update_certificate_consistency(
 }
 
 async fn check_revoked_user_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RevokedUserCertificate,
     author_user_id: UserID,
@@ -1503,7 +1503,7 @@ async fn check_realm_role_certificate_consistency(
 }
 
 async fn check_realm_name_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmNameCertificate,
     author_user_id: UserID,
@@ -1590,7 +1590,7 @@ async fn check_realm_name_certificate_consistency(
 }
 
 async fn check_realm_key_rotation_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmKeyRotationCertificate,
     author_user_id: UserID,
@@ -1677,7 +1677,7 @@ async fn check_realm_key_rotation_certificate_consistency(
 }
 
 async fn check_realm_archiving_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &RealmArchivingCertificate,
     author_user_id: UserID,
@@ -1764,7 +1764,7 @@ async fn check_realm_archiving_certificate_consistency(
 }
 
 async fn check_shamir_recovery_brief_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &ShamirRecoveryBriefCertificate,
     author_user_id: UserID,
@@ -1843,7 +1843,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 }
 
 async fn check_shamir_recovery_share_certificate_consistency(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
     cooked: &ShamirRecoveryShareCertificate,
     author_user_id: UserID,

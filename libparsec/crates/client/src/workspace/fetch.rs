@@ -7,8 +7,8 @@ use libparsec_types::prelude::*;
 
 use crate::{
     certif::{
-        CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
-        InvalidManifestError,
+        CertifValidateManifestError, CertificateOps, InvalidCertificateError,
+        InvalidKeysBundleError, InvalidManifestError,
     },
     CertifValidateBlockError, InvalidBlockAccessError,
 };
@@ -46,7 +46,7 @@ impl From<ConnectionError> for FetchRemoteManifestError {
 
 pub(super) async fn fetch_remote_child_manifest(
     cmds: &AuthenticatedCmds,
-    certificates_ops: &CertifOps,
+    certificates_ops: &CertificateOps,
     realm_id: VlobID,
     vlob_id: VlobID,
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
@@ -87,7 +87,7 @@ pub(super) async fn fetch_remote_child_manifest(
 #[allow(unused)]
 pub(super) async fn fetch_remote_workspace_manifest(
     cmds: &AuthenticatedCmds,
-    certificates_ops: &CertifOps,
+    certificates_ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<FolderManifest, FetchRemoteManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
@@ -210,7 +210,7 @@ impl From<ConnectionError> for FetchRemoteBlockError {
 
 pub(super) async fn fetch_block(
     cmds: &AuthenticatedCmds,
-    certificates_ops: &CertifOps,
+    certificates_ops: &CertificateOps,
     realm_id: VlobID,
     manifest: &FileManifest,
     access: &BlockAccess,

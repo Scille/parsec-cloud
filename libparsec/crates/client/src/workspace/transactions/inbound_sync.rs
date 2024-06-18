@@ -82,8 +82,8 @@ use libparsec_types::prelude::*;
 use super::super::WorkspaceOps;
 use crate::{
     certif::{
-        CertifOps, CertifValidateManifestError, InvalidCertificateError, InvalidKeysBundleError,
-        InvalidManifestError,
+        CertifValidateManifestError, CertificateOps, InvalidCertificateError,
+        InvalidKeysBundleError, InvalidManifestError,
     },
     workspace::{
         merge::{MergeLocalFileManifestOutcome, MergeLocalFolderManifestOutcome},
@@ -667,7 +667,7 @@ pub trait RemoteManifest: Sized {
 
     #[allow(clippy::too_many_arguments)]
     async fn validate(
-        certif_ops: &CertifOps,
+        certif_ops: &CertificateOps,
         needed_realm_certificate_timestamp: DateTime,
         needed_common_certificate_timestamp: DateTime,
         realm_id: VlobID,
@@ -701,7 +701,7 @@ impl RemoteManifest for RootManifest {
     }
 
     async fn validate(
-        certif_ops: &CertifOps,
+        certif_ops: &CertificateOps,
         needed_realm_certificate_timestamp: DateTime,
         needed_common_certificate_timestamp: DateTime,
         realm_id: VlobID,
@@ -753,7 +753,7 @@ impl RemoteManifest for ChildManifest {
     }
 
     async fn validate(
-        certif_ops: &CertifOps,
+        certif_ops: &CertificateOps,
         needed_realm_certificate_timestamp: DateTime,
         needed_common_certificate_timestamp: DateTime,
         realm_id: VlobID,

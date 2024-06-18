@@ -9,7 +9,7 @@ use crate::{
 };
 
 use super::{
-    store::CertifForReadWithRequirementsError, CertifOps, InvalidCertificateError,
+    store::CertifForReadWithRequirementsError, CertificateOps, InvalidCertificateError,
     InvalidKeysBundleError,
 };
 #[derive(Debug, thiserror::Error)]
@@ -65,7 +65,7 @@ pub enum CertifValidateBlockError {
 }
 
 pub(super) async fn validate_block(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     needed_realm_certificate_timestamp: DateTime,
     realm_id: VlobID,
     key_index: IndexInt,

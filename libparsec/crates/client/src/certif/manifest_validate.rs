@@ -7,7 +7,7 @@ use crate::{certif::realm_keys_bundle, CertifDecryptForRealmError, EncrytionUsag
 
 use super::{
     store::{CertifForReadWithRequirementsError, CertificatesStoreReadGuard, GetCertificateError},
-    CertifOps, InvalidCertificateError, InvalidKeysBundleError, UpTo,
+    CertificateOps, InvalidCertificateError, InvalidKeysBundleError, UpTo,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -102,7 +102,7 @@ pub enum CertifValidateManifestError {
 }
 
 pub(super) async fn validate_user_manifest(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     needed_realm_certificate_timestamp: DateTime,
     needed_common_certificate_timestamp: DateTime,
     author: DeviceID,
@@ -166,7 +166,7 @@ pub(super) async fn validate_user_manifest(
 
 #[allow(clippy::too_many_arguments)]
 pub(super) async fn validate_workspace_manifest(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     needed_realm_certificate_timestamp: DateTime,
     needed_common_certificate_timestamp: DateTime,
     realm_id: VlobID,
@@ -288,7 +288,7 @@ pub(super) async fn validate_workspace_manifest(
 
 #[allow(clippy::too_many_arguments)]
 pub(super) async fn validate_child_manifest(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     needed_realm_certificate_timestamp: DateTime,
     needed_common_certificate_timestamp: DateTime,
     realm_id: VlobID,

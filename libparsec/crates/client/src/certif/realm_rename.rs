@@ -6,8 +6,9 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError, CertifOps,
-    CertificateBasedActionOutcome, InvalidCertificateError, InvalidKeysBundleError, UpTo,
+    realm_keys_bundle::CertifEncryptForRealmError, store::CertifStoreError,
+    CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
+    UpTo,
 };
 use crate::{certif::CertifPollServerError, EncrytionUsage, EventTooMuchDriftWithServerClock};
 
@@ -58,7 +59,7 @@ impl From<CertifStoreError> for CertifRenameRealmError {
 }
 
 pub(super) async fn rename_realm(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     new_name: EntryName,
 ) -> Result<CertificateBasedActionOutcome, CertifRenameRealmError> {
@@ -66,7 +67,7 @@ pub(super) async fn rename_realm(
 }
 
 async fn rename_realm_internal(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     new_name: EntryName,
     initial_rename: bool,
@@ -189,7 +190,7 @@ async fn rename_realm_internal(
 }
 
 pub(super) async fn ensure_realm_initial_rename(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     name: EntryName,
 ) -> Result<CertificateBasedActionOutcome, CertifRenameRealmError> {

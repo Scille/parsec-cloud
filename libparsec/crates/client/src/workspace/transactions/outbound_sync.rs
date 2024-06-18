@@ -465,7 +465,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 bad_rep @ (
                     // Got sequester info from certificates
                     Rep::OrganizationNotSequestered
-                    // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
+                    // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
                     | Rep::RealmNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }
@@ -800,7 +800,7 @@ async fn upload_blocks(
 
                 // Unexpected errors :(
                 bad_rep @ (
-                    // Already checked the realm exists when we called `CertifOps::encrypt_for_realm`
+                    // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
                     | Rep::RealmNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }

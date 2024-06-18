@@ -66,7 +66,7 @@ pub enum CertificateBasedActionOutcome {
 }
 
 #[derive(Debug)]
-pub(crate) struct CertifOps {
+pub(crate) struct CertificateOps {
     #[allow(unused)]
     config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
@@ -77,7 +77,7 @@ pub(crate) struct CertifOps {
 
 // For readability, we define the public interface here and let the actual
 // implementation in separated submodules
-impl CertifOps {
+impl CertificateOps {
     pub async fn start(
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,

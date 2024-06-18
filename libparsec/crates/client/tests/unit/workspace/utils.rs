@@ -6,7 +6,7 @@ use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertifOps,
+    certif::CertificateOps,
     workspace::{LocalUserManifestWorkspaceEntry, WorkspaceExternalInfo, WorkspaceOps},
     ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
@@ -29,7 +29,7 @@ pub(crate) async fn workspace_ops_factory(
         AuthenticatedCmds::new(&config.config_dir, device.clone(), config.proxy.clone()).unwrap(),
     );
     let certificates_ops = Arc::new(
-        CertifOps::start(
+        CertificateOps::start(
             config.clone(),
             device.clone(),
             event_bus.clone(),

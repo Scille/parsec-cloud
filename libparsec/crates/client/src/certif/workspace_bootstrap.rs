@@ -4,9 +4,9 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifEnsureRealmCreatedError, CertifOps, CertifPollServerError,
+    store::CertifStoreError, CertifEnsureRealmCreatedError, CertifPollServerError,
     CertifRenameRealmError, CertifRotateRealmKeyError, CertificateBasedActionOutcome,
-    InvalidCertificateError, InvalidKeysBundleError,
+    CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -54,7 +54,7 @@ impl From<CertifStoreError> for CertifBootstrapWorkspaceError {
 }
 
 pub(super) async fn bootstrap_workspace(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     name: &EntryName,
 ) -> Result<CertificateBasedActionOutcome, CertifBootstrapWorkspaceError> {

@@ -217,7 +217,7 @@ impl_events!(
     // TODO: two types of new certificates events:
     //       - poll from scratch
     //       - per-type event: rename, key rotation, share/unshare with self, shamir for self, etc.
-    // The CertifOps has received integrated new certificates from the server.
+    // The CertificateOps has received integrated new certificates from the server.
     NewCertificates {
         // The local certificates storage was empty, hence the server sent all certificates.
         storage_initially_empty: bool,

@@ -20,8 +20,8 @@ use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertifOps, InvalidBlockAccessError, InvalidCertificateError, InvalidKeysBundleError,
-    InvalidManifestError,
+    certif::CertificateOps, InvalidBlockAccessError, InvalidCertificateError,
+    InvalidKeysBundleError, InvalidManifestError,
 };
 
 use cache::CurrentViewCache;
@@ -109,7 +109,7 @@ pub(super) struct WorkspaceStore {
     realm_id: VlobID,
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
-    certificates_ops: Arc<CertifOps>,
+    certificates_ops: Arc<CertificateOps>,
 
     /// Note cache also contains the update locks.
     current_view_cache: Mutex<CurrentViewCache>,
@@ -125,7 +125,7 @@ impl WorkspaceStore {
         data_base_dir: &Path,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
-        certificates_ops: Arc<CertifOps>,
+        certificates_ops: Arc<CertificateOps>,
         cache_size: u64,
         realm_id: VlobID,
     ) -> Result<Self, anyhow::Error> {
