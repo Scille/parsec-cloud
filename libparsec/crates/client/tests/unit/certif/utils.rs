@@ -7,14 +7,14 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::{store::CertificatesStore, CertifOps},
+    certif::{store::CertificatesStore, CertificateOps},
     ClientConfig, EventBus, MountpointMountStrategy, WorkspaceStorageCacheSize,
 };
 
 pub(crate) async fn certificates_ops_factory(
     env: &TestbedEnv,
     device: &Arc<LocalDevice>,
-) -> CertifOps {
+) -> CertificateOps {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
@@ -27,7 +27,7 @@ pub(crate) async fn certificates_ops_factory(
     let cmds = Arc::new(
         AuthenticatedCmds::new(&config.config_dir, device.clone(), config.proxy.clone()).unwrap(),
     );
-    CertifOps::start(config.clone(), device.clone(), event_bus, cmds)
+    CertificateOps::start(config.clone(), device.clone(), event_bus, cmds)
         .await
         .unwrap()
 }

@@ -13,14 +13,14 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
 use self::store::{UserForUpdateLocalWorkspacesUpdater, UserStore};
-use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
+use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
 
 #[derive(Debug)]
 pub struct UserOps {
     device: Arc<LocalDevice>,
     store: UserStore,
     cmds: Arc<AuthenticatedCmds>,
-    certificates_ops: Arc<CertifOps>,
+    certificates_ops: Arc<CertificateOps>,
     event_bus: EventBus,
 }
 
@@ -31,7 +31,7 @@ impl UserOps {
         config: &ClientConfig,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
-        certificates_ops: Arc<CertifOps>,
+        certificates_ops: Arc<CertificateOps>,
         event_bus: EventBus,
     ) -> Result<Self, anyhow::Error> {
         let store = UserStore::start(&config.data_base_dir, device.clone()).await?;

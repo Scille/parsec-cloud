@@ -7,7 +7,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    certif::CertifOps, user::UserOps, ClientConfig, EventBus, MountpointMountStrategy,
+    certif::CertificateOps, user::UserOps, ClientConfig, EventBus, MountpointMountStrategy,
     WorkspaceStorageCacheSize,
 };
 
@@ -25,7 +25,7 @@ pub(crate) async fn user_ops_factory(env: &TestbedEnv, device: &Arc<LocalDevice>
         AuthenticatedCmds::new(&config.config_dir, device.clone(), config.proxy.clone()).unwrap(),
     );
     let certificates_ops = Arc::new(
-        CertifOps::start(
+        CertificateOps::start(
             config.clone(),
             device.clone(),
             event_bus.clone(),

@@ -6,7 +6,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifOps, CertifPollServerError, CertificateBasedActionOutcome,
+    store::CertifStoreError, CertifPollServerError, CertificateBasedActionOutcome, CertificateOps,
     InvalidCertificateError, InvalidKeysBundleError,
 };
 use crate::{
@@ -69,7 +69,7 @@ impl From<CertifStoreError> for CertifShareRealmError {
 }
 
 pub(super) async fn share_realm(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     recipient: UserID,
     role: Option<RealmRole>,
@@ -142,7 +142,7 @@ enum DoServerCommandOutcome {
 }
 
 async fn unshare_do_server_command(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     recipient: UserID,
     timestamp: DateTime,
@@ -228,7 +228,7 @@ async fn unshare_do_server_command(
 }
 
 async fn share_do_server_command(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
     recipient: UserID,
     role: RealmRole,

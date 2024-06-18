@@ -16,7 +16,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_types::prelude::*;
 
-use crate::{certif::CertifOps, event_bus::EventBus, ClientConfig};
+use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
@@ -94,7 +94,7 @@ pub struct WorkspaceOps {
     config: Arc<ClientConfig>,
     device: Arc<LocalDevice>,
     cmds: Arc<AuthenticatedCmds>,
-    certificates_ops: Arc<CertifOps>,
+    certificates_ops: Arc<CertificateOps>,
     event_bus: EventBus,
     store: WorkspaceStore,
     opened_files: Mutex<OpenedFiles>,
@@ -134,7 +134,7 @@ impl WorkspaceOps {
         config: Arc<ClientConfig>,
         device: Arc<LocalDevice>,
         cmds: Arc<AuthenticatedCmds>,
-        certificates_ops: Arc<CertifOps>,
+        certificates_ops: Arc<CertificateOps>,
         event_bus: EventBus,
         realm_id: VlobID,
         workspace_external_info: WorkspaceExternalInfo,

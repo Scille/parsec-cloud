@@ -46,7 +46,7 @@ pub async fn refresh_workspaces_list(
     // them after B" problem).
     //
     // The downside is that the user manifest is potentially locked for a long time (as
-    // `CertifOps::list_self_workspaces` may need to reach the server).
+    // `CertificateOps::list_self_workspaces` may need to reach the server).
 
     let mut updater = client.user_ops.for_update_local_workspaces().await;
     let old_local_workspaces = updater.workspaces();

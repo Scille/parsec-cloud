@@ -31,7 +31,7 @@ use libparsec_types::prelude::*;
 
 use crate::certif::CertifPollServerError;
 
-use super::{realm_keys_bundle::RealmKeys, CertifOps, InvalidCertificateError};
+use super::{realm_keys_bundle::RealmKeys, CertificateOps, InvalidCertificateError};
 
 #[derive(Debug, Default)]
 enum ScalarCache<T> {
@@ -189,7 +189,7 @@ impl CertificatesStore {
         // don't work).
         // However in practice all our references have a lifetime bound to the
         // parent (i.e. `for_write`) or the grand-parent (i.e.
-        // `CertifOps::add_certificates_batch`) which are going to poll this
+        // `CertificateOps::add_certificates_batch`) which are going to poll this
         // future directly, so the references' lifetimes *are* long enough.
         // TODO: Remove this once async closure are available
         let static_write_guard_mut_ref = unsafe { pretend_static(&mut write_guard) };
@@ -277,7 +277,7 @@ impl CertificatesStore {
     /// the server provides us with the certificates requirements to do the validation).
     pub async fn for_read_with_requirements<T, E, Fut>(
         &self,
-        ops: &CertifOps,
+        ops: &CertificateOps,
         needed_timestamps: &PerTopicLastTimestamps,
         cb: impl FnOnce(&'static mut CertificatesStoreReadGuard) -> Fut,
     ) -> Result<Result<T, E>, CertifForReadWithRequirementsError>

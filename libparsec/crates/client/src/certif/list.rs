@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 
 use super::{
     store::{CertifStoreError, GetCertificateError},
-    CertifOps, UpTo,
+    CertificateOps, UpTo,
 };
 
 pub use super::store::CertifStoreError as CertifGetCurrentSelfProfileError;
@@ -17,7 +17,7 @@ pub use super::store::CertifStoreError as CertifListUserDevicesError;
 pub use super::store::CertifStoreError as CertifListWorkspaceUsersError;
 
 pub(super) async fn get_current_self_profile(
-    ops: &CertifOps,
+    ops: &CertificateOps,
 ) -> Result<UserProfile, CertifGetCurrentSelfProfileError> {
     ops.store
         .for_read(|store| store.get_current_self_profile())
@@ -26,7 +26,7 @@ pub(super) async fn get_current_self_profile(
 }
 
 pub(super) async fn get_current_self_realms_role(
-    ops: &CertifOps,
+    ops: &CertificateOps,
 ) -> Result<Vec<(VlobID, Option<RealmRole>, DateTime)>, CertifGetCurrentSelfRealmsRoleError> {
     // TODO: cache !
     let certifs = ops
@@ -55,7 +55,7 @@ pub(super) async fn get_current_self_realms_role(
 }
 
 pub(super) async fn get_current_self_realm_role(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<Option<Option<RealmRole>>, CertifGetCurrentSelfRealmRoleError> {
     // TODO: cache !
@@ -87,7 +87,7 @@ pub struct UserInfo {
 }
 
 pub(super) async fn list_users(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     skip_revoked: bool,
     offset: Option<u32>,
     limit: Option<u32>,
@@ -163,7 +163,7 @@ pub struct DeviceInfo {
 }
 
 pub(super) async fn list_user_devices(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     user_id: UserID,
 ) -> Result<Vec<DeviceInfo>, CertifListUserDevicesError> {
     let certifs = ops
@@ -211,7 +211,7 @@ impl From<CertifStoreError> for CertifGetUserDeviceError {
 }
 
 pub(super) async fn get_user_device(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     device_id: DeviceID,
 ) -> Result<(UserInfo, DeviceInfo), CertifGetUserDeviceError> {
     ops.store
@@ -316,7 +316,7 @@ pub struct WorkspaceUserAccessInfo {
 /// List users currently part of the given workspace (i.e. user not revoked
 /// and with a valid role)
 pub(super) async fn list_workspace_users(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<Vec<WorkspaceUserAccessInfo>, CertifListWorkspaceUsersError> {
     ops.store

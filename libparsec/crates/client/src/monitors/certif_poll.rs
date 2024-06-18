@@ -6,7 +6,7 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 
 use crate::{
-    certif::{CertifOps, CertifPollServerError},
+    certif::{CertifPollServerError, CertificateOps},
     event_bus::*,
 };
 
@@ -16,7 +16,7 @@ use crate::event_bus::{EventBus, EventMissedServerEvents};
 const CERTIF_POLL_MONITOR_NAME: &str = "certif_poll";
 
 pub(crate) async fn start_certif_poll_monitor(
-    certif_ops: Arc<CertifOps>,
+    certif_ops: Arc<CertificateOps>,
     event_bus: EventBus,
 ) -> Monitor {
     let task_future = {
@@ -27,7 +27,7 @@ pub(crate) async fn start_certif_poll_monitor(
 }
 
 fn task_future_factory(
-    certif_ops: Arc<CertifOps>,
+    certif_ops: Arc<CertificateOps>,
     event_bus: EventBus,
 ) -> impl Future<Output = ()> {
     enum Action {
@@ -81,7 +81,7 @@ fn task_future_factory(
                             // choice but to also stop.
                             return;
                         }
-                        // `CertifOps` is already responsible for sending the invalid
+                        // `CertificateOps` is already responsible for sending the invalid
                         // certificate event on the event bus, so there nothing more to do !
                         CertifPollServerError::InvalidCertificate(_) => (),
                         CertifPollServerError::Internal(err) => {

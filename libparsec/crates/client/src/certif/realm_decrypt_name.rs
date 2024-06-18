@@ -4,7 +4,9 @@ use libparsec_types::prelude::*;
 
 use crate::{CertifDecryptForRealmError, EncrytionUsage};
 
-use super::{realm_keys_bundle, store::CertifStoreError, CertifOps, InvalidKeysBundleError, UpTo};
+use super::{
+    realm_keys_bundle, store::CertifStoreError, CertificateOps, InvalidKeysBundleError, UpTo,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum InvalidEncryptedRealmNameError {
@@ -58,7 +60,7 @@ pub enum CertifDecryptCurrentRealmNameError {
 }
 
 pub(super) async fn decrypt_current_realm_name(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<(EntryName, DateTime), CertifDecryptCurrentRealmNameError> {
     ops.store

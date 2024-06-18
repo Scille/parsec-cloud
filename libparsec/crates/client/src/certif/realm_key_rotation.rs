@@ -8,7 +8,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifOps, CertificateBasedActionOutcome, InvalidCertificateError,
+    store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError,
 };
 use crate::{certif::CertifPollServerError, EventTooMuchDriftWithServerClock};
 
@@ -55,7 +55,7 @@ impl From<CertifStoreError> for CertifRotateRealmKeyError {
 }
 
 pub(super) async fn ensure_realm_initial_key_rotation(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
     // First look into our local certificates...
@@ -107,7 +107,7 @@ pub(super) async fn ensure_realm_initial_key_rotation(
 /// Note the fact this function is idempotent means the provided key may
 /// not be part of the realm's keys in the end !
 async fn realm_initial_key_rotation_idempotent(
-    ops: &CertifOps,
+    ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
     let key = KeyDerivation::generate();
@@ -282,14 +282,14 @@ async fn realm_initial_key_rotation_idempotent(
 // // - keys_bundle_heal
 
 // pub(super) async fn rotate_realm_key(
-//     ops: &CertifOps,
+//     ops: &CertificateOps,
 //     realm_id: VlobID,
 // ) -> Result<(), CertifRotateRealmKeyError> {
 //     todo!()
 // }
 
 // pub(super) async fn force_rotate_realm_key_for_healing(
-//     ops: &CertifOps,
+//     ops: &CertificateOps,
 //     realm_id: VlobID,
 // ) -> Result<(), CertifRotateRealmKeyError> {
 //     todo!()
