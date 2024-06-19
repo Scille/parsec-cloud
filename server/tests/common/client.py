@@ -382,7 +382,11 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
 
 async def setup_shamir_for_coolorg(
     coolorg: CoolorgRpcClients,
-):
+) -> tuple[bytes, bytes]:
+    """
+    setup a shamir for alice, with mallory as a share recipient
+    returns the associated brief and share as bytes
+    """
     dt = DateTime.now()
     share = ShamirRecoveryShareCertificate(
         author=coolorg.alice.device_id,
@@ -399,14 +403,18 @@ async def setup_shamir_for_coolorg(
         per_recipient_shares={coolorg.mallory.user_id: 2},
     )
 
+    raw_brief = brief.dump_and_sign(coolorg.alice.signing_key)
+    raw_share = share.dump_and_sign(coolorg.alice.signing_key)
+
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
         ShamirRevealToken.new(),
-        brief.dump_and_sign(coolorg.alice.signing_key),
-        [share.dump_and_sign(coolorg.alice.signing_key)],
+        raw_brief,
+        [raw_share],
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+    return (raw_brief, raw_share)
 
 
 @dataclass(slots=True)
