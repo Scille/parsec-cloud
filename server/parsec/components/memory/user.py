@@ -570,7 +570,7 @@ class MemoryUserComponent(BaseUserComponent):
 
         shamir_recovery_certificates: list[bytes] = []
 
-        for user_id, shamir in org.shamir_setup.items():
+        for user_id, shamir in sorted(org.shamir_setup.items(), key=lambda x: x[1].brief.timestamp):
             # filter on timestamp
             if shamir_recovery_after is not None and shamir.brief.timestamp < shamir_recovery_after:
                 continue
