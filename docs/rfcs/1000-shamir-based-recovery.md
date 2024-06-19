@@ -329,14 +329,11 @@ This secret contains both:
 
 ## 2 - Get the Shamir recovery setup
 
-This enables two use cases:
+The shamir related certificates are retrieved by the `get_certificates` route, with other certificates depending on the timestamp.
+If the user has authored a shamir setup, they will get the corresponding brief.
+If they are a share recipient, they will get their share and the associated brief.
 
-1) A User retrieving its own Shamir recovery setup. Useful for displaying it to
-   the user and to ensure the setup is still valid (i.e. no recipient has been
-   revoked)
-2) A user retrieving all the Shamir recovery information they are a part of.
-
-Authenticated API:
+> TODO: what happens with shamir deletion certificates.
 
 ```json5
 [
@@ -345,53 +342,34 @@ Authenticated API:
             4
         ],
         "req": {
-            "cmd": "shamir_recovery_self_info"
+            "cmd": "certificate_get",
+            "fields": [
+                {
+                    // Skip the certificates before (or at) this timestamp
+                    "name": "shamir_recovery_after",
+                    "type": "RequiredOption<DateTime>"
+                },
+                // <-------------- Other fields omitted --------->
+
+            ]
         },
         "reps": [
             {
                 "status": "ok",
                 "fields": [
+                    // Certificates are provided in-order (i.e. with growing timestamps)
                     {
-                        // `None` means no configuration
-                        // Otherwise, contains a `ShamirRecoveryBriefCertificate`
-                        "name": "self_info",
-                        "type": "RequiredOption<Bytes>"
-                    }
+                        "name": "shamir_recovery_certificates",
+                        "type": "List<Bytes>"
+                    },
+                    // <-------------- Other fields omitted --------->
+
                 ]
             }
         ]
     }
 ]
-```
 
-```json5
-[
-    {
-        "major_versions": [
-            4
-        ],
-        "req": {
-            "cmd": "shamir_recovery_others_list",
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        // Contains a list of `ShamirRecoveryBriefCertificate`
-                        "name": "brief_certificates",
-                        "type": "List<Bytes>"
-                    },
-                    {
-                        // Contains a list of `ShamirRecoveryShareCertificate`
-                        "name": "share_certificates",
-                        "type": "List<Bytes>"
-                    }
-                ]
-            },
-        ],
-    }
-]
 ```
 
 ## 3 - Use the Shamir recovery
