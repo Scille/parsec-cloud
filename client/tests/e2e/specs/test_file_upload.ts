@@ -4,7 +4,7 @@ describe('Upload files', () => {
   beforeEach(() => {
     cy.visitApp();
     cy.login('Boby', 'P@ssw0rd.');
-    cy.get('.workspaces-grid-item').first().click();
+    cy.get('.workspace-card-item').first().click();
   });
 
   afterEach(() => {
