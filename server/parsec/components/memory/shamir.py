@@ -112,7 +112,7 @@ class MemoryShamirComponent(BaseShamirComponent):
 
         if self._data.organizations[organization_id].shamir_setup.get(author) is None:
             self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
-                setup.ciphered_data, setup.reveal_token, brief, shares
+                setup.ciphered_data, setup.reveal_token, brief, shares, setup.brief
             )
         else:
             return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ALREADY_SET
