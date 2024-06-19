@@ -19,7 +19,7 @@ async function toggleViewMode(page: Page): Promise<void> {
 
 async function openContextMenu(page: Page, mode: Mode): Promise<void> {
   if (mode === 'grid') {
-    const wk = page.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1);
+    const wk = page.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1);
     await wk.locator('.card-option').click();
   } else if (mode === 'list') {
     await toggleViewMode(page);
@@ -72,7 +72,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(connected.locator('.workspace-context-menu')).toBeHidden();
 
     if (mode === 'grid') {
-      const wk = connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1);
+      const wk = connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1);
       await wk.click({ button: 'right' });
     } else if (mode === 'list') {
       await toggleViewMode(connected);
@@ -102,7 +102,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
 
   msTest(`Navigate into a workspace ${mode}`, async ({ connected }) => {
     if (mode === 'grid') {
-      await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1).click();
+      await connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(1).click();
     } else if (mode === 'list') {
       await toggleViewMode(connected);
       await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1).click();
@@ -149,8 +149,8 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await popover.getByRole('listitem').nth(7).click();
     let wk;
     if (await isInGridMode(connected)) {
-      wk = connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(0);
-      await expect(wk.locator('.card-content__title')).toHaveText('Trademeet');
+      wk = connected.locator('.workspaces-container-grid').locator('.workspace-card-item').nth(0);
+      await expect(wk.locator('.workspace-card__title')).toHaveText('Trademeet');
     } else {
       wk = connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0);
       await expect(wk.locator('.workspace-name')).toHaveText('Trademeet');

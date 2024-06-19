@@ -47,7 +47,7 @@ describe('File Card Item', () => {
       },
     });
 
-    expect(wrapper.get('.card-content__title').text()).to.equal('A File.txt');
+    expect(wrapper.get('.file-card__title').text()).to.equal('A File.txt');
     // expect(wrapper.get('.card-content-last-update').text()).to.equal('now');
     wrapper.trigger('dblclick');
     expect(wrapper.emitted('click')?.length).to.equal(1);
@@ -85,8 +85,8 @@ describe('File Card Item', () => {
       },
     });
 
-    expect(wrapper.get('.card-content__title').text()).to.equal('A Folder');
-    // expect(wrapper.get('.card-content-last-update').text()).to.equal('now');
+    expect(wrapper.get('.file-card__title').text()).to.equal('A Folder');
+    // expect(wrapper.get('.file-card-last-update').text()).to.equal('now');
     // expect(wrapper.get('.label-size')).not.to.be.visible;
     wrapper.trigger('dblclick');
     expect(wrapper.emitted('click')?.length).to.equal(1);
