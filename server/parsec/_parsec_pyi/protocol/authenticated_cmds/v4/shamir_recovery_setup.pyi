@@ -81,12 +81,7 @@ class RepMissingShareForRecipient(Rep):
         self,
     ) -> None: ...
 
-class RepThresholdGreaterThanTotalShares(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepShareIncoherentTimestamp(Rep):
+class RepShareInconsistentTimestamp(Rep):
     def __init__(
         self,
     ) -> None: ...
