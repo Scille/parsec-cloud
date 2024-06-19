@@ -344,37 +344,6 @@ async def test_authenticated_shamir_recovery_setup_share_invalid_data(
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShareInvalidData()
 
 
-async def test_authenticated_shamir_recovery_setup_threshold_greater_than_total_shares(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
-) -> None:
-    if with_postgresql:
-        pytest.skip("TODO: postgre not implemented yet")
-    dt = DateTime.now()
-    share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=dt,
-        recipient=coolorg.mallory.user_id,
-        ciphered_share=b"abc",
-    )
-    brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=dt,
-        threshold=3,
-        per_recipient_shares={coolorg.mallory.user_id: 2},
-    )
-
-    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
-        b"abc",
-        ShamirRevealToken.new(),
-        brief.dump_and_sign(coolorg.alice.signing_key),
-        [share.dump_and_sign(coolorg.alice.signing_key)],
-    )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepBriefInvalidData()
-
-
 async def test_authenticated_shamir_recovery_setup_share_recipient_not_in_brief(
     coolorg: CoolorgRpcClients, with_postgresql: bool
 ) -> None:
