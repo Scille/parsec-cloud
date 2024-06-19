@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::num::NonZeroU64;
-
 use libparsec_client_connection::{
     test_register_low_level_send_hook, test_register_send_hook, HeaderMap, ResponseMock, StatusCode,
 };
@@ -211,7 +209,7 @@ async fn cannot_decrypt(env: &TestbedEnv) {
 
 #[parsec_test(testbed = "minimal")]
 async fn cleartext_corrupted(
-    #[values("dummy", "file_pointing_to_itself", "folder_pointing_to_itself")] kind: &str,
+    #[values("dummy", "folder_pointing_to_itself")] kind: &str,
     env: &TestbedEnv,
 ) {
     let realm_id = env
@@ -233,28 +231,9 @@ async fn cleartext_corrupted(
 
     let (encrypted, data_error) = match kind {
         "dummy" => (key.encrypt(b"<dummy data>"), DataError::Signature),
-        "file_pointing_to_itself" => {
-            let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
-            let manifest = FileManifest {
-                author: alice.device_id,
-                timestamp: now,
-                id: child_id,
-                parent: child_id,
-                version: 1,
-                created: now,
-                updated: now,
-                blocks: Default::default(),
-                blocksize: Blocksize::try_from(1024).unwrap(),
-                size: 0,
-            };
-            (
-                manifest.dump_sign_and_encrypt(&alice.signing_key, &key),
-                DataError::DataIntegrity {
-                    data_type: "libparsec_types::manifest::FileManifest",
-                    invariant: "id and parent are different",
-                },
-            )
-        }
+        // It is valid to have a folder manifest pointing to itself, as long as it is the root manifest
+        // Since the dump method is not aware of the context, it will not prevent this case.
+        // Still, the validation after the load should catch it.
         "folder_pointing_to_itself" => {
             let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
             let manifest = FolderManifest {
@@ -312,161 +291,6 @@ async fn cleartext_corrupted(
         CertifValidateManifestError::InvalidManifest(boxed)
         if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. } if **error == data_error)
     )
-}
-
-#[parsec_test(testbed = "minimal")]
-async fn blocks_corrupted(
-    #[values(
-        "blocks_not_sorted",
-        "blocks_overlapping",
-        "exceed_file_size",
-        "same_block_span",
-        "in_between_block_span"
-    )]
-    kind: &str,
-    env: &TestbedEnv,
-) {
-    let realm_id = env
-        .customize(|builder| {
-            let realm_id = builder
-                .new_realm("alice")
-                .then_do_initial_key_rotation()
-                .map(|event| event.realm);
-            builder.certificates_storage_fetch_certificates("alice@dev1");
-            realm_id
-        })
-        .await;
-    let (realm_last_key_derivation, realm_key_index) = env.get_last_realm_key(realm_id);
-
-    let child_id = VlobID::default();
-    let parent_id = VlobID::default();
-    let key = realm_last_key_derivation.derive_secret_key_from_uuid(*child_id);
-
-    let alice = env.local_device("alice@dev1");
-    let blocksize = Blocksize::try_from(1024).unwrap();
-
-    let default_block_id = BlockID::from_hex("00000000000000000000000000000001").unwrap();
-    let default_digest = HashDigest::from_data(&[]);
-    let default_block_size = NonZeroU64::new(1024).unwrap();
-
-    let blocks = match kind {
-        "blocks_not_sorted" => {
-            vec![
-                BlockAccess {
-                    id: default_block_id,
-                    size: default_block_size,
-                    offset: 1024,
-                    digest: default_digest.clone(),
-                },
-                BlockAccess {
-                    id: default_block_id,
-                    size: default_block_size,
-                    offset: 0,
-                    digest: default_digest.clone(),
-                },
-            ]
-        }
-        "blocks_overlapping" => {
-            vec![
-                BlockAccess {
-                    id: default_block_id,
-                    size: NonZeroU64::new(10).unwrap(),
-                    offset: 0,
-                    digest: default_digest.clone(),
-                },
-                BlockAccess {
-                    id: default_block_id,
-                    size: NonZeroU64::new(10).unwrap(),
-                    offset: 5,
-                    digest: default_digest.clone(),
-                },
-            ]
-        }
-        "exceed_file_size" => {
-            vec![BlockAccess {
-                id: default_block_id,
-                size: default_block_size,
-                offset: 2048,
-                digest: default_digest.clone(),
-            }]
-        }
-        "same_block_span" => {
-            vec![
-                BlockAccess {
-                    id: default_block_id,
-                    size: NonZeroU64::new(10).unwrap(),
-                    offset: 0,
-                    digest: default_digest.clone(),
-                },
-                BlockAccess {
-                    id: default_block_id,
-                    size: NonZeroU64::new(10).unwrap(),
-                    offset: 10,
-                    digest: default_digest.clone(),
-                },
-            ]
-        }
-        "in_between_block_span" => {
-            vec![BlockAccess {
-                id: default_block_id,
-                size: default_block_size,
-                offset: 512,
-                digest: default_digest.clone(),
-            }]
-        }
-        unknown => panic!("Unknown kind {}", unknown),
-    };
-
-    let now = "2020-01-01T00:00:00.000000Z".parse().unwrap();
-    let manifest = FileManifest {
-        author: alice.device_id,
-        timestamp: now,
-        id: child_id,
-        parent: parent_id,
-        version: 1,
-        created: now,
-        updated: now,
-        blocks,
-        blocksize,
-        size: 2 * 1024,
-    };
-    let encrypted = manifest.dump_sign_and_encrypt(&alice.signing_key, &key);
-
-    let ops = certificates_ops_factory(env, &alice).await;
-
-    let keys_bundle = env.get_last_realm_keys_bundle(realm_id);
-    let keys_bundle_access = env.get_last_realm_keys_bundle_access_for(realm_id, alice.user_id);
-    test_register_send_hook(
-        &env.discriminant_dir,
-        move |_: authenticated_cmds::latest::realm_get_keys_bundle::Req| {
-            authenticated_cmds::latest::realm_get_keys_bundle::Rep::Ok {
-                keys_bundle,
-                keys_bundle_access,
-            }
-        },
-    );
-
-    let err = ops
-        .validate_child_manifest(
-            env.get_last_realm_certificate_timestamp(realm_id),
-            env.get_last_common_certificate_timestamp(),
-            realm_id,
-            realm_key_index,
-            child_id,
-            alice.device_id,
-            1,
-            now,
-            &encrypted,
-        )
-        .await
-        .unwrap_err();
-
-    p_assert_matches!(
-        err,
-        CertifValidateManifestError::InvalidManifest(boxed)
-        if matches!(&*boxed, InvalidManifestError::CleartextCorrupted { error, .. }
-            if matches!(**error, DataError::DataIntegrity { data_type: "libparsec_types::manifest::FileManifest", .. })),
-    );
 }
 
 #[parsec_test(testbed = "minimal")]

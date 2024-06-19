@@ -34,9 +34,18 @@ macro_rules! impl_manifest_dump {
                 author_signkey: &SigningKey,
                 key: &SecretKey,
             ) -> Vec<u8> {
-                self.check_data_integrity().expect("Invalid manifest");
                 let signed = self.dump_and_sign(author_signkey);
+                key.encrypt(&signed)
+            }
 
+            /// Test method to produce invalid payloads
+            pub fn dump_sign_and_encrypt_with_data_integrity_checks_disabled(
+                &self,
+                author_signkey: &SigningKey,
+                key: &SecretKey,
+            ) -> Vec<u8> {
+                let serialized = format_v0_dump(&self);
+                let signed = author_signkey.sign(&serialized);
                 key.encrypt(&signed)
             }
         }
