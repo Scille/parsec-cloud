@@ -18,10 +18,20 @@ P = ParamSpec("P")
 class Q:
     """
     Dead simple SQL query composition framework (◠_◠)
+
+    A Q object is constructed from an SQL query string containing variables
+    (such as `$user_id`). These variables are replaced by [positional parameters](https://www.postgresql.org/docs/current/sql-expressions.html#SQL-EXPRESSIONS-PARAMETERS-POSITIONAL)
+    (such as `$1`). When the Q object is called, the values are supplied
+    externally to the SQL query.
+
+    Example:
+    >>> _q_get_user = Q("SELECT name FROM user WHERE user_id = $user_id")
+    >>> print(_q_get_user(user_id=42))
+    ['SELECT name FROM user WHERE user_id = $1', 42]
     """
 
     def __init__(self, src: str, **kwargs: Any):
-        # retrieve variables
+        # Retrieve variables in src query string
         variables: dict[str, str] = {}
         for candidate in re.findall(r"\$([a-zA-Z0-9_]+)", src):
             if candidate in variables:
@@ -31,11 +41,12 @@ class Q:
             variables[candidate] = f"${len(variables) + 1}"
         self._variables = variables
 
-        # Replace variables with their order-based equivalent
-        # Variables are sorted in reverse to differentiate variables from others
-        # with same name and a suffix, for example var and var_len
-        for variable, order_based in sorted(variables.items(), reverse=True):
-            src = src.replace(f"${variable}", order_based)
+        # Replace variables with their order-based positional parameters
+        # Variables are sorted in reverse order in case a variable name
+        # is a suffix of another variable name (i.e. replace "var_len"
+        # before "var", otherwise we'll get something like "$1_len")
+        for variable, positional_parameter in sorted(variables.items(), reverse=True):
+            src = src.replace(f"${variable}", positional_parameter)
 
         self._sql = src
         self._stripped_sql = " ".join([x.strip() for x in src.split()])
@@ -45,24 +56,15 @@ class Q:
         return self._sql
 
     def __call__(self, **kwargs: Any) -> list[Any]:
-        if kwargs.keys() != self._variables.keys():
-            missing = self._variables.keys() - kwargs.keys()
-            unknown = kwargs.keys() - self._variables.keys()
-            raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
-        args = [self._stripped_sql]
-        for variable in self._variables:
-            args.append(kwargs[variable])
-        return args
+        return [self._stripped_sql, *self.arg_only(**kwargs)]
 
     def arg_only(self, **kwargs: Any) -> list[Any]:
         if kwargs.keys() != self._variables.keys():
             missing = self._variables.keys() - kwargs.keys()
             unknown = kwargs.keys() - self._variables.keys()
             raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
-        args = []
-        for variable in self._variables:
-            args.append(kwargs[variable])
-        return args
+
+        return [kwargs[variable] for variable in self._variables]
 
 
 def q_organization(
