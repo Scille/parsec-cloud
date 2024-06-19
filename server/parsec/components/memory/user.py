@@ -455,7 +455,7 @@ class MemoryUserComponent(BaseUserComponent):
             return UserGetCertificatesAsUserBadOutcome.AUTHOR_NOT_FOUND
         redacted = user.current_profile == UserProfile.OUTSIDER
 
-        # Bootstrap must have occured if author is present !
+        # Bootstrap must have occurred if author is present !
         assert org.bootstrapped_on is not None
 
         # 1) Common certificates (i.e. user/device/revoked/update)
@@ -568,8 +568,21 @@ class MemoryUserComponent(BaseUserComponent):
 
         # 4) Shamir certificates
 
-        # TODO: Shamir not currently implemented !
         shamir_recovery_certificates: list[bytes] = []
+
+        for user_id, shamir in org.shamir_setup.items():
+            # filter on timestamp
+            if shamir_recovery_after is not None and shamir.brief.timestamp < shamir_recovery_after:
+                continue
+
+            # if it is user's certificate keep brief
+            if user_id == author_user_id:
+                shamir_recovery_certificates.append(shamir.brief_bytes)
+
+            # if user is a share recipient keep share and brief
+            if author_user_id in shamir.shares.keys():
+                shamir_recovery_certificates.append(shamir.shares[author_user_id])
+                shamir_recovery_certificates.append(shamir.brief_bytes)
 
         return CertificatesBundle(
             common=common_certificates,
