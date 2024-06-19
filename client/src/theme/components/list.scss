@@ -3,7 +3,7 @@
 /* **** List of workspaces, files/folder, users **** */
 
 .workspace-list-item,
-ion-item:has(.file-list-item),
+.file-list-item,
 .user-list-item {
   border-radius: var(--parsec-radius-4);
   --show-full-highlight: 0;
@@ -94,6 +94,7 @@ ion-item:has(.file-list-item),
 
 .revoked {
   --background: var(--parsec-color-light-secondary-premiere) !important;
+  --background-hover: none;
 
   .user-name,
   .user-card-avatar {
@@ -125,7 +126,7 @@ ion-item:has(.file-list-item),
 // Allow to keep hover when context menu is open
 .file-hovered,
 .workspace-hovered,
-.user-hovered {
+.user-hovered:not(.revoked) {
   --background: var(--parsec-color-light-primary-30) !important;
   background-color: var(--parsec-color-light-primary-30) !important;
 }
