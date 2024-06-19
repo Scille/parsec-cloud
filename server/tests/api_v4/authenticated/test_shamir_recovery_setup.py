@@ -45,7 +45,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
 
 
-async def test_authenticated_shamir_recovery_setup_share_incoherent_timestamp(
+async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
     coolorg: CoolorgRpcClients, with_postgresql: bool
 ) -> None:
     if with_postgresql:
@@ -72,7 +72,7 @@ async def test_authenticated_shamir_recovery_setup_share_incoherent_timestamp(
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShareIncoherentTimestamp()
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShareInconsistentTimestamp()
 
 
 async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(

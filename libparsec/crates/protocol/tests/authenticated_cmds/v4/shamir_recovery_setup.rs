@@ -121,13 +121,13 @@ pub fn rep_missing_share_for_recipient() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
-pub fn rep_share_incoherent_timestamp() {
+pub fn rep_share_inconsistent_timestamp() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
-    //   status: "share_incoherent_timestamp"
+    //   status: "share_inconsistent_timestamp"
     test_roundtrip_serialization!(
         "81a6737461747573ba73686172655f696e636f686572656e745f74696d657374616d70",
-        authenticated_cmds::shamir_recovery_setup::Rep::ShareIncoherentTimestamp,
+        authenticated_cmds::shamir_recovery_setup::Rep::ShareInconsistentTimestamp,
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }

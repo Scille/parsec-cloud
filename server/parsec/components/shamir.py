@@ -70,8 +70,8 @@ class BaseShamirComponent:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepAuthorIncludedAsRecipient()
                 case ShamirAddRecoverySetupValidateBadOutcome.MISSING_SHARE_FOR_RECIPIENT:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepMissingShareForRecipient()
-                case ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCOHERENT_TIMESTAMP:
-                    return authenticated_cmds.latest.shamir_recovery_setup.RepShareIncoherentTimestamp()
+                case ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCONSISTENT_TIMESTAMP:
+                    return authenticated_cmds.latest.shamir_recovery_setup.RepShareInconsistentTimestamp()
 
                 case TimestampOutOfBallpark() as error:
                     return (
@@ -120,7 +120,7 @@ class ShamirAddRecoverySetupValidateBadOutcome(BadOutcomeEnum):
     DUPLICATE_SHARE_FOR_RECIPIENT = auto()
     AUTHOR_INCLUDED_AS_RECIPIENT = auto()
     MISSING_SHARE_FOR_RECIPIENT = auto()
-    SHARE_INCOHERENT_TIMESTAMP = auto()
+    SHARE_INCONSISTENT_TIMESTAMP = auto()
 
 
 class ShamirAddOrDeleteRecoverySetupStoreBadOutcome(BadOutcomeEnum):
@@ -165,7 +165,7 @@ def shamir_add_recovery_setup_validate(
             return ShamirAddRecoverySetupValidateBadOutcome.SHARE_INVALID_DATA
 
         if share_certificate.timestamp != brief_certificate.timestamp:
-            return ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCOHERENT_TIMESTAMP
+            return ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCONSISTENT_TIMESTAMP
         # share recipient not in brief
         if share_certificate.recipient not in brief_certificate.per_recipient_shares:
             return ShamirAddRecoverySetupValidateBadOutcome.SHARE_RECIPIENT_NOT_IN_BRIEF

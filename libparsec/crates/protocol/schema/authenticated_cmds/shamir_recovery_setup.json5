@@ -47,7 +47,7 @@
             },
             {
                 // A share has a timestamp different than the brief timestamp.
-                "status": "share_incoherent_timestamp"
+                "status": "share_inconsistent_timestamp"
             },
             {
                 // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
