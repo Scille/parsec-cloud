@@ -51,7 +51,7 @@ describe('User Card', () => {
     wrapper.trigger('click');
     expect(wrapper.emitted('click')?.length).to.equal(1);
     expect(wrapper.emitted('click')?.at(0)?.at(1)).to.deep.equal(USER);
-    wrapper.get('.user-card-option').trigger('click');
+    wrapper.get('.card-option').trigger('click');
     expect(wrapper.emitted('menuClick')?.length).to.equal(1);
     expect(wrapper.emitted('menuClick')?.at(0)?.at(1)).to.deep.equal(USER);
   });

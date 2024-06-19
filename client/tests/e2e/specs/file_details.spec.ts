@@ -17,8 +17,8 @@ for (const testData of TEST_DATA) {
   msTest(`Show ${testData.isFile ? 'file' : 'folder'} details`, async ({ connected, context }) => {
     const nameMatcher = `${testData.isFile ? 'File' : 'Dir'}_[a-z_.0-9]+`;
 
-    await expect(connected.locator('.workspaces-grid-item').nth(0)).toContainText('The Copper Coronet');
-    await connected.locator('.workspaces-grid-item').nth(0).click();
+    await expect(connected.locator('.workspace-card-item').nth(0)).toContainText('The Copper Coronet');
+    await connected.locator('.workspace-card-item').nth(0).click();
 
     await expect(connected.locator('.topbar-left__breadcrumb')).toContainText('The Copper Coronet');
     const files = connected.locator('.folder-container').getByRole('listitem');
@@ -106,8 +106,8 @@ for (const testData of TEST_DATA) {
 }
 
 msTest('Show file details in grid mode', async ({ connected }) => {
-  await expect(connected.locator('.workspaces-grid-item').nth(0)).toContainText('The Copper Coronet');
-  await connected.locator('.workspaces-grid-item').nth(0).click();
+  await expect(connected.locator('.workspace-card-item').nth(0)).toContainText('The Copper Coronet');
+  await connected.locator('.workspace-card-item').nth(0).click();
   await expect(connected.locator('.topbar-left__breadcrumb')).toContainText('The Copper Coronet');
 
   await connected.locator('#folders-ms-action-bar').locator('#grid-view').click();
