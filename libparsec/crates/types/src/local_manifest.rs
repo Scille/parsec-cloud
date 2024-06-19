@@ -23,6 +23,7 @@ macro_rules! impl_local_manifest_dump {
     ($name:ident) => {
         impl $name {
             pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+                self.check_data_integrity().expect("Manifest integrity");
                 let serialized = format_v0_dump(&self);
                 key.encrypt(&serialized)
             }
@@ -586,7 +587,22 @@ impl LocalFolderManifest {
         }
     }
 
+    /// A note about this method being public:
+    /// This structure represents mutable data (it gets loaded from disk, updated, then stored back modified)
+    /// Hence this `check_data_integrity`'s main goal is during deserialization.
+    /// However it is also useful as sanity check:
+    /// - Right before serialization
+    /// - After any modification (hence the need for this method to be public)
+    ///
+    /// Note that this method does not perform data integrity check related to the manifest being a
+    /// child or root manifest.
+    pub fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
     fn check_data_integrity_as_child(&self) -> DataResult<()> {
+        self.check_data_integrity()?;
+
         // Check that id and parent are different
         if self.base.id == self.parent {
             return Err(DataError::DataIntegrity {
@@ -598,6 +614,8 @@ impl LocalFolderManifest {
     }
 
     fn check_data_integrity_as_root(&self) -> DataResult<()> {
+        self.check_data_integrity()?;
+
         // Check that id and parent are the same
         if self.base.id != self.parent {
             return Err(DataError::DataIntegrity {

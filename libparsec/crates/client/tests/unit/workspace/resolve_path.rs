@@ -115,13 +115,13 @@ async fn inconsistent_path_parent_mismatch(
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let (patched_parent_id, expected_error) = match kind {
-        "other_entry" => (wksp1_foo_id, ResolvePathError::EntryNotFound),
+        "other_entry" => (wksp1_bar_txt_id, ResolvePathError::EntryNotFound),
         "self_referencing" => (
-            wksp1_bar_txt_id,
+            wksp1_foo_id,
             ResolvePathError::Internal(
                 DataError::DataIntegrity {
-                    data_type: "libparsec_types::local_manifest::LocalFileManifest",
-                    invariant: "id and parent are different",
+                    data_type: "libparsec_types::local_manifest::LocalFolderManifest",
+                    invariant: "id and parent are different for child manifest",
                 }
                 .into(),
             ),
@@ -130,10 +130,10 @@ async fn inconsistent_path_parent_mismatch(
     };
     env.customize(|builder| {
         builder
-            .workspace_data_storage_local_file_manifest_create_or_update(
+            .workspace_data_storage_local_folder_manifest_create_or_update(
                 "alice@dev1",
                 wksp1_id,
-                wksp1_bar_txt_id,
+                wksp1_foo_id,
                 None,
             )
             .customize(|x| {
@@ -148,7 +148,7 @@ async fn inconsistent_path_parent_mismatch(
 
     let err = ops
         .store
-        .resolve_path(&"/bar.txt".parse().unwrap())
+        .resolve_path(&"/foo".parse().unwrap())
         .await
         .unwrap_err();
 
