@@ -1,21 +1,25 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-The goal of this document is to cover all the necessary steps to add an API route to Parsec.
+The goal of this document is to cover all the necessary steps to add an API RPC command to Parsec.
+
+> Client-to-server RPC API routes are also called "commands" in Parsec. There are three command families: `anonymous_cmds` (authentication not required), `authenticated_cmds` (authentication required) and `invited_cmds` (invitation required).
+>
+> Note there is another unrelated API for administration purpose that uses REST instead of RPC (as it is expected to be used by admin using curl), this documentation doesn't cover it.
 
 In summary:
-1. Add the schema describing the new API route
+
+1. Add the schema describing the new API RPC command
 2. Generate binding code and serialization tests
 3. Implement server-side code (In-memory & PostgreSQL) and tests
 4. Implement client-side code and tests
 
 > Note that you will need a working development environment. See (./README.md).
+
 ## Schema generation
 
 Let's add a new `dummy` route to `invited_cmds`.
 
-> API routes are also called "commands" in Parsec. There are three command families: `anonymous_cmds` (authentication not required), `authenticated_cmds` (authentication required) and `invited_cmds` (invitation required).
-
-In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add a `dummy.json5` schema describing the API route.
+In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add a `dummy.json5` schema describing the API RPC command.
 
 ```json5
 [
@@ -50,6 +54,7 @@ In [this folder](../../misc/libparsec/crates/protocol/schema/invited_cmds/) add 
 ]
 
 ```
+
 For a full description of the accepted format see [the parsing/generating script](../../misc/gen_protocol_typings.py).
 
 > Note that the files are .json5. This is to allow for comments inside these files. But the parser we are using only supports .json files and we're removing the comments ourselves. So don't use any other specific feature of the json5 format (trailing commas, I'm looking at you 👀).
@@ -69,9 +74,6 @@ This will rebuild the bindings (use option `i` to install) and modify the follow
 python misc/gen_protocol_typings.py
 ```
 
-This will generate the .pyi files and some helpers for the tests. The generated code is in `/target` directory.
-
-
 ## Serialization tests
 
 After bindings generation, the serialization tests become required.
@@ -90,7 +92,6 @@ As for the content, the goal of these serialization tests is to go from bytes to
 
 On how to generate the bytes see [here](generate_blob.md) and [there](../rfcs/1009-hexstring-format.md)
 
-
 ## Server-side implementation
 
 ### Optional: the route introduces a new component
@@ -100,7 +101,6 @@ In `server/parsec/components` you define a base component. It will need to have 
 Add your component to `class Backend` in `server/parsec/backend.py`
 
 Add it to the `components_factory` both in `server/parsec/components/memory/factory.py` and `server/parsec/components/postgresql/factory.py`
-
 
 ### Defining the route
 
@@ -153,8 +153,8 @@ class MemoryDummyComponent(BaseDummyComponent):
         print("There are ",len(self._data.organizations), " organizations here.")
 ```
 
-
 ### Server tests
+
 Add the new test file `server/tests/api_v4/xxxxx/dummy.py`. It should contain a test function for each response status (see other command's tests as a guide on how to write them).
 
 Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`. It must be named `test_{new command name}` (e.g. `test_dummy`).
@@ -168,7 +168,6 @@ python make.py rts
 For more information on se testbed see [here](README.md/#starting-the-testbed-server).
 
 `test_each_cmd_req_rep_has_dedicated_test` will fail if a test function is missing
-
 
 ## Client-side implementation
 
