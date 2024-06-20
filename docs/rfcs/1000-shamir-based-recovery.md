@@ -139,7 +139,7 @@ Authenticated API:
                 "status": "missing_share_for_recipient"
             },
             {
-                // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
+                // Shamir recovery has already been setup
                 "status": "shamir_setup_already_exists"
             },
             {
@@ -224,7 +224,7 @@ Consistency between `brief` and `shares` must be checked by the Parsec server:
 - the recipients and their shares must be the same.
 - the certificates datetimes & authors must be the same.
 
-> **_Future evolution 2:_** Check the Shamir recovery setup against some
+> **_Future evolution 1:_** Check the Shamir recovery setup against some
 > organization-specific rules (e.g. the number of shares, the recipient's
 > profiles, max number of share per recipient, etc.). See "Bonus" section below.
 
@@ -716,7 +716,7 @@ Authenticated API:
             4
         ],
         "req": {
-            "cmd": "shamir_recovery_deletion",
+            "cmd": "shamir_recovery_delete_setup",
             "fields": [
                 {
                     "name": "certificate",
@@ -735,11 +735,11 @@ Authenticated API:
             },
             {
                 // Given timestamp does not match previous timestamps
-                "status": "incoherent_previous_timestamp"
+                "status": "inconsistent_previous_timestamp"
             }
             {
                 // Nothing to delete
-                "status": "no_setup_to_delete"
+                "status": "shamir_setup_not_found"
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared
@@ -806,9 +806,7 @@ The deletion certificate
 }
 ```
 
-The certificate needs to include the previous certificate timestamp in the deletion certificateto link both certificates together.
-
-> Future evolution: link the certificates with 1/ the brief signature 2/ a certificate id. This kind of link can be done between the share and brief certificate too.
+The certificate needs to include the previous certificate timestamp in the deletion certificate to link both certificates together.
 
 Who need witch certificate ?
 
@@ -822,41 +820,7 @@ Who need witch certificate ?
 
 ## Bonus
 
-### **Future evolution 1**: Only Admin can clear Shamir recovery
-
-Authenticated API, `organization_config`:
-
-```json5
-[
-    {
-        "major_versions": [
-            4
-        ],
-        "req": {
-            "cmd": "organization_config"
-        },
-        "reps": [
-            {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "shamir_recovery_clear_strategy",
-                        // Allowed values:
-                        // - `ADMINS_ONLY`
-                        // - `ADMINS_AND_SELF`
-                    },
-                    // <------------ Already existing options omitted --------->
-                ]
-            },
-            {
-                "status": "not_found"
-            }
-        ]
-    }
-]
-```
-
-### **Future evolution 2**: Specify a Shamir recovery setup template
+### **Future evolution 1**: Specify a Shamir recovery setup template
 
 Shamir recovery allows plenty of different configurations (single recipient, different
 weight per recipient etc.), but we want to be able to set some limits here using the
