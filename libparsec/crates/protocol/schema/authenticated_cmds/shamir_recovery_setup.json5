@@ -51,7 +51,14 @@
             },
             {
                 // Future evolution 1: Shamir recovery has already been setup, should ask your admin to reset it first !
-                "status": "shamir_setup_already_exists"
+                "status": "shamir_setup_already_exists",
+                "fields": [
+                    {
+                        "name": "last_shamir_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+
+                ]
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared

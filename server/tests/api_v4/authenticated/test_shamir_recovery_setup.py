@@ -81,8 +81,8 @@ async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
     # Setup previous shamir
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
-    await setup_shamir_for_coolorg(coolorg)
-
+    (raw_previous_brief, _) = await setup_shamir_for_coolorg(coolorg)
+    previous_brief = ShamirRecoveryBriefCertificate.unsecure_load(raw_previous_brief)
     dt = DateTime.now()
 
     share = ShamirRecoveryShareCertificate(
@@ -108,7 +108,9 @@ async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirSetupAlreadyExists()
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirSetupAlreadyExists(
+        last_shamir_certificate_timestamp=previous_brief.timestamp
+    )
 
 
 async def test_authenticated_shamir_recovery_setup_brief_invalid_data(

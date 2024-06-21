@@ -15,6 +15,7 @@ from parsec.components.shamir import (
     BaseShamirComponent,
     ShamirAddOrDeleteRecoverySetupStoreBadOutcome,
     ShamirAddRecoverySetupValidateBadOutcome,
+    ShamirSetupAlreadyExistsBadOutcome,
     shamir_add_recovery_setup_validate,
 )
 
@@ -75,6 +76,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
         | ShamirAddRecoverySetupValidateBadOutcome
+        | ShamirSetupAlreadyExistsBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
@@ -110,9 +112,10 @@ class MemoryShamirComponent(BaseShamirComponent):
             case last_shamir_timestamp:
                 return RequireGreaterTimestamp(last_shamir_timestamp)
 
-        if self._data.organizations[organization_id].shamir_setup.get(author) is None:
-            self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
-                setup.ciphered_data, setup.reveal_token, brief, shares, setup.brief
-            )
-        else:
-            return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ALREADY_SET
+        match self._data.organizations[organization_id].shamir_setup.get(author):
+            case None:
+                self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
+                    setup.ciphered_data, setup.reveal_token, brief, shares, setup.brief
+                )
+            case MemoryShamirSetup() as s:
+                return ShamirSetupAlreadyExistsBadOutcome(s.brief.timestamp)
