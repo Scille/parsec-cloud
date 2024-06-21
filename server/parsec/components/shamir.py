@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import auto
 
 from parsec._parsec import (
@@ -21,7 +22,7 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
-from parsec.types import BadOutcomeEnum
+from parsec.types import BadOutcome, BadOutcomeEnum
 
 
 class BaseShamirComponent:
@@ -55,8 +56,12 @@ class BaseShamirComponent:
                     client_ctx.author_revoked_abort()
                 case ShamirAddOrDeleteRecoverySetupStoreBadOutcome.INVALID_RECIPIENT:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepInvalidRecipient()
-                case ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ALREADY_SET:
-                    return authenticated_cmds.latest.shamir_recovery_setup.RepShamirSetupAlreadyExists()
+                case ShamirSetupAlreadyExistsBadOutcome() as error:
+                    return (
+                        authenticated_cmds.latest.shamir_recovery_setup.RepShamirSetupAlreadyExists(
+                            error.last_shamir_certificate_timestamp
+                        )
+                    )
 
                 case ShamirAddRecoverySetupValidateBadOutcome.BRIEF_INVALID_DATA:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepBriefInvalidData()
@@ -107,6 +112,7 @@ class BaseShamirComponent:
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
         | ShamirAddRecoverySetupValidateBadOutcome
+        | ShamirSetupAlreadyExistsBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
@@ -129,7 +135,11 @@ class ShamirAddOrDeleteRecoverySetupStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     INVALID_RECIPIENT = auto()
-    ALREADY_SET = auto()
+
+
+@dataclass(slots=True)
+class ShamirSetupAlreadyExistsBadOutcome(BadOutcome):
+    last_shamir_certificate_timestamp: DateTime
 
 
 # Check internal consistency of certificate
