@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@a5ac7e51b41094c92402da3b24376905380afc29 # pin v4.1.6
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
       - name: Generate cspell cache key
@@ -74,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@104110db58e8c9a11c1c6be025e2082f4dded3bb # pin v6.3.0
+        uses: streetsidesoftware/cspell-action@542d05c6a8980c81277ec229f9beadf4ab3f5a34 # pin v6.4.0
         with:
           config: .cspell/cspell.config.yml
           # Only check for changed files on a PR
