@@ -7,7 +7,7 @@ use data_encoding::BASE64URL;
 use eventsource_stream::Eventsource;
 use reqwest::{
     header::{HeaderMap, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LENGTH, CONTENT_TYPE},
-    Client, RequestBuilder, StatusCode, Url,
+    Client, RequestBuilder, Url,
 };
 use std::{fmt::Debug, marker::PhantomData, path::Path, sync::Arc};
 
@@ -19,7 +19,7 @@ use libparsec_types::prelude::*;
 use crate::testbed::{get_send_hook, SendHookConfig};
 use crate::{
     error::{ConnectionError, ConnectionResult},
-    SSEConnectionError, SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
+    SSEStream, API_VERSION_HEADER_NAME, PARSEC_CONTENT_TYPE,
 };
 
 use self::sse::EVENT_STREAM_CONTENT_TYPE;
@@ -239,34 +239,59 @@ impl AuthenticatedCmds {
         let request_builder = self.sse_request_builder::<T>(last_event_id.as_deref());
 
         #[cfg(feature = "test-with-testbed")]
-        let response = self
-            .send_hook
-            .low_level_send(request_builder)
-            .await
-            .map_err(SSEConnectionError::Transport)?;
+        let response = self.send_hook.low_level_send(request_builder).await?;
         #[cfg(not(feature = "test-with-testbed"))]
-        let response = request_builder
-            .send()
-            .await
-            .map_err(SSEConnectionError::Transport)?;
+        let response = request_builder.send().await;
 
-        match response.status() {
-            StatusCode::OK => {}
-            status => return Err(SSEConnectionError::InvalidStatusCode(status).into()),
-        }
+        match response.status().as_u16() {
+            200 => (),
 
-        let content_type = response
+            // HTTP codes used by Parsec
+
+            401 => return Err(ConnectionError::MissingAuthenticationInfo),
+            403 => return Err(ConnectionError::BadAuthenticationInfo),
+            404 => return Err(ConnectionError::OrganizationNotFound),
+            406 => return Err(ConnectionError::BadAcceptType),
+            // No 410: no invitation here
+            415 => return Err(ConnectionError::BadContent),
+            // TODO: cannot  access the response headers here...
+            422 => return Err(crate::error::unsupported_api_version_from_headers(
+                response.headers(),
+            )),
+            460 => return Err(ConnectionError::ExpiredOrganization),
+            461 => return Err(ConnectionError::RevokedUser),
+            462 => return Err(ConnectionError::FrozenUser),
+            498 => return Err(ConnectionError::AuthenticationTokenExpired),
+
+            // Other HTTP codes
+
+            // We typically use HTTP 503 in the tests to simulate server offline,
+            // so it should behave just like if we were not able to connect
+            // On top of that we should also handle 502 and 504 as they are related
+            // to a gateway.
+            #[allow(clippy::manual_range_patterns)]
+            502 // Bad Gateway
+            | 503 // Service Unavailable
+            | 504 // Gateway Timeout
+            => return Err(ConnectionError::NoResponse(None)),
+
+            // Finally all other HTTP codes are not supposed to occur (well except if
+            // an HTTP proxy starts modifying the response, but that's another story...)
+            _ => return Err(ConnectionError::InvalidResponseStatus(response.status())),
+        };
+
+        response
             .headers()
+            // Get `Content-Type` header
             .get(CONTENT_TYPE)
-            .ok_or_else(|| SSEConnectionError::InvalidContentType(HeaderValue::from_static("")))?;
-        let mime_type = content_type
-            .to_str()
-            .map_err(|_| SSEConnectionError::InvalidContentType(content_type.clone()))
-            .map(|e| e.split(';').next().expect("first item always exists"))?;
-
-        if mime_type != EVENT_STREAM_CONTENT_TYPE {
-            return Err(SSEConnectionError::InvalidContentType(content_type.clone()).into());
-        }
+            // Headers are expected to be ASCII (so Rust's `String` compatible)
+            .and_then(|content_type| content_type.to_str().ok())
+            // `Content-Type` header can have parameters, we only want the MIME type
+            .and_then(|content_type| content_type.split(';').next())
+            // Check if the MIME type is the one we expect
+            .filter(|content_type| *content_type == EVENT_STREAM_CONTENT_TYPE)
+            // We end up with `None` if any of the previous steps failed, now give the actual error
+            .ok_or(ConnectionError::BadContent)?;
 
         let mut sse_stream = response.bytes_stream().eventsource();
         if let Some(last_event_id) = last_event_id {
