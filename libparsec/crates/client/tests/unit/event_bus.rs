@@ -18,14 +18,14 @@ fn debug_format() {
     // Online/Offline events are always registered internally
     p_assert_eq!(
         format!("{:?}", eb),
-        "EventBus { on_offline_cbs: 1, on_online_cbs: 1 }"
+        "EventBus { on_online_cbs: 1, on_offline_cbs: 1 }"
     );
 
     let _lifetime = eb.connect(callback);
 
     p_assert_eq!(
         format!("{:?}", eb),
-        "EventBus { on_ping_cbs: 1, on_offline_cbs: 1, on_online_cbs: 1 }"
+        "EventBus { on_online_cbs: 1, on_offline_cbs: 1, on_ping_cbs: 1 }"
     );
 }
 

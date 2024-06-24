@@ -1,5 +1,38 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+/// Client-server communication is divided into two parts:
+/// - Client commands sent to the server through an RPC-like mechanism.
+/// - Server events sent to the client through a Server-Sent Events (SSE) mechanism.
+///
+/// In practice we have a single SSE connection handled by the connection monitor (which
+/// is implemented here !), and multiple concurrent RPC commands depending on what is
+/// going on in the client (e.g. data synchronization, reading a file not in cache, etc.).
+///
+/// On top of that, low-level details about the server connection are handled by the
+/// reqwest library (see `libparsec_client_connection` implementation), hence we have no
+/// guarantee on the number of physical TCP connections being used to handle RPC and SSE.
+///
+/// However what we know is 1) RPC and SSE connect to the same server and 2) server
+/// and client both support HTTP/2. Hence we can expect all connections to be multiplexed
+/// over a single physical TCP connection.
+///
+/// With this in mind, the choice has been to have the connection-related events only
+/// fired by the connection monitor: if a RPC command fails due to server disconnection,
+/// it is very likely the SSE connection will also fail right away.
+///
+/// In theory, we should have instead a centralized handling of connection errors (so
+/// that any error triggers the corresponding event, and we couldn't have a successful
+/// RPC command while the system is considered offline due to a failed SSE connection).
+/// However it is cumbersome to implement a middleware wrapper in Rust (we would have
+/// to wrap `AuthenticatedCmds` and `SSEStream` with their weird traits, and find them
+/// a good name not to confuse with the actual `AuthenticatedCmds` and `SSEStream`).
+/// Another solution would be that `AuthenticatedCmds` has an `on_error` callback, but
+/// this would make the code more fragile given it's easy to forget to call it by just
+/// using the ? operator in `libparsec_client_connection` implementation.
+///
+/// So we choose (for the moment at least !) the pragmatic approach of considering
+/// SSE errors are the only important ones, so that only the connection monitor have
+/// to deal with events.
 use std::{collections::HashMap, ops::ControlFlow, sync::Arc};
 
 use libparsec_client_connection::{

@@ -22,7 +22,7 @@ pub enum ClientEvent {
     // Server-notified changes
     ServerConfigChanged,
 
-    WorkspacesSelfAccessChanged,
+    WorkspacesSelfListChanged,
     WorkspaceLocallyCreated,
     WorkspaceWatchedEntryChanged {
         realm_id: VlobID,
@@ -68,7 +68,7 @@ pub(crate) struct OnEventCallbackPlugged {
     _online: EventBusConnectionLifetime<libparsec_client::EventOnline>,
     _server_config_changed: EventBusConnectionLifetime<libparsec_client::EventServerConfigChanged>,
     _workspace_self_access_changed:
-        EventBusConnectionLifetime<libparsec_client::EventWorkspacesSelfAccessChanged>,
+        EventBusConnectionLifetime<libparsec_client::EventWorkspacesSelfListChanged>,
     _workspace_locally_created:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceLocallyCreated>,
     _workspace_watched_entry_changed:
@@ -143,8 +143,8 @@ impl OnEventCallbackPlugged {
         let workspace_self_access_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
-                move |_: &libparsec_client::EventWorkspacesSelfAccessChanged| {
-                    (on_event_callback)(ClientEvent::WorkspacesSelfAccessChanged);
+                move |_: &libparsec_client::EventWorkspacesSelfListChanged| {
+                    (on_event_callback)(ClientEvent::WorkspacesSelfListChanged);
                 },
             )
         };

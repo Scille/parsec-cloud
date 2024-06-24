@@ -8,7 +8,7 @@ use crate::{
         CertifDecryptCurrentRealmNameError, CertifStoreError, InvalidEncryptedRealmNameError,
         InvalidKeysBundleError,
     },
-    event_bus::EventWorkspacesSelfAccessChanged,
+    event_bus::EventWorkspacesSelfListChanged,
     user::UserStoreUpdateError,
 };
 
@@ -244,7 +244,7 @@ pub async fn refresh_workspaces_list(
     }
 
     // 8) Finally trigger an event about the refresh
-    client.event_bus.send(&EventWorkspacesSelfAccessChanged);
+    client.event_bus.send(&EventWorkspacesSelfListChanged);
 
     Ok(())
 }

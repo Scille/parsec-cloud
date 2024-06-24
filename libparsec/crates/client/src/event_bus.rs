@@ -199,25 +199,131 @@ impl ToString for IncompatibleServerReason {
 // 1) Error-containing events are not often fired
 // 2) `anyhow::Error` itself is just a pointer, so converting it to an Arc is cheap
 impl_events!(
-    // Dummy event for tests only
-    Ping { ping: String },
-    // Events related to server connection
-    Offline,
+    // ***********************************************************************
+    // Server connection related events.
+    // ***********************************************************************
+
+    // Client-server communication is divided into two parts:
+    // - Client commands sent to the server through an RPC-like mechanism.
+    // - Server events sent to the client through a Server-Sent Events (SSE) mechanism.
+    //
+    // In practice we have a single SSE connection handled by the connection monitor, and
+    // multiple concurrent RPC commands depending on what is going on in the client (e.g.
+    // data synchronization, reading a file not in cache, etc.).
+    //
+    // On top of that, low-level details about the server connection are handled by the
+    // reqwest library (see `libparsec_client_connection` implementation), hence we have no
+    // guarantee on the number of physical TCP connections being used to handle RPC and SSE.
+    //
+    // However what we know is 1) RPC and SSE connect to the same server and 2) server
+    // and client both support HTTP/2. Hence we can expect all connections to be multiplexed
+    // over a single physical TCP connection.
+    //
+    // With this in mind, the choice has been to have the connection-related events only
+    // fired by the connection monitor: if a RPC command fails due to server disconnection,
+    // it is very likely the SSE connection will also fail right away.
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// The SSE connection with the server has been established.
     Online,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The SSE connection with the server has been lost.
+    Offline,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The SSE connection is able to catch up with the event it has missed when
+    /// re-connecting to the server.
+    /// However this falls short on two occasions:
+    /// - The connection monitor has just started.
+    /// - The server informed us that it has skipped some event is the SSE connection.
+    ///
+    /// In both cases, the issue is there is too much to catch up with and the monitors that
+    /// expect to be in sync with the server should do a polling operation to catch up instead.
     MissedServerEvents,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server has informed us that the organization we are part of has expired.
+    ExpiredOrganization,
+    /// This event is fired by the connection monitor.
+    ///
+    /// The server has informed us that the user we are authenticated with has been revoked.
+    /// Note this can also occur if the user has been frozen (i.e. the user is temporary not
+    /// allowed to connect to the server).
+    RevokedSelfUser,
+    /// This event is fired by the connection monitor.
+    ///
+    /// A connection has been made between the client and the server, but they cannot
+    /// settle on a common API to communicate.
+    IncompatibleServer(IncompatibleServerReason),
+    /// The server and client clocks are too much out of sync.
+    ///
+    /// This event is a special snowflake: it is fired anywhere the client sends a RPC
+    /// command to the server that may return a `timestamp_out_of_ballpark` error status.
+    ///
+    /// Note the SSE connection never returns a `timestamp_out_of_ballpark` so only the
+    /// RPC commands can fire this event (which is exactly the opposite of other
+    /// connection-related errors that are only fired by the connection monitor !).
+    ///
+    /// The reason for this weird behavior is the fact the error status is specific to
+    /// each RPC command.
+    // TODO: If we wrap `AuthenticatedCmds::send` to make it handle event sending, we
+    //       could also have `ProtocolRequest::api_load_response` informing us in a
+    //       generic way that the response should lead to a `TooMuchDriftWithServerClock`
+    //       event being fired.
     TooMuchDriftWithServerClock {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
         ballpark_client_early_offset: Float,
         ballpark_client_late_offset: Float,
     },
-    ExpiredOrganization,
-    RevokedSelfUser,
-    IncompatibleServer(IncompatibleServerReason),
+
+    // ***********************************************************************
+    // Server configuration related events
+    // ***********************************************************************
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// `ServerConfigNotified` correspond to the SSE event that is always send by the
+    /// server when connecting to it. `ServerConfigChanged` is the higher level event
+    /// that detect an actual change in the server configuration (e.g. in case of
+    /// disconnection we can have multiple `ServerConfigNotified`, but no
+    /// `ServerConfigChanged`).
+    ServerConfigNotified {
+        active_users_limit: ActiveUsersLimit,
+        user_profile_outsider_allowed: bool,
+    },
+    /// This event is fired by the connection monitor.
+    ///
+    /// `ServerConfigChanged` doesn't provide the actual config, use
+    /// `Client::get_server_config` to get it instead.
+    ServerConfigChanged,
+
+    // ***********************************************************************
+    // Certificates related events
+    // ***********************************************************************
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// There is new certificates available on the server.
+    ///
+    /// This event is used by the certificates poll monitor to trigger a polling
+    /// operation.
+    /// `CertificatesUpdated` correspond to the SSE event that is send by the server.
+    /// `NewCertificates` is the higher level event that occurs once the new
+    /// certificates has been integrated in the local storage and, hence, are visible
+    /// for all practical purpose.
+    CertificatesUpdated { last_timestamps: PerTopicLastTimestamps },
+    /// This event is fired by the certificate ops when new certificates has been
+    /// integrated into the local storage.
+    ///
+    /// This event is used by the workspaces refresh list monitor to trigger a refresh
+    /// of the local workspaces list (i.e. the list of workspaces the client considers
+    /// the user has access to)
     // TODO: two types of new certificates events:
     //       - poll from scratch
     //       - per-type event: rename, key rotation, share/unshare with self, shamir for self, etc.
-    // The CertificateOps has received integrated new certificates from the server.
     NewCertificates {
         // The local certificates storage was empty, hence the server sent all certificates.
         storage_initially_empty: bool,
@@ -231,61 +337,39 @@ impl_events!(
         shamir_recovery_new_since: Option<DateTime>,
         realm_new_since: Vec<(VlobID, DateTime)>,
     },
-    // Events related to ops
-    UserOpsSynced,
-    UserOpsNeedSync,
-    WorkspacesSelfAccessChanged,
-    WorkspaceLocallyCreated {
-        name: EntryName,
-        realm_id: VlobID,
-    },
-    WorkspaceRenamed {
-        new_name: EntryName,
-        realm_id: VlobID,
-    },
-    WorkspaceOpsOutboundSyncNeeded {
-        realm_id: VlobID,
-        entry_id: VlobID,
-    },
-    WorkspaceOpsInboundSyncDone {
-        realm_id: VlobID,
-        entry_id: VlobID,
-    },
-    WorkspaceWatchedEntryChanged {
-        realm_id: VlobID,
-        entry_id: VlobID,
-    },
-    // Events related to monitors
-    MonitorCrashed{
-        monitor: &'static str,
-        workspace_id: Option<VlobID>,
-        error: Arc<anyhow::Error>,
-    },
-    // CertificatesMonitorCrashed(Arc<anyhow::Error>),
+    /// This event is fired by the certificate ops when unsuccessfully trying to
+    /// integrate new certificates.
     InvalidCertificate(Box<crate::certif::InvalidCertificateError>),
-    // UserSyncMonitorCrashed(Arc<anyhow::Error>),
-    // WorkspaceInboundSyncMonitorCrashed(Arc<anyhow::Error>),
-    // WorkspaceOutboundSyncMonitorCrashed(Arc<anyhow::Error>),
-    // Re-publishing of `events_listen`
-    // `ServerConfigNotified` correspond to the SSE event that is always send by the
-    // server when connecting to it. `ServerConfigChanged` is the higher level event
-    // that detect an actual change in the server configuration (e.g. in case of
-    // disconnection we can have multiple `ServerConfigNotified`, but no
-    // `ServerConfigChanged`).
-    ServerConfigNotified {
-        active_users_limit: ActiveUsersLimit,
-        user_profile_outsider_allowed: bool,
-    },
-    // `ServerConfigChanged` doesn't provide the actual config, use
-    // `Client::get_server_config` to get it instead.
-    ServerConfigChanged,
-    CertificatesUpdated { last_timestamps: PerTopicLastTimestamps },
+
+    // ***********************************************************************
+    // Invitation related events
+    // ***********************************************************************
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// The invitation status has changed on server side (e.g. a claimer is online,
+    /// an invitation has been deleted etc.).
     InvitationChanged {
         status: InvitationStatus,
         token: InvitationToken,
     },
-    // Event triggered when the server notify us of a change, see `WorkspaceOpsInboundSyncDone`
-    // for the event triggered when the change is actually integrated.
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// The PKI enrollments have changed on server side (e.g. a new enrollment
+    /// is available).
+    PkiEnrollmentUpdated,
+
+    // ***********************************************************************
+    // Vlob related events
+    // ***********************************************************************
+
+    /// This event is fired by the connection monitor.
+    ///
+    /// A vlob has been created/updated on the server.
+    ///
+    /// This event is used by the workspaces inbound sync monitor (and the user
+    /// sync monitor) to be notified an inbound sync operation is needed.
     RealmVlobUpdated {
         author: DeviceID,
         blob: Option<Bytes>,
@@ -296,7 +380,76 @@ impl_events!(
         version: VersionInt,
         vlob_id: VlobID,
     },
-    PkiEnrollmentUpdated,
+
+    /// This event is fired by the user ops when a sync of the user manifest is needed.
+    ///
+    /// This event is hence used by the user sync monitor to be notified an outbound
+    /// sync operation is needed.
+    UserOpsOutboundSyncNeeded,
+    /// This event is fired by the user ops after a successful outbound sync of
+    /// the user manifest (i.e. the local user manifest is no longer need sync).
+    UserOpsOutboundSyncDone,
+
+    /// This event is fired by the workspace ops when a sync of one of its manifest is needed.
+    ///
+    /// This event is hence used by the workspace sync monitor to be notified an outbound
+    /// sync operation is needed.
+    /// This event is also used to implement `WorkspaceOps::workspace_watch_entry_oneshot`.
+    WorkspaceOpsOutboundSyncNeeded {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    /// This event is fired by the workspace ops after a successful outbound sync
+    /// (i.e. the corresponding local manifest is no longer need sync).
+    ///
+    /// This event is used to implement `WorkspaceOps::workspace_watch_entry_oneshot`.
+    WorkspaceOpsInboundSyncDone {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    /// This event is fired by the workspace ops when a manifest that is watched gets
+    /// modified or local or remote (see `WorkspaceOps::workspace_watch_entry_oneshot`).
+    WorkspaceWatchedEntryChanged {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+
+    // ***********************************************************************
+    // Misc events
+    // ***********************************************************************
+
+    /// This event is fired in `Client::refresh_workspaces_list` when a refresh of the
+    /// local workspaces list (i.e. the list of workspaces the client considers the
+    /// user has access to) leads to an actual change in the list.
+    ///
+    /// When this event is fired, you can expect:
+    /// - A new workspace has been added to the list.
+    /// - A workspace has been removed from the list.
+    /// - A workspace had its name changed.
+    WorkspacesSelfListChanged,
+
+    /// This event is fired in `Client::create_workspace`.
+    ///
+    /// This event is used by the workspaces bootstrap monitor to trigger a bootstrap
+    /// of the newly created workspace (i.e. the workspaces gets created on the server
+    /// and its initial key rotation and realm name certificates get uploaded).
+    WorkspaceLocallyCreated {
+        name: EntryName,
+        realm_id: VlobID,
+    },
+
+    /// A monitor has crashed :'(
+    ///
+    /// This is not supposed to occur, however if that's the case the monitor is
+    /// not restarted (to avoid crash loop).
+    MonitorCrashed{
+        monitor: &'static str,
+        workspace_id: Option<VlobID>,
+        error: Arc<anyhow::Error>,
+    },
+
+    /// Dummy event for tests only (only test code should fire it).
+    Ping { ping: String },
 );
 
 pub trait Broadcastable: std::fmt::Debug + Send
