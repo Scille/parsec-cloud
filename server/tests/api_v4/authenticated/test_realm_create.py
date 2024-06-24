@@ -181,7 +181,6 @@ async def test_authenticated_realm_create_require_greater_timestamp_due_to_commo
     backend: Backend,
     alice_owner_role_certificate: RealmRoleCertificate,
     timestamp_offset: int,
-    with_postgresql: bool,
 ) -> None:
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
