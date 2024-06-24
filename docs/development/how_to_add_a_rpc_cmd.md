@@ -1,5 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
+# How to add an API RPC command to Parsec
+
 The goal of this document is to cover all the necessary steps to add an API RPC command to Parsec.
 
 > Client-to-server RPC API routes are also called "commands" in Parsec. There are three command families: `anonymous_cmds` (authentication not required), `authenticated_cmds` (authentication required) and `invited_cmds` (invitation required).
@@ -59,20 +61,20 @@ For a full description of the accepted format see [the parsing/generating script
 
 > Note that the files are .json5. This is to allow for comments inside these files. But the parser we are using only supports .json files and we're removing the comments ourselves. So don't use any other specific feature of the json5 format (trailing commas, I'm looking at you 👀).
 
-Then from the root directory, run the following scripts to generate binding code.
+Then from the root directory, run the following scripts.
 
 ```shell
-python make.py r
+python make.py python-dev-rebuild # short option `r`
+python misc/gen_protocol_typings.py
 ```
 
-This will rebuild the bindings (use option `i` to install) and modify the following files:
+The `gen_protocol_typing` will only generate typing and modify the following files, that must be committed:
     - `server/parsec/_parsec_pyi/protocol/__init__.pyi`
     - `server/parsec/_parsec_pyi/protocol/xxxxxx_cmds/v4/__init__.pyi`
     - `server/tests/common/rpc.py`
 
-```shell
-python misc/gen_protocol_typings.py
-```
+
+`python-dev-rebuild` will rebuild the bindings in `server/parsec/_parsec.cpython-312-x86_64-linux-gnu.so`. Use can use `python-dev-install` to install before building the bindings (short option `i`).
 
 ## Serialization tests
 
@@ -162,7 +164,7 @@ Import the new test file in `server/tests/api_v4/xxxxx/__init__.py`. It must be 
 Start a new testbed :
 
 ```shell
-python make.py rts
+python make.py run-testbed-server # short option `rts`
 ```
 
 For more information on se testbed see [here](README.md/#starting-the-testbed-server).
