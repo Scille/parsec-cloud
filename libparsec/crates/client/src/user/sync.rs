@@ -12,7 +12,7 @@ use crate::{
         CertifPollServerError, CertifValidateManifestError, InvalidCertificateError,
         InvalidManifestError,
     },
-    EventUserOpsSynced,
+    EventUserOpsOutboundSyncDone,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -80,7 +80,7 @@ pub async fn sync(ops: &UserOps) -> Result<(), UserSyncError> {
 
     if user_manifest.need_sync {
         outbound_sync(ops).await?;
-        ops.event_bus.send(&EventUserOpsSynced);
+        ops.event_bus.send(&EventUserOpsOutboundSyncDone);
         Ok(())
     } else {
         inbound_sync(ops).await

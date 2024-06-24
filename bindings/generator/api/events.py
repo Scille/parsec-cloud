@@ -18,7 +18,7 @@ class ClientEvent(Variant):
     class ServerConfigChanged:
         pass
 
-    class WorkspacesSelfAccessChanged:
+    class WorkspacesSelfListChanged:
         pass
 
     class WorkspaceLocallyCreated:

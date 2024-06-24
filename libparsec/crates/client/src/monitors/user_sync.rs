@@ -6,7 +6,9 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMissedServerEvents, EventRealmVlobUpdated, EventUserOpsNeedSync},
+    event_bus::{
+        EventBus, EventMissedServerEvents, EventRealmVlobUpdated, EventUserOpsOutboundSyncNeeded,
+    },
     user::{UserOps, UserSyncError},
     EventMonitorCrashed,
 };
@@ -51,7 +53,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                 }
             })
         },
-        event_bus.connect(move |_: &EventUserOpsNeedSync| {
+        event_bus.connect(move |_: &EventUserOpsOutboundSyncNeeded| {
             let _ = tx.send(Action::LocalChange);
         }),
     );

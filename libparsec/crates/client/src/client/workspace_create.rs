@@ -68,7 +68,7 @@ pub(super) async fn create_workspace(
     client_ops
         .event_bus
         .send(&EventWorkspaceLocallyCreated { realm_id, name });
-    // Don't need to send an `EventUserOpsNeedSync` event given local user manifest's
+    // Don't need to send an `EventUserOpsOutboundSyncNeeded` event given local user manifest's
     // `local_workspaces` field does not need to be synchronized.
 
     Ok(realm_id)

@@ -11,7 +11,9 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
-use crate::{ClientRenameWorkspaceError, WorkspaceInfo};
+use crate::{
+    ClientRenameWorkspaceError, EventNewCertificates, EventWorkspacesSelfListChanged, WorkspaceInfo,
+};
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok(env: &TestbedEnv) {
@@ -66,18 +68,16 @@ async fn ok(env: &TestbedEnv) {
         },
     );
 
-    // let mut spy = client.event_bus.spy.start_expecting();
+    let mut spy = client.event_bus.spy.start_expecting();
 
     client
         .rename_workspace(wksp1_id, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 
-    // TODO: check event !
-    // spy.assert_next(|event: &EventWorkspaceRenamed| {
-    //     p_assert_eq!(event.realm_id, wksp1_id);
-    //     p_assert_eq!(event.new_name, "wksp1'".parse().unwrap());
-    // });
+    // Rename also trigger a local workspace list refresh
+    spy.assert_next(|_event: &EventNewCertificates| {});
+    spy.assert_next(|_event: &EventWorkspacesSelfListChanged| {});
 
     let mut workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces.len(), 1, "{:?}", workspaces);
@@ -165,18 +165,16 @@ async fn realm_not_bootstrapped_missing_initial_rename(env: &TestbedEnv) {
         },
     );
 
-    // let mut spy = client.event_bus.spy.start_expecting();
+    let mut spy = client.event_bus.spy.start_expecting();
 
     client
         .rename_workspace(wksp1_id, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 
-    // TODO: check event !
-    // spy.assert_next(|event: &EventWorkspaceRenamed| {
-    //     p_assert_eq!(event.realm_id, wksp1_id);
-    //     p_assert_eq!(event.new_name, "wksp1'".parse().unwrap());
-    // });
+    // Rename also trigger a local workspace list refresh
+    spy.assert_next(|_event: &EventNewCertificates| {});
+    spy.assert_next(|_event: &EventWorkspacesSelfListChanged| {});
 
     let mut workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces.len(), 1, "{:?}", workspaces);
@@ -311,18 +309,18 @@ async fn realm_not_bootstrapped_missing_initial_key_rotation(env: &TestbedEnv) {
         },
     );
 
-    // let mut spy = client.event_bus.spy.start_expecting();
+    let mut spy = client.event_bus.spy.start_expecting();
 
     client
         .rename_workspace(wksp1_id, "wksp1'".parse().unwrap())
         .await
         .unwrap();
 
-    // TODO: check event !
-    // spy.assert_next(|event: &EventWorkspaceRenamed| {
-    //     p_assert_eq!(event.realm_id, wksp1_id);
-    //     p_assert_eq!(event.new_name, "wksp1'".parse().unwrap());
-    // });
+    // Some certificates were missing and had to be fetched first...
+    spy.assert_next(|_event: &EventNewCertificates| {});
+    // ..then the rename also trigger a local workspace list refresh
+    spy.assert_next(|_event: &EventNewCertificates| {});
+    spy.assert_next(|_event: &EventWorkspacesSelfListChanged| {});
 
     let mut workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces.len(), 1, "{:?}", workspaces);

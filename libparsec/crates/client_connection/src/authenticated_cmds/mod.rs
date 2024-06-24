@@ -241,7 +241,7 @@ impl AuthenticatedCmds {
         #[cfg(feature = "test-with-testbed")]
         let response = self.send_hook.low_level_send(request_builder).await?;
         #[cfg(not(feature = "test-with-testbed"))]
-        let response = request_builder.send().await;
+        let response = request_builder.send().await?;
 
         match response.status().as_u16() {
             200 => (),

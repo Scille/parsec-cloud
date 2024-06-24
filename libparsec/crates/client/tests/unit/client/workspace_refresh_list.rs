@@ -7,7 +7,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
-use crate::{ClientRefreshWorkspacesListError, EventWorkspacesSelfAccessChanged, WorkspaceInfo};
+use crate::{ClientRefreshWorkspacesListError, EventWorkspacesSelfListChanged, WorkspaceInfo};
 
 #[parsec_test(testbed = "coolorg")]
 async fn ok_with_changes(
@@ -200,7 +200,7 @@ async fn ok_with_changes(
 
     client.refresh_workspaces_list().await.unwrap();
 
-    spy.assert_next(|_: &EventWorkspacesSelfAccessChanged| {});
+    spy.assert_next(|_: &EventWorkspacesSelfListChanged| {});
 
     let workspaces = client.list_workspaces().await;
     p_assert_eq!(workspaces, expected_workspaces);
