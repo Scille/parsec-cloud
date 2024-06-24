@@ -46,7 +46,7 @@ from parsec.components.vlob import (
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
-q_dump_vlobs = Q(
+_q_dump_vlobs = Q(
     f"""
 SELECT
     vlob_atom.vlob_id,
@@ -656,7 +656,7 @@ class PGVlobComponent(BaseVlobComponent):
     async def test_dump_vlobs(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
-        rows = await conn.fetch(*q_dump_vlobs(organization_id=organization_id.str))
+        rows = await conn.fetch(*_q_dump_vlobs(organization_id=organization_id.str))
         result: dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]] = {}
         for row in rows:
             vlob_id = VlobID.from_hex(row["vlob_id"])

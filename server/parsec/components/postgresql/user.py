@@ -137,7 +137,7 @@ WHERE
 """
 )
 
-q_freeze_user = Q(
+_q_freeze_user = Q(
     f"""
 UPDATE user_ SET
     frozen = $frozen
@@ -1234,7 +1234,9 @@ class PGUserComponent(BaseUserComponent):
                 )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
 
         await conn.execute(
-            *q_freeze_user(organization_id=organization_id.str, user_id=info.user_id, frozen=frozen)
+            *_q_freeze_user(
+                organization_id=organization_id.str, user_id=info.user_id, frozen=frozen
+            )
         )
         info.frozen = frozen
 
