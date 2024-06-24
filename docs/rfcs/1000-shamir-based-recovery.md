@@ -140,8 +140,9 @@ Authenticated API:
             },
             {
                 // Shamir recovery has already been setup
-                "status": "shamir_setup_already_exists"
+                "status": "shamir_setup_already_exists",
             },
+
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.
@@ -733,12 +734,23 @@ Authenticated API:
                 // Cannot deserialize data into the expected certificate
                 "status": "invalid_data"
             },
+             {
+                // Share recipients lists are incoherent
+                "status": "incoherent_date"
+            },
             {
-                // Given timestamp does not match previous timestamps
-                "status": "inconsistent_previous_timestamp"
-            }
+                // There is already a deletion certificate for the same setup
+                "status": "shamir_setup_already_deleted",
+                "fields": [
+                    {
+                        "name": "last_shamir_deletion_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+
+                ]
+            },
             {
-                // Nothing to delete
+                // Nothing to delete, ie no setup was found with the same (author_user_id, timestamp)
                 "status": "shamir_setup_not_found"
             },
             {
@@ -787,6 +799,7 @@ The deletion certificate
     "type": "shamir_recovery_deletion_certificate",
     "other_fields": [
         {
+            // certificate author
             "name": "author",
             "type": "DeviceID"
         },
@@ -795,7 +808,13 @@ The deletion certificate
             "type": "DateTime"
         },
         {
-            "name": "previous_timestamp",
+            "name": "setup_to_delete_timestamp",
+            "type": "DateTime"
+        },
+        // User here must be the one owning the device used as author
+        // (i.e. a user can only remove its own Shamir recovery)
+        {
+            "name": "setup_to_delete_user_id",
             "type": "DateTime"
         },
         {
@@ -812,11 +831,18 @@ Who need witch certificate ?
 
 | certificate | author | share recipient |
 |-------------|--------|-----------------|
-| brief       | x      |                 |
+| brief       | x      | x               |
 | share       |        | x               |
 | deletion    | x      | x               |
 
+### How to decide if a deletion certificate is valid ?
 
+A setup can be identified by the tuple (author_user_id, timestamp) that we'll call shamir_id.
+To decide is a deletion certificate is valid, the following questions must be asked
+
+1. Is there a shamir setup with the corresponding shamir id ? No, means `shamir_setup_not_found`
+2. Has this shamir id already a corresponding deletion certificate ? Yes, means `shamir_setup_already_deleted`
+3. Is the share recipients list the same ? No, means `invalid_data`
 
 ## Bonus
 
@@ -884,7 +910,7 @@ requires Alice and Bob, or Adam alone". However given we cannot trust the server
 on such precise configuration, a new certificate type must be introduced which is cumbersome :(
 Also we should be able to provide approach 2) as part of approach 1).
 
-### **Future evolution 3**: notify shamir author when shamir secret become irrecoverable
+### **Future evolution 2**: notify shamir author when shamir secret become irrecoverable
 
 If Alice has setup a shamir with Bob, Mallory and John, each of then having one share and a threshold of two.
 Then Bob and Mallory leave the organization. So this setup becomes unusable.
