@@ -108,10 +108,10 @@ INNER JOIN locked_realms USING (_id)
 """)
 
 
-q_check_realm_topic = _make_q_lock_realm(for_share=True)
-q_lock_realm_topic = _make_q_lock_realm(for_update=True)
+_q_check_realm_topic = _make_q_lock_realm(for_share=True)
+_q_lock_realm_topic = _make_q_lock_realm(for_update=True)
 
-q_get_current_roles = Q(
+_q_get_current_roles = Q(
     f"""
 SELECT DISTINCT ON(user_) { q_user(_id="realm_user_role.user_", select="user_id") }, role
 FROM  realm_user_role
@@ -120,7 +120,7 @@ ORDER BY user_, certified_on DESC
 """
 )
 
-q_insert_keys_bundle = Q(
+_q_insert_keys_bundle = Q(
     f"""
 INSERT INTO realm_keys_bundle (
     realm,
@@ -143,7 +143,7 @@ RETURNING _id
 """
 )
 
-q_insert_keys_bundle_access = Q(
+_q_insert_keys_bundle_access = Q(
     f"""
 INSERT INTO realm_keys_bundle_access (
     realm,
@@ -160,7 +160,7 @@ INSERT INTO realm_keys_bundle_access (
 )
 
 
-q_update_key_index = Q(
+_q_update_key_index = Q(
     f"""
 UPDATE realm
 SET key_index = $key_index
@@ -170,7 +170,7 @@ WHERE
 """
 )
 
-q_get_keys_bundle = Q(
+_q_get_keys_bundle = Q(
     f"""
 SELECT
     realm_keys_bundle._id,
@@ -184,7 +184,7 @@ WHERE
 """
 )
 
-q_get_keys_bundle_access = Q(
+_q_get_keys_bundle_access = Q(
     """
 SELECT
     realm_keys_bundle_access.access
@@ -397,7 +397,7 @@ class PGRealmComponent(BaseRealmComponent):
         author_user_id: UserID,
     ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
         row = await conn.fetchrow(
-            *q_check_realm_topic(
+            *_q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 user_id=author_user_id,
@@ -417,7 +417,7 @@ class PGRealmComponent(BaseRealmComponent):
         author_user_id: UserID,
     ) -> tuple[RealmRole, KeyIndex, DateTime] | RealmCheckBadOutcome:
         row = await conn.fetchrow(
-            *q_lock_realm_topic(
+            *_q_lock_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 user_id=author_user_id,
@@ -437,7 +437,7 @@ class PGRealmComponent(BaseRealmComponent):
         user_id: UserID,
     ) -> RealmRole | None:
         row = await conn.fetchrow(
-            *q_check_realm_topic(
+            *_q_check_realm_topic(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 user_id=user_id,
@@ -1150,7 +1150,7 @@ class PGRealmComponent(BaseRealmComponent):
 
         # Get keys bundle
         row = await conn.fetchrow(
-            *q_get_keys_bundle(
+            *_q_get_keys_bundle(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
                 key_index=key_index,
@@ -1163,7 +1163,7 @@ class PGRealmComponent(BaseRealmComponent):
 
         # Get key bundle access
         row = await conn.fetchrow(
-            *q_get_keys_bundle_access(
+            *_q_get_keys_bundle_access(
                 realm_keys_bundle_internal_id=realm_keys_bundle_internal_id,
                 user_id=author_user_id,
             )
@@ -1214,7 +1214,7 @@ class PGRealmComponent(BaseRealmComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, realm_id: VlobID
     ) -> set[UserID]:
         rows = await conn.fetch(
-            *q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
+            *_q_get_current_roles(organization_id=organization_id.str, realm_id=realm_id)
         )
         return {UserID.from_hex(row["user_id"]) for row in rows if row["role"] is not None}
 
@@ -1229,7 +1229,7 @@ class PGRealmComponent(BaseRealmComponent):
     ) -> None:
         assert realm_key_rotation_certificate_cooked.author is not None
         keys_bundle_internal_id = await conn.fetchval(
-            *q_insert_keys_bundle(
+            *_q_insert_keys_bundle(
                 organization_id=organization_id.str,
                 realm_id=realm_key_rotation_certificate_cooked.realm_id,
                 key_index=realm_key_rotation_certificate_cooked.key_index,
@@ -1244,7 +1244,7 @@ class PGRealmComponent(BaseRealmComponent):
 
         def arg_gen():
             for user_id, access in per_participant_keys_bundle_access.items():
-                x = q_insert_keys_bundle_access.arg_only(
+                x = _q_insert_keys_bundle_access.arg_only(
                     organization_id=organization_id.str,
                     realm_id=realm_key_rotation_certificate_cooked.realm_id,
                     realm_keys_bundle_internal_id=keys_bundle_internal_id,
@@ -1254,11 +1254,11 @@ class PGRealmComponent(BaseRealmComponent):
                 yield x
 
         await conn.executemany(
-            q_insert_keys_bundle_access.sql,
+            _q_insert_keys_bundle_access.sql,
             arg_gen(),
         )
         await conn.execute(
-            *q_update_key_index(
+            *_q_update_key_index(
                 organization_id=organization_id.str,
                 realm_id=realm_key_rotation_certificate_cooked.realm_id,
                 key_index=realm_key_rotation_certificate_cooked.key_index,
