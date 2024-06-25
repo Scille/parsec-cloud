@@ -149,12 +149,9 @@ def _table_q_factory(
                 assert organization_id is not None
                 organization = q_organization_internal_id(organization_id)
 
-            condition = " AND ".join(
-                (
-                    f"{select_table}.{public_id_column} = {public_id}",
-                    f"{select_table}.organization = {organization}",
-                )
-            )
+            filter1 = f"{select_table}.{public_id_column} = {public_id}"
+            filter2 = f"{select_table}.organization = {organization}"
+            condition = f"{filter1} AND {filter2}"
 
         assert not kwargs
         suffix = suffix or ""
@@ -163,9 +160,9 @@ def _table_q_factory(
     def _q_internal_id(**kwargs: Any) -> str:
         return _q(select="_id", **kwargs)
 
-    # TODO: What's the purpose of setting __name__ here? Setting __doc__ seem more useful
-    # _q.__name__ = f"q_{table}"
-    # _q_internal_id.__name__ = f"q_{table}_internal_id"
+    # Useful for function representation & debugging
+    _q.__name__ = f"q_{table}"
+    _q_internal_id.__name__ = f"q_{table}_internal_id"
 
     return _q, _q_internal_id
 
@@ -177,35 +174,6 @@ q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
 q_block, q_block_internal_id = _table_q_factory("block", "block_id")
 q_human, q_human_internal_id = _table_q_factory("human", "email")
 q_invitation, q_invitation_internal_id = _table_q_factory("invitation", "token")
-
-
-# TODO: This query is unused, still needed?
-# def q_vlob_encryption_revision_internal_id(
-#     encryption_revision: str,
-#     organization_id: str | None = None,
-#     organization: str | None = None,
-#     realm_id: str | None = None,
-#     realm: str | None = None,
-#     table: str = "vlob_encryption_revision",
-# ) -> str:
-#     if realm is None:
-#         assert realm_id is not None
-#         assert organization_id is not None or organization is not None
-#         if organization is None:
-#             _q_realm = q_realm_internal_id(organization_id=organization_id, realm_id=realm_id)
-#         else:
-#             _q_realm = q_realm_internal_id(organization=organization, realm_id=realm_id)
-#     else:
-#         _q_realm = realm
-#     return f"""
-# (
-# SELECT _id
-# FROM {table}
-# WHERE
-#     {table}.realm = {_q_realm}
-#     AND {table}.encryption_revision = {encryption_revision}
-# )
-# """
 
 
 def query(
