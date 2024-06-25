@@ -214,20 +214,6 @@ SELECT
 
 _q_get_organizations = Q("SELECT organization_id AS id from organization ORDER BY id")
 
-# TODO: This query is unused, still needed?
-# There's no `created_on` or similar field for realm. So we get an estimation by
-# taking the oldest certification in the `realm_user_role`
-# _q_get_average_realm_creation_date = Q(
-#    """
-#    SELECT realm, MIN(certified_on) AS creation_date
-#    FROM realm AS r
-#        JOIN realm_user_role AS rur ON r._id = rur.realm
-#        JOIN organization AS o ON o._id = r.organization
-#    WHERE o.organization_id = $organization_id
-#    GROUP BY realm
-# """
-# )
-
 
 @lru_cache()
 def _q_update_factory(
