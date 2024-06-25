@@ -21,11 +21,14 @@ class Q:
 
     A Q object is constructed from an SQL query string containing variables
     (such as `$user_id`). These variables are replaced by [positional parameters](https://www.postgresql.org/docs/current/sql-expressions.html#SQL-EXPRESSIONS-PARAMETERS-POSITIONAL)
-    (such as `$1`). When the Q object is called, the values are supplied
-    externally to the SQL query.
+    (such as `$1`).
+
+    When the Q object is called, the values are supplied after the query.
 
     Example:
     >>> _q_get_user = Q("SELECT name FROM user WHERE user_id = $user_id")
+    >>> print(_q_get_user.sql)
+    SELECT name FROM user WHERE user_id = $1
     >>> print(_q_get_user(user_id=42))
     ['SELECT name FROM user WHERE user_id = $1', 42]
     """
@@ -70,24 +73,55 @@ class Q:
 def q_organization(
     organization_id: str | None = None,
     _id: str | None = None,
-    table: str = "organization",
     select: str = "*",
 ) -> str:
     assert organization_id is not None or _id is not None
     if _id is not None:
-        condition = f"{table}._id = {_id}"
+        condition = f"organization._id = {_id}"
     else:
-        condition = f"{table}.organization_id = {organization_id}"
-    return f"(SELECT {select} FROM {table} WHERE {condition})"
+        condition = f"organization.organization_id = {organization_id}"
+    return f"(SELECT {select} FROM organization WHERE {condition})"
 
 
 def q_organization_internal_id(organization_id: str, **kwargs: Any) -> str:
+    """
+    Query the organization's internal ID for the given organization public ID
+
+    ```sql
+    SELECT _id FROM organization WHERE organization.organization_id = {organization_id}
+    ```
+    """
     return q_organization(organization_id=organization_id, select="_id", **kwargs)
 
 
 def _table_q_factory(
-    table: str, public_id_field: str
+    table: str,
+    public_id_column: str,
 ) -> tuple[Callable[..., str], Callable[..., str]]:
+    """
+    Returns a tuple of helper functions to query the specified table.
+
+    The first one can be used to query any column from the table. It is useful
+    as a subquery where internal ID (`_id`) should equal the column of an external
+    query (such as `author` in the example below).
+
+    The second one is used to query internal ID (`_id`) for the given public ID
+    (`public_id_column`) of the table.
+
+    >>> q_device, q_device_internal_id = _table_q_factory("device", "device_id")
+
+    >>> q_device(select="device_id", _id="author")
+    SELECT device_id FROM device WHERE device._id = author
+
+    >>> q_device_internal_id(organization_id="$organization_id", device_id="$author")
+    SELECT _id
+    FROM device
+    WHERE device.device_id = $author
+      AND device.organization = (SELECT _id
+                                 FROM organization
+                                 WHERE organization.organization_id = $organization_id) "
+    """
+
     def _q(
         organization_id: str | None = None,
         organization: str | None = None,
@@ -97,23 +131,31 @@ def _table_q_factory(
         suffix: str | None = None,
         **kwargs: Any,
     ) -> str:
-        if table_alias:
-            from_table = f"{table} as {table_alias}"
-            select_table = table_alias
-        else:
-            from_table = table
-            select_table = table
+        # Use table alias if specified
+        from_table = f"{table} AS {table_alias}" if table_alias else table
+        select_table = table_alias if table_alias else table
+
+        # Use either internal ID (_id) or public ID for the WHERE condition
         if _id is not None:
             condition = f"{select_table}._id = {_id}"
         else:
-            public_id = kwargs.pop(public_id_field, None)
+            public_id = kwargs.pop(public_id_column, None)
             assert public_id is not None
+
+            # When using public ID, the organization should also be specified.
+            # If the organization's internal ID (`organization`) is not specified,
+            # the organization's public ID (`organization_id`) is used to retrieve it.
             if organization is None:
                 assert organization_id is not None
                 organization = q_organization_internal_id(organization_id)
-            else:
-                assert organization is not None
-            condition = f"{select_table}.organization = {organization} AND {select_table}.{ public_id_field } = { public_id }"
+
+            condition = " AND ".join(
+                (
+                    f"{select_table}.{public_id_column} = {public_id}",
+                    f"{select_table}.organization = {organization}",
+                )
+            )
+
         assert not kwargs
         suffix = suffix or ""
         return f"(SELECT {select} FROM {from_table} WHERE {condition} {suffix})"
@@ -121,12 +163,14 @@ def _table_q_factory(
     def _q_internal_id(**kwargs: Any) -> str:
         return _q(select="_id", **kwargs)
 
-    _q.__name__ = f"q_{table}"
-    _q_internal_id.__name__ = f"q_{table}_internal_id"
+    # TODO: What's the purpose of setting __name__ here? Setting __doc__ seem more useful
+    # _q.__name__ = f"q_{table}"
+    # _q_internal_id.__name__ = f"q_{table}_internal_id"
 
     return _q, _q_internal_id
 
 
+# Helper query functions for the main tables (see _table_q_factory docstring).
 q_device, q_device_internal_id = _table_q_factory("device", "device_id")
 q_user, q_user_internal_id = _table_q_factory("user_", "user_id")
 q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
@@ -135,114 +179,33 @@ q_human, q_human_internal_id = _table_q_factory("human", "email")
 q_invitation, q_invitation_internal_id = _table_q_factory("invitation", "token")
 
 
-def q_vlob_encryption_revision_internal_id(
-    encryption_revision: str,
-    organization_id: str | None = None,
-    organization: str | None = None,
-    realm_id: str | None = None,
-    realm: str | None = None,
-    table: str = "vlob_encryption_revision",
-) -> str:
-    if realm is None:
-        assert realm_id is not None
-        assert organization_id is not None or organization is not None
-        if organization is None:
-            _q_realm = q_realm_internal_id(organization_id=organization_id, realm_id=realm_id)
-        else:
-            _q_realm = q_realm_internal_id(organization=organization, realm_id=realm_id)
-    else:
-        _q_realm = realm
-    return f"""
-(
-SELECT _id
-FROM {table}
-WHERE
-    {table}.realm = {_q_realm}
-    AND {table}.encryption_revision = {encryption_revision}
-)
-"""
-
-
-def q_user_can_read_vlob(
-    user: str | None = None,
-    user_id: str | None = None,
-    realm: str | None = None,
-    realm_id: str | None = None,
-    organization: str | None = None,
-    organization_id: str | None = None,
-    table: str = "realm_user_role",
-) -> str:
-    if user is None:
-        assert organization_id is not None and user_id is not None
-        _q_user = q_user_internal_id(
-            organization=organization, organization_id=organization_id, user_id=user_id
-        )
-    else:
-        _q_user = user
-
-    if realm is None:
-        assert organization_id is not None and realm_id is not None
-        _q_realm = q_realm_internal_id(
-            organization=organization, organization_id=organization_id, realm_id=realm_id
-        )
-    else:
-        _q_realm = realm
-
-    return f"""
-COALESCE(
-    (
-        SELECT { table }.role IS NOT NULL
-        FROM { table }
-        WHERE
-            { table }.realm = { _q_realm }
-            AND { table }.user_ = { _q_user }
-        ORDER BY certified_on DESC
-        LIMIT 1
-    ),
-    False
-)
-"""
-
-
-def q_user_can_write_vlob(
-    user: str | None = None,
-    user_id: str | None = None,
-    realm: str | None = None,
-    realm_id: str | None = None,
-    organization: str | None = None,
-    organization_id: str | None = None,
-    table: str = "realm_user_role",
-) -> str:
-    if user is None:
-        assert organization_id is not None and user_id is not None
-        _q_user = q_user_internal_id(
-            organization=organization, organization_id=organization_id, user_id=user_id
-        )
-    else:
-        _q_user = user
-
-    if realm is None:
-        assert organization_id is not None and realm_id is not None
-        _q_realm = q_realm_internal_id(
-            organization=organization, organization_id=organization_id, realm_id=realm_id
-        )
-    else:
-        _q_realm = realm
-
-    return f"""
-COALESCE(
-    (
-        SELECT { table }.role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
-        FROM { table }
-        WHERE
-            { table }.realm = { _q_realm }
-            AND { table }.user_ = { _q_user }
-        ORDER BY certified_on DESC
-        LIMIT 1
-    ),
-    False
-)
-"""
+# TODO: This query is unused, still needed?
+# def q_vlob_encryption_revision_internal_id(
+#     encryption_revision: str,
+#     organization_id: str | None = None,
+#     organization: str | None = None,
+#     realm_id: str | None = None,
+#     realm: str | None = None,
+#     table: str = "vlob_encryption_revision",
+# ) -> str:
+#     if realm is None:
+#         assert realm_id is not None
+#         assert organization_id is not None or organization is not None
+#         if organization is None:
+#             _q_realm = q_realm_internal_id(organization_id=organization_id, realm_id=realm_id)
+#         else:
+#             _q_realm = q_realm_internal_id(organization=organization, realm_id=realm_id)
+#     else:
+#         _q_realm = realm
+#     return f"""
+# (
+# SELECT _id
+# FROM {table}
+# WHERE
+#     {table}.realm = {_q_realm}
+#     AND {table}.encryption_revision = {encryption_revision}
+# )
+# """
 
 
 def query(
