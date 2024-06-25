@@ -37,13 +37,94 @@ from parsec.components.postgresql.utils import (
     q_organization_internal_id,
     q_realm,
     q_realm_internal_id,
-    q_user_can_read_vlob,
-    q_user_can_write_vlob,
     q_user_internal_id,
     transaction,
 )
 from parsec.components.realm import BadKeyIndex, RealmCheckBadOutcome
 from parsec.components.user import CheckDeviceBadOutcome
+
+
+def q_user_can_read_vlob(
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
+    table: str = "realm_user_role",
+) -> str:
+    if user is None:
+        assert organization_id is not None and user_id is not None
+        _q_user = q_user_internal_id(
+            organization=organization, organization_id=organization_id, user_id=user_id
+        )
+    else:
+        _q_user = user
+
+    if realm is None:
+        assert organization_id is not None and realm_id is not None
+        _q_realm = q_realm_internal_id(
+            organization=organization, organization_id=organization_id, realm_id=realm_id
+        )
+    else:
+        _q_realm = realm
+
+    return f"""
+COALESCE(
+    (
+        SELECT { table }.role IS NOT NULL
+        FROM { table }
+        WHERE
+            { table }.realm = { _q_realm }
+            AND { table }.user_ = { _q_user }
+        ORDER BY certified_on DESC
+        LIMIT 1
+    ),
+    False
+)
+"""
+
+
+def q_user_can_write_vlob(
+    user: str | None = None,
+    user_id: str | None = None,
+    realm: str | None = None,
+    realm_id: str | None = None,
+    organization: str | None = None,
+    organization_id: str | None = None,
+    table: str = "realm_user_role",
+) -> str:
+    if user is None:
+        assert organization_id is not None and user_id is not None
+        _q_user = q_user_internal_id(
+            organization=organization, organization_id=organization_id, user_id=user_id
+        )
+    else:
+        _q_user = user
+
+    if realm is None:
+        assert organization_id is not None and realm_id is not None
+        _q_realm = q_realm_internal_id(
+            organization=organization, organization_id=organization_id, realm_id=realm_id
+        )
+    else:
+        _q_realm = realm
+
+    return f"""
+COALESCE(
+    (
+        SELECT { table }.role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
+        FROM { table }
+        WHERE
+            { table }.realm = { _q_realm }
+            AND { table }.user_ = { _q_user }
+        ORDER BY certified_on DESC
+        LIMIT 1
+    ),
+    False
+)
+"""
+
 
 _q_get_block_info = Q(
     f"""
