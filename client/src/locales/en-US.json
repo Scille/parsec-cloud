@@ -1101,6 +1101,13 @@
             "missingToken": "Link does not include a token.",
             "invalidToken": "Link contains an invalid token."
         },
+        "bootstrapLink": {
+            "invalidProtocol": "Link should start with 'parsec3://'.",
+            "missingAction": "Link does not include an action.",
+            "invalidAction": "Link contains an invalid action.",
+            "missingToken": "Link does not include a token.",
+            "invalidToken": "Link contains an invalid token."
+        },
         "userInfo": {
             "name": "Name contains invalid characters.",
             "email": "Wrong email address format."

@@ -19,7 +19,7 @@ import { IonicVue, isPlatform, modalController } from '@ionic/vue';
 /* Theme variables */
 import '@/theme/global.scss';
 
-import { claimLinkValidator, fileLinkValidator } from '@/common/validators';
+import { bootstrapLinkValidator, claimLinkValidator, fileLinkValidator } from '@/common/validators';
 import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { getLoggedInDevices, getOrganizationHandle, isElectron, listAvailableDevices, logout, needsMocks, parseFileLink } from '@/parsec';
@@ -206,6 +206,8 @@ async function setupApp(): Promise<void> {
         await handleJoinLink(link);
       } else if ((await fileLinkValidator(link)).validity === Validity.Valid) {
         await handleFileLink(link, currentInformationManager);
+      } else if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
+        await handleBootstrapLink(link);
       } else {
         await currentInformationManager.present(
           new Information({
@@ -319,6 +321,13 @@ async function handleJoinLink(link: string): Promise<void> {
     await switchOrganization(null, true);
   }
   await navigateTo(Routes.Home, { query: { claimLink: link } });
+}
+
+async function handleBootstrapLink(link: string): Promise<void> {
+  if (!currentRouteIs(Routes.Home)) {
+    await switchOrganization(null, true);
+  }
+  await navigateTo(Routes.Home, { query: { bootstrapLink: link } });
 }
 
 async function handleFileLink(link: string, informationManager: InformationManager): Promise<void> {

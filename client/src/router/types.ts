@@ -143,6 +143,7 @@ export interface Query {
   documentPath?: FsPath;
   deviceId?: DeviceID;
   claimLink?: string;
+  bootstrapLink?: string;
   fileLink?: ParsecWorkspacePathAddr;
   openInvite?: true;
   workspaceName?: WorkspaceName;
