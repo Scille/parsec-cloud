@@ -147,6 +147,7 @@ impl PlatformUserStorage {
         }
     }
 
+    #[cfg(feature = "expose-test-methods")]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!();
     }

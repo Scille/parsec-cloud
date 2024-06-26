@@ -655,7 +655,7 @@ impl CertificatesStorage {
     }
 
     /// Only used for debugging tests
-    #[allow(unused)]
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         self.platform.debug_dump().await
     }
@@ -723,7 +723,7 @@ impl<'a> CertificatesStorageUpdater<'a> {
     }
 
     /// Only used for debugging tests
-    #[allow(unused)]
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         self.platform.debug_dump().await
     }

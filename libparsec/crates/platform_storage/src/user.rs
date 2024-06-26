@@ -78,7 +78,7 @@ impl UserStorage {
     }
 
     /// Only used for debugging tests
-    #[allow(unused)]
+    #[cfg(feature = "expose-test-methods")]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         self.platform.debug_dump().await
     }

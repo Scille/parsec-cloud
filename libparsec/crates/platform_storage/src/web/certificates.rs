@@ -277,6 +277,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
     }
 
     /// Only used for debugging tests
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!()
     }
@@ -364,6 +365,7 @@ impl PlatformCertificatesStorage {
     }
 
     /// Only used for debugging tests
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         let mut update = self.for_update().await?;
         update.debug_dump().await
