@@ -206,7 +206,7 @@ impl PlatformUserStorage {
     }
 
     /// Only used for debugging tests
-    #[allow(unused)]
+    #[cfg(feature = "testing")]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         let checkpoint = self.get_realm_checkpoint().await?;
 
