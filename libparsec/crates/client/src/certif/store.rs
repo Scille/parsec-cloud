@@ -131,6 +131,7 @@ impl CertificatesStore {
     }
 
     /// Only used for debugging tests
+    #[cfg(any(test, feature = "testing"))]
     #[allow(unused)]
     pub async fn debug_dump(&self) -> anyhow::Result<String> {
         let mut output = "{\n".to_owned();
