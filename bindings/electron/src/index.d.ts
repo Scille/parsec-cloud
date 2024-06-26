@@ -522,8 +522,8 @@ export interface ClientEventWorkspaceWatchedEntryChanged {
     realm_id: string
     entry_id: string
 }
-export interface ClientEventWorkspacesSelfAccessChanged {
-    tag: "WorkspacesSelfAccessChanged"
+export interface ClientEventWorkspacesSelfListChanged {
+    tag: "WorkspacesSelfListChanged"
 }
 export type ClientEvent =
   | ClientEventExpiredOrganization
@@ -537,7 +537,7 @@ export type ClientEvent =
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceWatchedEntryChanged
-  | ClientEventWorkspacesSelfAccessChanged
+  | ClientEventWorkspacesSelfListChanged
 
 
 // ClientGetUserDeviceError

@@ -156,7 +156,7 @@ export async function login(
       case ClientEventTag.WorkspaceLocallyCreated:
         eventDistributor.dispatchEvent(Events.WorkspaceCreated);
         break;
-      case ClientEventTag.WorkspacesSelfAccessChanged:
+      case ClientEventTag.WorkspacesSelfListChanged:
         eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       default:
