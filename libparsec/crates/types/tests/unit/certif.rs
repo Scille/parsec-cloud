@@ -306,6 +306,10 @@ fn serde_user_certificate(alice: &Device, bob: &Device) {
         algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
         profile: bob.profile,
     };
+    println!(
+        "***expected: {:?}",
+        expected.dump_and_sign(&alice.signing_key)
+    );
 
     let certif = UserCertificate::verify_and_load(
         &data,
