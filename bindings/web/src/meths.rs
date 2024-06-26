@@ -2970,8 +2970,8 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             };
             Ok(libparsec::ClientEvent::WorkspaceWatchedEntryChanged { realm_id, entry_id })
         }
-        "ClientEventWorkspacesSelfAccessChanged" => {
-            Ok(libparsec::ClientEvent::WorkspacesSelfAccessChanged {})
+        "ClientEventWorkspacesSelfListChanged" => {
+            Ok(libparsec::ClientEvent::WorkspacesSelfListChanged {})
         }
         _ => Err(JsValue::from(TypeError::new("Object is not a ClientEvent"))),
     }
@@ -3120,11 +3120,11 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             });
             Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
-        libparsec::ClientEvent::WorkspacesSelfAccessChanged { .. } => {
+        libparsec::ClientEvent::WorkspacesSelfListChanged { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ClientEventWorkspacesSelfAccessChanged".into(),
+                &"ClientEventWorkspacesSelfListChanged".into(),
             )?;
         }
     }

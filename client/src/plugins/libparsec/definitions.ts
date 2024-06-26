@@ -541,7 +541,7 @@ export enum ClientEventTag {
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
     WorkspaceWatchedEntryChanged = 'ClientEventWorkspaceWatchedEntryChanged',
-    WorkspacesSelfAccessChanged = 'ClientEventWorkspacesSelfAccessChanged',
+    WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
 
 export interface ClientEventExpiredOrganization {
@@ -587,8 +587,8 @@ export interface ClientEventWorkspaceWatchedEntryChanged {
     realmId: VlobID
     entryId: VlobID
 }
-export interface ClientEventWorkspacesSelfAccessChanged {
-    tag: ClientEventTag.WorkspacesSelfAccessChanged
+export interface ClientEventWorkspacesSelfListChanged {
+    tag: ClientEventTag.WorkspacesSelfListChanged
 }
 export type ClientEvent =
   | ClientEventExpiredOrganization
@@ -602,7 +602,7 @@ export type ClientEvent =
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
   | ClientEventWorkspaceWatchedEntryChanged
-  | ClientEventWorkspacesSelfAccessChanged
+  | ClientEventWorkspacesSelfListChanged
 
 // ClientGetUserDeviceError
 export enum ClientGetUserDeviceErrorTag {
