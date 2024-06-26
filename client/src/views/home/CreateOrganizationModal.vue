@@ -50,6 +50,7 @@
             name="organization"
             id="org-name-input"
             v-model="orgName"
+            :disabled="parsedBootstrapAddr !== null"
             ref="organizationNameInputRef"
             @on-enter-keyup="nextStep()"
             :validator="organizationNameValidator"
@@ -103,6 +104,7 @@
             :server-addr="orgInfo.serverAddr"
             :authentication="authChoice.authentication"
             @update-request="onUpdateRequested"
+            :bootstrap-only="parsedBootstrapAddr !== null"
           />
         </div>
 
@@ -189,6 +191,9 @@ import {
   DeviceSaveStrategyPassword,
   DeviceSaveStrategyTag,
   createOrganization as parsecCreateOrganization,
+  ParsedParsecAddrOrganizationBootstrap,
+  parseParsecAddr,
+  ParsedParsecAddrTag,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
@@ -234,9 +239,11 @@ const organizationNameInputRef = ref();
 
 const device: Ref<AvailableDevice | null> = ref(null);
 const orgInfo: Ref<null | OrgInfoValues> = ref(null);
+const parsedBootstrapAddr: Ref<ParsedParsecAddrOrganizationBootstrap | null> = ref(null);
 
 const props = defineProps<{
   informationManager: InformationManager;
+  bootstrapLink?: string;
 }>();
 
 const fieldsUpdated = ref(false);
@@ -299,6 +306,13 @@ const titles = new Map<CreateOrganizationStep, Title>([
 ]);
 
 onMounted(async () => {
+  if (props.bootstrapLink) {
+    const result = await parseParsecAddr(props.bootstrapLink);
+    if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+      parsedBootstrapAddr.value = result.value;
+      orgName.value = parsedBootstrapAddr.value.organizationId;
+    }
+  }
   await organizationNameInputRef.value.setFocus();
 });
 
@@ -407,6 +421,10 @@ async function nextStep(): Promise<void> {
     if (pageStep.value === CreateOrganizationStep.UserInfoStep) {
       await userInfo.value.setFocus();
     }
+    // Skip server choice if we're bootstrapping
+    if (pageStep.value === CreateOrganizationStep.ServerStep && parsedBootstrapAddr.value !== null) {
+      pageStep.value += 1;
+    }
   }
   if (pageStep.value === CreateOrganizationStep.SpinnerStep) {
     const addr = serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? getSaasServer() : serverChoice.value.serverAddr;
@@ -472,14 +490,23 @@ async function nextStep(): Promise<void> {
       orgName: orgName.value,
       userName: userInfo.value.fullName,
       email: userInfo.value.email,
-      serverMode: serverChoice.value.mode,
-      serverAddr: serverChoice.value.mode === serverChoice.value.ServerMode.SaaS ? DEFAULT_SAAS_ADDR : serverChoice.value.serverAddr,
+      serverMode: parsedBootstrapAddr.value !== null ? ServerMode.Custom : serverChoice.value.mode,
+      serverAddr:
+        parsedBootstrapAddr.value !== null
+          ? parsedBootstrapAddr.value.hostname
+          : serverChoice.value.mode === serverChoice.value.ServerMode.SaaS
+            ? DEFAULT_SAAS_ADDR
+            : serverChoice.value.serverAddr,
     };
   }
 }
 
 function previousStep(): void {
-  pageStep.value = pageStep.value - 1;
+  pageStep.value -= 1;
+  // In case we're bootstrapping, we can skip the server choice
+  if (pageStep.value === CreateOrganizationStep.ServerStep && parsedBootstrapAddr.value !== null) {
+    pageStep.value -= 1;
+  }
 }
 
 function onUpdateRequested(info: OrgInfo): void {

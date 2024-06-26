@@ -478,7 +478,7 @@ export class ElectronCapacitorApp {
           const arg = process.argv.at(i);
 
           // We're only interested in potential Parsec links
-          if (arg.startsWith('parsec://')) {
+          if (arg.startsWith('parsec3://')) {
             this.sendEvent(WindowToPageChannel.OpenLink, arg);
             break;
           } else if (arg === '--log-debug') {

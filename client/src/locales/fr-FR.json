@@ -1101,6 +1101,13 @@
             "missingToken": "Le lien n'inclut pas de jeton.",
             "invalidToken": "Le lien contient un jeton invalide."
         },
+        "bootstrapLink": {
+            "invalidProtocol": "Le lien doit commencer par 'parsec3://'.",
+            "missingAction": "Le lien n'inclut pas d'action.",
+            "invalidAction": "Le lien contient une action invalide.",
+            "missingToken": "Le lien n'inclut pas de jeton.",
+            "invalidToken": "Le lien contient un jeton invalide."
+        },
         "userInfo": {
             "name": "Le nom contient des caractères invalides.",
             "email": "Le format de l'adresse email est invalide."

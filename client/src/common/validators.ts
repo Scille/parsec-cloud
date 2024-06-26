@@ -126,6 +126,15 @@ export const claimLinkValidator: IValidator = async function (value: string) {
   return { validity: Validity.Invalid, reason: reason ? reason : '' };
 };
 
+export const claimAndBootstrapLinkValidator: IValidator = async function (value: string) {
+  const result = await bootstrapLinkValidator(value);
+
+  if (result.validity === Validity.Valid) {
+    return result;
+  }
+  return await claimLinkValidator(value);
+};
+
 export const fileLinkValidator: IValidator = async function (value: string) {
   value = value.trim();
   if (value.length === 0) {
@@ -182,6 +191,30 @@ export const claimDeviceLinkValidator: IValidator = async function (value: strin
     reason = 'validators.claimDeviceLink.missingToken';
   } else {
     reason = 'validators.claimDeviceLink.invalidToken';
+  }
+  return { validity: Validity.Invalid, reason: reason ? reason : '' };
+};
+
+export const bootstrapLinkValidator: IValidator = async function (value: string) {
+  value = value.trim();
+  if (value.length === 0) {
+    return { validity: Validity.Intermediate };
+  }
+  const result = await parseParsecAddr(value);
+  if (result.ok) {
+    return result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ? { validity: Validity.Valid } : { validity: Validity.Invalid };
+  }
+  let reason = '';
+  if (!value.startsWith('parsec3://')) {
+    reason = 'validators.bootstrapLink.invalidProtocol';
+  } else if (!value.includes('a=')) {
+    reason = 'validators.bootstrapLink.missingAction';
+  } else if (value.includes('a=') && !value.includes('a=bootstrap_organization')) {
+    reason = 'validators.bootstrapLink.invalidAction';
+  } else if (!value.includes('token=')) {
+    reason = 'validators.bootstrapLink.missingToken';
+  } else {
+    reason = 'validators.bootstrapLink.invalidToken';
   }
   return { validity: Validity.Invalid, reason: reason ? reason : '' };
 };

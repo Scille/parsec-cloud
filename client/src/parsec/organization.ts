@@ -94,6 +94,65 @@ export async function createOrganization(
   }
 }
 
+export async function bootstrapOrganization(
+  bootstrapAddr: string,
+  userName: string,
+  email: string,
+  deviceLabel: string,
+  saveStrategy: DeviceSaveStrategy,
+): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
+  function parsecEventCallback(event: ClientEvent): void {
+    console.log('On event', event);
+  }
+
+  if (!needsMocks()) {
+    const config: ClientConfig = {
+      configDir: window.getConfigDir(),
+      dataBaseDir: window.getDataBaseDir(),
+      mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
+      workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
+      withMonitors: false,
+    };
+    const result = await libparsec.bootstrapOrganization(
+      config,
+      parsecEventCallback,
+      bootstrapAddr,
+      saveStrategy,
+      { label: userName, email: email },
+      deviceLabel,
+      null,
+    );
+    if (!result.ok && result.error.tag === BootstrapOrganizationErrorTag.TimestampOutOfBallpark) {
+      result.error.clientTimestamp = DateTime.fromSeconds(result.error.clientTimestamp as any as number);
+      result.error.serverTimestamp = DateTime.fromSeconds(result.error.serverTimestamp as any as number);
+    } else if (result.ok) {
+      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
+    }
+    return result;
+  } else {
+    await wait(MOCK_WAITING_TIME);
+    return {
+      ok: true,
+      value: {
+        keyFilePath: '/path',
+        serverUrl: 'https://parsec.invalid',
+        createdOn: DateTime.utc(),
+        protectedOn: DateTime.utc(),
+        organizationId: 'MyOrg',
+        userId: 'userid',
+        deviceId: 'deviceid',
+        humanHandle: {
+          label: 'A',
+          email: 'a@b.c',
+        },
+        deviceLabel: 'a@b',
+        ty: DeviceFileType.Password,
+      },
+    };
+  }
+}
+
 export async function parseParsecAddr(addr: string): Promise<Result<ParsedParsecAddr, ParseParsecAddrError>> {
   return await libparsec.parseParsecAddr(addr);
 }

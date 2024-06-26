@@ -31,6 +31,7 @@
                 @organization-select="onOrganizationSelected"
                 @join-organization-click="onJoinOrganizationClicked"
                 @join-organization-with-link-click="openJoinByLinkModal"
+                @bootstrap-organization-with-link-click="openCreateOrganizationModal"
               />
             </template>
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
@@ -58,7 +59,12 @@
 </template>
 
 <script setup lang="ts">
-import { claimDeviceLinkValidator, claimLinkValidator, claimUserLinkValidator } from '@/common/validators';
+import {
+  bootstrapLinkValidator,
+  claimAndBootstrapLinkValidator,
+  claimDeviceLinkValidator,
+  claimUserLinkValidator,
+} from '@/common/validators';
 import {
   AccessStrategy,
   AvailableDevice,
@@ -152,6 +158,8 @@ async function handleQuery(): Promise<void> {
   const query = getCurrentRouteQuery();
   if (query.claimLink) {
     await openJoinByLinkModal(query.claimLink);
+  } else if (query.bootstrapLink) {
+    await openCreateOrganizationModal(query.bootstrapLink);
   } else if (query.deviceId) {
     const availableDevices = await listAvailableDevices();
     const device = availableDevices.find((d) => d.deviceId === query.deviceId);
@@ -163,7 +171,7 @@ async function handleQuery(): Promise<void> {
   }
 }
 
-async function openCreateOrganizationModal(): Promise<void> {
+async function openCreateOrganizationModal(bootstrapLink?: string): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
     canDismiss: true,
@@ -171,6 +179,7 @@ async function openCreateOrganizationModal(): Promise<void> {
     backdropDismiss: false,
     componentProps: {
       informationManager: informationManager,
+      bootstrapLink: bootstrapLink,
     },
   });
   await modal.present();
@@ -398,14 +407,18 @@ async function onJoinOrganizationClicked(): Promise<void> {
     title: 'JoinByLinkModal.pageTitle',
     subtitle: 'JoinByLinkModal.pleaseEnterUrl',
     trim: true,
-    validator: claimLinkValidator,
+    validator: claimAndBootstrapLinkValidator,
     inputLabel: 'JoinOrganization.linkFormLabel',
     placeholder: 'JoinOrganization.linkFormPlaceholder',
     okButtonText: 'JoinByLinkModal.join',
   });
 
   if (link) {
-    await openJoinByLinkModal(link);
+    if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
+      await openCreateOrganizationModal(link);
+    } else {
+      await openJoinByLinkModal(link);
+    }
   }
 }
 </script>

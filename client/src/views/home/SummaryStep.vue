@@ -12,6 +12,7 @@
           {{ organization }}
         </ion-text>
         <ion-button
+          v-show="!bootstrapOnly"
           fill="clear"
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.Organization)"
@@ -69,6 +70,7 @@
           {{ serverMode === ServerMode.SaaS ? $msTranslate('CreateOrganization.saas') : serverAddr }}
         </ion-text>
         <ion-button
+          v-show="!bootstrapOnly"
           fill="clear"
           class="summary-item__button"
           @click="$emit('update-request', OrgInfo.ServerMode)"
@@ -132,6 +134,7 @@ defineProps<{
   serverMode: ServerMode;
   serverAddr: string;
   authentication: DeviceSaveStrategyTag;
+  bootstrapOnly?: boolean;
 }>();
 </script>
 

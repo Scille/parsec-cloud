@@ -44,13 +44,13 @@
               :label="'HomePage.noDevices.invitationLink'"
               :placeholder="'JoinOrganization.linkFormPlaceholder'"
               v-model="link"
-              @on-enter-keyup="$emit('joinOrganizationWithLinkClick', link)"
-              :validator="claimLinkValidator"
+              @on-enter-keyup="onLinkClick"
+              :validator="claimAndBootstrapLinkValidator"
               class="invitation-link__input"
               ref="linkRef"
             />
             <ion-button
-              @click="$emit('joinOrganizationWithLinkClick', link)"
+              @click="onLinkClick(link)"
               size="large"
               fill="default"
               id="join-organization-button"
@@ -159,7 +159,7 @@
 </template>
 
 <script setup lang="ts">
-import { claimLinkValidator } from '@/common/validators';
+import { claimAndBootstrapLinkValidator, bootstrapLinkValidator } from '@/common/validators';
 import {
   formatTimeSince,
   MsImage,
@@ -200,6 +200,7 @@ const emits = defineEmits<{
   (e: 'createOrganizationClick'): void;
   (e: 'joinOrganizationClick'): void;
   (e: 'joinOrganizationWithLinkClick', link: string): void;
+  (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
 }>();
 
 enum SortCriteria {
@@ -237,6 +238,14 @@ const msSorterLabels = {
 };
 
 const isPopoverOpen = ref(false);
+
+async function onLinkClick(link: string): Promise<void> {
+  if (await bootstrapLinkValidator(link)) {
+    emits('bootstrapOrganizationWithLinkClick', link);
+  } else {
+    emits('joinOrganizationWithLinkClick', link);
+  }
+}
 
 async function togglePopover(event: Event): Promise<void> {
   isPopoverOpen.value = !isPopoverOpen.value;
