@@ -116,12 +116,12 @@ In a component (maybe the one defined just before), you'll need to define this k
         req: xxxxx_cmds.latest.dummy.Req,
     ) -> xxxxx.latest.dummy.Rep:
         match await self.do_dummy():
-        case None:
-            return invited_cmds.latest.dummy.Rep()
-        case DummyBadOutcome.DUMMY_SPECIFIC_ERROR:
-            return invited_cmds.latest.dummy.RepDummyRepWithoutFields()
-        case DummyBadOutcome.ORGANIZATION_NOT_FOUND:
-            client_ctx.organization_not_found_abort()
+            case None:
+                return invited_cmds.latest.dummy.Rep()
+            case DummyBadOutcome.DUMMY_SPECIFIC_ERROR:
+                return invited_cmds.latest.dummy.RepDummyRepWithoutFields()
+            case DummyBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
 ```
 
 This function will mostly contain error management logic. The component will also contain a generic method, that will be overridden in the memory and postgresql implementations.
