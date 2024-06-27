@@ -2734,6 +2734,180 @@ fn variant_client_event_js_to_rs<'a>(
         "ClientEventWorkspaceLocallyCreated" => {
             Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
         }
+        "ClientEventWorkspaceOpsInboundSyncDone" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsInboundSyncDone { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncAborted" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncDone" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncProgress" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let blocks = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "blocks")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            let block_index = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "blockIndex")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            let blocksize = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "blocksize")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        cx.throw_type_error("Not an u64 number")?
+                    }
+                    let v = v as u64;
+                    v
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
+                realm_id,
+                entry_id,
+                blocks,
+                block_index,
+                blocksize,
+            })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncStarted" => {
+            let realm_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let entry_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "entryId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                        libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
+        }
         "ClientEventWorkspaceWatchedEntryChanged" => {
             let realm_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "realmId")?;
@@ -2871,6 +3045,152 @@ fn variant_client_event_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "ClientEventWorkspaceLocallyCreated").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsInboundSyncDone {
+            realm_id, entry_id, ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOpsInboundSyncDone").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted {
+            realm_id, entry_id, ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOpsOutboundSyncAborted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone {
+            realm_id, entry_id, ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOpsOutboundSyncDone").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
+            realm_id,
+            entry_id,
+            blocks,
+            block_index,
+            blocksize,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ClientEventWorkspaceOpsOutboundSyncProgress")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
+            let js_blocks = JsNumber::new(cx, blocks as f64);
+            js_obj.set(cx, "blocks", js_blocks)?;
+            let js_block_index = JsNumber::new(cx, block_index as f64);
+            js_obj.set(cx, "blockIndex", js_block_index)?;
+            let js_blocksize = JsNumber::new(cx, blocksize as f64);
+            js_obj.set(cx, "blocksize", js_blocksize)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted {
+            realm_id, entry_id, ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientEventWorkspaceOpsOutboundSyncStarted").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_realm_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "realmId", js_realm_id)?;
+            let js_entry_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "entryId", js_entry_id)?;
         }
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
             realm_id, entry_id, ..

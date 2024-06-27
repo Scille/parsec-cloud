@@ -517,6 +517,34 @@ export interface ClientEventTooMuchDriftWithServerClock {
 export interface ClientEventWorkspaceLocallyCreated {
     tag: "WorkspaceLocallyCreated"
 }
+export interface ClientEventWorkspaceOpsInboundSyncDone {
+    tag: "WorkspaceOpsInboundSyncDone"
+    realm_id: string
+    entry_id: string
+}
+export interface ClientEventWorkspaceOpsOutboundSyncAborted {
+    tag: "WorkspaceOpsOutboundSyncAborted"
+    realm_id: string
+    entry_id: string
+}
+export interface ClientEventWorkspaceOpsOutboundSyncDone {
+    tag: "WorkspaceOpsOutboundSyncDone"
+    realm_id: string
+    entry_id: string
+}
+export interface ClientEventWorkspaceOpsOutboundSyncProgress {
+    tag: "WorkspaceOpsOutboundSyncProgress"
+    realm_id: string
+    entry_id: string
+    blocks: number
+    block_index: number
+    blocksize: number
+}
+export interface ClientEventWorkspaceOpsOutboundSyncStarted {
+    tag: "WorkspaceOpsOutboundSyncStarted"
+    realm_id: string
+    entry_id: string
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: "WorkspaceWatchedEntryChanged"
     realm_id: string
@@ -536,6 +564,11 @@ export type ClientEvent =
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspaceOpsInboundSyncDone
+  | ClientEventWorkspaceOpsOutboundSyncAborted
+  | ClientEventWorkspaceOpsOutboundSyncDone
+  | ClientEventWorkspaceOpsOutboundSyncProgress
+  | ClientEventWorkspaceOpsOutboundSyncStarted
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
