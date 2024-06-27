@@ -160,6 +160,12 @@ export async function login(
       case ClientEventTag.WorkspaceWatchedEntryChanged:
         eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, 300);
         break;
+      case ClientEventTag.WorkspaceOpsInboundSyncDone:
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        break;
+      case ClientEventTag.WorkspaceOpsOutboundSyncDone:
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        break;
       default:
         window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
         break;

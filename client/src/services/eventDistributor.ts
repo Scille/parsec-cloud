@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
+import { EntryID, InvitationStatus, InvitationToken, WorkspaceID } from '@/parsec';
 import { v4 as uuid4 } from 'uuid';
 
 export const EventDistributorKey = 'eventDistributor';
@@ -17,6 +17,7 @@ enum Events {
   UpdateAvailability = 1 << 8,
   WorkspaceUpdated = 1 << 9,
   EntryUpdated = 1 << 10,
+  EntrySynced = 1 << 11,
 }
 
 interface WorkspaceCreatedData {
@@ -33,7 +34,12 @@ interface UpdateAvailabilityData {
   version?: string;
 }
 
-type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData;
+interface EntrySyncedData {
+  workspaceId: WorkspaceID;
+  entryId: EntryID;
+}
+
+type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncedData;
 
 interface Callback {
   id: string;
@@ -96,4 +102,4 @@ class EventDistributor {
   }
 }
 
-export { EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedData };
+export { EntrySyncedData, EventData, EventDistributor, Events, InvitationUpdatedData, UpdateAvailabilityData, WorkspaceCreatedDat };
