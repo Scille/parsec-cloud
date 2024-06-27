@@ -12,6 +12,7 @@ mod realm_key_rotation;
 mod realm_keys_bundle;
 mod realm_rename;
 mod realm_share;
+mod shamir_recovery_setup;
 mod store;
 mod user_revoke;
 mod workspace_bootstrap;
@@ -36,11 +37,12 @@ pub use realm_keys_bundle::{
 };
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
+pub use shamir_recovery_setup::CertifShamirError;
 pub use store::{CertifStoreError, UpTo};
 pub use user_revoke::CertifRevokeUserError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
@@ -493,6 +495,23 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<(EntryName, DateTime), CertifDecryptCurrentRealmNameError> {
         realm_decrypt_name::decrypt_current_realm_name(self, realm_id).await
+    }
+
+    pub async fn shamir_setup_create(
+        &self,
+        author_device: DeviceID,
+        author_id: UserID,
+        share_recipients: HashMap<UserID, u8>,
+        threshold: u8,
+    ) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
+        shamir_recovery_setup::shamir_setup_create(
+            self,
+            author_device,
+            author_id,
+            share_recipients,
+            threshold,
+        )
+        .await
     }
 }
 
