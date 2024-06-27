@@ -540,6 +540,11 @@ export enum ClientEventTag {
     ServerConfigChanged = 'ClientEventServerConfigChanged',
     TooMuchDriftWithServerClock = 'ClientEventTooMuchDriftWithServerClock',
     WorkspaceLocallyCreated = 'ClientEventWorkspaceLocallyCreated',
+    WorkspaceOpsInboundSyncDone = 'ClientEventWorkspaceOpsInboundSyncDone',
+    WorkspaceOpsOutboundSyncAborted = 'ClientEventWorkspaceOpsOutboundSyncAborted',
+    WorkspaceOpsOutboundSyncDone = 'ClientEventWorkspaceOpsOutboundSyncDone',
+    WorkspaceOpsOutboundSyncProgress = 'ClientEventWorkspaceOpsOutboundSyncProgress',
+    WorkspaceOpsOutboundSyncStarted = 'ClientEventWorkspaceOpsOutboundSyncStarted',
     WorkspaceWatchedEntryChanged = 'ClientEventWorkspaceWatchedEntryChanged',
     WorkspacesSelfListChanged = 'ClientEventWorkspacesSelfListChanged',
 }
@@ -582,6 +587,34 @@ export interface ClientEventTooMuchDriftWithServerClock {
 export interface ClientEventWorkspaceLocallyCreated {
     tag: ClientEventTag.WorkspaceLocallyCreated
 }
+export interface ClientEventWorkspaceOpsInboundSyncDone {
+    tag: ClientEventTag.WorkspaceOpsInboundSyncDone
+    realmId: VlobID
+    entryId: VlobID
+}
+export interface ClientEventWorkspaceOpsOutboundSyncAborted {
+    tag: ClientEventTag.WorkspaceOpsOutboundSyncAborted
+    realmId: VlobID
+    entryId: VlobID
+}
+export interface ClientEventWorkspaceOpsOutboundSyncDone {
+    tag: ClientEventTag.WorkspaceOpsOutboundSyncDone
+    realmId: VlobID
+    entryId: VlobID
+}
+export interface ClientEventWorkspaceOpsOutboundSyncProgress {
+    tag: ClientEventTag.WorkspaceOpsOutboundSyncProgress
+    realmId: VlobID
+    entryId: VlobID
+    blocks: IndexInt
+    blockIndex: IndexInt
+    blocksize: SizeInt
+}
+export interface ClientEventWorkspaceOpsOutboundSyncStarted {
+    tag: ClientEventTag.WorkspaceOpsOutboundSyncStarted
+    realmId: VlobID
+    entryId: VlobID
+}
 export interface ClientEventWorkspaceWatchedEntryChanged {
     tag: ClientEventTag.WorkspaceWatchedEntryChanged
     realmId: VlobID
@@ -601,6 +634,11 @@ export type ClientEvent =
   | ClientEventServerConfigChanged
   | ClientEventTooMuchDriftWithServerClock
   | ClientEventWorkspaceLocallyCreated
+  | ClientEventWorkspaceOpsInboundSyncDone
+  | ClientEventWorkspaceOpsOutboundSyncAborted
+  | ClientEventWorkspaceOpsOutboundSyncDone
+  | ClientEventWorkspaceOpsOutboundSyncProgress
+  | ClientEventWorkspaceOpsOutboundSyncStarted
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 

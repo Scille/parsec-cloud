@@ -2937,6 +2937,216 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
         "ClientEventWorkspaceLocallyCreated" => {
             Ok(libparsec::ClientEvent::WorkspaceLocallyCreated {})
         }
+        "ClientEventWorkspaceOpsInboundSyncDone" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsInboundSyncDone { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncAborted" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncDone" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone { realm_id, entry_id })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncProgress" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let blocks = {
+                let js_val = Reflect::get(&obj, &"blocks".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    v as u64
+                }
+            };
+            let block_index = {
+                let js_val = Reflect::get(&obj, &"blockIndex".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    v as u64
+                }
+            };
+            let blocksize = {
+                let js_val = Reflect::get(&obj, &"blocksize".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u64 number")));
+                    }
+                    v as u64
+                }
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
+                realm_id,
+                entry_id,
+                blocks,
+                block_index,
+                blocksize,
+            })
+        }
+        "ClientEventWorkspaceOpsOutboundSyncStarted" => {
+            let realm_id = {
+                let js_val = Reflect::get(&obj, &"realmId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            let entry_id = {
+                let js_val = Reflect::get(&obj, &"entryId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                            libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid VlobID"))?
+            };
+            Ok(libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted { realm_id, entry_id })
+        }
         "ClientEventWorkspaceWatchedEntryChanged" => {
             let realm_id = {
                 let js_val = Reflect::get(&obj, &"realmId".into())?;
@@ -3090,6 +3300,162 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspaceLocallyCreated".into(),
             )?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsInboundSyncDone {
+            realm_id, entry_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceOpsInboundSyncDone".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncAborted {
+            realm_id, entry_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceOpsOutboundSyncAborted".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncDone {
+            realm_id, entry_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceOpsOutboundSyncDone".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncProgress {
+            realm_id,
+            entry_id,
+            blocks,
+            block_index,
+            blocksize,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceOpsOutboundSyncProgress".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
+            let js_blocks = JsValue::from(blocks);
+            Reflect::set(&js_obj, &"blocks".into(), &js_blocks)?;
+            let js_block_index = JsValue::from(block_index);
+            Reflect::set(&js_obj, &"blockIndex".into(), &js_block_index)?;
+            let js_blocksize = JsValue::from(blocksize);
+            Reflect::set(&js_obj, &"blocksize".into(), &js_blocksize)?;
+        }
+        libparsec::ClientEvent::WorkspaceOpsOutboundSyncStarted {
+            realm_id, entry_id, ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientEventWorkspaceOpsOutboundSyncStarted".into(),
+            )?;
+            let js_realm_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(realm_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"realmId".into(), &js_realm_id)?;
+            let js_entry_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(entry_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"entryId".into(), &js_entry_id)?;
         }
         libparsec::ClientEvent::WorkspaceWatchedEntryChanged {
             realm_id, entry_id, ..
