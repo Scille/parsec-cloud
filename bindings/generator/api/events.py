@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from .common import Variant, DateTime, InvitationToken, InvitationStatus, VlobID
+from .common import Variant, DateTime, InvitationToken, InvitationStatus, VlobID, IndexInt, SizeInt
 
 
 class ClientEvent(Variant):
@@ -25,6 +25,29 @@ class ClientEvent(Variant):
         pass
 
     class WorkspaceWatchedEntryChanged:
+        realm_id: VlobID
+        entry_id: VlobID
+
+    class WorkspaceOpsOutboundSyncStarted:
+        realm_id: VlobID
+        entry_id: VlobID
+
+    class WorkspaceOpsOutboundSyncProgress:
+        realm_id: VlobID
+        entry_id: VlobID
+        blocks: IndexInt
+        block_index: IndexInt
+        blocksize: SizeInt
+
+    class WorkspaceOpsOutboundSyncAborted:
+        realm_id: VlobID
+        entry_id: VlobID
+
+    class WorkspaceOpsOutboundSyncDone:
+        realm_id: VlobID
+        entry_id: VlobID
+
+    class WorkspaceOpsInboundSyncDone:
         realm_id: VlobID
         entry_id: VlobID
 
