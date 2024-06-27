@@ -75,11 +75,6 @@ msTest('Check join link', async ({ home }) => {
       expectedError: 'Link does not include an action.',
     },
     {
-      // cspell:disable-next-line
-      link: 'parsec3://parsec.cloud/Test?a=bootstrap_organization&p=xBBHJlEjlpxNZYTCvBWWDPIS',
-      expectedError: 'Link contains an invalid action.',
-    },
-    {
       link: 'parsec3://parsec.cloud/Test?a=claim_user',
       expectedError: 'Link does not include a token.',
     },

@@ -19,7 +19,7 @@ async function toggleViewMode(page: Page): Promise<void> {
 
 const FILE_MATCHER = /^File_[a-z0-9_.]+$/;
 const DIR_MATCHER = /^Dir_[a-z_]+$/;
-const TIME_MATCHER = /^(now|(\d{1,2}|one) minutes? ago)$/;
+const TIME_MATCHER = /^(now|< 1 minute|(\d{1,2}|one) minutes? ago)$/;
 const SIZE_MATCHER = /^[0-9.]+ (K|M|G)?B$/;
 
 msTest('Documents page default state', async ({ documents }) => {
