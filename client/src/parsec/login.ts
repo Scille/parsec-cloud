@@ -41,8 +41,6 @@ import { DateTime } from 'luxon';
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
   device: AvailableDevice;
-  // Used to simulate update events, remove when we have real events
-  intervalId: any;
 }
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
@@ -159,6 +157,15 @@ export async function login(
       case ClientEventTag.WorkspacesSelfListChanged:
         eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
+      case ClientEventTag.WorkspaceWatchedEntryChanged:
+        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, 300);
+        break;
+      case ClientEventTag.WorkspaceOpsInboundSyncDone:
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        break;
+      case ClientEventTag.WorkspaceOpsOutboundSyncDone:
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        break;
       default:
         window.electronAPI.log('debug', `Unhandled event ${event.tag}`);
         break;
@@ -177,11 +184,7 @@ export async function login(
     const clientConfig = getClientConfig();
     const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
     if (result.ok) {
-      // Simulate an update event every 10s to force a refresh
-      const intervalId = setInterval(() => {
-        eventDistributor.dispatchEvent(Events.EntryUpdated);
-      }, 10000);
-      loggedInDevices.push({ handle: result.value, device: device, intervalId: intervalId });
+      loggedInDevices.push({ handle: result.value, device: device });
     }
     return result;
   } else {
@@ -189,7 +192,7 @@ export async function login(
       accessStrategy.tag === DeviceAccessStrategyTag.Password &&
       ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
     ) {
-      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, intervalId: null });
+      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device });
       return { ok: true, value: DEFAULT_HANDLE };
     }
     return {
@@ -212,10 +215,7 @@ export async function logout(handle?: ConnectionHandle | undefined | null): Prom
     if (result.ok) {
       const index = loggedInDevices.findIndex((info) => info.handle === handle);
       if (index !== -1) {
-        const removed = loggedInDevices.splice(index, 1);
-        if (removed && removed.length > 0) {
-          clearInterval(removed[0].intervalId);
-        }
+        loggedInDevices.splice(index, 1);
       }
     }
     return result;

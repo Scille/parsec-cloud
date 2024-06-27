@@ -16,7 +16,10 @@ use crate::certif::{
 use crate::workspace::store::{
     ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
 };
-use crate::EncrytionUsage;
+use crate::{
+    EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted, EventWorkspaceOpsOutboundSyncDone,
+    EventWorkspaceOpsOutboundSyncProgress, EventWorkspaceOpsOutboundSyncStarted,
+};
 
 pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
 
@@ -155,10 +158,36 @@ async fn outbound_sync_child(
             })?;
     }
 
-    match local {
+    // Synchro start/done/aborted events are handled here, the last one is the progress
+    // event that is only triggered when uploading blocks and hence is handled in
+    // `reshape_and_upload_blocks`.
+
+    let event = EventWorkspaceOpsOutboundSyncStarted {
+        realm_id: ops.realm_id,
+        entry_id,
+    };
+    ops.event_bus.send(&event);
+
+    let outcome = match local {
         ArcLocalChildManifest::File(local) => outbound_sync_file(ops, local).await,
         ArcLocalChildManifest::Folder(local) => outbound_sync_folder(ops, local).await,
+    };
+
+    if matches!(outcome, Ok(OutboundSyncOutcome::Done)) {
+        let event = EventWorkspaceOpsOutboundSyncDone {
+            realm_id: ops.realm_id,
+            entry_id,
+        };
+        ops.event_bus.send(&event);
+    } else {
+        let event = EventWorkspaceOpsOutboundSyncAborted {
+            realm_id: ops.realm_id,
+            entry_id,
+        };
+        ops.event_bus.send(&event);
     }
+
+    outcome
 }
 
 async fn outbound_sync_file(
@@ -722,7 +751,7 @@ async fn upload_blocks(
     ops: &WorkspaceOps,
     manifest: &LocalFileManifest,
 ) -> Result<UploadBlocksOutcome, WorkspaceSyncError> {
-    for block in manifest.blocks.iter() {
+    for (block_index, block) in manifest.blocks.iter().enumerate() {
         assert!(block.len() == 1); // Sanity check: the manifest is guaranteed to be reshaped
         let chunk = &block[0];
         let block_access = chunk.access.as_ref().expect("already reshaped");
@@ -749,6 +778,15 @@ async fn upload_blocks(
         };
 
         // 2) Upload the block
+
+        let event = EventWorkspaceOpsOutboundSyncProgress {
+            realm_id: ops.realm_id,
+            entry_id: manifest.base.id,
+            block_index: block_index as IndexInt,
+            blocks: manifest.blocks.len() as IndexInt,
+            blocksize: *manifest.blocksize,
+        };
+        ops.event_bus.send(&event);
 
         loop {
             let (encrypted, key_index) = ops

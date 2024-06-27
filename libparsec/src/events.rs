@@ -28,6 +28,29 @@ pub enum ClientEvent {
         realm_id: VlobID,
         entry_id: VlobID,
     },
+    WorkspaceOpsOutboundSyncStarted {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    WorkspaceOpsOutboundSyncProgress {
+        realm_id: VlobID,
+        entry_id: VlobID,
+        blocks: IndexInt,
+        block_index: IndexInt,
+        blocksize: SizeInt,
+    },
+    WorkspaceOpsOutboundSyncAborted {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    WorkspaceOpsOutboundSyncDone {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    WorkspaceOpsInboundSyncDone {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
 
     InvitationChanged {
         token: InvitationToken,
@@ -73,6 +96,16 @@ pub(crate) struct OnEventCallbackPlugged {
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceLocallyCreated>,
     _workspace_watched_entry_changed:
         EventBusConnectionLifetime<libparsec_client::EventWorkspaceWatchedEntryChanged>,
+    _workspace_ops_outbound_sync_started:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncStarted>,
+    _workspace_ops_outbound_sync_progress:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncProgress>,
+    _workspace_ops_outbound_sync_aborted:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncAborted>,
+    _workspace_ops_outbound_sync_done:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsOutboundSyncDone>,
+    _workspace_ops_inbound_sync_done:
+        EventBusConnectionLifetime<libparsec_client::EventWorkspaceOpsInboundSyncDone>,
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
@@ -165,6 +198,64 @@ impl OnEventCallbackPlugged {
                 },
             )
         };
+        let workspace_ops_outbound_sync_started = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncStarted| {
+                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncStarted {
+                        realm_id: e.realm_id,
+                        entry_id: e.entry_id,
+                    });
+                },
+            )
+        };
+        let workspace_ops_outbound_sync_progress = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncProgress| {
+                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncProgress {
+                        realm_id: e.realm_id,
+                        entry_id: e.entry_id,
+                        blocks: e.blocks,
+                        block_index: e.block_index,
+                        blocksize: e.blocksize,
+                    });
+                },
+            )
+        };
+        let workspace_ops_outbound_sync_aborted = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncAborted| {
+                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncAborted {
+                        realm_id: e.realm_id,
+                        entry_id: e.entry_id,
+                    });
+                },
+            )
+        };
+        let workspace_ops_outbound_sync_done = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncDone| {
+                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncDone {
+                        realm_id: e.realm_id,
+                        entry_id: e.entry_id,
+                    });
+                },
+            )
+        };
+        let workspace_ops_inbound_sync_done = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(
+                move |e: &libparsec_client::EventWorkspaceOpsInboundSyncDone| {
+                    (on_event_callback)(ClientEvent::WorkspaceOpsInboundSyncDone {
+                        realm_id: e.realm_id,
+                        entry_id: e.entry_id,
+                    });
+                },
+            )
+        };
         let invitation_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |e: &libparsec_client::EventInvitationChanged| {
@@ -237,6 +328,11 @@ impl OnEventCallbackPlugged {
             _workspace_self_access_changed: workspace_self_access_changed,
             _workspace_locally_created: workspace_locally_created,
             _workspace_watched_entry_changed: workspace_watched_entry_changed,
+            _workspace_ops_outbound_sync_started: workspace_ops_outbound_sync_started,
+            _workspace_ops_outbound_sync_progress: workspace_ops_outbound_sync_progress,
+            _workspace_ops_outbound_sync_aborted: workspace_ops_outbound_sync_aborted,
+            _workspace_ops_outbound_sync_done: workspace_ops_outbound_sync_done,
+            _workspace_ops_inbound_sync_done: workspace_ops_inbound_sync_done,
             _invitation_changed: invitation_changed,
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
             _expired_organization: expired_organization,
