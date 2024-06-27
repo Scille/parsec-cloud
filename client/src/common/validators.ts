@@ -127,12 +127,20 @@ export const claimLinkValidator: IValidator = async function (value: string) {
 };
 
 export const claimAndBootstrapLinkValidator: IValidator = async function (value: string) {
-  const result = await bootstrapLinkValidator(value);
-
-  if (result.validity === Validity.Valid) {
-    return result;
+  value = value.trim();
+  if (value.length === 0) {
+    return { validity: Validity.Intermediate };
   }
-  return await claimLinkValidator(value);
+  const result = await parseParsecAddr(value);
+  if (
+    result.ok &&
+    (result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap ||
+      result.value.tag === ParsedParsecAddrTag.InvitationUser ||
+      result.value.tag === ParsedParsecAddrTag.InvitationDevice)
+  ) {
+    return { validity: Validity.Valid };
+  }
+  return { validity: Validity.Invalid, reason: 'validators.link.invalid' };
 };
 
 export const fileLinkValidator: IValidator = async function (value: string) {
@@ -211,7 +219,7 @@ export const bootstrapLinkValidator: IValidator = async function (value: string)
     reason = 'validators.bootstrapLink.missingAction';
   } else if (value.includes('a=') && !value.includes('a=bootstrap_organization')) {
     reason = 'validators.bootstrapLink.invalidAction';
-  } else if (!value.includes('token=')) {
+  } else if (!value.includes('p=')) {
     reason = 'validators.bootstrapLink.missingToken';
   } else {
     reason = 'validators.bootstrapLink.invalidToken';

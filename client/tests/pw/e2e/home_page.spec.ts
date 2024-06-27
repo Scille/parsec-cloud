@@ -67,20 +67,20 @@ msTest('Check join link', async ({ home }) => {
     {
       // cspell:disable-next-line
       link: 'http://parsec.cloud/Test?a=claim_user&p=xBBHJlEjlpxNZYTCvBWWDPIS',
-      expectedError: "Link should start with 'parsec3://'.",
+      expectedError: 'This link is invalid.',
     },
     {
       // cspell:disable-next-line
       link: 'parsec3://parsec.cloud/Test?p=xBBHJlEjlpxNZYTCvBWWDPIS',
-      expectedError: 'Link does not include an action.',
+      expectedError: 'This link is invalid.',
     },
     {
       link: 'parsec3://parsec.cloud/Test?a=claim_user',
-      expectedError: 'Link does not include a token.',
+      expectedError: 'This link is invalid.',
     },
     {
       link: 'parsec3://parsec.cloud/Test?a=claim_user&p=abcde',
-      expectedError: 'Link contains an invalid token.',
+      expectedError: 'This link is invalid.',
     },
     {
       // cspell:disable-next-line
