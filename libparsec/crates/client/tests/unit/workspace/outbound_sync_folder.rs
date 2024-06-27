@@ -7,7 +7,10 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{MoveEntryMode, OutboundSyncOutcome};
+use crate::{
+    workspace::{MoveEntryMode, OutboundSyncOutcome},
+    EventWorkspaceOpsOutboundSyncAborted, EventWorkspaceOpsOutboundSyncStarted,
+};
 
 enum Modification {
     Create,
@@ -21,6 +24,8 @@ async fn non_placeholder(
     modification: Modification,
     env: &TestbedEnv,
 ) {
+    use crate::EventWorkspaceOpsOutboundSyncDone;
+
     let alice = env.local_device("alice@dev1");
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
@@ -113,8 +118,18 @@ async fn non_placeholder(
         },
     );
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
     let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
     p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_foo_id);
+    });
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncDone| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_foo_id);
+    });
 
     // Check the user manifest is not longer need sync
     let foo_manifest = get_folder_manifest(wksp1_foo_id).await;
@@ -127,6 +142,7 @@ async fn non_placeholder(
 
     let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
     p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+    spy.assert_no_events();
 
     wksp1_ops.stop().await.unwrap();
 }
@@ -198,8 +214,18 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
     let before_sync_manifest = get_folder_manifest(wksp1_foo_id).await;
     p_assert_eq!(before_sync_manifest.need_sync, true); // Sanity check
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
     let outcome = wksp1_ops.outbound_sync(wksp1_foo_id).await.unwrap();
     p_assert_matches!(outcome, OutboundSyncOutcome::InboundSyncNeeded);
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_foo_id);
+    });
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncAborted| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_foo_id);
+    });
 
     // Check the user manifest still need sync
     let after_failed_sync_manifest = get_folder_manifest(wksp1_foo_id).await;
