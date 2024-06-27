@@ -17,7 +17,6 @@ from parsec._parsec import (
     OrganizationID,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
-    ShamirRevealToken,
     SigningKey,
     UserID,
     VerifyKey,
@@ -408,7 +407,7 @@ async def setup_shamir_for_coolorg(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         raw_brief,
         [raw_share],
     )
