@@ -399,8 +399,47 @@ impl_events!(
         realm_id: VlobID,
         entry_id: VlobID,
     },
+    /// This event is fired by the workspace ops when starting an outbound sync
+    WorkspaceOpsOutboundSyncStarted {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    /// This event is fired by the workspace ops when doing an outbound sync for a file.
+    ///
+    /// This event aims at providing feedback about the file's blocks upload (hence it
+    /// never occurs for folders or when a file is empty or just gets truncated, as in
+    /// those cases only the manifest is uploaded which should be fast and is a single
+    /// operation anyway so started & done events are enough).
+    ///
+    /// Also note that the progress may become misleading if the synchronization only
+    /// uploads a subset of the file (e.g. a small modification in the file leads to
+    /// a single block being modified), given in this case only the block index to
+    /// upload will fire a corresponding the progress event.
+    WorkspaceOpsOutboundSyncProgress {
+        realm_id: VlobID,
+        entry_id: VlobID,
+        blocks: IndexInt,
+        block_index: IndexInt,
+        blocksize: SizeInt,
+    },
+    /// This event is fired by the workspace ops when an outbound sync cannot be
+    /// completed. This is typically the case if an inbound sync is needed first.
+    WorkspaceOpsOutboundSyncAborted {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
     /// This event is fired by the workspace ops after a successful outbound sync
     /// (i.e. the corresponding local manifest is no longer need sync).
+    WorkspaceOpsOutboundSyncDone {
+        realm_id: VlobID,
+        entry_id: VlobID,
+    },
+    /// This event is fired by the workspace ops after a successful inbound sync.
+    ///
+    /// Note, unlike for outbound sync, we don't have started & progress events for
+    /// this kind of sync. This is because inbound sync is very fast once the remote
+    /// manifest has been fetched (and it's useless to communicate progress about
+    /// this fetch step).
     ///
     /// This event is used to implement `WorkspaceOps::workspace_watch_entry_oneshot`.
     WorkspaceOpsInboundSyncDone {
@@ -682,6 +721,7 @@ impl EventBus {
         {
             self.spy.add(event.to_any_spied_event());
         }
+        log::debug!("Sending event: {:?}", event);
         event.send(&self.internal);
     }
 
