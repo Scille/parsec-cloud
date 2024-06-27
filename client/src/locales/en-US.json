@@ -1108,6 +1108,9 @@
             "missingToken": "Link does not include a token.",
             "invalidToken": "Link contains an invalid token."
         },
+        "link": {
+            "invalid": "This link is invalid."
+        },
         "userInfo": {
             "name": "Name contains invalid characters.",
             "email": "Wrong email address format."
