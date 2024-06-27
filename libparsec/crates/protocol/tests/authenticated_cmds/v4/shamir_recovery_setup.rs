@@ -3,7 +3,7 @@
 
 use libparsec_protocol::authenticated_cmds::v4::shamir_recovery_setup::ShamirRecoverySetup;
 use libparsec_tests_lite::prelude::*;
-use libparsec_types::{DateTime, ShamirRevealToken};
+use libparsec_types::{DateTime, InvitationToken};
 
 use super::authenticated_cmds;
 
@@ -205,7 +205,7 @@ pub fn req() {
         setup: Some(ShamirRecoverySetup {
             brief: "brief".into(),
             ciphered_data: "ciphered_data".into(),
-            reveal_token: ShamirRevealToken::from_hex("0563ff98846c4dbf9e0a1cc2f6fbb149").unwrap(),
+            reveal_token: InvitationToken::from_hex("0563ff98846c4dbf9e0a1cc2f6fbb149").unwrap(),
             shares: vec!["shares".into()],
         }),
     };

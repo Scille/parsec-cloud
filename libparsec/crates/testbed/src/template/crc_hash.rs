@@ -182,7 +182,6 @@ macro_rules! impl_crc_hash_for_token_based {
 }
 
 impl_crc_hash_for_token_based!(InvitationToken);
-impl_crc_hash_for_token_based!(ShamirRevealToken);
 
 impl CrcHash for DateTime {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {

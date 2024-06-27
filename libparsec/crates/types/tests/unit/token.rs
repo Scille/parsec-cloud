@@ -45,4 +45,3 @@ macro_rules! base_token_tests {
 
 base_token_tests!(invitation_token, InvitationToken);
 base_token_tests!(bootstrap_token, BootstrapToken);
-base_token_tests!(shamir_reveal_token, ShamirRevealToken);
