@@ -102,7 +102,7 @@ async def test_ok(
         },
     )
     assert response.status_code == 200, response.content
-    assert response.json() == {"bootstrap_token": ANY}
+    assert response.json() == {"bootstrap_url": ANY}
 
     expected_active_users_limit = ActiveUsersLimit.from_maybe_int(
         args.get("active_users_limit", None)

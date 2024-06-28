@@ -21,6 +21,7 @@ from parsec._parsec import (
     BootstrapToken,
     DateTime,
     OrganizationID,
+    ParsecOrganizationBootstrapAddr,
     UserID,
     UserProfile,
 )
@@ -90,7 +91,7 @@ class CreateOrganizationIn(BaseModel):
 
 
 class CreateOrganizationOut(BaseModel):
-    bootstrap_token: str
+    bootstrap_url: str
 
 
 @administration_router.post("/administration/organizations")
@@ -117,7 +118,15 @@ async def administration_create_organizations(
                 detail="Organization already exists",
             )
 
-    return CreateOrganizationOut(bootstrap_token=bootstrap_token.hex)
+    assert request.url.hostname is not None
+    bootstrap_url = ParsecOrganizationBootstrapAddr(
+        body.organization_id,
+        bootstrap_token,
+        hostname=request.url.hostname,
+        port=request.url.port,
+        use_ssl=request.url.scheme == "https",
+    )
+    return CreateOrganizationOut(bootstrap_url=bootstrap_url.to_url())
 
 
 class GetOrganizationOut(BaseModel):
