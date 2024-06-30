@@ -5,6 +5,12 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.0-b.6.dev.19904+6bd7fe0 (2024-06-30)
+------------------------------------------------
+
+No significant changes.
+
+
 Parsec v3.0.0-b.6 (2024-03-26)
 ------------------------------
 
