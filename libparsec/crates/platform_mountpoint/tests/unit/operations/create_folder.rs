@@ -150,7 +150,7 @@ async fn invalid_name(tmp_path: TmpPath, env: &TestbedEnv) {
     let raw_bad_name = b"new\xC0dir";
 
     // 0xC0 is not a valid UF8 character, however Linux rules are "no / and no \0"
-    #[cfg(target_os = "linux")]
+    #[cfg(target_family = "unix")]
     let raw_bad_name = b"new\xC0dir";
 
     mount_and_test!(

@@ -1,6 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{os::linux::fs::MetadataExt, sync::Arc, thread::JoinHandle};
+#[cfg(target_os = "macos")]
+use std::os::macos::fs::MetadataExt;
+
+#[cfg(target_os = "linux")]
+use std::os::linux::fs::MetadataExt;
+
+use std::{sync::Arc, thread::JoinHandle};
 
 use libparsec_client::{MountpointMountStrategy, WorkspaceOps};
 use libparsec_types::prelude::*;
