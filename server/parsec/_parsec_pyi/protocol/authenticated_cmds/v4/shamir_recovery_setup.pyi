@@ -4,22 +4,18 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, ShamirRevealToken
+from parsec._parsec import DateTime, InvitationToken
 
 class ShamirRecoverySetup:
     def __init__(
-        self,
-        ciphered_data: bytes,
-        reveal_token: ShamirRevealToken,
-        brief: bytes,
-        shares: list[bytes],
+        self, ciphered_data: bytes, reveal_token: InvitationToken, brief: bytes, shares: list[bytes]
     ) -> None: ...
     @property
     def brief(self) -> bytes: ...
     @property
     def ciphered_data(self) -> bytes: ...
     @property
-    def reveal_token(self) -> ShamirRevealToken: ...
+    def reveal_token(self) -> InvitationToken: ...
     @property
     def shares(self) -> list[bytes]: ...
 

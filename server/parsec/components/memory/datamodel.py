@@ -28,7 +28,6 @@ from parsec._parsec import (
     SequesterServiceCertificate,
     SequesterServiceID,
     ShamirRecoveryBriefCertificate,
-    ShamirRevealToken,
     UserCertificate,
     UserID,
     UserProfile,
@@ -422,7 +421,7 @@ class MemoryShamirSetup:
     # The token the claimer should provide to get access to `ciphered_data`.
     # This token is split into shares, hence it acts as a proof the claimer
     # asking for the `ciphered_data` had it identity confirmed by the recipients.
-    reveal_token: ShamirRevealToken
+    reveal_token: InvitationToken
     # The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
     # It contains the threshold for the quorum and the shares recipients.
     # This field has a certain level of duplication with the "shares" below,

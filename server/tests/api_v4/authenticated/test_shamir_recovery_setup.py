@@ -4,10 +4,10 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    InvitationToken,
     RevokedUserCertificate,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
-    ShamirRevealToken,
     authenticated_cmds,
 )
 from tests.common import Backend, CoolorgRpcClients
@@ -37,7 +37,7 @@ async def test_authenticated_shamir_recovery_setup_ok(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -67,7 +67,7 @@ async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -103,7 +103,7 @@ async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
     # attempt to overwrite setup
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"def",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -121,7 +121,7 @@ async def test_authenticated_shamir_recovery_setup_brief_invalid_data(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         b"ijk",
         [b"lmn"],
     )
@@ -152,7 +152,7 @@ async def test_authenticated_shamir_recovery_setup_author_included_as_recipient(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -191,7 +191,7 @@ async def test_authenticated_shamir_recovery_setup_duplicate_share_for_recipient
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [
             share.dump_and_sign(coolorg.alice.signing_key),
@@ -242,7 +242,7 @@ async def test_authenticated_shamir_recovery_setup_invalid_recipient(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -273,7 +273,7 @@ async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -307,7 +307,7 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.bob.signing_key),
         [share.dump_and_sign(coolorg.bob.signing_key)],
     )
@@ -338,7 +338,7 @@ async def test_authenticated_shamir_recovery_setup_share_invalid_data(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -369,7 +369,7 @@ async def test_authenticated_shamir_recovery_setup_share_recipient_not_in_brief(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
@@ -399,7 +399,7 @@ async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
-        ShamirRevealToken.new(),
+        InvitationToken.new(),
         brief.dump_and_sign(coolorg.alice.signing_key),
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
