@@ -11,7 +11,11 @@ use std::{
 };
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{InboundSyncOutcome, OutboundSyncOutcome};
+use crate::{
+    workspace::{InboundSyncOutcome, OutboundSyncOutcome},
+    EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncAborted,
+    EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncStarted,
+};
 
 enum Modification {
     Nothing,
@@ -37,6 +41,7 @@ async fn non_placeholder(
 ) {
     // In case of no modification, the client won't query the server, hence the
     // remote modification is useless !
+
     if matches!(modification, Modification::Nothing) && remote_change {
         // Meaningless case, just skip it
         return;
@@ -222,16 +227,52 @@ async fn non_placeholder(
         }
     }
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
     let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
 
     if !remote_change {
         p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+        if matches!(modification, Modification::Nothing) {
+            spy.assert_no_events();
+        } else {
+            spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+                p_assert_eq!(event.realm_id, wksp1_id);
+                p_assert_eq!(event.entry_id, wksp1_id);
+            });
+            spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncDone| {
+                p_assert_eq!(event.realm_id, wksp1_id);
+                p_assert_eq!(event.entry_id, wksp1_id);
+            });
+        }
     } else {
         p_assert_matches!(outcome, OutboundSyncOutcome::InboundSyncNeeded);
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_id);
+        });
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncAborted| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_id);
+        });
+
         let outcome = wksp1_ops.inbound_sync(wksp1_id).await.unwrap();
         p_assert_matches!(outcome, InboundSyncOutcome::Updated);
+        spy.assert_next(|event: &EventWorkspaceOpsInboundSyncDone| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_id);
+        });
+
         let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
         p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_id);
+        });
+        spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncDone| {
+            p_assert_eq!(event.realm_id, wksp1_id);
+            p_assert_eq!(event.entry_id, wksp1_id);
+        });
     }
 
     // 4) Check the outcome
@@ -294,6 +335,8 @@ async fn non_placeholder(
 
 #[parsec_test(testbed = "minimal")]
 async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedEnv) {
+    use crate::EventNewCertificates;
+
     let wksp1_id = env
         .customize(|builder| {
             // Alice has access to a workspace partially bootstrapped: only the realm creation has been done
@@ -431,8 +474,29 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
         },
     );
 
+    let mut spy = wksp1_ops.event_bus.spy.start_expecting();
+
     let outcome = wksp1_ops.outbound_sync(wksp1_id).await.unwrap();
     p_assert_matches!(outcome, OutboundSyncOutcome::Done);
+    // Sync triggers the workspace bootstrap first, which leads to certificates creation
+    spy.assert_next(|event: &EventNewCertificates| {
+        p_assert_eq!(event.storage_initially_empty, false);
+        p_assert_eq!(event.common_new_since, None);
+        p_assert_eq!(event.sequester_new_since, None);
+        p_assert_eq!(event.shamir_recovery_new_since, None);
+        p_assert_eq!(
+            event.realm_new_since,
+            [(wksp1_id, "2000-01-03T00:00:00Z".parse().unwrap())]
+        );
+    });
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncStarted| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_id);
+    });
+    spy.assert_next(|event: &EventWorkspaceOpsOutboundSyncDone| {
+        p_assert_eq!(event.realm_id, wksp1_id);
+        p_assert_eq!(event.entry_id, wksp1_id);
+    });
 
     // Check the workspace manifest is no longer need sync
     let workspace_manifest = wksp1_ops.store.get_root_manifest();
@@ -441,6 +505,7 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
     p_assert_eq!(workspace_manifest.base.version, 1);
     assert!(workspace_manifest.children.is_empty());
     assert!(workspace_manifest.base.children.is_empty());
+    spy.assert_no_events();
 
     wksp1_ops.stop().await.unwrap();
 }
