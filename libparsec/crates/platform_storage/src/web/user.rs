@@ -147,6 +147,7 @@ impl PlatformUserStorage {
         }
     }
 
+    #[cfg(feature = "testing")]
     pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
         todo!();
     }
