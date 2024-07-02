@@ -3,6 +3,8 @@
 use std::collections::HashMap;
 
 pub use crate::certif::CertifShamirError as ClientShamirError;
+use crate::{CertifPollServerError, CertificateBasedActionOutcome};
+use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_types::UserID;
 
 use super::Client;
@@ -22,5 +24,27 @@ pub async fn shamir_setup_create(
         )
         .await?;
 
-    todo!()
+    let latest_known_timestamps = match outcome {
+        CertificateBasedActionOutcome::LocalIdempotent => return Ok(()),
+        CertificateBasedActionOutcome::Uploaded {
+            certificate_timestamp,
+        }
+        | CertificateBasedActionOutcome::RemoteIdempotent {
+            certificate_timestamp,
+        } => PerTopicLastTimestamps::new_for_common(certificate_timestamp),
+    };
+    client_ops
+        .certificates_ops
+        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+        .await
+        .map_err(|e| match e {
+            CertifPollServerError::Stopped => ClientShamirError::Stopped,
+            CertifPollServerError::Offline => ClientShamirError::Offline,
+            CertifPollServerError::InvalidCertificate(err) => {
+                ClientShamirError::InvalidCertificate(err)
+            }
+            CertifPollServerError::Internal(err) => err
+                .context("Cannot poll server for new certificates")
+                .into(),
+        })
 }

@@ -3,9 +3,11 @@
 use std::{
     collections::{HashMap, HashSet},
     num::NonZeroU64,
+    sync::Arc,
 };
 
 use libparsec_client_connection::ConnectionError;
+use libparsec_platform_storage::certificates::UpTo;
 use libparsec_protocol::authenticated_cmds::{
     latest::shamir_recovery_setup::{Rep, Req},
     v4::shamir_recovery_setup::ShamirRecoverySetup,
@@ -15,7 +17,10 @@ use libparsec_types::{
     ShamirRecoveryShareCertificate, UserID,
 };
 
-use crate::{CertificateBasedActionOutcome, CertificateOps, EventTooMuchDriftWithServerClock};
+use crate::{
+    CertificateBasedActionOutcome, CertificateOps, EventTooMuchDriftWithServerClock,
+    InvalidCertificateError,
+};
 
 use super::CertifStoreError;
 
@@ -77,6 +82,8 @@ pub enum CertifShamirError {
         ballpark_client_early_offset: f64,
         ballpark_client_late_offset: f64,
     },
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
 }
 
 impl From<CertifStoreError> for CertifShamirError {
@@ -148,7 +155,7 @@ async fn shamir_internals(
     if share_recipients
         .iter()
         .fold(0, |acc, (_, share_count)| acc + share_count)
-        > threshold
+        < threshold
     {
         return Err(CertifShamirError::InvalidThreshold);
     }
@@ -170,8 +177,8 @@ async fn shamir_internals(
     }
 
     // 2. Check for previous setup
-    if get_latest_shamir_setup_for_author(certificate_ops, author_device, author_id)
-        .await
+    if get_latest_shamir_setup_for_author(certificate_ops, &author_id, &timestamp)
+        .await?
         .is_some()
     {
         return Err(CertifShamirError::ShamirSetupAlreadyExist);
@@ -299,8 +306,16 @@ async fn shamir_internals(
 
 async fn get_latest_shamir_setup_for_author(
     certificate_ops: &CertificateOps,
-    author_device: DeviceID,
-    author_id: UserID,
-) -> Option<ShamirRecoveryBriefCertificate> {
-    todo!()
+    author_id: &UserID,
+    timestamp: &DateTime,
+) -> Result<Option<Arc<ShamirRecoveryBriefCertificate>>, CertifShamirError> {
+    Ok(certificate_ops
+        .store
+        .for_read(|store| {
+            store.get_last_shamir_recovery_brief_certificate_for_author(
+                author_id,
+                UpTo::Timestamp(*timestamp),
+            )
+        })
+        .await??)
 }
