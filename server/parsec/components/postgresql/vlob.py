@@ -51,7 +51,7 @@ _q_dump_vlobs = Q(
 SELECT
     vlob_atom.vlob_id,
     realm.realm_id,
-    { q_device(_id="vlob_atom.author", select="device_id") } as author,
+    { q_device(_id="vlob_atom.author", select="device_id") } AS author,
     vlob_atom.created_on,
     vlob_atom.blob
 FROM vlob_atom
@@ -105,7 +105,6 @@ INSERT INTO realm_vlob_update (
 RETURNING index
 """
 )
-
 
 _q_poll_changes = Q(
     f"""
@@ -171,7 +170,6 @@ ORDER BY version DESC
 LIMIT 1
 """
 )
-
 
 _q_get_vlob_at_version = Q(
     f"""
@@ -408,6 +406,7 @@ class PGVlobComponent(BaseVlobComponent):
             return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
         if org.is_sequestered:
+            # TODO: Implement sequester
             raise NotImplementedError
         else:
             if sequester_blob is not None:

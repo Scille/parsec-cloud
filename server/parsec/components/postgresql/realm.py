@@ -61,27 +61,6 @@ from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.events import EventRealmCertificate
 
 
-def q_user_role(
-    user_id: str,
-    realm: str,
-    organization: str,
-) -> str:
-    return f"""
-COALESCE(
-    (
-        SELECT realm_user_role.role
-        FROM realm_user_role
-        WHERE
-            realm_user_role.realm = { realm }
-            AND realm_user_role.user_ = { q_user_internal_id(organization=organization, user_id=user_id) }
-        ORDER BY certified_on DESC
-        LIMIT 1
-    ),
-    NULL
-)
-"""
-
-
 def _make_q_lock_realm(for_update: bool = False, for_share=False) -> Q:
     assert for_update ^ for_share
     share_or_update = "SHARE" if for_share else "UPDATE"
@@ -100,7 +79,18 @@ locked_realms AS (
     FOR {share_or_update}
 )
 SELECT
-    { q_user_role(organization="realm.organization", realm="realm._id", user_id="$user_id") } role,
+    COALESCE(
+        (
+            SELECT realm_user_role.role
+            FROM realm_user_role
+            WHERE
+                realm_user_role.realm = realm._id
+                AND realm_user_role.user_ = { q_user_internal_id(organization="realm.organization", user_id="$user_id") }
+            ORDER BY certified_on DESC
+            LIMIT 1
+        ),
+        NULL
+    ) AS role,
     key_index,
     last_timestamp
 FROM realm
@@ -113,7 +103,9 @@ _q_lock_realm_topic = _make_q_lock_realm(for_update=True)
 
 _q_get_current_roles = Q(
     f"""
-SELECT DISTINCT ON(user_) { q_user(_id="realm_user_role.user_", select="user_id") }, role
+SELECT DISTINCT ON(user_)
+    { q_user(_id="realm_user_role.user_", select="user_id") },
+    role
 FROM  realm_user_role
 WHERE realm = { q_realm_internal_id(organization_id="$organization_id", realm_id="$realm_id") }
 ORDER BY user_, certified_on DESC
@@ -159,7 +151,6 @@ INSERT INTO realm_keys_bundle_access (
 """
 )
 
-
 _q_update_key_index = Q(
     f"""
 UPDATE realm
@@ -186,8 +177,7 @@ WHERE
 
 _q_get_keys_bundle_access = Q(
     """
-SELECT
-    realm_keys_bundle_access.access
+SELECT realm_keys_bundle_access.access
 FROM realm_keys_bundle_access
 INNER JOIN user_ ON realm_keys_bundle_access.user_ = user_._id
 WHERE realm_keys_bundle = $realm_keys_bundle_internal_id
@@ -377,6 +367,19 @@ LIMIT 1
 )
 
 
+async def query_get_realms_for_user(
+    conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
+) -> dict[VlobID, RealmRole]:
+    rep = await conn.fetch(
+        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
+    )
+    return {
+        VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
+        for row in rep
+        if row["role"] is not None
+    }
+
+
 class PGRealmComponent(BaseRealmComponent):
     def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
         super().__init__()
@@ -448,18 +451,24 @@ class PGRealmComponent(BaseRealmComponent):
         return RealmRole.from_str(row["role"])
 
     async def _get_realms_for_user(
-        self, conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> dict[VlobID, tuple[RealmRole | None, DateTime]]:
-        rep = await conn.fetch(
-            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
+        rows = await conn.fetch(
+            *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user_id)
         )
-        result = {}
-        for row in rep:
-            key = VlobID.from_hex(row["realm_id"])
+        realms = {}
+        for row in rows:
+            realm_id = VlobID.from_hex(row["realm_id"])
             role = RealmRole.from_str(row["role"]) if row["role"] is not None else None
-            value = (role, row["certified_on"])
-            result[key] = value
-        return result
+            realms[realm_id] = (role, row["certified_on"])
+
+        return realms
+
+    async def _get_realm_ids_for_user(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
+    ) -> dict[VlobID, RealmRole]:
+        realms = await self._get_realms_for_user(conn, organization_id, user_id)
+        return {realm_id: role for realm_id, (role, _) in realms.items() if role is not None}
 
     async def _get_realm_certificates_for_user(
         self,
@@ -495,36 +504,36 @@ class PGRealmComponent(BaseRealmComponent):
         realm_role_priority = 0
         key_rotation_priority = 1
         realm_name_priority = 2
-        rep = await conn.fetch(
+        rows = await conn.fetch(
             *_q_get_realm_role_certificates(
                 organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
-        for row in rep:
+        for row in rows:
             realm_item = (
                 row["certified_on"],
                 realm_role_priority,
                 row["certificate"],
             )
             realm_items.append(realm_item)
-        rep = await conn.fetch(
+        rows = await conn.fetch(
             *_q_get_key_rotation_certificates(
                 organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
-        for row in rep:
+        for row in rows:
             realm_item = (
                 row["certified_on"],
                 key_rotation_priority,
                 row["realm_key_rotation_certificate"],
             )
             realm_items.append(realm_item)
-        rep = await conn.fetch(
+        rows = await conn.fetch(
             *_q_get_realm_name_certificates(
                 organization_id=organization_id.str, realm_id=realm_id, after=after, before=before
             )
         )
-        for row in rep:
+        for row in rows:
             realm_item = (
                 row["certified_on"],
                 realm_name_priority,
@@ -538,7 +547,7 @@ class PGRealmComponent(BaseRealmComponent):
     async def _has_realm_name_certificate(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, realm_id: VlobID
     ) -> bool:
-        ret = await conn.fetchrow(
+        rows = await conn.fetchrow(
             *_q_get_realm_name_certificates(
                 organization_id=organization_id.str,
                 realm_id=realm_id,
@@ -546,7 +555,7 @@ class PGRealmComponent(BaseRealmComponent):
                 before=None,
             )
         )
-        return ret is not None
+        return rows is not None
 
     @override
     @transaction
