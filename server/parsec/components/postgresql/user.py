@@ -26,12 +26,9 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.utils import (
     Q,
-    q_device,
     q_device_internal_id,
-    q_human,
     q_human_internal_id,
     q_organization_internal_id,
-    q_user,
     q_user_internal_id,
     transaction,
 )
@@ -70,37 +67,23 @@ if TYPE_CHECKING:
     from parsec.components.postgresql.organization import PGOrganizationComponent
     from parsec.components.postgresql.realm import PGRealmComponent
 
-
-_q_get_device = Q(
+_q_get_user_id_for_device = Q(
     f"""
-SELECT
-    { q_user(_id="device.user_", select="user_id") } as user_id,
-    device_label,
-    device_certificate,
-    redacted_device_certificate,
-    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
-    created_on
+SELECT user_.user_id
 FROM device
+INNER JOIN user_
+ON user_._id = device.user_
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND device_id = $device_id
+    device.organization = { q_organization_internal_id("$organization_id") }
+    AND device.device_id = $device_id
 """
 )
 
-_q_get_user = Q(
+_q_get_profile_for_user = Q(
     f"""
 SELECT
-    { q_human(_id="user_.human", select="email") } as human_email,
-    { q_human(_id="user_.human", select="label") } as human_label,
-    COALESCE(profile.profile, user_.initial_profile) as profile,
-    user_.user_certificate,
-    user_.redacted_user_certificate,
-    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
-    user_.created_on,
-    user_.revoked_on,
-    user_.revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
-    user_.frozen
+    COALESCE(profile.profile, user_.initial_profile) AS profile,
+    user_.revoked_on
 FROM user_
 LEFT JOIN profile ON user_._id = profile.user_
 WHERE
@@ -110,32 +93,24 @@ ORDER BY profile.certified_on DESC LIMIT 1
 """
 )
 
-_q_get_user_info = Q(
-    f"""
-SELECT
-    { q_human(_id="user_.human", select="email") } as email,
-    { q_human(_id="user_.human", select="label") } as label,
-    frozen
-FROM user_
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND user_id = $user_id
-"""
-)
 
-_q_get_user_info_from_email = Q(
-    f"""
+def _make_q_get_user_info_for(condition: str) -> Q:
+    return Q(f"""
 SELECT
-    user_id,
-    { q_human(_id="user_.human", select="email") } as email,
-    { q_human(_id="user_.human", select="label") } as label,
-    frozen
+    user_.user_id,
+    user_.frozen,
+    human.email,
+    human.label
 FROM user_
+INNER JOIN human ON user_.human = human._id
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND human = { q_human_internal_id(organization_id="$organization_id", email="$email") }
-"""
-)
+    user_.organization = { q_organization_internal_id("$organization_id") }
+    AND {condition}
+""")
+
+
+_q_get_user_info_for_user = _make_q_get_user_info_for("user_.user_id = $user_id")
+_q_get_user_info_for_email = _make_q_get_user_info_for("human.email = $email")
 
 _q_freeze_user = Q(
     f"""
@@ -146,7 +121,6 @@ WHERE
     AND user_id = $user_id
 """
 )
-
 
 _q_revoke_user = Q(
     f"""
@@ -213,7 +187,7 @@ _q_get_redacted_user_certificates = Q(
     f"""
 SELECT
     created_on,
-    redacted_user_certificate as user_certificate
+    redacted_user_certificate AS user_certificate
 FROM user_
 WHERE organization = { q_organization_internal_id("$organization_id") }
 AND COALESCE(created_on > $after, TRUE)
@@ -259,7 +233,7 @@ _q_get_device_redacted_certificates = Q(
     f"""
 SELECT
     created_on,
-    redacted_device_certificate as device_certificate
+    redacted_device_certificate AS device_certificate
 FROM device
 WHERE organization = { q_organization_internal_id("$organization_id") }
 AND COALESCE(created_on > $after, TRUE)
@@ -269,23 +243,18 @@ AND COALESCE(created_on > $after, TRUE)
 _q_get_organization_users = Q(
     f"""
 SELECT DISTINCT ON(user_._id)
-    user_id,
-    { q_human(_id="user_.human", select="email") } as human_email,
-    { q_human(_id="user_.human", select="label") } as human_label,
-    initial_profile,
-    user_certificate,
-    redacted_user_certificate,
-    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
-    created_on,
-    revoked_on,
-    revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
-    frozen,
-    COALESCE(profile.profile, user_.initial_profile) as current_profile
+    user_.user_id,
+    user_.frozen,
+    user_.created_on,
+    user_.revoked_on,
+    COALESCE(profile.profile, user_.initial_profile) AS current_profile,
+    human.email AS human_email,
+    human.label AS human_label
 FROM user_
 LEFT JOIN profile ON user_._id = profile.user_
+INNER JOIN human ON human._id = user_.human
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = { q_organization_internal_id("$organization_id") }
 ORDER BY user_._id, profile.certified_on DESC
 """
 )
@@ -293,16 +262,13 @@ ORDER BY user_._id, profile.certified_on DESC
 _q_get_organization_devices = Q(
     f"""
 SELECT
-    { q_user(select="user_id", _id="device.user_") } as user_id,
-    device_id,
-    device_label,
-    device_certificate,
-    redacted_device_certificate,
-    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
-    created_on
+    user_.user_id,
+    device.device_id,
+    device.created_on
 FROM device
+INNER JOIN user_ ON user_._id = device.user_
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    device.organization = { q_organization_internal_id("$organization_id") }
 """
 )
 
@@ -310,7 +276,7 @@ _q_check_active_users_limit = Q(
     """
     SELECT
         (
-            organization.active_users_limit is NULL
+            organization.active_users_limit IS NULL
             OR (
                 SELECT
                     count(*)
@@ -320,7 +286,7 @@ _q_check_active_users_limit = Q(
                     user_.organization = organization._id AND
                     user_.revoked_on IS NULL
             ) < organization.active_users_limit
-        ) as allowed
+        ) AS allowed
     FROM
         organization
     WHERE
@@ -365,7 +331,7 @@ VALUES (
 """
 )
 
-_q_get_not_revoked_users_for_human = Q(
+_q_get_active_users_for_human = Q(
     f"""
 SELECT user_id
 FROM user_
@@ -378,7 +344,7 @@ WHERE
 """
 )
 
-_q_get_user_devices = Q(
+_q_get_devices_for_user = Q(
     f"""
 SELECT device_id
 FROM device
@@ -487,18 +453,18 @@ class PGUserComponent(BaseUserComponent):
         if result != "INSERT 0 1":
             assert False, f"Insertion error: {result}"
 
-        # Finally make sure there is only one non-revoked user with this human handle
+        # Finally make sure there is only one active user with this human handle
         now = DateTime.now()
-        not_revoked_users = await conn.fetch(
-            *_q_get_not_revoked_users_for_human(
+        active_users = await conn.fetch(
+            *_q_get_active_users_for_human(
                 organization_id=organization_id.str,
                 email=user_certificate_cooked.human_handle.email,
                 now=now,
             )
         )
         if (
-            len(not_revoked_users) != 1
-            or UserID.from_hex(not_revoked_users[0]["user_id"]) != user_certificate_cooked.user_id
+            len(active_users) != 1
+            or UserID.from_hex(active_users[0]["user_id"]) != user_certificate_cooked.user_id
         ):
             # Exception cancels the transaction so the user insertion is automatically cancelled
             return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
@@ -523,7 +489,7 @@ class PGUserComponent(BaseUserComponent):
     ) -> None | UserCreateDeviceStoreBadOutcome:
         if not first_device:
             existing_devices = await conn.fetch(
-                *_q_get_user_devices(
+                *_q_get_devices_for_user(
                     organization_id=organization_id.str,
                     user_id=device_certificate_cooked.user_id,
                 )
@@ -577,13 +543,13 @@ class PGUserComponent(BaseUserComponent):
         if common_timestamp is None:
             common_timestamp = DateTime.from_timestamp_micros(0)
         d_row = await conn.fetchrow(
-            *_q_get_device(organization_id=organization_id.str, device_id=device_id)
+            *_q_get_user_id_for_device(organization_id=organization_id.str, device_id=device_id)
         )
         if not d_row:
             return CheckDeviceBadOutcome.DEVICE_NOT_FOUND
         user_id = UserID.from_hex(d_row["user_id"])
         u_row = await conn.fetchrow(
-            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
+            *_q_get_profile_for_user(organization_id=organization_id.str, user_id=user_id)
         )
         if not u_row:
             return CheckDeviceBadOutcome.USER_NOT_FOUND
@@ -607,7 +573,7 @@ class PGUserComponent(BaseUserComponent):
         if common_timestamp is None:
             common_timestamp = DateTime.from_timestamp_micros(0)
         u_row = await conn.fetchrow(
-            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
+            *_q_get_profile_for_user(organization_id=organization_id.str, user_id=user_id)
         )
         if not u_row:
             return CheckUserBadOutcome.USER_NOT_FOUND
@@ -682,12 +648,10 @@ class PGUserComponent(BaseUserComponent):
         if common_topic_timestamp >= user_certificate_cooked.timestamp:
             return RequireGreaterTimestamp(strictly_greater_than=common_topic_timestamp)
 
-        record = await conn.fetchrow(
-            *_q_check_active_users_limit(organization_id=organization_id.str)
-        )
+        row = await conn.fetchrow(*_q_check_active_users_limit(organization_id=organization_id.str))
         # Note that with the user/device write lock held, we have guarantee that
         # the active users limit won't change behind our back.
-        if record is not None and not record["allowed"]:
+        if row is not None and not row["allowed"]:
             return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
         if not user_certificate_cooked.human_handle:
@@ -931,7 +895,7 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         row = await conn.fetchrow(
-            *_q_get_user_info(organization_id=organization_id.str, user_id=user_id)
+            *_q_get_user_info_for_user(organization_id=organization_id.str, user_id=user_id)
         )
         if row is None:
             return None
@@ -941,8 +905,9 @@ class PGUserComponent(BaseUserComponent):
     async def get_user_info_from_email(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, email: str
     ) -> UserInfo | None:
+        print(_q_get_user_info_for_email.sql)
         row = await conn.fetchrow(
-            *_q_get_user_info_from_email(organization_id=organization_id.str, email=email)
+            *_q_get_user_info_for_email(organization_id=organization_id.str, email=email)
         )
         if row is None:
             return None
