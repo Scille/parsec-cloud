@@ -119,7 +119,7 @@ def _table_q_factory(
     WHERE device.device_id = $author
       AND device.organization = (SELECT _id
                                  FROM organization
-                                 WHERE organization.organization_id = $organization_id) "
+                                 WHERE organization.organization_id = $organization_id)
     """
 
     def _q(
