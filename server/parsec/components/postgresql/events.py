@@ -10,7 +10,6 @@ from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStre
 
 from parsec._parsec import (
     OrganizationID,
-    RealmRole,
     UserID,
     UserProfile,
     VlobID,
@@ -20,36 +19,15 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import parse_signal, send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
+from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.user import PGUserComponent
-from parsec.components.postgresql.utils import Q, q_realm, q_user_internal_id, transaction
+from parsec.components.postgresql.utils import transaction
 from parsec.components.user import CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import Event, EventOrganizationConfig
 from parsec.logging import get_logger
 
 logger = get_logger()
-
-_q_get_realms_for_user = Q(
-    f"""
-SELECT DISTINCT ON(realm) { q_realm(_id="realm_user_role.realm", select="realm_id") } as realm_id, role
-FROM  realm_user_role
-WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
-ORDER BY realm, certified_on DESC
-"""
-)
-
-
-async def query_get_realms_for_user(
-    conn: AsyncpgConnection, organization_id: OrganizationID, user: UserID
-) -> dict[VlobID, RealmRole]:
-    rep = await conn.fetch(
-        *_q_get_realms_for_user(organization_id=organization_id.str, user_id=user)
-    )
-    return {
-        VlobID.from_hex(row["realm_id"]): RealmRole.from_str(row["role"])
-        for row in rep
-        if row["role"] is not None
-    }
 
 
 class PGEventBus(EventBus):
@@ -127,12 +105,18 @@ class PGEventsComponent(BaseEventsComponent):
         self.pool = pool
         self.organization: PGOrganizationComponent
         self.user: PGUserComponent
+        self.realm: PGRealmComponent
 
     def register_components(
-        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
+        self,
+        organization: PGOrganizationComponent,
+        user: PGUserComponent,
+        realm: PGRealmComponent,
+        **kwargs,
     ) -> None:
         self.organization = organization
         self.user = user
+        self.realm = realm
 
     @override
     @transaction
@@ -162,5 +146,5 @@ class PGEventsComponent(BaseEventsComponent):
             active_users_limit=org.active_users_limit,
         )
 
-        mapping = await query_get_realms_for_user(conn, organization_id, user_id)
+        mapping = await self.realm._get_realm_ids_for_user(conn, organization_id, user_id)
         return org_config, profile, set(mapping.keys())
