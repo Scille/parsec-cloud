@@ -7,8 +7,6 @@ from parsec._parsec import (
     DeviceID,
     InvitationToken,
     OrganizationID,
-    UserID,
-    VerifyKey,
 )
 from parsec.components.auth import (
     AnonymousAuthInfo,
@@ -25,78 +23,10 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.invite import InviteAsInvitedInfoBadOutcome, PGInviteComponent
 from parsec.components.postgresql.organization import PGOrganizationComponent
-from parsec.components.postgresql.utils import (
-    Q,
-    q_device,
-    q_human,
-    q_organization_internal_id,
-    q_user,
-    transaction,
-)
-from parsec.components.user import (
-    CheckUserForAuthenticationBadOutcome,
-)
+from parsec.components.postgresql.user import PGUserComponent
+from parsec.components.postgresql.utils import transaction
+from parsec.components.user import CheckUserForAuthenticationBadOutcome
 from parsec.config import BackendConfig
-
-_q_get_user = Q(
-    f"""
-SELECT
-    { q_human(_id="user_.human", select="email") } as human_email,
-    { q_human(_id="user_.human", select="label") } as human_label,
-    COALESCE(profile.profile, user_.initial_profile) as profile,
-    user_.user_certificate,
-    user_.redacted_user_certificate,
-    { q_device(select="device_id", _id="user_.user_certifier") } as user_certifier,
-    user_.created_on,
-    user_.revoked_on,
-    user_.revoked_user_certificate,
-    { q_device(select="device_id", _id="user_.revoked_user_certifier") } as revoked_user_certifier,
-    user_.frozen
-FROM user_
-LEFT JOIN profile ON user_._id = profile.user_
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND user_id = $user_id
-ORDER BY profile.certified_on DESC LIMIT 1
-"""
-)
-
-
-_q_get_device = Q(
-    f"""
-SELECT
-    { q_user(select="user_id", _id="device.user_") } as user_id,
-    device_label,
-    verify_key,
-    redacted_device_certificate,
-    { q_device(table_alias="d", select="d.device_id", _id="device.device_certifier") } as device_certifier,
-    created_on
-FROM device
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND device_id = $device_id
-"""
-)
-
-
-async def query_check_user_for_authentication(
-    conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
-) -> tuple[UserID, VerifyKey] | CheckUserForAuthenticationBadOutcome:
-    d_row = await conn.fetchrow(
-        *_q_get_device(organization_id=organization_id.str, device_id=device_id)
-    )
-    if not d_row:
-        return CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND
-    user_id = UserID.from_hex(d_row["user_id"])
-    u_row = await conn.fetchrow(*_q_get_user(organization_id=organization_id.str, user_id=user_id))
-    if not u_row:
-        return CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND
-    if u_row["revoked_on"] is not None:
-        return CheckUserForAuthenticationBadOutcome.USER_REVOKED
-    if u_row["frozen"]:
-        return CheckUserForAuthenticationBadOutcome.USER_FROZEN
-    verify_key = VerifyKey(d_row["verify_key"])
-    return (user_id, verify_key)
 
 
 class PGAuthComponent(BaseAuthComponent):
@@ -105,12 +35,18 @@ class PGAuthComponent(BaseAuthComponent):
         self.pool = pool
         self.organization: PGOrganizationComponent
         self.invite: PGInviteComponent
+        self.user: PGUserComponent
 
     def register_components(
-        self, organization: PGOrganizationComponent, invite: PGInviteComponent, **kwargs
+        self,
+        organization: PGOrganizationComponent,
+        invite: PGInviteComponent,
+        user: PGUserComponent,
+        **kwargs,
     ) -> None:
         self.organization = organization
         self.invite = invite
+        self.user = user
 
     @override
     @transaction
@@ -184,7 +120,7 @@ class PGAuthComponent(BaseAuthComponent):
         if organization.is_expired:
             return AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED
 
-        match await query_check_user_for_authentication(conn, organization_id, device_id):
+        match await self.user._check_user_for_authentication(conn, organization_id, device_id):
             case (user_id, verify_key):
                 pass
             case CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND:

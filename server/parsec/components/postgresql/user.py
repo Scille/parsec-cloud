@@ -38,6 +38,7 @@ from parsec.components.user import (
     CertificatesBundle,
     CheckDeviceBadOutcome,
     CheckUserBadOutcome,
+    CheckUserForAuthenticationBadOutcome,
     UserCreateDeviceStoreBadOutcome,
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
@@ -67,9 +68,11 @@ if TYPE_CHECKING:
     from parsec.components.postgresql.organization import PGOrganizationComponent
     from parsec.components.postgresql.realm import PGRealmComponent
 
-_q_get_user_id_for_device = Q(
+_q_get_device = Q(
     f"""
-SELECT user_.user_id
+SELECT
+    user_.user_id,
+    device.verify_key
 FROM device
 INNER JOIN user_
 ON user_._id = device.user_
@@ -94,11 +97,12 @@ ORDER BY profile.certified_on DESC LIMIT 1
 )
 
 
-def _make_q_get_user_info_for(condition: str) -> Q:
+def _make_q_get_user_for(condition: str) -> Q:
     return Q(f"""
 SELECT
     user_.user_id,
     user_.frozen,
+    user_.revoked_on,
     human.email,
     human.label
 FROM user_
@@ -109,8 +113,8 @@ WHERE
 """)
 
 
-_q_get_user_info_for_user = _make_q_get_user_info_for("user_.user_id = $user_id")
-_q_get_user_info_for_email = _make_q_get_user_info_for("human.email = $email")
+_q_get_user = _make_q_get_user_for("user_.user_id = $user_id")
+_q_get_user_for_email = _make_q_get_user_for("human.email = $email")
 
 _q_freeze_user = Q(
     f"""
@@ -352,6 +356,20 @@ WHERE user_ = { q_user_internal_id(organization_id="$organization_id", user_id="
 """
 )
 
+_q_get_device = Q(
+    f"""
+SELECT
+    user_.user_id,
+    device.verify_key
+FROM device
+INNER JOIN user_
+ON user_._id = device.user_
+WHERE
+    device.organization = { q_organization_internal_id("$organization_id") }
+    AND device.device_id = $device_id
+"""
+)
+
 _q_insert_device = Q(
     f"""
 INSERT INTO device (
@@ -543,7 +561,7 @@ class PGUserComponent(BaseUserComponent):
         if common_timestamp is None:
             common_timestamp = DateTime.from_timestamp_micros(0)
         d_row = await conn.fetchrow(
-            *_q_get_user_id_for_device(organization_id=organization_id.str, device_id=device_id)
+            *_q_get_device(organization_id=organization_id.str, device_id=device_id)
         )
         if not d_row:
             return CheckDeviceBadOutcome.DEVICE_NOT_FOUND
@@ -580,6 +598,35 @@ class PGUserComponent(BaseUserComponent):
         if u_row["revoked_on"] is not None:
             return CheckUserBadOutcome.USER_REVOKED
         return UserProfile.from_str(u_row["profile"]), common_timestamp
+
+    # TODO: This is used by the auth component and is somewhat duplicated with _check_device and _check_user
+    #       See https://github.com/Scille/parsec-cloud/issues/7119
+    async def _check_user_for_authentication(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        device_id: DeviceID,
+    ) -> tuple[UserID, VerifyKey] | CheckUserForAuthenticationBadOutcome:
+        d_row = await conn.fetchrow(
+            *_q_get_device(organization_id=organization_id.str, device_id=device_id)
+        )
+        if not d_row:
+            return CheckUserForAuthenticationBadOutcome.DEVICE_NOT_FOUND
+
+        user_id = UserID.from_hex(d_row["user_id"])
+        verify_key = VerifyKey(d_row["verify_key"])
+
+        u_row = await conn.fetchrow(
+            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
+        )
+        if not u_row:
+            return CheckUserForAuthenticationBadOutcome.USER_NOT_FOUND
+        if u_row["revoked_on"] is not None:
+            return CheckUserForAuthenticationBadOutcome.USER_REVOKED
+        if u_row["frozen"]:
+            return CheckUserForAuthenticationBadOutcome.USER_FROZEN
+
+        return (user_id, verify_key)
 
     async def _lock_common_topic(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
@@ -895,7 +942,7 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID, user_id: UserID
     ) -> UserInfo | None:
         row = await conn.fetchrow(
-            *_q_get_user_info_for_user(organization_id=organization_id.str, user_id=user_id)
+            *_q_get_user(organization_id=organization_id.str, user_id=user_id)
         )
         if row is None:
             return None
@@ -905,9 +952,8 @@ class PGUserComponent(BaseUserComponent):
     async def get_user_info_from_email(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, email: str
     ) -> UserInfo | None:
-        print(_q_get_user_info_for_email.sql)
         row = await conn.fetchrow(
-            *_q_get_user_info_for_email(organization_id=organization_id.str, email=email)
+            *_q_get_user_for_email(organization_id=organization_id.str, email=email)
         )
         if row is None:
             return None
