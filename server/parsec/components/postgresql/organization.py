@@ -81,7 +81,7 @@ WITH new_organization AS (
             is_expired = EXCLUDED.is_expired,
             _expired_on = EXCLUDED._expired_on,
             minimum_archiving_period = EXCLUDED.minimum_archiving_period
-        WHERE organization.root_verify_key is NULL
+        WHERE organization.root_verify_key IS NULL
     RETURNING _id
 )
 INSERT INTO common_topic (organization, last_timestamp)
@@ -91,8 +91,8 @@ ON CONFLICT (organization) DO NOTHING
 )
 
 
-_q_get_organization = Q(
-    """
+def _make_q_get_organization(for_update: bool = False) -> Q:
+    return Q(f"""
 SELECT
     bootstrap_token,
     root_verify_key,
@@ -106,37 +106,22 @@ SELECT
     minimum_archiving_period
 FROM organization
 WHERE organization_id = $organization_id
-"""
-)
+{"FOR UPDATE" if for_update else ""}
+""")
 
-_q_get_organization_enabled_services_certificates = Q(
+
+_q_get_organization = _make_q_get_organization()
+_q_get_organization_for_update = _make_q_get_organization(for_update=True)
+
+_q_get_enabled_service_certificates_for_organization = Q(
     f"""
     SELECT service_certificate
     FROM sequester_service
     WHERE
         organization={ q_organization_internal_id("$organization_id") }
-        AND disabled_on is NULL
+        AND disabled_on IS NULL
     ORDER BY _id
     """
-)
-
-_q_get_organization_for_update = Q(
-    """
-SELECT
-    bootstrap_token,
-    root_verify_key,
-    is_expired,
-    _bootstrapped_on as bootstrapped_on,
-    _created_on as created_on,
-    active_users_limit,
-    user_profile_outsider_allowed,
-    sequester_authority_certificate,
-    sequester_authority_verify_key_der,
-    minimum_archiving_period
-FROM organization
-WHERE organization_id = $organization_id
-FOR UPDATE
-"""
 )
 
 _q_bootstrap_organization = Q(
@@ -163,7 +148,7 @@ SELECT
         SELECT COALESCE(_created_on <= $at, false)
         FROM organization
         WHERE organization_id = $organization_id
-    ) exist,
+    ) AS found,
     (
         SELECT ARRAY(
             SELECT (
@@ -182,7 +167,7 @@ SELECT
             WHERE organization = { q_organization_internal_id("$organization_id") }
             AND created_on <= $at
         )
-    ) users,
+    ) AS users,
     (
         SELECT COUNT(DISTINCT(realm._id))
         FROM realm
@@ -190,7 +175,7 @@ SELECT
         ON realm_user_role.realm = realm._id
         WHERE realm.organization = { q_organization_internal_id("$organization_id") }
         AND realm_user_role.certified_on <= $at
-    ) realms,
+    ) AS realms,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM vlob_atom
@@ -200,7 +185,7 @@ SELECT
             realm.organization = { q_organization_internal_id("$organization_id") }
             AND vlob_atom.created_on <= $at
             AND (vlob_atom.deleted_on IS NULL OR vlob_atom.deleted_on > $at)
-    ) metadata_size,
+    ) AS metadata_size,
     (
         SELECT COALESCE(SUM(size), 0)
         FROM block
@@ -208,11 +193,11 @@ SELECT
             organization = { q_organization_internal_id("$organization_id") }
             AND created_on <= $at
             AND (deleted_on IS NULL OR deleted_on > $at)
-    ) data_size
+    ) AS data_size
 """
 )
 
-_q_get_organizations = Q("SELECT organization_id AS id from organization ORDER BY id")
+_q_get_organizations = Q("SELECT organization_id AS id FROM organization ORDER BY id")
 
 
 @lru_cache()
@@ -256,9 +241,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self.event_bus = event_bus
         self.user: PGUserComponent
 
-    def register_components(
-        self, organization: PGOrganizationComponent, user: PGUserComponent, **kwargs
-    ) -> None:
+    def register_components(self, user: PGUserComponent, **kwargs) -> None:
         self.user = user
 
     @override
@@ -361,11 +344,12 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
             sequester_authority_certificate = row["sequester_authority_certificate"]
             services = await conn.fetch(
-                *_q_get_organization_enabled_services_certificates(organization_id=id.str)
+                *_q_get_enabled_service_certificates_for_organization(organization_id=id.str)
             )
             sequester_services_certificates = tuple(
                 service["service_certificate"] for service in services
             )
+
         raw_bootstrap_token = row["bootstrap_token"]
         bootstrap_token = (
             None if raw_bootstrap_token is None else BootstrapToken.from_hex(raw_bootstrap_token)
@@ -494,6 +478,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         author: DeviceID,
         at: DateTime | None = None,
     ) -> OrganizationStats | OrganizationStatsAsUserBadOutcome:
+        # TODO: This is intended for organization admins but is not currently exposed/used
         raise NotImplementedError
 
     async def _get_organization_stats(
@@ -504,24 +489,25 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     ) -> OrganizationStats | OrganizationStatsBadOutcome:
         at = at or DateTime.now()
         result = await connection.fetchrow(*_q_get_stats(organization_id=organization.str, at=at))
-        if result is None or not result["exist"]:
+        if result is None or not result["found"]:
             return OrganizationStatsBadOutcome.ORGANIZATION_NOT_FOUND
 
         users = 0
         active_users = 0
-        users_per_profile_detail = {p: {"active": 0, "revoked": 0} for p in UserProfile.VALUES}
+        users_per_profile = {profile: {"active": 0, "revoked": 0} for profile in UserProfile.VALUES}
         for u in result["users"]:
-            is_revoked, profile = u
+            revoked_on, profile = u
             users += 1
-            if is_revoked:
-                users_per_profile_detail[UserProfile.from_str(profile)]["revoked"] += 1
+            user_profile = UserProfile.from_str(profile)
+            if revoked_on:
+                users_per_profile[user_profile]["revoked"] += 1
             else:
                 active_users += 1
-                users_per_profile_detail[UserProfile.from_str(profile)]["active"] += 1
+                users_per_profile[user_profile]["active"] += 1
 
         users_per_profile_detail = tuple(
             OrganizationStatsProfileDetailItem(profile=profile, **data)
-            for profile, data in users_per_profile_detail.items()
+            for profile, data in users_per_profile.items()
         )
 
         return OrganizationStats(

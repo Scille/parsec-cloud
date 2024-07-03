@@ -250,6 +250,7 @@ class BaseOrganizationComponent:
     ):
         raise NotImplementedError
 
+    # TODO: This is intended for organization admins but is not currently exposed/used
     async def stats(
         self,
         organization_id: OrganizationID,
