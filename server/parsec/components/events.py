@@ -390,7 +390,7 @@ class BaseEventsComponent:
         if last_event_id is not None:
             missed_events: deque[ClientBroadcastableEvent] = deque()
             # It is likely the client has missed only few events, hence we
-            # iter over the events starting by the most recents.
+            # iter over the events starting by the most recent.
             for event in reversed(self._last_events_cache):
                 if event.event_id == last_event_id:
                     # Found the last event !
