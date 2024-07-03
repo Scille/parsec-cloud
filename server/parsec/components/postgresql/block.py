@@ -44,47 +44,6 @@ from parsec.components.realm import BadKeyIndex, RealmCheckBadOutcome
 from parsec.components.user import CheckDeviceBadOutcome
 
 
-def q_user_can_read_vlob(
-    user: str | None = None,
-    user_id: str | None = None,
-    realm: str | None = None,
-    realm_id: str | None = None,
-    organization: str | None = None,
-    organization_id: str | None = None,
-    table: str = "realm_user_role",
-) -> str:
-    if user is None:
-        assert organization_id is not None and user_id is not None
-        _q_user = q_user_internal_id(
-            organization=organization, organization_id=organization_id, user_id=user_id
-        )
-    else:
-        _q_user = user
-
-    if realm is None:
-        assert organization_id is not None and realm_id is not None
-        _q_realm = q_realm_internal_id(
-            organization=organization, organization_id=organization_id, realm_id=realm_id
-        )
-    else:
-        _q_realm = realm
-
-    return f"""
-COALESCE(
-    (
-        SELECT { table }.role IS NOT NULL
-        FROM { table }
-        WHERE
-            { table }.realm = { _q_realm }
-            AND { table }.user_ = { _q_user }
-        ORDER BY certified_on DESC
-        LIMIT 1
-    ),
-    False
-)
-"""
-
-
 def q_user_can_write_vlob(
     user: str | None = None,
     user_id: str | None = None,
@@ -92,7 +51,6 @@ def q_user_can_write_vlob(
     realm_id: str | None = None,
     organization: str | None = None,
     organization_id: str | None = None,
-    table: str = "realm_user_role",
 ) -> str:
     if user is None:
         assert organization_id is not None and user_id is not None
@@ -113,11 +71,11 @@ def q_user_can_write_vlob(
     return f"""
 COALESCE(
     (
-        SELECT { table }.role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
-        FROM { table }
+        SELECT realm_user_role.role IN ('CONTRIBUTOR', 'MANAGER', 'OWNER')
+        FROM realm_user_role
         WHERE
-            { table }.realm = { _q_realm }
-            AND { table }.user_ = { _q_user }
+            realm_user_role.realm = { _q_realm }
+            AND realm_user_role.user_ = { _q_user }
         ORDER BY certified_on DESC
         LIMIT 1
     ),
@@ -138,28 +96,6 @@ WHERE
 """
 )
 
-
-_q_get_block_meta = Q(
-    f"""
-SELECT
-    deleted_on,
-    {
-        q_user_can_read_vlob(
-            user=q_user_internal_id(
-                organization_id="$organization_id",
-                user_id="$user_id"
-            ),
-            realm="block.realm"
-        )
-    } as has_access
-FROM block
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND block_id = $block_id
-"""
-)
-
-
 _q_get_block_write_right_and_unicity = Q(
     f"""
 SELECT
@@ -169,16 +105,15 @@ SELECT
             user_id="$user_id",
             realm_id="$realm_id"
         )
-    } as has_access,
+    } AS has_access,
     EXISTS({
         q_block(
             organization_id="$organization_id",
             block_id="$block_id"
         )
-    }) as exists
+    }) AS exists
 """
 )
-
 
 _q_insert_block = Q(
     f"""
@@ -199,8 +134,8 @@ _q_get_all_block_meta = Q(
     f"""
 SELECT
     block_id,
-    { q_realm(_id="realm", select="realm.realm_id") } as realm_id,
-    { q_device(_id="author", select="device_id") } as author,
+    { q_realm(_id="realm", select="realm.realm_id") } AS realm_id,
+    { q_device(_id="author", select="device_id") } AS author,
     size,
     created_on,
     key_index
@@ -331,7 +266,7 @@ class PGBlockComponent(BaseBlockComponent):
                 return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
 
         # Note it's important to check unicity here because blockstore create
-        # overwrite existing data !
+        # overwrites existing data!
         ret = await conn.fetchrow(
             *_q_get_block_write_right_and_unicity(
                 organization_id=organization_id.str,
@@ -391,17 +326,17 @@ class PGBlockComponent(BaseBlockComponent):
     async def test_dump_blocks(
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[BlockID, tuple[DateTime, DeviceID, VlobID, int, int]]:
-        ret = await conn.fetch(*_q_get_all_block_meta(organization_id=organization_id.str))
+        rows = await conn.fetch(*_q_get_all_block_meta(organization_id=organization_id.str))
 
         items = {}
-        for item in ret:
-            block_id = BlockID.from_hex(item["block_id"])
+        for row in rows:
+            block_id = BlockID.from_hex(row["block_id"])
             items[block_id] = (
-                item["created_on"],
-                DeviceID.from_hex(item["author"]),
-                VlobID.from_hex(item["realm_id"]),
-                int(item["key_index"]),
-                int(item["size"]),
+                row["created_on"],
+                DeviceID.from_hex(row["author"]),
+                VlobID.from_hex(row["realm_id"]),
+                int(row["key_index"]),
+                int(row["size"]),
             )
 
         return items
@@ -409,15 +344,13 @@ class PGBlockComponent(BaseBlockComponent):
 
 _q_get_block_data = Q(
     """
-SELECT
-    data
+SELECT data
 FROM block_data
 WHERE
     organization_id = $organization_id
     AND block_id = $block_id
 """
 )
-
 
 _q_insert_block_data = Q(
     """
