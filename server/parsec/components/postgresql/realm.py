@@ -65,7 +65,8 @@ def _make_q_lock_realm(for_update: bool = False, for_share=False) -> Q:
     assert for_update ^ for_share
     share_or_update = "SHARE" if for_share else "UPDATE"
     return Q(f"""
-WITH selected_realm AS (
+WITH
+selected_realm AS (
     SELECT _id
     FROM realm
     WHERE
@@ -79,17 +80,14 @@ locked_realms AS (
     FOR {share_or_update}
 )
 SELECT
-    COALESCE(
-        (
-            SELECT realm_user_role.role
-            FROM realm_user_role
-            WHERE
-                realm_user_role.realm = realm._id
-                AND realm_user_role.user_ = { q_user_internal_id(organization="realm.organization", user_id="$user_id") }
-            ORDER BY certified_on DESC
-            LIMIT 1
-        ),
-        NULL
+    (
+        SELECT realm_user_role.role
+        FROM realm_user_role
+        WHERE
+            realm_user_role.realm = realm._id
+            AND realm_user_role.user_ = { q_user_internal_id(organization="realm.organization", user_id="$user_id") }
+        ORDER BY certified_on DESC
+        LIMIT 1
     ) AS role,
     key_index,
     last_timestamp
