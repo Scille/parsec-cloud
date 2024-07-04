@@ -1,0 +1,16 @@
+[sqlfluff]
+
+# Supported dialects https://docs.sqlfluff.com/en/stable/dialects.html
+# Or run 'sqlfluff dialects'
+dialect = sqlite
+
+# Comma separated list of rules to exclude, or None
+# See https://docs.sqlfluff.com/en/stable/configuration.html#enabling-and-disabling-rules
+# exclude_rules =
+
+# The standard max_line_length is 80 in line with the convention of
+# other tools and several style guides.
+# We set it to something a little longer to avoid having to fix
+# lines for the moment.
+# Set to zero or negative to disable checks.
+max_line_length = 120

@@ -24,8 +24,10 @@ CREATE TABLE organization (
     is_expired BOOLEAN NOT NULL,
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL,
-    sequester_authority_certificate BYTEA, -- NULL for non-sequestered organization
-    sequester_authority_verify_key_der BYTEA, -- NULL for non-sequestered organization
+    -- NULL for non-sequestered organization
+    sequester_authority_certificate BYTEA,
+    -- NULL for non-sequestered organization
+    sequester_authority_verify_key_der BYTEA,
     minimum_archiving_period INTEGER NOT NULL
 );
 
@@ -34,7 +36,7 @@ CREATE TABLE organization (
 -------------------------------------------------------
 CREATE TYPE sequester_service_type AS ENUM ('STORAGE', 'WEBHOOK');
 
-CREATE TABLE sequester_service(
+CREATE TABLE sequester_service (
     _id SERIAL PRIMARY KEY,
     service_id UUID NOT NULL,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
@@ -43,14 +45,14 @@ CREATE TABLE sequester_service(
     created_on TIMESTAMPTZ NOT NULL,
     disabled_on TIMESTAMPTZ, -- NULL if currently enabled
     webhook_url TEXT, -- NULL if service_type != WEBHOOK;
-    service_type sequester_service_type NOT NULL,
+    service_type SEQUESTER_SERVICE_TYPE NOT NULL,
 
 
     revoked_on TIMESTAMPTZ, -- NULL if not yet revoked
     revoked_sequester_certificate BYTEA, -- NULL if not yet revoked
     revoked_sequester_certifier INTEGER, -- NULL if not yet revoked
 
-    UNIQUE(organization, service_id)
+    UNIQUE (organization, service_id)
 );
 
 -------------------------------------------------------
@@ -64,7 +66,7 @@ CREATE TABLE human (
     email VARCHAR(254) NOT NULL,
     label VARCHAR(254) NOT NULL,
 
-    UNIQUE(organization, email)
+    UNIQUE (organization, email)
 );
 
 
@@ -90,19 +92,19 @@ CREATE TABLE user_ (
     -- system to obtain a device label (i.e. label is user_id, email is `<user_id>@redacted.invalid`).
     human INTEGER REFERENCES human (_id),
     redacted_user_certificate BYTEA NOT NULL,
-    initial_profile user_profile NOT NULL,
+    initial_profile USER_PROFILE NOT NULL,
     -- This field is altered in an `ALTER TABLE` statement below
     -- in order to avoid cross-reference issues
     shamir_recovery INTEGER,
-    frozen BOOLEAN NOT NULL DEFAULT False,
+    frozen BOOLEAN NOT NULL DEFAULT FALSE,
 
-    UNIQUE(organization, user_id)
+    UNIQUE (organization, user_id)
 );
 
 CREATE TABLE profile (
     _id SERIAL PRIMARY KEY,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-    profile user_profile NOT NULL,
+    profile USER_PROFILE NOT NULL,
     profile_certificate BYTEA NOT NULL,
     certified_by INTEGER NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
@@ -122,15 +124,21 @@ CREATE TABLE device (
     created_on TIMESTAMPTZ NOT NULL,
     redacted_device_certificate BYTEA NOT NULL,
 
-    UNIQUE(organization, device_id)
+    UNIQUE (organization, device_id)
 );
 
 
 ALTER TABLE user_
-ADD CONSTRAINT FK_user_device_user_certifier FOREIGN KEY (user_certifier) REFERENCES device (_id);
+ADD CONSTRAINT fk_user_device_user_certifier FOREIGN KEY (
+    user_certifier
+) REFERENCES device (_id);
 ALTER TABLE user_
-ADD CONSTRAINT FK_user_device_revoked_user_certifier FOREIGN KEY (revoked_user_certifier) REFERENCES device (_id);
-ALTER TABLE sequester_service ADD FOREIGN KEY (revoked_sequester_certifier) REFERENCES device (_id);
+ADD CONSTRAINT fk_user_device_revoked_user_certifier FOREIGN KEY (
+    revoked_user_certifier
+) REFERENCES device (_id);
+ALTER TABLE sequester_service ADD FOREIGN KEY (
+    revoked_sequester_certifier
+) REFERENCES device (_id);
 
 ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
 
@@ -150,7 +158,7 @@ CREATE TABLE shamir_recovery_setup (
     shares INTEGER NOT NULL,
     ciphered_data BYTEA,
 
-    UNIQUE(organization, reveal_token)
+    UNIQUE (organization, reveal_token)
 );
 
 
@@ -164,13 +172,15 @@ CREATE TABLE shamir_recovery_share (
     share_certificate BYTEA NOT NULL,
     shares INTEGER NOT NULL,
 
-    UNIQUE(organization, shamir_recovery, recipient)
+    UNIQUE (organization, shamir_recovery, recipient)
 );
 
 
 
 -- Alter user table to introduce a cross-reference between user id and shamir id
-ALTER TABLE user_ ADD FOREIGN KEY (shamir_recovery) REFERENCES shamir_recovery_setup (_id);
+ALTER TABLE user_ ADD FOREIGN KEY (
+    shamir_recovery
+) REFERENCES shamir_recovery_setup (_id);
 
 
 -------------------------------------------------------
@@ -178,7 +188,9 @@ ALTER TABLE user_ ADD FOREIGN KEY (shamir_recovery) REFERENCES shamir_recovery_s
 -------------------------------------------------------
 
 CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
-CREATE TYPE invitation_deleted_reason AS ENUM ('FINISHED', 'CANCELLED', 'ROTTEN');
+CREATE TYPE invitation_deleted_reason AS ENUM (
+    'FINISHED', 'CANCELLED', 'ROTTEN'
+);
 CREATE TYPE invitation_conduit_state AS ENUM (
     '1_WAIT_PEERS',
     '2_1_CLAIMER_HASHED_NONCE',
@@ -194,7 +206,7 @@ CREATE TABLE invitation (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     token VARCHAR(32) NOT NULL,
-    type invitation_type NOT NULL,
+    type INVITATION_TYPE NOT NULL,
 
     created_by INTEGER REFERENCES device (_id) NOT NULL,
     -- Required for when type=USER
@@ -202,12 +214,12 @@ CREATE TABLE invitation (
 
     created_on TIMESTAMPTZ NOT NULL,
     deleted_on TIMESTAMPTZ,
-    deleted_reason invitation_deleted_reason,
+    deleted_reason INVITATION_DELETED_REASON,
 
     -- Required for when type=SHAMIR_RECOVERY
     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id),
 
-    UNIQUE(organization, token)
+    UNIQUE (organization, token)
 );
 
 
@@ -216,12 +228,12 @@ CREATE TABLE invitation_conduit (
     invitation INTEGER REFERENCES invitation (_id) NOT NULL,
     greeter INTEGER REFERENCES user_ (_id) NOT NULL,
 
-    conduit_state invitation_conduit_state NOT NULL DEFAULT '1_WAIT_PEERS',
+    conduit_state INVITATION_CONDUIT_STATE NOT NULL DEFAULT '1_WAIT_PEERS',
     conduit_greeter_payload BYTEA,
     conduit_claimer_payload BYTEA,
     last_exchange BOOLEAN,
 
-    UNIQUE(invitation, greeter)
+    UNIQUE (invitation, greeter)
 );
 
 
@@ -237,18 +249,18 @@ CREATE TYPE enrollment_state AS ENUM (
     'CANCELLED'
 );
 
-CREATE TYPE pki_enrollment_info_accepted AS(
+CREATE TYPE pki_enrollment_info_accepted AS (
     accepted_on TIMESTAMPTZ,
     accepter_der_x509_certificate BYTEA,
     accept_payload_signature BYTEA,
     accept_payload BYTEA
 );
 
-CREATE TYPE pki_enrollment_info_rejected AS(
+CREATE TYPE pki_enrollment_info_rejected AS (
     rejected_on TIMESTAMPTZ
 );
 
-CREATE TYPE pki_enrollment_info_cancelled AS(
+CREATE TYPE pki_enrollment_info_cancelled AS (
     cancelled_on TIMESTAMPTZ
 );
 
@@ -267,12 +279,12 @@ CREATE TABLE pki_enrollment (
     accepter INTEGER REFERENCES device (_id),
     submitter_accepted_device INTEGER REFERENCES device (_id),
 
-    enrollment_state enrollment_state NOT NULL DEFAULT 'SUBMITTED',
-    info_accepted pki_enrollment_info_accepted,
-    info_rejected pki_enrollment_info_rejected,
-    info_cancelled pki_enrollment_info_cancelled,
+    enrollment_state ENROLLMENT_STATE NOT NULL DEFAULT 'SUBMITTED',
+    info_accepted PKI_ENROLLMENT_INFO_ACCEPTED,
+    info_rejected PKI_ENROLLMENT_INFO_REJECTED,
+    info_cancelled PKI_ENROLLMENT_INFO_CANCELLED,
 
-    UNIQUE(organization, enrollment_id)
+    UNIQUE (organization, enrollment_id)
 );
 
 -------------------------------------------------------
@@ -290,7 +302,7 @@ CREATE TABLE realm (
     key_index INTEGER NOT NULL,
     created_on TIMESTAMPTZ NOT NULL,
 
-    UNIQUE(organization, realm_id)
+    UNIQUE (organization, realm_id)
 );
 
 
@@ -302,22 +314,24 @@ CREATE TABLE realm_user_role (
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
     -- NULL if access revocation
-    role realm_role,
+    role REALM_ROLE,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
-CREATE TYPE realm_archiving_configuration AS ENUM ('AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED');
+CREATE TYPE realm_archiving_configuration AS ENUM (
+    'AVAILABLE', 'ARCHIVED', 'DELETION_PLANNED'
+);
 
 CREATE TABLE realm_archiving (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
-    configuration realm_archiving_configuration NOT NULL,
+    configuration REALM_ARCHIVING_CONFIGURATION NOT NULL,
     -- NULL if not DELETION_PLANNED
     deletion_date TIMESTAMPTZ,
     certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -334,24 +348,24 @@ CREATE TABLE realm_user_change (
     -- The last time this user changed the archiving configuration
     last_archiving_change TIMESTAMPTZ,
 
-    UNIQUE(realm, user_)
+    UNIQUE (realm, user_)
 );
 
-create TABLE realm_keys_bundle (
+CREATE TABLE realm_keys_bundle (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     key_index INTEGER NOT NULL,
 
     realm_key_rotation_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL,
     key_canary BYTEA NOT NULL,
     keys_bundle BYTEA NOT NULL,
 
-    UNIQUE(realm, key_index)
+    UNIQUE (realm, key_index)
 );
 
-create TABLE realm_keys_bundle_access (
+CREATE TABLE realm_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
@@ -359,25 +373,25 @@ create TABLE realm_keys_bundle_access (
 
     access BYTEA NOT NULL,
 
-    UNIQUE(realm, user_, realm_keys_bundle)
+    UNIQUE (realm, user_, realm_keys_bundle)
 );
 
 
-create TABLE realm_sequester_keys_bundle_access (
+CREATE TABLE realm_sequester_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
     sequester_service INTEGER REFERENCES sequester_service (_id) NOT NULL,
     realm_keys_bundle INTEGER REFERENCES realm_keys_bundle (_id) NOT NULL,
 
     access BYTEA NOT NULL,
 
-    UNIQUE(sequester_service, realm_keys_bundle)
+    UNIQUE (sequester_service, realm_keys_bundle)
 );
 
-create TABLE realm_name (
+CREATE TABLE realm_name (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     realm_name_certificate BYTEA NOT NULL,
-    certified_by INTEGER REFERENCES device(_id) NOT NULL,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
     certified_on TIMESTAMPTZ NOT NULL
 );
 
@@ -399,7 +413,7 @@ CREATE TABLE vlob_atom (
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
 
-    UNIQUE(realm, vlob_id, version)
+    UNIQUE (realm, vlob_id, version)
 );
 
 
@@ -409,7 +423,7 @@ CREATE TABLE realm_vlob_update (
     index INTEGER NOT NULL,
     vlob_atom INTEGER REFERENCES vlob_atom (_id) NOT NULL,
 
-    UNIQUE(realm, index)
+    UNIQUE (realm, index)
 );
 
 
@@ -430,7 +444,7 @@ CREATE TABLE block (
     deleted_on TIMESTAMPTZ,
     key_index INTEGER NOT NULL,
 
-    UNIQUE(organization, block_id)
+    UNIQUE (organization, block_id)
 );
 
 
@@ -443,7 +457,7 @@ CREATE TABLE block_data (
     block_id UUID NOT NULL,
     data BYTEA NOT NULL,
 
-    UNIQUE(organization_id, block_id)
+    UNIQUE (organization_id, block_id)
 );
 
 
@@ -455,7 +469,7 @@ CREATE TABLE common_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
-    UNIQUE(organization)
+    UNIQUE (organization)
 
 );
 
@@ -463,14 +477,14 @@ CREATE TABLE sequester_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
-    UNIQUE(organization)
+    UNIQUE (organization)
 );
 
 CREATE TABLE shamir_recovery_topic (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
-    UNIQUE(organization)
+    UNIQUE (organization)
 );
 
 CREATE TABLE realm_topic (
@@ -478,7 +492,7 @@ CREATE TABLE realm_topic (
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     last_timestamp TIMESTAMPTZ NOT NULL,
-    UNIQUE(organization, realm)
+    UNIQUE (organization, realm)
 );
 
 

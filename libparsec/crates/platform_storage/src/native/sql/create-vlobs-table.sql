@@ -5,5 +5,5 @@ CREATE TABLE IF NOT EXISTS vlobs (
     base_version INTEGER NOT NULL,
     remote_version INTEGER NOT NULL,
     need_sync INTEGER NOT NULL, -- Boolean
-    blob BLOB NOT NULL
+    blob BLOB NOT NULL --noqa: references.keywords
 ) STRICT;

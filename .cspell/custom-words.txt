@@ -623,6 +623,7 @@ SPHINXBUILD
 SPHINXOPTS
 splashscreen
 sqldrivers
+sqlfluff
 sqlx
 SRCDIR
 SRSC
