@@ -17,8 +17,7 @@ For convenience, queries are defined at the top of each component file in order
 to be close to the methods using them (as you often go back and forth between
 the two).
 
-Components might expose methods to other components in order to access tables
-specific tables.
+Components might expose methods to other components in order to access specific tables.
 
 ## Naming convention
 
