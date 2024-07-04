@@ -638,6 +638,14 @@ fn quote_nested_type(
                     impl #subclass_name {
                         #fn_new_impl
                         #(#fn_getters_impls)*
+
+                        fn dump<'py>(_self: PyRef<'py, Self>, py: Python<'py>) -> PyResult<Bound<'py, PyBytes>> {
+                            Ok(PyBytes::new_bound(
+                                py,
+                                &_self.into_super().0.dump().map_err(|e| PyValueError::new_err(e.to_string()))?,
+                            ))
+                        }
+
                     }
                 }
             });
@@ -667,6 +675,16 @@ fn quote_nested_type(
                         match raw {
                             #(#from_subclasses_matches_codes)*
                         }
+                    }
+                }
+
+                #[pymethods]
+                impl #nested_type_name {
+
+                    #[staticmethod]
+                    fn load(py: Python, raw: &[u8]) -> PyResult<PyObject> {
+                        let raw = #protocol_path::#nested_type_name::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
+                        Self::from_raw(py, raw)
                     }
                 }
 

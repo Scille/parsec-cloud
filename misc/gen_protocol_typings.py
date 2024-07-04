@@ -264,7 +264,8 @@ def gen_nested_type_variant(
 
     else:
         code = f"""class {class_name}:
-    pass
+    @classmethod
+    def load(cls, raw: bytes) -> {class_name}: ...
 """
         for variant in nested_type["variants"]:
             subclass_name = f"{class_name}{variant['name']}"
@@ -274,6 +275,7 @@ def gen_nested_type_variant(
             code += f"""
 class {subclass_name}({class_name}):
     def __init__(self, {','.join(n + ': ' + t for n, t in fields)}) -> None: ...
+    def dump(self) -> bytes: ...
 """
 
             for field_name, field_type in sorted(fields, key=lambda x: x[0]):

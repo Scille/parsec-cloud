@@ -7,12 +7,14 @@ from __future__ import annotations
 from parsec._parsec import HumanHandle, UserID
 
 class UserOrDevice:
-    pass
+    @classmethod
+    def load(cls, raw: bytes) -> UserOrDevice: ...
 
 class UserOrDeviceUser(UserOrDevice):
     def __init__(
         self, claimer_email: str, greeter_user_id: UserID, greeter_human_handle: HumanHandle
     ) -> None: ...
+    def dump(self) -> bytes: ...
     @property
     def claimer_email(self) -> str: ...
     @property
@@ -22,6 +24,7 @@ class UserOrDeviceUser(UserOrDevice):
 
 class UserOrDeviceDevice(UserOrDevice):
     def __init__(self, greeter_user_id: UserID, greeter_human_handle: HumanHandle) -> None: ...
+    def dump(self) -> bytes: ...
     @property
     def greeter_human_handle(self) -> HumanHandle: ...
     @property

@@ -7,7 +7,8 @@ from __future__ import annotations
 from parsec._parsec import DateTime, InvitationStatus, InvitationToken
 
 class InviteListItem:
-    pass
+    @classmethod
+    def load(cls, raw: bytes) -> InviteListItem: ...
 
 class InviteListItemUser(InviteListItem):
     def __init__(
@@ -17,6 +18,7 @@ class InviteListItemUser(InviteListItem):
         claimer_email: str,
         status: InvitationStatus,
     ) -> None: ...
+    def dump(self) -> bytes: ...
     @property
     def claimer_email(self) -> str: ...
     @property
@@ -30,6 +32,7 @@ class InviteListItemDevice(InviteListItem):
     def __init__(
         self, token: InvitationToken, created_on: DateTime, status: InvitationStatus
     ) -> None: ...
+    def dump(self) -> bytes: ...
     @property
     def created_on(self) -> DateTime: ...
     @property
