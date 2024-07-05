@@ -6,9 +6,8 @@ use crate::fixtures::{bob, Device};
 use crate::prelude::*;
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_invite_user_data(bob: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "invite_user_data"
     //   requested_device_label: "My dev1 machine"
@@ -16,13 +15,14 @@ fn serde_invite_user_data(bob: &Device) {
     //   public_key: <bob.public_key as bytes>
     //   verify_key: <bob.verify_key as bytes>
     let encrypted = &hex!(
-        "2802b8a233ad8ec183bb7060b81432fab2f7786ce1a9f774798f3c793bed75fc9ac654"
-        "056ba0c42786dd9f95b4eeaeb9ba51fe3e799d93f26f8de11f47bfec8067d844d9d3cc"
-        "1a4665ad94c01890600c1a29b2c058ede68f50c872a3762fb843a5516283d70565bb5f"
-        "089eac347da2524af11775efa56189eba5bdbc3bffca52a8e948a3502419f0694afa48"
-        "1f7f1b8beb149b09182eb258d4ce95dedb6bed0c900dacd1cd3fec67637721351cd449"
-        "e7093477e05e3510fa01cefce2d31af8df499e54d9e15e136b454657b3bf104fb7bc3e"
-        "0d1bd170a1c9cba023bd19693e4ae3c115bfbf01d8ce6fbb414e5db5e752bf05c20a"
+        "e4f5ba3abc4d45355a5977e0bfd07bfdeff13ffe2a82f7079f214250a479d9c0084fb1"
+        "600b3de09b8064419fd14fd36b4ed3acf1778804695d21030b78c903f033e0d8193e93"
+        "88368b386a3939c442c2eb081eb72682c441d3a92a62ceeb99c6d7f7c182bc4e8b4994"
+        "806a49a41ffd8e20b30205517ee33012b9360f52dc20b6f725963ba2cda55a611e1add"
+        "8bf76b4d7b2906a62e0b89871a37f3a267bc0ee21460334b212e1c39ad7b3a3054e15c"
+        "d12b1b2c1bc4a43bd693711f37acc5b2f774b478c8d2a2457b3f24ff3ca84564a6b223"
+        "625c5507cd2710eace856e8c4d9084b294c3cc1147cec211036d4f8c570fd2958f378a"
+        "44b318"
     );
 
     let expected = InviteUserData {
@@ -48,24 +48,25 @@ fn serde_invite_user_data(bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_invite_user_confirmation(bob: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "invite_user_confirmation"
-    //   device_id: "bob@dev1"
+    //   user_id: ext(2, 808c0010000000000000000000000000)
+    //   device_id: ext(2, de10808c001000000000000000000000)
     //   device_label: "My dev1 machine"
     //   human_handle: ("bob@example.com", "Boby McBobFace")
     //   profil: "STANDARD"
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
     let encrypted = &hex!(
-        "d49ccfc53ca9eeda99cf7218c7b2cd60996885f7b16059f444530a6da146be4cf7a95c"
-        "638e86ac42ac446bb03da4dd77aba5b7df397d2584cd07741168094bb0f4927aa4fff8"
-        "93a3580ad289c60e3aad326eb7534339fb000553b1f37b52b99d9636f78344ef2f7b5a"
-        "fd621a40f9bca39c4db8fbedfc093628eace16c81714710273c772a0ee4c236a7056c6"
-        "88ad49d69d5a6661d98c6dbc1677d8c4a6dff65c01d5d1a91580e5a45bd638dcf23bef"
-        "fc690cc70382690e9ae76be763ef7c8ef077be06a6d2672aa24537a59545918ad5dd95"
-        "2394d0f9371271ef8b6d71af2dd087725be430f96b"
+        "da506f3f3431ec1f18849c94f4e4e76ce792c147d31a195ed831036ce1ab803930ce29"
+        "ae62ecae189601befa743ec9b73a0a76118bdb5e26a01360bd337ab3cb3b3298932250"
+        "7b6c2c3528b7a26c6eb9ad11fd5057fc0a72b2c93f7b412d76bbce5d992a7cf0c8025f"
+        "b32f2d12c92872fb44e3306fc16f57400f6b303cce8aa7063fa064eb50dfdd5ae3898e"
+        "5e1d2804ebba18a1c6558eb2a92e3ca2088659001963b5aa844fa5de61ea7a06e71598"
+        "8c993ed10a42ab2aa6d5e40455d4aeb6365473c486f1ebb6318e9d8ef047e0407a7736"
+        "d6d3607196afebec66c920c99a3dd17656085d787d6b0f7303ec374cf3275745bfe799"
+        "77160c6001054dd6af082a62a358f72252fd57f5ae83"
     );
 
     let expected = InviteUserConfirmation {
@@ -93,19 +94,18 @@ fn serde_invite_user_confirmation(bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_invite_device_data(bob: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "invite_device_data"
     //   requested_device_label: "My dev1 machine"
     //   verify_key: <bob.verify_key as bytes>
     let encrypted = &hex!(
-        "6ffae1baf9f4eec1ef7b29ec88dbe4e006672a30a48871d04a0f5d63965653a8d69a0f"
-        "bf3fa7c6ed1351863080232acc245748e5c970c0fda93b192c6b81e1d8c5126e6960f1"
-        "e0470deded2f42eaca16a793198818b85c03914ef3fd780785278feed85a7243e8274a"
-        "0a98d2fbed573d69b6df31a8d06ac57ca2529ad112cb0d214ab9c1886073b3d81a7e5d"
-        "a402fcea57696dbb25c860"
+        "04040f06a106396d6d53e03abb5cfb77088cda9683bb54e434ca2fad0187c0a78d00ac"
+        "99727b980ba0eba6586a4db4b6575ee37b37178ff9f2b8623d045cf8fa8981a8cf7c76"
+        "0fccf4c324e6da00142bc382c6365fc4255bf57026e83d463b7241d89175edc90d8726"
+        "7a6839b5c867a7b630f30bb13e0f0a01b02c2c0ff107cf98212f0cc87ab903cef8380f"
+        "ad96a704e1907946ed48"
     );
 
     let expected = InviteDeviceData {
@@ -129,12 +129,12 @@ fn serde_invite_device_data(bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_invite_device_confirmation(bob: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "invite_device_confirmation"
-    //   device_id: "bob@dev1"
+    //   user_id: ext(2, 808c0010000000000000000000000000)
+    //   device_id: ext(2, de10808c001000000000000000000000)
     //   device_label: "My dev1 machine"
     //   human_handle: ("bob@example.com", "Boby McBobFace")
     //   profil: "STANDARD"
@@ -143,16 +143,18 @@ fn serde_invite_device_confirmation(bob: &Device) {
     //   user_manifest_key: <bob.user_manifest_key as bytes>
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
     let encrypted = &hex!(
-        "b703ea4cfb8aed8c7ba7a434316f0acd43389159bbf66c3a2bedd34d943ed97ed22302"
-        "c76d2b91790f19ca7a87c4dd5526ea493cf388ff5a492c7343409175f17542f29ccf25"
-        "1bf8bb4b503a78c3614535225ffcf974069bd036576f31f2ec1cb498e8716f08a56339"
-        "eb1c784183bf34874963e0f1656d6af6859ffcb58e57ab3e73ce6285de981d3b636f7b"
-        "4dd37070f3f68947ff463d1c9668f30f4e30adc898741c57871d97975be07da4639aba"
-        "d4249e461fed36635bd9240b1bbca9317d239164426eed3d03f86120ecfef81d5c03e3"
-        "18988311db64628e01560546bec8a48633b6024cd417d49dfff774de638d1a14fb133d"
-        "54a69d6c21238417dea12b4f8f8db2fc8d99b20e62c49a6b7efc22b9e4cd2d00dacd66"
-        "e0cf57c12ca375a2e2853794f294af7e7858832b66ec128713ee3c2310fd25d3b1e2c1"
-        "4622d103c9ce636025b4a61ed7ee1d5ac9817b14955b99f5b9b93c65d300"
+        "06733269843fadca366b5f1a4328eeebfbd9ee0c33b11435ddbba1721c317ebcded96b"
+        "e030e5cc768faebd91b09c4370f4153f7bc134b803253b5911377f5558d81c79c173d2"
+        "859f1d52b5baa7ceafd03e8259c45eca8522f05b35c7c5c297ee7303b12b19bd1c9a87"
+        "d76d103098baa2b423c314749416a95b4381f40d9899666f10f4866f618ec91a711ff4"
+        "55738e009854013f4b2772e4d9c69eac81a6c0df27bf0c3e0c98965e29ee4272d23471"
+        "a1537485fe6c03dc29e8dbe7c81903cf54aae45bc9994d1028f4de9e8f57abdedecd16"
+        "30aec2414f714944f864484d87d3fd93c8ae2af9dab9695c60936043452e679d92c55e"
+        "c2b39a5c720ae04579b419d3be360936c535824c7d7f109ba4c72340fda07435b28891"
+        "412a9b2a1164dac3b607fb236c715896ea029ed64aa1c77afab39c2447bc2eba85415e"
+        "26860e463e0b6fde8a77e709d5991db925f6f6c2051388228f5c3a17797fb9000c7502"
+        "80026b4f239c2a4ec112eaf29aaedbf6f9fba0be3af96aa119a4ebbb031d81d880069d"
+        "2210ca4999db6ecf2f5ecc"
     );
 
     let expected = InviteDeviceConfirmation {
