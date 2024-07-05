@@ -233,6 +233,7 @@ generate_field_type_enum!(
     ShamirRevealToken => libparsec_types::ShamirRevealToken,
     EnrollmentID => libparsec_types::EnrollmentID,
     SequesterServiceID => libparsec_types::SequesterServiceID,
+    AttemptID => libparsec_types::AttemptID,
     DeviceLabel => libparsec_types::DeviceLabel,
     HumanHandle => libparsec_types::HumanHandle,
     UserProfile => libparsec_types::UserProfile,

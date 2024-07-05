@@ -838,6 +838,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::ShamirRevealToken => quote! { crate::token::ShamirRevealToken },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
+        FieldType::AttemptID => quote! { crate::ids::AttemptID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { &'static PyObject },
@@ -959,6 +960,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::SequesterServiceID => {
             quote! { crate::ids::SequesterServiceID(#field_path.to_owned()) }
         }
+        FieldType::AttemptID => quote! { crate::ids::AttemptID(#field_path.to_owned()) },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel(#field_path.to_owned()) },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle(#field_path.to_owned()) },
         FieldType::UserProfile => {
@@ -1062,6 +1064,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::ShamirRevealToken => quote! { crate::token::ShamirRevealToken },
         FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
         FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
+        FieldType::AttemptID => quote! { crate::ids::AttemptID },
         FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
         FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
         FieldType::UserProfile => quote! { crate::enumerate::UserProfile },
@@ -1186,6 +1189,7 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::ShamirRevealToken
         | FieldType::EnrollmentID
         | FieldType::SequesterServiceID
+        | FieldType::AttemptID
         | FieldType::DeviceLabel
         | FieldType::HumanHandle
         | FieldType::UserProfile

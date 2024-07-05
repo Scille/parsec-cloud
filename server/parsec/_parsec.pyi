@@ -55,6 +55,7 @@ from parsec._parsec_pyi.enumerate import (
     UserProfile,
 )
 from parsec._parsec_pyi.ids import (
+    AttemptID,
     BlockID,
     BootstrapToken,
     ChunkID,
@@ -148,6 +149,7 @@ __all__ = [
     "VlobID",
     "SequesterServiceID",
     "EnrollmentID",
+    "AttemptID",
     "BootstrapToken",
     "InvitationToken",
     "ShamirRevealToken",
