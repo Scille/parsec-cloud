@@ -76,8 +76,6 @@ fn serde_pki_enrollment_submit_payload(
     #[case] raw: &[u8],
     #[case] expected: PkiEnrollmentSubmitPayload,
 ) {
-    println!("***expected: {:?}", expected.dump());
-
     let data = PkiEnrollmentSubmitPayload::load(raw).unwrap();
     p_assert_eq!(data, expected);
 

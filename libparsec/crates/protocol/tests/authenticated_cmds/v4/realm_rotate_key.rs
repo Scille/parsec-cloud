@@ -38,7 +38,6 @@ pub fn req() {
         realm_key_rotation_certificate: Bytes::from_static(b"foobar"),
     };
 
-    println!("{:?}", req.dump());
     let expected = authenticated_cmds::AnyCmdReq::RealmRotateKey(req);
 
     let data = authenticated_cmds::AnyCmdReq::load(&raw).unwrap();
