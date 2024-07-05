@@ -11,7 +11,6 @@ use crate::prelude::*;
 // default/missing policy
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     let user_certificate = UserCertificate {
         author: CertificateSignerOwned::User(alice.device_id),
@@ -745,7 +744,6 @@ fn serde_user_update_certificate(alice: &Device, bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
     // Generated from Parsec v3.0.0-b.11+dev
     // Content:
@@ -828,7 +826,6 @@ fn serde_realm_role_certificate(alice: &Device, bob: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_realm_role_certificate_no_role(alice: &Device, bob: &Device) {
     // Generated from Parsec v3.0.0-b.11+dev
     // Content:
@@ -1498,7 +1495,6 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_sequester_authority_certificate(alice: &Device) {
     // Generated from Parsec v3.0.0-b.11+dev
     // Content:
@@ -1612,7 +1608,7 @@ fn serde_sequester_service_certificate() {
     assert_eq!(
         outcome,
         Err(DataError::BadSerialization {
-            format: Some(0),
+            format: None,
             step: "format detection"
         })
     );
