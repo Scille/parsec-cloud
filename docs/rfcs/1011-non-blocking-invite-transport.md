@@ -168,6 +168,21 @@ Methods:
 
 ### New commands
 
+#### `invite_greeter_start_attempt` command
+
+TODO
+
+#### `invite_claimer_start_attempt` command
+
+TODO
+
+#### `invite_greeter_cancel_attempt` command
+
+TODO
+
+#### `invite_claimer_cancel_attempt` command
+
+TODO
 
 #### `invite_greeter_step` command
 
@@ -194,11 +209,10 @@ In the second case, the author can poll the command with the same parameters unt
 
 If the submitted step differs from the one that has already been registered, a dedicated `step_mismatch` status is returned.
 
-
 Pseudo-code:
 
 ```python
-invitation_greeter_step(
+invite_greeter_step(
     token: InvitationToken,
     attempt: AttemptID,
     step: GreeterStep,
@@ -345,7 +359,7 @@ If the submitted step differs from the one that has already been registered, a d
 Pseudo-code:
 
 ```python
-invitation_claimer_step(
+invite_claimer_step(
     token: InvitationToken,
     greeter: UserID,
     attempt: AttemptID,
@@ -500,7 +514,7 @@ Here is an overview of the different kinds of data that can be contained in a cl
 - public key: `PublicKey`
 - nonce: `Bytes`
 - hashed nonce: `HashDigest`
-- acknowledgement: `Constant`
+- acknowledgement: `None`
 - payload: `Bytes`
 
 The news steps are defined as such:
@@ -523,9 +537,176 @@ Those steps work very similarly to Parsec v2. There are a couple of differences 
 - Step `4` in version 2 could be used for several exchanges, until the greeter marked an exchange with `last=True`. Instead, those exchanges are expanded in steps `6` and `7`
 - In version 2, the last step was used to complete the invite. In version 3 this is now done with a dedicated `invite_complete` command, so we add a last step (index `8`) for the claimer to acknowledge that it's been able to successfully process the greeter payload.
 
-The `ClaimerStep` and `GreeterStep` nested data types are defined as such:
+The `GreeterStep` nested data type is then define as such:
 ```json5
-TODO
+            {
+                "name": "GreeterStep",
+                "discriminant_field": "step",
+                "variants": [
+                    {
+                        "name": "WaitPeer",
+                        "discriminant_value": "0",
+                        "fields": [
+                            {
+                                "name": "public_key",
+                                "type": "PublicKey"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetHashedNonce",
+                        "discriminant_value": "1"
+                    },
+                    {
+                        "name": "SendNonce",
+                        "discriminant_value": "2",
+                        "fields": [
+                            {
+                                "name": "greeter_nonce",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetNonce",
+                        "discriminant_value": "3"
+                    },
+                    {
+                        "name": "WaitPeerTrust",
+                        "discriminant_value": "4"
+                    },
+                    {
+                        "name": "SignifyTrust",
+                        "discriminant_value": "5"
+                    },
+                    {
+                        "name": "GetPayload",
+                        "discriminant_value": "6"
+                    },
+                    {
+                        "name": "SendPayload",
+                        "discriminant_value": "7",
+                        "fields": [
+                            {
+                                "name": "greeter_payload",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "WaitPeerAcknowledgment",
+                        "discriminant_value": "8"
+                    }
+                ]
+            }
+```
+
+And the `ClaimerStep` nested data type has the following definition:
+
+```json5
+            {
+                "name": "ClaimerStep",
+                "discriminant_field": "step",
+                "variants": [
+                    {
+                        "name": "WaitPeer",
+                        "discriminant_value": "0",
+                        "fields": [
+                            {
+                                "name": "public_key",
+                                "type": "PublicKey"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SendHashedNonce",
+                        "discriminant_value": "1",
+                        "fields": [
+                            {
+                                "name": "hashed_nonce",
+                                "type": "HashDigest"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetNonce",
+                        "discriminant_value": "2"
+                    },
+                    {
+                        "name": "SendNonce",
+                        "discriminant_value": "3",
+                        "fields": [
+                            {
+                                "name": "claimer_nonce",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SignifyTrust",
+                        "discriminant_value": "4"
+                    },
+                    {
+                        "name": "WaitPeerTrust",
+                        "discriminant_value": "5"
+                    },
+                    {
+                        "name": "SendPayload",
+                        "discriminant_value": "6",
+                        "fields": [
+                            {
+                                "name": "claimer_payload",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetPayload",
+                        "discriminant_value": "7"
+                    },
+                    {
+                        "name": "Acknowledge",
+                        "discriminant_value": "8"
+                    }
+                ]
+            }
+```
+
+## Typical workflow
+
+Typical workflow
+----------------
+
+Here's how a typical workflow for a user invitation can play out:
+
+```python
+# An admin creates a new invitation
+invite_new_user(...) -> token
+
+# Later the user receives the invitation and starts polling
+invite_claimer_start_attempt(token, greeter) -> attempt ID
+invite_claimer_step(token, greeter, attempt, claimer_step_0) -> NotReady
+
+# Later a greeter connects
+invite_greeter_start_attempt(token) -> attempt ID
+invite_greeter_step(token, attempt, greeter_step_0) -> claimer_step_0
+
+# ... while the claimer is still polling
+invite_claimer_step(token, greeter, attempt, claimer_step_0) -> greeter_step_0
+
+# Steps keep being submitted
+invite_greeter_step(token, attempt, greeter_step_1) -> NotReady
+invite_claimer_step(token, greeter, attempt, claimer_step_1) -> greeter_step_1
+invite_greeter_step(token, attempt, greeter_step_1) -> claimer_step_1
+[...]
+
+# The step 8 is performed
+invite_greeter_step(token, attempt, greeter_step_8) -> NotReady
+invite_claimer_step(token, greeter, attempt, claimer_step_8) -> greeter_step_8
+invite_greeter_step(token, attempt, greeter_step_8) -> claimer_step_8
+
+# The greeter can now mark the invitation as completed
+invite_greeter_complete(token)
 ```
 
 
@@ -543,4 +724,4 @@ Those changes have few security implications. The main point to be careful with 
 
 ## Risks
 
-Overall, those changes should simplify the invite transport and make the overall process more robust, with clearer semantics. This makes it a low risk item, although the implementation should be tested thoroughly as the invitation process being a critical part of the product.
+Overall, those changes should simplify the invite transport and make the overall process more robust, with clearer semantics. This makes it a low risk item, although the implementation should be tested thoroughly as the invitation process is a critical part of the product.
