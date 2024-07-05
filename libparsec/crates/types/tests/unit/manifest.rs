@@ -347,12 +347,11 @@ fn invalid_load(alice: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.6+dev
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "file_manifest"
-    //   author: "alice@dev1"
+    //   author: ext(2, de10a11cec0010000000000000000000)
     //   timestamp: ext(1, 1638618643.208821)
     //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
     //   version: 42
@@ -376,19 +375,19 @@ fn serde_file_manifest_ok(alice: &Device) {
     //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
     //   size: 700
     let data = hex!(
-        "09f77ead3e78f15e5c8d1475c11f704861682b7601250493fb4c7ae5b1387ba9a48c3d"
-        "fcd94bd1ba97a0a4c3928e95628588163cbdf9f6024cbbd19749841f7661d346d6dd0c"
-        "cc6f95750ca8755d5ada11c7e716453699815ff75c5c39267c5238f6e02171c50bd32d"
-        "271506b5a1834ff37a218b882503a607c8f8f4e26f834c2af620d733a130e3328ee2b7"
-        "0adeb43319a1a1e047ba2f699362ac236d92bc88ca18dbc67cbaff476b9cf1a0e9ffcc"
-        "d5e0ccebc97ee468191a513655d028ca1a973a26b510c38d26007f0f00fd8b71c3db89"
-        "7fcec1a3b3f2cc82bbb8319ef2e63ff8a12dbf5c3971352a40af512a69f4263085db6e"
-        "0700efc4da802a82585d1c306b311873e5cd01c92e84deb91d9d6bbab1f1cd0464e54d"
-        "7a0a9a29b2cf23bf7b00dc543c5c93ef1638d9dbdd86c29be5bc88b977ea34d55dbc39"
-        "5eb0b027d7985d67d96c927b8f1ddf5f3f15d1d45fb4ef6bcd622813b73ab1f243cd6b"
-        "2a893d2fa90a5f41f7ca285a3f4bcf4a51faad93c4ecb171dde9e0bbb4670d365e5b1c"
-        "e04a13b108ce22d4483fa634e1345aeedac2581cbc99d11fd5aef880539fc5cd0f2f75"
-        "007a47b609f30349dcbae2e7"
+        "b1c255a968225dc9dfb30e7f8d942895b66ade79c5924c1f425579c6dd27750f3de61e"
+        "41a2f132e1c0d994493c16ff4df9f8972211519c1b92bf04b88fd4a6d03cbcd2125492"
+        "28a7402f7fa1b15161a2c521f6aa6058c52b344ee39bff593e17da2b61c90bd67f4d73"
+        "a9abe43140d920dd287a832a28d2319d6d47a3545921df48b96963f61767882e301ed6"
+        "a0fe605ade9e86b264cdc9afda41ec217a2e200a663659a350d4560d62086ba5824e55"
+        "7ad1f76f3b50148dbcdb7fd3c27f7b53587f76c5bdca9c2d62879143528a8b7392a67a"
+        "4b6e27d4d5765620e9b2d89f6a7019df8c17d373aec46d32207d8f27435e11de179e8d"
+        "c146bbd0d673bf40379b45390d95eb84793ef52b3500c529dd3ea542cd00713b61030f"
+        "924a0d55f5bb40746596942944f5d875eafce6bcfe0921561397899a95dbd9248f29fb"
+        "a2cd24ffec9df96d095afb3aebde0aaed3238ec4d480d9958ad1e202a62034c2e7c23e"
+        "ab0906a4cd0ca62cb569702adff82bdc9047f0a798dc038af88c5dfdf402d306202e14"
+        "9997de859ad44a92e8216b266ea1e8e88b0120f6a816b90c6cd85ff9d8cb435ad6bbb1"
+        "251654931c5c68f10b9894ba6cc6cc5c3b2f1f88f5dcbb5f581073762e"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
@@ -508,12 +507,11 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_folder_manifest(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "folder_manifest"
-    //   author: "alice@dev1"
+    //   author: ext(2, de10a11cec0010000000000000000000)
     //   timestamp: ext(1, 1638618643.208821)
     //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
     //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
@@ -525,15 +523,16 @@ fn serde_folder_manifest(alice: &Device) {
     //     "wksp2": hex!("d7e3af6a03e1414db0f4682901e9aa4b")
     //   }
     let data = hex!(
-        "afc13ea5d28a0da5f17662d5110dd75d983f22efc1c09ddce90fb3ff8fef001aad8317"
-        "957874a52cf75882123b1030891e5b46052d5bddfd1885de9fc784e07afa0d415fe7e0"
-        "ffde9416d1285a8738a0e634fc1185e441886db61aa8fce5b588f502604fe26d28e295"
-        "23f424b65465dcde840192a68b1668376ac86e1949c7613f65e1f760cc031df2306ae5"
-        "73d0178d7a388515ffe241562e167af7eb7484a3b0608438a08ff3449759d2622847ef"
-        "c05698d772b0fff9f529b1c3582b1137f7121bc2f3dcdb4de32dc3f8daac75602273de"
-        "7b7d8b87451c517c1d1476422c51d72375520808e85eb64c0f6a6f2de5ca564df7cca2"
-        "86530c527b4bad7594f9e3dad1f40845af2dbe8fbb97201f3c617d5d63824ff36ce61f"
-        "ccd31ac8d5cb3c2f1609236a266b46ae9d01b508"
+        "816426b30ff69bbfda1232fc85708987c8556a9a25a32d6f3031282abd8a7040a9d2e2"
+        "eed40f839e0ef0af0c416585e49e685e9df1e15e1d11b6991689a8e1102a98325a6d7d"
+        "3cbf5d129053e0e99e77074b9858f7990b8993c0c79defab4768d4407e7facbc1efa42"
+        "2cbc9242dddd389019a418367afe4f4c35295dd24480f80270a2e6e2e22c62439ce8cd"
+        "2cf3fa44afa66bb4dc554c6a9d422ce46836f070aca9919ca89555a385c9d1ccf64897"
+        "5cc72838e452cdcd74428d00802bc204e1d4dd5cf9b272b827d5333c73da27e3ea3d96"
+        "6f311889ee3e6804be13d16105c534fde987b80c58e3910001f7e3076abe2e634215fb"
+        "4ae259131c8e5c4070165713301cd7027d0759f6dc1822c91bd30d90c2e7a954983a17"
+        "dc08014817994b6a7ff7e42037409218cd3126a9fbf43962f91422664c44ec9e3bb5ec"
+        "300cfe5b269e"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
@@ -594,25 +593,24 @@ fn serde_folder_manifest(alice: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_user_manifest(alice: &Device) {
-    // Generated from Rust implementation (Parsec v3.0.0-alpha)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   type: "user_manifest"
-    //   author: "alice@dev1"
+    //   author: ext(2, de10a11cec0010000000000000000000)
     //   timestamp: ext(1, 1638618643.208821)
     //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
     //   version: 42
     //   created: ext(1, 1638618643.208821)
     //   updated: ext(1, 1638618643.208821)
     let data = hex!(
-        "a7f9f9e4d8e30951e7977a4d142f7f6bd623f7590dff7da3059fcf851cb172f23f4eac"
-        "f275d78de986ee2cd64049c54cff626ad777f7928ab5a47f751db9f7896bf64c8b10e2"
-        "45e40e6f847f52f503d4d0c9ad812642d5bbf71e2c7d80bc5159c191279b2f9e47a83b"
-        "ba7f85d8431d77570a93de678d5a3268c76aaede7790945c653d487c958f689172c25c"
-        "1f160c872dc30bb1c4e63157b981d2698ddb5b8253c140e54e3028017d8bd461fcc662"
-        "4a26e7daa6be4ef396cc587f368a523bc585e3b606ddf72be6c7f8eaf12f6b2410d783"
-        "59782a9b508148cd30fcada6bd0f3f1cec49bd30afc6e1fa2a1fb3a0b8"
+        "92c7286c12e48b9790d55713dd33a0c447ae96b1ee03537ce46c64eac982d957483dd9"
+        "9f7725220c2bed5c76f02caca992daec30e8fe9c46986f61555e8c7009a9895b8ab0bb"
+        "843cb63c96f02f756fafdee6d991b18fd0090003de20e12a96e23f19298f78d0e451dd"
+        "a7559776a519fa5bdd3adb398ccc6fa3222a293c19ac80dd400c6fb61d667848c2071b"
+        "6acfe752d20bb6e8a1cd1dd91616c29bf2a19367c197ea8e5dd3b09f2ca886ff8b9c85"
+        "9b726fe2bcd9fc6eb56c14067b8383c462c55fe1eff51c6d60f99105820d99bcf70f47"
+        "3cca12385f6b184ce9b737d36f1b6489791a4a4183cccf4fa094"
     );
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(

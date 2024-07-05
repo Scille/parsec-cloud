@@ -1557,7 +1557,6 @@ fn serde_sequester_authority_certificate(alice: &Device) {
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_sequester_service_certificate() {
     // Generated from Parsec v3.0.0-b.11+dev
     // Content:
