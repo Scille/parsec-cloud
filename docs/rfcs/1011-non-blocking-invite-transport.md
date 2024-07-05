@@ -92,7 +92,7 @@ Methods:
 - complete invitation
 
 
-### Channels
+### Channel
 
 A channel is dedicated to the verification of the claimer identity by a specific greeter.
 
@@ -153,20 +153,381 @@ A step is identified by:
 - step count
 
 Mutable properties:
-- claimer payload: NotSet | Bytes
-- greeter payload NotSet | Bytes
+- claimer data: NotSet | ClaimerStep
+- greeter data: NotSet | GreeterStep
 
 Inferred properties:
 - state: PENDING | HALF PENDING | COMPLETED
 
 Methods:
-- set claimer payload
-- set greeter payload
+- set claimer data
+- set greeter data
 
 
 ## Design
 
+### New commands
+
+
+#### `invite_greeter_step` command
+
+This authenticated command, along with `invite_greeter_step`, is the main route used to establish a secure channel between both peers.
+
+It is used by the greeter to submit the data for a given step. The step is identified by:
+- the author of the command (being the greeter)
+- the invitation token
+- the type of the submitted step data
+
+For the step data to be accepted, it has to pass the following the checks:
+- the invitation exists
+- the invitation is pending (i.e. not completed nor cancelled)
+- the author is allowed (i.e. it is part of the greeters)
+- the attempt exists
+- the attempt is active (i.e. joined and not cancelled)
+- the previous steps must have been completed by both peers
+
+Once the data is accepted, it either returns:
+- the claimer step data if it is available
+- a `not_ready` status otherwise
+
+In the second case, the author can poll the command with the same parameters until it gets the claimer step data.
+
+If the submitted step differs from the one that has already been registered, a dedicated `step_mismatch` status is returned.
+
+
+Pseudo-code:
+
+```python
+invitation_greeter_step(
+    token: InvitationToken,
+    attempt: AttemptID,
+    step: GreeterStep,
+) ->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  GreeterNotAllowed
+  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  StepTooAdvanced | PayloadMismatch
+  NotReady | OK[ClaimerStep]:
+    # Perform checks
+    [...]
+    # Call `set_greeter_payload`
+    [...]
+    # Return `greeter_step` or `NotReady`
+    [...]
+```
+
+Schema definition:
+
+```json5
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_step",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "attempt",
+                    "type": "AttemptID"
+                },
+                {
+                    "name": "greeter_step",
+                    "type": "GreeterStep"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "claimer_step",
+                        "type": "ClaimerStep"
+                    }
+                ]
+            },
+            {
+                // The claimer has not submitted its step yet
+                "status": "not_ready"
+            },
+            {
+                // The invitation token doesn't correspond to any existing invitation
+                "status": "invitation_not_found"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is not part of the allowed greeters for this invitation
+                "status": "author_not_allowed"
+            },
+            {
+                // The attempt id doesn't correspond to any existing attempt
+                "status": "attempt_not_found"
+            },
+            {
+                // The author did not join the attempt
+                // This should not happen, since joining is required to get the attempt ID
+                "status": "attempt_not_joined"
+            },
+            {
+                // The attempt has been cancelled
+                "status": "attempt_cancelled"
+            },
+            {
+                // The submitted step is too advanced
+                // Every step before must have been completed by both peers
+                "status": "step_too_advanced"
+            },
+            {
+                // The submitted step somehow changed during polling
+                "status": "step_mismatch"
+            }
+        ],
+        "nested_types": [
+            {
+                // GreeterStep should be identical to the one in invite_claimer_step.json5
+                "name": "GreeterStep",
+                "discriminant_field": "step",
+                "variants": [
+                    [...]  // This is described in the protocol update section
+                ]
+            },
+            {
+                // ClaimerStep should be identical to the one in invite_claimer_step.json5
+                "name": "ClaimerStep",
+                "discriminant_field": "step",
+                "variants": [
+                  [...]  // This is described in the protocol update section
+                ]
+            }
+        ]
+    }
+]
+```
+
+#### `invite_claimer_step` command
+
+This invited command, along with `invite_claimer_step`, is the main route used to establish a secure channel between both peers.
+
+It is used by the claimer to submit the data for a given step. The step is identified by:
+- the provided greeter
+- the invitation token
+- the type of the submitted step data
+
+For the step data to be accepted, it has to pass the following the checks:
+- the author exists
+- the author is allowed (i.e. it is part of the greeters)
+- the attempt exists
+- the attempt is active (i.e. joined and not cancelled)
+- the previous steps must have been completed by both peers
+
+Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+
+Once the data is accepted, it either returns:
+- the greeter step data if it is available
+- a `not_ready` status otherwise
+
+In the second case, the author can poll the command with the same parameters until it gets the greeter step data.
+
+If the submitted step differs from the one that has already been registered, a dedicated `step_mismatch` status is returned.
+
+Pseudo-code:
+
+```python
+invitation_claimer_step(
+    token: InvitationToken,
+    greeter: UserID,
+    attempt: AttemptID,
+    step: ClaimerStep
+) ->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  GreeterNotFound | GreeterNotAllowed
+  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  StepTooAdvanced | PayloadMismatch
+  NotReady | OK[GreeterStep]:
+    # Perform checks
+    [...]
+    # Call `set_claimer_payload`
+    [...]
+    # Return `greeter_step` or `NotReady`
+    [...]
+```
+
+Schema definition:
+
+```json5
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_claimer_step",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter",
+                    "type": "UserID"
+                },
+                {
+                    "name": "attempt",
+                    "type": "AttemptID"
+                },
+                {
+                    "name": "claimer_step",
+                    "type": "ClaimerStep"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeter_step",
+                        "type": "GreeterStep"
+                    }
+                ]
+            },
+            {
+                // The claimer has not submitted its step yet
+                "status": "not_ready"
+            },
+            // The following statuses do exist for the greeter, but not for the claimer
+            // Instead, in those cases, the claimer would get an HTTP 410 error, defined
+            // as `InvitationAlreadyUsedOrDeleted`.
+            // {
+            //     // The invitation token doesn't correspond to any existing invitation
+            //     "status": "invitation_not_found"
+            // },
+            // {
+            //     // The invitation has already been completed
+            //     "status": "invitation_completed"
+            // },
+            // {
+            //     // The invitation has been cancelled
+            //     "status": "invitation_cancelled"
+            // },
+            {
+                // The provided greeter ID doesn't correspond to any existing greeter
+                "status": "greeter_not_found"
+            },
+            {
+                // The greeter is not part of the allowed greeters for this invitation
+                "status": "greeter_not_allowed"
+            },
+            {
+                // The attempt id doesn't correspond to any existing attempt
+                "status": "attempt_not_found"
+            },
+            {
+                // The author did not join the attempt
+                // This should not happen, since joining is required to get the attempt ID
+                "status": "attempt_not_joined"
+            },
+            {
+                // The attempt has been cancelled
+                "status": "attempt_cancelled"
+            },
+            {
+                // The submitted step is too advanced
+                // Every step before must have been completed by both peers
+                "status": "step_too_advanced"
+            },
+            {
+                // The submitted step somehow changed during polling
+                "status": "step_mismatch"
+            }
+        ],
+        "nested_types": [
+            {
+                // GreeterStep should be identical to the one in invite_greeter_step.json5
+                "name": "GreeterStep",
+                "discriminant_field": "step",
+                "variants": [
+                    [...]  // This is described in the protocol update section
+                ]
+            },
+            {
+                // ClaimerStep should be identical to the one in invite_greeter_step.json5
+                "name": "ClaimerStep",
+                "discriminant_field": "step",
+                "variants": [
+                    [...]  // This is described in the protocol update section
+                ]
+            }
+        ]
+    }
+]
+```
+
+### Removed routes
+
+All the `invite_<N>_claimer_<step name>` and ``invite_<N>_greeter_<step name>` are removed and replaced by `invite_claimer_step` and `invite_greeter_step`.
+
+This includes:
+- `invite_1_greeter_wait_peer`
+- `invite_2a_greeter_get_hashed_nonce`
+- `invite_2b_greeter_send_nonce`
+- `invite_3a_greeter_wait_peer_trust`
+- `invite_3b_greeter_signify_trust`
+- `invite_4_greeter_communicate`
+- `invite_1_claimer_wait_peer`
+- `invite_2a_claimer_send_hashed_nonce`
+- `invite_2b_claimer_send_nonce`
+- `invite_3a_claimer_signify_trust`
+- `invite_3b_claimer_wait_peer_trust`
+- `invite_4_claimer_communicate`
+
+
+### Protocol update
+
+Here is an overview of the different kinds of data that can be contained in a claimer or greeter step:
+- public key: `PublicKey`
+- nonce: `Bytes`
+- hashed nonce: `HashDigest`
+- acknowledgement: `Constant`
+- payload: `Bytes`
+
+The news steps are defined as such:
+
+| Index | Greeter            | Greeter data   | Claimer             | Claimer data   |
+|-------|--------------------|----------------|---------------------|----------------|
+| 0     | `wait_peer`        | public key     | `wait_peer`         | public key     |
+| 1     | `get_hashed_nonce` |                | `send_hashed_nonce` | hashed nonce   |
+| 2     | `send_nonce`       | nonce          | `get_nonce`         |                |
+| 3     | `get_nonce`        |                | `send_nonce`        | nonce          |
+| 4     | `wait_peer_trust`  |                | `signify_trust`     | acknowledgment |
+| 5     | `signify_trust`    | acknowledgment | `wait_peer_trust`   |                |
+| 6     | `get_payload`      |                | `send_payload`      | payload        |
+| 7     | `send_payload`     | payload        | `get_payload`       |                |
+| 8     | `wait_peer_ack`    |                | `acknowledge`       | acknowledgment |
+
+Those steps work very similarly to Parsec v2. There are a couple of differences though:
+- Steps are not counted as `1`, `2a`, `2b`, `3a`, `3b`, and `4` like in v2
+- Three different exchanges were performed in steps `2a` and `2b`. Now those exchanges are expanded in steps `1`, `2` and `3`.
+- Step `4` in version 2 could be used for several exchanges, until the greeter marked an exchange with `last=True`. Instead, those exchanges are expanded in steps `6` and `7`
+- In version 2, the last step was used to complete the invite. In version 3 this is now done with a dedicated `invite_complete` command, so we add a last step (index `8`) for the claimer to acknowledge that it's been able to successfully process the greeter payload.
+
+The `ClaimerStep` and `GreeterStep` nested data types are defined as such:
+```json5
 TODO
+```
+
 
 ## Alternatives Considered
 
