@@ -103,6 +103,46 @@
                     {
                         "name": "GetHashedNonce",
                         "discriminant_value": "1"
+                    },
+                    {
+                        "name": "SendNonce",
+                        "discriminant_value": "2",
+                        "fields": [
+                            {
+                                "name": "greeter_nonce",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetNonce",
+                        "discriminant_value": "3"
+                    },
+                    {
+                        "name": "WaitPeerTrust",
+                        "discriminant_value": "4"
+                    },
+                    {
+                        "name": "SignifyTrust",
+                        "discriminant_value": "5"
+                    },
+                    {
+                        "name": "GetPayload",
+                        "discriminant_value": "6"
+                    },
+                    {
+                        "name": "SendPayload",
+                        "discriminant_value": "7",
+                        "fields": [
+                            {
+                                "name": "greeter_payload",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "WaitPeerAcknowledgment",
+                        "discriminant_value": "8"
                     }
                 ]
             },
@@ -130,6 +170,46 @@
                                 "type": "HashDigest"
                             }
                         ]
+                    },
+                    {
+                        "name": "GetNonce",
+                        "discriminant_value": "2"
+                    },
+                    {
+                        "name": "SendNonce",
+                        "discriminant_value": "3",
+                        "fields": [
+                            {
+                                "name": "claimer_nonce",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SignifyTrust",
+                        "discriminant_value": "4"
+                    },
+                    {
+                        "name": "WaitPeerTrust",
+                        "discriminant_value": "5"
+                    },
+                    {
+                        "name": "SendPayload",
+                        "discriminant_value": "6",
+                        "fields": [
+                            {
+                                "name": "claimer_payload",
+                                "type": "Bytes"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetPayload",
+                        "discriminant_value": "7"
+                    },
+                    {
+                        "name": "Acknowledge",
+                        "discriminant_value": "8"
                     }
                 ]
             }
