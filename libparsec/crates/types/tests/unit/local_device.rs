@@ -6,108 +6,113 @@ use crate::prelude::*;
 
 #[rstest]
 #[case::admin(
-    // Generated from v3.0.0-b.6+dev
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   server_url: http://alice_dev1.example.com:9999
     //   organization_id: "CoolOrg"
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
-    //   device_id: "alice@dev1"
+    //   user_id: ext(2, a11cec00100000000000000000000000)
+    //   device_id: ext(2, de10a11cec0010000000000000000000)
     //   device_label: "My dev1 machine"
     //   human_handle: ("alice@example.com", "Alicey McAliceFace")
     //   signing_key: <alice.signing_key as bytes>
     //   private_key: <alice.private_key as bytes>
-    //   profile: "ADMIN"
+    //   initial_profile: "ADMIN"
     //   user_realm_id: ext(2, hex!("a4031e8bcdd84df8ae12bd3d05e6e20f"))
     //   user_realm_key: hex!("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")
     //   local_symkey: hex!("125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4")
     &hex!(
-        "a4eeb71ec7b4dccf55fd715b0686d650d22990201076acfc67dc9a506a87ec9e652665"
-        "148f745a5f27eb3c4d6f22e5bd23c3bb02eb64a11c1072f6003317bc7826dbcda57af7"
-        "8f412b4cfaef049c7cc358038f928783db21c5f9ec21017b37232c290c2872db6efc2a"
-        "ff88b530ce5e90d16dfe5ee9b2d6f537f919d306918d9d1224d4574c466b786cc2b932"
-        "f88219a5273b2f016244f04c9bec93f23514295bc7ccbe64a79ef9b00ab6daaabb5e5f"
-        "ad26fc53bca5adb90f865fe1d514f072095878d3b16f4579288626b4963adfb3ac5139"
-        "765fb8154b95188201688cf0356f5e4f3a6f5b9f1f3419906f5cd1af8bb985dd40afc3"
-        "3bcc5ef4a9c7eed5a03fa0133153a1be6bccd652b42e1eb937d79a4347fbdef3dd51bf"
-        "55ca3ee7762f88708143c63d0bff2e0558a8b9948038b1126a6970a68a471ad427c71f"
-        "d0ef0288f5dbbcd7e45d661fff667da685e98250aa76d312b26e7d1de6aa578333b7ab"
-        "90c33edfdbf6e2a22a4680ef7a7058d14db29f47866eec7ecb338f0415e4a13b4c05da"
-        "c6999b9477862ef83ee1aef9c20b8ca6c9fd135ff291cf730b53f23c19aafc4d58d342"
-        "24b330a3786a13dee70c4e304fd1237d5d9a9999ed2c86fc9fb3eb84e92dd92591dacd"
-        "d504c2a63a1acc527351fa1720f507c6d0535ac29d5747c8ce86e700a952c4fe463308"
-        "719f8dfc923d999e789c645b7b43dfc0"
+        "7183aed06c4aca4a681cac2d0005a333f1710b7e0f68b7cb3d283b7470bc78fff39519"
+        "375f7edb40a3e8060b07382f141534cf087ae8e9c545e75acdf2dbadd2aaa8a56cd68d"
+        "72f9e98f645c84a4cc7499ef1a1190c43a8673fc2521c3addc1ac7434962f92286798b"
+        "3783c6de3eb3efde083514911c844b0f2843f51b452b9742737065fff0d11450e8757d"
+        "6c04c0111690eaef205b30a3cf6cc072129d93d41fd4724f3f734fea3e28519550c4cc"
+        "7aee4bdbcc69b92b2aef705043a8ff921b3b8b129270cc5bcd50e0a808535d796f5851"
+        "9766a3899810c451a018b4aaf786e075b4247678a408a996181069f77c8eb0774f5da2"
+        "194fc6b771f7792755a2f21f53d6f8a2bbf1ac1e47424b6f7b57006bb5735c27c9e64e"
+        "9507d5cf167907fc5fa1ddbae9d99db22239a99e674936e4236d96d55596b746601055"
+        "7ad0164a5ffa206934f5e813f9fb4f14a9a1715660a6b07e69253f8efda8bde2bb1d3d"
+        "d54a291f3a31ffae3664884b26b8ef30882abfbd3b4d5ebcc959b83f894d6e70a8d083"
+        "caf59ed69fc4264ec4a6c5cee2039acaf2200444ee923cf01d9b73aceb34ddea057072"
+        "1ad654b8e555608d65c91b311c8ad2806c8178aab75ae00942a755d2a018f88c3bc22f"
+        "ba8768e75d7cb55950114f5ff70161f29eac8c8490d492165a442d7ece078eeb632a71"
+        "aff4a5acbb15ccd586a9fa57ce24a158f1bdeb6990e743bdf734303d5c484e9d8cadd4"
+        "122e23a1cee9a87ebf268c6360068db44398e2aaf26382606bb7e1bee4321a91"
     ),
     UserProfile::Admin,
 )]
 #[case::standard(
-    // Generated from v3.0.0-b.6+dev
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   server_url: http://alice_dev1.example.com:9999
     //   organization_id: "CoolOrg"
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
-    //   device_id: "alice@dev1"
+    //   user_id: ext(2, a11cec00100000000000000000000000)
+    //   device_id: ext(2, de10a11cec0010000000000000000000)
     //   device_label: "My dev1 machine"
     //   human_handle: ("alice@example.com", "Alicey McAliceFace")
     //   signing_key: <alice.signing_key as bytes>
     //   private_key: <alice.private_key as bytes>
-    //   profile: "STANDARD"
+    //   initial_profile: "STANDARD"
     //   user_realm_id: ext(2, hex!("a4031e8bcdd84df8ae12bd3d05e6e20f"))
     //   user_realm_key: hex!("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")
     //   local_symkey: hex!("125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4")
     &hex!(
-        "e2cca1b6fc5cb43dabb33a2d77556feb873ac5396a602b4b8547ba6d338d3ecda5506c"
-        "e54242d90920d80c7059ff1082ee9f672978320688329ec7a59bf6abf9eb58b7ac35ba"
-        "e55b6c94549c7544117c8262da043dce90889d5426781a917364e4a27829e39e0270e5"
-        "83dc28426ae8c5100dd3878a7ad7b83aba39b44d74e85f841b795bd21157a1b0035a88"
-        "3e84955e36835a95f56898935b3969ed7153feed771184bb80af5bd6231361de5af61e"
-        "2704e9b1118950c72808e757fd3188b87d6c31443f75c39ca066fbcfda391af749c7d3"
-        "b989742b4e0770ec70545b4ef55ce07a3009a162fa3fba333b51139c9d094f2b8d6438"
-        "d174b27c416e64ce9e39a0bbe30819f47c5e83cf96c1688f24b317573b9a5c379dce3c"
-        "07531f636ef4fc4be8e1811d6d0365230c17d02649e70772117914df06f48b236ab035"
-        "c6d898b413b17ada185387cb0fa40249a1a82f5172e68f4795a419b75a355cdc6ea7d6"
-        "66b9dbd26a2757381a750657dd9e1ee3927d303d9cb64c9aec1ab6d5f17245712469e7"
-        "42e057411716d8cd51cefb4bc8903577e2ea1d8dcfb641c9de86a84470f6a162a71c4d"
-        "874fcd34af9b9fc9ff62ac9b109635cb5544645204ff32effc9b26fd0021e8cdf51947"
-        "a2ca36d5fde110d3565e52e02d84d8590a1fb725a60ffaa80beccdedfd87e80cf9e096"
-        "2e23763d9eaaefef2781e9288bb3e1944bec66"
+        "bfd29c0e21f862421c4171ca3e1c5b4bbe3e580fc7c33b341343efbd671a73aa3a8627"
+        "666685478204f5a7a1f92f6ed96ee8f1473535581e01d1a7c570660df75c68115bd88c"
+        "f91952d59268cd334e59ab25707082ed062a163f3681630c58fcebf655a3ab30eb5c76"
+        "a320ab8fb8d1d91d64b38d13d48cb9812acb822fc0bea3015436c9928435cf98a94f0a"
+        "6fcdbf187390f32ab483c079c6bb7de16578350dea09a3927f08c6da41cf902aa19d5d"
+        "328c7ccc00eb24e99fa799f21f84f20090e248bb1dfd2939b2271304794d872a64fb73"
+        "4ba0df9627834a5ed31a26790aa95f4e84b738dfce0952ec8c3a3e4ed21d0cf5480b4f"
+        "c17750b4ce3a094f4401d04d86c6f6499bb66c99a86882a864ae755673049e0c034bb7"
+        "c35fe7bc2f1f7d5c3baebc2ae1d7012bb93db6fd5fe6432cc566fa081cc9d5a4da33c5"
+        "427c843c4f4883548c70d0c06d775105621eaa0ae993120f6032bf345eb3060e4f484d"
+        "e5376460c56057bcfa554b652456af6e2f199d7345470963370af42d51a80fd0ff09de"
+        "12ac98c14d702f8f48fe0b5bea102316e808c7cd066e2e458a50f53e52b12e48383f6d"
+        "2239f3c7b0d5e2ceeb42e07abbbf0b4eb236904259235163f3bfa90e3ecc77dc7d5e80"
+        "e00ed493073c4062f84e72d796c8df83c8132092eac6bcafa394fc52f182df32d50567"
+        "dae8a9923a8c36bda8fe793b2672de8165b6446baf2bc2d4ce051b56a0cfe984f82e4e"
+        "bb4509bc79de71abae79cfa37139de4c393b41674c2729ec169d0092b8d590fd336dbb"
     ),
     UserProfile::Standard,
 )]
 #[case::outsider(
-    // Generated from v3.0.0-b.6+dev
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   server_url: http://alice_dev1.example.com:9999
     //   organization_id: "CoolOrg"
     //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
-    //   device_id: "alice@dev1"
+    //   user_id: ext(2, a11cec00100000000000000000000000)
+    //   device_id: ext(2, de10a11cec0010000000000000000000)
     //   device_label: "My dev1 machine"
     //   human_handle: ("alice@example.com", "Alicey McAliceFace")
     //   signing_key: <alice.signing_key as bytes>
     //   private_key: <alice.private_key as bytes>
-    //   profile: "OUTSIDER"
+    //   initial_profile: "OUTSIDER"
     //   user_realm_id: ext(2, hex!("a4031e8bcdd84df8ae12bd3d05e6e20f"))
     //   user_realm_key: hex!("26bf35a98c1e54e90215e154af92a1af2d1142cdd0dba25b990426b0b30b0f9a")
     //   local_symkey: hex!("125a78618995e2e0f9a19bc8617083c809c03deb5457d5b82df5bcaec9966cd4")
     &hex!(
-        "21db4301d0d64f2ab7697fcfde71deeea8acb8b94187bfd985680d8ba6a794340db0cc"
-        "9c9da49114b3f29fdab29b00d13afd4e59c1661dceaa928b7e6777397a8c0695a27c71"
-        "1948f49a339495ea95796059518d8633a214868b01a8f95af6b7784d7a81a7dd01e42a"
-        "1403374c943426b499a4efd2d9082715451dc99886089dfe125c47d24db4029ed544e2"
-        "2cd7be5cd8170b4b165dadcaa28063c18942dc3ea6b002b4dbb8f1c2d4ed2371ae77f7"
-        "1ea6c3e814fba3cc89e490ec117fc6d308643c5de52a6bf337b1070a2fb8b405ae8c20"
-        "41a30d0c0ed16e4981e253bff6d02ce8428fcfbf206d6dcab3f05af1ef0ddefbf9ca5a"
-        "e54d359efb754192eddd5631b22b128a081724bf80845e54c65143d46b64c5474ed345"
-        "b578abcb51087aa895366dfe16726ae7f479594899d344a8e51dba754f08565d9799f3"
-        "751b478bd43c9de56e48a2c18f503229537e604c06517aeadd4bb355eadcf6eea00e67"
-        "e6c5bab563715488dff15006cdfc36ad5a66eed5120fad68f0ae0130d5f15f387528db"
-        "ccd247b2a5505df5eec9290d256b5705dd62eedf9ae1cd1550ff2389988a7ddee8143f"
-        "e5cf047a544571a7ff610f42c278602d5bcd8daa171a8c914fff1f2a1035a2d0355ab0"
-        "d83786afa829e65b3e36c4c99852d6d20ca57ee74156f07c6a2ed0439a3b710b7a6afd"
-        "1e20fbe53b7a6ce1ccb831d8d9ac8680fe7bc7"
+        "cb74876c6136006164a1fb8ba211a0447205edc26469c6834e1332cec1b43680046550"
+        "1c86bbb734908c63c04d369b6d0e1d8eb8de78324cb13c53d219c94c0e6cedae660852"
+        "1a94673f34fbb2f5ea10c1a9630d12c3557bc0cab0e71420e6afdc875be52def609fa5"
+        "2cd18522b947b38638b9aacda8517235a5c1ed3730beb5482c91ebd5c73d75fb3e7d1a"
+        "c1deae0f04e9c6597fcd2b299c6c1503795395ee275a12affad6c816f3e1b7d8375bd6"
+        "bd36f9635237c1963008e9f31d656e83a650f3039582a8df873fa8c7b45116db89d664"
+        "12fc64bb3ebb6411da83de5db0992df311154edc3f1497a9367d947f1a70f58f8230a8"
+        "d8af9b8aa48d767d85478dbbf8ff950ecc7c2bf993fd8e0357f1a401d257ce7aaebbff"
+        "6c622a58fc197d533e0682d1d43798a349b802d385f581455a742defe5171430b9253a"
+        "8a7e8cbf1838953ea9885d02510bd800be3834e16b2b1f30bdc6fa4cffff5c911a2d52"
+        "df15c0b461616fb755ef62b05d9c98c9ef2d3b059062230e7cfa9b82b28584393a656c"
+        "be3700553866b93293e9dc2ce7dbc4eff760ecbeaf59c6a67501cf7e966029601d8a49"
+        "a5a424cfaa440d802fc12f5eed0e4f6e2a76e80ce399a9bbf3d14d5ee97a45369473c4"
+        "e631c154a907112f5d18fc151e832ace8684bbf5530a4e43a2a54b896e7022f6bc9e42"
+        "25f795551d2c414e6560bde08e1c34176cd45a19c16c0ab8d3f665242eb45acda90965"
+        "82fcb754a9268ca37e6719040a3a655bbd899651123118f8568ed00ef1a196f74048aa"
     ),
     UserProfile::Outsider,
 )]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_local_device_data_x(#[case] data: &[u8], #[case] initial_profile: UserProfile) {
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
