@@ -258,6 +258,11 @@ jobs:
           mv 'D:/a/_temp/winfsp-tests-x64.exe' 'C:/Program Files (x86)/WinFsp/bin/'
         timeout-minutes: 2
 
+      - name: MacOS > Install macFUSE
+        if: matrix.platform == 'macos'
+        run: brew install --cask macfuse
+        timeout-minutes: 5
+
       - name: Linux > Install system dependencies
         if: matrix.platform == 'linux'
         run: |
