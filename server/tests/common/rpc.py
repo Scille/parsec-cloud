@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    AttemptID,
     BlockID,
     BootstrapToken,
     DateTime,
@@ -186,6 +187,18 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_cancel.Req(token=token)
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
+
+    async def invite_greeter_step(
+        self,
+        token: InvitationToken,
+        attempt: AttemptID,
+        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
+    ) -> authenticated_cmds.latest.invite_greeter_step.Rep:
+        req = authenticated_cmds.latest.invite_greeter_step.Req(
+            token=token, attempt=attempt, greeter_step=greeter_step
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_greeter_step.Rep.load(raw_rep)
 
     async def invite_list(
         self,
@@ -468,6 +481,19 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.invite_4_claimer_communicate.Req(payload=payload)
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.invite_4_claimer_communicate.Rep.load(raw_rep)
+
+    async def invite_claimer_step(
+        self,
+        token: InvitationToken,
+        greeter: UserID,
+        attempt: AttemptID,
+        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
+    ) -> invited_cmds.latest.invite_claimer_step.Rep:
+        req = invited_cmds.latest.invite_claimer_step.Req(
+            token=token, greeter=greeter, attempt=attempt, claimer_step=claimer_step
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_claimer_step.Rep.load(raw_rep)
 
     async def invite_info(
         self,

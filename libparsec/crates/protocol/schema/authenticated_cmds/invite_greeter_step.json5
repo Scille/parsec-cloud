@@ -1,0 +1,127 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_step",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "attempt",
+                    "type": "AttemptID"
+                },
+                {
+                    "name": "greeter_step",
+                    "type": "GreeterStep"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "claimer_step",
+                        "type": "ClaimerStep"
+                    }
+                ]
+            },
+            {
+                // The claimer has not submitted its step yet
+                "status": "not_ready"
+            },
+            {
+                // The invitation token doesn't correspond to any existing invitation
+                "status": "invitation_not_found"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is not part of the allowed greeters for this invitation
+                "status": "author_not_allowed"
+            },
+            {
+                // The attempt id doesn't correspond to any existing attempt
+                "status": "attempt_not_found"
+            },
+            {
+                // The author did not join the attempt
+                // This should not happen, since joining is required to get the attempt ID
+                "status": "attempt_not_joined"
+            },
+            {
+                // The attempt has been cancelled
+                "status": "attempt_cancelled"
+            },
+            {
+                // The submitted step is too advanced
+                // Every step before must have been completed by both peers
+                "status": "step_too_advanced"
+            },
+            {
+                // The submitted step somehow changed during polling
+                "status": "step_mismatch"
+            }
+        ],
+        "nested_types": [
+            {
+                // GreeterStep should be identical to the one in invite_claimer_step.json5
+                "name": "GreeterStep",
+                "discriminant_field": "step",
+                "variants": [
+                    {
+                        "name": "WaitPeer",
+                        "discriminant_value": "0",
+                        "fields": [
+                            {
+                                "name": "public_key",
+                                "type": "PublicKey"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "GetHashedNonce",
+                        "discriminant_value": "1"
+                    }
+                ]
+            },
+            {
+                // ClaimerStep should be identical to the one in invite_claimer_step.json5
+                "name": "ClaimerStep",
+                "discriminant_field": "step",
+                "variants": [
+                    {
+                        "name": "WaitPeer",
+                        "discriminant_value": "0",
+                        "fields": [
+                            {
+                                "name": "public_key",
+                                "type": "PublicKey"
+                            }
+                        ]
+                    },
+                    {
+                        "name": "SendHashedNonce",
+                        "discriminant_value": "1",
+                        "fields": [
+                            {
+                                "name": "hashed_nonce",
+                                "type": "HashDigest"
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+]

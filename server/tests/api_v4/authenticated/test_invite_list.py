@@ -36,6 +36,7 @@ async def test_authenticated_invite_list_ok(
         send_email=False,
     )
     assert isinstance(outcome, tuple)
+
     expected_invitations.append(
         authenticated_cmds.v4.invite_list.InviteListItemUser(
             created_on=t2,
