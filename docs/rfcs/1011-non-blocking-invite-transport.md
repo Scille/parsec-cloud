@@ -168,19 +168,161 @@ Methods:
 
 ### New commands
 
+7 commands are added in total, 4 authenticated commands and 3 invited commands.
+
 #### `invite_greeter_start_attempt` command
+
+Two new commands are introduced to start an attempt, which returns an attempt ID used in the subsequent queries. This attempt ID is the same for the greeter and the claimer. For the greeter, an authenticated command is exposed.
+
+In order for a greeter to start an attempt, a couple of checks have to be performed:
+- the invitation exists
+- the invitation is pending (i.e. not completed or cancelled)
+- the author is allowed (i.e. it is part of the greeters)
+
+It's possible for the active attempt to be in a state where the greeter has already joined. Usually, previous attempts are expected to be cancelled by one of the peers, but one can think of many cases where this cancellation didn't occur (e.g. the greeter device shutdown, or another device has an ongoing attempt running that hasn't been cancelled by the user).
+
+In this case, the `invite_greeter_start_attempt` command cancels the active attempts automatically (using a dedicated reason), and joins the new active attempt. This means that the last device calling `start_attempt` always has the priority.
+
+If no cancellation of the active attempt is required, the greeter simply joins it and the command returns the corresponding attempt ID.
+
+Pseudo code:
+
+```python
+invite_greeter_start_attempt(
+    token: InvitationToken,
+)
+->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  GreeterNotAllowed | OK[AttemptID]:
+    # If the greeter has already joined the active attempt:
+    #    -> cancel the active attempt and create a new one
+    [...]
+    # Get the active attempt and call `greeter_join_attempt()`
+    [...]
+    # Return the attempt ID
+    [...]
+```
+
+Schema definition:
 
 TODO
 
 #### `invite_claimer_start_attempt` command
 
+This is the new invited command introduced for the claimer to start an attempt and get the corresponding attempt ID.
+
+In order for the claimer to start an attempt, a couple of checks have to be performed:
+- the author exists
+- the author is allowed (i.e. it is part of the greeters)
+
+Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+
+Otherwise this command has the same logic as `invite_greeter_start_attempt`.
+
+Pseudo code:
+
+```python
+invite_claimer_start_attempt(
+    token: InvitationToken,
+    greeter: UserID,
+)
+->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  GreeterNotFound | GreeterNotAllowed |
+  OK[AttemptID]:
+    # Perform checks
+    [...]
+    # If the claimer has already joined the active attempt:
+    #    -> cancel the active attempt and create a new one
+    [...]
+    # Get the active attempt and call `claimer_join_attempt()`
+    [...]
+    # Return the attempt ID
+    [...]
+```
+
+Schema definition:
+
 TODO
 
 #### `invite_greeter_cancel_attempt` command
 
+Two new commands are introduced to cancel an attempt, which registers a cancellation reason for the given attempt. For the greeter, an authenticated command is exposed. After using `invite_greeter_cancel_attempt`, the greeter can start a new attempt by using the `invite_greeter_start_attempt` command.
+
+In order for a greeter to cancel an attempt, a couple of checks have to be performed:
+- the invitation exists
+- the invitation is pending (i.e. not completed or cancelled)
+- the author is allowed (i.e. it is part of the greeters)
+- the attempt exists
+- the attempt is active (i.e. joined and not cancelled)
+
+Then, the active attempt is cancelled with the provided reason and a new active attempt is created. The cancellation reason covers several cases:
+- the user manually cancelled the attempt
+- the hashed nonce didn't match the provided nonce
+- the SAS code communicated to the user was invalid
+- the payload could not be deciphered
+- the payload could not be deserialized
+- the payload contained invalid information
+- the attempt has been automatically cancelled by a new `start_attempt` command
+
+It is also registered that the greeter cancelled the attempt, so that this information can be provided in subsequent `invitation_cancelled` replies, along with the corresponding reason and timestamp. This way, the front-end application has all the information to properly communicate to the user what happened during the attempt.
+
+Pseudo code:
+
+```python
+invite_greeter_cancel_attempt(
+    token: InvitationToken,
+    attempt: AttemptID,
+    reason: CancelledAttemptReason,
+
+)
+->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreeterNotAllowed | OK:
+    # Perform checks
+    [...]
+    # Call `greeter_cancel_attempt(reason)`
+    [...]
+```
+
+Schema definition:
+
 TODO
 
 #### `invite_claimer_cancel_attempt` command
+
+This is the new invited command introduced for the claimer to cancel an attempt with a provided reason.
+
+In order for the claimer to cancel an attempt, a couple of checks have to be performed:
+- the author exists
+- the author is allowed (i.e. it is part of the greeters)
+- the attempt exists
+- the attempt is active (i.e. joined and not cancelled)
+
+Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+
+Otherwise this command has the same logic as `invite_greeter_cancel_attempt`.
+
+Pseudo-code:
+
+```python
+invite_claimer_cancel_attempt(
+    token: InvitationToken,
+    attempt: AttemptID,
+    reason: CancelledAttemptReason,
+)
+->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreeterNotAllowed | OK:
+    # Perform checks
+    [...]
+    # Call `claimer_cancel_attempt(reason)`
+    [...]
+```
+
+Schema definition:
 
 TODO
 
@@ -489,6 +631,11 @@ Schema definition:
 ]
 ```
 
+#### `invite_complete` command
+
+TODO
+
+
 ### Removed routes
 
 All the `invite_<N>_claimer_<step name>` and ``invite_<N>_greeter_<step name>` are removed and replaced by `invite_claimer_step` and `invite_greeter_step`.
@@ -519,7 +666,7 @@ Here is an overview of the different kinds of data that can be contained in a cl
 
 The news steps are defined as such:
 
-| Index | Greeter            | Greeter data   | Claimer             | Claimer data   |
+| Index | Greeter step       | Greeter data   | Claimer step        | Claimer data   |
 |-------|--------------------|----------------|---------------------|----------------|
 | 0     | `wait_peer`        | public key     | `wait_peer`         | public key     |
 | 1     | `get_hashed_nonce` |                | `send_hashed_nonce` | hashed nonce   |
@@ -532,7 +679,7 @@ The news steps are defined as such:
 | 8     | `wait_peer_ack`    |                | `acknowledge`       | acknowledgment |
 
 Those steps work very similarly to Parsec v2. There are a couple of differences though:
-- Steps are not counted as `1`, `2a`, `2b`, `3a`, `3b`, and `4` like in v2
+- Steps are not longer counted as `1`, `2a`, `2b`, `3a`, `3b`, and `4` like in version 2
 - Three different exchanges were performed in steps `2a` and `2b`. Now those exchanges are expanded in steps `1`, `2` and `3`.
 - Step `4` in version 2 could be used for several exchanges, until the greeter marked an exchange with `last=True`. Instead, those exchanges are expanded in steps `6` and `7`
 - In version 2, the last step was used to complete the invite. In version 3 this is now done with a dedicated `invite_complete` command, so we add a last step (index `8`) for the claimer to acknowledge that it's been able to successfully process the greeter payload.
