@@ -9,7 +9,7 @@ repos:
   # Common stuff
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.4.0 # Use the ref you want to point at
+    rev: v4.6.0 # Use the ref you want to point at
     hooks:
       - id: mixed-line-ending
         alias: eol
@@ -57,12 +57,12 @@ repos:
           ]
 
   - repo: https://github.com/adrienverge/yamllint
-    rev: v1.29.0
+    rev: v1.35.1
     hooks:
       - id: yamllint
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v6.30.1
+    rev: v8.10.1
     hooks:
       - id: cspell
         stages:
@@ -92,7 +92,7 @@ repos:
   # [1] https://github.com/koalaman/shellcheck/issues/2495
   # [2] https://www.shellcheck.net/wiki/SC1090
   - repo: https://github.com/shellcheck-py/shellcheck-py
-    rev: v0.9.0.6
+    rev: v0.10.0.1
     hooks:
       - id: shellcheck
         args: [--exclude=SC1090, --severity=warning]
@@ -285,7 +285,7 @@ repos:
   # JSON
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.22.0
+    rev: 0.28.6
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
