@@ -26,15 +26,15 @@ macro_rules! test_roundtrip_serialization {
     };
 }
 
-fn encode_and_format_with_70_width<T: AsRef<[u8]>>(data: T) -> String {
-    hex::encode(data)
-        .as_bytes()
-        .chunks(70)
-        .map(std::str::from_utf8)
-        .collect::<Result<Vec<&str>, _>>()
-        .unwrap()
-        .join("\"\n\"")
-}
+// fn encode_and_format_with_70_width<T: AsRef<[u8]>>(data: T) -> String {
+//     hex::encode(data)
+//         .as_bytes()
+//         .chunks(70)
+//         .map(std::str::from_utf8)
+//         .collect::<Result<Vec<&str>, _>>()
+//         .unwrap()
+//         .join("\"\n\"")
+// }
 
 pub fn rep_shamir_setup_already_exists() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
@@ -58,6 +58,7 @@ pub fn rep_brief_invalid_data() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_share_invalid_data() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -68,6 +69,7 @@ pub fn rep_share_invalid_data() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_invalid_recipient() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -78,6 +80,7 @@ pub fn rep_invalid_recipient() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_share_recipient_not_in_brief() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -89,6 +92,7 @@ pub fn rep_share_recipient_not_in_brief() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_duplicate_share_for_recipient() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -100,6 +104,7 @@ pub fn rep_duplicate_share_for_recipient() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_author_included_as_recipient() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -122,6 +127,7 @@ pub fn rep_missing_share_for_recipient() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_share_inconsistent_timestamp() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -132,6 +138,7 @@ pub fn rep_share_inconsistent_timestamp() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_timestamp_out_of_ballpark() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
@@ -142,7 +149,7 @@ pub fn rep_timestamp_out_of_ballpark() {
     //   server_timestamp: ext(1, timestamp(2009-02-13T23:31:30.000000Z))
 
     let dt = DateTime::from_timestamp_seconds(1234567890).unwrap();
-    let req = authenticated_cmds::shamir_recovery_setup::Rep::TimestampOutOfBallpark {
+    let _req = authenticated_cmds::shamir_recovery_setup::Rep::TimestampOutOfBallpark {
         ballpark_client_early_offset: 32.,
         ballpark_client_late_offset: 32.,
         client_timestamp: dt,
@@ -158,13 +165,14 @@ pub fn rep_timestamp_out_of_ballpark() {
         authenticated_cmds::shamir_recovery_setup::Rep::load
     );
 }
+
 pub fn rep_require_greater_timestamp() {
     // Generated from Rust implementation (Parsec v3.0.0-b.6+dev 2024-06-06)
     // Content:
     //   status: "require_greater_timestamp"
     //   strictly_greater_than: ext(1, timestamp(2009-02-13T23:31:30.000000Z))
     //
-    let req = authenticated_cmds::shamir_recovery_setup::Rep::RequireGreaterTimestamp {
+    let _req = authenticated_cmds::shamir_recovery_setup::Rep::RequireGreaterTimestamp {
         strictly_greater_than: DateTime::from_timestamp_seconds(1234567890).unwrap(),
     };
     test_roundtrip_serialization!(

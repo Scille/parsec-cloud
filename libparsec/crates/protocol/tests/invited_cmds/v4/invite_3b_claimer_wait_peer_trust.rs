@@ -5,7 +5,6 @@
 #![allow(clippy::unwrap_used)]
 
 use libparsec_tests_lite::prelude::*;
-use libparsec_types::prelude::*;
 
 use super::invited_cmds;
 
