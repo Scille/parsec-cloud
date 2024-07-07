@@ -16,7 +16,7 @@ use super::authenticated_cmds;
 pub fn req() {
     let raw_expected = [
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   timestamp: ext(1, 946774800.0)
             //   version: 8
@@ -27,10 +27,10 @@ pub fn req() {
             //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
             //
             &hex!(
-                "87a3636d64ab766c6f625f757064617465a7766c6f625f6964d8022b5f314728134a12863d"
-                "a1ce49c112f6a96b65795f696e64657808a974696d657374616d70d70141cc375188000000"
-                "a776657273696f6e08a4626c6f62c406666f6f626172ae7365717565737465725f626c6f62"
-                "c0"
+            "87a3636d64ab766c6f625f757064617465a7766c6f625f6964d8022b5f314728134a12"
+            "863da1ce49c112f6a96b65795f696e64657808a974696d657374616d70d70100035d16"
+            "2fa2e400a776657273696f6e08a4626c6f62c406666f6f626172ae7365717565737465"
+            "725f626c6f62c0"
             )[..],
             authenticated_cmds::vlob_update::Req {
                 key_index: 8,
@@ -42,7 +42,7 @@ pub fn req() {
             },
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   timestamp: ext(1, 946774800.0)
             //   version: 8
@@ -55,10 +55,10 @@ pub fn req() {
             //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
             //
             &hex!(
-                "87a3636d64ab766c6f625f757064617465a7766c6f625f6964d8022b5f314728134a12863d"
-                "a1ce49c112f6a96b65795f696e64657808a974696d657374616d70d70141cc375188000000"
-                "a776657273696f6e08a4626c6f62c406666f6f626172ae7365717565737465725f626c6f62"
-                "81d802b5eb565343c442b3a26be44573813ff0c406666f6f626172"
+            "87a3636d64ab766c6f625f757064617465a7766c6f625f6964d8022b5f314728134a12"
+            "863da1ce49c112f6a96b65795f696e64657808a974696d657374616d70d70100035d16"
+            "2fa2e400a776657273696f6e08a4626c6f62c406666f6f626172ae7365717565737465"
+            "725f626c6f6281d802b5eb565343c442b3a26be44573813ff0c406666f6f626172"
             )[..],
             authenticated_cmds::vlob_update::Req {
                 key_index: 8,
@@ -157,13 +157,13 @@ pub fn rep_vlob_not_found() {
 }
 
 pub fn rep_bad_key_index() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   last_realm_certificate_timestamp: ext(1, 946774800.0)
     //   status: "bad_key_index"
     let raw = hex!(
-        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f6365"
-        "7274696669636174655f74696d657374616d70d70141cc375188000000"
+        "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f"
+        "63657274696669636174655f74696d657374616d70d70100035d162fa2e400"
     );
 
     let expected = authenticated_cmds::vlob_update::Rep::BadKeyIndex {
@@ -183,14 +183,14 @@ pub fn rep_bad_key_index() {
 }
 
 pub fn rep_require_greater_timestamp() {
-    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   status: "require_greater_timestamp"
     //   strictly_greater_than: ext(1, 946774800.0)
     //
     let raw = hex!(
-        "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
-        "726963746c795f677265617465725f7468616ed70141cc375188000000"
+        "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b5"
+        "7374726963746c795f677265617465725f7468616ed70100035d162fa2e400"
     );
 
     let expected = authenticated_cmds::vlob_update::Rep::RequireGreaterTimestamp {
@@ -210,7 +210,7 @@ pub fn rep_require_greater_timestamp() {
 }
 
 pub fn rep_timestamp_out_of_ballpark() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   ballpark_client_early_offset: 300.0
     //   ballpark_client_late_offset: 320.0
@@ -219,11 +219,11 @@ pub fn rep_timestamp_out_of_ballpark() {
     //   status: "timestamp_out_of_ballpark"
     //
     let raw = hex!(
-        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc6261"
-        "6c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c00000000000bb62"
-        "616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb4074000000000000b063"
-        "6c69656e745f74696d657374616d70d70141cc375188000000b07365727665725f74696d65"
-        "7374616d70d70141cc375188000000"
+        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc"
+        "62616c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c0000000"
+        "0000bb62616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb40740000"
+        "00000000b0636c69656e745f74696d657374616d70d70100035d162fa2e400b0736572"
+        "7665725f74696d657374616d70d70100035d162fa2e400"
     );
 
     let expected = authenticated_cmds::vlob_update::Rep::TimestampOutOfBallpark {
@@ -267,15 +267,15 @@ pub fn rep_organization_not_sequestered() {
 }
 
 pub fn rep_sequester_inconsistency() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   last_common_certificate_timestamp: ext(1, 946774800.0)
     //   status: "sequester_inconsistency"
     //
     let raw = hex!(
-        "82a6737461747573b77365717565737465725f696e636f6e73697374656e6379d9216c6173"
-        "745f636f6d6d6f6e5f63657274696669636174655f74696d657374616d70d70141cc375188"
-        "000000"
+        "82a6737461747573b77365717565737465725f696e636f6e73697374656e6379d9216c"
+        "6173745f636f6d6d6f6e5f63657274696669636174655f74696d657374616d70d70100"
+        "035d162fa2e400"
     );
 
     let expected = authenticated_cmds::vlob_update::Rep::SequesterInconsistency {

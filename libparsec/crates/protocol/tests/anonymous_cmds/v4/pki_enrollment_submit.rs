@@ -60,12 +60,12 @@ pub fn req() {
 // Responses
 
 pub fn rep_ok() {
-    // Generated from Python implementation (Parsec v2.14.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   status: "ok"
     //   submitted_on: ext(1, 1668767275.338466)
     //
-    let raw = hex!("82a6737461747573a26f6bac7375626d69747465645f6f6ed70141d8ddd78ad5a96d");
+    let raw = hex!("82a6737461747573a26f6bac7375626d69747465645f6f6ed7010005edbc28a8cae2");
 
     let expected = anonymous_cmds::pki_enrollment_submit::Rep::Ok {
         submitted_on: DateTime::from_timestamp_micros(1668767275338466).unwrap(),
@@ -84,14 +84,14 @@ pub fn rep_ok() {
 }
 
 pub fn rep_x509_certificate_already_submitted() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   status: "x509_certificate_already_submitted"
     //   submitted_on: ext(1, 1668767275.338466)
     //
     let raw = hex!(
         "82a6737461747573d922783530395f63657274696669636174655f616c72656164795f"
-        "7375626d6974746564ac7375626d69747465645f6f6ed70141d8ddd78ad5a96d"
+        "7375626d6974746564ac7375626d69747465645f6f6ed7010005edbc28a8cae2"
     );
 
     let expected = anonymous_cmds::pki_enrollment_submit::Rep::X509CertificateAlreadySubmitted {

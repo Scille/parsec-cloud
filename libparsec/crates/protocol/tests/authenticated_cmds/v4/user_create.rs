@@ -217,7 +217,7 @@ pub fn rep_active_users_limit_reached() {
 }
 
 pub fn rep_timestamp_out_of_ballpark() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   ballpark_client_early_offset: 300.0
     //   ballpark_client_late_offset: 320.0
@@ -226,11 +226,11 @@ pub fn rep_timestamp_out_of_ballpark() {
     //   status: "timestamp_out_of_ballpark"
     //
     let raw = hex!(
-        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc6261"
-        "6c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c00000000000bb62"
-        "616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb4074000000000000b063"
-        "6c69656e745f74696d657374616d70d70141cc375188000000b07365727665725f74696d65"
-        "7374616d70d70141cc375188000000"
+        "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc"
+        "62616c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c0000000"
+        "0000bb62616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb40740000"
+        "00000000b0636c69656e745f74696d657374616d70d70100035d162fa2e400b0736572"
+        "7665725f74696d657374616d70d70100035d162fa2e400"
     );
 
     let expected = authenticated_cmds::user_create::Rep::TimestampOutOfBallpark {
@@ -253,14 +253,14 @@ pub fn rep_timestamp_out_of_ballpark() {
 }
 
 pub fn rep_require_greater_timestamp() {
-    // Generated from Python implementation (Parsec v2.11.1+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   status: "require_greater_timestamp"
     //   strictly_greater_than: ext(1, 946774800.0)
     //
     let raw = hex!(
-        "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b57374"
-        "726963746c795f677265617465725f7468616ed70141cc375188000000"
+        "82a6737461747573b9726571756972655f677265617465725f74696d657374616d70b5"
+        "7374726963746c795f677265617465725f7468616ed70100035d162fa2e400"
     );
 
     let expected = authenticated_cmds::user_create::Rep::RequireGreaterTimestamp {
