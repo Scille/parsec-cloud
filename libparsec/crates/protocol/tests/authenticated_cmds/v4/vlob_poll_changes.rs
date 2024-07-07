@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::collections::HashMap;
-
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 

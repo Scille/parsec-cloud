@@ -121,14 +121,14 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   event: "COMMON_CERTIFICATE"
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
                 "83a6737461747573a26f6ba56576656e74b2434f4d4d4f4e5f43455254494649434154"
-                "45a974696d657374616d70d70141cc375188000000"
+                "45a974696d657374616d70d70100035d162fa2e400"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::CommonCertificate {
@@ -137,14 +137,14 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   event: "SEQUESTER_CERTIFICATE"
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
                 "83a6737461747573a26f6ba56576656e74b55345515545535445525f43455254494649"
-                "43415445a974696d657374616d70d70141cc375188000000"
+                "43415445a974696d657374616d70d70100035d162fa2e400"
             )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::SequesterCertificate {
@@ -153,15 +153,15 @@ pub fn rep_ok() {
             ),
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   event: "SHAMIR_RECOVERY_CERTIFICATE"
             //   status: "ok"
             //   timestamp: ext(1, 946774800.0)
             &hex!(
-                "83a6737461747573a26f6ba56576656e74bb5348414d49525f5245434f564552595f43"
-                "45525449464943415445a974696d657374616d70d70141cc375188000000"
-            )[..],
+            "83a6737461747573a26f6ba56576656e74bb5348414d49525f5245434f564552595f43"
+            "45525449464943415445a974696d657374616d70d70100035d162fa2e400"
+                )[..],
             authenticated_cmds::events_listen::Rep::Ok(
                 authenticated_cmds::events_listen::APIEvent::ShamirRecoveryCertificate {
                     timestamp: "2000-01-02T01:00:00Z".parse().unwrap(),

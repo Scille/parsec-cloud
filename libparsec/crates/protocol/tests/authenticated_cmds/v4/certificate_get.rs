@@ -16,7 +16,7 @@ use super::authenticated_cmds;
 pub fn req() {
     let raw_expected = [
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   cmd: "certificate_get"
             //   common_after: None
@@ -36,7 +36,7 @@ pub fn req() {
             },
         ),
         (
-            // Generated from Rust implementation (Parsec v3.0.0+dev)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   cmd: "certificate_get"
             //   common_after: ext(1, 946774800.0)
@@ -45,10 +45,10 @@ pub fn req() {
             //   shamir_recovery_after: ext(1, 946774800.0)
             &hex!(
                 "85a3636d64af63657274696669636174655f676574ac636f6d6d6f6e5f6166746572d7"
-                "0141cc375188000000af7365717565737465725f6166746572d70141cc375188000000"
-                "b57368616d69725f7265636f766572795f6166746572d70141cc375188000000ab7265"
-                "616c6d5f616674657281d8021d3353157d7d4e95ad2fdea7b3bd19c5d70141cc375188"
-                "000000"
+                "0100035d162fa2e400af7365717565737465725f6166746572d70100035d162fa2e400"
+                "b57368616d69725f7265636f766572795f6166746572d70100035d162fa2e400ab7265"
+                "616c6d5f616674657281d8021d3353157d7d4e95ad2fdea7b3bd19c5d70100035d162f"
+                "a2e400"
             )[..],
             authenticated_cmds::certificate_get::Req {
                 common_after: Some("2000-1-2T01:00:00Z".parse().unwrap()),
@@ -66,7 +66,6 @@ pub fn req() {
         let expected = authenticated_cmds::AnyCmdReq::CertificateGet(expected);
 
         let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
-
         p_assert_eq!(data, expected);
 
         // Also test serialization round trip

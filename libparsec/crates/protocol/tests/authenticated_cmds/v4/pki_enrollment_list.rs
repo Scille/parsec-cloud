@@ -42,7 +42,7 @@ pub fn req() {
 pub fn rep_ok() {
     let raw_expected = [
         (
-            // Generated from Python implementation (Parsec v2.14.0)
+            // Generated from Parsec v3.0.0-b.11+dev
             // Content:
             //   enrollments: [
             //     {
@@ -55,12 +55,12 @@ pub fn rep_ok() {
             //   ]
             //   status: "ok"
             &hex!(
-                "82ab656e726f6c6c6d656e74739185be7375626d69747465725f6465725f783530395f6365"
-                "727469666963617465c40d3c78353039206365727469663eac7375626d69747465645f6f6e"
-                "d70141d8dd2f49d8f5c7ad656e726f6c6c6d656e745f6964d802e1fe88bd0f054261887a6c"
-                "8039710b40b87375626d69745f7061796c6f61645f7369676e6174757265c40b3c7369676e"
-                "61747572653eae7375626d69745f7061796c6f6164c4073c64756d6d793ea6737461747573"
-                "a26f6b"
+                "82a6737461747573a26f6bab656e726f6c6c6d656e74739185ad656e726f6c6c6d656e"
+                "745f6964d802e1fe88bd0f054261887a6c8039710b40ae7375626d69745f7061796c6f"
+                "6164c4073c64756d6d793eb87375626d69745f7061796c6f61645f7369676e61747572"
+                "65c40b3c7369676e61747572653eac7375626d69747465645f6f6ed7010005ed940b42"
+                "4b31be7375626d69747465725f6465725f783530395f6365727469666963617465c40d"
+                "3c78353039206365727469663e"
             )[..],
             authenticated_cmds::pki_enrollment_list::Rep::Ok {
                 enrollments: vec![

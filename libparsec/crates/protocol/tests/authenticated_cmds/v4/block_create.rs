@@ -101,13 +101,13 @@ pub fn rep_store_unavailable() {
 }
 
 pub fn rep_bad_key_index() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   status: "bad_key_index"
     //   last_realm_certificate_timestamp: ext(1, 946684800.0)
     let raw = hex!(
         "82a6737461747573ad6261645f6b65795f696e646578d9206c6173745f7265616c6d5f"
-        "63657274696669636174655f74696d657374616d70d70141cc36a1c0000000"
+        "63657274696669636174655f74696d657374616d70d70100035d013b37e000"
     );
     let expected = authenticated_cmds::block_create::Rep::BadKeyIndex {
         last_realm_certificate_timestamp: "2000-01-01T00:00:00Z".parse().unwrap(),

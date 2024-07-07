@@ -286,7 +286,7 @@ pub fn rep_invalid_data() {
 }
 
 pub fn rep_timestamp_out_of_ballpark() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+    // Generated from Parsec v3.0.0-b.11+dev
     // Content:
     //   ballpark_client_early_offset: 300.0
     //   ballpark_client_late_offset: 320.0
@@ -298,8 +298,8 @@ pub fn rep_timestamp_out_of_ballpark() {
         "85a6737461747573b974696d657374616d705f6f75745f6f665f62616c6c7061726bbc"
         "62616c6c7061726b5f636c69656e745f6561726c795f6f6666736574cb4072c0000000"
         "0000bb62616c6c7061726b5f636c69656e745f6c6174655f6f6666736574cb40740000"
-        "00000000b0636c69656e745f74696d657374616d70d70141cc375188000000b0736572"
-        "7665725f74696d657374616d70d70141cc375188000000"
+        "00000000b0636c69656e745f74696d657374616d70d70100035d162fa2e400b0736572"
+        "7665725f74696d657374616d70d70100035d162fa2e400"
     );
 
     let expected = anonymous_cmds::organization_bootstrap::Rep::TimestampOutOfBallpark {
