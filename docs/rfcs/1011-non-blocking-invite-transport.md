@@ -409,8 +409,7 @@ Schema definition:
                 },
                 {
                     "name": "reason",
-                    // TODO: define dedicated type
-                    "type": "Integer"
+                    "type": "CancelledAttemptReason"
                 }
             ]
         },
@@ -451,7 +450,21 @@ Schema definition:
             },
             {
                 // The attempt has been already cancelled
-                "status": "attempt_already_cancelled"
+                "status": "attempt_already_cancelled",
+                "fields": [
+                    {
+                        "name": "origin",
+                        "type": "GreeterOrClaimer"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "CancelledAttemptReason"
+                    }
+                ]
             }
         ]
     }
@@ -516,8 +529,7 @@ Schema definition:
                 },
                 {
                     "name": "reason",
-                    // TODO: define dedicated type
-                    "type": "Integer"
+                    "type": "CancelledAttemptReason"
                 }
             ]
         },
@@ -559,7 +571,21 @@ Schema definition:
             },
             {
                 // The attempt has already been cancelled
-                "status": "attempt_already_cancelled"
+                "status": "attempt_already_cancelled",
+                "fields": [
+                    {
+                        "name": "origin",
+                        "type": "GreeterOrClaimer"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "CancelledAttemptReason"
+                    }
+                ]
             }
         ]
     }
@@ -679,7 +705,21 @@ Schema definition:
             },
             {
                 // The attempt has been cancelled
-                "status": "attempt_cancelled"
+                "status": "attempt_cancelled",
+                "fields": [
+                    {
+                        "name": "origin",
+                        "type": "GreeterOrClaimer"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "CancelledAttemptReason"
+                    }
+                ]
             },
             {
                 // The submitted step is too advanced
@@ -838,7 +878,21 @@ Schema definition:
             },
             {
                 // The attempt has been cancelled
-                "status": "attempt_cancelled"
+                "status": "attempt_cancelled",
+                "fields": [
+                    {
+                        "name": "origin",
+                        "type": "GreeterOrClaimer"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "CancelledAttemptReason"
+                    }
+                ]
             },
             {
                 // The submitted step is too advanced
