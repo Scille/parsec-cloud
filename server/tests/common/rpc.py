@@ -188,6 +188,22 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
+    async def invite_greeter_cancel_attempt(
+        self, token: InvitationToken, attempt: AttemptID, reason: int
+    ) -> authenticated_cmds.latest.invite_greeter_cancel_attempt.Rep:
+        req = authenticated_cmds.latest.invite_greeter_cancel_attempt.Req(
+            token=token, attempt=attempt, reason=reason
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_greeter_cancel_attempt.Rep.load(raw_rep)
+
+    async def invite_greeter_start_attempt(
+        self, token: InvitationToken
+    ) -> authenticated_cmds.latest.invite_greeter_start_attempt.Rep:
+        req = authenticated_cmds.latest.invite_greeter_start_attempt.Req(token=token)
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_greeter_start_attempt.Rep.load(raw_rep)
+
     async def invite_greeter_step(
         self,
         token: InvitationToken,
@@ -481,6 +497,22 @@ class BaseInvitedRpcClient:
         req = invited_cmds.latest.invite_4_claimer_communicate.Req(payload=payload)
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.invite_4_claimer_communicate.Rep.load(raw_rep)
+
+    async def invite_claimer_cancel_attempt(
+        self, token: InvitationToken, greeter: UserID, attempt: AttemptID, reason: int
+    ) -> invited_cmds.latest.invite_claimer_cancel_attempt.Rep:
+        req = invited_cmds.latest.invite_claimer_cancel_attempt.Req(
+            token=token, greeter=greeter, attempt=attempt, reason=reason
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_claimer_cancel_attempt.Rep.load(raw_rep)
+
+    async def invite_claimer_start_attempt(
+        self, token: InvitationToken, greeter: UserID
+    ) -> invited_cmds.latest.invite_claimer_start_attempt.Rep:
+        req = invited_cmds.latest.invite_claimer_start_attempt.Req(token=token, greeter=greeter)
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_claimer_start_attempt.Rep.load(raw_rep)
 
     async def invite_claimer_step(
         self,

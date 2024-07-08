@@ -1,0 +1,54 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_claimer_start_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter",
+                    "type": "UserID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "attempt",
+                        "type": "AttemptID"
+                    }
+                ]
+            },
+            // The following statuses do exist for the greeter, but not for the claimer
+            // Instead, in those cases, the claimer would get an HTTP 410 error, defined
+            // as `InvitationAlreadyUsedOrDeleted`.
+            // {
+            //     // The invitation token doesn't correspond to any existing invitation
+            //     "status": "invitation_not_found"
+            // },
+            // {
+            //     // The invitation has already been completed
+            //     "status": "invitation_completed"
+            // },
+            // {
+            //     // The invitation has been cancelled
+            //     "status": "invitation_cancelled"
+            // },
+            {
+                // The provided greeter ID doesn't correspond to any existing greeter
+                "status": "greeter_not_found"
+            },
+            {
+                // The greeter is not part of the allowed greeters for this invitation
+                "status": "greeter_not_allowed"
+            }
+        ]
+    }
+]

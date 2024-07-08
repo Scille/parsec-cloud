@@ -17,6 +17,8 @@ from . import (
     invite_3b_greeter_signify_trust,
     invite_4_greeter_communicate,
     invite_cancel,
+    invite_greeter_cancel_attempt,
+    invite_greeter_start_attempt,
     invite_greeter_step,
     invite_list,
     invite_new_device,
@@ -59,6 +61,8 @@ class AnyCmdReq:
         | invite_3b_greeter_signify_trust.Req
         | invite_4_greeter_communicate.Req
         | invite_cancel.Req
+        | invite_greeter_cancel_attempt.Req
+        | invite_greeter_start_attempt.Req
         | invite_greeter_step.Req
         | invite_list.Req
         | invite_new_device.Req
@@ -98,6 +102,8 @@ __all__ = [
     "invite_3b_greeter_signify_trust",
     "invite_4_greeter_communicate",
     "invite_cancel",
+    "invite_greeter_cancel_attempt",
+    "invite_greeter_start_attempt",
     "invite_greeter_step",
     "invite_list",
     "invite_new_device",

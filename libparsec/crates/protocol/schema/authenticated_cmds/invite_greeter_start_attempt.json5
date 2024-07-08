@@ -1,0 +1,43 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_start_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "attempt",
+                        "type": "AttemptID"
+                    }
+                ]
+            },
+            {
+                // The invitation token doesn't correspond to any existing invitation
+                "status": "invitation_not_found"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is not part of the allowed greeters for this invitation
+                "status": "author_not_allowed"
+            }
+        ]
+    }
+]
