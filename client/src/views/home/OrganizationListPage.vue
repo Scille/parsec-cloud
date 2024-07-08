@@ -240,7 +240,7 @@ const msSorterLabels = {
 const isPopoverOpen = ref(false);
 
 async function onLinkClick(link: string): Promise<void> {
-  if (await bootstrapLinkValidator(link)) {
+  if ((await bootstrapLinkValidator(link)).validity === Validity.Valid) {
     emits('bootstrapOrganizationWithLinkClick', link);
   } else {
     emits('joinOrganizationWithLinkClick', link);
