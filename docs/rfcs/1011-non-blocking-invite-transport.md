@@ -10,9 +10,9 @@ This RFC describes the new invite transport model, adapted to work with non-bloc
 
 The invite system is based on the creation of a secure channel between two peers, a claimer and a greeter. This is done using the Short Authentication String algorithm and requires a couple of messages to exchange by the peers, along with some acknowledgments.
 
-In the following paragraphs, we'll use `invite protocol` to describe the rules that define the **content** of those messages and what the clients are expected to do with them. We'll use `invite transport` to describe the semantics behind the **handling** of those messages between the clients and the server. This RFC is mostly about the `invite transport` while `invite protocol` is almost left untouched.
+In the following paragraphs, we'll use the term `invite protocol` to describe the rules that define the **content** of those messages and what the clients are expected to do with them. We'll use the term `invite transport` to describe the semantics behind the **handling** of those messages between the clients and the server. This RFC is mostly about the `invite transport` while `invite protocol` is almost left untouched.
 
-In Parsec v2, the communication between the clients and the server is based on websockets which allows for building blocking APIs. The `invite transport` is based on blocking commands for each step of the message passing protocol. Each step consists of a handshake between the peers where two messages are exchanged. The commands are blocking while waiting for the other peers. If one of the peers is disconnected during the process, the attempt is reset and the peers have to start over from the beginning.
+In Parsec v2, the communication between the clients and the server is based on websockets which allows for building blocking APIs. The `invite transport` is based on blocking commands for each step of the message passing protocol. Each step consists of a handshake between the peers where two messages are exchanged. The corresponding command is blocking while waiting for the other peer. If one of the peers is disconnected during the process, the attempt is reset and the peers have to start over from the beginning.
 
 In Parsec v3, the communication between the clients and the server is now based on regular HTTP routes (along with Server-Sent Events). Blocking HTTP requests would be very cumbersome considering that gateways are basically free to close the connection however they please after a while. Worse, a connection loss in the context of the building of an invitation channel would cause the process to start over. Since the invite process already weighs heavily on the user experience, keeping this unreliable process is highly unadvisable. A more thorough analysis is available in the [issue #7018 - Update the internal invitation logic for better network failure resilience](https://github.com/Scille/parsec-cloud/issues/7018).
 
@@ -24,6 +24,7 @@ The second change is related to the concept of greeters. In Parsec v2, only the 
 - for user invitation, this would be the administrators
 - for device invitation, this would be the user alone
 - for shamir invitation, this would be the shamir recipients
+
 Note that this set may evolve overtime as users can be revoked and user profiles can change.
 
 
@@ -77,7 +78,7 @@ Immutable properties:
   * or user id (for device or shamir invitation)
 
 Mutable state:
-- state: PENDING | CANCELLED | COMPLETED
+- state: `PENDING` | `CANCELLED` | `COMPLETED`
 
 Getters:
 - get greeters
@@ -123,13 +124,13 @@ An attempt is identified by:
 - attempt id
 
 Mutable properties:
-- claimer joined: NotSet | Timestamp
-- greeter joined: NotSet | Timestamp
-- cancelled reason: NotSet | (CLAIMER | GREETER, Reason, Timestamp)
+- claimer joined: `NotSet` | `Timestamp`
+- greeter joined: `NotSet` | `Timestamp`
+- cancelled reason: `NotSet` | (`CLAIMER` | `GREETER`, `Reason`, `Timestamp`)
 
 Inferred properties:
-- state: IDLE | HALF JOINED | FULLY JOINED | CANCELLED
-- is active: is either IDLE, HALF JOINED or FULLY JOINED
+- state: `IDLE` | `HALF_JOINED` | `FULLY_JOINED` | `CANCELLED`
+- is active: `True` if it is either `IDLE`, `HALF_JOINED` or `FULLY_JOINED`
 
 Getters:
 - get steps
@@ -153,11 +154,11 @@ A step is identified by:
 - step count
 
 Mutable properties:
-- claimer data: NotSet | ClaimerStep
-- greeter data: NotSet | GreeterStep
+- claimer data: `NotSet` | `ClaimerStep`
+- greeter data: `NotSet` | `GreeterStep`
 
 Inferred properties:
-- state: PENDING | HALF PENDING | COMPLETED
+- state: `PENDING` | `HALF_PENDING` | `COMPLETED`
 
 Methods:
 - set claimer data
@@ -205,7 +206,10 @@ invite_greeter_start_attempt(
 
 Schema definition:
 
-TODO
+```json5
+// TODO
+```
+
 
 #### `invite_claimer_start_attempt` command
 
@@ -243,7 +247,10 @@ invite_claimer_start_attempt(
 
 Schema definition:
 
-TODO
+```json5
+// TODO
+```
+
 
 #### `invite_greeter_cancel_attempt` command
 
@@ -288,7 +295,10 @@ invite_greeter_cancel_attempt(
 
 Schema definition:
 
-TODO
+```json5
+// TODO
+```
+
 
 #### `invite_claimer_cancel_attempt` command
 
@@ -324,7 +334,10 @@ invite_claimer_cancel_attempt(
 
 Schema definition:
 
-TODO
+```json5
+// TODO
+```
+
 
 #### `invite_greeter_step` command
 
@@ -633,12 +646,40 @@ Schema definition:
 
 #### `invite_complete` command
 
-TODO
+An extra authenticated command is added to complete an invitation.
+
+In the previous implementation, this was done automatically when the last exchange was performed. However, this is confusing in some cases:
+- Maybe the last exchange worked but the reply didn't reach one of the peers. In this case, the peer cannot retry the exchange since the invite is now completed.
+- In a shared recovery (shamir) invitation, the invitation must not complete after a successful attempt since there might be more exchanges to complete with other recipients.
+
+A better approach is then to explicitly complete the invitation with a dedicated command. The allowed authors for this command depends on the invitation type:
+- User invitation: any administrator or the freshly registered user are allowed
+- Device invitation: only the corresponding user is allowed
+- Shamir invitation: any recipient of the freshly recovered user are allowed
+
+Pseudo-code:
+
+```python
+invite_complete(token: InvitationToken) ->
+  InvitationNotFound | InvitationCompleted | InvitationCancelled | Ok:
+    # Perform checks
+    [...]
+    # Call `complete_invitation`
+    [...]
+    # Return `Ok`
+    [...]
+```
+
+Schema definition:
+
+```json5
+// TODO
+```
 
 
 ### Removed routes
 
-All the `invite_<N>_claimer_<step name>` and ``invite_<N>_greeter_<step name>` are removed and replaced by `invite_claimer_step` and `invite_greeter_step`.
+All the `invite_<N>_claimer_<step name>` and `invite_<N>_greeter_<step name>` are removed and replaced by `invite_claimer_step` and `invite_greeter_step`.
 
 This includes:
 - `invite_1_greeter_wait_peer`
