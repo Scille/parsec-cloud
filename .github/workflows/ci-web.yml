@@ -110,7 +110,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@331a600f1b10a3fed8dc56f925012bede91ae51f # pin v2.41.7
+      - uses: taiki-e/install-action@64e4e2f995104968c78bd697b253d55bf557af66 # pin v2.41.11
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 

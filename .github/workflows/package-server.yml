@@ -88,7 +88,7 @@ jobs:
         timeout-minutes: 10
 
       - name: Download version.patch artifact
-        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # pin v4.1.7
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
         with:
           name: version.patch
           path: ${{ runner.temp }}/version.patch
@@ -135,14 +135,14 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@331a600f1b10a3fed8dc56f925012bede91ae51f # pin v2.41.7
+      - uses: taiki-e/install-action@64e4e2f995104968c78bd697b253d55bf557af66 # pin v2.41.11
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-Wheel-${{ matrix.platform }}.spdx.json .
 
-      - uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin v4.3.3
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: |
