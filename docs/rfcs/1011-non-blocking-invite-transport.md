@@ -207,7 +207,49 @@ invite_greeter_start_attempt(
 Schema definition:
 
 ```json5
-// TODO
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_start_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "attempt",
+                        "type": "AttemptID"
+                    }
+                ]
+            },
+            {
+                // The invitation token doesn't correspond to any existing invitation
+                "status": "invitation_not_found"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is not part of the allowed greeters for this invitation
+                "status": "author_not_allowed"
+            }
+        ]
+    }
+]
 ```
 
 
@@ -248,7 +290,60 @@ invite_claimer_start_attempt(
 Schema definition:
 
 ```json5
-// TODO
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_claimer_start_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter",
+                    "type": "UserID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "attempt",
+                        "type": "AttemptID"
+                    }
+                ]
+            },
+            // The following statuses do exist for the greeter, but not for the claimer
+            // Instead, in those cases, the claimer would get an HTTP 410 error, defined
+            // as `InvitationAlreadyUsedOrDeleted`.
+            // {
+            //     // The invitation token doesn't correspond to any existing invitation
+            //     "status": "invitation_not_found"
+            // },
+            // {
+            //     // The invitation has already been completed
+            //     "status": "invitation_completed"
+            // },
+            // {
+            //     // The invitation has been cancelled
+            //     "status": "invitation_cancelled"
+            // },
+            {
+                // The provided greeter ID doesn't correspond to any existing greeter
+                "status": "greeter_not_found"
+            },
+            {
+                // The greeter is not part of the allowed greeters for this invitation
+                "status": "greeter_not_allowed"
+            }
+        ]
+    }
+]
 ```
 
 
@@ -296,7 +391,71 @@ invite_greeter_cancel_attempt(
 Schema definition:
 
 ```json5
-// TODO
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_cancel_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "attempt",
+                    "type": "AttemptID"
+                },
+                {
+                    "name": "reason",
+                    // TODO: define dedicated type
+                    "type": "Integer"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "attempt",
+                        "type": "AttemptID"
+                    }
+                ]
+            },
+            {
+                // The invitation token doesn't correspond to any existing invitation
+                "status": "invitation_not_found"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is not part of the allowed greeters for this invitation
+                "status": "author_not_allowed"
+            },
+            {
+                // The attempt id doesn't correspond to any existing attempt
+                "status": "attempt_not_found"
+            },
+            {
+                // The author did not join the attempt
+                // This should not happen, since joining is required to get the attempt ID
+                "status": "attempt_not_joined"
+            },
+            {
+                // The attempt has been already cancelled
+                "status": "attempt_already_cancelled"
+            }
+        ]
+    }
+]
 ```
 
 
@@ -335,7 +494,76 @@ invite_claimer_cancel_attempt(
 Schema definition:
 
 ```json5
-// TODO
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_claimer_cancel_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter",
+                    "type": "UserID"
+                },
+                {
+                    "name": "attempt",
+                    "type": "AttemptID"
+                },
+                {
+                    "name": "reason",
+                    // TODO: define dedicated type
+                    "type": "Integer"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            // The following statuses do exist for the greeter, but not for the claimer
+            // Instead, in those cases, the claimer would get an HTTP 410 error, defined
+            // as `InvitationAlreadyUsedOrDeleted`.
+            // {
+            //     // The invitation token doesn't correspond to any existing invitation
+            //     "status": "invitation_not_found"
+            // },
+            // {
+            //     // The invitation has already been completed
+            //     "status": "invitation_completed"
+            // },
+            // {
+            //     // The invitation has been cancelled
+            //     "status": "invitation_cancelled"
+            // },
+            {
+                // The provided greeter ID doesn't correspond to any existing greeter
+                "status": "greeter_not_found"
+            },
+            {
+                // The greeter is not part of the allowed greeters for this invitation
+                "status": "greeter_not_allowed"
+            },
+            {
+                // The attempt id doesn't correspond to any existing attempt
+                "status": "attempt_not_found"
+            },
+            {
+                // The author did not join the attempt
+                // This should not happen, since joining is required to get the attempt ID
+                "status": "attempt_not_joined"
+            },
+            {
+                // The attempt has already been cancelled
+                "status": "attempt_already_cancelled"
+            }
+        ]
+    }
+]
 ```
 
 
@@ -673,7 +901,36 @@ invite_complete(token: InvitationToken) ->
 Schema definition:
 
 ```json5
-// TODO
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_complete",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invitation_not_found"
+            },
+            {
+                "status": "invitation_already_completed"
+            },
+            {
+                "status": "invitation_cancelled"
+            }
+        ]
+    }
+]
 ```
 
 
