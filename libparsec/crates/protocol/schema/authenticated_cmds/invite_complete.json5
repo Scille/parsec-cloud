@@ -1,0 +1,30 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_complete",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "invitation_not_found"
+            },
+            {
+                "status": "invitation_already_completed"
+            },
+            {
+                "status": "invitation_cancelled"
+            }
+        ]
+    }
+]

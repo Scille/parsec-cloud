@@ -188,6 +188,13 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
 
+    async def invite_complete(
+        self, token: InvitationToken
+    ) -> authenticated_cmds.latest.invite_complete.Rep:
+        req = authenticated_cmds.latest.invite_complete.Req(token=token)
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_complete.Rep.load(raw_rep)
+
     async def invite_greeter_cancel_attempt(
         self, token: InvitationToken, attempt: AttemptID, reason: int
     ) -> authenticated_cmds.latest.invite_greeter_cancel_attempt.Rep:
