@@ -170,7 +170,6 @@ pub fn rep_bad_key_index() {
     let expected = authenticated_cmds::vlob_create::Rep::BadKeyIndex {
         last_realm_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
-    println!("***expected: {:?}", expected.dump().unwrap());
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
 
@@ -218,7 +217,6 @@ pub fn rep_require_greater_timestamp() {
     let expected = authenticated_cmds::vlob_create::Rep::RequireGreaterTimestamp {
         strictly_greater_than: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
-    println!("***expected: {:?}", expected.dump().unwrap());
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
 
@@ -304,7 +302,6 @@ pub fn rep_sequester_inconsistency() {
     let expected = authenticated_cmds::vlob_create::Rep::SequesterInconsistency {
         last_common_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
     };
-    println!("***expected: {:?}", expected.dump().unwrap());
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
 
