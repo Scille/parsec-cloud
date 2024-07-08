@@ -81,9 +81,7 @@ async def test_disconnect_sse(
     url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}/users/freeze"
 
     async with coolorg.alice.events_listen() as alice_sse:
-        rep = (
-            await alice_sse.next_event()
-        )  # Server always starts by returning a `ServerConfig` event
+        _ = await alice_sse.next_event()  # Server always starts by returning a `ServerConfig` event
 
         response = await client.post(
             url,
