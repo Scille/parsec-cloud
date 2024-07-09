@@ -1,19 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
 use reqwest::{Client, Response};
 use serde_json::Value;
 
 use libparsec::{DateTime, ParsecAddr};
 
-#[derive(Args)]
+use crate::utils::ServerSharedOpts;
+
+#[derive(clap::Parser)]
 pub struct StatsServer {
-    /// Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)
-    #[arg(short, long)]
-    addr: ParsecAddr,
-    /// Administration token
-    #[arg(short, long)]
-    token: String,
+    #[clap(flatten)]
+    server: ServerSharedOpts,
     /// Output format (json/csv)
     #[arg(short, long, default_value_t = Format::Json)]
     format: Format,
@@ -73,8 +70,7 @@ pub async fn stats_server_req(
 
 pub async fn stats_server(stats_organization: StatsServer) -> anyhow::Result<()> {
     let StatsServer {
-        addr,
-        token,
+        server: ServerSharedOpts { addr, token },
         format,
         end_date,
     } = stats_organization;

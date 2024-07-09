@@ -1,27 +1,22 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
 use libparsec::{
     authenticated_cmds::latest::invite_new_device::{self, InviteNewDeviceRep},
-    get_default_config_dir, InvitationType, ParsecInvitationAddr,
+    InvitationType, ParsecInvitationAddr,
 };
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct InviteDevice {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
 }
 
 pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
-    let InviteDevice { config_dir, device } = invite_device;
+    let InviteDevice {
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
+    } = invite_device;
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
         let mut handle = start_spinner("Creating device invitation".into());

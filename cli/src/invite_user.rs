@@ -1,23 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
 use libparsec::{
     authenticated_cmds::latest::invite_new_user::{self, InviteNewUserRep},
-    get_default_config_dir, InvitationType, ParsecInvitationAddr,
+    InvitationType, ParsecInvitationAddr,
 };
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct InviteUser {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Greeter device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Claimer email (i.e.: The invitee)
     #[arg(short, long)]
     email: String,
@@ -28,8 +21,7 @@ pub struct InviteUser {
 
 pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
     let InviteUser {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         email,
         send_email,
     } = invite_user;

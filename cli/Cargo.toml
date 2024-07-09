@@ -17,7 +17,7 @@ testenv = []
 libparsec = { workspace = true }
 
 anyhow = { workspace = true }
-clap = { workspace = true, features = ["default", "derive"] }
+clap = { workspace = true, features = ["default", "derive", "env"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
 log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }

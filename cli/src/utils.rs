@@ -10,6 +10,33 @@ use libparsec::{
 };
 use spinners::{Spinner, Spinners, Stream};
 
+#[derive(clap::Parser)]
+pub(crate) struct ConfigSharedOpts {
+    /// Parsec config directory
+    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = libparsec::PARSEC_CONFIG_DIR)]
+    pub(crate) config_dir: PathBuf,
+}
+
+#[derive(clap::Parser)]
+pub(crate) struct ConfigWithDeviceSharedOpts {
+    /// Parsec config directory
+    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = libparsec::PARSEC_CONFIG_DIR)]
+    pub(crate) config_dir: PathBuf,
+    /// Device ID
+    #[arg(short, long, env = "PARSEC_DEVICE_ID")]
+    pub(crate) device: Option<String>,
+}
+
+#[derive(clap::Parser, Clone)]
+pub(crate) struct ServerSharedOpts {
+    /// Server address (e.g: parsec3://127.0.0.1:6770?no_ssl=true)
+    #[arg(short, long, env = "PARSEC_SERVER_ADDR")]
+    pub(crate) addr: libparsec::ParsecAddr,
+    /// Administration token
+    #[arg(short, long, env = "PARSEC_ADMINISTRATION_TOKEN")]
+    pub(crate) token: String,
+}
+
 pub const GREEN: &str = "\x1B[92m";
 pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";

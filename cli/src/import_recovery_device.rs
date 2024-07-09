@@ -1,17 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
 use std::path::{Path, PathBuf};
 
-use libparsec::{get_default_config_dir, load_recovery_device, DeviceAccessStrategy};
+use libparsec::{load_recovery_device, DeviceAccessStrategy};
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct ImportRecoveryDevice {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
+    #[clap(flatten)]
+    config: ConfigSharedOpts,
     /// Recovery file
     #[arg(short, long)]
     input: PathBuf,
@@ -24,9 +22,9 @@ pub async fn import_recovery_device(
     import_recovery_device: ImportRecoveryDevice,
 ) -> anyhow::Result<()> {
     let ImportRecoveryDevice {
+        config: ConfigSharedOpts { config_dir },
         input,
         passphrase,
-        config_dir,
     } = import_recovery_device;
 
     let mut handle = start_spinner("Loading recovery device file".into());

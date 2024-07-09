@@ -1,20 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
-use libparsec::{get_default_config_dir, RealmRole, UserID, VlobID};
+use libparsec::{RealmRole, UserID, VlobID};
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct ShareWorkspace {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Workspace id
     #[arg(short, long, value_parser = VlobID::from_hex)]
     workspace_id: VlobID,
@@ -28,8 +21,7 @@ pub struct ShareWorkspace {
 
 pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<()> {
     let ShareWorkspace {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         workspace_id,
         user_id,
         role,
