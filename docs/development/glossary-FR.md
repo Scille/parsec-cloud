@@ -1,9 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
-# Translation memory
+# Glossary (French)
 
-For translation consistency, the following table display the preferred translations for terms that might have multiple (reasonable) translations.
-It is therefore not intended to cover translation for every possible term.
+The following table displays the preferred translations for terms that might
+have multiple (reasonable) translations. It is therefore not intended to cover
+translation for every possible term.
 
 | EN                              | FR                 |
 |---------------------------------|--------------------|
