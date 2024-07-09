@@ -86,6 +86,7 @@ enum Command {
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let arg = Arg::parse();
+    env_logger::init();
 
     match arg.command {
         Command::BootstrapOrganization(bootstrap_organization) => {
