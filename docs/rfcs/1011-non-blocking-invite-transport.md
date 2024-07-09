@@ -25,7 +25,8 @@ The second change is related to the concept of greeters. In Parsec v2, only the 
 - for device invitation, this would be the user alone
 - for shamir invitation, this would be the shamir recipients
 
-Note that this set may evolve overtime as users can be revoked and user profiles can change.
+> [!NOTE]
+> This set may evolve overtime as users can be revoked and user profiles can change.
 
 
 ## Goals and Non-Goals
@@ -261,7 +262,8 @@ In order for the claimer to start an attempt, a couple of checks have to be perf
 - the greeter exists
 - the greeter is allowed (i.e. it is part of the greeters)
 
-Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+> [!NOTE]
+> The state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
 Otherwise this command has the same logic as `invite_greeter_start_attempt`.
 
@@ -482,7 +484,8 @@ In order for the claimer to cancel an attempt, a couple of checks have to be per
 - the attempt exists
 - the attempt is active (i.e. joined and not cancelled)
 
-Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+> [!NOTE]
+> The state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
 Otherwise this command has the same logic as `invite_greeter_cancel_attempt`.
 
@@ -770,7 +773,8 @@ For the step data to be accepted, it has to pass the following the checks:
 - the attempt is active (i.e. joined and not cancelled)
 - the previous steps must have been completed by both peers
 
-Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
+> [!NOTE]
+> The state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
 Once the data is accepted, it either returns:
 - the greeter step data if it is available
