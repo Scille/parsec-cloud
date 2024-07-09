@@ -1,24 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
-use libparsec::get_default_config_dir;
-
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct RemoveDevice {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
 }
 
 pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
-    let RemoveDevice { config_dir, device } = remove_device;
+    let RemoveDevice {
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
+    } = remove_device;
 
     load_device_file_and_run(config_dir, device, |device| async move {
         let short_id = &device.device_id.hex()[..3];

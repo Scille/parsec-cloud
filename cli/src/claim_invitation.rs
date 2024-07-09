@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
 use std::sync::Arc;
 
 use libparsec::{
@@ -15,7 +14,7 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct ClaimInvitation {
     /// Server invitation address (e.g.: parsec3://127.0.0.1:41905/Org?no_ssl=true&action=claim_user&token=4e45cc21e7604af196173ff6c9184a1f)
     #[arg(short, long)]

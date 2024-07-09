@@ -1,20 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
 use std::path::PathBuf;
 
-use libparsec::{get_default_config_dir, save_recovery_device};
+use libparsec::save_recovery_device;
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct ExportRecoveryDevice {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Recovery device output
     #[arg(short, long)]
     output: PathBuf,
@@ -24,8 +19,7 @@ pub async fn export_recovery_device(
     export_recovery_device: ExportRecoveryDevice,
 ) -> anyhow::Result<()> {
     let ExportRecoveryDevice {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         output,
     } = export_recovery_device;
 

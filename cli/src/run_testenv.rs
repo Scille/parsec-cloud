@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
 use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
@@ -32,7 +31,7 @@ const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
 pub const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct RunTestenv {
     /// Sourced script file
     #[arg(long)]

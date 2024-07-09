@@ -1,20 +1,13 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
-use libparsec::{get_default_config_dir, EntryName};
+use libparsec::EntryName;
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Args)]
 pub struct CreateWorkspace {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// New workspace name
     #[arg(short, long)]
     name: EntryName,
@@ -22,8 +15,7 @@ pub struct CreateWorkspace {
 
 pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Result<()> {
     let CreateWorkspace {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         name,
     } = create_workspace;
 

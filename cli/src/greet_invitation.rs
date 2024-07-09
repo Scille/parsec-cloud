@@ -1,11 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 use libparsec::{
     authenticated_cmds::latest::invite_list::{self, InviteListItem},
-    get_default_config_dir,
     internal::{
         DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
         DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus, UserGreetInProgress1Ctx,
@@ -17,14 +15,10 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct GreetInvitation {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Invitation token
     #[arg(short, long, value_parser = InvitationToken::from_hex)]
     token: InvitationToken,
@@ -32,8 +26,7 @@ pub struct GreetInvitation {
 
 pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Result<()> {
     let GreetInvitation {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
     } = greet_invitation;
 

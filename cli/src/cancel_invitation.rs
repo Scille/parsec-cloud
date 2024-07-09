@@ -1,23 +1,16 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
 use libparsec::{
     authenticated_cmds::latest::invite_cancel::{self, InviteCancelRep},
-    get_default_config_dir, InvitationToken,
+    InvitationToken,
 };
 
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct CancelInvitation {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Invitation token
     #[arg(short, long, value_parser = InvitationToken::from_hex)]
     token: InvitationToken,
@@ -25,8 +18,7 @@ pub struct CancelInvitation {
 
 pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::Result<()> {
     let CancelInvitation {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
     } = cancel_invitation;
 

@@ -1,20 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use clap::Args;
-use std::path::PathBuf;
-
-use libparsec::get_default_config_dir;
-
 use crate::utils::*;
 
-#[derive(Args)]
+#[derive(clap::Parser)]
 pub struct ListUsers {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
+    #[clap(flatten)]
+    config: ConfigWithDeviceSharedOpts,
     /// Skip revoked users
     #[arg(short, long, default_value_t)]
     skip_revoked: bool,
@@ -22,8 +13,7 @@ pub struct ListUsers {
 
 pub async fn list_users(list_users: ListUsers) -> anyhow::Result<()> {
     let ListUsers {
-        config_dir,
-        device,
+        config: ConfigWithDeviceSharedOpts { config_dir, device },
         skip_revoked,
     } = list_users;
 
