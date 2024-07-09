@@ -1,17 +1,17 @@
 [package]
-name = "parsec_cli"
-publish.workspace = true
 authors.workspace = true
 edition.workspace = true
 homepage.workspace = true
 license.workspace = true
-version.workspace = true
+name = "parsec_cli"
+publish.workspace = true
 repository.workspace = true
+version.workspace = true
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-testenv = ["dep:url"]
+testenv = []
 
 [dependencies]
 libparsec = { workspace = true }
@@ -20,11 +20,12 @@ anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive"] }
 reqwest = { workspace = true, features = ["json"] }
 rpassword = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+url = { workspace = true, optional = true }
 uuid = { workspace = true }
-url = { workspace = true, optional = true}
 
 [dev-dependencies]
 libparsec = { workspace = true, features = ["cli-tests"] }
