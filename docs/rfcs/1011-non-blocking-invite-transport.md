@@ -258,8 +258,8 @@ Schema definition:
 This is the new invited command introduced for the claimer to start an attempt and get the corresponding attempt ID.
 
 In order for the claimer to start an attempt, a couple of checks have to be performed:
-- the author exists
-- the author is allowed (i.e. it is part of the greeters)
+- the greeter exists
+- the greeter is allowed (i.e. it is part of the greeters)
 
 Note that the state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
@@ -273,7 +273,7 @@ invite_claimer_start_attempt(
     greeter: UserID,
 )
 ->
-  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  InvitationNotFound | InvitationCompleted | InvitationCancelled |
   GreeterNotFound | GreeterNotAllowed |
   OK[AttemptID]:
     # Perform checks
@@ -477,8 +477,8 @@ Schema definition:
 This is the new invited command introduced for the claimer to cancel an attempt with a provided reason.
 
 In order for the claimer to cancel an attempt, a couple of checks have to be performed:
-- the author exists
-- the author is allowed (i.e. it is part of the greeters)
+- the greeter exists
+- the greeter is allowed (i.e. it is part of the greeters)
 - the attempt exists
 - the attempt is active (i.e. joined and not cancelled)
 
@@ -491,13 +491,14 @@ Pseudo-code:
 ```python
 invite_claimer_cancel_attempt(
     token: InvitationToken,
+    greeter: GreeterID,
     attempt: AttemptID,
     reason: CancelledAttemptReason,
 )
 ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
-  GreeterNotAllowed | OK:
+  GreeterNotFound | GreeterNotAllowed | OK:
     # Perform checks
     [...]
     # Call `claimer_cancel_attempt(reason)`
@@ -763,8 +764,8 @@ It is used by the claimer to submit the data for a given step. The step is ident
 - the type of the submitted step data
 
 For the step data to be accepted, it has to pass the following the checks:
-- the author exists
-- the author is allowed (i.e. it is part of the greeters)
+- the greeter exists
+- the greeter is allowed (i.e. it is part of the greeters)
 - the attempt exists
 - the attempt is active (i.e. joined and not cancelled)
 - the previous steps must have been completed by both peers
