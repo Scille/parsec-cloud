@@ -14,8 +14,8 @@ use libparsec::{
         invite_new_user::{self, InviteNewUserRep},
     },
     get_default_config_dir, tmp_path, AuthenticatedCmds, ClientConfig, HumanHandle, InvitationType,
-    LocalDevice, OrganizationID, ParsecAddr, ParsecInvitationAddr, ParsecOrganizationBootstrapAddr,
-    ProxyConfig, TmpPath, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
+    LocalDevice, OrganizationID, ParsecAddr, ParsecInvitationAddr, ProxyConfig, TmpPath,
+    PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
@@ -152,11 +152,9 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
     let addr = std::env::var(TESTBED_SERVER_URL).unwrap().parse().unwrap();
 
     println!("Creating organization {organization_id}");
-    let bootstrap_token = create_organization_req(&organization_id, &addr, "s3cr3t")
+    let organization_addr = create_organization_req(&organization_id, &addr, "s3cr3t")
         .await
         .unwrap();
-    let organization_addr =
-        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
 
     Command::cargo_bin("parsec_cli")
         .unwrap()

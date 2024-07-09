@@ -2780,6 +2780,7 @@ dependencies = [
  "reqwest",
  "rpassword",
  "rstest",
+ "serde",
  "serde_json",
  "spinners",
  "tokio",

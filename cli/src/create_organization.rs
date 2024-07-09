@@ -2,9 +2,8 @@
 
 use clap::Args;
 use reqwest::Client;
-use serde_json::Value;
 
-use libparsec::{BootstrapToken, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
+use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
 
 use crate::utils::*;
 
@@ -21,11 +20,40 @@ pub struct CreateOrganization {
     token: String,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(untagged)]
+enum CreateOrganizationRep {
+    Ok(CreationOrganizationOk),
+    Err(CreationOrganizationErr),
+}
+
+#[derive(serde::Deserialize)]
+struct CreationOrganizationOk {
+    #[serde(deserialize_with = "bootstrap_url_deserialize")]
+    bootstrap_url: ParsecOrganizationBootstrapAddr,
+}
+
+fn bootstrap_url_deserialize<'de, D>(
+    deserializer: D,
+) -> Result<ParsecOrganizationBootstrapAddr, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    use std::str::FromStr;
+    let s: &str = serde::Deserialize::deserialize(deserializer)?;
+    ParsecOrganizationBootstrapAddr::from_str(s).map_err(serde::de::Error::custom)
+}
+
+#[derive(serde::Deserialize)]
+struct CreationOrganizationErr {
+    detail: String,
+}
+
 pub async fn create_organization_req(
     organization_id: &OrganizationID,
     addr: &ParsecAddr,
     administration_token: &str,
-) -> anyhow::Result<BootstrapToken> {
+) -> anyhow::Result<ParsecOrganizationBootstrapAddr> {
     let url = addr.to_http_url(Some("/administration/organizations"));
 
     let rep = Client::new()
@@ -37,16 +65,10 @@ pub async fn create_organization_req(
         .send()
         .await?;
 
-    let rep = rep.json::<Value>().await?;
-
-    if let Some(e) = rep.get("error") {
-        return Err(anyhow::anyhow!("{e}"));
+    match rep.json::<CreateOrganizationRep>().await? {
+        CreateOrganizationRep::Ok(res) => Ok(res.bootstrap_url),
+        CreateOrganizationRep::Err(res) => Err(anyhow::anyhow!("{}", res.detail)),
     }
-
-    Ok(
-        BootstrapToken::from_hex(rep["bootstrap_token"].as_str().expect("Unreachable"))
-            .expect("Unreachable"),
-    )
 }
 
 pub async fn create_organization(create_organization: CreateOrganization) -> anyhow::Result<()> {
@@ -58,10 +80,7 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
 
     let mut handle = start_spinner("Creating organization".into());
 
-    let bootstrap_token = create_organization_req(&organization_id, &addr, &token).await?;
-
-    let organization_addr =
-        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
+    let organization_addr = create_organization_req(&organization_id, &addr, &token).await?;
 
     handle.stop_with_message(format!(
         "Organization bootstrap url: {YELLOW}{organization_addr}{RESET}"

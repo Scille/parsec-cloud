@@ -15,9 +15,9 @@ use libparsec::{
     },
     load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
     DeviceAccessStrategy, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr,
-    PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm, UserCertificate,
-    UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR, PARSEC_HOME_DIR, PARSEC_SCHEME,
+    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
+    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_CONFIG_DIR, PARSEC_DATA_DIR,
+    PARSEC_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -216,11 +216,8 @@ pub async fn initialize_test_organization(
     organization_id: OrganizationID,
 ) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
     // Create organization
-    let bootstrap_token =
-        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
-
     let organization_addr =
-        ParsecOrganizationBootstrapAddr::new(addr, organization_id, Some(bootstrap_token));
+        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
 
     // Bootstrap organization and Alice user and create device "laptop" for Alice
     let alice_device = bootstrap_organization_req(
