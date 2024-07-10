@@ -195,7 +195,7 @@
         "subtitle": {
             "nameYourOrg": "Choose your organization name.",
             "personalDetails": "Fill in your name and email.",
-            "server": "Choose your desired server type.",
+            "server": "What is your need for Parsec?",
             "authentication": "Lastly, choose an authentication method.",
             "overview": "Verify that the information is correct."
         },
@@ -211,7 +211,16 @@
             "previous": "Previous",
             "create": "Create organization",
             "done": "Let's go!",
-            "modify": "Edit"
+            "modify": "Edit",
+            "continue": "Continue"
+        },
+        "server": {
+            "saas": "Store my data with Parsec Share",
+            "trial": {
+                "title": "Try Parsec for 15 days",
+                "description": "(Données non conservées après la période d'essai)"
+            },
+            "ownServer": "I set up my own server"
         },
         "errors": {
             "timestampOutOfBallpark": "Your device time differs from the server time. Please check your device clock and make sure it is up-to-date (your device time is {clientTime}, server time is {serverTime}).",

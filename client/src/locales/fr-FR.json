@@ -195,7 +195,7 @@
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Renseignez votre nom et votre email.",
-            "server": "Choisissez le type de serveur dont vous avez besoin.",
+            "server": "Quel est votre besoin sur Parsec ?",
             "authentication": "Pour finir, choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
         },
@@ -211,7 +211,16 @@
             "previous": "Précédent",
             "create": "Créer l'organisation",
             "done": "Terminer",
-            "modify": "Modifier"
+            "modify": "Modifier",
+            "continue": "Continuer"
+        },
+        "server": {
+            "saas": "Stocker mes données avec Parsec Share",
+            "trial": {
+                "title": "Essayer Parsec pendant 15 jours",
+                "description": "(Données non conservées après la période d'essai)"
+            },
+            "ownServer": "Je configure mon propre serveur"
         },
         "errors": {
             "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",

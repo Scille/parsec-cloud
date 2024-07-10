@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
+  <ion-page class="modal-container server-type">
     <div class="modal-content inner-content">
       <server-type-choice
         v-if="serverType === undefined"
@@ -65,6 +65,6 @@ async function onCloseRequested(): Promise<void> {
 <style lang="scss" scoped>
 .modal-content {
   min-width: 32em;
-  min-height: 32em;
+  display: flex;
 }
 </style>
