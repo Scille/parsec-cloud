@@ -5,7 +5,7 @@
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.create"
-      subtitle="CreateOrganization.subtitle.server"
+      subtitle="CreateOrganization.subtitle.needs"
     />
     <div class="server-choice">
       <!-- Saas -->
