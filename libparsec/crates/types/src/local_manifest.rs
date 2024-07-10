@@ -1,20 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 //! Types used to store the content of the workspace on local storage.
-//! Those types are never sent to the server.
+//! These types are never sent to the server.
 //!
-//! The local manifest are base on remote manifest but with additional information
-//! Unlike the remote manifest that represent an immutable version of a data
-//! that have been uploaded to the server, the local manifest represent the
-//! as it is currently known by the client:
+//! The local manifests are based on remote manifests but contain additional information.
+//! Unlike remote manifests that represent an immutable version of a data
+//! that have been uploaded to the server, the local manifests represent the
+//! data as it is currently known by the client:
 //! - It is based on a remote manifest (see the `base` field).
-//! - If the local manifest has just been created on local, then the remote
-//!   manifest it is based on is a placeholder with version = 0.
+//! - If the local manifest has just been created locally, then its base remote
+//!   manifest is a placeholder with version = 0.
 //! - It gets modified by the client (e.g. when a file is created, the parent folder
 //!   manifest is updated to add the new file entry).
-//! - It gets converted into a remote manifest when the data is synchronized with the server.
-//! - The remote manifest it is based on is used to merge the local change with the
-//!   remote change when synchronizing.
+//! - It gets converted into a remote manifest when data is synchronized with the server.
+//! - When synchronizing, the remote manifest (in which the local manifest is based on),
+//!   is used to merge the local changes with the remote changes.
 
 use std::{
     cmp::Ordering,
@@ -246,7 +246,16 @@ impl Chunk {
     /// Then after step 3, the local file manifest contains 3 chunks:
     /// a. A chunk of 100 bytes at offset 0
     /// b. A chunk of 200 bytes at offset 100
-    /// c. A chunk of 100 bytes at offset 300
+    /// c. A chunk of 212 bytes at offset 300
+    ///
+    ///         0       100      200      300      400       512
+    /// Step 2  |xxxxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx|---------|
+    ///         |---------single chunk--------------|---------|
+    ///
+    /// Step 3  |xxxxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx|---------|
+    ///         |chunk a-|                 |-chunk c|---------|
+    ///                  |oooooooo|oooooooo|
+    ///                  |-----chunk b-----|
     ///
     /// Chunks a and c have the same chunk ID as they are two windows over different
     /// parts of the same piece of data that was locally saved at step 2.
@@ -313,14 +322,14 @@ impl Chunk {
  * LocalFileManifest
  */
 
-/// The `LocalFileManifest` is used to represents a file in the client.
+/// The `LocalFileManifest` represents a file in the client.
 ///
-/// Unlike the `FileManifest`, it is designed to be modified as the changes
-/// occurs locally. It is also stored serialized on the local storage.
+/// Unlike `FileManifest`, it is designed to be modified as changes
+/// occur locally. It is also stored serialized on the local storage.
 ///
-/// It can be merged with a `FileManifest` if only the parent field differs (e.i.
-/// the file has been moved in another folder). However if the file content differs,
-/// then we get a merge conflict that end up with the creation of a copy of the
+/// It can be merged with a `FileManifest` if only the parent field differs (i.e.
+/// the file has been moved to another folder). However if the file contents differ,
+/// then we get a merge conflict that leads to the creation of a copy of the
 /// file containing the local modifications.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFileManifestData", try_from = "LocalFileManifestData")]
@@ -584,12 +593,12 @@ impl LocalFileManifest {
  * LocalFolderManifest
  */
 
-/// The `LocalFolderManifest` is used to represents a folder in the client.
+/// The `LocalFolderManifest` represents a folder in the client.
 ///
-/// Unlike the `FileManifest`, it is designed to be modified as the changes
-/// occurs locally. It is also stored serialized on the local storage.
+/// Unlike `FolderManifest`, it is designed to be modified as changes
+/// occur locally. It is also stored serialized on the local storage.
 ///
-/// It can always be merged with a `FolderManifest` without conflict (CRDT ftw !).
+/// It can always be merged with a `FolderManifest` without conflict (CRDT ftw!).
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(into = "LocalFolderManifestData", from = "LocalFolderManifestData")]
 pub struct LocalFolderManifest {
