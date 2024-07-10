@@ -26,7 +26,7 @@ The second change is related to the concept of greeters. In Parsec v2, only the 
 - for shamir invitation, this would be the shamir recipients
 
 > [!NOTE]
-> This set may evolve overtime as users can be revoked and user profiles can change.
+> This set may evolve over time as users can be revoked and user profiles can change.
 
 
 ## Goals and Non-Goals
@@ -170,7 +170,16 @@ Methods:
 
 ### New commands
 
-7 commands are added in total, 4 authenticated commands and 3 invited commands.
+7 commands are added in total:
+- 3 new invited commands
+    - [`invite_claimer_start_attempt`](#invite_claimer_start_attempt-command)
+    - [`invite_claimer_cancel_attempt`](#invite_claimer_cancel_attempt-command)
+    - [`invite_claimer_step`](#invite_claimer_step-command)
+- 4 new authenticated commands
+    - [`invite_greeter_start_attempt`](#invite_greeter_start_attempt-command)
+    - [`invite_greeter_cancel_attempt`](#invite_greeter_cancel_attempt-command)
+    - [`invite_greeter_step`](#invite_greeter_step-command)
+    - [`invite_complete`](#invite_complete-command)
 
 #### `invite_greeter_start_attempt` command
 
@@ -187,13 +196,12 @@ In this case, the `invite_greeter_start_attempt` command cancels the active atte
 
 If no cancellation of the active attempt is required, the greeter simply joins it and the command returns the corresponding attempt ID.
 
-Pseudo code:
+Pseudo-code:
 
 ```python
-invite_greeter_start_attempt(
+def invite_greeter_start_attempt(
     token: InvitationToken,
-)
-->
+) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled
   GreeterNotAllowed | OK[AttemptID]:
     # If the greeter has already joined the active attempt:
@@ -265,16 +273,18 @@ In order for the claimer to start an attempt, a couple of checks have to be perf
 > [!NOTE]
 > The state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
+> [!NOTE]
+> The claimer chooses the greeter ID using the information it received from calling the existing `invite_info` command.
+
 Otherwise this command has the same logic as `invite_greeter_start_attempt`.
 
-Pseudo code:
+Pseudo-code:
 
 ```python
-invite_claimer_start_attempt(
+def invite_claimer_start_attempt(
     token: InvitationToken,
     greeter: UserID,
-)
-->
+) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled |
   GreeterNotFound | GreeterNotAllowed |
   OK[AttemptID]:
@@ -371,16 +381,14 @@ Then, the active attempt is cancelled with the provided reason and a new active 
 
 It is also registered that the greeter cancelled the attempt, so that this information can be provided in subsequent `invitation_cancelled` replies, along with the corresponding reason and timestamp. This way, the front-end application has all the information to properly communicate to the user what happened during the attempt.
 
-Pseudo code:
+Pseudo-code:
 
 ```python
-invite_greeter_cancel_attempt(
+def invite_greeter_cancel_attempt(
     token: InvitationToken,
     attempt: AttemptID,
     reason: CancelledAttemptReason,
-
-)
-->
+) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   GreeterNotAllowed | OK:
@@ -492,13 +500,12 @@ Otherwise this command has the same logic as `invite_greeter_cancel_attempt`.
 Pseudo-code:
 
 ```python
-invite_claimer_cancel_attempt(
+def invite_claimer_cancel_attempt(
     token: InvitationToken,
     greeter: GreeterID,
     attempt: AttemptID,
     reason: CancelledAttemptReason,
-)
-->
+) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   GreeterNotFound | GreeterNotAllowed | OK:
@@ -599,7 +606,7 @@ Schema definition:
 
 #### `invite_greeter_step` command
 
-This authenticated command, along with `invite_greeter_step`, is the main route used to establish a secure channel between both peers.
+This authenticated command, along with `invite_claimer_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the greeter to submit the data for a given step. The step is identified by:
 - the author of the command (being the greeter)
@@ -625,7 +632,7 @@ If the submitted step differs from the one that has already been registered, a d
 Pseudo-code:
 
 ```python
-invite_greeter_step(
+def invite_greeter_step(
     token: InvitationToken,
     attempt: AttemptID,
     step: GreeterStep,
@@ -759,7 +766,7 @@ Schema definition:
 
 #### `invite_claimer_step` command
 
-This invited command, along with `invite_claimer_step`, is the main route used to establish a secure channel between both peers.
+This invited command, along with `invite_greeter_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the claimer to submit the data for a given step. The step is identified by:
 - the provided greeter
@@ -787,7 +794,7 @@ If the submitted step differs from the one that has already been registered, a d
 Pseudo-code:
 
 ```python
-invite_claimer_step(
+def invite_claimer_step(
     token: InvitationToken,
     greeter: UserID,
     attempt: AttemptID,
@@ -947,7 +954,7 @@ A better approach is then to explicitly complete the invitation with a dedicated
 Pseudo-code:
 
 ```python
-invite_complete(token: InvitationToken) ->
+def invite_complete(token: InvitationToken) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled | Ok:
     # Perform checks
     [...]
@@ -1021,7 +1028,7 @@ Here is an overview of the different kinds of data that can be contained in a cl
 - acknowledgement: `None`
 - payload: `Bytes`
 
-The news steps are defined as such:
+The new steps are defined as such:
 
 | Index | Greeter step       | Greeter data   | Claimer step        | Claimer data   |
 |-------|--------------------|----------------|---------------------|----------------|
