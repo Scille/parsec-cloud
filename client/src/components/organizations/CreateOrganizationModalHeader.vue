@@ -23,7 +23,7 @@
       {{ $msTranslate(title) }}
     </ion-text>
     <ion-text
-      class="modal-header__text body-lg"
+      class="modal-header__text subtitles-normal"
       v-if="subtitle"
     >
       {{ $msTranslate(subtitle) }}
@@ -52,16 +52,16 @@ defineEmits<{
   display: flex;
   flex-direction: column;
   text-wrap: wrap;
+  margin-bottom: 2rem;
+  gap: 1rem;
 
   &__title {
     padding: 0;
-    margin-bottom: 2rem;
     color: var(--parsec-color-light-primary-800);
   }
 
   &__text {
     color: var(--parsec-color-light-secondary-grey);
-    padding-bottom: 1.5rem;
   }
 }
 </style>

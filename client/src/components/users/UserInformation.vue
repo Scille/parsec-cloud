@@ -1,27 +1,29 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ms-input
-    :label="'CreateOrganization.fullname'"
-    :placeholder="'CreateOrganization.fullnamePlaceholder'"
-    name="fullname"
-    v-model="fullName"
-    ref="firstInputFieldRef"
-    :disabled="!$props.nameEnabled"
-    @change="$emit('fieldUpdate')"
-    @on-enter-keyup="$emit('onEnterKeyup', fullName)"
-    :validator="userNameValidator"
-  />
-  <ms-input
-    :label="'CreateOrganization.email'"
-    :placeholder="'CreateOrganization.emailPlaceholder'"
-    v-model="email"
-    name="email"
-    :disabled="!$props.emailEnabled"
-    @change="$emit('fieldUpdate')"
-    @on-enter-keyup="$emit('onEnterKeyup', email)"
-    :validator="emailValidator"
-  />
+  <div class="user-information">
+    <ms-input
+      :label="'CreateOrganization.fullname'"
+      :placeholder="'CreateOrganization.fullnamePlaceholder'"
+      name="fullname"
+      v-model="fullName"
+      ref="firstInputFieldRef"
+      :disabled="!$props.nameEnabled"
+      @change="$emit('fieldUpdate')"
+      @on-enter-keyup="$emit('onEnterKeyup', fullName)"
+      :validator="userNameValidator"
+    />
+    <ms-input
+      :label="'CreateOrganization.email'"
+      :placeholder="'CreateOrganization.emailPlaceholder'"
+      v-model="email"
+      name="email"
+      :disabled="!$props.emailEnabled"
+      @change="$emit('fieldUpdate')"
+      @on-enter-keyup="$emit('onEnterKeyup', email)"
+      :validator="emailValidator"
+    />
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -75,4 +77,10 @@ async function areFieldsCorrect(): Promise<boolean> {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.user-information {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+</style>

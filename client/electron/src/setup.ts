@@ -16,6 +16,16 @@ import { electronIsDev } from './utils';
 import { WinRegistry } from './winRegistry';
 
 const CHECK_UPDATE_INTERVAL = 1000 * 60 * 60; // 1 hour
+const ALLOWED_URL_LIST = [
+  'https://my.parsec.cloud/',
+  'https://parsec.cloud/',
+  'https://github.com/Scille/',
+  'https://raw.githubusercontent.com/Scille/',
+  'https://spdx.org/licenses/',
+  'https://docs.parsec.cloud/',
+  'https://bms-dev.parsec.cloud/',
+  'https://bms.parsec.cloud',
+];
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.
 const reloadWatcher = {
@@ -429,14 +439,7 @@ export class ElectronCapacitorApp {
     // Security
     this.MainWindow.webContents.setWindowOpenHandler((details) => {
       function isAuthorizedUrl(url: string): boolean {
-        return [
-          'https://my.parsec.cloud/',
-          'https://parsec.cloud/',
-          'https://github.com/Scille/',
-          'https://raw.githubusercontent.com/Scille/',
-          'https://spdx.org/licenses/',
-          'https://docs.parsec.cloud/',
-        ].some((prefix) => url.startsWith(prefix));
+        return ALLOWED_URL_LIST.some((prefix) => url.startsWith(prefix));
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
@@ -500,8 +503,8 @@ export function setupContentSecurityPolicy(customScheme: string): void {
         ...details.responseHeaders,
         'Content-Security-Policy': [
           electronIsDev
-            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' data:`
-            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' data:`,
+            ? `default-src ${customScheme}://* 'unsafe-inline' devtools://* 'unsafe-eval' https://* 'unsafe-eval' data:`
+            : `default-src ${customScheme}://* 'unsafe-inline' 'unsafe-eval' https://* 'unsafe-eval' data:`,
         ],
       },
     });

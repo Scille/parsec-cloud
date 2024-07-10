@@ -84,7 +84,7 @@ import { InjectionProvider, InjectionProviderKey } from '@/services/injectionPro
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
 import AboutModal from '@/views/about/AboutModal.vue';
 import ImportRecoveryDevicePage from '@/views/devices/ImportRecoveryDevicePage.vue';
-import CreateOrganizationModal from '@/views/home/CreateOrganizationModal.vue';
+import CreateOrganizationModal from '@/views/organizations/creation/CreateOrganizationModal.vue';
 import DeviceJoinOrganizationModal from '@/views/home/DeviceJoinOrganizationModal.vue';
 import HomePageHeader from '@/views/home/HomePageHeader.vue';
 import LoginPage from '@/views/home/LoginPage.vue';
