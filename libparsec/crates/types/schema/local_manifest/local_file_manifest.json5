@@ -29,7 +29,7 @@
         },
         {
             "name": "blocks",
-            "type": "List<List<Chunk>>"
+            "type": "List<List<ChunkView>>"
         }
     ]
 }

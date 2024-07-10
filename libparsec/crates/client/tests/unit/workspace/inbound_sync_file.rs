@@ -146,7 +146,7 @@ async fn non_placeholder(
                         manifest.need_sync = true;
                         manifest.blocks.clear();
                         manifest.size = 3;
-                        manifest.blocks.push(vec![Chunk {
+                        manifest.blocks.push(vec![ChunkView {
                             id: wksp1_bar_txt_new_chunk_id,
                             start: 0,
                             stop: 3.try_into().unwrap(),

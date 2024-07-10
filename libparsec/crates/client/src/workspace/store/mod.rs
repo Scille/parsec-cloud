@@ -344,7 +344,7 @@ impl WorkspaceStore {
 
     pub async fn get_chunk_or_block_local_only(
         &self,
-        chunk: &Chunk,
+        chunk: &ChunkView,
     ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
         {
             let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
@@ -391,7 +391,7 @@ impl WorkspaceStore {
 
     pub async fn get_chunk_or_block(
         &self,
-        chunk: &Chunk,
+        chunk: &ChunkView,
         remote_manifest: &FileManifest,
     ) -> Result<Bytes, ReadChunkOrBlockError> {
         let outcome = self.get_chunk_or_block_local_only(chunk).await;

@@ -247,7 +247,7 @@ generate_field_type_enum!(
     WorkspaceManifest => libparsec_types::WorkspaceManifest,
     UserManifest => libparsec_types::UserManifest,
     ActiveUsersLimit => libparsec_types::ActiveUsersLimit,
-    Chunk => libparsec_types::Chunk,
+    ChunkView => libparsec_types::ChunkView,
     UsersPerProfileDetailItem => libparsec_types::UsersPerProfileDetailItem,
     PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
     X509Certificate => libparsec_types::X509Certificate,

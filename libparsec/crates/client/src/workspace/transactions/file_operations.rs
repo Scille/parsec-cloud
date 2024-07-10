@@ -7,13 +7,13 @@ use std::num::NonZeroU64;
 use libparsec_types::prelude::*;
 
 pub(crate) struct WriteOperation {
-    pub chunk: Chunk,
+    pub chunk: ChunkView,
     pub offset: i64,
 }
 
 // Prepare read
 
-fn block_read(chunks: &[Chunk], size: u64, start: u64) -> impl Iterator<Item = Chunk> + '_ {
+fn block_read(chunks: &[ChunkView], size: u64, start: u64) -> impl Iterator<Item = ChunkView> + '_ {
     let stop = start + size;
 
     // Bisect
@@ -51,7 +51,7 @@ pub fn prepare_read(
     manifest: &LocalFileManifest,
     size: u64,
     offset: u64,
-) -> (u64, impl Iterator<Item = Chunk> + '_) {
+) -> (u64, impl Iterator<Item = ChunkView> + '_) {
     // Sanitize size and offset to fit the manifest
     let offset = min(offset, manifest.size);
     let size = min(
@@ -91,11 +91,11 @@ pub fn prepare_read(
 // Prepare write
 
 fn block_write(
-    chunks: &[Chunk],
+    chunks: &[ChunkView],
     size: u64,
     start: u64,
-    new_chunk: Chunk,
-) -> (Vec<Chunk>, HashSet<ChunkID>) {
+    new_chunk: ChunkView,
+) -> (Vec<ChunkView>, HashSet<ChunkID>) {
     let stop = start + size;
 
     // Edge case
@@ -122,7 +122,7 @@ fn block_write(
         .collect();
 
     // Chunks before start chunk
-    let mut new_chunks: Vec<Chunk> = chunks
+    let mut new_chunks: Vec<ChunkView> = chunks
         .get(0..start_index)
         .unwrap_or_default()
         .iter()
@@ -226,7 +226,7 @@ pub fn prepare_write(
         let content_offset = sub_start - offset;
 
         // Prepare new chunk
-        let new_chunk = Chunk::new(
+        let new_chunk = ChunkView::new(
             sub_start,
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
@@ -367,16 +367,16 @@ pub fn prepare_resize(
 
 pub(crate) enum ReshapeBlockOperation<'a> {
     ToReshape {
-        manifest_chunks: &'a mut Vec<Chunk>,
-        reshaped_chunk: Chunk,
+        manifest_chunks: &'a mut Vec<ChunkView>,
+        reshaped_chunk: ChunkView,
     },
     ToPromote {
-        chunk: &'a mut Chunk,
+        chunk: &'a mut ChunkView,
     },
 }
 
 impl ReshapeBlockOperation<'_> {
-    pub fn try_reshape(chunks: &mut Vec<Chunk>) -> Option<ReshapeBlockOperation> {
+    pub fn try_reshape(chunks: &mut Vec<ChunkView>) -> Option<ReshapeBlockOperation> {
         // All zeroes or already a valid block
         if chunks.is_empty() || chunks.len() == 1 && chunks[0].is_block() {
             None
@@ -389,21 +389,21 @@ impl ReshapeBlockOperation<'_> {
         } else {
             let start = chunks[0].start;
             let stop = chunks.last().expect("A block cannot be empty").stop;
-            let reshaped_chunk = Chunk::new(start, stop);
+            let reshaped_chunk = ChunkView::new(start, stop);
             Some(ReshapeBlockOperation::ToReshape {
                 manifest_chunks: chunks,
                 reshaped_chunk,
             })
         }
     }
-    pub fn destination(&self) -> &Chunk {
+    pub fn destination(&self) -> &ChunkView {
         match self {
             ReshapeBlockOperation::ToReshape { reshaped_chunk, .. } => reshaped_chunk,
             ReshapeBlockOperation::ToPromote { chunk } => chunk,
         }
     }
 
-    pub fn source(&self) -> &[Chunk] {
+    pub fn source(&self) -> &[ChunkView] {
         match self {
             ReshapeBlockOperation::ToReshape {
                 manifest_chunks, ..

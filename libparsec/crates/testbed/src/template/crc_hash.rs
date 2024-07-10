@@ -466,11 +466,11 @@ impl CrcHash for BlockAccess {
         digest.crc_hash(hasher);
     }
 }
-impl CrcHash for Chunk {
+impl CrcHash for ChunkView {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         hasher.update(b"Chunk");
 
-        let Chunk {
+        let ChunkView {
             id,
             start,
             stop,
