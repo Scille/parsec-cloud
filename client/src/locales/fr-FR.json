@@ -1142,5 +1142,15 @@
         "defaultPlaceholder": "Nom ou email de la personne",
         "noMatch": "Aucun utilisateur trouvé",
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."
+    },
+    "ClientApplication": {
+        "title": "Liez votre espace client à votre nouvelle organisation",
+        "emailLabel": "Adresse mail",
+        "password": "Mot de passe",
+        "forgottenPassword": "Mot de passe oublié ?",
+        "login": "Se connecter",
+        "loginFailed": "Impossible de se connecter",
+        "noAccount": "Vous n'avez pas encore d'espace client ?",
+        "createAccount": "Créer un compte"
     }
 }

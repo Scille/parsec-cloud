@@ -1142,5 +1142,15 @@
         "defaultPlaceholder": "Name or email of the person",
         "noMatch": "No users found",
         "queryFailed": "An error prevents us from listing the users."
+    },
+    "ClientApplication": {
+        "title": "Link you customer account to your new organization",
+        "emailLabel": "Email",
+        "password": "Password",
+        "forgottenPassword": "Forgot your password?",
+        "login": "Log in",
+        "loginFailed": "Cannot log in. Please check your email and password.",
+        "noAccount": "No customer account yet?",
+        "createAccount": "Create an account"
     }
 }

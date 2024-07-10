@@ -19,23 +19,26 @@
     </ion-button>
   </ion-buttons>
   <ion-header class="modal-header">
-    <ion-title class="modal-header__title title-h2">
+    <ion-text class="modal-header__title title-h2">
       {{ $msTranslate(title) }}
-    </ion-title>
-    <ion-text class="modal-header__text body-lg">
+    </ion-text>
+    <ion-text
+      class="modal-header__text body-lg"
+      v-if="subtitle"
+    >
       {{ $msTranslate(subtitle) }}
     </ion-text>
   </ion-header>
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonButtons, IonHeader, IonIcon, IonTitle, IonText } from '@ionic/vue';
+import { IonButton, IonButtons, IonHeader, IonIcon, IonText } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Translatable } from 'megashark-lib';
 
 defineProps<{
   title: Translatable;
-  subtitle: Translatable;
+  subtitle?: Translatable;
   hideCloseButton?: boolean;
 }>();
 
@@ -48,25 +51,12 @@ defineEmits<{
 .modal-header {
   display: flex;
   flex-direction: column;
-  padding-bottom: 0.5rem;
+  text-wrap: wrap;
 
   &__title {
     padding: 0;
-    margin-bottom: 1rem;
+    margin-bottom: 2rem;
     color: var(--parsec-color-light-primary-800);
-    display: flex;
-    align-items: center;
-    max-width: 22rem;
-
-    &-container {
-      display: flex;
-      align-items: center;
-    }
-
-    &-icon {
-      color: var(--parsec-color-light-primary-600);
-      margin-right: 4px;
-    }
   }
 
   &__text {
