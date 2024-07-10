@@ -195,7 +195,8 @@
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Renseignez votre nom et votre email.",
-            "server": "Quel est votre besoin sur Parsec ?",
+            "server": "Choisissez le type de serveur dont vous avez besoin.",
+            "needs": "Quel est votre besoin sur Parsec ?",
             "authentication": "Pour finir, choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
         },
@@ -1144,7 +1145,7 @@
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."
     },
     "ClientApplication": {
-        "title": "Liez votre espace client à votre nouvelle organisation",
+        "title": "Lier votre espace client à votre nouvelle organisation",
         "emailLabel": "Adresse mail",
         "password": "Mot de passe",
         "forgottenPassword": "Mot de passe oublié ?",

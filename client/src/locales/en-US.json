@@ -195,7 +195,8 @@
         "subtitle": {
             "nameYourOrg": "Choose your organization name.",
             "personalDetails": "Fill in your name and email.",
-            "server": "What is your need for Parsec?",
+            "needs": "What is your need for Parsec?",
+            "server": "Choose your desired server type.",
             "authentication": "Lastly, choose an authentication method.",
             "overview": "Verify that the information is correct."
         },
@@ -218,7 +219,7 @@
             "saas": "Store my data with Parsec Share",
             "trial": {
                 "title": "Try Parsec for 15 days",
-                "description": "(Données non conservées après la période d'essai)"
+                "description": "(Data are erased after the trial period)"
             },
             "ownServer": "I set up my own server"
         },

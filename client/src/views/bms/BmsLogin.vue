@@ -14,7 +14,7 @@
           class="saas-login-content__input"
           ref="emailInput"
           v-model="email"
-          :label="'ClientApplication.emailLabel'"
+          label="ClientApplication.emailLabel"
           :validator="emailValidator"
         />
         <!-- password -->
@@ -22,7 +22,7 @@
           <ms-password-input
             class="saas-login-content__input"
             v-model="password"
-            :label="'ClientApplication.password'"
+            label="ClientApplication.password"
           />
           <!-- TODO: UPDATE THE LINK -->
           <!-- TODO: CHECK THAT ELECTRON ALLOWS THE LINK TO BE OPENED -->
@@ -164,7 +164,6 @@ async function onLoginClicked(): Promise<void> {
           text-decoration: underline;
         }
       }
-
     }
   }
 
