@@ -107,6 +107,8 @@ pub enum LocalFileManifestToRemoteError {
 /// Access is an optional block access that can be used to produce a remote manifest
 /// when the chunk corresponds to an actual block within the context of this manifest.
 pub struct Chunk {
+    // This ID identifies the raw data the chunk is based on
+    // Two chunks can have the same id if they point to the same underlying data
     pub id: ChunkID,
     // TODO: don't directly expose those fields, this way we can guarantee
     //       invariances on their order (e.g. start < stop, raw_offset <= start, etc.)
