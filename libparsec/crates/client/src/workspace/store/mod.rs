@@ -344,11 +344,11 @@ impl WorkspaceStore {
 
     pub async fn get_chunk_or_block_local_only(
         &self,
-        chunk: &ChunkView,
+        chunk_view: &ChunkView,
     ) -> Result<Bytes, ReadChunkOrBlockLocalOnlyError> {
         {
             let cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            let found = cache.chunks.get(&chunk.id);
+            let found = cache.chunks.get(&chunk_view.id);
             if let Some(data) = found {
                 return Ok(data);
             }
@@ -362,11 +362,11 @@ impl WorkspaceStore {
             Some(storage) => storage,
         };
 
-        let mut maybe_encrypted = storage.get_chunk(chunk.id).await?;
+        let mut maybe_encrypted = storage.get_chunk(chunk_view.id).await?;
 
         if maybe_encrypted.is_none() {
             maybe_encrypted = storage
-                .get_block(chunk.id.into(), self.device.now())
+                .get_block(chunk_view.id.into(), self.device.now())
                 .await?;
         }
 
@@ -381,7 +381,7 @@ impl WorkspaceStore {
             // Don't forget to update the cache !
 
             let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-            cache.chunks.push(chunk.id, data.clone());
+            cache.chunks.push(chunk_view.id, data.clone());
 
             return Ok(data);
         }
@@ -391,10 +391,10 @@ impl WorkspaceStore {
 
     pub async fn get_chunk_or_block(
         &self,
-        chunk: &ChunkView,
+        chunk_view: &ChunkView,
         remote_manifest: &FileManifest,
     ) -> Result<Bytes, ReadChunkOrBlockError> {
-        let outcome = self.get_chunk_or_block_local_only(chunk).await;
+        let outcome = self.get_chunk_or_block_local_only(chunk_view).await;
         match outcome {
             Ok(chunk_data) => return Ok(chunk_data),
             Err(err) => match err {
@@ -408,7 +408,7 @@ impl WorkspaceStore {
 
         // Chunk not in local, time to ask the server
 
-        let access = match &chunk.access {
+        let access = match &chunk_view.access {
             Some(access) => access,
             None => return Err(ReadChunkOrBlockError::ChunkNotFound),
         };
@@ -457,7 +457,7 @@ impl WorkspaceStore {
         // ...and update the cache !
 
         let mut cache = self.current_view_cache.lock().expect("Mutex is poisoned");
-        cache.chunks.push(chunk.id, data.clone());
+        cache.chunks.push(chunk_view.id, data.clone());
 
         Ok(data)
     }

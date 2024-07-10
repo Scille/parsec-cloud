@@ -104,8 +104,8 @@ pub async fn fd_write(
     }
 
     for write_operation in write_operations {
-        let chunk_start = write_operation.chunk.start;
-        let chunk_stop = write_operation.chunk.stop.get();
+        let chunk_start = write_operation.chunk_view.start;
+        let chunk_stop = write_operation.chunk_view.stop.get();
         // TODO: replace this by a check when building `Chunk`
         assert!(chunk_start <= chunk_stop);
 
@@ -118,18 +118,18 @@ pub async fn fd_write(
         };
 
         let chunk_data = match (chunk_data_start, chunk_data_stop) {
-            // 1) This chunk is entirely composed of data from the buffer
+            // 1) This chunk view is entirely composed of data from the buffer
             (chunk_data_start, _) if chunk_data_start >= 0 => {
                 data[chunk_data_start as usize..chunk_data_stop as usize].to_vec()
             }
-            // 2) This chunk is entirely composed of zeroes filler data
+            // 2) This chunk view is entirely composed of zeroes filler data
             (_, chunk_data_stop) if chunk_data_stop <= 0 => {
                 let chunk_data_size = chunk_data_start
                     .checked_sub(chunk_data_stop)
                     .expect("overflow !") as usize;
                 vec![0; chunk_data_size]
             }
-            // 3) This chunk contains first some zeroes, then some data from the buffer
+            // 3) This chunk view contains first some zeroes, then some data from the buffer
             // chunk_data_start < 0 and chunk_data_stop > 0
             (_, _) => {
                 let zeroes_filler_size = (0 - chunk_data_start) as usize;
@@ -143,7 +143,7 @@ pub async fn fd_write(
 
         opened_file
             .new_chunks
-            .push((write_operation.chunk.id, chunk_data));
+            .push((write_operation.chunk_view.id, chunk_data));
     }
 
     opened_file.bytes_written_since_last_flush += data.len() as u64;

@@ -76,14 +76,14 @@ pub async fn fd_read(
         return Err(WorkspaceFdReadError::NotInReadMode);
     }
 
-    let (written_size, chunks) = super::prepare_read(&opened_file.manifest, size, offset);
+    let (written_size, chunk_views) = super::prepare_read(&opened_file.manifest, size, offset);
     let mut buf_size = 0;
-    for chunk in chunks {
+    for chunk_view in chunk_views {
         let found = opened_file
             .new_chunks
             .iter()
             .find_map(|(candidate_id, chunk_data)| {
-                if *candidate_id == chunk.id {
+                if *candidate_id == chunk_view.id {
                     Some(chunk_data)
                 } else {
                     None
@@ -95,7 +95,7 @@ pub async fn fd_read(
             None => {
                 chunk_data_bytes = ops
                     .store
-                    .get_chunk_or_block(&chunk, &opened_file.manifest.base)
+                    .get_chunk_or_block(&chunk_view, &opened_file.manifest.base)
                     .await
                     .map_err(|err| match err {
                         ReadChunkOrBlockError::Offline => WorkspaceFdReadError::Offline,
@@ -112,7 +112,7 @@ pub async fn fd_read(
                         }
                         ReadChunkOrBlockError::ChunkNotFound => anyhow::anyhow!(
                             "Chunk ID {} referenced in local manifest not in local storage !",
-                            chunk.id
+                            chunk_view.id
                         )
                         .into(),
                         ReadChunkOrBlockError::Internal(err) => {
@@ -122,7 +122,7 @@ pub async fn fd_read(
                 chunk_data_bytes.as_ref()
             }
         };
-        chunk
+        chunk_view
             .copy_between_start_and_stop(chunk_data, offset, buf, &mut buf_size)
             .expect("prepare_read/buf/size are consistent");
     }

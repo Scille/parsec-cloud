@@ -162,7 +162,7 @@ async fn remove_file_with_local_changes(
 
     // Local changes
 
-    let changes_chunk = {
+    let changes_chunk_view = {
         let fd = ops
             .open_file_by_id(wksp1_foo_egg_txt_id, OpenOptions::read_write())
             .await
@@ -193,7 +193,7 @@ async fn remove_file_with_local_changes(
     );
     p_assert_eq!(
         ops.store
-            .get_chunk_or_block_local_only(&changes_chunk)
+            .get_chunk_or_block_local_only(&changes_chunk_view)
             .await
             .unwrap(),
         b"xxxxx".as_ref()
@@ -229,7 +229,7 @@ async fn remove_file_with_local_changes(
     );
     p_assert_matches!(
         ops.store
-            .get_chunk_or_block_local_only(&changes_chunk)
+            .get_chunk_or_block_local_only(&changes_chunk_view)
             .await
             .unwrap_err(),
         ReadChunkOrBlockLocalOnlyError::ChunkNotFound

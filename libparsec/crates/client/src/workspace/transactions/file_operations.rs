@@ -7,40 +7,45 @@ use std::num::NonZeroU64;
 use libparsec_types::prelude::*;
 
 pub(crate) struct WriteOperation {
-    pub chunk: ChunkView,
+    pub chunk_view: ChunkView,
     pub offset: i64,
 }
 
 // Prepare read
 
-fn block_read(chunks: &[ChunkView], size: u64, start: u64) -> impl Iterator<Item = ChunkView> + '_ {
+fn block_read(
+    chunk_views: &[ChunkView],
+    size: u64,
+    start: u64,
+) -> impl Iterator<Item = ChunkView> + '_ {
     let stop = start + size;
 
     // Bisect
-    let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
+    let start_index = match chunk_views.binary_search_by_key(&start, |chunk_view| chunk_view.start)
+    {
         Ok(found_index) => found_index,
         Err(insert_index) => insert_index.saturating_sub(1),
     };
-    let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
+    let stop_index = match chunk_views.binary_search_by_key(&stop, |chunk_view| chunk_view.start) {
         Ok(found_index) => found_index,
         Err(insert_index) => insert_index,
     };
 
     // Loop over chunks
-    chunks
+    chunk_views
         .get(start_index..stop_index)
         .unwrap_or_default()
         .iter()
-        .filter(move |chunk| chunk.start < stop && chunk.stop.get() > start)
-        .map(move |chunk| {
-            let mut new_chunk = chunk.clone();
-            new_chunk.start = max(chunk.start, start);
-            new_chunk.stop = min(
-                chunk.stop,
+        .filter(move |chunk_view| chunk_view.start < stop && chunk_view.stop.get() > start)
+        .map(move |chunk_view| {
+            let mut new_chunk_view = chunk_view.clone();
+            new_chunk_view.start = max(chunk_view.start, start);
+            new_chunk_view.stop = min(
+                chunk_view.stop,
                 NonZeroU64::new(stop)
                     .expect("The stop offset can only be 0 if the index range is empty"),
             );
-            new_chunk
+            new_chunk_view
         })
 }
 
@@ -91,30 +96,31 @@ pub fn prepare_read(
 // Prepare write
 
 fn block_write(
-    chunks: &[ChunkView],
+    chunk_views: &[ChunkView],
     size: u64,
     start: u64,
-    new_chunk: ChunkView,
+    new_chunk_view: ChunkView,
 ) -> (Vec<ChunkView>, HashSet<ChunkID>) {
     let stop = start + size;
 
     // Edge case
-    if chunks.is_empty() {
-        return (vec![new_chunk], HashSet::new());
+    if chunk_views.is_empty() {
+        return (vec![new_chunk_view], HashSet::new());
     }
 
     // Bisect
-    let start_index = match chunks.binary_search_by_key(&start, |chunk| chunk.start) {
+    let start_index = match chunk_views.binary_search_by_key(&start, |chunk_view| chunk_view.start)
+    {
         Ok(found_index) => found_index,
         Err(insert_index) => insert_index.saturating_sub(1),
     };
-    let stop_index = match chunks.binary_search_by_key(&stop, |chunk| chunk.start) {
+    let stop_index = match chunk_views.binary_search_by_key(&stop, |chunk_view| chunk_view.start) {
         Ok(found_index) => found_index,
         Err(insert_index) => insert_index,
     };
 
     // Removed ids
-    let mut removed_ids: HashSet<ChunkID> = chunks
+    let mut removed_ids: HashSet<ChunkID> = chunk_views
         .get(start_index..stop_index)
         .unwrap_or_default()
         .iter()
@@ -122,67 +128,67 @@ fn block_write(
         .collect();
 
     // Chunks before start chunk
-    let mut new_chunks: Vec<ChunkView> = chunks
+    let mut new_chunk_views: Vec<ChunkView> = chunk_views
         .get(0..start_index)
         .unwrap_or_default()
         .iter()
-        .map(|chunk| {
+        .map(|chunk_view| {
             // The same ID might appear in multiple chunks,
             // so it's crucial that we make sure to not remove an ID
             // that ends up being part of the new manifest
-            removed_ids.remove(&chunk.id);
-            chunk
+            removed_ids.remove(&chunk_view.id);
+            chunk_view
         })
         .cloned()
         .collect();
 
     // Test start chunk
-    let start_chunk = chunks
+    let start_chunk_view = chunk_views
         .get(start_index)
         .expect("Indexes are found using binary search and hence always valid");
-    if start_chunk.start < start {
-        let mut new_start_chunk = start_chunk.clone();
-        new_start_chunk.stop = start_chunk.stop.min(
+    if start_chunk_view.start < start {
+        let mut new_start_chunk_view = start_chunk_view.clone();
+        new_start_chunk_view.stop = start_chunk_view.stop.min(
             NonZeroU64::new(start)
-                .expect("Cannot be zero since it's strictly greater than start_chunk.start"),
+                .expect("Cannot be zero since it's strictly greater than start_chunk_view.start"),
         );
-        new_chunks.push(new_start_chunk);
-        removed_ids.remove(&start_chunk.id);
+        new_chunk_views.push(new_start_chunk_view);
+        removed_ids.remove(&start_chunk_view.id);
     }
 
     // Add new buffer
-    new_chunks.push(new_chunk);
+    new_chunk_views.push(new_chunk_view);
 
     // Test stop_chunk
     if stop_index > 0 {
-        let stop_chunk = chunks
+        let stop_chunk_view = chunk_views
             .get(stop_index - 1)
             .expect("Indexes are found using binary search and hence always valid");
-        if stop_chunk.stop.get() > stop {
-            let mut new_stop_chunk = stop_chunk.clone();
-            new_stop_chunk.start = stop;
-            new_chunks.push(new_stop_chunk);
-            removed_ids.remove(&stop_chunk.id);
+        if stop_chunk_view.stop.get() > stop {
+            let mut new_stop_chunk_view = stop_chunk_view.clone();
+            new_stop_chunk_view.start = stop;
+            new_chunk_views.push(new_stop_chunk_view);
+            removed_ids.remove(&stop_chunk_view.id);
         }
     }
 
     // Chunks after start chunk
-    new_chunks.extend(
-        chunks
+    new_chunk_views.extend(
+        chunk_views
             .get(stop_index..)
             .unwrap_or_default()
             .iter()
-            .map(|chunk| {
+            .map(|chunk_view| {
                 // The same ID might appear in multiple chunks,
                 // so it's crucial that we make sure to not remove an ID
                 // that ends up being part of the new manifest
-                removed_ids.remove(&chunk.id);
-                chunk
+                removed_ids.remove(&chunk_view.id);
+                chunk_view
             })
             .cloned(),
     );
 
-    (new_chunks, removed_ids)
+    (new_chunk_views, removed_ids)
 }
 
 /// Prepare a write operation by updating the provided manifest.
@@ -191,7 +197,7 @@ fn block_write(
 /// manifest to become valid.
 /// Each write operation consists of a new chunk to store, along with an offset to apply
 /// to the corresponding raw data.
-/// Note that the raw data also needs to be sliced to the chunk size and padded with
+/// Note that the raw data also needs to be sliced to the chunk view size and padded with
 /// null bytes if necessary.
 /// Also return a `HashSet` of chunk IDs that must cleaned up from the storage, after
 /// the updated manifest has been successfully stored.
@@ -226,13 +232,13 @@ pub fn prepare_write(
         let content_offset = sub_start - offset;
 
         // Prepare new chunk
-        let new_chunk = ChunkView::new(
+        let new_chunk_view = ChunkView::new(
             sub_start,
             NonZeroU64::new(sub_start + sub_size)
                 .expect("sub-size is always strictly greater than zero"),
         );
         write_operations.push(WriteOperation {
-            chunk: new_chunk.clone(),
+            chunk_view: new_chunk_view.clone(),
             offset: content_offset as i64,
         });
 
@@ -240,11 +246,11 @@ pub fn prepare_write(
         let new_chunks = match manifest.get_chunks(block as usize) {
             Some(block_chunks) => {
                 let (new_chunks, more_removed_ids) =
-                    block_write(block_chunks, sub_size, sub_start, new_chunk);
+                    block_write(block_chunks, sub_size, sub_start, new_chunk_view);
                 removed_ids.extend(more_removed_ids);
                 new_chunks
             }
-            None => vec![new_chunk],
+            None => vec![new_chunk_view],
         };
 
         // Update data structures
@@ -295,8 +301,8 @@ fn prepare_truncate(
     let empty = vec![];
     let chunks = manifest.get_chunks(block).unwrap_or(&empty);
 
-    // Find the index of the first chunk to exclude
-    let chunk_index = match chunks.binary_search_by_key(&size, |chunk| chunk.start) {
+    // Find the index of the first chunk view to exclude
+    let chunk_index = match chunks.binary_search_by_key(&size, |chunk_view| chunk_view.start) {
         Ok(found_index) => found_index,
         Err(insert_index) => insert_index,
     };
@@ -310,30 +316,30 @@ fn prepare_truncate(
     } else {
         assert!(remainder != 0, "The remainder cannot be zero");
 
-        // Find the index of the last chunk to include
+        // Find the index of the last chunk view to include
         let chunk_index = chunk_index - 1;
 
         // Create the new last chunk
-        let last_chunk = chunks
+        let last_chunk_view = chunks
             .get(chunk_index)
             .expect("The index is found using binary search and hence always valid");
-        let mut new_chunk = last_chunk.clone();
-        new_chunk.stop = new_chunk
+        let mut new_chunk_view = last_chunk_view.clone();
+        new_chunk_view.stop = new_chunk_view
             .stop
             .min(NonZeroU64::new(size).expect("Cannot be zero since the remainder is not zero"));
 
         // Create the new chunks for the last block
-        let mut new_chunks = chunks.get(..chunk_index).unwrap_or_default().to_vec();
-        new_chunks.push(new_chunk);
+        let mut new_chunk_views = chunks.get(..chunk_index).unwrap_or_default().to_vec();
+        new_chunk_views.push(new_chunk_view);
 
         // Those new chunks should not be removed
-        for chunk in &new_chunks {
-            removed_ids.remove(&chunk.id);
+        for chunk_view in &new_chunk_views {
+            removed_ids.remove(&chunk_view.id);
         }
 
         // Truncate and add the new chunks
         manifest.blocks.truncate(block);
-        manifest.blocks.push(new_chunks);
+        manifest.blocks.push(new_chunk_views);
     }
 
     // Update the manifest
@@ -367,48 +373,52 @@ pub fn prepare_resize(
 
 pub(crate) enum ReshapeBlockOperation<'a> {
     ToReshape {
-        manifest_chunks: &'a mut Vec<ChunkView>,
-        reshaped_chunk: ChunkView,
+        manifest_chunk_views: &'a mut Vec<ChunkView>,
+        reshaped_chunk_view: ChunkView,
     },
     ToPromote {
-        chunk: &'a mut ChunkView,
+        chunk_view: &'a mut ChunkView,
     },
 }
 
 impl ReshapeBlockOperation<'_> {
-    pub fn try_reshape(chunks: &mut Vec<ChunkView>) -> Option<ReshapeBlockOperation> {
+    pub fn try_reshape(chunk_views: &mut Vec<ChunkView>) -> Option<ReshapeBlockOperation> {
         // All zeroes or already a valid block
-        if chunks.is_empty() || chunks.len() == 1 && chunks[0].is_block() {
+        if chunk_views.is_empty() || chunk_views.len() == 1 && chunk_views[0].is_block() {
             None
-        // Already ready for block promotion, we can keep the chunk as it is
-        } else if chunks.len() == 1 && chunks[0].is_aligned_with_raw_data() {
+        // Already ready for block promotion, we can keep the chunk view as it is
+        } else if chunk_views.len() == 1 && chunk_views[0].is_aligned_with_raw_data() {
             Some(ReshapeBlockOperation::ToPromote {
-                chunk: &mut chunks[0],
+                chunk_view: &mut chunk_views[0],
             })
         // Reshape those chunks as a single block
         } else {
-            let start = chunks[0].start;
-            let stop = chunks.last().expect("A block cannot be empty").stop;
-            let reshaped_chunk = ChunkView::new(start, stop);
+            let start = chunk_views[0].start;
+            let stop = chunk_views.last().expect("A block cannot be empty").stop;
+            let reshaped_chunk_view = ChunkView::new(start, stop);
             Some(ReshapeBlockOperation::ToReshape {
-                manifest_chunks: chunks,
-                reshaped_chunk,
+                manifest_chunk_views: chunk_views,
+                reshaped_chunk_view,
             })
         }
     }
     pub fn destination(&self) -> &ChunkView {
         match self {
-            ReshapeBlockOperation::ToReshape { reshaped_chunk, .. } => reshaped_chunk,
-            ReshapeBlockOperation::ToPromote { chunk } => chunk,
+            ReshapeBlockOperation::ToReshape {
+                reshaped_chunk_view,
+                ..
+            } => reshaped_chunk_view,
+            ReshapeBlockOperation::ToPromote { chunk_view } => chunk_view,
         }
     }
 
     pub fn source(&self) -> &[ChunkView] {
         match self {
             ReshapeBlockOperation::ToReshape {
-                manifest_chunks, ..
+                manifest_chunk_views: manifest_chunks,
+                ..
             } => manifest_chunks,
-            ReshapeBlockOperation::ToPromote { chunk } => std::slice::from_ref(chunk),
+            ReshapeBlockOperation::ToPromote { chunk_view } => std::slice::from_ref(chunk_view),
         }
     }
 
@@ -419,10 +429,14 @@ impl ReshapeBlockOperation<'_> {
     pub fn cleanup_ids(&self) -> HashSet<ChunkID> {
         match self {
             ReshapeBlockOperation::ToReshape {
-                manifest_chunks, ..
+                manifest_chunk_views,
+                ..
             } => {
                 // Remove duplicate IDs by returning a HashSet
-                manifest_chunks.iter().map(|chunk| chunk.id).collect()
+                manifest_chunk_views
+                    .iter()
+                    .map(|chunk_view| chunk_view.id)
+                    .collect()
             }
             ReshapeBlockOperation::ToPromote { .. } => HashSet::new(),
         }
@@ -430,20 +444,20 @@ impl ReshapeBlockOperation<'_> {
 
     pub fn commit(self, chunk_data: &[u8]) {
         match self {
-            ReshapeBlockOperation::ToPromote { chunk } => {
-                chunk
+            ReshapeBlockOperation::ToPromote { chunk_view } => {
+                chunk_view
                     .promote_as_block(chunk_data)
                     .expect("chunk is block-compatible");
             }
             ReshapeBlockOperation::ToReshape {
-                manifest_chunks,
-                mut reshaped_chunk,
+                manifest_chunk_views,
+                mut reshaped_chunk_view,
             } => {
-                manifest_chunks.clear();
-                reshaped_chunk
+                manifest_chunk_views.clear();
+                reshaped_chunk_view
                     .promote_as_block(chunk_data)
                     .expect("chunk is block-compatible");
-                manifest_chunks.push(reshaped_chunk);
+                manifest_chunk_views.push(reshaped_chunk_view);
             }
         }
     }
@@ -453,8 +467,8 @@ impl ReshapeBlockOperation<'_> {
 
 /// Prepare a reshape operation without updating the provided manifest.
 /// The reason why the manifest is not updated is because the hash of the
-/// corresponding data is required to turn a chunk into a block.
-/// Instead, it's up to the caller to call `chunk.evolve_as_block` and
+/// corresponding data is required to turn a chunk view into a block.
+/// Instead, it's up to the caller to call `chunk_view.evolve_as_block` and
 /// `manifest.set_single_block` to update the manifest.
 ///
 /// Return an iterator where each item corresponds to a block to reshape.
@@ -462,7 +476,7 @@ impl ReshapeBlockOperation<'_> {
 /// - the index of the block that is being reshaped
 /// - a source block, represented as a `Vec` of chunks
 /// - a destination block, represented as a single chunk
-/// - a write back boolean indicating the new chunk must be written
+/// - a write back boolean indicating the new chunk of data must be written
 /// - a `HashSet` of chunk IDs that must cleaned up from the storage
 pub fn prepare_reshape(
     manifest: &mut LocalFileManifest,

@@ -39,28 +39,28 @@ impl Storage {
         self.0.remove(&chunk_id);
     }
 
-    fn read_chunk(&self, chunk: &ChunkView) -> &[u8] {
-        let data = self.read_chunk_data(chunk.id);
-        let start = (chunk.start - chunk.raw_offset) as usize;
-        let stop = (chunk.stop.get() - chunk.raw_offset) as usize;
+    fn read_from_chunk_view(&self, chunk_view: &ChunkView) -> &[u8] {
+        let data = self.read_chunk_data(chunk_view.id);
+        let start = (chunk_view.start - chunk_view.raw_offset) as usize;
+        let stop = (chunk_view.stop.get() - chunk_view.raw_offset) as usize;
         data.get(start..stop).unwrap()
     }
 
-    fn write_chunk(&mut self, chunk: &ChunkView, content: &[u8], offset: i64) {
+    fn write_for_chunk_view(&mut self, chunk_view: &ChunkView, content: &[u8], offset: i64) {
         let data = padded_data(
             content,
             offset,
-            offset + chunk.stop.get() as i64 - chunk.start as i64,
+            offset + chunk_view.stop.get() as i64 - chunk_view.start as i64,
         );
-        self.write_chunk_data(chunk.id, data)
+        self.write_chunk_data(chunk_view.id, data)
     }
 
-    fn build_data(&self, chunks: &[ChunkView], size: u64, offset: u64) -> Vec<u8> {
+    fn build_data(&self, chunk_views: &[ChunkView], size: u64, offset: u64) -> Vec<u8> {
         let start = offset as usize;
         let mut result: Vec<u8> = vec![0; size as usize];
-        for chunk in chunks {
-            let data = self.read_chunk(chunk);
-            result[chunk.start as usize - start..chunk.stop.get() as usize - start]
+        for chunk_view in chunk_views {
+            let data = self.read_from_chunk_view(chunk_view);
+            result[chunk_view.start as usize - start..chunk_view.stop.get() as usize - start]
                 .copy_from_slice(data);
         }
         result
@@ -86,7 +86,7 @@ impl Storage {
         let (write_operations, removed_ids) =
             prepare_write(manifest, content.len() as u64, offset, timestamp);
         for wo in write_operations {
-            self.write_chunk(&wo.chunk, content, wo.offset);
+            self.write_for_chunk_view(&wo.chunk_view, content, wo.offset);
         }
         for removed_id in removed_ids {
             self.clear_chunk_data(removed_id);
@@ -108,11 +108,11 @@ impl Storage {
     pub fn reshape(&mut self, manifest: &mut LocalFileManifest) {
         let operations: Vec<_> = prepare_reshape(manifest).collect();
         for operation in operations {
-            let new_chunk = operation.destination();
-            let size = new_chunk.stop.get() - new_chunk.start;
-            let data = self.build_data(operation.source(), size, new_chunk.start);
+            let new_chunk_view = operation.destination();
+            let size = new_chunk_view.stop.get() - new_chunk_view.start;
+            let data = self.build_data(operation.source(), size, new_chunk_view.start);
             if operation.write_back() {
-                self.write_chunk(new_chunk, &data, 0);
+                self.write_for_chunk_view(new_chunk_view, &data, 0);
             }
             for chunk_id in operation.cleanup_ids() {
                 self.clear_chunk_data(chunk_id);
