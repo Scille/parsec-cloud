@@ -126,7 +126,13 @@
             "labelSortBy": "Trier par",
             "search": "Rechercher",
             "loggedIn": "Connecté",
-            "noMatch": "Aucune organisation trouvé qui correspond à la recherche '{query}'."
+            "noMatch": "Aucune organisation trouvé qui correspond à la recherche '{query}'.",
+            "trialOrganization": "Version d'essai",
+            "expiration": {
+                "days": "1 jour restant | {days} jours restants",
+                "hours": "Moins d'une heure | {hours} heures restantes",
+                "expired": "Expiré"
+            }
         },
         "noExistingOrganization": {
             "createOrJoin": "Créer ou rejoindre",
@@ -171,6 +177,7 @@
         "useParsecServer": "Utiliser le serveur PARSEC principal",
         "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
         "saas": "Parsec SaaS",
+        "customServer": "Serveur personnel",
         "keyringChoice": "Authentification du système",
         "passwordChoice": "Mot de passe",
         "acceptTOS": {
@@ -190,14 +197,15 @@
             "server": "Choisissez votre serveur adapté",
             "authentication": "Authentification",
             "overview": "Récapitulatif de votre organisation",
-            "done": "Votre organisation a bien été créée !"
+            "done": "Votre organisation a bien été créée !",
+            "nameAndServer": "Nom d'organisation et adresse du serveur"
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Renseignez votre nom et votre email.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
             "needs": "Quel est votre besoin sur Parsec ?",
-            "authentication": "Pour finir, choisissez votre méthode d'authentification.",
+            "authentication": "Choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
         },
         "overview": {
@@ -221,7 +229,7 @@
                 "title": "Essayer Parsec pendant 15 jours",
                 "description": "(Données non conservées après la période d'essai)"
             },
-            "ownServer": "Je configure mon propre serveur"
+            "ownServer": "J'ai configuré mon propre serveur"
         },
         "errors": {
             "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
@@ -1150,8 +1158,12 @@
         "password": "Mot de passe",
         "forgottenPassword": "Mot de passe oublié ?",
         "login": "Se connecter",
-        "loginFailed": "Impossible de se connecter",
+        "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
+        "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
+        "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
         "noAccount": "Vous n'avez pas encore d'espace client ?",
-        "createAccount": "Créer un compte"
+        "createAccount": "Créer un compte",
+        "createAccountUrl": "https://parsec.cloud/tarification/",
+        "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
     }
 }

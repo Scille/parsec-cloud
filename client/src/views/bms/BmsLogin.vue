@@ -12,7 +12,7 @@
         <!-- email -->
         <ms-input
           class="saas-login-content__input"
-          ref="emailInput"
+          ref="emailInputRef"
           v-model="email"
           label="ClientApplication.emailLabel"
           :validator="emailValidator"
@@ -21,43 +21,46 @@
         <div class="input-password">
           <ms-password-input
             class="saas-login-content__input"
+            ref="passwordInputRef"
             v-model="password"
             label="ClientApplication.password"
           />
           <!-- TODO: UPDATE THE LINK -->
-          <!-- TODO: CHECK THAT ELECTRON ALLOWS THE LINK TO BE OPENED -->
+          <!-- If changing the link, don't forget to check that it is allowed by electron! -->
           <ion-text
             class="saas-login-inputs__link button-small"
             target="_blank"
             @click="$event.stopPropagation()"
-            href="FORGOT_PASSWORD_LINK"
+            :href="$msTranslate('ClientApplication.forgottenPasswordLink')"
           >
             {{ $msTranslate('ClientApplication.forgottenPassword') }}
           </ion-text>
         </div>
+        <!-- error -->
+        <ion-text
+          class="form-error body login-button-error"
+          v-show="loginError"
+        >
+          <ion-icon
+            class="form-error-icon"
+            :icon="warning"
+          />{{ $msTranslate(loginError) }}
+        </ion-text>
       </div>
 
       <ion-footer class="saas-login-footer">
         <div class="login-button">
           <ion-button
-            :disabled="!emailInput || emailInput.validity !== Validity.Valid || !password.length"
+            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
             @click="onLoginClicked"
           >
             {{ $msTranslate('ClientApplication.login') }}
           </ion-button>
           <ms-spinner v-show="querying" />
-
-          <!-- error -->
-          <div
-            class="form-error login-button-error"
-            v-show="loginError"
-          >
-            {{ $msTranslate(loginError) }}
-          </div>
         </div>
 
         <!-- TODO: UPDATE THE LINK -->
-        <!-- TODO: CHECK THAT ELECTRON ALLOWS THE LINK TO BE OPENED -->
+        <!-- If changing the link, don't forget to check that it is allowed by electron! -->
         <div class="create-account">
           <ion-text class="create-account__text body">{{ $msTranslate('ClientApplication.noAccount') }}</ion-text>
           <ion-button
@@ -65,7 +68,7 @@
             target="_blank"
             fill="clear"
             @click="$event.stopPropagation()"
-            href="parsec.cloud/register"
+            :href="$msTranslate('ClientApplication.createAccountUrl')"
           >
             {{ $msTranslate('ClientApplication.createAccount') }}
           </ion-button>
@@ -82,11 +85,12 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter } from '@ionic/vue';
+import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { ref } from 'vue';
-import { AuthenticationToken, BmsApi, DataType } from '@/services/bmsApi';
+import { warning } from 'ionicons/icons';
+import { onMounted, ref } from 'vue';
+import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 const props = defineProps<{
@@ -94,29 +98,52 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginSuccess', token: AuthenticationToken): void;
+  (e: 'loginSuccess', token: AuthenticationToken, personalInformation: PersonalInformationResultData): void;
   (e: 'closeRequested'): void;
 }>();
 
 const email = ref<string>(props.email ?? '');
 const password = ref<string>('');
-const emailInput = ref();
+const emailInputRef = ref();
+const passwordInputRef = ref();
 const querying = ref(false);
 const loginError = ref<Translatable>('');
+
+onMounted(async () => {
+  if (emailInputRef.value) {
+    if (email.value.length > 0) {
+      await emailInputRef.value.validate(email.value);
+      await passwordInputRef.value.setFocus();
+    } else {
+      await emailInputRef.value.setFocus();
+    }
+  }
+});
 
 async function onLoginClicked(): Promise<void> {
   if (email.value.length === 0 || password.value.length === 0) {
     return;
   }
   querying.value = true;
-  const response = await BmsApi.login({ email: email.value, password: password.value });
+  try {
+    const response = await BmsApi.login({ email: email.value, password: password.value });
 
-  if (response.isError() || !response.data || response.data.type !== DataType.Login) {
-    loginError.value = 'FAILED';
-  } else {
-    emits('loginSuccess', response.data.token);
+    if (response.isError || !response.data || response.data.type !== DataType.Login) {
+      loginError.value = 'ClientApplication.loginFailed';
+    } else {
+      const dataResponse = await BmsApi.getPersonalInformation(response.data.token);
+      if (dataResponse.isError || !dataResponse.data || dataResponse.data.type !== DataType.PersonalInformation) {
+        loginError.value = 'ClientApplication.retrieveInformationFailed';
+      } else {
+        emits('loginSuccess', response.data.token, dataResponse.data);
+      }
+    }
+  } catch (error: any) {
+    window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
+    loginError.value = 'ClientApplication.networkFailed';
+  } finally {
+    querying.value = false;
   }
-  querying.value = false;
 }
 </script>
 

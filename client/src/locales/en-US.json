@@ -126,7 +126,13 @@
             "labelSortBy": "Sort by",
             "search": "Search",
             "loggedIn": "Logged in",
-            "noMatch": "No organization found that matches '{query}'."
+            "noMatch": "No organization found that matches '{query}'.",
+            "trialOrganization": "Trial version",
+            "expiration": {
+                "days": "1 day remaining | {days} days remaining",
+                "hours": "Less than one hour | {hours} hours remaining",
+                "expired": "Expired"
+            }
         },
         "noExistingOrganization": {
             "createOrJoin": "Create or join",
@@ -171,6 +177,7 @@
         "useParsecServer": "Use the main PARSEC server",
         "useMyOwnServer": "I have my own PARSEC server",
         "saas": "Parsec SaaS",
+        "customServer": "Custom Server",
         "keyringChoice": "System authentication",
         "passwordChoice": "Password",
         "acceptTOS": {
@@ -190,14 +197,15 @@
             "server": "Choose the server you need",
             "authentication": "Authentication",
             "overview": "Overview of your organization",
-            "done": "Your organization has been created!"
+            "done": "Your organization has been created!",
+            "nameAndServer": "Organization name and server address"
         },
         "subtitle": {
             "nameYourOrg": "Choose your organization name.",
             "personalDetails": "Fill in your name and email.",
             "needs": "What is your need for Parsec?",
             "server": "Choose your desired server type.",
-            "authentication": "Lastly, choose an authentication method.",
+            "authentication": "Choose an authentication method.",
             "overview": "Verify that the information is correct."
         },
         "overview": {
@@ -221,7 +229,7 @@
                 "title": "Try Parsec for 15 days",
                 "description": "(Data are erased after the trial period)"
             },
-            "ownServer": "I set up my own server"
+            "ownServer": "I have set up my own server"
         },
         "errors": {
             "timestampOutOfBallpark": "Your device time differs from the server time. Please check your device clock and make sure it is up-to-date (your device time is {clientTime}, server time is {serverTime}).",
@@ -1151,7 +1159,11 @@
         "forgottenPassword": "Forgot your password?",
         "login": "Log in",
         "loginFailed": "Cannot log in. Please check your email and password.",
+        "networkFailed": "Could not reach the server. Make sure that you are online and try again.",
+        "retrieveInformationFailed": "Failed to retrieve your personal information from the server.",
         "noAccount": "No customer account yet?",
-        "createAccount": "Create an account"
+        "createAccount": "Create an account",
+        "createAccountUrl": "https://parsec.cloud/en/tarification/",
+        "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
     }
 }

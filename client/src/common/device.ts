@@ -3,7 +3,7 @@
 import { Platform } from '@/parsec';
 import { I18n } from 'megashark-lib';
 
-export async function getDefaultDeviceName(): Promise<string> {
+export function getDefaultDeviceName(): string {
   switch (window.getPlatform()) {
     case Platform.Web:
       return I18n.translate('common.deviceTypes.web');

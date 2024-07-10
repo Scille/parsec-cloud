@@ -245,4 +245,34 @@ export const expect = baseExpect.extend({
       pass: true,
     };
   },
+
+  async toBeTrulyDisabled(locator: Locator): Promise<AssertReturnType> {
+    let errorMessage = '';
+    let pass = true;
+    try {
+      await baseExpect(locator).toHaveAttribute('aria-disabled');
+    } catch (error: any) {
+      errorMessage = "Element does not have a 'disabled' attribute.";
+      pass = false;
+    }
+    return {
+      message: () => errorMessage,
+      pass: pass,
+    };
+  },
+
+  async toBeTrulyEnabled(locator: Locator): Promise<AssertReturnType> {
+    let errorMessage = '';
+    let pass = true;
+    try {
+      await baseExpect(locator).not.toHaveAttribute('aria-disabled');
+    } catch (error: any) {
+      errorMessage = "Element has a 'disabled' attribute.";
+      pass = false;
+    }
+    return {
+      message: () => errorMessage,
+      pass: pass,
+    };
+  },
 });

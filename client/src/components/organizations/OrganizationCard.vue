@@ -4,9 +4,19 @@
   <ion-card class="organization-card__body">
     <ion-card-header class="card-content">
       <div class="organization-info">
-        <ion-avatar class="orga-avatar body-lg">
+        <ion-avatar
+          class="orga-avatar body-lg"
+          v-show="!isTrialOrg"
+        >
           <span>{{ device.organizationId?.substring(0, 2) }}</span>
         </ion-avatar>
+        <ion-text
+          v-if="expirationDuration"
+          class="orga-expiration button-small"
+          :class="{ expired: isExpired(expirationDuration) }"
+        >
+          {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
+        </ion-text>
         <div class="orga-text">
           <ion-card-title class="card-title">
             <span class="title-h4">{{ device.organizationId }}</span>
@@ -20,11 +30,27 @@
 
 <script setup lang="ts">
 import { AvailableDevice } from '@/parsec';
-import { IonAvatar, IonCard, IonCardHeader, IonCardTitle } from '@ionic/vue';
+import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
+import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
+import { onMounted, ref } from 'vue';
+import { Duration } from 'luxon';
+import { getDurationBeforeExpiration, formatExpirationTime, isExpired } from '@/common/organization';
 
-defineProps<{
+const props = defineProps<{
   device: AvailableDevice;
 }>();
+
+const isTrialOrg = ref(false);
+const expirationDuration = ref<Duration | undefined>(undefined);
+
+onMounted(async () => {
+  const url = new URL(props.device.serverUrl);
+  const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
+  isTrialOrg.value = serverType === ServerType.Trial;
+  if (isTrialOrg.value) {
+    expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
+  }
+});
 </script>
 
 <style lang="scss" scoped>
@@ -43,6 +69,8 @@ defineProps<{
     align-items: center;
     flex-direction: row;
     gap: 0.5rem;
+    position: relative;
+    z-index: 1;
 
     .orga-avatar {
       background-color: var(--parsec-color-light-secondary-white);
@@ -57,6 +85,21 @@ defineProps<{
       position: relative;
       z-index: 1;
       border: 1px solid var(--parsec-color-light-secondary-medium);
+    }
+
+    .orga-expiration {
+      border-radius: var(--parsec-radius-12);
+      padding: 0.25rem 0.5rem;
+      position: absolute;
+      top: 0;
+      right: 0;
+      background: var(--parsec-color-light-primary-700);
+      color: var(--parsec-color-light-secondary-white);
+
+      &.expired {
+        background: var(--parsec-color-light-secondary-grey);
+        color: var(--parsec-color-light-secondary-white);
+      }
     }
 
     .card-title {

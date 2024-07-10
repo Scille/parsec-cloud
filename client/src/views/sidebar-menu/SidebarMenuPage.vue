@@ -256,11 +256,13 @@ import { ChevronExpand, MsImage, getTextFromUser } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
+  AvailableDevice,
   ClientInfo,
   UserProfile,
   WorkspaceHandle,
   WorkspaceID,
   WorkspaceInfo,
+  getCurrentAvailableDevice,
   isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
@@ -312,6 +314,7 @@ let eventDistributorCbId: string | null = null;
 const divider = ref();
 const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
+const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 
@@ -352,6 +355,11 @@ async function loadAll(): Promise<void> {
     userInfo.value = infoResult.value;
   } else {
     console.log('Failed to get user info', infoResult.error);
+  }
+
+  const deviceResult = await getCurrentAvailableDevice();
+  if (deviceResult.ok) {
+    currentDevice.value = deviceResult.value;
   }
 
   const result = await parsecListWorkspaces();

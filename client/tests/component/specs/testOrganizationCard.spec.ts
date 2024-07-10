@@ -4,8 +4,13 @@ import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceFileType } from '@/plugins/libparsec';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { beforeAll } from 'vitest';
 
 describe('Organization Card', () => {
+  beforeAll(() => {
+    window.isDev = (): boolean => false;
+  });
+
   let wrapper: VueWrapper;
 
   const DEVICE: AvailableDevice = {

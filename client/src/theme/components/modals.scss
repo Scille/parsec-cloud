@@ -101,9 +101,43 @@
   }
 
   &:has(.OrgNameStep)::part(content),
-  &:has(.UserInfoStep)::part(content) {
+  &:has(.UserInfoStep)::part(content),
+  &:has(.organization-name-page.active)::part(content),
+  &:has(.user-information-page.active)::part(content),
+  &:has(.organization-creation-page.active)::part(content),
+  &:has(.creation-page.active)::part(content),
+  &:has(.created-page.active)::part(content),
+  &:has(.organization-name-and-server-page.active)::part(content) {
     min-width: var(--parsec-modal-width-sm);
     max-width: var(--parsec-modal-width-sm);
+  }
+
+  .page-modal-container {
+    padding: 2.5rem;
+    display: flex;
+    height: auto;
+    width: 100%;
+  }
+
+  .authentication-page-footer,
+  .summary-page-footer,
+  .organization-name-and-server-page-footer,
+  .organization-name-page-footer,
+  .user-information-page-footer,
+  .created-page-footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 2.5rem;
+
+    .modal-footer-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+  }
+
+  .form-error ion-icon {
+    align-self: baseline;
+    padding-top: 0.25rem;
   }
 }
 
