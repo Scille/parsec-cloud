@@ -78,10 +78,6 @@ defineExpose({
   getSaveStrategy,
 });
 
-defineEmits<{
-  (e: 'fieldUpdate'): void;
-}>();
-
 onMounted(async () => {
   keyringAvailable.value = await isKeyringAvailable();
 

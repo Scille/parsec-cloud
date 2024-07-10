@@ -45,20 +45,23 @@ async function setupApp(): Promise<void> {
   const hotkeyManager = new HotkeyManager();
   const router = getRouter();
 
+  const megasharkPlugin = new MegaSharkPlugin({
+    i18n: {
+      defaultLocale: config.locale,
+      customAssets: {
+        'fr-FR': appFrFR,
+        'en-US': appEnUS,
+      },
+    },
+  });
+  await megasharkPlugin.init();
+
   const app = createApp(App)
     .use(IonicVue, {
       rippleEffect: false,
     })
     .use(router)
-    .use(MegaSharkPlugin, {
-      i18n: {
-        defaultLocale: config.locale,
-        customAssets: {
-          'fr-FR': appFrFR,
-          'en-US': appEnUS,
-        },
-      },
-    });
+    .use(megasharkPlugin);
 
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);

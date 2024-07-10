@@ -63,7 +63,7 @@ for (const testData of TEST_DATA) {
     await expect(modal.locator('.file-info-path-value__not-copied')).toHaveText('Failed to copy');
 
     // Wait for the button to be available again
-    await connected.waitForTimeout(4000);
+    await connected.waitForTimeout(5000);
     // Grant the permissions
     await context.grantPermissions(['clipboard-write']);
 

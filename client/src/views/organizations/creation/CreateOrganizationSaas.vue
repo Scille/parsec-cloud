@@ -1,0 +1,217 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <ion-page>
+    <bms-login
+      v-show="step === Steps.BmsLogin"
+      @login-success="onLoginSuccess"
+      @close-requested="$emit('closeRequested')"
+    />
+    <organization-name-page
+      v-show="step === Steps.OrganizationName"
+      :organization-name="organizationName ?? ''"
+      @organization-name-chosen="onOrganizationNameChosen"
+      :error="currentError"
+      @close-requested="$emit('closeRequested')"
+    />
+    <organization-authentication-page
+      v-show="step === Steps.Authentication"
+      @authentication-chosen="onAuthenticationChosen"
+      @close-requested="$emit('closeRequested')"
+      @go-back-requested="onGoBackRequested"
+    />
+    <organization-summary-page
+      v-show="step === Steps.Summary"
+      v-if="personalInformation && saveStrategy && organizationName"
+      :error="currentError"
+      :email="personalInformation.email"
+      :name="`${personalInformation.firstName} ${personalInformation.lastName}`"
+      :save-strategy="saveStrategy.tag"
+      :organization-name="organizationName"
+      :server-type="ServerType.Saas"
+      :can-edit-email="false"
+      :can-edit-name="false"
+      :can-edit-organization-name="false"
+      :can-edit-save-strategy="true"
+      @create-clicked="onCreateClicked"
+      @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
+      @close-requested="$emit('closeRequested')"
+      @go-back-requested="onGoBackRequested"
+    />
+    <organization-creation-page v-show="step === Steps.Creation" />
+    <organization-created-page
+      v-show="step === Steps.Created"
+      v-if="organizationName"
+      @go-clicked="onGoClicked"
+      :organization-name="organizationName"
+    />
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
+import { ServerType } from '@/services/parsecServers';
+import { IonPage } from '@ionic/vue';
+import { onMounted, ref } from 'vue';
+import BmsLogin from '@/views/bms/BmsLogin.vue';
+import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
+import { AvailableDevice, bootstrapOrganization, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import { Translatable } from 'megashark-lib';
+import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
+import { getDefaultDeviceName } from '@/common/device';
+import OrganizationSummaryPage from '@/views/organizations/creation/OrganizationSummaryPage.vue';
+import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
+import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
+import { wait } from '@/parsec/internals';
+
+enum Steps {
+  BmsLogin,
+  OrganizationName,
+  Authentication,
+  Summary,
+  Creation,
+  Created,
+}
+
+const props = defineProps<{
+  bootstrapLink?: string;
+}>();
+
+const emits = defineEmits<{
+  (e: 'closeRequested'): void;
+  (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
+}>();
+
+const step = ref<Steps>(Steps.BmsLogin);
+const organizationName = ref<OrganizationID | undefined>(undefined);
+const personalInformation = ref<PersonalInformationResultData | undefined>(undefined);
+const authenticationToken = ref<AuthenticationToken | undefined>(undefined);
+const currentError = ref<Translatable | undefined>(undefined);
+const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
+const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
+const availableDevice = ref<AvailableDevice | undefined>(undefined);
+
+onMounted(async () => {
+  if (bootstrapLink.value) {
+    const result = await parseParsecAddr(bootstrapLink.value);
+    if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
+      organizationName.value = result.value.organizationId;
+    }
+  }
+});
+
+async function onLoginSuccess(token: AuthenticationToken): Promise<void> {
+  const response = await BmsApi.getPersonalInformation(token);
+  if (response.isError || !response.data || response.data.type !== DataType.PersonalInformation) {
+    // TODO: Show something to the user
+    console.log('Failed to retrieve personal information');
+  } else {
+    authenticationToken.value = token;
+    personalInformation.value = response.data;
+
+    if (props.bootstrapLink) {
+      step.value = Steps.Authentication;
+    } else {
+      step.value = Steps.OrganizationName;
+    }
+  }
+}
+
+async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID): Promise<void> {
+  if (!authenticationToken.value || !personalInformation.value) {
+    window.electronAPI.log(
+      'error',
+      'OrganizationCreation: no authentication token after choosing the organization name, should not happen',
+    );
+    return;
+  }
+  const response = await BmsApi.createOrganization(authenticationToken.value, {
+    organizationName: chosenOrganizationName,
+    userId: personalInformation.value.id,
+    clientId: personalInformation.value.clientId,
+  });
+
+  if (response.isError) {
+    console.log('Failed to create organization');
+    // TODO: Change this error handling with the real backend response
+    if (response.errors && response.errors.some((error) => error.attr === 'already_exists')) {
+      currentError.value = 'ALREADY_EXISTS';
+    }
+    return;
+  }
+  if (!response.data || response.data.type !== DataType.CreateOrganization) {
+    // Should not happen
+    console.log('Incorrect response data type');
+    return;
+  }
+  bootstrapLink.value = response.data.bootstrapLink;
+  organizationName.value = chosenOrganizationName;
+  step.value = Steps.Authentication;
+}
+
+async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): Promise<void> {
+  if (!personalInformation.value) {
+    window.electronAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
+  }
+  saveStrategy.value = chosenSaveStrategy;
+  step.value = Steps.Summary;
+}
+
+async function onCreateClicked(): Promise<void> {
+  if (!bootstrapLink.value || !personalInformation.value || !saveStrategy.value) {
+    window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
+    return;
+  }
+
+  step.value = Steps.Creation;
+
+  const startTime = new Date().valueOf();
+  const result = await bootstrapOrganization(
+    bootstrapLink.value,
+    `${personalInformation.value.firstName} ${personalInformation.value.lastName}`,
+    personalInformation.value.email,
+    getDefaultDeviceName(),
+    saveStrategy.value,
+  );
+
+  const endTime = new Date().valueOf();
+  // If we're too fast, a weird blinking will occur. Add some artificial time.
+  if (endTime - startTime < 2000) {
+    await wait(endTime - startTime);
+  }
+
+  if (!result.ok) {
+    currentError.value = 'ERROR';
+    step.value = Steps.Summary;
+    console.log('Failed to create organization', result.error);
+    return;
+  }
+  availableDevice.value = result.value;
+
+  step.value = Steps.Created;
+}
+
+async function onGoClicked(): Promise<void> {
+  if (!saveStrategy.value || !availableDevice.value || !organizationName.value) {
+    window.electronAPI.log('error', 'OrganizationCreation: missing data at the end step, should not happen');
+    return;
+  }
+  emits('organizationCreated', organizationName.value, availableDevice.value, saveStrategy.value);
+}
+
+async function onGoBackRequested(): Promise<void> {
+  if (step.value === Steps.Authentication) {
+    step.value = Steps.OrganizationName;
+  } else if (step.value === Steps.Summary) {
+    step.value = Steps.Authentication;
+  } else {
+    console.log(`Cannot go back from ${step.value}, should not happen`);
+  }
+}
+
+async function onUpdateSaveStrategyClicked(): Promise<void> {
+  step.value = Steps.Authentication;
+}
+</script>
+
+<style scoped lang="scss"></style>
