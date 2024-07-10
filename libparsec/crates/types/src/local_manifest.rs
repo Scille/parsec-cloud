@@ -88,7 +88,7 @@ pub enum LocalFileManifestToRemoteError {
 }
 
 /*
- * Chunk
+ * ChunkView
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -106,7 +106,7 @@ pub enum LocalFileManifestToRemoteError {
 ///
 /// Access is an optional block access that can be used to produce a remote manifest
 /// when the chunk corresponds to an actual block within the context of this manifest.
-pub struct Chunk {
+pub struct ChunkView {
     // This ID identifies the raw data the chunk is based on
     // Two chunks can have the same id if they point to the same underlying data
     pub id: ChunkID,
@@ -119,19 +119,19 @@ pub struct Chunk {
     pub access: Option<BlockAccess>,
 }
 
-impl PartialEq<u64> for Chunk {
+impl PartialEq<u64> for ChunkView {
     fn eq(&self, other: &u64) -> bool {
         self.start == *other
     }
 }
 
-impl PartialOrd<u64> for Chunk {
+impl PartialOrd<u64> for ChunkView {
     fn partial_cmp(&self, other: &u64) -> Option<Ordering> {
         Some(self.start.cmp(other))
     }
 }
 
-impl Chunk {
+impl ChunkView {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
         let chunk = Self {
             id: ChunkID::default(),
@@ -355,7 +355,7 @@ pub struct LocalFileManifest {
     /// process flatten the chunks into a single one (hence a `LocalFileManifest`
     /// created from a `FileManifest` should only contains block slots made of
     /// a single chunk).
-    pub blocks: Vec<Vec<Chunk>>,
+    pub blocks: Vec<Vec<ChunkView>>,
 }
 
 parsec_data!("schema/local_manifest/local_file_manifest.json5");
@@ -416,7 +416,7 @@ impl LocalFileManifest {
         }
     }
 
-    pub fn get_chunks(&self, block: usize) -> Option<&Vec<Chunk>> {
+    pub fn get_chunks(&self, block: usize) -> Option<&Vec<ChunkView>> {
         self.blocks.get(block)
     }
 
@@ -506,10 +506,10 @@ impl LocalFileManifest {
     }
 
     pub fn from_remote(remote: FileManifest) -> Self {
-        let chunks: Vec<Chunk> = remote
+        let chunks: Vec<ChunkView> = remote
             .blocks
             .iter()
-            .map(|access| Chunk::from_block_access(access.to_owned()))
+            .map(|access| ChunkView::from_block_access(access.to_owned()))
             .collect();
 
         let mut blocks = vec![];
@@ -585,7 +585,11 @@ impl LocalFileManifest {
         Ok(manifest)
     }
 
-    pub fn set_single_block(&mut self, block: u64, new_chunk: Chunk) -> Result<Vec<Chunk>, u64> {
+    pub fn set_single_block(
+        &mut self,
+        block: u64,
+        new_chunk: ChunkView,
+    ) -> Result<Vec<ChunkView>, u64> {
         let slice = self.blocks.get_mut(block as usize).ok_or(block)?;
         Ok(std::mem::replace(slice, vec![new_chunk]))
     }

@@ -39,14 +39,14 @@ impl Storage {
         self.0.remove(&chunk_id);
     }
 
-    fn read_chunk(&self, chunk: &Chunk) -> &[u8] {
+    fn read_chunk(&self, chunk: &ChunkView) -> &[u8] {
         let data = self.read_chunk_data(chunk.id);
         let start = (chunk.start - chunk.raw_offset) as usize;
         let stop = (chunk.stop.get() - chunk.raw_offset) as usize;
         data.get(start..stop).unwrap()
     }
 
-    fn write_chunk(&mut self, chunk: &Chunk, content: &[u8], offset: i64) {
+    fn write_chunk(&mut self, chunk: &ChunkView, content: &[u8], offset: i64) {
         let data = padded_data(
             content,
             offset,
@@ -55,7 +55,7 @@ impl Storage {
         self.write_chunk_data(chunk.id, data)
     }
 
-    fn build_data(&self, chunks: &[Chunk], size: u64, offset: u64) -> Vec<u8> {
+    fn build_data(&self, chunks: &[ChunkView], size: u64, offset: u64) -> Vec<u8> {
         let start = offset as usize;
         let mut result: Vec<u8> = vec![0; size as usize];
         for chunk in chunks {

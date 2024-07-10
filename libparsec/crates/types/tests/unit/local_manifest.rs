@@ -131,7 +131,7 @@ fn serde_local_file_manifest_ok(alice: &Device) {
             size: 700,
         },
         blocks: vec![vec![
-            Chunk {
+            ChunkView {
                 id: ChunkID::from_hex("ad67b6b5b9ad4653bf8e2b405bb6115f").unwrap(),
                 access: Some(BlockAccess {
                     id: BlockID::from_hex("b82954f1138b4d719b7f5bd78915d20f").unwrap(),
@@ -147,7 +147,7 @@ fn serde_local_file_manifest_ok(alice: &Device) {
                 start: 0,
                 stop: NonZeroU64::new(250).unwrap(),
             },
-            Chunk {
+            ChunkView {
                 id: ChunkID::from_hex("2f99258022a94555b3109e81d34bdf97").unwrap(),
                 access: None,
                 raw_offset: 250,
@@ -593,7 +593,7 @@ fn serde_local_user_manifest(
 
 #[rstest]
 fn chunk_new() {
-    let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
+    let chunk = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
 
     p_assert_eq!(chunk.start, 1);
     p_assert_eq!(chunk.stop, NonZeroU64::try_from(5).unwrap());
@@ -604,12 +604,12 @@ fn chunk_new() {
     p_assert_eq!(chunk, 1);
     assert!(chunk < 2);
     assert!(chunk > 0);
-    p_assert_ne!(chunk, Chunk::new(1, NonZeroU64::try_from(5).unwrap()));
+    p_assert_ne!(chunk, ChunkView::new(1, NonZeroU64::try_from(5).unwrap()));
 }
 
 #[rstest]
 fn chunk_promote_as_block() {
-    let chunk = Chunk::new(1, NonZeroU64::try_from(5).unwrap());
+    let chunk = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
     let id = chunk.id;
     let block = {
         let mut block = chunk.clone();
@@ -640,11 +640,11 @@ fn chunk_promote_as_block() {
         digest: HashDigest::from_data(b"<data>"),
     };
 
-    let mut block = Chunk::from_block_access(block_access);
+    let mut block = ChunkView::from_block_access(block_access);
     let err = block.promote_as_block(b"<data>").unwrap_err();
     p_assert_eq!(err, ChunkPromoteAsBlockError::AlreadyPromotedAsBlock);
 
-    let mut chunk = Chunk {
+    let mut chunk = ChunkView {
         id,
         start: 0,
         stop: NonZeroU64::try_from(1).unwrap(),
@@ -659,7 +659,7 @@ fn chunk_promote_as_block() {
 
 #[rstest]
 fn chunk_is_block() {
-    let chunk = Chunk {
+    let chunk = ChunkView {
         id: ChunkID::default(),
         start: 0,
         stop: NonZeroU64::try_from(1).unwrap(),
@@ -747,7 +747,7 @@ fn local_file_manifest_is_reshaped(timestamp: DateTime) {
     assert!(lfm.is_reshaped());
 
     let block = {
-        let mut block = Chunk {
+        let mut block = ChunkView {
             id: ChunkID::default(),
             start: 0,
             stop: NonZeroU64::try_from(1).unwrap(),
@@ -815,7 +815,7 @@ fn local_file_manifest_from_remote(timestamp: DateTime, #[case] input: (u64, Vec
         lfm.blocks,
         blocks
             .into_iter()
-            .map(|block| vec![Chunk::from_block_access(block)])
+            .map(|block| vec![ChunkView::from_block_access(block)])
             .collect::<Vec<_>>()
     );
 }
@@ -830,7 +830,7 @@ fn local_file_manifest_to_remote(timestamp: DateTime) {
     let mut lfm = LocalFileManifest::new(author, parent, t1);
 
     let block = {
-        let mut block = Chunk {
+        let mut block = ChunkView {
             id: ChunkID::default(),
             start: 0,
             stop: NonZeroU64::try_from(1).unwrap(),
