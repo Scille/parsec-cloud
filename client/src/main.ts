@@ -288,7 +288,6 @@ async function setupApp(): Promise<void> {
         console.log(`[MOCKED-ELECTRON-LOG] ${level}: ${message}`);
       },
       pageIsInitialized: (): void => {
-        console.log('Page is initialized');
         window.isDev = (): boolean => needsMocks();
       },
     };
