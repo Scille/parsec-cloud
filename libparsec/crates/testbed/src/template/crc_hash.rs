@@ -468,6 +468,7 @@ impl CrcHash for BlockAccess {
 }
 impl CrcHash for ChunkView {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        // TODO: change to `ChunkView``
         hasher.update(b"Chunk");
 
         let ChunkView {

@@ -67,17 +67,17 @@ macro_rules! impl_local_manifest_load {
  */
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum ChunkPromoteAsBlockError {
-    #[error("This chunk has already been promoted as a block")]
+pub enum ChunkViewPromoteAsBlockError {
+    #[error("This chunk view has already been promoted as a block")]
     AlreadyPromotedAsBlock,
 
-    #[error("This chunk is not aligned and can't be promoted as a block")]
+    #[error("This chunk view is not aligned and can't be promoted as a block")]
     NotAligned,
 }
 
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
-pub enum ChunkGetBlockAccessError {
-    #[error("This chunk hasn't been promoted as a block")]
+pub enum ChunkViewGetBlockAccessError {
+    #[error("This chunk view hasn't been promoted as a block")]
     NotPromotedAsBlock,
 }
 
@@ -92,7 +92,15 @@ pub enum LocalFileManifestToRemoteError {
  */
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-/// Represents a chunk of a data in file manifest.
+/// Represents the content of a file manifest over a specific range of addresses.
+///
+/// It is called a `ChunkView` because it is implemented as a view over an
+/// underlying chunk of data. Example:
+///
+/// File addressing:            raw offset            raw offset + raw size
+/// Underlying chunk data: |--------|abcdefghijklmnopqrstuvwxyz|-------------|
+/// Specific chunk view:   |--------------|ghijklmnopqrstu|------------------|
+/// File addressing:                    start           stop
 ///
 /// The raw data is identified by its `id` attribute and is aligned using the
 /// `raw_offset` attribute with respect to the file addressing. The raw data
@@ -107,7 +115,7 @@ pub enum LocalFileManifestToRemoteError {
 /// Access is an optional block access that can be used to produce a remote manifest
 /// when the chunk corresponds to an actual block within the context of this manifest.
 pub struct ChunkView {
-    // This ID identifies the raw data the chunk is based on
+    // This ID identifies the raw data the chunk view is based on
     // Two chunks can have the same id if they point to the same underlying data
     pub id: ChunkID,
     // TODO: don't directly expose those fields, this way we can guarantee
@@ -133,19 +141,21 @@ impl PartialOrd<u64> for ChunkView {
 
 impl ChunkView {
     pub fn new(start: u64, stop: NonZeroU64) -> Self {
-        let chunk = Self {
+        let chunk_view = Self {
             id: ChunkID::default(),
             start,
             stop,
             raw_offset: start,
             // TODO: what to do with overflow
             raw_size: NonZeroU64::try_from(stop.get() - start)
-                .expect("Chunk raw_size should be NonZeroU64"),
+                .expect("Chunk view raw_size should be NonZeroU64"),
             access: None,
         };
         // Sanity check
-        chunk.check_data_integrity().expect("Chunk integrity");
-        chunk
+        chunk_view
+            .check_data_integrity()
+            .expect("Chunk view integrity");
+        chunk_view
     }
 
     pub fn size(&self) -> u64 {
@@ -184,21 +194,21 @@ impl ChunkView {
             stop: (block_access.offset + block_access.size.get())
                 .try_into()
                 .expect(
-                    "Chunk stop should be NonZeroU64 since bloc_access.size is already NonZeroU64",
-                ),
+                "Chunk view stop should be NonZeroU64 since bloc_access.size is already NonZeroU64",
+            ),
             access: Some(block_access),
         }
     }
 
-    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), ChunkPromoteAsBlockError> {
+    pub fn promote_as_block(&mut self, data: &[u8]) -> Result<(), ChunkViewPromoteAsBlockError> {
         // No-op
         if self.is_block() {
-            return Err(ChunkPromoteAsBlockError::AlreadyPromotedAsBlock);
+            return Err(ChunkViewPromoteAsBlockError::AlreadyPromotedAsBlock);
         }
 
         // Check alignement
         if !self.is_aligned_with_raw_data() {
-            return Err(ChunkPromoteAsBlockError::NotAligned);
+            return Err(ChunkViewPromoteAsBlockError::NotAligned);
         }
 
         // Craft access
@@ -232,7 +242,7 @@ impl ChunkView {
         self.block().is_some()
     }
 
-    /// A chunk needs to be aligned with its raw data in order to form a valid
+    /// A chunk view needs to be aligned with its raw data in order to form a valid
     /// block that can be uploaded.
     ///
     /// For instance let's consider a file being modified by the user:
@@ -241,32 +251,32 @@ impl ChunkView {
     /// 2. The user writes 400 bytes of data.
     /// 3. The user writes 200 bytes at the offset 100.
     ///
-    /// Up until step 3, the local file manifest contains a single chunk of 400
+    /// Up until step 3, the local file manifest contains a single chunk view of 400
     /// bytes that is properly aligned with its raw data (i.e. if we sync the file
     /// right now we will end up with a single block taken verbatim from this chunk).
     ///
     /// Then after step 3, the local file manifest contains 3 chunks:
-    /// a. A chunk of 100 bytes at offset 0
-    /// b. A chunk of 200 bytes at offset 100
-    /// c. A chunk of 212 bytes at offset 300
+    /// a. A chunk view of 100 bytes at offset 0
+    /// b. A chunk view of 200 bytes at offset 100
+    /// c. A chunk view of 100 bytes at offset 300
     ///
     ///         0       100      200      300      400       512
     /// Step 2  |xxxxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx|---------|
-    ///         |---------single chunk--------------|---------|
+    ///         |-------single chunk view-----------|---------|
     ///
     /// Step 3  |xxxxxxxx|xxxxxxxx|xxxxxxxx|xxxxxxxx|---------|
     ///         |chunk a-|                 |-chunk c|---------|
     ///                  |oooooooo|oooooooo|
-    ///                  |-----chunk b-----|
+    ///                  |--chunk view b---|
     ///
-    /// Chunks a and c have the same chunk ID as they are two windows over different
+    /// Chunk views a and c have the same chunk ID as they are two windows over different
     /// parts of the same piece of data that was locally saved at step 2.
     /// Hence those two chunks are not properly aligned: a reshape is required to
     /// flatten the data written at step 2 and 3 to obtain a piece of data
     /// that can be uploaded as a proper block, i.e:
-    /// d. A chunk of 400 bytes at offset 0
+    /// d. A chunk view of 400 bytes at offset 0
     ///
-    /// Also note that blocksize doesn't play a role here: chunk d is a considered
+    /// Also note that blocksize doesn't play a role here: chunk view d is a considered
     /// aligned with its raw data even if it is not aligned on blocksize (being smaller
     /// than the blocksize). This is because:
     /// - The last block in a file is allowed to be smaller than the blocksize.
@@ -284,9 +294,9 @@ impl ChunkView {
         true
     }
 
-    pub fn get_block_access(&self) -> Result<&BlockAccess, ChunkGetBlockAccessError> {
+    pub fn get_block_access(&self) -> Result<&BlockAccess, ChunkViewGetBlockAccessError> {
         self.block()
-            .ok_or(ChunkGetBlockAccessError::NotPromotedAsBlock)
+            .ok_or(ChunkViewGetBlockAccessError::NotPromotedAsBlock)
     }
 
     #[allow(clippy::nonminimal_bool)]
@@ -466,26 +476,26 @@ impl LocalFileManifest {
             let block_span_start = i as u64 * *self.blocksize;
             let block_span_stop = block_span_start + *self.blocksize;
 
-            for chunk in chunks {
-                // Check that the chunk is internally consistent
-                chunk.check_data_integrity()?;
+            for chunk_view in chunks {
+                // Check that the chunk view is internally consistent
+                chunk_view.check_data_integrity()?;
 
-                // Check that the chunk belong to the block span
-                if chunk.start < block_span_start || chunk.stop.get() > block_span_stop {
+                // Check that the chunk view belong to the block span
+                if chunk_view.start < block_span_start || chunk_view.stop.get() > block_span_stop {
                     return Err(DataError::DataIntegrity {
                         data_type: std::any::type_name::<Self>(),
-                        invariant: "Chunk belong to the block span",
+                        invariant: "Chunk view belong to the block span",
                     });
                 }
 
                 // Check that the chunks are ordered and do not overlap
-                if current > chunk.start {
+                if current > chunk_view.start {
                     return Err(DataError::DataIntegrity {
                         data_type: std::any::type_name::<Self>(),
-                        invariant: "Chunks are ordered and do not overlap",
+                        invariant: "Chunk views are ordered and do not overlap",
                     });
                 }
-                current = chunk.stop.get();
+                current = chunk_view.stop.get();
             }
         }
 
@@ -498,7 +508,7 @@ impl LocalFileManifest {
         if current > self.size {
             return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
-                invariant: "File size is consistent with the last chunk",
+                invariant: "File size is consistent with the last chunk view",
             });
         }
 
@@ -506,19 +516,19 @@ impl LocalFileManifest {
     }
 
     pub fn from_remote(remote: FileManifest) -> Self {
-        let chunks: Vec<ChunkView> = remote
+        let chunk_views: Vec<ChunkView> = remote
             .blocks
             .iter()
             .map(|access| ChunkView::from_block_access(access.to_owned()))
             .collect();
 
         let mut blocks = vec![];
-        for chunk in chunks {
-            let block = (chunk.start / *remote.blocksize) as usize;
+        for chunk_view in chunk_views {
+            let block = (chunk_view.start / *remote.blocksize) as usize;
             while blocks.len() <= block {
                 blocks.push(vec![]);
             }
-            blocks[block].push(chunk);
+            blocks[block].push(chunk_view);
         }
 
         let manifest = Self {
@@ -555,8 +565,8 @@ impl LocalFileManifest {
             // Since remote manifests is composed of a flat list of ordered and reshaped blocks,
             // empty blocks (i.e lists containing no chunks) are simply filtered out.
             .filter(|chunks| !chunks.is_empty())
-            // Each blocksize area is expected to contain a single chunk, reshaped as an uploadable block
-            // (i.e a chunk with an access). If not, the `NotReshaped` error is returned.
+            // Each blocksize area is expected to contain a single chunk view, reshaped as an uploadable block
+            // (i.e a chunk view with an access). If not, the `NotReshaped` error is returned.
             .map(|chunks| match chunks.len() {
                 0 => unreachable!(),
                 1 => chunks[0]
@@ -588,10 +598,10 @@ impl LocalFileManifest {
     pub fn set_single_block(
         &mut self,
         block: u64,
-        new_chunk: ChunkView,
+        new_chunk_view: ChunkView,
     ) -> Result<Vec<ChunkView>, u64> {
         let slice = self.blocks.get_mut(block as usize).ok_or(block)?;
-        Ok(std::mem::replace(slice, vec![new_chunk]))
+        Ok(std::mem::replace(slice, vec![new_chunk_view]))
     }
 }
 

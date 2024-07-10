@@ -131,11 +131,11 @@ async fn reshape(
         let mut buf_size = 0;
         let mut local_miss = false;
         let start = reshape.destination().start;
-        for chunk in reshape.source().iter() {
-            let outcome = ops.store.get_chunk_or_block_local_only(chunk).await;
+        for chunk_view in reshape.source().iter() {
+            let outcome = ops.store.get_chunk_or_block_local_only(chunk_view).await;
             match outcome {
                 Ok(chunk_data) => {
-                    chunk
+                    chunk_view
                         .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
                         .expect("write on vec cannot fail");
                 }

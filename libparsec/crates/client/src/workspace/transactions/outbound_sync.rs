@@ -660,11 +660,14 @@ async fn do_next_reshape_operation(
     let mut buf = Vec::with_capacity(reshape.destination().size() as usize);
     let mut buf_size = 0;
     let start = reshape.destination().start;
-    for chunk in reshape.source().iter() {
-        let outcome = ops.store.get_chunk_or_block(chunk, manifest_base).await;
+    for chunk_view in reshape.source().iter() {
+        let outcome = ops
+            .store
+            .get_chunk_or_block(chunk_view, manifest_base)
+            .await;
         match outcome {
             Ok(chunk_data) => {
-                chunk
+                chunk_view
                     .copy_between_start_and_stop(&chunk_data, start, &mut buf, &mut buf_size)
                     .expect("write on vec cannot fail");
             }
@@ -693,7 +696,7 @@ async fn do_next_reshape_operation(
     // Sanity check: make sure that the buffer is fully filled
     assert!(buf.len() == reshape.destination().size() as usize);
 
-    // 2) Save the manifest with the new chunk in the storage
+    // 2) Save the manifest with the new chunk view in the storage
 
     // Lock back the entry or abort if it has changed in the meantime
 
@@ -715,7 +718,7 @@ async fn do_next_reshape_operation(
             }
             Err(ForUpdateSyncLocalOnlyError::Stopped) => return Err(WorkspaceSyncError::Stopped),
             Err(ForUpdateSyncLocalOnlyError::Internal(err)) => {
-                return Err(err.context("cannot acces entry in store").into())
+                return Err(err.context("cannot access entry in store").into())
             }
         }
     };
@@ -753,23 +756,23 @@ async fn upload_blocks(
 ) -> Result<UploadBlocksOutcome, WorkspaceSyncError> {
     for (block_index, block) in manifest.blocks.iter().enumerate() {
         assert!(block.len() == 1); // Sanity check: the manifest is guaranteed to be reshaped
-        let chunk = &block[0];
-        let block_access = chunk.access.as_ref().expect("already reshaped");
+        let chunk_view = &block[0];
+        let block_access = chunk_view.access.as_ref().expect("already reshaped");
         let block_id = block_access.id;
-        assert_eq!(block_id, chunk.id.into()); // Sanity check
+        assert_eq!(block_id, chunk_view.id.into()); // Sanity check
 
         // 1) Get back the block's data
 
-        let maybe_data =
-            ops.store
-                .get_not_uploaded_chunk(chunk.id)
-                .await
-                .map_err(|err| match err {
-                    WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
-                    WorkspaceStoreOperationError::Internal(err) => {
-                        err.context("cannot get chunk").into()
-                    }
-                })?;
+        let maybe_data = ops
+            .store
+            .get_not_uploaded_chunk(chunk_view.id)
+            .await
+            .map_err(|err| match err {
+                WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                WorkspaceStoreOperationError::Internal(err) => {
+                    err.context("cannot get chunk").into()
+                }
+            })?;
 
         let data = match maybe_data {
             // Already uploaded, nothing to do
@@ -822,7 +825,7 @@ async fn upload_blocks(
                 Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
                 // Nothing we can do if server is not ready to store our data, retry later
                 Rep::StoreUnavailable => return Ok(UploadBlocksOutcome::EntryIsBusy),
-                    // A key rotation occured concurrently, should poll for new certificates and retry
+                    // A key rotation occurred concurrently, should poll for new certificates and retry
                     Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                         let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
                         ops.certificates_ops
@@ -853,7 +856,7 @@ async fn upload_blocks(
         // 3) Mark the block as uploaded on local storage
 
         ops.store
-            .promote_local_only_chunk_to_uploaded_block(chunk.id)
+            .promote_local_only_chunk_to_uploaded_block(chunk_view.id)
             .await
             .map_err(|err| match err {
                 WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,

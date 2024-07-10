@@ -16,6 +16,7 @@ use super::per_manifest_update_lock::PerManifestUpdateLock;
 /// than a typical kernel read (512ko vs 4ko), so it's a big win to just keep the
 /// chunks currently being read in memory.
 /// To approximate that, we just keep the last 16 chunks read in memory.
+/// More practical information in this issue: https://github.com/Scille/parsec-cloud/issues/7111
 #[derive(Debug)]
 pub(super) struct ChunksCache {
     items: [Option<(ChunkID, Bytes)>; 16],

@@ -593,26 +593,29 @@ fn serde_local_user_manifest(
 
 #[rstest]
 fn chunk_new() {
-    let chunk = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
+    let chunk_view = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
 
-    p_assert_eq!(chunk.start, 1);
-    p_assert_eq!(chunk.stop, NonZeroU64::try_from(5).unwrap());
-    p_assert_eq!(chunk.raw_offset, 1);
-    p_assert_eq!(chunk.raw_size, NonZeroU64::try_from(4).unwrap());
-    p_assert_eq!(chunk.access, None);
+    p_assert_eq!(chunk_view.start, 1);
+    p_assert_eq!(chunk_view.stop, NonZeroU64::try_from(5).unwrap());
+    p_assert_eq!(chunk_view.raw_offset, 1);
+    p_assert_eq!(chunk_view.raw_size, NonZeroU64::try_from(4).unwrap());
+    p_assert_eq!(chunk_view.access, None);
 
-    p_assert_eq!(chunk, 1);
-    assert!(chunk < 2);
-    assert!(chunk > 0);
-    p_assert_ne!(chunk, ChunkView::new(1, NonZeroU64::try_from(5).unwrap()));
+    p_assert_eq!(chunk_view, 1);
+    assert!(chunk_view < 2);
+    assert!(chunk_view > 0);
+    p_assert_ne!(
+        chunk_view,
+        ChunkView::new(1, NonZeroU64::try_from(5).unwrap())
+    );
 }
 
 #[rstest]
 fn chunk_promote_as_block() {
-    let chunk = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
-    let id = chunk.id;
+    let chunk_view = ChunkView::new(1, NonZeroU64::try_from(5).unwrap());
+    let id = chunk_view.id;
     let block = {
-        let mut block = chunk.clone();
+        let mut block = chunk_view.clone();
         block.promote_as_block(b"<data>").unwrap();
         block
     };
@@ -642,9 +645,9 @@ fn chunk_promote_as_block() {
 
     let mut block = ChunkView::from_block_access(block_access);
     let err = block.promote_as_block(b"<data>").unwrap_err();
-    p_assert_eq!(err, ChunkPromoteAsBlockError::AlreadyPromotedAsBlock);
+    p_assert_eq!(err, ChunkViewPromoteAsBlockError::AlreadyPromotedAsBlock);
 
-    let mut chunk = ChunkView {
+    let mut chunk_view = ChunkView {
         id,
         start: 0,
         stop: NonZeroU64::try_from(1).unwrap(),
@@ -653,13 +656,13 @@ fn chunk_promote_as_block() {
         access: None,
     };
 
-    let err = chunk.promote_as_block(b"<data>").unwrap_err();
-    p_assert_eq!(err, ChunkPromoteAsBlockError::NotAligned);
+    let err = chunk_view.promote_as_block(b"<data>").unwrap_err();
+    p_assert_eq!(err, ChunkViewPromoteAsBlockError::NotAligned);
 }
 
 #[rstest]
 fn chunk_is_block() {
-    let chunk = ChunkView {
+    let chunk_view = ChunkView {
         id: ChunkID::default(),
         start: 0,
         stop: NonZeroU64::try_from(1).unwrap(),
@@ -668,11 +671,11 @@ fn chunk_is_block() {
         access: None,
     };
 
-    assert!(chunk.is_aligned_with_raw_data());
-    assert!(!chunk.is_block());
+    assert!(chunk_view.is_aligned_with_raw_data());
+    assert!(!chunk_view.is_block());
 
     let mut block = {
-        let mut block = chunk.clone();
+        let mut block = chunk_view.clone();
         block.promote_as_block(b"<data>").unwrap();
         block
     };
