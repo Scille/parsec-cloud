@@ -65,6 +65,5 @@ async function onCloseRequested(): Promise<void> {
 <style lang="scss" scoped>
 .modal-content {
   min-width: 32em;
-  display: flex;
 }
 </style>
