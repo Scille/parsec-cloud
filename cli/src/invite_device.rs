@@ -17,6 +17,11 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
     let InviteDevice {
         config: ConfigWithDeviceSharedOpts { config_dir, device },
     } = invite_device;
+    log::trace!(
+        "Inviting a device (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
         let mut handle = start_spinner("Creating device invitation".into());

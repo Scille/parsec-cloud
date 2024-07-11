@@ -29,6 +29,11 @@ pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Resu
         config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
     } = greet_invitation;
+    log::trace!(
+        "Greeting invitation (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
         let invitation = step0(&cmds, token).await?;

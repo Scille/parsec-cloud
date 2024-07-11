@@ -22,6 +22,7 @@ pub struct ClaimInvitation {
 }
 
 pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Result<()> {
+    log::trace!("Claiming invitation (addr={})", claim_invitation.addr);
     let ctx = step0(claim_invitation.addr).await?;
 
     match ctx {

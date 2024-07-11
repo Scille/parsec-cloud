@@ -21,6 +21,11 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
         config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
     } = cancel_invitation;
+    log::trace!(
+        "Cancelling invitation (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_cmds_and_run(config_dir, device, |cmds, _| async move {
         let mut handle = start_spinner("Deleting invitation".into());

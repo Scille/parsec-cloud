@@ -33,6 +33,12 @@ pub async fn bootstrap_organization_req(
     human_handle: HumanHandle,
     password: Password,
 ) -> anyhow::Result<AvailableDevice> {
+    log::trace!(
+        "Bootstrapping organization (confdir={}, datadir={})",
+        client_config.config_dir.display(),
+        client_config.data_base_dir.display()
+    );
+
     let on_event_callback = Arc::new(|_| ());
 
     Ok(libparsec::bootstrap_organization(
@@ -57,6 +63,7 @@ pub async fn bootstrap_organization(
         addr,
         device_label,
     } = bootstrap_organization;
+    log::trace!("Bootstrapping organization (addr={addr})");
 
     let human_handle = HumanHandle::new(&email, &label)
         .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;

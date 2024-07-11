@@ -18,6 +18,11 @@ pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Resu
         config: ConfigWithDeviceSharedOpts { config_dir, device },
         name,
     } = create_workspace;
+    log::trace!(
+        "Creating workspace {name} (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_client_and_run(config_dir, device, |client| async move {
         let mut handle = start_spinner("Creating workspace".into());

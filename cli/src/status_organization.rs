@@ -39,6 +39,7 @@ pub async fn status_organization(status_organization: StatusOrganization) -> any
         organization_id,
         server: ServerSharedOpts { addr, token },
     } = status_organization;
+    log::trace!("Retrieving status of organization {organization_id} (addr={addr})");
 
     let rep = status_organization_req(&organization_id, &addr, &token).await?;
 
