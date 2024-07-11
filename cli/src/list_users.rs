@@ -16,6 +16,11 @@ pub async fn list_users(list_users: ListUsers) -> anyhow::Result<()> {
         config: ConfigWithDeviceSharedOpts { config_dir, device },
         skip_revoked,
     } = list_users;
+    log::trace!(
+        "Listing users (confdir={}, device={}, skip_revoked={skip_revoked})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_client_and_run(config_dir, device, |client| async move {
         client.poll_server_for_new_certificates().await?;

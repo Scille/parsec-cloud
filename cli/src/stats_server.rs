@@ -74,6 +74,7 @@ pub async fn stats_server(stats_organization: StatsServer) -> anyhow::Result<()>
         format,
         end_date,
     } = stats_organization;
+    log::trace!("Retrieving server's stats (addr={addr}, format={format})");
 
     let rep = stats_server_req(&addr, &token, format, end_date).await?;
 

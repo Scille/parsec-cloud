@@ -12,6 +12,11 @@ pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
     let RemoveDevice {
         config: ConfigWithDeviceSharedOpts { config_dir, device },
     } = remove_device;
+    log::trace!(
+        "Removing device {device} (confdir={})",
+        config_dir.display(),
+        device = device.as_deref().unwrap_or("N/A")
+    );
 
     load_device_file_and_run(config_dir, device, |device| async move {
         let short_id = &device.device_id.hex()[..3];

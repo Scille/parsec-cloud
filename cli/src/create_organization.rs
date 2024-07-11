@@ -71,6 +71,7 @@ pub async fn create_organization(create_organization: CreateOrganization) -> any
         organization_id,
         server: ServerSharedOpts { addr, token },
     } = create_organization;
+    log::trace!("Creating organization \"{organization_id}\" (addr={addr})");
 
     let mut handle = start_spinner("Creating organization".into());
 

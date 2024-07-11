@@ -12,6 +12,7 @@ pub struct ListDevices {
 
 pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
     let config_dir = list_devices.config.config_dir;
+    log::trace!("Listing devices under {}", config_dir.display());
     let devices = list_available_devices(&config_dir).await;
     let config_dir_str = config_dir.to_string_lossy();
 

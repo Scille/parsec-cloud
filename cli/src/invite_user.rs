@@ -25,6 +25,11 @@ pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
         email,
         send_email,
     } = invite_user;
+    log::trace!(
+        "Inviting an user (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_cmds_and_run(config_dir, device, |cmds, device| async move {
         let mut handle = start_spinner("Creating user invitation".into());

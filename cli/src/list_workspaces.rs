@@ -12,6 +12,11 @@ pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<
     let ListWorkspaces {
         config: ConfigWithDeviceSharedOpts { config_dir, device },
     } = list_workspaces;
+    log::trace!(
+        "Listing workspaces (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_client_and_run(config_dir, device, |client| async move {
         client.poll_server_for_new_certificates().await?;

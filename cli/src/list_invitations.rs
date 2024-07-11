@@ -17,6 +17,11 @@ pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Resu
     let ListInvitations {
         config: ConfigWithDeviceSharedOpts { config_dir, device },
     } = list_invitations;
+    log::trace!(
+        "Listing invitations (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_cmds_and_run(config_dir, device, |cmds, _| async move {
         let mut handle = start_spinner("Listing invitations".into());

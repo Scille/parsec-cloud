@@ -26,6 +26,11 @@ pub async fn import_recovery_device(
         input,
         passphrase,
     } = import_recovery_device;
+    log::trace!(
+        "Importing recovery device from {} (confdir={})",
+        input.display(),
+        config_dir.display(),
+    );
 
     let mut handle = start_spinner("Loading recovery device file".into());
 

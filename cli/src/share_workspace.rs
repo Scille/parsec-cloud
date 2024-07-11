@@ -26,6 +26,11 @@ pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<
         user_id,
         role,
     } = share_workspace;
+    log::trace!(
+        "Sharing workspace {workspace_id} to {user_id} with role {role} (confdir={}, device={})",
+        config_dir.display(),
+        device.as_deref().unwrap_or("N/A")
+    );
 
     load_client_and_run(config_dir, device, |client| async move {
         let mut handle = start_spinner("Sharing workspace".into());
