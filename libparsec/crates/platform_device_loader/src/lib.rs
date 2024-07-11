@@ -28,7 +28,7 @@ pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
 pub const PARSEC_BASE_CONFIG_DIR: &str = "PARSEC_BASE_CONFIG_DIR";
 pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
-pub const PARSEC_HOME_DIR: &str = "PARSEC_HOME_DIR";
+pub const PARSEC_BASE_HOME_DIR: &str = "PARSEC_BASE_HOME_DIR";
 
 pub fn get_default_data_base_dir() -> PathBuf {
     #[cfg(target_arch = "wasm32")]
@@ -73,7 +73,7 @@ pub fn get_default_mountpoint_base_dir() -> PathBuf {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_HOME_DIR) {
+        let mut path = if let Ok(home_dir) = std::env::var(PARSEC_BASE_HOME_DIR) {
             PathBuf::from(home_dir)
         } else {
             dirs::home_dir().expect("Could not determine home directory")
