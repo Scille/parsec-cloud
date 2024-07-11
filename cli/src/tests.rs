@@ -94,6 +94,7 @@ fn version() {
 #[rstest::rstest]
 #[tokio::test]
 async fn list_devices(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
@@ -116,6 +117,7 @@ async fn list_devices(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn create_organization(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
@@ -141,6 +143,7 @@ async fn create_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn bootstrap_organization(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
@@ -176,6 +179,7 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_device(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -193,6 +197,7 @@ async fn invite_device(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -216,6 +221,7 @@ async fn invite_user(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn cancel_invitation(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -266,6 +272,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn stats_organization(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, org_id) = run_local_organization(&tmp_path, None, config)
@@ -317,6 +324,7 @@ async fn stats_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn export_recovery_device(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -344,6 +352,7 @@ async fn export_recovery_device(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn import_recovery_device(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -373,6 +382,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn stats_server(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
@@ -423,6 +433,7 @@ async fn stats_server(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn status_organization(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, _, org_id) = run_local_organization(&tmp_path, None, config)
@@ -460,6 +471,7 @@ async fn status_organization(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn list_invitations(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -513,6 +525,7 @@ async fn list_invitations(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn create_workspace(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -543,6 +556,7 @@ async fn create_workspace(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn list_users(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -570,6 +584,7 @@ async fn list_users(tmp_path: TmpPath) {
 // and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn share_workspace(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, _, bob], _) = run_local_organization(&tmp_path, None, config)
@@ -627,6 +642,7 @@ async fn share_workspace(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_device_dance(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -728,6 +744,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user_dance(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
@@ -843,6 +860,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 // and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn remove_device(tmp_path: TmpPath) {
+    let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
