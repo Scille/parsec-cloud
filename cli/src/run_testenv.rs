@@ -16,7 +16,7 @@ use libparsec::{
     DeviceAccessStrategy, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice,
     MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
     SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_HOME_DIR, PARSEC_SCHEME,
+    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -356,7 +356,7 @@ fn get_env_variables(tmp_dir: &Path) -> (&'static str, Vec<(&'static str, String
         "set",
         vec![
             (
-                PARSEC_HOME_DIR,
+                PARSEC_BASE_HOME_DIR,
                 format!("{dir}\\cache", dir = tmp_dir.display()),
             ),
             (
@@ -375,7 +375,7 @@ fn get_env_variables(tmp_dir: &Path) -> (&'static str, Vec<(&'static str, String
         "export",
         vec![
             (
-                PARSEC_HOME_DIR,
+                PARSEC_BASE_HOME_DIR,
                 format!("{dir}/cache", dir = tmp_dir.display()),
             ),
             (
