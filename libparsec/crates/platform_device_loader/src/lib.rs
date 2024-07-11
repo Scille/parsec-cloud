@@ -27,7 +27,7 @@ pub const ARGON2ID_DEFAULT_PARALLELISM: u32 = 1;
 pub(crate) const DEVICE_FILE_EXT: &str = "keys";
 
 pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
-pub const PARSEC_DATA_DIR: &str = "PARSEC_DATA_DIR";
+pub const PARSEC_BASE_DATA_DIR: &str = "PARSEC_BASE_DATA_DIR";
 pub const PARSEC_HOME_DIR: &str = "PARSEC_HOME_DIR";
 
 pub fn get_default_data_base_dir() -> PathBuf {
@@ -37,7 +37,7 @@ pub fn get_default_data_base_dir() -> PathBuf {
     }
     #[cfg(not(target_arch = "wasm32"))]
     {
-        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_DATA_DIR) {
+        let mut path = if let Ok(data_dir) = std::env::var(PARSEC_BASE_DATA_DIR) {
             PathBuf::from(data_dir)
         } else {
             dirs::data_dir().expect("Could not determine base data directory")
