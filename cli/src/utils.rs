@@ -10,17 +10,21 @@ use libparsec::{
 };
 use spinners::{Spinner, Spinners, Stream};
 
+/// Environment variable to set the Parsec config directory
+/// Should not be confused with [`libparsec::PARSEC_BASE_CONFIG_DIR`]
+pub const PARSEC_CONFIG_DIR: &str = "PARSEC_CONFIG_DIR";
+
 #[derive(clap::Parser)]
 pub(crate) struct ConfigSharedOpts {
     /// Parsec config directory
-    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = libparsec::PARSEC_CONFIG_DIR)]
+    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = PARSEC_CONFIG_DIR)]
     pub(crate) config_dir: PathBuf,
 }
 
 #[derive(clap::Parser)]
 pub(crate) struct ConfigWithDeviceSharedOpts {
     /// Parsec config directory
-    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = libparsec::PARSEC_CONFIG_DIR)]
+    #[arg(short, long, default_value_os_t = libparsec::get_default_config_dir(), env = PARSEC_CONFIG_DIR)]
     pub(crate) config_dir: PathBuf,
     /// Device ID
     #[arg(short, long, env = "PARSEC_DEVICE_ID")]

@@ -15,8 +15,8 @@ use libparsec::{
     load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
     DeviceAccessStrategy, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice,
     MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
-    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_DATA_DIR, PARSEC_CONFIG_DIR,
-    PARSEC_HOME_DIR, PARSEC_SCHEME,
+    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
+    PARSEC_BASE_DATA_DIR, PARSEC_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -364,7 +364,7 @@ fn get_env_variables(tmp_dir: &Path) -> (&'static str, Vec<(&'static str, String
                 format!("{dir}\\share", dir = tmp_dir.display()),
             ),
             (
-                PARSEC_CONFIG_DIR,
+                PARSEC_BASE_CONFIG_DIR,
                 format!("{dir}\\config", dir = tmp_dir.display()),
             ),
         ],
@@ -383,7 +383,7 @@ fn get_env_variables(tmp_dir: &Path) -> (&'static str, Vec<(&'static str, String
                 format!("{dir}/share", dir = tmp_dir.display()),
             ),
             (
-                PARSEC_CONFIG_DIR,
+                PARSEC_BASE_CONFIG_DIR,
                 format!("{dir}/config", dir = tmp_dir.display()),
             ),
         ],

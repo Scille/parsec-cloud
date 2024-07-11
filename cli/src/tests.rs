@@ -15,7 +15,7 @@ use libparsec::{
     },
     get_default_config_dir, tmp_path, AuthenticatedCmds, ClientConfig, HumanHandle, InvitationType,
     LocalDevice, OrganizationID, ParsecAddr, ParsecInvitationAddr, ProxyConfig, TmpPath,
-    PARSEC_BASE_DATA_DIR, PARSEC_CONFIG_DIR, PARSEC_HOME_DIR,
+    PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR, PARSEC_HOME_DIR,
 };
 
 use crate::{
@@ -41,7 +41,7 @@ fn set_env(tmp_dir: &str, url: &ParsecAddr) {
     std::env::set_var(TESTBED_SERVER_URL, url.to_url().to_string());
     std::env::set_var(PARSEC_HOME_DIR, format!("{tmp_dir}/cache"));
     std::env::set_var(PARSEC_BASE_DATA_DIR, format!("{tmp_dir}/share"));
-    std::env::set_var(PARSEC_CONFIG_DIR, format!("{tmp_dir}/config"));
+    std::env::set_var(PARSEC_BASE_CONFIG_DIR, format!("{tmp_dir}/config"));
 }
 
 fn unique_org_id() -> OrganizationID {
