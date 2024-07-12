@@ -257,7 +257,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "client/electron/scripts/package-sign.ps1": {
+    ROOT_DIR / "client/electron/scripts/sign-windows-package.ps1": {
         Tool.Node: [
             ReplaceRegex(
                 r'expected_node_version = "v.*"',
