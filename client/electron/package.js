@@ -10,6 +10,9 @@ const PARSEC_SCHEME = 'parsec3';
  *   mode: 'test' | 'prod',
  *   platform: 'linux' | 'win32' | 'darwin',
  *   targets: string[],
+ *   export: boolean,
+ *   nightly: boolean,
+ *   sign: boolean,
  * }}
  */
 function cli() {
@@ -27,6 +30,7 @@ function cli() {
   );
   program.addOption(new Option('--export', 'Export the configuration to JSON'));
   program.addOption(new Option('--nightly', 'The current build is a nightly build').default(false));
+  program.addOption(new Option('--sign', 'Sign the package').default(false));
   program.argument('[target...]', 'Targets to build');
 
   program.parse();
@@ -78,6 +82,11 @@ const fs = require('node:fs');
 fs.mkdirSync('build/assets', { recursive: true });
 fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
+const sign_options = {
+  certificateSubjectName: 'Scille',
+  certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
+}
+
 /**
  * @type {import('electron-builder').Configuration}
  * @see https://www.electron.build/configuration/configuration
@@ -111,13 +120,14 @@ const options = {
 
   win: {
     target: 'nsis',
+    ... ( OPTS.sign ? sign_options : {}),
     extraResources: [
       {
         from: 'node_modules/regedit/vbs',
         to: 'vbs',
         filter: ['**/*'],
       },
-    ],
+    ]
   },
 
   nsis: {
