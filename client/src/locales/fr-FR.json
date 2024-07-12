@@ -152,7 +152,7 @@
         "organizationActionSheet": "Organisation",
         "keyringFailed": "Impossible de se connecter",
         "noDevices": {
-            "titleCreateOrga": "Vous débutez sur Parsec Cloud ?",
+            "titleCreateOrga": "Vous débutez sur Parsec ?",
             "titleInvitation": "Vous avez reçu un lien d'invitation ?",
             "invitationLink": "Saisissez le lien d'invitation",
             "invitationJoin": "Rejoindre",

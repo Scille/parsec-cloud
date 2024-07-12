@@ -152,7 +152,7 @@
         "organizationActionSheet": "Organization",
         "keyringFailed": "Could not log in",
         "noDevices": {
-            "titleCreateOrga": "New to Parsec Cloud ?",
+            "titleCreateOrga": "New to Parsec?",
             "titleInvitation": "You have received an invitation link?",
             "invitationLink": "Enter the invitation link",
             "invitationJoin": "Join",
