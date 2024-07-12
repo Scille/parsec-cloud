@@ -343,3 +343,19 @@ jobs:
             client/electron/dist/Parsec-SBOM-*.spdx.json
           if-no-files-found: error
         timeout-minutes: 10
+
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+        if: matrix.platform == 'windows'
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-pre-built-${{ matrix.extension }}
+          path: |
+            client/electron/app
+            client/electron/build
+            client/electron/assets
+            client/electron/scripts
+            client/electron/package.js
+            client/electron/package.json
+            client/electron/package-lock.json
+            client/electron/package-sign.cmd
+          if-no-files-found: error
+        timeout-minutes: 10
