@@ -120,7 +120,7 @@ const options = {
 
   win: {
     target: 'nsis',
-    ... ( OPTS.sign ? signOptions : {}),
+    ...(OPTS.sign ? signOptions : {}),
     extraResources: [
       {
         from: 'node_modules/regedit/vbs',
