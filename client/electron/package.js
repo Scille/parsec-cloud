@@ -82,10 +82,10 @@ const fs = require('node:fs');
 fs.mkdirSync('build/assets', { recursive: true });
 fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
-const sign_options = {
+const signOptions = {
   certificateSubjectName: 'Scille',
   certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
-}
+};
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -120,14 +120,14 @@ const options = {
 
   win: {
     target: 'nsis',
-    ... ( OPTS.sign ? sign_options : {}),
+    ... ( OPTS.sign ? signOptions : {}),
     extraResources: [
       {
         from: 'node_modules/regedit/vbs',
         to: 'vbs',
         filter: ['**/*'],
       },
-    ]
+    ],
   },
 
   nsis: {
