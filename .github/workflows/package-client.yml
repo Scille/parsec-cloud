@@ -356,6 +356,7 @@ jobs:
             client/electron/package.js
             client/electron/package.json
             client/electron/package-lock.json
-            client/electron/package-sign.cmd
+            client/electron/sign-windows-package.cmd
+            client/electron/README.md
           if-no-files-found: error
         timeout-minutes: 10
