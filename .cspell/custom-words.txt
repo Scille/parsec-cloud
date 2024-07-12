@@ -162,6 +162,7 @@ exceptiongroup
 excrepr
 executemany
 executescript
+executionpolicy
 fallocate
 farn
 fastapi
