@@ -1859,7 +1859,7 @@ checksum = "4ec2a862134d2a7d32d7983ddcdd1c4923530833c9f2ea1a44fc5fa473989058"
 
 [[package]]
 name = "libparsec"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "dirs",
  "libparsec_client",
@@ -1878,7 +1878,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_bindings_android"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "android_logger",
  "jni",
@@ -1890,7 +1890,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_bindings_electron"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "env_logger",
  "lazy_static",
@@ -1902,7 +1902,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_bindings_web"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "console_error_panic_hook",
  "console_log",
@@ -1916,7 +1916,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_client"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_async",
@@ -1934,7 +1934,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_client_connection"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "bytes",
  "data-encoding",
@@ -1957,7 +1957,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_crypto"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "argon2",
  "blake2",
@@ -1991,7 +1991,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_async"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "async-broadcast",
  "async-lock 3.4.0",
@@ -2014,7 +2014,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_device_loader"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "dirs",
  "keyring",
@@ -2032,7 +2032,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_http_proxy"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "libparsec_types",
  "reqwest",
@@ -2042,7 +2042,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_mountpoint"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "ctrlc",
  "env_logger",
@@ -2065,7 +2065,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_platform_storage"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "indexed_db_futures",
  "js-sys",
@@ -2087,7 +2087,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_protocol"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "bytes",
  "futures",
@@ -2108,7 +2108,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_serialization_format"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "bytes",
  "hex-literal",
@@ -2126,7 +2126,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_testbed"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "crc32fast",
  "hex-literal",
@@ -2143,7 +2143,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_fixtures"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_device_loader",
@@ -2156,7 +2156,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_lite"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "env_logger",
  "hex-literal",
@@ -2172,7 +2172,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_tests_macros"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2181,7 +2181,7 @@ dependencies = [
 
 [[package]]
 name = "libparsec_types"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2749,7 +2749,7 @@ dependencies = [
 
 [[package]]
 name = "parsec"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "chrono",
  "futures",
@@ -2770,7 +2770,7 @@ dependencies = [
 
 [[package]]
 name = "parsec_cli"
-version = "3.0.0-b.11+dev"
+version = "3.0.0-b.12"
 dependencies = [
  "anyhow",
  "assert_cmd",
