@@ -14,10 +14,12 @@ if (-Not ($node_version -eq $expected_node_version)) {
 }
 
 # Cleanup dist directory
-rm dist -r -force
+if (Test-Path dist) {
+    rm dist -r -force
+}
 
 # Install node-modules
-npm install
+npm clean-install
 
 # Build and sign the release
 npm run electron:sign
