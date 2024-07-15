@@ -86,6 +86,12 @@ jobs:
         uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
         timeout-minutes: 2
 
+      - name: Check that snapcraft credential is not empty
+        run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -ne 0
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
+        timeout-minutes: 1
+
       - name: Whoami snap
         run: snapcraft whoami
         env:
