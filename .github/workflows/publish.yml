@@ -7,12 +7,22 @@ on:
         type: string
         required: true
         description: The release tag to fetch the package to publish
+      nightly:
+        type: boolean
+        required: false
+        description: Whether to publish the package as a nightly release
+        default: true
   workflow_call:
     inputs:
       release_tag:
         type: string
         required: true
         description: The release tag to fetch the package to publish
+      nightly:
+        type: boolean
+        required: false
+        description: Whether to publish the package as a nightly release
+        default: true
   release:
     types:
       - published
@@ -39,6 +49,12 @@ jobs:
       contents: read
       id-token: write
     steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+        with:
+          sparse-checkout: |
+            misc
+        timeout-minutes: 5
+
       - name: Get tag version
         id: version
         run: |
@@ -86,6 +102,12 @@ jobs:
         uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
         timeout-minutes: 2
 
+      - name: Get releases for snapcraft
+        run: |
+          set -o pipefail
+          python misc/snapcraft_releases.py ${{ inputs.nightly && '--nightly' || '' }} ${{ steps.version.outputs.full }} | tee ${{ runner.temp }}/snap-releases-args
+        timeout-minutes: 1
+
       - name: Check that snapcraft credential is not empty
         run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -ne 0
         env:
@@ -99,7 +121,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Upload Snap
-        run: snapcraft upload --release=nightly/stable snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
+        run: snapcraft upload $(cat ${{ runner.temp }}/snap-releases-args) snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 5
