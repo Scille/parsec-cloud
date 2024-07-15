@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8  # pin v4.0.2
+      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b  # pin v4.0.3
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -116,7 +116,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@64e4e2f995104968c78bd697b253d55bf557af66 # pin v2.41.11
+      - uses: taiki-e/install-action@32300fcc7462d35c920c6d4a42efe7bc39b61569 # pin v2.41.17
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
