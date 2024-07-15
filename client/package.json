@@ -79,6 +79,7 @@
         "cypress-file-upload": "^5.0.8",
         "cypress-real-events": "^1.11.0",
         "cypress-vite": "^1.4.2",
+        "electron-builder-notarize": "^1.5.2",
         "esbuild": "^0.19.5",
         "eslint": "^8.53.0",
         "eslint-config-standard-with-typescript": "^39.1.1",
