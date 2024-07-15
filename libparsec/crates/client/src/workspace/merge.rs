@@ -153,6 +153,13 @@ pub(super) fn merge_local_folder_manifest(
     // 0) Sanity checks, caller is responsible to handle them properly !
     debug_assert_eq!(local.base.id, remote.id);
 
+    // TODO
+    // Start by re-applying pattern (idempotent)
+    // if force_apply_pattern and isinstance(
+    //     local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
+    // ):
+    //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
+
     // 1) Shortcut in case the remote is outdated
     if remote.version <= local.base.version {
         return MergeLocalFolderManifestOutcome::NoChange;
@@ -181,7 +188,7 @@ pub(super) fn merge_local_folder_manifest(
     // the previous remote manifest which appears to be remote
     // changes we know about (given we are the author of it !).
     // If the speculative flag is not taken into account, we would
-    // consider we have  willingly removed all entries from the remote,
+    // consider we have willingly removed all entries from the remote,
     // hence uploading a new expunged remote manifest.
     //
     // Of course removing local storage is an unlikely situation, but:
@@ -217,9 +224,9 @@ pub(super) fn merge_local_folder_manifest(
     let FolderManifest {
         // `id` has already been checked
         id: _,
-        // Ignore `author`&`timestamp`: we don't merge data that change on each sync
-        author: _,
         // Ignore `author`: we don't merge data that change on each sync
+        author: _,
+        // Ignore `timestamp`: we don't merge data that change on each sync
         timestamp: _,
         // Ignore `version`: we don't merge data that change on each sync
         version: _,
@@ -233,13 +240,6 @@ pub(super) fn merge_local_folder_manifest(
         parent: remote_parent,
         children: remote_children,
     } = &remote;
-
-    // TODO
-    // Start by re-applying pattern (idempotent)
-    // if force_apply_pattern and isinstance(
-    //     local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
-    // ):
-    //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
 
     // Solve the folder conflict
     let merged_children = merge_children(&local_base.children, local_children, remote_children);
