@@ -347,6 +347,8 @@ async fn merge_manifest_and_update_store(
             let merge_outcome = super::super::merge::merge_local_folder_manifest(
                 ops.device.device_id,
                 ops.device.now(),
+                // TODO: Pass prevent sync pattern
+                None,
                 &local_manifest,
                 remote_manifest,
             );

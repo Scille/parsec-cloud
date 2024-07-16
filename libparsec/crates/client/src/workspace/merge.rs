@@ -147,29 +147,65 @@ pub(super) fn merge_local_file_manifest(
 pub(super) fn merge_local_folder_manifest(
     local_author: DeviceID,
     timestamp: DateTime,
+    prevent_sync_pattern: Option<&Regex>,
     local: &LocalFolderManifest,
     remote: FolderManifest,
 ) -> MergeLocalFolderManifestOutcome {
-    // 0) Sanity checks, caller is responsible to handle them properly !
-    debug_assert_eq!(local.base.id, remote.id);
+    // Destruct local and remote manifests to ensure this code with fail to compile whenever a new field is introduced.
+    let LocalFolderManifest {
+        base:
+            FolderManifest {
+                id: local_base_id,
+                version: local_base_version,
+                children: local_base_children,
+                parent: local_base_parent,
+                // Ignored, we don't merge data that change on each sync
+                author: _,
+                // `created` should never change, so in theory we should have
+                // `local.base.created == remote.base.created`, but there is no strict
+                // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
+                // so we have no choice but to accept whatever value remote provides.
+                created: _,
+                // Ignored, we don't merge data that change on each sync
+                timestamp: _,
+                // Ignored, we don't merge data that change on each sync
+                updated: _,
+            },
+        children: local_children,
+        parent: local_parent,
+        need_sync: local_need_sync,
+        speculative: local_speculative,
+        // Ignored, that field is merged in `from_remote_with_local_context`
+        remote_confinement_points: _,
+        // Ignored, that field is merged in `from_remote_with_local_context`
+        local_confinement_points: _,
+        // Ignored, we don't merge data that change on each sync
+        updated: _,
+    } = local;
 
-    // TODO
-    // Start by re-applying pattern (idempotent)
-    // if force_apply_pattern and isinstance(
-    //     local_manifest, (LocalFolderManifest, LocalWorkspaceManifest)
-    // ):
+    // 0) Sanity checks, caller is responsible to handle them properly !
+    debug_assert_eq!(local_base_id, &remote.id);
+
+    // TODO: Allow to force re-applying the prevent sync pattern (idempotent)
+    // if force_apply_pattern {
     //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
+    // }
 
     // 1) Shortcut in case the remote is outdated
-    if remote.version <= local.base.version {
+    if remote.version <= *local_base_version {
         return MergeLocalFolderManifestOutcome::NoChange;
     }
 
+    let local_from_remote = LocalFolderManifest::from_remote_with_local_context(
+        remote,
+        prevent_sync_pattern,
+        local,
+        timestamp,
+    );
+
     // 2) Shortcut in case only the remote has changed
-    if !local.need_sync {
-        return MergeLocalFolderManifestOutcome::Merged(Arc::new(
-            LocalFolderManifest::from_remote(remote, None),
-        ));
+    if !local_need_sync {
+        return MergeLocalFolderManifestOutcome::Merged(Arc::new(local_from_remote));
     }
 
     // Both the remote and the local have changed
@@ -196,54 +232,21 @@ pub(super) fn merge_local_folder_manifest(
     //   that would be considered as bug :/
     // - the fixtures and server data binder system used in the tests
     //   makes it much more likely
-    if remote.author == local_author && !local.speculative {
+    if local_from_remote.base.author == local_author && !local_speculative {
         let mut new_local = local.to_owned();
-        new_local.base = remote;
+        new_local.base = local_from_remote.base;
         return MergeLocalFolderManifestOutcome::Merged(Arc::new(new_local));
     }
 
     // 4) Merge data and ensure the sync is still needed
 
-    // Destruct local and remote manifests to ensure this code with fail to compile
-    // whenever a new field is introduced.
-    let LocalFolderManifest {
-        // `need_sync` has already been checked
-        need_sync: _,
-        // Ignore `updated`: we don't merge data that change on each sync
-        updated: _,
-        // Ignore `speculative`: merging with a remote means we're not speculative anymore !
-        speculative: _,
-        base: local_base,
-        parent: local_parent,
-        children: local_children,
-        // TODO: confinement points support not implemented yet !
-        local_confinement_points: _local_local_confinement_points,
-        // TODO: confinement points support not implemented yet !
-        remote_confinement_points: _local_remote_confinement_points,
-    } = local;
-    let FolderManifest {
-        // `id` has already been checked
-        id: _,
-        // Ignore `author`: we don't merge data that change on each sync
-        author: _,
-        // Ignore `timestamp`: we don't merge data that change on each sync
-        timestamp: _,
-        // Ignore `version`: we don't merge data that change on each sync
-        version: _,
-        // Ignore `updated`: we don't merge data that change on each sync
-        updated: _,
-        // `created` should never change, so in theory we should have
-        // `local.base.created == remote.base.created`, but there is no strict
-        // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
-        // so we have no choice but to accept whatever value remote provides.
-        created: _,
-        parent: remote_parent,
-        children: remote_children,
-    } = &remote;
-
     // Solve the folder conflict
-    let merged_children = merge_children(&local_base.children, local_children, remote_children);
-    let merged_parent = merge_parent(local_base.parent, *local_parent, *remote_parent);
+    let merged_children = merge_children(
+        local_base_children,
+        local_children,
+        &local_from_remote.children,
+    );
+    let merged_parent = merge_parent(*local_base_parent, *local_parent, local_from_remote.parent);
 
     // Children merge can end up with nothing to sync.
     //
@@ -263,27 +266,26 @@ pub(super) fn merge_local_folder_manifest(
     // /!\ Extra attention should be paid here if we want to add new fields
     // /!\ with their own sync logic, as this optimization may shadow them!
 
-    let merged_need_sync = merged_children != remote.children || merged_parent != remote.parent;
-    let updated = if merged_need_sync {
+    let merge_need_sync =
+        merged_children != local_from_remote.children || merged_parent != local_from_remote.parent;
+    let merge_update = if merge_need_sync {
         timestamp
     } else {
-        remote.updated
-    };
-    // TODO: prevent sync pattern is not handled here !
-    let merged_manifest = LocalFolderManifest {
-        need_sync: merged_need_sync,
-        parent: merged_parent,
-        children: merged_children,
-        updated,
-        base: remote,
-        // TODO: confinement points support not implemented yet !
-        local_confinement_points: HashSet::new(),
-        // TODO: confinement points support not implemented yet !
-        remote_confinement_points: HashSet::new(),
-        speculative: false,
+        local_from_remote.base.updated
     };
 
-    MergeLocalFolderManifestOutcome::Merged(Arc::new(merged_manifest))
+    let manifest = LocalFolderManifest {
+        children: merged_children,
+        parent: merged_parent,
+        need_sync: merge_need_sync,
+        updated: merge_update,
+        speculative: false,
+        base: local_from_remote.base,
+        local_confinement_points: local_from_remote.local_confinement_points,
+        remote_confinement_points: local_from_remote.remote_confinement_points,
+    };
+
+    MergeLocalFolderManifestOutcome::Merged(Arc::new(manifest))
 }
 
 fn merge_parent(base: VlobID, local: VlobID, remote: VlobID) -> VlobID {
