@@ -303,6 +303,55 @@ async fn add_realm_role_certificate(env: &TestbedEnv) {
     p_assert_eq!(got, vec![alice_realm_role_certif]);
 }
 
+#[parsec_test(testbed = "minimal")]
+async fn get_realm_current_users_roles(env: &TestbedEnv) {
+    let realm_id = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            builder.new_user("mallory");
+            let realm_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|e| e.realm);
+            builder.share_realm(realm_id, "bob", RealmRole::Contributor);
+            builder.share_realm(realm_id, "mallory", RealmRole::Contributor);
+            builder.share_realm(realm_id, "bob", RealmRole::Reader);
+            builder.share_realm(realm_id, "bob", RealmRole::Manager);
+            builder.share_realm(realm_id, "mallory", None);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            realm_id
+        })
+        .await;
+
+    let alice = env.local_device("alice@dev1");
+    let store = certificates_store_factory(env, &alice).await;
+
+    let last_user_roles = store
+        .for_read(|store| async move {
+            store
+                .get_realm_current_users_roles(UpTo::Current, realm_id)
+                .await
+        })
+        .await
+        .unwrap()
+        .unwrap();
+
+    p_assert_eq!(
+        last_user_roles,
+        HashMap::from_iter([
+            (
+                "alice".parse().unwrap(),
+                env.get_last_realm_role_certificate("alice", realm_id).0
+            ),
+            (
+                "bob".parse().unwrap(),
+                env.get_last_realm_role_certificate("bob", realm_id).0
+            ),
+            // Mallory is not longer part of the realm, so it is not present in the result
+        ])
+    );
+}
+
 #[parsec_test(testbed = "empty")]
 async fn add_sequester_authority_certificate(env: &TestbedEnv) {
     env.customize(|builder| {

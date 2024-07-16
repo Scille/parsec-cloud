@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
-
 use libparsec_types::prelude::*;
 
 use super::{
@@ -319,21 +317,18 @@ pub(super) async fn list_workspace_users(
     ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<Vec<WorkspaceUserAccessInfo>, CertifListWorkspaceUsersError> {
+    let mut infos = Vec::new();
+
     ops.store
         .for_read(|store| async move {
-            let role_certifs = store.get_realm_roles(UpTo::Current, realm_id).await?;
+            let per_user_certifs = store
+                .get_realm_current_users_roles(UpTo::Current, realm_id)
+                .await?;
 
-            let mut infos = HashMap::with_capacity(role_certifs.len());
-            for role_certif in role_certifs {
-                // Ignore user that have lost their access
-                let current_role = match role_certif.role {
-                    None => {
-                        infos.remove(&role_certif.user_id);
-                        continue;
-                    }
-                    Some(role) => role,
-                };
-                let user_id = role_certif.user_id;
+            for (user_id, role_certif) in per_user_certifs {
+                let current_role = role_certif
+                    .role
+                    .expect("unshared user should not be listed");
 
                 // Ignore revoked users
                 let maybe_revoked = store
@@ -369,10 +364,10 @@ pub(super) async fn list_workspace_users(
                     current_profile,
                     current_role,
                 };
-                infos.insert(user_id, user_info);
+                infos.push(user_info);
             }
 
-            Ok(infos.into_values().collect())
+            Ok(infos)
         })
         .await?
         .map_err(|err| err.into())
