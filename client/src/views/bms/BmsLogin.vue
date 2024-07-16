@@ -36,6 +36,16 @@
             {{ $msTranslate('ClientApplication.forgottenPassword') }}
           </ion-text>
         </div>
+        <!-- error -->
+        <ion-text
+          class="form-error body login-button-error"
+          v-show="loginError"
+        >
+          <ion-icon
+            class="form-error-icon"
+            :icon="warning"
+          />{{ $msTranslate(loginError) }}
+        </ion-text>
       </div>
 
       <ion-footer class="saas-login-footer">
@@ -47,14 +57,6 @@
             {{ $msTranslate('ClientApplication.login') }}
           </ion-button>
           <ms-spinner v-show="querying" />
-
-          <!-- error -->
-          <div
-            class="form-error login-button-error"
-            v-show="loginError"
-          >
-            {{ $msTranslate(loginError) }}
-          </div>
         </div>
 
         <!-- TODO: UPDATE THE LINK -->
@@ -83,9 +85,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter } from '@ionic/vue';
+import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
+import { warning } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { AuthenticationToken, BmsApi, DataType } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';

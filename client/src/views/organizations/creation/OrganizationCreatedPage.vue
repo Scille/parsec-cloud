@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="created-page">
+  <ion-page class="created-page page-modal-container">
     <ms-informative-text>
       {{ $msTranslate('CreateOrganization.organizationCreated') }}
     </ms-informative-text>
@@ -45,17 +45,4 @@ defineEmits<{
 }>();
 </script>
 
-<style scoped lang="scss">
-.created-page {
-  padding: 2.5rem;
-  display: flex;
-  height: auto;
-  width: 100%;
-
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2.5rem;
-  }
-}
-</style>
+<style scoped lang="scss"></style>

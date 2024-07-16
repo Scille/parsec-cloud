@@ -1,26 +1,27 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="organization-name-and-server-page">
+  <ion-page class="organization-name-and-server-page page-modal-container">
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.nameAndServer"
     />
 
-    <div>
-      <ms-input
-        :label="'CreateOrganization.organizationName'"
-        :placeholder="'CreateOrganization.organizationNamePlaceholder'"
-        id="org-name-input"
-        v-model="organizationName"
-        :disabled="disableOrganizationNameField"
-        ref="organizationNameInputRef"
-        :validator="organizationValidator"
-      />
-
-      <ion-text class="subtitles-sm org-name-criteria">
-        {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
-      </ion-text>
+    <div class="organization-name-and-server-page-content">
+      <div class="organization-name">
+        <ms-input
+          :label="'CreateOrganization.organizationName'"
+          :placeholder="'CreateOrganization.organizationNamePlaceholder'"
+          id="org-name-input"
+          v-model="organizationName"
+          :disabled="disableOrganizationNameField"
+          ref="organizationNameInputRef"
+          :validator="organizationValidator"
+        />
+        <ion-text class="subtitles-sm org-name-criteria">
+          {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
+        </ion-text>
+      </div>
 
       <ms-input
         :label="'CreateOrganization.serverDescription'"
@@ -30,9 +31,16 @@
         ref="serverAddrInputRef"
         :validator="parsecAddrValidator"
       />
-      <p v-show="error">
-        {{ $msTranslate(error) }}
-      </p>
+      <!-- error -->
+      <ion-text
+        class="form-error body login-button-error"
+        v-show="error"
+      >
+        <ion-icon
+          class="form-error-icon"
+          :icon="warning"
+        />{{ $msTranslate(error) }}
+      </ion-text>
 
       <ion-footer class="organization-name-and-server-page-footer">
         <ion-buttons
@@ -82,6 +90,7 @@ import { chevronForward, chevronBack } from 'ionicons/icons';
 import { organizationValidator, parsecAddrValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { warning } from 'ionicons/icons';
 
 const props = defineProps<{
   organizationName?: OrganizationID;
@@ -122,16 +131,21 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.organization-name-and-server-page {
-  padding: 2.5rem;
+.organization-name-and-server-page-content {
   display: flex;
-  height: auto;
-  width: 100%;
+  flex-direction: column;
+  height: 100%;
+}
 
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2.5rem;
-  }
+.organization-name {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.org-name-criteria {
+  color: var(--parsec-color-light-secondary-hard-grey);
 }
 </style>

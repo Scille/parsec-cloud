@@ -8,6 +8,7 @@
       @close-requested="$emit('closeRequested')"
     />
     <organization-name-page
+      :class="step === Steps.OrganizationName ? 'active' : ''"
       v-show="step === Steps.OrganizationName"
       :organization-name="organizationName ?? ''"
       @organization-name-chosen="onOrganizationNameChosen"
@@ -15,12 +16,14 @@
       @close-requested="$emit('closeRequested')"
     />
     <organization-authentication-page
+      :class="step === Steps.Authentication ? 'active' : ''"
       v-show="step === Steps.Authentication"
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
     <organization-summary-page
+      :class="step === Steps.Summary ? 'active' : ''"
       v-show="step === Steps.Summary"
       v-if="personalInformation && saveStrategy && organizationName"
       :error="currentError"
@@ -38,8 +41,12 @@
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
-    <organization-creation-page v-show="step === Steps.Creation" />
+    <organization-creation-page
+      :class="step === Steps.Creation ? 'active' : ''"
+      v-show="step === Steps.Creation"
+    />
     <organization-created-page
+      :class="step === Steps.Created ? 'active' : ''"
       v-show="step === Steps.Created"
       v-if="organizationName"
       @go-clicked="onGoClicked"

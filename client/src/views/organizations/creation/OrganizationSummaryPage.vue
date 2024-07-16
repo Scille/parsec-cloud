@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="summary-page">
+  <ion-page class="summary-page page-modal-container">
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.overview"
@@ -10,12 +10,12 @@
 
     <ion-list class="summary-list">
       <!-- organization name -->
-      <ion-item class="ion-no-padding">
+      <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-label class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.organization') }}
-          </ion-label>
-          <ion-text class="summary-item__text body">
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
             {{ organizationName }}
           </ion-text>
           <ion-button
@@ -29,13 +29,15 @@
         </div>
       </ion-item>
 
+      <hr class="summary-item-divider" />
+
       <!-- full name -->
-      <ion-item class="ion-no-padding">
+      <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-label class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.fullname') }}
-          </ion-label>
-          <ion-text class="summary-item__text body">
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
             {{ name }}
           </ion-text>
           <ion-button
@@ -49,13 +51,15 @@
         </div>
       </ion-item>
 
+      <hr class="summary-item-divider" />
+
       <!-- Email -->
-      <ion-item class="ion-no-padding">
+      <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-label class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.email') }}
-          </ion-label>
-          <ion-text class="summary-item__text body">
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
             {{ email }}
           </ion-text>
           <ion-button
@@ -69,25 +73,29 @@
         </div>
       </ion-item>
 
+      <hr class="summary-item-divider" />
+
       <!-- serverMode -->
-      <ion-item class="ion-no-padding">
+      <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-label class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.server') }}
-          </ion-label>
-          <ion-text class="summary-item__text body">
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
             {{ serverType === ServerType.Saas ? $msTranslate('CreateOrganization.saas') : $msTranslate('CreateOrganization.customServer') }}
           </ion-text>
         </div>
       </ion-item>
 
+      <hr class="summary-item-divider" />
+
       <!-- authentication mode -->
-      <ion-item class="ion-no-padding">
+      <ion-item class="summary-item-container ion-no-padding">
         <div class="summary-item">
-          <ion-label class="summary-item__label subtitles-sm">
+          <ion-text class="summary-item__label subtitles-sm">
             {{ $msTranslate('CreateOrganization.overview.authentication') }}
-          </ion-label>
-          <ion-text class="summary-item__text body">
+          </ion-text>
+          <ion-text class="summary-item__text body-lg">
             {{
               saveStrategy === DeviceSaveStrategyTag.Keyring
                 ? $msTranslate('CreateOrganization.keyringChoice')
@@ -105,9 +113,16 @@
         </div>
       </ion-item>
     </ion-list>
-    <p v-show="error">
-      {{ $msTranslate(error) }}
-    </p>
+    <!-- error -->
+    <ion-text
+      class="form-error body login-button-error"
+      v-show="error"
+    >
+      <ion-icon
+        class="form-error-icon"
+        :icon="warning"
+      />{{ $msTranslate(error) }}
+    </ion-text>
 
     <ion-footer class="summary-page-footer">
       <ion-buttons
@@ -150,8 +165,8 @@
 <script setup lang="ts">
 import { DeviceSaveStrategyTag, OrganizationID } from '@/parsec';
 import { ServerType } from '@/services/parsecServers';
-import { chevronForward, chevronBack } from 'ionicons/icons';
-import { IonPage, IonItem, IonButton, IonText, IonLabel, IonButtons, IonIcon, IonFooter, IonList } from '@ionic/vue';
+import { chevronForward, chevronBack, warning } from 'ionicons/icons';
+import { IonPage, IonItem, IonButton, IonText, IonButtons, IonIcon, IonFooter, IonList } from '@ionic/vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 import { Translatable } from 'megashark-lib';
 
@@ -180,48 +195,40 @@ defineEmits<{
 </script>
 
 <style scoped lang="scss">
-.summary-page {
-  padding: 2.5rem;
-  display: flex;
-  height: auto;
-  width: 100%;
-
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2.5rem;
-  }
-}
-
 .summary-list {
   padding: 0;
   display: flex;
   flex-direction: column;
+  border-radius: var(--parsec-radius-8);
+  border: 1px solid var(--parsec-color-light-secondary-medium);
 }
 
+.summary-item-container {
+  --inner-padding-end: 0px;
+}
 .summary-item {
-  padding: 0.75rem 0;
   display: flex;
-  align-items: center;
-  flex: 1;
+  align-items: stretch;
+  width: 100%;
   position: relative;
   gap: 1rem;
-  width: -webkit-fill-available;
+  padding-right: 1rem;
 
-  &::after {
-    content: '';
-    position: absolute;
+  &-divider {
     width: 100%;
     height: 1px;
-    bottom: 0;
-    left: 7.5rem;
-    background: var(--parsec-color-light-secondary-disabled);
+    background: var(--parsec-color-light-secondary-medium);
     z-index: 2;
+    margin: 0;
   }
 
   &__label {
     min-width: 8rem;
+    background: var(--parsec-color-light-secondary-premiere);
     color: var(--parsec-color-light-secondary-grey);
+    align-items: center;
+    padding: 0 0.5rem;
+    display: flex;
   }
 
   &__text {
@@ -230,13 +237,15 @@ defineEmits<{
     text-overflow: ellipsis;
     white-space: nowrap;
     color: var(--parsec-color-light-secondary-text);
+    background: var(--parsec-color-light-secondary-white);
+    padding: 1rem 0;
   }
-  &__button {
-    margin-left: auto;
 
-    &::part(native) {
-      padding: 0.5rem;
-    }
+  &__button {
+    color: var(--parsec-color-light-secondary-text);
+    align-self: center;
+    height: --webkit-fill-available;
+    margin-left: auto;
   }
 }
 </style>

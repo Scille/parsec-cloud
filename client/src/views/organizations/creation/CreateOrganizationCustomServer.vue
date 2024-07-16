@@ -5,6 +5,7 @@
     <organization-name-and-server-page
       v-if="initialized"
       v-show="step === Steps.OrganizationNameAndServer"
+      :class="step === Steps.OrganizationNameAndServer ? 'active' : ''"
       :organization-name="organizationName ?? ''"
       :server-addr="serverAddr ?? ''"
       :disable-server-addr-field="bootstrapLink !== undefined"
@@ -15,18 +16,21 @@
     />
     <organization-user-information-page
       v-show="step === Steps.PersonalInformation"
+      :class="step === Steps.PersonalInformation ? 'active' : ''"
       @user-information-filled="onUserInformationFilled"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
+      :class="step === Steps.Authentication ? 'active' : ''"
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
     <organization-summary-page
       v-show="step === Steps.Summary"
+      :class="step === Steps.Summary ? 'active' : ''"
       v-if="email && name && saveStrategy && organizationName"
       :error="currentError"
       :email="email"
@@ -46,9 +50,13 @@
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
-    <organization-creation-page v-show="step === Steps.Creation" />
+    <organization-creation-page
+      v-show="step === Steps.Creation"
+      :class="step === Steps.Creation ? 'active' : ''"
+    />
     <organization-created-page
       v-show="step === Steps.Created"
+      :class="step === Steps.Created ? 'active' : ''"
       v-if="organizationName"
       @go-clicked="onGoClicked"
       :organization-name="organizationName"

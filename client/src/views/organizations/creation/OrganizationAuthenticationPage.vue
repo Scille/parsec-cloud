@@ -1,7 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="authentication-page">
+  <ion-page class="authentication-page page-modal-container">
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.authentication"
@@ -88,11 +88,5 @@ async function onFieldUpdated(): Promise<void> {
   display: flex;
   height: auto;
   width: 100%;
-
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2.5rem;
-  }
 }
 </style>

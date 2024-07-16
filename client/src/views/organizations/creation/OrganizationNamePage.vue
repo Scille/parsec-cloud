@@ -1,14 +1,13 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="organization-name-page">
+  <ion-page class="organization-name-page page-modal-container">
     <create-organization-modal-header
       @close-clicked="$emit('closeRequested')"
       title="CreateOrganization.title.create"
       subtitle="CreateOrganization.subtitle.nameYourOrg"
     />
-
-    <div>
+    <div class="organization-name-page-content">
       <ms-input
         :label="'CreateOrganization.organizationName'"
         :placeholder="'CreateOrganization.organizationNamePlaceholder'"
@@ -21,36 +20,44 @@
         :validator="organizationValidator"
       />
 
-      <ion-text class="subtitles-sm org-name-criteria">
+      <ion-text class="body org-name-criteria">
         {{ $msTranslate('CreateOrganization.organizationNameCriteria') }}
       </ion-text>
-      <p v-show="error">
-        {{ $msTranslate(error) }}
-      </p>
 
-      <ion-footer class="organization-name-page-footer">
-        <ion-buttons
-          slot="primary"
-          class="modal-footer-buttons"
-        >
-          <ion-button
-            fill="solid"
-            size="default"
-            @click="$emit('organizationNameChosen', organizationName)"
-            :disabled="!organizationNameInputRef || organizationNameInputRef.validity !== Validity.Valid"
-          >
-            <span>
-              {{ $msTranslate('CreateOrganization.button.next') }}
-            </span>
-            <ion-icon
-              slot="start"
-              :icon="chevronForward"
-              size="small"
-            />
-          </ion-button>
-        </ion-buttons>
-      </ion-footer>
+      <!-- error -->
+      <ion-text
+        class="form-error body login-button-error"
+        v-show="error"
+      >
+        <ion-icon
+          class="form-error-icon"
+          :icon="warning"
+        />{{ $msTranslate(error) }}
+      </ion-text>
     </div>
+
+    <ion-footer class="organization-name-page-footer">
+      <ion-buttons
+        slot="primary"
+        class="modal-footer-buttons"
+      >
+        <ion-button
+          fill="solid"
+          size="default"
+          @click="$emit('organizationNameChosen', organizationName)"
+          :disabled="!organizationNameInputRef || organizationNameInputRef.validity !== Validity.Valid"
+        >
+          <span>
+            {{ $msTranslate('CreateOrganization.button.next') }}
+          </span>
+          <ion-icon
+            slot="start"
+            :icon="chevronForward"
+            size="small"
+          />
+        </ion-button>
+      </ion-buttons>
+    </ion-footer>
   </ion-page>
 </template>
 
@@ -62,6 +69,7 @@ import { chevronForward } from 'ionicons/icons';
 import { organizationValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { warning } from 'ionicons/icons';
 
 const props = defineProps<{
   organizationName?: OrganizationID;
@@ -85,16 +93,14 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.organization-name-page {
-  padding: 2.5rem;
+.organization-name-page-content {
   display: flex;
-  height: auto;
+  flex-direction: column;
+  gap: 0.5rem;
   width: 100%;
+}
 
-  &-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 2.5rem;
-  }
+.org-name-criteria {
+  color: var(--parsec-color-light-secondary-hard-grey);
 }
 </style>

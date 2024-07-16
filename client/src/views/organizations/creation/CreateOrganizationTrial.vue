@@ -4,21 +4,27 @@
   <ion-page>
     <organization-user-information-page
       v-show="step === Steps.PersonalInformation"
+      :class="step === Steps.PersonalInformation ? 'active' : ''"
       @user-information-filled="onUserInformationFilled"
       @close-requested="$emit('closeRequested')"
       :hide-previous="true"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
+      :class="step === Steps.Authentication ? 'active' : ''"
       @authentication-chosen="onAuthenticationChosen"
       @go-back-requested="onGoBackRequested"
       @close-requested="$emit('closeRequested')"
     />
-    <organization-creation-page v-show="step === Steps.Creation" />
+    <organization-creation-page
+      v-show="step === Steps.Creation"
+      :class="step === Steps.Creation ? 'active' : ''"
+    />
 
     <organization-created-page
       v-if="organizationName"
       v-show="step === Steps.Created"
+      :class="step === Steps.Created ? 'active' : ''"
       @go-clicked="onGoClicked"
       :organization-name="organizationName"
     />
