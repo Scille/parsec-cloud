@@ -58,7 +58,14 @@ async fn no_remote_change(
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
-    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(
+        local_author,
+        timestamp,
+        // TODO: Pass prevent sync pattern
+        None,
+        &local,
+        remote,
+    );
     p_assert_eq!(outcome, MergeLocalFolderManifestOutcome::NoChange);
 }
 
@@ -118,7 +125,14 @@ async fn remote_only_change(env: &TestbedEnv) {
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
-    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(
+        local_author,
+        timestamp,
+        // TODO: Pass prevent sync pattern
+        None,
+        &local,
+        remote,
+    );
     p_assert_eq!(
         outcome,
         MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
@@ -377,6 +391,64 @@ async fn remote_only_change(env: &TestbedEnv) {
 
     expected
 })]
+#[case::remote_with_confined_children(|remote: &mut FolderManifest, _: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    remote.version = 2;
+    remote.children.insert("a.txt".parse().unwrap(), VlobID::default());
+    remote.children.insert("b.txt".parse().unwrap(), VlobID::default());
+    let c_file_vid = VlobID::default();
+    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
+    remote.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
+
+    let mut expected = LocalFolderManifest::from_remote(remote.clone(), None);
+    expected.children.remove(&c_file_entry);
+    expected.remote_confinement_points.insert(c_file_vid);
+
+    expected
+})]
+#[case::local_with_confined_children(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
+    let d_name: EntryName = "d.txt".parse().unwrap();
+    let d_vid = VlobID::default();
+    remote.children.insert(d_name.clone(), d_vid);
+    remote.version = 2;
+
+    local.need_sync = true;
+    local.children.insert("a.txt".parse().unwrap(), VlobID::default());
+    local.children.insert("b.txt".parse().unwrap(), VlobID::default());
+    let c_file_vid = VlobID::default();
+    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
+    local.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
+    local.local_confinement_points.insert(c_file_vid);
+
+    let mut expected = local.clone();
+    expected.base = remote.clone();
+    expected.children.insert(d_name, d_vid);
+    expected.updated = timestamp;
+    expected
+})]
+#[case::both_remote_local_with_confined_children(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
+    let d_name: EntryName = "d.txt".parse().unwrap();
+    let d_vid = VlobID::default();
+    remote.children.insert(d_name.clone(), d_vid);
+    let e_name: EntryName = "e.txt.tmp".parse().unwrap();
+    let e_vid = VlobID::default();
+    remote.children.insert(e_name.clone(), e_vid); // This one match the version sync pattern
+    remote.version = 2;
+
+    local.need_sync = true;
+    local.children.insert("a.txt".parse().unwrap(), VlobID::default());
+    local.children.insert("b.txt".parse().unwrap(), VlobID::default());
+    let c_file_vid = VlobID::default();
+    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
+    local.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
+    local.local_confinement_points.insert(c_file_vid);
+
+    let mut expected = local.clone();
+    expected.base = remote.clone();
+    expected.children.insert(d_name, d_vid);
+    expected.updated = timestamp;
+    expected.remote_confinement_points.insert(e_vid);
+    expected
+})]
 async fn local_and_remote_changes(
     #[case] prepare: impl FnOnce(
         &mut FolderManifest,
@@ -390,6 +462,7 @@ async fn local_and_remote_changes(
     let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
     let parent_id = VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap();
+    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
 
     let mut remote = FolderManifest {
         author: "bob@dev1".parse().unwrap(),
@@ -414,7 +487,13 @@ async fn local_and_remote_changes(
 
     let expected = prepare(&mut remote, &mut local, timestamp, local_author);
 
-    let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
+    let outcome = merge_local_folder_manifest(
+        local_author,
+        timestamp,
+        Some(&prevent_sync_pattern),
+        &local,
+        remote,
+    );
     p_assert_eq!(
         outcome,
         MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
