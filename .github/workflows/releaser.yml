@@ -233,3 +233,6 @@ jobs:
     with:
       release_tag: ${{ github.event_name == 'schedule' && 'nightly' || github.ref_name }}
       nightly: ${{ github.event_name == 'schedule' || github.event_name == 'pull_request' || github.ref == 'refs/tags/nightly' }}
+    secrets:
+      SNAPCRAFT_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
+      PYPI_CREDENTIALS: ${{ secrets.PYPI_CREDENTIALS }}

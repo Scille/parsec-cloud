@@ -23,6 +23,11 @@ on:
         required: false
         description: Whether to publish the package as a nightly release
         default: true
+    secrets:
+      SNAPCRAFT_CREDENTIALS:
+        required: true
+      PYPI_CREDENTIALS:
+        required: true
   release:
     types:
       - published
@@ -109,7 +114,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Check that snapcraft credential is not empty
-        run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -ne 0
+        run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -gt 10
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
         timeout-minutes: 1
