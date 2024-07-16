@@ -126,21 +126,264 @@ async fn remote_only_change(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
+#[case::update_field_only(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+
+    let mut expected = local.clone();
+    expected.need_sync = false;
+    expected.updated = remote.updated;
+    expected.base = remote.clone();
+
+    expected
+})]
+#[case::children_no_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
+    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote
+        .children
+        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local
+        .children
+        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
+
+    let mut expected = local.clone();
+    expected.updated = timestamp;
+    expected.base = remote.clone();
+    expected
+        .children
+        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
+    expected
+        .children
+        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
+
+    expected
+})]
+#[case::children_same_id_and_name(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    let new_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote
+        .children
+        .insert("child.txt".parse().unwrap(), new_child_id);
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local
+        .children
+        .insert("child.txt".parse().unwrap(), new_child_id);
+
+    let mut expected = local.clone();
+    expected.need_sync = false;
+    expected.updated = remote.updated;
+    expected.base = remote.clone();
+    expected
+        .children
+        .insert("child.txt".parse().unwrap(), new_child_id);
+
+    expected
+})]
+#[case::children_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
+    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote
+        .children
+        .insert("child.txt".parse().unwrap(), new_remote_child_id);
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local
+        .children
+        .insert("child.txt".parse().unwrap(), new_local_child_id);
+
+    let mut expected = local.clone();
+    expected.updated = timestamp;
+    expected.base = remote.clone();
+    expected
+        .children
+        .insert("child.txt".parse().unwrap(), new_remote_child_id);
+    expected.children.insert(
+        "child (Parsec - name conflict).txt".parse().unwrap(),
+        new_local_child_id,
+    );
+
+    expected
+})]
+#[case::parent_modified_on_local(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
+    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local.parent = new_parent_id;
+
+    let mut expected = local.clone();
+    expected.updated = timestamp;
+    expected.base = remote.clone();
+    expected.parent = new_parent_id;
+
+    expected
+})]
+#[case::parent_modified_on_remote(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote.parent = new_parent_id;
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+
+    let mut expected = local.clone();
+    expected.need_sync = false;
+    expected.updated = remote.updated;
+    expected.base = remote.clone();
+    expected.parent = new_parent_id;
+
+    expected
+})]
+#[case::parent_no_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote.parent = new_parent_id;
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local.parent = new_parent_id;
+
+    let mut expected = local.clone();
+    expected.need_sync = false;
+    expected.base = remote.clone();
+    expected.updated = remote.updated;
+    expected.parent = new_parent_id;
+
+    expected
+})]
+#[case::parent_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
+    let new_remote_parent_id =
+        VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote.parent = new_remote_parent_id;
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local.parent = new_local_parent_id;
+
+    let mut expected = local.clone();
+    expected.need_sync = false;
+    expected.base = remote.clone();
+    // Parent conflict is simply resolved by siding with remote
+    expected.updated = remote.updated;
+    expected.parent = new_remote_parent_id;
+
+    expected
+})]
+#[case::remote_parent_change_are_ours(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, local_author: DeviceID| {
+    remote.author = local_author;
+
+    let new_remote_parent_id =
+        VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote.parent = new_remote_parent_id;
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local.parent = new_local_parent_id;
+
+    let mut expected = local.clone();
+    expected.base = remote.clone();
+
+    expected
+})]
+#[case::remote_children_changes_are_ours(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, local_author: DeviceID| {
+    remote.author = local_author;
+
+    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote
+        .children
+        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
+
+    local.need_sync = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local
+        .children
+        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
+
+    let mut expected = local.clone();
+    expected.base = remote.clone();
+
+    expected
+})]
+#[case::remote_changes_are_ours_but_speculative(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, local_author: DeviceID| {
+    remote.author = local_author;
+    local.speculative = true;
+
+    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
+    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
+
+    remote.version = 2;
+    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
+    remote
+        .children
+        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
+
+    local.need_sync = true;
+    local.speculative = true;
+    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    local
+        .children
+        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
+
+    let mut expected = local.clone();
+    expected.updated = timestamp;
+    expected.base = remote.clone();
+    expected.speculative = false;
+    // Given `local` was a speculative manifest, it is considered the client wasn't
+    // aware of `remote`, and hence a regular merge is done instead of considering
+    // `remote_child.txt` was willingly locally removed while uploading the remote.
+    expected
+        .children
+        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
+    expected
+        .children
+        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
+
+    expected
+})]
 async fn local_and_remote_changes(
-    #[values(
-        "updated_field_only",
-        "children_no_conflict",
-        "children_same_id_and_name",
-        "children_conflict",
-        "parent_modified_on_local",
-        "parent_modified_on_remote",
-        "parent_no_conflict",
-        "parent_conflict",
-        "remote_parent_change_are_ours",
-        "remote_children_changes_are_ours",
-        "remote_changes_are_ours_but_speculative"
-    )]
-    kind: &str,
+    #[case] prepare: impl FnOnce(
+        &mut FolderManifest,
+        &mut LocalFolderManifest,
+        DateTime,
+        DeviceID,
+    ) -> LocalFolderManifest,
     env: &TestbedEnv,
 ) {
     let local_author: DeviceID = "alice@dev1".parse().unwrap();
@@ -169,271 +412,7 @@ async fn local_and_remote_changes(
         remote_confinement_points: HashSet::new(),
     };
 
-    let expected = match kind {
-        "updated_field_only" => {
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-
-            let mut expected = local.clone();
-            expected.need_sync = false;
-            expected.updated = remote.updated;
-            expected.base = remote.clone();
-
-            expected
-        }
-
-        "children_no_conflict" => {
-            let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote
-                .children
-                .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local
-                .children
-                .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-            let mut expected = local.clone();
-            expected.updated = timestamp;
-            expected.base = remote.clone();
-            expected
-                .children
-                .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-            expected
-                .children
-                .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-            expected
-        }
-
-        "children_same_id_and_name" => {
-            let new_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote
-                .children
-                .insert("child.txt".parse().unwrap(), new_child_id);
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local
-                .children
-                .insert("child.txt".parse().unwrap(), new_child_id);
-
-            let mut expected = local.clone();
-            expected.need_sync = false;
-            expected.updated = remote.updated;
-            expected.base = remote.clone();
-            expected
-                .children
-                .insert("child.txt".parse().unwrap(), new_child_id);
-
-            expected
-        }
-
-        "children_conflict" => {
-            let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote
-                .children
-                .insert("child.txt".parse().unwrap(), new_remote_child_id);
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local
-                .children
-                .insert("child.txt".parse().unwrap(), new_local_child_id);
-
-            let mut expected = local.clone();
-            expected.updated = timestamp;
-            expected.base = remote.clone();
-            expected
-                .children
-                .insert("child.txt".parse().unwrap(), new_remote_child_id);
-            expected.children.insert(
-                "child (Parsec - name conflict).txt".parse().unwrap(),
-                new_local_child_id,
-            );
-
-            expected
-        }
-
-        "parent_modified_on_local" => {
-            let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local.parent = new_parent_id;
-
-            let mut expected = local.clone();
-            expected.updated = timestamp;
-            expected.base = remote.clone();
-            expected.parent = new_parent_id;
-
-            expected
-        }
-
-        "parent_modified_on_remote" => {
-            let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote.parent = new_parent_id;
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-
-            let mut expected = local.clone();
-            expected.need_sync = false;
-            expected.updated = remote.updated;
-            expected.base = remote.clone();
-            expected.parent = new_parent_id;
-
-            expected
-        }
-
-        "parent_no_conflict" => {
-            let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote.parent = new_parent_id;
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local.parent = new_parent_id;
-
-            let mut expected = local.clone();
-            expected.need_sync = false;
-            expected.base = remote.clone();
-            expected.updated = remote.updated;
-            expected.parent = new_parent_id;
-
-            expected
-        }
-
-        "parent_conflict" => {
-            let new_remote_parent_id =
-                VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote.parent = new_remote_parent_id;
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local.parent = new_local_parent_id;
-
-            let mut expected = local.clone();
-            expected.need_sync = false;
-            expected.base = remote.clone();
-            // Parent conflict is simply resolved by siding with remote
-            expected.updated = remote.updated;
-            expected.parent = new_remote_parent_id;
-
-            expected
-        }
-
-        "remote_parent_change_are_ours" => {
-            remote.author = local_author;
-
-            let new_remote_parent_id =
-                VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote.parent = new_remote_parent_id;
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local.parent = new_local_parent_id;
-
-            let mut expected = local.clone();
-            expected.base = remote.clone();
-
-            expected
-        }
-
-        "remote_children_changes_are_ours" => {
-            remote.author = local_author;
-
-            let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote
-                .children
-                .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-            local.need_sync = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local
-                .children
-                .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-            let mut expected = local.clone();
-            expected.base = remote.clone();
-
-            expected
-        }
-
-        "remote_changes_are_ours_but_speculative" => {
-            remote.author = local_author;
-            local.speculative = true;
-
-            let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-            let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-            remote.version = 2;
-            remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-            remote
-                .children
-                .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-            local.need_sync = true;
-            local.speculative = true;
-            local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-            local
-                .children
-                .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-            let mut expected = local.clone();
-            expected.updated = timestamp;
-            expected.base = remote.clone();
-            expected.speculative = false;
-            // Given `local` was a speculative manifest, it is considered the client wasn't
-            // aware of `remote`, and hence a regular merge is done instead of considering
-            // `remote_child.txt` was willingly locally removed while uploading the remote.
-            expected
-                .children
-                .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-            expected
-                .children
-                .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-            expected
-        }
-
-        unknown => panic!("Unknown kind: {}", unknown),
-    };
+    let expected = prepare(&mut remote, &mut local, timestamp, local_author);
 
     let outcome = merge_local_folder_manifest(local_author, timestamp, &local, remote);
     p_assert_eq!(
