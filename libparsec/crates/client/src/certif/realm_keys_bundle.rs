@@ -175,9 +175,14 @@ impl From<ConnectionError> for LoadLastKeysBundleError {
 ///
 /// Note that the keys bundle might contains corrupted keys, or even might itself be
 /// corrupted.
+///
 /// The idea here is to trust the last keys bundle author of having done his best to
 /// provide us with valid keys (and if something is corrupted, an OWNER should do
 /// a healing key rotation soon enough in theory).
+///
+/// Also, a simple mitigation against corrupted keys bundle could be to look for an
+/// older one, but this only works for user that have been part of the realm before the
+/// corruption occured, hence it's not worth the complexity.
 async fn load_last_realm_keys_bundle(
     ops: &CertificateOps,
     store: &mut CertificatesStoreReadGuard<'_>,
