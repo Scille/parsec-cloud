@@ -821,8 +821,28 @@ macro_rules! impl_read_methods {
             )
         }
 
-        // TODO: Provide a `get_realm_last_user_roles` that, for a given realm, returns
-        //       the last valid realm role certificate for each of its users.
+        /// For the given realm, return the last role certificate for each user still
+        /// part of it (i.e. if the last role certificate for a given user is an
+        /// unsharing one, then the user will be discarded).
+        pub async fn get_realm_current_users_roles(
+            &mut self,
+            up_to: UpTo,
+            realm_id: VlobID,
+        ) -> anyhow::Result<HashMap<UserID, Arc<RealmRoleCertificate>>> {
+            let all_certifs = self.get_realm_roles(up_to, realm_id).await?;
+            let mut per_user_role = HashMap::new();
+            for certif in all_certifs {
+                match certif.role {
+                    Some(_) => {
+                        per_user_role.insert(certif.user_id, certif);
+                    }
+                    None => {
+                        per_user_role.remove(&certif.user_id);
+                    }
+                }
+            }
+            Ok(per_user_role)
+        }
 
         #[allow(unused)]
         pub async fn get_realm_last_name_certificate(
