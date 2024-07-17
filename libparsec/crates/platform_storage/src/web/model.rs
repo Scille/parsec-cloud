@@ -441,17 +441,16 @@ impl PreventSyncPattern {
         super::db::write(conn, Self::STORE)
     }
 
-    pub(super) async fn get(conn: &IdbDatabase) -> anyhow::Result<Option<Self>> {
-        let tx = Self::read(conn)?;
+    /// Retrieve the prevent sync pattern with `id = 0` from the database.
+    pub(super) async fn get(tx: &IdbTransaction<'_>) -> anyhow::Result<Option<Self>> {
         super::db::get_value(&tx, Self::STORE, 0.into()).await
     }
 
-    pub(super) async fn insert(&self, conn: &IdbDatabase) -> anyhow::Result<()> {
+    /// Insert the current sync pattern into the database.
+    pub(super) async fn insert(&self, tx: &IdbTransaction<'_>) -> anyhow::Result<()> {
         let value = serde_wasm_bindgen::to_value(self).map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-        let tx = Self::write(conn)?;
-        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await?;
-        super::db::commit(tx).await
+        super::db::insert_with_key(&tx, Self::STORE, 0.into(), value).await
     }
 }
 
@@ -603,13 +602,17 @@ pub(super) async fn initialize_model_if_needed(
 
     let conn = db_req.await.map_err(|e| anyhow::anyhow!("{e:?}"))?;
 
-    if PreventSyncPattern::get(&conn).await?.is_none() {
-        PreventSyncPattern {
-            pattern: PREVENT_SYNC_PATTERN_EMPTY_PATTERN.into(),
-            fully_applied: false,
+    {
+        let tx = PreventSyncPattern::write(&conn)?;
+
+        if PreventSyncPattern::get(&tx).await?.is_none() {
+            PreventSyncPattern {
+                pattern: PREVENT_SYNC_PATTERN_EMPTY_PATTERN.into(),
+                fully_applied: false,
+            }
+            .insert(&tx)
+            .await?;
         }
-        .insert(&conn)
-        .await?;
     }
 
     Ok(conn)
