@@ -495,6 +495,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   // logo parsec
   &::after {
     content: url('@/assets/images/background/logo-icon-white.svg');
+    pointer-events: none;
     opacity: 0.03;
     width: 100%;
     max-width: 270px;
