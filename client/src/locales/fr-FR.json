@@ -129,7 +129,7 @@
             "noMatch": "Aucune organisation trouvé qui correspond à la recherche '{query}'.",
             "trialOrganization": "Version d'essai",
             "expiration": {
-                "days": "1 jour restant | {days} jours restant",
+                "days": "1 jour restant | {days} jours restants",
                 "hours": "Moins d'une heure | {hours} heures restantes",
                 "expired": "Expiré"
             }
