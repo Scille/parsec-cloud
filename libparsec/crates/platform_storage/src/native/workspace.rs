@@ -12,6 +12,8 @@ use std::path::Path;
 
 use libparsec_types::prelude::*;
 
+#[cfg(any(test, feature = "expose-test-methods"))]
+use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{PopulateManifestOutcome, UpdateManifestData};
 
 use super::model::{
@@ -305,9 +307,8 @@ impl PlatformWorkspaceStorage {
 
     /// Only used for debugging tests
     #[cfg(any(test, feature = "expose-test-methods"))]
-    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
+    pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
         let checkpoint = self.get_realm_checkpoint().await?;
-        let mut output = format!("checkpoint: {checkpoint}\n");
 
         // Vlobs
 
@@ -323,23 +324,23 @@ impl PlatformWorkspaceStorage {
         .fetch_all(&mut self.conn)
         .await?;
 
-        output += "vlobs: [\n";
-        for row in rows {
-            let vlob_id =
-                VlobID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e))?;
-            let need_sync = row.try_get::<bool, _>(1)?;
-            let base_version = row.try_get::<u32, _>(2)?;
-            let remote_version = row.try_get::<u32, _>(3)?;
-            output += &format!(
-                "{{\n\
-                \tvlob_id: {vlob_id}\n\
-                \tneed_sync: {need_sync}\n\
-                \tbase_version: {base_version}\n\
-                \tremote_version: {remote_version}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let vlobs = rows
+            .iter()
+            .map(|row| {
+                let id = VlobID::try_from(row.try_get::<&[u8], _>(0)?)
+                    .map_err(|e| anyhow::anyhow!(e))?;
+                let need_sync = row.try_get::<bool, _>(1)?;
+                let base_version = row.try_get::<u32, _>(2)?;
+                let remote_version = row.try_get::<u32, _>(3)?;
+
+                Ok(DebugVlob {
+                    id,
+                    need_sync,
+                    base_version,
+                    remote_version,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
 
         // Chunks
 
@@ -354,21 +355,17 @@ impl PlatformWorkspaceStorage {
         .fetch_all(&mut self.conn)
         .await?;
 
-        output += "chunks: [\n";
-        for row in rows {
-            let chunk_id =
-                ChunkID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e))?;
-            let size = row.try_get::<u32, _>(1)?;
-            let offline = row.try_get::<bool, _>(2)?;
-            output += &format!(
-                "{{\n\
-                \tchunk_id: {chunk_id}\n\
-                \tsize: {size}\n\
-                \toffline: {offline}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let chunks = rows
+            .iter()
+            .map(|row| {
+                let id = ChunkID::try_from(row.try_get::<&[u8], _>(0)?)
+                    .map_err(|e| anyhow::anyhow!(e))?;
+                let size = row.try_get::<u32, _>(1)?;
+                let offline = row.try_get::<bool, _>(2)?;
+
+                Ok(DebugChunk { id, size, offline })
+            })
+            .collect::<anyhow::Result<_>>()?;
 
         // Blocks
 
@@ -384,26 +381,31 @@ impl PlatformWorkspaceStorage {
         .fetch_all(&mut self.cache_conn)
         .await?;
 
-        output += "blocks: [\n";
-        for row in rows {
-            let block_id =
-                BlockID::try_from(row.try_get::<&[u8], _>(0)?).map_err(|e| anyhow::anyhow!(e))?;
-            let size = row.try_get::<u32, _>(1)?;
-            let offline = row.try_get::<bool, _>(2)?;
-            let accessed_on =
-                DateTime::from_timestamp_micros(row.try_get::<i64, _>(3)?)?.to_rfc3339();
-            output += &format!(
-                "{{\n\
-                \tblock_id: {block_id}\n\
-                \tsize: {size}\n\
-                \toffline: {offline}\n\
-                \taccessed_on: {accessed_on}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let blocks = rows
+            .iter()
+            .map(|row| {
+                let id = BlockID::try_from(row.try_get::<&[u8], _>(0)?)
+                    .map_err(|e| anyhow::anyhow!(e))?;
+                let size = row.try_get::<u32, _>(1)?;
+                let offline = row.try_get::<bool, _>(2)?;
+                let accessed_on =
+                    DateTime::from_timestamp_micros(row.try_get::<i64, _>(3)?)?.to_rfc3339();
 
-        Ok(output)
+                Ok(DebugBlock {
+                    id,
+                    size,
+                    offline,
+                    accessed_on,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
+
+        Ok(DebugDump {
+            checkpoint,
+            vlobs,
+            chunks,
+            blocks,
+        })
     }
 }
 

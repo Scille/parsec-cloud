@@ -9,6 +9,8 @@ use std::{path::Path, sync::Arc};
 use indexed_db_futures::{prelude::IdbTransaction, IdbDatabase};
 use libparsec_types::prelude::*;
 
+#[cfg(any(test, feature = "expose-test-methods"))]
+use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::{
     web::{
         model::{RealmCheckpoint, Vlob},
@@ -306,32 +308,30 @@ impl PlatformWorkspaceStorage {
     }
 
     /// Only used for debugging tests
-    #[cfg(feature = "expose-test-methods")]
-    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
+    #[cfg(any(test, feature = "expose-test-methods"))]
+    pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
         let checkpoint = self.get_realm_checkpoint().await?;
-        let mut output = format!("checkpoint: {checkpoint}\n");
 
         // Vlobs
 
         let vlobs = Vlob::get_all(&self.conn).await?;
 
-        output += "vlobs: [\n";
-        for vlob in vlobs {
-            let vlob_id =
-                VlobID::try_from(vlob.vlob_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-            let need_sync = vlob.need_sync;
-            let base_version = vlob.base_version;
-            let remote_version = vlob.remote_version;
-            output += &format!(
-                "{{\n\
-                \tvlob_id: {vlob_id}\n\
-                \tneed_sync: {need_sync}\n\
-                \tbase_version: {base_version}\n\
-                \tremote_version: {remote_version}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let vlobs = vlobs
+            .iter()
+            .map(|vlob| {
+                let id = VlobID::try_from(vlob.vlob_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
+                let need_sync = vlob.need_sync;
+                let base_version = vlob.base_version;
+                let remote_version = vlob.remote_version;
+
+                Ok(DebugVlob {
+                    id,
+                    need_sync,
+                    base_version,
+                    remote_version,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
 
         // Chunks
 
@@ -339,51 +339,52 @@ impl PlatformWorkspaceStorage {
 
         let chunks = super::model::Chunk::get_chunks(&transaction).await?;
 
-        output += "chunks: [\n";
-        for chunk in chunks {
-            let chunk_id =
-                ChunkID::try_from(chunk.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-            let size = chunk.size;
-            let offline = chunk.offline;
-            output += &format!(
-                "{{\n\
-                \tchunk_id: {chunk_id}\n\
-                \tsize: {size}\n\
-                \toffline: {offline}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let chunks = chunks
+            .iter()
+            .map(|chunk| {
+                let id =
+                    ChunkID::try_from(chunk.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
+                let size = chunk.size as u32;
+                let offline = chunk.offline;
+
+                Ok(DebugChunk { id, size, offline })
+            })
+            .collect::<anyhow::Result<_>>()?;
 
         // Blocks
 
         let mut blocks = super::model::Chunk::get_blocks(&transaction).await?;
         blocks.sort_by(|x, y| x.chunk_id.cmp(&y.chunk_id));
 
-        output += "blocks: [\n";
-        for block in blocks {
-            let block_id =
-                BlockID::try_from(block.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
-            let size = block.size;
-            let offline = block.offline;
-            let accessed_on = DateTime::from_timestamp_micros(
-                block
-                    .accessed_on
-                    .ok_or(anyhow::anyhow!("Missing accessed_on field"))?,
-            )?
-            .to_rfc3339();
-            output += &format!(
-                "{{\n\
-                \tblock_id: {block_id}\n\
-                \tsize: {size}\n\
-                \toffline: {offline}\n\
-                \taccessed_on: {accessed_on}\n\
-            }},\n",
-            );
-        }
-        output += "]\n";
+        let blocks = blocks
+            .iter()
+            .map(|block| {
+                let id =
+                    BlockID::try_from(block.chunk_id.as_ref()).map_err(|e| anyhow::anyhow!(e))?;
+                let size = block.size as u32;
+                let offline = block.offline;
+                let accessed_on = DateTime::from_timestamp_micros(
+                    block
+                        .accessed_on
+                        .ok_or(anyhow::anyhow!("Missing accessed_on field"))?,
+                )?
+                .to_rfc3339();
 
-        Ok(output)
+                Ok(DebugBlock {
+                    id,
+                    size,
+                    offline,
+                    accessed_on,
+                })
+            })
+            .collect::<anyhow::Result<_>>()?;
+
+        Ok(DebugDump {
+            checkpoint,
+            vlobs,
+            chunks,
+            blocks,
+        })
     }
 }
 

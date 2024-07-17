@@ -392,7 +392,7 @@ impl Chunk {
             .map(|x| x.into_iter().nth(0))
     }
 
-    #[cfg(feature = "expose-test-methods")]
+    #[cfg(any(test, feature = "expose-test-methods"))]
     pub(super) async fn get_chunks(tx: &IdbTransaction<'_>) -> anyhow::Result<Vec<Self>> {
         super::db::get_values(tx, Self::STORE, Self::INDEX_IS_BLOCK, 0.into()).await
     }

@@ -9,7 +9,7 @@ use std::collections::{HashMap, HashSet};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::UpdateManifestData;
+use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob, UpdateManifestData};
 
 use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
 
@@ -230,18 +230,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
     // 1) Storage starts empty
 
     let dump = workspace_storage.debug_dump().await.unwrap();
-    p_assert_eq!(
-        dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-]
-blocks: [
-]
-"
-    );
+    p_assert_eq!(dump, DebugDump::default());
     p_assert_eq!(
         workspace_storage.get_manifest(entry_id).await.unwrap(),
         None
@@ -287,21 +276,15 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000ff
-	need_sync: false
-	base_version: 1
-	remote_version: 1
-},
-]
-chunks: [
-]
-blocks: [
-]
-"
+        DebugDump {
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: false,
+                base_version: 1,
+                remote_version: 1
+            }],
+            ..Default::default()
+        }
     );
 
     // 4) Overwrite
@@ -327,21 +310,15 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000ff
-	need_sync: true
-	base_version: 2
-	remote_version: 2
-},
-]
-chunks: [
-]
-blocks: [
-]
-"
+        DebugDump {
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: true,
+                base_version: 2,
+                remote_version: 2
+            }],
+            ..Default::default()
+        }
     );
 }
 
@@ -398,27 +375,23 @@ async fn update_manifests(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: true
-	base_version: 1
-	remote_version: 1
-},
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f2
-	need_sync: false
-	base_version: 2
-	remote_version: 2
-},
-]
-chunks: [
-]
-blocks: [
-]
-"
+        DebugDump {
+            vlobs: vec![
+                DebugVlob {
+                    id: entry1_id,
+                    need_sync: true,
+                    base_version: 1,
+                    remote_version: 1
+                },
+                DebugVlob {
+                    id: entry2_id,
+                    need_sync: false,
+                    base_version: 2,
+                    remote_version: 2
+                }
+            ],
+            ..Default::default()
+        }
     );
 }
 
@@ -486,31 +459,27 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: true
-	base_version: 1
-	remote_version: 1
-},
-]
-chunks: [
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c1
-	size: 8
-	offline: false
-},
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c2
-	size: 14
-	offline: false
-},
-]
-blocks: [
-]
-"
+        DebugDump {
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: true,
+                base_version: 1,
+                remote_version: 1
+            }],
+            chunks: vec![
+                DebugChunk {
+                    id: chunk1_id,
+                    size: 8,
+                    offline: false
+                },
+                DebugChunk {
+                    id: chunk2_id,
+                    size: 14,
+                    offline: false
+                },
+            ],
+            ..Default::default()
+        }
     );
 
     // 2) Remove chunks
@@ -543,26 +512,20 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: true
-	base_version: 2
-	remote_version: 2
-},
-]
-chunks: [
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c1
-	size: 8
-	offline: false
-},
-]
-blocks: [
-]
-"
+        DebugDump {
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: true,
+                base_version: 2,
+                remote_version: 2
+            }],
+            chunks: vec![DebugChunk {
+                id: chunk1_id,
+                size: 8,
+                offline: false
+            }],
+            ..Default::default()
+        }
     );
 }
 
@@ -603,31 +566,28 @@ async fn promote_chunk_to_block(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: true
-	base_version: 1
-	remote_version: 1
-},
-]
-chunks: [
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c1
-	size: 8
-	offline: false
-},
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c2
-	size: 14
-	offline: false
-},
-]
-blocks: [
-]
-"
+        DebugDump {
+            checkpoint: 0,
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: true,
+                base_version: 1,
+                remote_version: 1
+            }],
+            chunks: vec![
+                DebugChunk {
+                    id: chunk1_id,
+                    size: 8,
+                    offline: false
+                },
+                DebugChunk {
+                    id: chunk2_id,
+                    size: 14,
+                    offline: false
+                },
+            ],
+            ..Default::default()
+        }
     );
 
     // 2) Promote chunk
@@ -642,32 +602,27 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-{
-	vlob_id: aa000000-0000-0000-0000-0000000000f1
-	need_sync: true
-	base_version: 1
-	remote_version: 1
-},
-]
-chunks: [
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000c2
-	size: 14
-	offline: false
-},
-]
-blocks: [
-{
-	block_id: aa000000-0000-0000-0000-0000000000c1
-	size: 8
-	offline: false
-	accessed_on: 2000-01-31T00:00:00Z
-},
-]
-"
+        DebugDump {
+            checkpoint: 0,
+            vlobs: vec![DebugVlob {
+                id: entry_id,
+                need_sync: true,
+                base_version: 1,
+                remote_version: 1
+            }],
+            chunks: vec![DebugChunk {
+                id: chunk2_id,
+                size: 14,
+                offline: false
+            },],
+            blocks: vec![DebugBlock {
+                id: chunk1_id.into(),
+                size: 8,
+                offline: false,
+                accessed_on: "2000-01-31T00:00:00Z".into()
+            }],
+            ..Default::default()
+        }
     );
 
     p_assert_eq!(
@@ -732,20 +687,14 @@ async fn get_and_set_chunk(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-{
-	chunk_id: aa000000-0000-0000-0000-0000000000f1
-	size: 8
-	offline: false
-},
-]
-blocks: [
-]
-"
+        DebugDump {
+            chunks: vec![DebugChunk {
+                id: chunk_id,
+                size: 8,
+                offline: false
+            }],
+            ..Default::default()
+        }
     );
 }
 
@@ -774,21 +723,15 @@ async fn get_and_set_block(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-]
-blocks: [
-{
-	block_id: aa000000-0000-0000-0000-0000000000f1
-	size: 8
-	offline: false
-	accessed_on: 2000-01-01T00:00:00Z
-},
-]
-"
+        DebugDump {
+            blocks: vec![DebugBlock {
+                id: block_id,
+                size: 8,
+                offline: false,
+                accessed_on: "2000-01-01T00:00:00Z".into()
+            }],
+            ..Default::default()
+        }
     );
 
     // 2) Get back block
@@ -805,21 +748,16 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-]
-blocks: [
-{
-	block_id: aa000000-0000-0000-0000-0000000000f1
-	size: 8
-	offline: false
-	accessed_on: 2000-01-02T00:00:00Z
-},
-]
-"
+        DebugDump {
+            blocks: vec![DebugBlock {
+                id: block_id,
+                size: 8,
+                offline: false,
+                // The access date should have changed.
+                accessed_on: "2000-01-02T00:00:00Z".into()
+            }],
+            ..Default::default()
+        }
     );
 
     // 3) Test chunk or block access
@@ -883,7 +821,7 @@ async fn block_cache_cleanup(env: &TestbedEnv) {
         block_size,
         "2000-01-02T00:00:00Z"
     );
-    insert_block!(
+    let block3_id = insert_block!(
         "aa0000000000000000000000000000f3",
         block_size,
         "2000-01-03T00:00:00Z"
@@ -891,7 +829,7 @@ async fn block_cache_cleanup(env: &TestbedEnv) {
 
     // 2) Add one more block that should trigger the cleanup and remove block 1
 
-    insert_block!(
+    let block4_id = insert_block!(
         "aa0000000000000000000000000000f4",
         block_size,
         "2000-01-04T00:00:00Z"
@@ -900,33 +838,29 @@ async fn block_cache_cleanup(env: &TestbedEnv) {
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-]
-blocks: [
-{
-	block_id: aa000000-0000-0000-0000-0000000000f2
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-02T00:00:00Z
-},
-{
-	block_id: aa000000-0000-0000-0000-0000000000f3
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-03T00:00:00Z
-},
-{
-	block_id: aa000000-0000-0000-0000-0000000000f4
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-04T00:00:00Z
-},
-]
-"
+        DebugDump {
+            blocks: vec![
+                DebugBlock {
+                    id: block2_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-02T00:00:00Z".into()
+                },
+                DebugBlock {
+                    id: block3_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-03T00:00:00Z".into()
+                },
+                DebugBlock {
+                    id: block4_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-04T00:00:00Z".into()
+                },
+            ],
+            ..Default::default()
+        }
     );
 
     // 3) Accessing a block should prevent it from being the one to be removed
@@ -936,7 +870,7 @@ blocks: [
         .await
         .unwrap();
 
-    insert_block!(
+    let block5_id = insert_block!(
         "aa0000000000000000000000000000f5",
         block_size,
         "2000-01-06T00:00:00Z"
@@ -945,33 +879,29 @@ blocks: [
     let dump = workspace_storage.debug_dump().await.unwrap();
     p_assert_eq!(
         dump,
-        "\
-checkpoint: 0
-vlobs: [
-]
-chunks: [
-]
-blocks: [
-{
-	block_id: aa000000-0000-0000-0000-0000000000f2
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-05T00:00:00Z
-},
-{
-	block_id: aa000000-0000-0000-0000-0000000000f4
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-04T00:00:00Z
-},
-{
-	block_id: aa000000-0000-0000-0000-0000000000f5
-	size: 524288
-	offline: false
-	accessed_on: 2000-01-06T00:00:00Z
-},
-]
-"
+        DebugDump {
+            blocks: vec![
+                DebugBlock {
+                    id: block2_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-05T00:00:00Z".into()
+                },
+                DebugBlock {
+                    id: block4_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-04T00:00:00Z".into()
+                },
+                DebugBlock {
+                    id: block5_id,
+                    size: 524288,
+                    offline: false,
+                    accessed_on: "2000-01-06T00:00:00Z".into()
+                },
+            ],
+            ..Default::default()
+        }
     );
 }
 
