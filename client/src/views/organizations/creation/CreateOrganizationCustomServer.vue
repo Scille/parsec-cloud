@@ -88,6 +88,7 @@ import { getDefaultDeviceName } from '@/common/device';
 import { wait } from '@/parsec/internals';
 import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
+import { Translatable } from 'megashark-lib';
 
 enum Steps {
   OrganizationNameAndServer,
@@ -114,7 +115,7 @@ const serverAddr = ref<string | undefined>(undefined);
 const email = ref<string | undefined>(undefined);
 const name = ref<string | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
-const currentError = ref<string | undefined>(undefined);
+const currentError = ref<Translatable | undefined>(undefined);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 const initialized = ref(false);
 
@@ -134,6 +135,7 @@ async function onOrganizationNameAndServerChosen(chosenOrganizationName: Organiz
     organizationName.value = chosenOrganizationName;
     serverAddr.value = chosenServerAddr;
   }
+
   step.value = Steps.PersonalInformation;
 }
 
@@ -196,12 +198,18 @@ async function onCreateClicked(): Promise<void> {
 
   const endTime = new Date().valueOf();
   // If we're too fast, a weird blinking will occur. Add some artificial time.
-  if (endTime - startTime < 2000) {
-    await wait(endTime - startTime);
+  if (endTime - startTime < 1500) {
+    await wait(1500 - (endTime - startTime));
   }
 
   if (!result.ok) {
-    currentError.value = 'ERROR';
+    if (result.error.tag === BootstrapOrganizationErrorTag.AlreadyUsedToken) {
+      currentError.value = 'CreateOrganization.errors.alreadyExists';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.Offline) {
+      currentError.value = 'CreateOrganization.errors.offline';
+    } else {
+      currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
+    }
     step.value = Steps.Summary;
     console.log('Failed to create organization', result.error);
     return;

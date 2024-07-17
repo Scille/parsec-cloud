@@ -62,7 +62,15 @@ import { IonPage } from '@ionic/vue';
 import { isProxy, onMounted, ref, toRaw } from 'vue';
 import BmsLogin from '@/views/bms/BmsLogin.vue';
 import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
-import { AvailableDevice, bootstrapOrganization, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
+import {
+  AvailableDevice,
+  bootstrapOrganization,
+  BootstrapOrganizationErrorTag,
+  DeviceSaveStrategy,
+  OrganizationID,
+  ParsedParsecAddrTag,
+  parseParsecAddr,
+} from '@/parsec';
 import { Translatable } from 'megashark-lib';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
 import { getDefaultDeviceName } from '@/common/device';
@@ -142,7 +150,7 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     console.log('Failed to create organization');
     // TODO: Change this error handling with the real backend response
     if (response.errors && response.errors.some((error) => error.attr === 'already_exists')) {
-      currentError.value = 'ALREADY_EXISTS';
+      currentError.value = 'CreateOrganization.errors.alreadyExists';
     }
     return;
   }
@@ -183,12 +191,18 @@ async function onCreateClicked(): Promise<void> {
 
   const endTime = new Date().valueOf();
   // If we're too fast, a weird blinking will occur. Add some artificial time.
-  if (endTime - startTime < 2000) {
-    await wait(endTime - startTime);
+  if (endTime - startTime < 1500) {
+    await wait(1500 - (endTime - startTime));
   }
 
   if (!result.ok) {
-    currentError.value = 'ERROR';
+    if (result.error.tag === BootstrapOrganizationErrorTag.AlreadyUsedToken) {
+      currentError.value = 'CreateOrganization.errors.alreadyExists';
+    } else if (result.error.tag === BootstrapOrganizationErrorTag.Offline) {
+      currentError.value = 'CreateOrganization.errors.offline';
+    } else {
+      currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
+    }
     step.value = Steps.Summary;
     console.log('Failed to create organization', result.error);
     return;

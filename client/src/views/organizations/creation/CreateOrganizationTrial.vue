@@ -171,8 +171,8 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
   const endTime = new Date().valueOf();
   // If we're too fast, a weird blinking will occur. Add some artificial time.
   console.log(endTime, startTime, endTime - startTime);
-  if (endTime - startTime < 2000) {
-    await wait(endTime - startTime);
+  if (endTime - startTime < 1500) {
+    await wait(1500 - (endTime - startTime));
   }
 
   if (result.ok) {

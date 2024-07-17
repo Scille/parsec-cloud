@@ -4,6 +4,8 @@ const SAAS_SERVER_HOST = 'saas-v3.parsec.cloud';
 const TRIAL_SERVER_HOST = 'trial.parsec.cloud';
 const TEST_SERVER_HOST = 'saas-demo-v3-mightyfairy.parsec.cloud';
 
+export const TRIAL_EXPIRATION_DAYS = 14;
+
 export enum ServerType {
   Saas = 'saas',
   Trial = 'trial',
