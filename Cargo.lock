@@ -2098,7 +2098,6 @@ dependencies = [
  "js-sys",
  "lazy_static",
  "libparsec_platform_async",
- "libparsec_platform_storage",
  "libparsec_testbed",
  "libparsec_tests_fixtures",
  "libparsec_tests_lite",

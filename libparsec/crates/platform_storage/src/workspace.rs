@@ -34,6 +34,41 @@ pub enum PopulateManifestOutcome {
     AlreadyPresent,
 }
 
+#[cfg(any(test, feature = "expose-test-methods"))]
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct DebugDump {
+    pub checkpoint: u64,
+    pub vlobs: Vec<DebugVlob>,
+    pub chunks: Vec<DebugChunk>,
+    pub blocks: Vec<DebugBlock>,
+}
+
+#[cfg(any(test, feature = "expose-test-methods"))]
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct DebugVlob {
+    pub id: VlobID,
+    pub need_sync: bool,
+    pub base_version: u32,
+    pub remote_version: u32,
+}
+
+#[cfg(any(test, feature = "expose-test-methods"))]
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct DebugChunk {
+    pub id: ChunkID,
+    pub size: u32,
+    pub offline: bool,
+}
+
+#[cfg(any(test, feature = "expose-test-methods"))]
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct DebugBlock {
+    pub id: BlockID,
+    pub size: u32,
+    pub offline: bool,
+    pub accessed_on: String,
+}
+
 impl WorkspaceStorage {
     pub async fn start(
         data_base_dir: &Path,
@@ -176,8 +211,8 @@ impl WorkspaceStorage {
     }
 
     /// Only used for debugging tests
-    #[cfg(feature = "expose-test-methods")]
-    pub async fn debug_dump(&mut self) -> anyhow::Result<String> {
+    #[cfg(any(test, feature = "expose-test-methods"))]
+    pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
         self.platform.debug_dump().await
     }
 }
