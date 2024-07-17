@@ -215,6 +215,23 @@ impl WorkspaceStorage {
     pub async fn debug_dump(&mut self) -> anyhow::Result<DebugDump> {
         self.platform.debug_dump().await
     }
+
+    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
+        self.platform.set_prevent_sync_pattern(pattern).await
+    }
+
+    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
+        self.platform.get_prevent_sync_pattern().await
+    }
+
+    pub async fn mark_prevent_sync_pattern_fully_applied(
+        &mut self,
+        pattern: &Regex,
+    ) -> anyhow::Result<bool> {
+        self.platform
+            .mark_prevent_sync_pattern_fully_applied(pattern)
+            .await
+    }
 }
 
 #[cfg(test)]

@@ -19,6 +19,8 @@ use crate::{
     workspace::{PopulateManifestOutcome, UpdateManifestData},
 };
 
+use super::{db, model::PreventSyncPattern};
+
 #[derive(Debug)]
 pub(crate) struct PlatformWorkspaceStorage {
     conn: Arc<IdbDatabase>,
@@ -385,6 +387,72 @@ impl PlatformWorkspaceStorage {
             chunks,
             blocks,
         })
+    }
+
+    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
+        let tx = PreventSyncPattern::write(&self.conn)?;
+
+        let current = PreventSyncPattern::get(&tx).await?;
+
+        let regex = pattern.to_string();
+        match current {
+            // The provided pattern is already in the database, we return its current state.
+            Some(current) if current.pattern == regex => Ok(current.fully_applied),
+            // Either we don't have a prevent sync pattern in the database
+            // or the pattern is different from the one provided.
+            None | Some(_) => {
+                let value = PreventSyncPattern {
+                    pattern: regex,
+                    fully_applied: false,
+                };
+                value.insert(&tx).await?;
+                db::commit(tx).await.and(Ok(false))
+            }
+        }
+    }
+
+    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
+        let tx = PreventSyncPattern::read(&self.conn)?;
+        let res = PreventSyncPattern::get(&tx)
+            .await?
+            .expect("The database should be initialized with a default value");
+
+        let regex = Regex::from_regex_str(&res.pattern).map_err(anyhow::Error::from)?;
+
+        Ok((regex, res.fully_applied))
+    }
+
+    pub async fn mark_prevent_sync_pattern_fully_applied(
+        &mut self,
+        pattern: &Regex,
+    ) -> anyhow::Result<bool> {
+        let tx = PreventSyncPattern::write(&self.conn)?;
+
+        let current = PreventSyncPattern::get(&tx).await?;
+
+        let regex = pattern.to_string();
+        let value = match current {
+            // The provided pattern is already in the database
+            Some(current) if current.pattern == regex => {
+                // Already applied
+                if current.fully_applied {
+                    return Ok(true);
+                }
+
+                PreventSyncPattern {
+                    pattern: regex,
+                    fully_applied: true,
+                }
+            }
+            // Either we don't have a prevent sync pattern in the database
+            // or the pattern is different from the one provided
+            None | Some(_) => PreventSyncPattern {
+                pattern: regex,
+                fully_applied: false,
+            },
+        };
+        value.insert(&tx).await?;
+        db::commit(tx).await.and(Ok(value.fully_applied))
     }
 }
 

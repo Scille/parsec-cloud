@@ -9,7 +9,10 @@ use std::collections::{HashMap, HashSet};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob, UpdateManifestData};
+use crate::{
+    workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob, UpdateManifestData},
+    PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
+};
 
 use super::{workspace_storage_non_speculative_init, WorkspaceStorage};
 
@@ -1006,6 +1009,95 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     // TODO: drop the database so that it exists but it is empty, this shouldn't cause any issue
 
     // TODO: remove workspace manifest's vlob from the database, this shouldn't cause any issue
+}
+
+async fn start_workspace(env: &TestbedEnv) -> WorkspaceStorage {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+        .await
+        .unwrap()
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn check_prevent_sync_pattern_initialized_with_empty_pattern(env: &TestbedEnv) {
+    let mut workspace = start_workspace(env).await;
+
+    let (regex, bool) = workspace.get_prevent_sync_pattern().await.unwrap();
+
+    p_assert_eq!(
+        regex,
+        Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
+    );
+    assert_eq!(bool, false);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn mark_empty_pattern_as_fully_applied(env: &TestbedEnv) {
+    let mut workspace = start_workspace(env).await;
+
+    let empty_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
+
+    let res = workspace
+        .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
+        .await
+        .unwrap();
+
+    assert!(res);
+}
+
+/// Using `set_prevent_sync_pattern` should not change the `fully applied` status if the pattern is the same.
+#[parsec_test(testbed = "minimal")]
+async fn check_set_pattern_is_idempotent(env: &TestbedEnv) {
+    let mut workspace = start_workspace(env).await;
+
+    // 1st, mark the empty pattern as fully applied.
+    let empty_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
+
+    let res = workspace
+        .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
+        .await
+        .unwrap();
+
+    assert!(res);
+
+    // 2nd, set the empty pattern again.
+    let res = workspace
+        .set_prevent_sync_pattern(&empty_pattern)
+        .await
+        .unwrap();
+
+    assert!(res);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn set_prevent_sync_pattern(env: &TestbedEnv) {
+    let mut workspace = start_workspace(env).await;
+
+    let regex = Regex::from_regex_str(r".*\.tmp$").unwrap();
+
+    let res = workspace.set_prevent_sync_pattern(&regex).await.unwrap();
+
+    assert_eq!(res, false);
+    let (got_regex, bool) = workspace.get_prevent_sync_pattern().await.unwrap();
+
+    assert_eq!(got_regex, regex);
+    assert_eq!(bool, false);
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn nop_mark_prevent_sync_pattern_with_different_pat(env: &TestbedEnv) {
+    let mut workspace = start_workspace(env).await;
+
+    let regex = Regex::from_regex_str(r".*\.tmp$").unwrap();
+
+    let res = workspace
+        .mark_prevent_sync_pattern_fully_applied(&regex)
+        .await
+        .unwrap();
+
+    assert_eq!(res, false);
 }
 
 // TODO: test get/set blocks

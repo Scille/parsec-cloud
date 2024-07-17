@@ -407,6 +407,122 @@ impl PlatformWorkspaceStorage {
             blocks,
         })
     }
+
+    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
+        let pattern = pattern.to_string();
+
+        let mut transaction = self.conn.begin().await?;
+
+        let fully_applied = db_update_prevent_sync_pattern(&mut transaction, &pattern).await?;
+
+        transaction.commit().await?;
+
+        Ok(fully_applied)
+    }
+
+    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
+        db_get_prevent_sync_pattern(&mut self.conn)
+            .await
+            .and_then(|(pattern, fully_applied)| {
+                Regex::from_regex_str(&pattern)
+                    .map(|re| (re, fully_applied))
+                    .map_err(anyhow::Error::from)
+            })
+    }
+
+    pub async fn mark_prevent_sync_pattern_fully_applied(
+        &mut self,
+        pattern: &Regex,
+    ) -> anyhow::Result<bool> {
+        let pattern = pattern.to_string();
+
+        let mut transaction = self.conn.begin().await?;
+
+        let fully_applied =
+            db_set_prevent_sync_pattern_as_fully_applied(&mut transaction, &pattern).await?;
+
+        transaction.commit().await?;
+
+        Ok(fully_applied)
+    }
+}
+
+async fn db_update_prevent_sync_pattern<T, E>(mut trans: T, pattern: &str) -> anyhow::Result<bool>
+where
+    T: AsMut<E>,
+    for<'c> &'c mut E: sqlx::Executor<'c, Database = sqlx::Sqlite>,
+{
+    let res = sqlx::query(concat!(
+        "UPDATE prevent_sync_pattern",
+        " SET pattern = ?1, fully_applied = false",
+        " WHERE _id = 0 AND pattern != ?1",
+    ))
+    .bind(pattern)
+    .execute(trans.as_mut())
+    .await?;
+
+    if res.rows_affected() == 1 {
+        Ok(false)
+    } else {
+        // No row was updated, the pattern was already set.
+        db_get_fully_applied(trans.as_mut()).await
+    }
+}
+
+async fn db_get_fully_applied(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<bool> {
+    sqlx::query(concat!(
+        "SELECT fully_applied",
+        " FROM prevent_sync_pattern",
+        " WHERE _id = 0",
+    ))
+    .fetch_one(executor)
+    .await?
+    .try_get(0)
+    .map_err(anyhow::Error::from)
+}
+
+async fn db_get_prevent_sync_pattern(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+) -> anyhow::Result<(String, bool)> {
+    let row = sqlx::query(concat!(
+        "SELECT pattern, fully_applied",
+        " FROM prevent_sync_pattern",
+        " WHERE _id = 0",
+    ))
+    .fetch_one(executor)
+    .await?;
+
+    let pattern = row.try_get::<String, _>(0)?;
+    let fully_applied = row.try_get::<bool, _>(1)?;
+
+    Ok((pattern, fully_applied))
+}
+
+async fn db_set_prevent_sync_pattern_as_fully_applied<T, E>(
+    mut trans: T,
+    pattern: &str,
+) -> anyhow::Result<bool>
+where
+    T: AsMut<E>,
+    for<'c> &'c mut E: sqlx::Executor<'c, Database = sqlx::Sqlite>,
+{
+    let res = sqlx::query(concat!(
+        "UPDATE prevent_sync_pattern",
+        " SET fully_applied = true",
+        " WHERE _id = 0 AND pattern = ?1",
+    ))
+    .bind(pattern)
+    .execute(trans.as_mut())
+    .await?;
+
+    if res.rows_affected() == 1 {
+        Ok(true)
+    } else {
+        // No row was updated, a different pattern is set in the database.
+        db_get_fully_applied(trans.as_mut()).await
+    }
 }
 
 pub async fn workspace_storage_non_speculative_init(
