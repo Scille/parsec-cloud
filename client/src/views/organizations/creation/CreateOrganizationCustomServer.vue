@@ -66,7 +66,7 @@
 
 <script setup lang="ts">
 import { IonPage } from '@ionic/vue';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, isProxy, toRaw } from 'vue';
 import OrganizationNameAndServerPage from '@/views/organizations/creation/OrganizationNameAndServerPage.vue';
 import {
   DeviceSaveStrategy,
@@ -159,7 +159,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
     name.value,
     email.value,
     getDefaultDeviceName(),
-    saveStrategy.value,
+    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
   );
   return result;
 }
@@ -173,7 +173,7 @@ async function bootstrapOrganization(): Promise<Result<AvailableDevice, Bootstra
     name.value,
     email.value,
     getDefaultDeviceName(),
-    saveStrategy.value,
+    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
   );
   return result;
 }

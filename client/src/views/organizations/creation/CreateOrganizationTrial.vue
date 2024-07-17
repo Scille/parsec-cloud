@@ -32,8 +32,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { IonPage, modalController } from '@ionic/vue';
+import { isProxy, onMounted, ref, toRaw } from 'vue';
 import OrganizationUserInformationPage from '@/views/organizations/creation/OrganizationUserInformationPage.vue';
 import OrganizationAuthenticationPage from '@/views/organizations/creation/OrganizationAuthenticationPage.vue';
 import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
@@ -50,11 +50,11 @@ import {
   parseParsecAddr,
   ParsedParsecAddrTag,
 } from '@/parsec';
-import { adjectives, animals, colors, uniqueNamesGenerator } from 'unique-names-generator';
 import { getServerAddress, ServerType } from '@/services/parsecServers';
 import { getDefaultDeviceName } from '@/common/device';
-import { Translatable, I18n } from 'megashark-lib';
+import { Translatable, I18n, MsModalResult } from 'megashark-lib';
 import { wait } from '@/parsec/internals';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
 enum Steps {
   PersonalInformation,
@@ -65,6 +65,7 @@ enum Steps {
 
 const props = defineProps<{
   bootstrapLink?: string;
+  informationManager: InformationManager;
 }>();
 
 const emits = defineEmits<{
@@ -97,7 +98,8 @@ async function onUserInformationFilled(chosenName: string, chosenEmail: string):
 }
 
 function generateOrganizationName(): string {
-  return `${uniqueNamesGenerator({ dictionaries: [colors, adjectives, animals], separator: '_' })}`.slice(0, 32);
+  const orgName = window.crypto.randomUUID().slice(0, 32);
+  return orgName;
 }
 
 async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
@@ -115,7 +117,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       name.value,
       email.value,
       getDefaultDeviceName(),
-      saveStrategy.value,
+      isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
     );
     if (result.ok) {
       organizationName.value = orgName;
@@ -168,6 +170,7 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
 
   const endTime = new Date().valueOf();
   // If we're too fast, a weird blinking will occur. Add some artificial time.
+  console.log(endTime, startTime, endTime - startTime);
   if (endTime - startTime < 2000) {
     await wait(endTime - startTime);
   }
@@ -199,8 +202,14 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
         };
         break;
     }
-    // TODO: DISPLAY SOMETHING TO THE USER
-    console.error(I18n.translate(currentError.value));
+    await modalController.dismiss(null, MsModalResult.Cancel);
+    await props.informationManager.present(
+      new Information({
+        message: I18n.translate(currentError.value),
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
   }
 }
 

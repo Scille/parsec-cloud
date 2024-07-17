@@ -59,7 +59,7 @@
 import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
 import { ServerType } from '@/services/parsecServers';
 import { IonPage } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
+import { isProxy, onMounted, ref, toRaw } from 'vue';
 import BmsLogin from '@/views/bms/BmsLogin.vue';
 import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
 import { AvailableDevice, bootstrapOrganization, DeviceSaveStrategy, OrganizationID, ParsedParsecAddrTag, parseParsecAddr } from '@/parsec';
@@ -178,7 +178,7 @@ async function onCreateClicked(): Promise<void> {
     `${personalInformation.value.firstName} ${personalInformation.value.lastName}`,
     personalInformation.value.email,
     getDefaultDeviceName(),
-    saveStrategy.value,
+    isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
   );
 
   const endTime = new Date().valueOf();

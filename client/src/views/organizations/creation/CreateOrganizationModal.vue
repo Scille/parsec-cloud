@@ -25,6 +25,7 @@
         :bootstrap-link="bootstrapLink"
         @close-requested="onCloseRequested"
         @organization-created="onOrganizationCreated"
+        :information-manager="informationManager"
       />
     </div>
   </ion-page>
