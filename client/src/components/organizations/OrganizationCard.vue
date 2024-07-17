@@ -4,8 +4,11 @@
   <ion-card class="organization-card__body">
     <ion-card-header class="card-content">
       <div class="organization-info">
-        <ion-avatar class="orga-avatar body-lg">
-          <span>{{ 'TR' }}</span>
+        <ion-avatar
+          class="orga-avatar body-lg"
+          v-show="!isTrialOrg"
+        >
+          <span>{{ device.organizationId?.substring(0, 2) }}</span>
         </ion-avatar>
         <ion-text
           v-if="expirationTime"
@@ -30,7 +33,7 @@
 <script setup lang="ts">
 import { AvailableDevice } from '@/parsec';
 import { getServerTypeFromHost, ServerType, TRIAL_EXPIRATION_DAYS } from '@/services/parsecServers';
-import { IonAvatar, IonCard, IonCardHeader, IonCardTitle } from '@ionic/vue';
+import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { Duration } from 'luxon';
 import { Translatable } from 'megashark-lib';
