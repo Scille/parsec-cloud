@@ -74,6 +74,7 @@ class Tool(enum.Enum):
     License = "license"
     PostgreSQL = "postgres"
     WinFSP = "winfsp"
+    PreCommit = "pre-commit"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
         updated: set[Path] = set()
@@ -178,10 +179,16 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
     Tool.WinFSP: "2.0.23075",
+    Tool.PreCommit: "3.7.1",
 }
 
 
 FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
+    ROOT_DIR / ".github/actions/use-pre-commit/action.yml": {
+        Tool.PreCommit: [
+            ReplaceRegex(r"default: .* # __VERSION__", "default: {version} # __VERSION__")
+        ]
+    },
     ROOT_DIR / ".github/workflows/ci-docs.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
@@ -340,6 +347,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
         ],
         Tool.WinFSP: [ReplaceRegex(r'Tool.WinFSP: "[0-9.]+"', 'Tool.WinFSP: "{version}"')],
+        Tool.PreCommit: [ReplaceRegex(r'Tool.PreCommit: "[0-9.]+"', 'Tool.PreCommit: "{version}"')],
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
