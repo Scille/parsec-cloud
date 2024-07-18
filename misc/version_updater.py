@@ -60,6 +60,10 @@ TOML_VERSION_FIELD = ReplaceRegex(r'version = ".*"', 'version = "{version}"')
 JSON_LICENSE_FIELD = ReplaceRegex(r'"license": ".*"', '"license": "{version}"')
 JSON_VERSION_FIELD = ReplaceRegex(r'"version": ".*"', '"version": "{version}"')
 CI_WINFSP_VERSION = ReplaceRegex(r"WINFSP_VERSION: .*", "WINFSP_VERSION: {version}")
+TESTBED_VERSION = ReplaceRegex(
+    r"ghcr.io/scille/parsec-cloud/parsec-testbed-server:[^\s]+",
+    "ghcr.io/scille/parsec-cloud/parsec-testbed-server:{version}",
+)
 
 
 @enum.unique
@@ -74,6 +78,7 @@ class Tool(enum.Enum):
     License = "license"
     PostgreSQL = "postgres"
     WinFSP = "winfsp"
+    Testbed = "testbed"
     PreCommit = "pre-commit"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
@@ -179,6 +184,7 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
     Tool.WinFSP: "2.0.23075",
+    Tool.Testbed: "3.0.0-b.6.dev.19914.1a7577b",
     Tool.PreCommit: "3.7.1",
 }
 
@@ -205,9 +211,11 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
         Tool.Nextest: [ReplaceRegex(r"nextest@[0-9.]+", "nextest@{version}")],
         Tool.WinFSP: [CI_WINFSP_VERSION],
+        Tool.Testbed: [TESTBED_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci-web.yml": {
         Tool.Node: [NODE_GA_VERSION],
+        Tool.Testbed: [TESTBED_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci.yml": {
         Tool.Python: [
@@ -347,6 +355,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
         ],
         Tool.WinFSP: [ReplaceRegex(r'Tool.WinFSP: "[0-9.]+"', 'Tool.WinFSP: "{version}"')],
+        Tool.Testbed: [ReplaceRegex(r'Tool.Testbed: "[0-9.]+.*",', 'Tool.Testbed: "{version}",')],
         Tool.PreCommit: [ReplaceRegex(r'Tool.PreCommit: "[0-9.]+"', 'Tool.PreCommit: "{version}"')],
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
@@ -366,6 +375,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
                 "curl -sSL https://install.python-poetry.org | python - --version={version}",
             )
         ],
+    },
+    ROOT_DIR / "server/packaging/testbed-server/README.md": {
+        Tool.Testbed: [TESTBED_VERSION],
     },
     ROOT_DIR / "server/packaging/testbed-server/testbed-server.dockerfile": {
         Tool.Python: [PYTHON_DOCKER_VERSION]
