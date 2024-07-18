@@ -56,15 +56,11 @@ pub(super) async fn get_current_self_realm_role(
     ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<Option<Option<RealmRole>>, CertifGetCurrentSelfRealmRoleError> {
-    // TODO: cache !
-    let certif = ops
+    let role = ops
         .store
-        .for_read(|store| {
-            store.get_last_user_realm_role(UpTo::Current, ops.device.user_id, realm_id)
-        })
+        .for_read(|store| async move { store.get_self_user_realm_role(realm_id).await })
         .await??;
-
-    Ok(certif.map(|c| c.role))
+    Ok(role)
 }
 
 #[derive(Debug)]
