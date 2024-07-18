@@ -88,10 +88,13 @@ jobs:
       - name: Copy artifacts to the release folder
         run: |
           set -ex
-          # Python Wheels
+          # Python Files
           cp ${CP_ARGS} artifacts/Linux-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/Linux-X64-wheel/requirements.txt release-files/python-linux-requirements.txt
           cp ${CP_ARGS} artifacts/macOS-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/macOS-X64-wheel/requirements.txt release-files/python-macos-requirements.txt
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl release-files
+          cp ${CP_ARGS} artifacts/Windows-X64-wheel/requirements.txt release-files/python-win-requirements.txt
 
           # Snapcraft
           cp ${CP_ARGS} artifacts/Linux-X64-electron-app-snap/Parsec_${{ needs.version.outputs.full }}_linux_*.snap release-files
@@ -205,6 +208,8 @@ jobs:
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg*
+            release-files/python-*-requirements.txt
+            release-files/python-*-requirements.txt.sha256
             release-files/latest-*.yml
             release-files/latest-*.yml.sha256
             release-files/Parsec-SBOM-*.spdx.json
