@@ -12,6 +12,7 @@ mod realm_key_rotation;
 mod realm_keys_bundle;
 mod realm_rename;
 mod realm_share;
+mod realms_needs;
 mod shamir_recovery_setup;
 mod store;
 mod user_revoke;
@@ -37,6 +38,7 @@ pub use realm_keys_bundle::{
 };
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
+pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
 pub use shamir_recovery_setup::CertifShamirError;
 pub use store::{CertifStoreError, UpTo};
 pub use user_revoke::CertifRevokeUserError;
@@ -401,13 +403,14 @@ impl CertificateOps {
         realm_share::share_realm(self, realm_id, recipient, role).await
     }
 
-    // TODO: determine this API when implementing the related monitor
-    // pub async fn rotate_realm_key(
-    //     &self,
-    //     realm_id: VlobID,
-    // ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
-    //     realm_key_rotation::rotate_realm_key(self, realm_id).await
-    // }
+    /// Returns the needs of a given realm, i.e. if new key rotation (and users
+    /// unsharing) is needed.
+    pub async fn get_realm_needs(
+        &self,
+        realm_id: VlobID,
+    ) -> Result<RealmNeeds, CertifGetRealmNeedsError> {
+        realms_needs::get_realm_needs(self, realm_id).await
+    }
 
     /// Bootstrap the workspace in an idempotent way, i.e. ensure the realm
     /// exists on the server and that it can be shared with other users.
