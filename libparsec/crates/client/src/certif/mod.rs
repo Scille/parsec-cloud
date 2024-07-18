@@ -462,6 +462,7 @@ impl CertificateOps {
         list::get_current_self_realms_role(self).await
     }
 
+    #[allow(unused)]
     pub async fn get_current_self_realm_role(
         &self,
         realm_id: VlobID,
