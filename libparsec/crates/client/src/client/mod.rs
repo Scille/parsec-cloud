@@ -34,7 +34,7 @@ use crate::{
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
         start_user_sync_monitor, start_workspaces_bootstrap_monitor,
-        start_workspaces_refresh_list_monitor, Monitor,
+        start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
 };
@@ -143,6 +143,10 @@ impl Client {
             let workspaces_bootstrap_monitor =
                 start_workspaces_bootstrap_monitor(client.event_bus.clone(), client.clone()).await;
 
+            let workspaces_process_needs_monitor =
+                start_workspaces_process_needs_monitor(client.event_bus.clone(), client.clone())
+                    .await;
+
             let workspaces_refresh_list_monitor =
                 start_workspaces_refresh_list_monitor(client.event_bus.clone(), client.clone())
                     .await;
@@ -166,6 +170,7 @@ impl Client {
 
             let mut monitors = client.monitors.lock().expect("Mutex is poisoned");
             monitors.push(workspaces_bootstrap_monitor);
+            monitors.push(workspaces_process_needs_monitor);
             monitors.push(workspaces_refresh_list_monitor);
             monitors.push(user_sync_monitor);
             monitors.push(certif_poll_monitor);
