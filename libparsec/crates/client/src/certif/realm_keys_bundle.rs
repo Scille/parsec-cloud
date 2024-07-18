@@ -960,3 +960,76 @@ pub(super) async fn decrypt_for_realm(
     key.decrypt(encrypted)
         .map_err(|_| CertifDecryptForRealmError::CorruptedData)
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum GenerateNextKeyBundleForRealmError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Not allowed to access this realm")]
+    NotAllowed,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+/// This methods retrieves the current keys bundle for a given realm, and appends
+/// to it another key. The resulting couple (keys bundle, keys bundle access) can
+/// then be used to do a key rotation.
+/// Note the realm existence is not checked, and an invalid realm ID will be handled
+/// similarly to a realm with no key yet.
+pub(super) async fn generate_next_keys_bundle_for_realm(
+    ops: &CertificateOps,
+    store: &mut CertificatesStoreReadGuard<'_>,
+    realm_id: VlobID,
+) -> Result<(RealmKeysBundle, RealmKeysBundleAccess), GenerateNextKeyBundleForRealmError> {
+    let outcome = load_last_realm_keys_bundle(ops, store, realm_id).await;
+
+    let realm_keys = match outcome {
+        Ok(realm_keys) => Some(realm_keys),
+        Err(err) => match err {
+            LoadLastKeysBundleError::NoKey => None,
+
+            LoadLastKeysBundleError::Offline => {
+                return Err(GenerateNextKeyBundleForRealmError::Offline)
+            }
+            LoadLastKeysBundleError::NotAllowed => {
+                return Err(GenerateNextKeyBundleForRealmError::NotAllowed)
+            }
+            LoadLastKeysBundleError::InvalidKeysBundle(err) => {
+                return Err(GenerateNextKeyBundleForRealmError::InvalidKeysBundle(err))
+            }
+            LoadLastKeysBundleError::Internal(err) => {
+                return Err(GenerateNextKeyBundleForRealmError::Internal(err))
+            }
+        },
+    };
+
+    let new_key = KeyDerivation::generate();
+    let keys = match realm_keys {
+        None => vec![new_key],
+        Some(realm_keys) => {
+            let mut keys: Vec<_> = realm_keys
+                .keys
+                .iter()
+                .map(|k| match k {
+                    ValidatedKey::Valid { key, .. } => key.to_owned(),
+                    // Note we don't *use* the key here, we only keep it as it is in the next keys bundle.
+                    ValidatedKey::Corrupted {
+                        corrupted_key_dont_use_me,
+                    } => corrupted_key_dont_use_me.to_owned(),
+                })
+                .collect();
+            keys.push(new_key);
+            keys
+        }
+    };
+
+    let keys_bundle = RealmKeysBundle::new(ops.device.device_id, ops.device.now(), realm_id, keys);
+
+    let keys_bundle_access = RealmKeysBundleAccess {
+        keys_bundle_key: SecretKey::generate(),
+    };
+
+    Ok((keys_bundle, keys_bundle_access))
+}
