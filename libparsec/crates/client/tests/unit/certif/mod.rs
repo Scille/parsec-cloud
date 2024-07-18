@@ -22,6 +22,7 @@ mod ensure_realm_created;
 mod get_current_self_profile;
 mod get_current_self_realm_role;
 mod get_current_self_realms_role;
+mod get_realm_needs;
 mod get_user_device;
 mod list_user_devices;
 mod list_users;
