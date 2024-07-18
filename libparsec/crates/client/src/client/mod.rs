@@ -7,9 +7,9 @@ mod user_revoke;
 mod workspace_bootstrap;
 mod workspace_create;
 mod workspace_list;
+mod workspace_needs;
 mod workspace_refresh_list;
 mod workspace_rename;
-mod workspace_rotate_key;
 mod workspace_share;
 mod workspace_start;
 
@@ -22,10 +22,10 @@ use std::{
 pub use self::{
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError, workspace_list::WorkspaceInfo,
+    workspace_needs::ClientProcessWorkspacesNeedsError,
     workspace_refresh_list::ClientRefreshWorkspacesListError,
-    workspace_rename::ClientRenameWorkspaceError,
-    workspace_rotate_key::ClientRotateWorkspaceKeyError,
-    workspace_share::ClientShareWorkspaceError, workspace_start::ClientStartWorkspaceError,
+    workspace_rename::ClientRenameWorkspaceError, workspace_share::ClientShareWorkspaceError,
+    workspace_start::ClientStartWorkspaceError,
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
@@ -424,6 +424,25 @@ impl Client {
         workspace_refresh_list::refresh_workspaces_list(self).await
     }
 
+    /// Workspace needs correspond to:
+    /// - The workspace has been unshared with someone, a new key rotation is needed
+    /// - A user which is part of the workspace has been revoked, unsharing is needed
+    ///
+    /// This method looks into the local certificates to determine the needs of each workspace
+    /// where the current user has OWNER profile, then proceed to do the requested operations.
+    ///
+    /// ⚠️ This method doesn't poll for the new certificates that have been created by
+    /// those operations.
+    /// This is because it is expected to be called from a monitor (hence the refresh
+    /// will be triggered by new certificates events from the server).
+    ///
+    /// This method is typically used by a monitor.
+    pub(crate) async fn process_workspaces_needs(
+        &self,
+    ) -> Result<(), ClientProcessWorkspacesNeedsError> {
+        workspace_needs::process_workspaces_needs(self).await
+    }
+
     /// Refresh the server configuration, typically after the server have sent a
     /// `ServerConfig` SSE event.
     ///
@@ -431,19 +450,6 @@ impl Client {
     pub(crate) fn update_server_config(&self, updater: impl FnOnce(&mut ServerConfig)) {
         let mut guard = self.server_config.lock().expect("Mutex is poisoned");
         updater(&mut guard);
-    }
-
-    /// This function deals with subsequent (i.e. post bootstrap) key rotations.
-    ///
-    /// This is something that cannot be handled by `ensure_workspaces_minimal_sync` given,
-    /// unlike workspace rename, key rotation is something meaningless to do while offline:
-    /// - Workspace key are only used for encrypting uploaded data,
-    /// - Key rotation must be done is a strict order given they contain an index,
-    pub(crate) async fn rotate_workspace_key(
-        &self,
-        realm_id: VlobID,
-    ) -> Result<(), ClientRotateWorkspaceKeyError> {
-        workspace_rotate_key::rotate_workspace_key(self, realm_id).await
     }
 
     pub async fn start_workspace(

@@ -6,6 +6,7 @@ mod list_user_devices;
 mod list_users;
 mod list_workspace_users;
 mod list_workspaces;
+mod process_workspaces_needs;
 mod rename_workspace;
 mod revoke_user;
 mod shamir_setup_create;
