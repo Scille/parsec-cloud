@@ -403,6 +403,17 @@ impl CertificateOps {
         realm_share::share_realm(self, realm_id, recipient, role).await
     }
 
+    /// Do a key rotation for the given realm, provided that `target_key_index`
+    /// actually corresponds to the next key index (and otherwise consider a
+    /// concurrent operation has made the key rotation we were supposed to do).
+    pub async fn rotate_realm_key_idempotent(
+        &self,
+        realm_id: VlobID,
+        target_key_index: IndexInt,
+    ) -> Result<CertificateBasedActionOutcome, CertifRotateRealmKeyError> {
+        realm_key_rotation::rotate_realm_key_idempotent(self, realm_id, target_key_index).await
+    }
+
     /// Returns the needs of a given realm, i.e. if new key rotation (and users
     /// unsharing) is needed.
     pub async fn get_realm_needs(
