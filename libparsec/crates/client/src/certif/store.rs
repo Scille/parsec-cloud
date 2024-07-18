@@ -33,6 +33,42 @@ use crate::certif::CertifPollServerError;
 
 use super::{realm_keys_bundle::RealmKeys, CertificateOps, InvalidCertificateError};
 
+/// This enum list all possible states for a realm.
+///
+/// Bootstrapping a user realm just correspond to uploading its initial realm role
+/// manifest.
+/// Bootstrapping a workspace realm (the famous "workspace bootstrap") requires two
+/// additional certificates to be upload in a non-atomic way, hence the need to know
+/// at what state we currently are in order to be able to achieve such bootstrap in
+/// an idempotent way.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RealmBootstrapState {
+    /// Step 0
+    ///
+    /// The realm has been created on our device but doesn't exist yet on the server
+    /// (i.e. we haven't send the initial realm role certificate).
+    LocalOnly,
+    /// Step 1
+    ///
+    /// The realm exists on the server (i.e. initial realm role certificate has been uploaded).
+    /// Notes:
+    /// - The user realm doesn't go beyond this state.
+    /// - For a workspace realm, this is the first step of the workspace bootstrap.
+    CreatedInServer,
+    /// Step 2 (workspace only)
+    ///
+    /// The realm exists on the server, and its initial key rotation manifest has
+    /// been uploaded.
+    InitialKeyRotationDone,
+    /// Step 3 (workspace only)
+    ///
+    /// The realm exists on the server and its initial keys rotation manifest and realm
+    /// name certificate has been uploaded.
+    ///
+    /// At this point the workspace bootstrap has been fully achieved.
+    WorkspaceBootstrapped,
+}
+
 #[derive(Debug, Default)]
 enum ScalarCache<T> {
     #[default]
@@ -80,6 +116,10 @@ struct CurrentViewCache {
     // Instead those data are fetched from the server then validated against the
     // certificates.
     pub per_realm_keys: HashMap<VlobID, Arc<RealmKeys>>,
+    pub per_realm_bootstrap_state: HashMap<VlobID, RealmBootstrapState>,
+    /// If the entry is missing this is a cache miss, if the entry is at `None`
+    /// that means the user used to be part of the given realm.
+    pub per_realm_self_role: HashMap<VlobID, Option<RealmRole>>,
 }
 
 impl CurrentViewCache {
@@ -780,19 +820,133 @@ macro_rules! impl_read_methods {
         //       the last valid realm role certificate for each of its realms.
 
         #[allow(unused)]
-        pub async fn is_realm_created(
+        /// Get the current role of our user for a given realm, if any.
+        pub async fn get_self_user_realm_role(
             &mut self,
-            up_to: UpTo,
             realm_id: VlobID,
-        ) -> anyhow::Result<bool> {
-            let query = GetCertificateQuery::realm_role_certificates(&realm_id);
-            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
-            match outcome {
-                Ok(_) => Ok(true),
-                Err(GetCertificateError::NonExisting)
-                | Err(GetCertificateError::ExistButTooRecent { .. }) => return Ok(false),
-                Err(GetCertificateError::Internal(err)) => return Err(err),
+        ) -> anyhow::Result<Option<Option<RealmRole>>> {
+            {
+                let cache = self
+                    .store
+                    .current_view_cache
+                    .lock()
+                    .expect("Mutex is poisoned !");
+                if let Some(role) = cache.per_realm_self_role.get(&realm_id) {
+                    return Ok(Some(*role));
+                }
             }
+
+            // Cache miss !
+
+            let query = GetCertificateQuery::realm_role_certificate(&realm_id, &self.store.device.user_id);
+            // `get_certificate_encrypted` return the last certificate if multiple are available
+            let outcome = self.storage.get_certificate_encrypted(query, UpTo::Current).await;
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let certif = get_certificate_from_encrypted(
+                self.store,
+                &encrypted,
+                RealmRoleCertificate::unsecure_load,
+                UnsecureRealmRoleCertificate::skip_validation,
+            )?;
+
+            // Update cache before leaving
+            {
+                let mut cache = self
+                    .store
+                    .current_view_cache
+                    .lock()
+                    .expect("Mutex is poisoned !");
+                cache
+                    .per_realm_self_role
+                    .insert(realm_id, certif.role);
+            }
+
+            Ok(Some(certif.role))
+        }
+
+        #[allow(unused)]
+        /// Return the current state of the bootstrap for a given realm.
+        pub async fn get_realm_bootstrap_state(
+            &mut self,
+            realm_id: VlobID,
+        ) -> anyhow::Result<RealmBootstrapState> {
+            {
+                let guard = self
+                    .store
+                    .current_view_cache
+                    .lock()
+                    .expect("Mutex is poisoned !");
+
+                if let Some(state) = guard.per_realm_bootstrap_state.get(&realm_id) {
+                    return Ok(*state)
+                }
+            }
+
+            // Cache miss !
+
+            let mut state =  'get_state: {
+                // Most likely case is the realm is a bootstrapped workspace, so start by
+                // looking for the realm name certificate (i.e. last things done during
+                // bootstrap).
+
+                // 1) Realm name certificate ? (i.e. last workspace bootstrap step)
+
+                let query = GetCertificateQuery::realm_name_certificates(&realm_id);
+                let outcome = self.storage.get_certificate_encrypted(query, UpTo::Current).await;
+                match outcome {
+                    Ok(_) => {
+                        break 'get_state RealmBootstrapState::WorkspaceBootstrapped;
+                    },
+                    Err(GetCertificateError::NonExisting)
+                    | Err(GetCertificateError::ExistButTooRecent { .. }) => (),
+                    Err(GetCertificateError::Internal(err)) => return Err(err),
+                }
+
+                // 2) Realm key rotation ? (i.e. first workspace bootstrap step)
+
+                let query = GetCertificateQuery::realm_key_rotation_certificates(&realm_id);
+                let outcome = self.storage.get_certificate_encrypted(query, UpTo::Current).await;
+                match outcome {
+                    Ok(_) => {
+                        break 'get_state RealmBootstrapState::InitialKeyRotationDone;
+                    },
+                    Err(GetCertificateError::NonExisting)
+                    | Err(GetCertificateError::ExistButTooRecent { .. }) => (),
+                    Err(GetCertificateError::Internal(err)) => return Err(err),
+                }
+
+                // 3) Realm role certificate ?
+
+                let query = GetCertificateQuery::realm_role_certificates(&realm_id);
+                let outcome = self.storage.get_certificate_encrypted(query, UpTo::Current).await;
+                match outcome {
+                    Ok(_) => {
+                        break 'get_state RealmBootstrapState::CreatedInServer;
+                    },
+                    Err(GetCertificateError::NonExisting)
+                    | Err(GetCertificateError::ExistButTooRecent { .. }) => (),
+                    Err(GetCertificateError::Internal(err)) => return Err(err),
+                }
+
+                RealmBootstrapState::LocalOnly
+            };
+
+            self.store
+                .current_view_cache
+                .lock()
+                .expect("Mutex is poisoned !")
+                .per_realm_bootstrap_state
+                .insert(realm_id, state);
+
+            Ok(state)
         }
 
         #[allow(unused)]
@@ -824,6 +978,7 @@ macro_rules! impl_read_methods {
         /// For the given realm, return the last role certificate for each user still
         /// part of it (i.e. if the last role certificate for a given user is an
         /// unsharing one, then the user will be discarded).
+        #[allow(unused)]
         pub async fn get_realm_current_users_roles(
             &mut self,
             up_to: UpTo,
@@ -1353,11 +1508,14 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
             }
         };
 
+        // Update the cache
+
         let mut guard = self
             .store
             .current_view_cache
             .lock()
             .expect("Mutex is poisoned");
+
         match &mut guard.per_topic_last_timestamps {
             ScalarCache::Present(last_timestamps) => {
                 last_timestamps.realm.insert(realm_id, timestamp);
@@ -1371,6 +1529,13 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                 });
             }
         }
+
+        // By always discarding those caches, we trade simplicity for performances,
+        // however it is no big deal given new certificates within a given realm
+        // shouldn't occur that often.
+        guard.per_realm_self_role.remove(&realm_id);
+        guard.per_realm_bootstrap_state.remove(&realm_id);
+
         // Discard proactively the keys bundle cache in case of a key rotation.
         // This is to ensure we won't try to encrypt data with the wrong key
         // (i.e. not the very last one).

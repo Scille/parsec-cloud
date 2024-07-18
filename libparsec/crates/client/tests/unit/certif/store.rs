@@ -6,6 +6,8 @@ use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLast
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
+use crate::certif::store::RealmBootstrapState;
+
 use super::utils::certificates_store_factory;
 
 #[parsec_test(testbed = "minimal")]
@@ -708,6 +710,186 @@ async fn get_last_timestamps_realm(env: &TestbedEnv) {
             shamir_recovery: None,
         }
     );
+}
+
+#[parsec_test(testbed = "coolorg")]
+async fn get_self_user_realm_role(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    env.customize(|builder| {
+        builder.share_realm(wksp1_id, "bob", None);
+    })
+    .await;
+
+    let (certif, signed) = env.get_last_realm_role_certificate("bob", wksp1_id);
+
+    macro_rules! get_self_user_realm_role {
+        ($store:ident, $realm_id:expr) => {
+            $store.for_read(|store| async move { store.get_self_user_realm_role($realm_id).await })
+        };
+    }
+
+    let bob = env.local_device("bob@dev1");
+    let store = certificates_store_factory(env, &bob).await;
+
+    // Test unknown realm
+
+    let got = get_self_user_realm_role!(store, VlobID::default())
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, None);
+
+    // Initial check
+
+    let got = get_self_user_realm_role!(store, wksp1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, Some(Some(RealmRole::Reader)));
+
+    // Update the store
+
+    store
+        .for_write({
+            let certif = certif.clone();
+            |store| async move {
+                store
+                    .add_next_realm_x_certificate(
+                        RealmTopicArcCertificate::RealmRole(certif),
+                        &signed,
+                    )
+                    .await
+            }
+        })
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Re-do the check
+
+    let got = get_self_user_realm_role!(store, wksp1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, Some(None));
+
+    store.stop().await.unwrap();
+
+    // Ensure we don't rely on a cache but on data in persistent database
+
+    let store = certificates_store_factory(env, &bob).await;
+    let got = get_self_user_realm_role!(store, wksp1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, Some(None));
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn get_realm_bootstrap_state(env: &TestbedEnv) {
+    let (realm_step1_id, realm_step2_id, realm_step3_id) = env
+        .customize(|builder| {
+            let realm_step1_id = builder.new_realm("alice").map(|e| e.realm_id);
+            let realm_step2_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation()
+                .map(|e| e.realm);
+            let realm_step3_id = builder
+                .new_realm("alice")
+                .then_do_initial_key_rotation_and_naming("foo")
+                .map(|e| e.realm);
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+            // Plot twist ! In fact this realm is in step 2 (but Alice doesn't know it at first)
+            builder.rotate_key_realm(realm_step1_id);
+
+            (realm_step1_id, realm_step2_id, realm_step3_id)
+        })
+        .await;
+
+    macro_rules! get_realm_bootstrap_state {
+        ($store:ident, $realm_id:expr) => {
+            $store.for_read(|store| async move { store.get_realm_bootstrap_state($realm_id).await })
+        };
+    }
+
+    let alice = env.local_device("alice@dev1");
+    let store = certificates_store_factory(env, &alice).await;
+
+    // Realm with no certificates
+
+    let got = get_realm_bootstrap_state!(store, VlobID::default())
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::LocalOnly);
+
+    // Realm created on server (step 1)
+
+    let got = get_realm_bootstrap_state!(store, realm_step1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::CreatedInServer);
+
+    // Realm created in server & with initial key rotation (step 2)
+
+    let got = get_realm_bootstrap_state!(store, realm_step2_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::InitialKeyRotationDone);
+
+    // Realm created in server & with initial key rotation & initial name (step 3, fully bootstrapped)
+
+    let got = get_realm_bootstrap_state!(store, realm_step3_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::WorkspaceBootstrapped);
+
+    // Update the store
+
+    let (certif, signed) = {
+        let event_certif = env.template.certificates_rev().next().unwrap();
+        let certif = match event_certif.certificate {
+            AnyArcCertificate::RealmKeyRotation(certif) => certif,
+            _ => unreachable!(),
+        };
+        (certif, event_certif.signed)
+    };
+    store
+        .for_write({
+            |store| async move {
+                store
+                    .add_next_realm_x_certificate(
+                        RealmTopicArcCertificate::RealmKeyRotation(certif),
+                        &signed,
+                    )
+                    .await
+            }
+        })
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Re-do the check
+
+    let got = get_realm_bootstrap_state!(store, realm_step1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::InitialKeyRotationDone);
+
+    store.stop().await.unwrap();
+
+    // Ensure we don't rely on a cache but on data in persistent database
+
+    let store = certificates_store_factory(env, &alice).await;
+    let got = get_realm_bootstrap_state!(store, realm_step1_id)
+        .await
+        .unwrap()
+        .unwrap();
+    p_assert_eq!(got, RealmBootstrapState::InitialKeyRotationDone);
 }
 
 #[parsec_test(testbed = "minimal")]

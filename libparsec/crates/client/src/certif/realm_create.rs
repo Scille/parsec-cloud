@@ -4,7 +4,10 @@ use libparsec_client_connection::ConnectionError;
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
-use super::{store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps, UpTo};
+use super::{
+    store::{CertifStoreError, RealmBootstrapState},
+    CertificateBasedActionOutcome, CertificateOps,
+};
 use crate::EventTooMuchDriftWithServerClock;
 
 #[derive(Debug, thiserror::Error)]
@@ -49,11 +52,11 @@ pub(super) async fn ensure_realm_created(
     ops: &CertificateOps,
     realm_id: VlobID,
 ) -> Result<CertificateBasedActionOutcome, CertifEnsureRealmCreatedError> {
-    let is_created = ops
+    let realm_state = ops
         .store
-        .for_read(|store| async move { store.is_realm_created(UpTo::Current, realm_id).await })
+        .for_read(|store| async move { store.get_realm_bootstrap_state(realm_id).await })
         .await??;
-    if is_created {
+    if matches!(realm_state, RealmBootstrapState::CreatedInServer) {
         return Ok(CertificateBasedActionOutcome::LocalIdempotent);
     }
 
