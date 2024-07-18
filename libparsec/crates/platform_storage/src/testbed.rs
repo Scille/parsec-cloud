@@ -69,7 +69,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
             // 2) Actually do the initialization
             if let Some(up_to) = up_to {
                 let need_redacted = matches!(
-                    env.template.user_profile_at(device.user_id, up_to),
+                    env.template.user_profile_at(device.user_id, Some(up_to)),
                     UserProfile::Outsider
                 );
 

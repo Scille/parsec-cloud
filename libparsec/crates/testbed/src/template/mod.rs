@@ -1,10 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-// mod build;
 mod build;
 mod crc_hash;
 mod events;
 mod utils;
+
+use std::collections::HashMap;
 
 pub use build::*;
 pub use events::*;
@@ -240,7 +241,10 @@ impl TestbedTemplate {
             .expect("User doesn't exist")
     }
 
-    pub fn user_profile_at(&self, user_id: UserID, up_to: DateTime) -> UserProfile {
+    pub fn user_profile_at(&self, user_id: UserID, up_to: Option<DateTime>) -> UserProfile {
+        // Default to the last timestamp used to create event, i.e. all events are included
+        let up_to = up_to.unwrap_or(self.build_counters.current_timestamp());
+
         let mut current_profile = None;
         self.events.iter().find_map(|e| {
             let maybe_profile_update = match e {
@@ -274,6 +278,51 @@ impl TestbedTemplate {
             })
         });
         current_profile.expect("User doesn't exist")
+    }
+
+    pub fn realm_users_roles_at(
+        &self,
+        realm_id: VlobID,
+        up_to: Option<DateTime>,
+    ) -> HashMap<UserID, RealmRole> {
+        // Default to the last timestamp used to create event, i.e. all events are included
+        let up_to = up_to.unwrap_or(self.build_counters.current_timestamp());
+
+        let mut roles = HashMap::new();
+        for e in &self.events {
+            match e {
+                TestbedEvent::NewRealm(e) if e.realm_id == realm_id && e.timestamp <= up_to => {
+                    let user_id = self.device_user_id(e.author);
+                    roles.insert(user_id, RealmRole::Owner);
+                }
+                TestbedEvent::ShareRealm(e) if e.realm == realm_id && e.timestamp <= up_to => {
+                    match e.role {
+                        Some(role) => {
+                            roles.insert(e.user, role);
+                        }
+                        None => {
+                            roles.remove(&e.user);
+                        }
+                    }
+                }
+                _ => (),
+            }
+        }
+        roles
+    }
+
+    pub fn user_devices_ids(&self, user_id: UserID) -> Vec<DeviceID> {
+        self.events
+            .iter()
+            .filter_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(e) if e.first_user_id == user_id => {
+                    Some(e.first_user_first_device_id)
+                }
+                TestbedEvent::NewUser(e) if e.user_id == user_id => Some(e.first_device_id),
+                TestbedEvent::NewDevice(e) if e.user_id == user_id => Some(e.device_id),
+                _ => None,
+            })
+            .collect()
     }
 
     pub fn certificates(&self) -> impl Iterator<Item = TestbedTemplateEventCertificate> + '_ {
