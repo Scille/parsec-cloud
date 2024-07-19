@@ -1162,7 +1162,7 @@
         "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
         "noAccount": "Vous n'avez pas encore d'espace client ?",
         "createAccount": "Créer un compte",
-        "createAccountUrl": "https://parsec.cloud/register",
+        "createAccountUrl": "https://parsec.cloud/fr/tarification",
         "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
     }
 }

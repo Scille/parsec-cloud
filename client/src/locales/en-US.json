@@ -1162,7 +1162,7 @@
         "networkFailed": "Could not reach the server. Make sure that you are online and try again.",
         "noAccount": "No customer account yet?",
         "createAccount": "Create an account",
-        "createAccountUrl": "https://parsec.cloud/register",
+        "createAccountUrl": "https://parsec.cloud/en/tarification",
         "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
     }
 }
