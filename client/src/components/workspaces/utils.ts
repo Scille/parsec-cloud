@@ -124,7 +124,6 @@ export async function openWorkspaceContextMenu(
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    side: fromSidebar ? 'right' : 'bottom',
     componentProps: {
       workspaceName: workspace.currentName,
       clientProfile: clientProfile,
