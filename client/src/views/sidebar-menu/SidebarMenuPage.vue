@@ -475,13 +475,13 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
 .sidebar,
 .sidebar ion-content {
-  --background: var(--parsec-color-light-primary-800);
   --padding-end: 0;
   --padding-start: 0;
   --padding-top: 0;
 }
 
 .sidebar {
+  --background: var(--parsec-color-light-primary-800);
   border: none;
   user-select: none;
   border-radius: 0 0.5rem 0.5rem 0;
@@ -492,22 +492,23 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     gap: 1.5rem;
   }
 
-  // logo parsec
-  &::after {
-    content: url('@/assets/images/background/logo-icon-white.svg');
-    opacity: 0.03;
-    width: 100%;
-    max-width: 270px;
-    max-height: 170px;
-    position: absolute;
-    bottom: 16px;
-    right: -60px;
-    z-index: 0;
-  }
-
   .sidebar-content {
+    --background: transparent;
     position: relative;
     z-index: 12;
+
+    // logo parsec
+    &::before {
+      content: url('@/assets/images/background/logo-icon-white.svg');
+      opacity: 0.03;
+      width: 100%;
+      max-width: 270px;
+      max-height: 170px;
+      position: absolute;
+      bottom: 16px;
+      right: -60px;
+      z-index: 0;
+    }
   }
 
   .organization-workspaces {
