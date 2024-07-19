@@ -74,6 +74,21 @@
         </ion-header>
 
         <ion-content class="ion-padding sidebar-content">
+          <!-- trial section -->
+          <div
+            v-show="!isTrialOrg"
+            class="trial-card"
+          >
+            <ion-text class="trial-card__tag title-h5">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
+            <div class="trial-card-text">
+              <ion-text class="trial-card-text__time subtitles-sm">{{ $msTranslate('SideMenu.trial.title') }}</ion-text>
+              <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
+            </div>
+            <ion-button class="trial-card__button">
+              {{ $msTranslate('SideMenu.upgrade') }}
+            </ion-button>
+          </div>
+
           <!-- workspaces -->
           <div
             v-show="!currentRouteIsOrganizationManagementRoute()"
@@ -305,6 +320,7 @@ import {
 } from '@ionic/vue';
 import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart, star } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Duration } from 'luxon';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -317,12 +333,21 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const isTrialOrg = ref(false);
+const expirationTime = ref<Duration | undefined>(undefined);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
   // set toast offset
   setToastOffset(value);
 });
+
+function isExpired(): boolean {
+  if (!expirationTime.value) {
+    return false;
+  }
+  return expirationTime.value.days <= 0 && expirationTime.value.hours <= 0;
+}
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
   await navigateToWorkspace(workspaceHandle);
@@ -778,6 +803,51 @@ ion-menu {
     white-space: nowrap;
     overflow: hidden;
     --color: var(--parsec-color-light-primary-100);
+  }
+}
+
+.trial-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1rem 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-white);
+
+  &__tag {
+    color: var(--parsec-color-light-secondary-white);
+    background: var(--parsec-color-light-gradient-background);;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--parsec-radius-6);
+    width: fit-content;
+  }
+
+  &-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &__time {
+      color: var(--parsec-color-light-secondary-white);
+    }
+
+    &__info {
+      color: var(--parsec-color-light-primary-30);
+      opacity: 0.8;
+    }
+  }
+
+  // !important is used when waiting for a custom button
+  &__button {
+    --background: var(--parsec-color-light-secondary-white) !important;
+    --color: var(--parsec-color-light-primary-600) !important;
+    --background-hover: var(--parsec-color-light-secondary-premiere) !important;
+    --color-hover: var(--parsec-color-light-primary-700) !important;
+    --border-radius: var(--parsec-radius-8);
+    --padding-start: 1rem;
+    --padding-end: 1rem;
+    --padding-top: 0.625rem;
+    --padding-bottom: 0.625rem;
   }
 }
 

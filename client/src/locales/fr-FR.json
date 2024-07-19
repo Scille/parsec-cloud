@@ -619,7 +619,12 @@
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
-        "back": "Retour"
+        "back": "Retour",
+        "trial": {
+            "tag": "version d'essai",
+            "title": "L'essai se termine dans {days} jours | L'essai se termine dans moins d'une heure | L'essai a expiré",
+            "description": "Vous êtes sur actuellement sur la version d'essai gratuite."
+        }
     },
     "DevicesPage": {
         "addDevice": "Ajouter",
