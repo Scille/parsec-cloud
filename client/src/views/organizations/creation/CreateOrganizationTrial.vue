@@ -52,6 +52,7 @@ import {
 } from '@/parsec';
 import { getServerAddress, ServerType } from '@/services/parsecServers';
 import { getDefaultDeviceName } from '@/common/device';
+import { generateTrialOrganizationName } from '@/common/organization';
 import { Translatable, I18n, MsModalResult } from 'megashark-lib';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -97,11 +98,6 @@ async function onUserInformationFilled(chosenName: string, chosenEmail: string):
   step.value = Steps.Authentication;
 }
 
-function generateOrganizationName(): string {
-  const orgName = window.crypto.randomUUID().slice(0, 32);
-  return orgName;
-}
-
 async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
   if (!name.value || !email.value || !saveStrategy.value) {
     return { ok: false, error: { tag: BootstrapOrganizationErrorTag.Internal, error: 'Missing data' } };
@@ -109,8 +105,8 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
 
   let retry = 0;
 
-  while (retry < 10) {
-    const orgName = generateOrganizationName();
+  while (retry < 2) {
+    const orgName = generateTrialOrganizationName(email.value);
     const result = await parsecCreateOrganization(
       getServerAddress(ServerType.Trial) as string,
       orgName,
@@ -123,6 +119,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
       organizationName.value = orgName;
       return result;
     } else {
+      // Very unlikely
       // Name already used, retry with something else
       if (result.error.tag === BootstrapOrganizationErrorTag.AlreadyUsedToken) {
         retry += 1;
@@ -170,7 +167,6 @@ async function onAuthenticationChosen(strategy: DeviceSaveStrategy): Promise<voi
 
   const endTime = new Date().valueOf();
   // If we're too fast, a weird blinking will occur. Add some artificial time.
-  console.log(endTime, startTime, endTime - startTime);
   if (endTime - startTime < 1500) {
     await wait(1500 - (endTime - startTime));
   }
