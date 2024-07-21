@@ -8,7 +8,7 @@ This RFC describes the new invite transport model, adapted to work with non-bloc
 
 ## Background & Motivation
 
-The invite system is based on the creation of a secure channel between two peers, a claimer and a greeter. This is done using the Short Authentication String algorithm and requires a couple of messages to exchange by the peers, along with some acknowledgments.
+The invite system is based on the creation of a secure channel between two peers, a claimer and a greeter. This is done using the Short Authentication String algorithm (SAS) and requires a couple of messages to be exchanged by the peers, along with some acknowledgments.
 
 In the following paragraphs, we'll use the term `invite protocol` to describe the rules that define the **content** of those messages and what the clients are expected to do with them. We'll use the term `invite transport` to describe the semantics behind the **handling** of those messages between the clients and the server. This RFC is mostly about the `invite transport` while `invite protocol` is almost left untouched.
 
@@ -20,13 +20,13 @@ In addition, we can notice that the constraint of having both peers connected to
 
 Since the invite transport is being redesigned, we're including two more changes to this RFC. First, we need to add a reason for an attempt being cancelled by a peer. This is useful for the front-end application to properly communicate to the user what actually happened. This reason did not exist in v2 and has to be added in v3. More precisely, we can notice that the semantics of "attempts" is absent from the v2, even though the process of creating a secure channel between peers can still be cancelled and/or reset. Without dedicated semantics, it is hard to properly manage edge cases such as two devices for the same user trying to create a secure channel at the same time. For this reason, a new attempt semantics is defined here such that each attempt is properly identified and dealt with separately.
 
-The second change is related to the concept of greeters. In Parsec v2, only the administrator that created an invitation is able to greet the invited user. This is something we want to change to open the way to easier invitations, where any administrator can greet a user that has been invited. This may be configurable of course, but the transport should allow for multiple greeters per invitation. Note that this is already the case for shamir invitations, where the greeters are the shamir recipients. For this reason, the new design can draw inspiration from what was done during the shamir implementation. More precisely, each invitation will have its corresponding set of greeters which is different for each invitation type:
+The second change is related to the concept of greeters. In Parsec v2, only the administrator that created an invitation is able to greet the invited user. This is something we want to change to open the way to easier invitations, where any administrator can greet a user that has been invited. This may be configurable of course, but the transport should allow for multiple greeters per invitation. Note that this is already the case for Shamir invitations, where the greeters are the Shamir recipients. For this reason, the new design can draw inspiration from what was done during the Shamir implementation. More precisely, each invitation will have its corresponding set of greeters which is different for each invitation type:
 - for user invitation, this would be the administrators
 - for device invitation, this would be the user alone
-- for shamir invitation, this would be the shamir recipients
+- for Shamir invitation, this would be the Shamir recipients
 
 > [!NOTE]
-> This set may evolve over time as users can be revoked and user profiles can change.
+> This set may change during the lifetime of a given invitation. This specifically affects Shamir invitations (where recipients can get revoked) and user invitations (where users can loose their administrator profile).
 
 
 ## Goals and Non-Goals
@@ -64,19 +64,19 @@ Each concept is described with their identifier, immutable properties, internal 
 An invitation is used to verify the identity of a user (called the claimer) on a specific device. The users allowed to verify the identity are called greeters. The invitation can be of 3 types:
 - User invitation
 - Device invitation
-- Shared recovery (shamir) invitation
+- Shared recovery (Shamir) invitation
 
 An invitation is identified by:
 - organization id
 - invitation token
 
 Immutable properties:
-- type (user, device, shamir)
+- type (user, device, Shamir)
 - created-on timestamp
 - created-by author
 - claimer id:
   * email address (for user invitation)
-  * or user id (for device or shamir invitation)
+  * or user id (for device or Shamir invitation)
 
 Mutable state:
 - state: `PENDING` | `CANCELLED` | `COMPLETED`
@@ -85,7 +85,7 @@ Getters:
 - get greeters
   * for user invitation: all administrators
   * for device invitation: same as claimer id
-  * for shamir invitation: all recipients
+  * for Shamir invitation: all recipients
 - get channel for greeter
 
 Methods:
@@ -425,13 +425,7 @@ Schema definition:
         },
         "reps": [
             {
-                "status": "ok",
-                "fields": [
-                    {
-                        "name": "attempt",
-                        "type": "AttemptID"
-                    }
-                ]
+                "status": "ok"
             },
             {
                 // The invitation token doesn't correspond to any existing invitation
@@ -613,7 +607,7 @@ It is used by the greeter to submit the data for a given step. The step is ident
 - the invitation token
 - the type of the submitted step data
 
-For the step data to be accepted, it has to pass the following the checks:
+For the step data to be accepted, it has to pass the following checks:
 - the invitation exists
 - the invitation is pending (i.e. not completed nor cancelled)
 - the author is allowed (i.e. it is part of the greeters)
@@ -944,7 +938,7 @@ An extra authenticated command is added to complete an invitation.
 
 In the previous implementation, this was done automatically when the last exchange was performed. However, this is confusing in some cases:
 - Maybe the last exchange worked but the reply didn't reach one of the peers. In this case, the peer cannot retry the exchange since the invite is now completed.
-- In a shared recovery (shamir) invitation, the invitation must not complete after a successful attempt since there might be more exchanges to complete with other recipients.
+- In a shared recovery (Shamir) invitation, the invitation must not complete after a successful attempt since there might be more exchanges to complete with other recipients.
 
 A better approach is then to explicitly complete the invitation with a dedicated command. The allowed authors for this command depends on the invitation type:
 - User invitation: any administrator or the freshly registered user are allowed
@@ -987,6 +981,9 @@ Schema definition:
             },
             {
                 "status": "invitation_not_found"
+            },
+            {
+                "status": "author_not_allowed"
             },
             {
                 "status": "invitation_already_completed"
