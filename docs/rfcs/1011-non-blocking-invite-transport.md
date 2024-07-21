@@ -376,7 +376,7 @@ Then, the active attempt is cancelled with the provided reason and a new active 
 - the SAS code communicated to the user was invalid
 - the payload could not be deciphered
 - the payload could not be deserialized
-- the payload contained invalid information
+- the payload contained inconsistent information
 - the attempt has been automatically cancelled by a new `start_attempt` command
 
 It is also registered that the greeter cancelled the attempt, so that this information can be provided in subsequent `invitation_cancelled` replies, along with the corresponding reason and timestamp. This way, the front-end application has all the information to properly communicate to the user what happened during the attempt.
