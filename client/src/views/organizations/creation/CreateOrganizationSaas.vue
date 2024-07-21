@@ -34,7 +34,7 @@
       :server-type="ServerType.Saas"
       :can-edit-email="false"
       :can-edit-name="false"
-      :can-edit-organization-name="false"
+      :can-edit-organization-name="true"
       :can-edit-save-strategy="true"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
@@ -103,12 +103,11 @@ const personalInformation = ref<PersonalInformationResultData | undefined>(undef
 const authenticationToken = ref<AuthenticationToken | undefined>(undefined);
 const currentError = ref<Translatable | undefined>(undefined);
 const saveStrategy = ref<DeviceSaveStrategy | undefined>(undefined);
-const bootstrapLink = ref<string | undefined>(props.bootstrapLink);
 const availableDevice = ref<AvailableDevice | undefined>(undefined);
 
 onMounted(async () => {
-  if (bootstrapLink.value) {
-    const result = await parseParsecAddr(bootstrapLink.value);
+  if (props.bootstrapLink) {
+    const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
       organizationName.value = result.value.organizationId;
     }
@@ -140,26 +139,6 @@ async function onOrganizationNameChosen(chosenOrganizationName: OrganizationID):
     );
     return;
   }
-  const response = await BmsApi.createOrganization(authenticationToken.value, {
-    organizationName: chosenOrganizationName,
-    userId: personalInformation.value.id,
-    clientId: personalInformation.value.clientId,
-  });
-
-  if (response.isError) {
-    console.log('Failed to create organization');
-    // TODO: Change this error handling with the real backend response
-    if (response.errors && response.errors.some((error) => error.attr === 'already_exists')) {
-      currentError.value = 'CreateOrganization.errors.alreadyExists';
-    }
-    return;
-  }
-  if (!response.data || response.data.type !== DataType.CreateOrganization) {
-    // Should not happen
-    console.log('Incorrect response data type');
-    return;
-  }
-  bootstrapLink.value = response.data.bootstrapLink;
   organizationName.value = chosenOrganizationName;
   step.value = Steps.Authentication;
 }
@@ -172,8 +151,17 @@ async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): P
   step.value = Steps.Summary;
 }
 
+async function onCreationError(startTime: number): Promise<void> {
+  const endTime = new Date().valueOf();
+  // If we're too fast, a weird blinking will occur. Add some artificial time.
+  if (endTime - startTime < 1500) {
+    await wait(1500 - (endTime - startTime));
+  }
+  step.value = Steps.Summary;
+}
+
 async function onCreateClicked(): Promise<void> {
-  if (!bootstrapLink.value || !personalInformation.value || !saveStrategy.value) {
+  if (!organizationName.value || !personalInformation.value || !saveStrategy.value || !authenticationToken.value) {
     window.electronAPI.log('error', 'OrganizationCreation: missing data at the creation step, should not happen');
     return;
   }
@@ -181,19 +169,45 @@ async function onCreateClicked(): Promise<void> {
   step.value = Steps.Creation;
 
   const startTime = new Date().valueOf();
+  let bootstrapLink: string | undefined = props.bootstrapLink;
+  if (!props.bootstrapLink) {
+    const response = await BmsApi.createOrganization(authenticationToken.value, {
+      organizationName: organizationName.value,
+      userId: personalInformation.value.id,
+      clientId: personalInformation.value.clientId,
+    });
+
+    if (response.isError) {
+      console.log('Failed to create organization');
+      // TODO: Change this error handling with the real backend response
+      if (response.errors && response.errors.some((error) => error.code === 'parsec_bad_status')) {
+        currentError.value = 'CreateOrganization.errors.alreadyExists';
+        await onCreationError(startTime);
+        return;
+      }
+      step.value = Steps.Summary;
+    } else if (!response.data || response.data.type !== DataType.CreateOrganization) {
+      // Should not happen
+      console.log('Incorrect response data type');
+      currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'IncorrectDataType' } };
+      await onCreationError(startTime);
+      return;
+    } else {
+      bootstrapLink = response.data.bootstrapLink;
+    }
+  }
+  if (!bootstrapLink) {
+    currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'NoBootstrapLink' } };
+    await onCreationError(startTime);
+    return;
+  }
   const result = await bootstrapOrganization(
-    bootstrapLink.value,
+    bootstrapLink,
     `${personalInformation.value.firstName} ${personalInformation.value.lastName}`,
     personalInformation.value.email,
     getDefaultDeviceName(),
     isProxy(saveStrategy.value) ? toRaw(saveStrategy.value) : saveStrategy.value,
   );
-
-  const endTime = new Date().valueOf();
-  // If we're too fast, a weird blinking will occur. Add some artificial time.
-  if (endTime - startTime < 1500) {
-    await wait(1500 - (endTime - startTime));
-  }
 
   if (!result.ok) {
     if (result.error.tag === BootstrapOrganizationErrorTag.AlreadyUsedToken) {
@@ -203,9 +217,15 @@ async function onCreateClicked(): Promise<void> {
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
-    step.value = Steps.Summary;
+    await onCreationError(startTime);
     console.log('Failed to create organization', result.error);
     return;
+  }
+
+  const endTime = new Date().valueOf();
+  // If we're too fast, a weird blinking will occur. Add some artificial time.
+  if (endTime - startTime < 1500) {
+    await wait(1500 - (endTime - startTime));
   }
   availableDevice.value = result.value;
 
