@@ -11,11 +11,11 @@
           <span>{{ device.organizationId?.substring(0, 2) }}</span>
         </ion-avatar>
         <ion-text
-          v-if="expirationTime"
+          v-if="expirationDuration"
           class="orga-expiration button-small"
-          :class="{ expired: isExpired() }"
+          :class="{ expired: isExpired(expirationDuration) }"
         >
-          {{ $msTranslate(formatExpirationTime()) }}
+          {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
         </ion-text>
         <div class="orga-text">
           <ion-card-title class="card-title">
@@ -30,54 +30,27 @@
 
 <script setup lang="ts">
 import { AvailableDevice } from '@/parsec';
-import { getServerTypeFromHost, ServerType, TRIAL_EXPIRATION_DAYS } from '@/services/parsecServers';
+import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { Duration } from 'luxon';
-import { Translatable } from 'megashark-lib';
+import { getDurationBeforeExpiration, formatExpirationTime, isExpired } from '@/common/organization';
 
 const props = defineProps<{
   device: AvailableDevice;
 }>();
 
 const isTrialOrg = ref(false);
-const expirationTime = ref<Duration | undefined>(undefined);
+const expirationDuration = ref<Duration | undefined>(undefined);
 
 onMounted(async () => {
   const url = new URL(props.device.serverUrl);
   const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
   isTrialOrg.value = serverType === ServerType.Trial;
   if (isTrialOrg.value) {
-    expirationTime.value = props.device.createdOn.plus({ days: TRIAL_EXPIRATION_DAYS }).diffNow(['days', 'hours']);
+    expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
   }
 });
-
-function isExpired(): boolean {
-  if (!expirationTime.value) {
-    return false;
-  }
-  return expirationTime.value.days <= 0 && expirationTime.value.hours <= 0;
-}
-
-function formatExpirationTime(): Translatable {
-  if (!expirationTime.value) {
-    return '';
-  }
-  if (expirationTime.value.days > 0) {
-    return {
-      key: 'HomePage.organizationList.expiration.days',
-      count: expirationTime.value.days,
-      data: { days: expirationTime.value.days },
-    };
-  } else if (expirationTime.value.hours > 0) {
-    return {
-      key: 'HomePage.organizationList.expiration.hours',
-      count: Math.floor(expirationTime.value.hours),
-      data: { hours: Math.floor(expirationTime.value.hours) },
-    };
-  }
-  return { key: 'HomePage.organizationList.expiration.expired' };
-}
 </script>
 
 <style lang="scss" scoped>

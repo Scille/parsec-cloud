@@ -38,6 +38,7 @@
       :can-edit-save-strategy="true"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
+      @update-organization-name-clicked="onUpdateOrganizationNameClicked"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
     />
@@ -242,6 +243,10 @@ async function onGoBackRequested(): Promise<void> {
   } else {
     console.log(`Cannot go back from ${step.value}, should not happen`);
   }
+}
+
+async function onUpdateOrganizationNameClicked(): Promise<void> {
+  step.value = Steps.OrganizationName;
 }
 
 async function onUpdateSaveStrategyClicked(): Promise<void> {

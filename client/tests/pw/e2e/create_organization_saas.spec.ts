@@ -356,3 +356,68 @@ msTest('Cannot reach the BMS', async ({ home }) => {
     'Could not reach the server. Make sure that you are online and try again.',
   );
 });
+
+msTest('Edit from summary', async ({ home }) => {
+  const modal = await openCreateOrganizationModal(home);
+
+  await mockLogin(home, true);
+  await mockUserInfo(home);
+  await mockCreateOrganization(home);
+
+  const bmsContainer = modal.locator('.saas-login-container');
+  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await bmsNext.click();
+
+  const orgNameContainer = modal.locator('.organization-name-page');
+  const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button');
+  await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
+  await orgNameNext.click();
+
+  const authContainer = modal.locator('.authentication-page');
+  const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+  await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
+  await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await authNext.click();
+
+  const summaryContainer = modal.locator('.summary-page');
+  const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+
+  await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
+    'Organization',
+    'Full name',
+    'Email',
+    'Server choice',
+    'Authentication method',
+  ]);
+  await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
+    DEFAULT_ORGANIZATION_INFORMATION.name,
+    DEFAULT_USER_INFORMATION.name,
+    DEFAULT_USER_INFORMATION.email,
+    'Parsec SaaS',
+    'Password',
+  ]);
+  const editButton = summaryContainer.locator('.summary-item-container').nth(0).locator('.summary-item__button');
+  await expect(editButton).toBeVisible();
+  await expect(editButton).toHaveText('Edit');
+  await editButton.click();
+
+  await expect(summaryContainer).toBeHidden();
+  await expect(orgNameContainer).toBeVisible();
+  await fillIonInput(orgNameContainer.locator('ion-input'), `${DEFAULT_ORGANIZATION_INFORMATION.name}2`);
+  await orgNameNext.click();
+
+  await authNext.click();
+
+  await expect(summaryContainer).toBeVisible();
+  await expect(orgNameContainer).toBeHidden();
+  await expect(summaryContainer.locator('.summary-item__text')).toHaveText([
+    `${DEFAULT_ORGANIZATION_INFORMATION.name}2`,
+    DEFAULT_USER_INFORMATION.name,
+    DEFAULT_USER_INFORMATION.email,
+    'Parsec SaaS',
+    'Password',
+  ]);
+  await expect(summaryNext).toBeTrulyEnabled();
+});
