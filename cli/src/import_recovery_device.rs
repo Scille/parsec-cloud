@@ -31,6 +31,7 @@ pub async fn import_recovery_device(
 
     let mut handle = start_spinner("Loading recovery device file".into());
 
+    // TODO this is a recovery device: a new local device must be created
     let device = load_recovery_device(&input, passphrase.into()).await?;
 
     handle.stop_with_newline();
