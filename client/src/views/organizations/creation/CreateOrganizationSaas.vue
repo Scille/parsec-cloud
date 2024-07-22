@@ -114,20 +114,14 @@ onMounted(async () => {
   }
 });
 
-async function onLoginSuccess(token: AuthenticationToken): Promise<void> {
-  const response = await BmsApi.getPersonalInformation(token);
-  if (response.isError || !response.data || response.data.type !== DataType.PersonalInformation) {
-    // TODO: Show something to the user
-    console.log('Failed to retrieve personal information');
-  } else {
-    authenticationToken.value = token;
-    personalInformation.value = response.data;
+async function onLoginSuccess(token: AuthenticationToken, info: PersonalInformationResultData): Promise<void> {
+  authenticationToken.value = token;
+  personalInformation.value = info;
 
-    if (props.bootstrapLink) {
-      step.value = Steps.Authentication;
-    } else {
-      step.value = Steps.OrganizationName;
-    }
+  if (props.bootstrapLink) {
+    step.value = Steps.Authentication;
+  } else {
+    step.value = Steps.OrganizationName;
   }
 }
 

@@ -51,7 +51,7 @@
       <ion-footer class="saas-login-footer">
         <div class="login-button">
           <ion-button
-            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length"
+            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
             @click="onLoginClicked"
           >
             {{ $msTranslate('ClientApplication.login') }}
@@ -90,7 +90,7 @@ import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'meg
 import { emailValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { AuthenticationToken, BmsApi, DataType } from '@/services/bms';
+import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 const props = defineProps<{
@@ -98,7 +98,7 @@ const props = defineProps<{
 }>();
 
 const emits = defineEmits<{
-  (e: 'loginSuccess', token: AuthenticationToken): void;
+  (e: 'loginSuccess', token: AuthenticationToken, personalInformation: PersonalInformationResultData): void;
   (e: 'closeRequested'): void;
 }>();
 
@@ -131,7 +131,12 @@ async function onLoginClicked(): Promise<void> {
     if (response.isError || !response.data || response.data.type !== DataType.Login) {
       loginError.value = 'ClientApplication.loginFailed';
     } else {
-      emits('loginSuccess', response.data.token);
+      const dataResponse = await BmsApi.getPersonalInformation(response.data.token);
+      if (dataResponse.isError || !dataResponse.data || dataResponse.data.type !== DataType.PersonalInformation) {
+        loginError.value = 'ClientApplication.retrieveInformationFailed';
+      } else {
+        emits('loginSuccess', response.data.token, dataResponse.data);
+      }
     }
   } catch (error: any) {
     window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
