@@ -32,6 +32,8 @@ pub async fn export_recovery_device(
     load_device_and_run(config_dir, device, |device| async move {
         let mut handle = start_spinner("Saving recovery device file".into());
 
+        // TODO save recovery device instead of local device
+        // The recovery device must be generated first
         let passphrase = save_recovery_device(&output, &device).await?;
 
         handle.stop_with_message(

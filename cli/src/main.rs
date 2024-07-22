@@ -17,6 +17,7 @@ mod list_workspaces;
 mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;
+mod shamir_setup;
 mod share_workspace;
 mod stats_organization;
 mod stats_server;
@@ -81,6 +82,8 @@ enum Command {
     StatsServer(stats_server::StatsServer),
     /// Get organization status
     StatusOrganization(status_organization::StatusOrganization),
+    /// Create a shamir setup
+    ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
 }
 
 #[tokio::main]
@@ -135,6 +138,9 @@ async fn main() -> anyhow::Result<()> {
         Command::StatsServer(stats_server) => stats_server::stats_server(stats_server).await,
         Command::StatusOrganization(status_organization) => {
             status_organization::status_organization(status_organization).await
+        }
+        Command::ShamirSetupCreate(shamir_setup_create) => {
+            shamir_setup::shamir_setup_create(shamir_setup_create).await
         }
     }
 }
