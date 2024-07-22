@@ -64,13 +64,12 @@ COLOR_RED = "\033[91m"
 COLOR_GREEN = "\033[92m"
 COLOR_YELLOW = "\033[93m"
 COLOR_DIM = "\033[2m"
-DESCRIPTION = (
-    f"""TL,DR:
+DESCRIPTION = f"""TL,DR:
 Create release commit&tag: {COLOR_GREEN}./misc/releaser.py build v1.2.3{COLOR_END}
 Oops I've made a mistake: {COLOR_GREEN}./misc/releaser.py rollback{COLOR_END}
-    """
-    + __doc__
-)
+    """ + (
+    __doc__ if __doc__ else ""
+)  # __doc__ is "str | None", see https://github.com/microsoft/pyright/discussions/3820
 
 PRERELEASE_EXPR = r"(?P<pre_l>(a|b|rc))\.?(?P<pre_n>[0-9]+)"
 

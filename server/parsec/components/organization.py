@@ -23,7 +23,7 @@ from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
 from parsec.client_context import AnonymousClientContext
 from parsec.config import BackendConfig
-from parsec.types import BadOutcomeEnum, Unset
+from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
 
 
@@ -221,9 +221,9 @@ class BaseOrganizationComponent:
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
-        minimum_archiving_period: Literal[Unset] | int = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
@@ -275,10 +275,10 @@ class BaseOrganizationComponent:
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
-        is_expired: Literal[Unset] | bool = Unset,
+        is_expired: Literal[UnsetType.Unset] | bool = Unset,
         # `None` stands for "no limit"
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError
 
