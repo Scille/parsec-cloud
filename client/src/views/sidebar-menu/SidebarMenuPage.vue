@@ -82,12 +82,12 @@
           <!-- trial section -->
           <div
             v-show="isTrialOrg"
-            v-if="expirationTime"
+            v-if="expirationDuration"
             class="trial-card"
           >
             <ion-text class="trial-card__tag title-h5">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
             <div class="trial-card-text">
-              <ion-text class="trial-card-text__time body">{{ $msTranslate(formatExpirationTime()) }}</ion-text>
+              <ion-text class="trial-card-text__time body">{{ $msTranslate(formatExpirationTime(expirationDuration)) }}</ion-text>
               <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
             </div>
             <ion-button class="trial-card__button">
@@ -303,7 +303,10 @@ import {
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
+import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { formatExpirationTime, getDurationBeforeExpiration } from '@/common/organization';
+
 import {
   GestureDetail,
   IonAvatar,
@@ -341,8 +344,8 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
-const isTrialOrg = ref(true);
-const expirationTime = ref<Duration | undefined>(undefined);
+const isTrialOrg = ref(false);
+const expirationDuration = ref<Duration | undefined>(undefined);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -350,25 +353,25 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   setToastOffset(value);
 });
 
-function formatExpirationTime(): Translatable {
-  if (!expirationTime.value) {
-    return '';
-  }
-  if (expirationTime.value.days > 0) {
-    return {
-      key: 'SideMenu.trial.expiration.days',
-      count: expirationTime.value.days,
-      data: { days: expirationTime.value.days },
-    };
-  } else if (expirationTime.value.hours > 0) {
-    return {
-      key: 'SideMenu.trial.expiration.hours',
-      count: Math.floor(expirationTime.value.hours),
-      data: { hours: Math.floor(expirationTime.value.hours) },
-    };
-  }
-  return { key: 'SideMenu.trial.expiration.expired' };
-}
+// function formatExpirationTime(): Translatable {
+//   if (!expirationTime.value) {
+//     return '';
+//   }
+//   if (expirationTime.value.days > 0) {
+//     return {
+//       key: 'SideMenu.trial.expiration.days',
+//       count: expirationTime.value.days,
+//       data: { days: expirationTime.value.days },
+//     };
+//   } else if (expirationTime.value.hours > 0) {
+//     return {
+//       key: 'SideMenu.trial.expiration.hours',
+//       count: Math.floor(expirationTime.value.hours),
+//       data: { hours: Math.floor(expirationTime.value.hours) },
+//     };
+//   }
+//   return { key: 'SideMenu.trial.expiration.expired' };
+// }
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
   await navigateToWorkspace(workspaceHandle);
@@ -436,6 +439,17 @@ onMounted(async () => {
       onMove,
     });
     gesture.enable();
+  }
+
+  if (currentDevice.value) {
+    const url = new URL(currentDevice.value.serverUrl);
+    const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
+    isTrialOrg.value = serverType === ServerType.Trial;
+    console.log(isTrialOrg.value);
+
+    if (isTrialOrg.value) {
+      expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
+    }
   }
 });
 

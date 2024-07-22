@@ -39,7 +39,6 @@ import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { Duration } from 'luxon';
-import { Translatable } from 'megashark-lib';
 import { LogoIconGradient } from 'megashark-lib';
 import { getDurationBeforeExpiration, formatExpirationTime, isExpired } from '@/common/organization';
 
