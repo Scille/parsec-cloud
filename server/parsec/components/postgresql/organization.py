@@ -254,8 +254,8 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
@@ -547,10 +547,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         self,
         conn: AsyncpgConnection,
         id: OrganizationID,
-        is_expired: Literal[Unset] | bool = Unset,
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
-        minimum_archiving_period: Literal[Unset] | int = Unset,
+        is_expired: Literal[UnsetType.Unset] | bool = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         with_is_expired = is_expired is not Unset
         with_active_users_limit = active_users_limit is not Unset

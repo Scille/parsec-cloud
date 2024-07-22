@@ -42,7 +42,7 @@ from parsec.components.organization import (
     organization_bootstrap_validate,
 )
 from parsec.events import EventOrganizationExpired
-from parsec.types import Unset
+from parsec.types import Unset, UnsetType
 
 
 class MemoryOrganizationComponent(BaseOrganizationComponent):
@@ -65,9 +65,9 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         self,
         now: DateTime,
         id: OrganizationID,
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
-        minimum_archiving_period: Literal[Unset] | int = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -316,10 +316,10 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     async def update(
         self,
         id: OrganizationID,
-        is_expired: Literal[Unset] | bool = Unset,
-        active_users_limit: Literal[Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[Unset] | bool = Unset,
-        minimum_archiving_period: Literal[Unset] | int = Unset,
+        is_expired: Literal[UnsetType.Unset] | bool = Unset,
+        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         try:
             org = self._data.organizations[id]

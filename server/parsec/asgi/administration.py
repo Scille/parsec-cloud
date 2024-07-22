@@ -32,10 +32,10 @@ from parsec.components.organization import (
     OrganizationStats,
     OrganizationStatsBadOutcome,
     OrganizationUpdateBadOutcome,
-    Unset,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
 from parsec.events import OrganizationIDField
+from parsec.types import Unset, UnsetType
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
@@ -70,13 +70,13 @@ class CreateOrganizationIn(BaseModel):
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | Literal[Unset] = Unset
-    active_users_limit: ActiveUsersLimit | Literal[Unset] = Unset
-    minimum_archiving_period: int | Literal[Unset] = Unset
+    user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
+    active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
+    minimum_archiving_period: int | Literal[UnsetType.Unset] = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[Unset]:
+    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[UnsetType.Unset]:
         match v:
             case ActiveUsersLimit():
                 return v
@@ -170,16 +170,16 @@ class PatchOrganizationOut(BaseModel):
 
 class PatchOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    is_expired: bool | Literal[Unset] = Unset
+    is_expired: bool | Literal[UnsetType.Unset] = Unset
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | Literal[Unset] = Unset
-    active_users_limit: ActiveUsersLimit | Literal[Unset] = Unset
+    user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
+    active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[Unset]:
+    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[UnsetType.Unset]:
         match v:
             case ActiveUsersLimit():
                 return v
