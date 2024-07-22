@@ -253,4 +253,8 @@ generate_field_type_enum!(
     X509Certificate => libparsec_types::X509Certificate,
     // Used only in protocol
     IntegerBetween1And100 => libparsec_types::IntegerBetween1And100,
+    // Used only in shamir
+    ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
+    ShamirShare =>  libparsec_types::ShamirShare,
+
 );

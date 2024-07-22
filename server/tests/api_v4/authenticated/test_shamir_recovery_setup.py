@@ -247,7 +247,9 @@ async def test_authenticated_shamir_recovery_setup_invalid_recipient(
         [share.dump_and_sign(coolorg.alice.signing_key)],
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidRecipient()
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepInvalidRecipient(
+        coolorg.mallory.user_id
+    )
 
 
 async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(

@@ -54,8 +54,6 @@ class BaseShamirComponent:
                     client_ctx.author_not_found_abort()
                 case ShamirAddOrDeleteRecoverySetupStoreBadOutcome.AUTHOR_REVOKED:
                     client_ctx.author_revoked_abort()
-                case ShamirAddOrDeleteRecoverySetupStoreBadOutcome.INVALID_RECIPIENT:
-                    return authenticated_cmds.latest.shamir_recovery_setup.RepInvalidRecipient()
                 case ShamirSetupAlreadyExistsBadOutcome() as error:
                     return (
                         authenticated_cmds.latest.shamir_recovery_setup.RepShamirSetupAlreadyExists(
@@ -77,6 +75,11 @@ class BaseShamirComponent:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepMissingShareForRecipient()
                 case ShamirAddRecoverySetupValidateBadOutcome.SHARE_INCONSISTENT_TIMESTAMP:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepShareInconsistentTimestamp()
+
+                case ShamirInvalidRecipientBadOutcome() as error:
+                    return authenticated_cmds.latest.shamir_recovery_setup.RepInvalidRecipient(
+                        error.user_id
+                    )
 
                 case TimestampOutOfBallpark() as error:
                     return (
@@ -113,6 +116,7 @@ class BaseShamirComponent:
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
         | ShamirAddRecoverySetupValidateBadOutcome
         | ShamirSetupAlreadyExistsBadOutcome
+        | ShamirInvalidRecipientBadOutcome
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
     ):
@@ -134,12 +138,16 @@ class ShamirAddOrDeleteRecoverySetupStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
-    INVALID_RECIPIENT = auto()
 
 
 @dataclass(slots=True)
 class ShamirSetupAlreadyExistsBadOutcome(BadOutcome):
     last_shamir_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class ShamirInvalidRecipientBadOutcome(BadOutcome):
+    user_id: UserID
 
 
 # Check internal consistency of certificate

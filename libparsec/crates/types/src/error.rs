@@ -76,6 +76,9 @@ pub enum DataError {
         data_type: &'static str,
         invariant: &'static str,
     },
+
+    #[error(transparent)]
+    CryptoError(#[from] CryptoError),
 }
 
 pub type DataResult<T> = Result<T, DataError>;

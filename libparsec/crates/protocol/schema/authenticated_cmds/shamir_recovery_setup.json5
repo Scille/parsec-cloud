@@ -27,7 +27,14 @@
             },
             {
                 // a recipient is missing, revoked or frozen
-                "status": "invalid_recipient"
+                "status": "invalid_recipient",
+                "fields": [
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    }
+
+                ]
             },
             {
                 // A share has a recipient not mentioned in brief

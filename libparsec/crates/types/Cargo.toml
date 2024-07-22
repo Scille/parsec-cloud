@@ -49,9 +49,11 @@ rand = { workspace = true, features = ["std", "std_rng"] }
 thiserror = { workspace = true }
 email-address-parser = { workspace = true }
 anyhow = { workspace = true, features = ["std", "backtrace"] }
+flate2 = { workspace = true }
 fnmatch-regex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
+sharks = { workspace = true }
 zstd = { workspace = true, optional = true }
 # TODO: temporary to fix parquet wasm build
 # upstream issue: https://github.com/gyscos/zstd-rs/issues/269

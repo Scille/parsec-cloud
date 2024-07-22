@@ -120,7 +120,13 @@ Authenticated API:
             },
             {
                 // a recipient is missing, revoked or frozen
-                "status": "invalid_recipient"
+                "status": "invalid_recipient",
+                "fields": [
+                    {
+                        "name": "user_id",
+                        "type": "UserID"
+                    }
+                ]
             },
             {
                 // A share has a recipient not mentioned in brief
@@ -135,14 +141,23 @@ Authenticated API:
                 "status": "author_included_as_recipient"
             },
             {
+                // A share has a timestamp different than the brief timestamp.
+                "status": "share_inconsistent_timestamp"
+            },
+            {
                 // A recipient listed in brief has no associated share
                 "status": "missing_share_for_recipient"
             },
             {
                 // Shamir recovery has already been setup
                 "status": "shamir_setup_already_exists",
+                "fields": [
+                    {
+                        "name": "last_shamir_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
-
             {
                 // Returned if the timestamp in the certificate is too far away compared
                 // to server clock.

@@ -838,6 +838,12 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
+        FieldType::ShamirRecoveryShareData => {
+            quote! { crate::shamir::ShamirRecoveryShareData}
+        }
+        FieldType::ShamirShare => {
+            quote! { crate::shamir::ShamirShare}
+        }
     }
 }
 
@@ -978,6 +984,12 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::X509Certificate => {
             quote! { crate::data::X509Certificate(#field_path.to_owned()) }
         }
+        FieldType::ShamirRecoveryShareData => {
+            quote! { crate::shamir::ShamirRecoveryShareData(#field_path.to_owned())}
+        }
+        FieldType::ShamirShare => {
+            quote! { crate::shamir::ShamirShare(#field_path.to_owned())}
+        }
     }
 }
 
@@ -1058,6 +1070,12 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
+        FieldType::ShamirRecoveryShareData => {
+            quote! { crate::shamir::ShamirRecoveryShareData}
+        }
+        FieldType::ShamirShare => {
+            quote! { crate::shamir::ShamirShare}
+        }
     }
 }
 
