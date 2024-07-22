@@ -10,9 +10,17 @@ use crate::workspace::merge::{merge_local_folder_manifest, MergeLocalFolderManif
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn no_remote_change(
-    #[values("same_version", "older_version", "same_version_with_local_change")] kind: &str,
+    #[values(
+        "same_version",
+        "older_version",
+        "same_version_with_local_change",
+        "same_version_with_local_confinement",
+        "same_version_with_remote_confinement"
+    )]
+    kind: &str,
     env: &TestbedEnv,
 ) {
+    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
     let local_author = "alice@dev1".parse().unwrap();
     let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
@@ -55,13 +63,31 @@ async fn no_remote_change(
                 .children
                 .insert("child.txt".parse().unwrap(), VlobID::default());
         }
+        "same_version_with_local_confinement" => {
+            let child_id = VlobID::default();
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
+        }
+        "same_version_with_remote_confinement" => {
+            let child_id = VlobID::default();
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+        }
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
-        &libparsec_types::Regex::empty(),
+        &prevent_sync_pattern,
         &local,
         remote,
     );
@@ -69,7 +95,20 @@ async fn no_remote_change(
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn remote_only_change(env: &TestbedEnv) {
+async fn remote_only_change(
+    #[values(
+        "no_confinement",
+        "with_local_confinement",
+        "with_existing_remote_confinement",
+        "with_new_remote_confinement",
+        "with_outdated_remote_confinement",
+        "with_outdated_prevent_sync_pattern_local",
+        "with_outdated_prevent_sync_pattern_remote"
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
+    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
     let local_author = "alice@dev1".parse().unwrap();
     let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
@@ -85,7 +124,7 @@ async fn remote_only_change(env: &TestbedEnv) {
         updated: "2021-01-02T00:00:00Z".parse().unwrap(),
         children: HashMap::new(),
     };
-    let local = LocalFolderManifest {
+    let mut local = LocalFolderManifest {
         base: remote.clone(),
         parent: parent_id,
         need_sync: false,
@@ -105,7 +144,7 @@ async fn remote_only_change(env: &TestbedEnv) {
         .children
         .insert("child.txt".parse().unwrap(), new_child_id);
 
-    let expected = LocalFolderManifest {
+    let mut expected = LocalFolderManifest {
         base: FolderManifest {
             author: "bob@dev1".parse().unwrap(),
             timestamp: "2021-01-03T00:00:00Z".parse().unwrap(),
@@ -124,10 +163,68 @@ async fn remote_only_change(env: &TestbedEnv) {
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
+
+    let confined_id = VlobID::from_hex("9100fa0bfca94e4d96077dd274a243c0").unwrap();
+    let confined_name: EntryName = "child.tmp".parse().unwrap();
+    match kind {
+        "no_confinement" => (),
+        "with_local_confinement" => {
+            local.children.insert(confined_name.clone(), confined_id);
+            local.local_confinement_points.insert(confined_id);
+            expected.children.insert(confined_name, confined_id);
+            expected.local_confinement_points.insert(confined_id);
+        }
+        // Remote confinement was already known in `local`, and is still there in the new `remote`
+        "with_existing_remote_confinement" => {
+            local
+                .base
+                .children
+                .insert(confined_name.clone(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+            remote.children.insert(confined_name.clone(), confined_id);
+            expected.base.children.insert(confined_name, confined_id);
+            expected.remote_confinement_points.insert(confined_id);
+        }
+        // Remote confinement was not known in `local`, and appeared in the new `remote`
+        "with_new_remote_confinement" => {
+            remote.children.insert(confined_name.clone(), confined_id);
+            expected.base.children.insert(confined_name, confined_id);
+            expected.remote_confinement_points.insert(confined_id);
+        }
+        // Remote confinement was known in `local`, but is no longer there in the new `remote`
+        "with_outdated_remote_confinement" => {
+            local.base.children.insert(confined_name, confined_id);
+            local.remote_confinement_points.insert(confined_id);
+        }
+        // The prevent sync pattern has changed, but `local_confinement_points` hasn't been updated yet
+        "with_outdated_prevent_sync_pattern_local" => {
+            // Name that doesn't match the current `*.tmp` prevent sync pattern
+            let confined_name: EntryName = "child.tmp~".parse().unwrap();
+            local.children.insert(confined_name.clone(), confined_id);
+            local.local_confinement_points.insert(confined_id);
+            expected.children.insert(confined_name, confined_id);
+            expected.need_sync = true;
+            expected.updated = timestamp;
+        }
+        "with_outdated_prevent_sync_pattern_remote" => {
+            // Name that doesn't match the current `*.tmp` prevent sync pattern
+            let confined_name: EntryName = "child.tmp~".parse().unwrap();
+            remote.children.insert(confined_name.clone(), confined_id);
+            local
+                .base
+                .children
+                .insert(confined_name.clone(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+            expected.children.insert(confined_name.clone(), confined_id);
+            expected.base.children.insert(confined_name, confined_id);
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
-        &libparsec_types::Regex::empty(),
+        &prevent_sync_pattern,
         &local,
         remote,
     );
