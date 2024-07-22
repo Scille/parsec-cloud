@@ -622,8 +622,13 @@
         "back": "Retour",
         "trial": {
             "tag": "version d'essai",
-            "title": "L'essai se termine dans {days} jours | L'essai se termine dans moins d'une heure | L'essai a expiré",
-            "description": "Vous êtes sur actuellement sur la version d'essai gratuite."
+            "expiration": {
+                "days": "L'essai se termine dans 1 jour | dans {days} jours restants",
+                "hours": "L'essai se termine dans moins d'une heure | L'essai se termine dans {hours} heures",
+                "expired": "L'essai est terminé"
+            },
+            "description": "Vous êtes sur actuellement sur la version d'essai gratuite.",
+            "subscribe": "S'abonnez maintenant"
         }
     },
     "DevicesPage": {

@@ -6,9 +6,13 @@
       <div class="organization-info">
         <ion-avatar
           class="orga-avatar body-lg"
-          v-show="!isTrialOrg"
         >
-          <span>{{ device.organizationId?.substring(0, 2) }}</span>
+          <span v-if="isTrialOrg">{{ device.organizationId?.substring(0, 2) }}</span>
+          <ms-image
+            v-else
+            :image="LogoIconGradient"
+            class="orga-avatar-logo"
+          />
         </ion-avatar>
         <ion-text
           v-if="expirationDuration"
@@ -25,6 +29,7 @@
         </div>
       </div>
     </ion-card-header>
+    <ion-text class="orga-email body">{{ device.humanHandle.label }}</ion-text>
   </ion-card>
 </template>
 
@@ -34,6 +39,8 @@ import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { Duration } from 'luxon';
+import { Translatable } from 'megashark-lib';
+import { LogoIconGradient } from 'megashark-lib';
 import { getDurationBeforeExpiration, formatExpirationTime, isExpired } from '@/common/organization';
 
 const props = defineProps<{
@@ -55,6 +62,9 @@ onMounted(async () => {
 
 <style lang="scss" scoped>
 .organization-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
   user-select: none;
   box-shadow: none;
   background: none;
@@ -75,9 +85,9 @@ onMounted(async () => {
     .orga-avatar {
       background-color: var(--parsec-color-light-secondary-white);
       color: var(--parsec-color-light-primary-600);
-      width: 3.25rem;
-      height: 3.25rem;
-      border-radius: 50%;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: var(--parsec-radius-12);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -85,6 +95,17 @@ onMounted(async () => {
       position: relative;
       z-index: 1;
       border: 1px solid var(--parsec-color-light-secondary-medium);
+
+      &-logo {
+        width: 1.5rem;
+      }
+    }
+
+    .card-title {
+      display: flex;
+      flex-direction: column;
+      gap: 0.375rem;
+      color: var(--parsec-color-light-primary-700);
     }
 
     .orga-expiration {
@@ -101,20 +122,10 @@ onMounted(async () => {
         color: var(--parsec-color-light-secondary-white);
       }
     }
-
-    .card-title {
-      display: flex;
-      flex-direction: column;
-      gap: 0.375rem;
-
-      span:first-child {
-        color: var(--parsec-color-light-primary-700);
-      }
-
-      span:last-child {
-        color: var(--parsec-color-light-secondary-grey);
-      }
-    }
   }
+
+  .orga-email {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
 }
 </style>

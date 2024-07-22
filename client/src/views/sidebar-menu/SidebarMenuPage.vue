@@ -21,8 +21,13 @@
                 @click="openOrganizationChoice($event)"
               >
                 <div class="header-container">
-                  <ion-avatar class="orga-avatar">
-                    <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                  <ion-avatar class="orga-avatar body-lg">
+                    <span v-if="isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                    <ms-image
+                      v-else
+                      :image="LogoIconGradient"
+                      class="orga-avatar-logo"
+                    />
                   </ion-avatar>
                   <div class="orga-text">
                     <ion-card-title class="title-h3">
@@ -76,16 +81,19 @@
         <ion-content class="ion-padding sidebar-content">
           <!-- trial section -->
           <div
-            v-show="!isTrialOrg"
+            v-show="isTrialOrg"
+            v-if="expirationTime"
             class="trial-card"
           >
             <ion-text class="trial-card__tag title-h5">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
             <div class="trial-card-text">
-              <ion-text class="trial-card-text__time subtitles-sm">{{ $msTranslate('SideMenu.trial.title') }}</ion-text>
+              <ion-text class="trial-card-text__time body">{{ $msTranslate(formatExpirationTime()) }}</ion-text>
               <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
             </div>
             <ion-button class="trial-card__button">
-              {{ $msTranslate('SideMenu.upgrade') }}
+              <a href="https://parsec.cloud/tarification">
+                {{ $msTranslate('SideMenu.trial.subscribe') }}
+              </a>
             </ion-button>
           </div>
 
@@ -267,7 +275,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser, Translatable, LogoIconGradient } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -333,7 +341,7 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
-const isTrialOrg = ref(false);
+const isTrialOrg = ref(true);
 const expirationTime = ref<Duration | undefined>(undefined);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
@@ -342,11 +350,24 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   setToastOffset(value);
 });
 
-function isExpired(): boolean {
+function formatExpirationTime(): Translatable {
   if (!expirationTime.value) {
-    return false;
+    return '';
   }
-  return expirationTime.value.days <= 0 && expirationTime.value.hours <= 0;
+  if (expirationTime.value.days > 0) {
+    return {
+      key: 'SideMenu.trial.expiration.days',
+      count: expirationTime.value.days,
+      data: { days: expirationTime.value.days },
+    };
+  } else if (expirationTime.value.hours > 0) {
+    return {
+      key: 'SideMenu.trial.expiration.hours',
+      count: Math.floor(expirationTime.value.hours),
+      data: { hours: Math.floor(expirationTime.value.hours) },
+    };
+  }
+  return { key: 'SideMenu.trial.expiration.expired' };
 }
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
@@ -590,6 +611,10 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       flex-shrink: 0;
       position: relative;
       z-index: 1;
+
+      &-logo {
+        width: 1.5rem;
+      }
     }
 
     .orga-text {
@@ -848,6 +873,10 @@ ion-menu {
     --padding-end: 1rem;
     --padding-top: 0.625rem;
     --padding-bottom: 0.625rem;
+
+    a {
+      color: var(--parsec-color-light-primary-600);
+    }
   }
 }
 
