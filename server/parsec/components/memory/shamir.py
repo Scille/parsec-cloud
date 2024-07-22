@@ -15,6 +15,7 @@ from parsec.components.shamir import (
     BaseShamirComponent,
     ShamirAddOrDeleteRecoverySetupStoreBadOutcome,
     ShamirAddRecoverySetupValidateBadOutcome,
+    ShamirInvalidRecipientBadOutcome,
     ShamirSetupAlreadyExistsBadOutcome,
     shamir_add_recovery_setup_validate,
 )
@@ -78,6 +79,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         | ShamirAddRecoverySetupValidateBadOutcome
         | ShamirSetupAlreadyExistsBadOutcome
         | TimestampOutOfBallpark
+        | ShamirInvalidRecipientBadOutcome
         | RequireGreaterTimestamp
     ):
         match await self.organization_and_user_common_checks(organization_id, author):
@@ -97,9 +99,9 @@ class MemoryShamirComponent(BaseShamirComponent):
             try:
                 recipient_user = org.users[share_recipient]
             except KeyError:
-                return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.INVALID_RECIPIENT
+                return ShamirInvalidRecipientBadOutcome(share_recipient)
             if recipient_user.is_revoked:
-                return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.INVALID_RECIPIENT
+                return ShamirInvalidRecipientBadOutcome(share_recipient)
 
         # check that certificate timestamps are strictly increasing in the shamir topic
         match self._data.organizations[organization_id].last_shamir_certificate_timestamp:

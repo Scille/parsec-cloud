@@ -73,6 +73,7 @@ mod realm;
 mod regex;
 mod sas_code;
 mod serialization;
+mod shamir;
 mod time;
 mod token;
 
@@ -93,6 +94,7 @@ pub use pki::*;
 pub use protocol::*;
 pub use realm::*;
 pub use sas_code::*;
+pub use shamir::*;
 pub use time::*;
 pub use token::*;
 

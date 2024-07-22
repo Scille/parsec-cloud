@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod shamir_setup_create;
 mod user_revoke;
 mod workspace_bootstrap;
 mod workspace_create;
@@ -13,6 +14,7 @@ mod workspace_share;
 mod workspace_start;
 
 use std::{
+    collections::HashMap,
     fmt::Debug,
     sync::{Arc, Mutex},
 };
@@ -47,7 +49,8 @@ pub use crate::certif::{
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
-    CertifRevokeUserError as ClientRevokeUserError, DeviceInfo, UserInfo, WorkspaceUserAccessInfo,
+    CertifRevokeUserError as ClientRevokeUserError, CertifShamirError as ClientShamirError,
+    DeviceInfo, UserInfo, WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
     CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
@@ -498,6 +501,14 @@ impl Client {
             self.event_bus.clone(),
             token,
         )
+    }
+
+    pub async fn shamir_setup_create(
+        &self,
+        share_recipients: HashMap<UserID, u8>,
+        threshold: u8,
+    ) -> Result<(), ClientShamirError> {
+        shamir_setup_create::shamir_setup_create(self, share_recipients, threshold).await
     }
 }
 

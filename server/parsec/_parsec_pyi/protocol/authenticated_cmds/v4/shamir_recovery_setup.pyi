@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationToken
+from parsec._parsec import DateTime, InvitationToken, UserID
 
 class ShamirRecoverySetup:
     def __init__(
@@ -53,9 +53,9 @@ class RepShareInvalidData(Rep):
     ) -> None: ...
 
 class RepInvalidRecipient(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self, user_id: UserID) -> None: ...
+    @property
+    def user_id(self) -> UserID: ...
 
 class RepShareRecipientNotInBrief(Rep):
     def __init__(
