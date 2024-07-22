@@ -322,7 +322,7 @@ msTest('Open account creation', async ({ home }) => {
   const newTabPromise = home.waitForEvent('popup');
   await bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(1).click();
   const newTab = await newTabPromise;
-  await expect(newTab).toHaveURL(/^https:\/\/parsec\.cloud(?:\/en)?\/register$/);
+  await expect(newTab).toHaveURL(/^https:\/\/parsec\.cloud(?:\/en)\/tarification\/?$/);
 });
 
 msTest('Fail to login to BMS', async ({ home }) => {
