@@ -275,7 +275,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser, Translatable, LogoIconGradient } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -352,26 +352,6 @@ const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   // set toast offset
   setToastOffset(value);
 });
-
-// function formatExpirationTime(): Translatable {
-//   if (!expirationTime.value) {
-//     return '';
-//   }
-//   if (expirationTime.value.days > 0) {
-//     return {
-//       key: 'SideMenu.trial.expiration.days',
-//       count: expirationTime.value.days,
-//       data: { days: expirationTime.value.days },
-//     };
-//   } else if (expirationTime.value.hours > 0) {
-//     return {
-//       key: 'SideMenu.trial.expiration.hours',
-//       count: Math.floor(expirationTime.value.hours),
-//       data: { hours: Math.floor(expirationTime.value.hours) },
-//     };
-//   }
-//   return { key: 'SideMenu.trial.expiration.expired' };
-// }
 
 async function goToWorkspace(workspaceHandle: WorkspaceHandle): Promise<void> {
   await navigateToWorkspace(workspaceHandle);
@@ -855,7 +835,7 @@ ion-menu {
 
   &__tag {
     color: var(--parsec-color-light-secondary-white);
-    background: var(--parsec-color-light-gradient-background);;
+    background: var(--parsec-color-light-gradient-background);
     padding: 0.25rem 0.5rem;
     border-radius: var(--parsec-radius-6);
     width: fit-content;

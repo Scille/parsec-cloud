@@ -4,9 +4,7 @@
   <ion-card class="organization-card__body">
     <ion-card-header class="card-content">
       <div class="organization-info">
-        <ion-avatar
-          class="orga-avatar body-lg"
-        >
+        <ion-avatar class="orga-avatar body-lg">
           <span v-if="isTrialOrg">{{ device.organizationId?.substring(0, 2) }}</span>
           <ms-image
             v-else
@@ -124,7 +122,7 @@ onMounted(async () => {
   }
 
   .orga-email {
-      color: var(--parsec-color-light-secondary-hard-grey);
-    }
+    color: var(--parsec-color-light-secondary-hard-grey);
+  }
 }
 </style>
