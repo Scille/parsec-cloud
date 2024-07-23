@@ -838,6 +838,7 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
+        FieldType::GreetingAttemptID => quote! { crate::ids::GreetingAttemptID },
     }
 }
 
@@ -978,6 +979,9 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::X509Certificate => {
             quote! { crate::data::X509Certificate(#field_path.to_owned()) }
         }
+        FieldType::GreetingAttemptID => {
+            quote! { crate::ids::GreetingAttemptID(#field_path.to_owned()) }
+        }
     }
 }
 
@@ -1058,6 +1062,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
         FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
         FieldType::X509Certificate => quote! { crate::data::X509Certificate },
+        FieldType::GreetingAttemptID => quote! { crate::ids::GreetingAttemptID },
     }
 }
 
@@ -1180,7 +1185,8 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::ChunkView
         | FieldType::UsersPerProfileDetailItem
         | FieldType::PkiEnrollmentSubmitPayload
-        | FieldType::X509Certificate => quote! { #field_name.0 },
+        | FieldType::X509Certificate
+        | FieldType::GreetingAttemptID => quote! { #field_name.0 },
         // No conversion for the rest
         _ => quote! { #field_name },
     }
