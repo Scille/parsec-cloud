@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { OrganizationID } from '@/parsec';
 import { DateTime } from 'luxon';
 
 interface BmsError {
@@ -19,6 +20,10 @@ enum DataType {
   Login = 'login',
   PersonalInformation = 'personal-information',
   CreateOrganization = 'create-organization',
+  ListOrganizations = 'list-organizations',
+  OrganizationStats = 'organization-stats',
+  OrganizationStatus = 'organization-status',
+  Invoices = 'invoices',
 }
 
 type AuthenticationToken = string;
@@ -46,7 +51,62 @@ interface CreateOrganizationResultData {
   bootstrapLink: string;
 }
 
-type ResultData = LoginResultData | PersonalInformationResultData | CreateOrganizationResultData;
+interface ListOrganizationsResultData {
+  type: DataType.ListOrganizations;
+  organizations: Array<BmsOrganization>;
+}
+
+interface OrganizationStatsResultData {
+  type: DataType.OrganizationStats;
+  dataSize: number;
+  // Add more status
+  status: 'ok';
+  users: number;
+}
+
+interface OrganizationStatusResultData {
+  type: DataType.OrganizationStatus;
+  activeUsersLimit?: number;
+  isBootstrapped: boolean;
+  isFrozen: boolean;
+  isInitialized: boolean;
+  outsidersAllowed: boolean;
+}
+
+interface InvoicesResultData {
+  type: DataType.Invoices;
+  invoices: Array<BmsInvoice>;
+}
+
+type ResultData =
+  | LoginResultData
+  | PersonalInformationResultData
+  | CreateOrganizationResultData
+  | ListOrganizationsResultData
+  | OrganizationStatsResultData
+  | OrganizationStatusResultData
+  | InvoicesResultData;
+
+// Misc data
+interface BmsOrganization {
+  bmsId: string;
+  createdAt: DateTime;
+  parsecId: OrganizationID;
+  name: string;
+  bootstrapLink: string;
+  expirationDate?: DateTime;
+  stripeSubscriptionId?: string;
+}
+
+interface BmsInvoice {
+  id: string;
+  pdf: string;
+  start: DateTime;
+  end: DateTime;
+  total: number;
+  status: string;
+  organizationId: OrganizationID;
+}
 
 // Data used for queries
 interface LoginQueryData {
@@ -54,19 +114,42 @@ interface LoginQueryData {
   password: string;
 }
 
-interface CreateOrganizationQueryData {
+interface _ClientQueryData {
   userId: string;
   clientId: string;
+}
+
+interface CreateOrganizationQueryData extends _ClientQueryData {
   organizationName: string;
 }
+
+interface ListOrganizationsQueryData extends _ClientQueryData {}
+
+interface OrganizationStatsQueryData extends _ClientQueryData {
+  organizationId: string;
+}
+
+interface OrganizationStatusQueryData extends _ClientQueryData {
+  organizationId: string;
+}
+
+interface InvoicesQueryData extends _ClientQueryData {}
 
 export {
   AuthenticationToken,
   BmsError,
+  BmsOrganization,
   BmsResponse,
   CreateOrganizationQueryData,
   DataType,
+  InvoicesQueryData,
+  ListOrganizationsQueryData,
+  ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,
+  OrganizationStatsQueryData,
+  OrganizationStatsResultData,
+  OrganizationStatusQueryData,
+  OrganizationStatusResultData,
   PersonalInformationResultData,
 };

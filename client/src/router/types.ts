@@ -17,6 +17,8 @@ export enum Routes {
   MyProfile = 'myProfile',
   RecoveryExport = 'recoveryExport',
   Loading = 'loading',
+  ClientAreaLogin = 'clientLogin',
+  ClientArea = 'clientArea',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -33,6 +35,16 @@ const routes: Array<RouteRecordRaw> = [
     path: `/${Routes.Loading}`,
     name: Routes.Loading,
     component: () => import('@/views/layouts/LoadingLayout.vue'),
+  },
+  {
+    path: `/${Routes.ClientAreaLogin}`,
+    name: Routes.ClientAreaLogin,
+    component: () => import('@/views/client-area/AuthenticationPage.vue'),
+  },
+  {
+    path: `/${Routes.ClientArea}`,
+    name: Routes.ClientArea,
+    component: () => import('@/views/client-area/ClientAreaPage.vue'),
   },
   {
     // ConnectedLayout ensure that every children components are provided

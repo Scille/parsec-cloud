@@ -2,6 +2,7 @@
 
 import { Locator, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
+import { MockBms } from '@tests/pw/helpers/bms';
 import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
 import { msTest } from '@tests/pw/helpers/fixtures';
 import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
@@ -31,82 +32,12 @@ async function cancelAndResume(page: Page, currentContainer: Locator): Promise<v
   await expect(page.locator('.create-organization-modal')).toBeVisible();
 }
 
-async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promise<void> {
-  const TOKEN = btoa(
-    JSON.stringify({
-      email: DEFAULT_USER_INFORMATION.email,
-      // eslint-disable-next-line camelcase
-      is_staff: true,
-      // eslint-disable-next-line camelcase
-      token_type: 'access',
-      // eslint-disable-next-line camelcase
-      user_id: DEFAULT_USER_INFORMATION.id,
-      exp: 4242,
-      iat: 0,
-    }),
-  );
-
-  await page.route('**/api/token', async (route) => {
-    if (success) {
-      route.fulfill({
-        status: 200,
-        json: {
-          access: TOKEN,
-        },
-      });
-    } else {
-      if (timeout) {
-        route.abort('timedout');
-      } else {
-        route.fulfill({
-          status: 401,
-          json: {
-            type: 'login_error',
-            errors: [{ code: 'invalid', attr: 'email', detail: 'Cannot log in' }],
-          },
-        });
-      }
-    }
-  });
-}
-
-async function mockUserInfo(page: Page): Promise<void> {
-  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}`, async (route) => {
-    route.fulfill({
-      status: 200,
-      json: {
-        id: DEFAULT_USER_INFORMATION.id,
-        // eslint-disable-next-line camelcase
-        created_at: '2024-07-15T13:21:32.141317Z',
-        email: DEFAULT_USER_INFORMATION.email,
-        client: {
-          firstname: DEFAULT_USER_INFORMATION.firstName,
-          lastname: DEFAULT_USER_INFORMATION.lastName,
-          id: '1337',
-        },
-      },
-    });
-  });
-}
-
-async function mockCreateOrganization(page: Page): Promise<void> {
-  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/1337/organizations`, async (route) => {
-    route.fulfill({
-      status: 201,
-      json: {
-        // eslint-disable-next-line camelcase
-        bootstrap_link: BOOTSTRAP_ADDR,
-      },
-    });
-  });
-}
-
 msTest('Go through saas org creation process', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
-  await mockLogin(home, true);
-  await mockUserInfo(home);
-  await mockCreateOrganization(home);
+  await MockBms.mockLogin(home, true);
+  await MockBms.mockUserInfo(home);
+  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login-container');
   await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
@@ -238,9 +169,9 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await fillInputModal(home, BOOTSTRAP_ADDR);
   const modal = home.locator('.create-organization-modal');
 
-  await mockLogin(home, true);
-  await mockUserInfo(home);
-  await mockCreateOrganization(home);
+  await MockBms.mockLogin(home, true);
+  await MockBms.mockUserInfo(home);
+  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login-container');
   await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
@@ -328,7 +259,7 @@ msTest('Open account creation', async ({ home }) => {
 msTest('Fail to login to BMS', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
-  await mockLogin(home, false);
+  await MockBms.mockLogin(home, false);
 
   const bmsContainer = modal.locator('.saas-login-container');
   const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
@@ -343,8 +274,7 @@ msTest('Fail to login to BMS', async ({ home }) => {
 msTest('Cannot reach the BMS', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
-  await mockLogin(home, false, true);
-
+  await MockBms.mockLogin(home, false, true);
   const bmsContainer = modal.locator('.saas-login-container');
   const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
@@ -360,9 +290,9 @@ msTest('Cannot reach the BMS', async ({ home }) => {
 msTest('Edit from summary', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
-  await mockLogin(home, true);
-  await mockUserInfo(home);
-  await mockCreateOrganization(home);
+  await MockBms.mockLogin(home, true);
+  await MockBms.mockUserInfo(home);
+  await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login-container');
   const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);

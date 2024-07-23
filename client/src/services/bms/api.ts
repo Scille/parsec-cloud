@@ -1,6 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { AuthenticationToken, BmsError, BmsResponse, CreateOrganizationQueryData, DataType, LoginQueryData } from '@/services/bms/types';
+import {
+  AuthenticationToken,
+  BmsError,
+  BmsResponse,
+  CreateOrganizationQueryData,
+  DataType,
+  InvoicesQueryData,
+  ListOrganizationsQueryData,
+  LoginQueryData,
+  OrganizationStatsQueryData,
+  OrganizationStatusQueryData,
+} from '@/services/bms/types';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
@@ -51,24 +62,9 @@ function parseBmsErrors(data: object): Array<BmsError> {
   return [];
 }
 
-async function login(query: LoginQueryData): Promise<BmsResponse> {
+async function wrapQuery(queryFunc: () => Promise<BmsResponse>): Promise<BmsResponse> {
   try {
-    const axiosResponse = await http.getInstance().post('/api/token', query);
-    if (axiosResponse.status !== 200) {
-      return {
-        status: axiosResponse.status,
-        isError: true,
-        errors: parseBmsErrors(axiosResponse.data),
-      };
-    }
-    return {
-      status: axiosResponse.status,
-      isError: false,
-      data: {
-        type: DataType.Login,
-        token: axiosResponse.data.access,
-      },
-    };
+    return await queryFunc();
   } catch (error: any) {
     if (isAxiosError(error) && (error as AxiosError).response) {
       const response = (error as AxiosError).response as AxiosResponse;
@@ -82,20 +78,30 @@ async function login(query: LoginQueryData): Promise<BmsResponse> {
   }
 }
 
+async function login(query: LoginQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post('/api/token', query, { validateStatus: (status) => status === 200 });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.Login,
+        token: axiosResponse.data.access,
+      },
+    };
+  });
+}
+
 async function getPersonalInformation(token: AuthenticationToken): Promise<BmsResponse> {
-  try {
+  return await wrapQuery(async () => {
     const decodedToken = decodeToken(token);
     if (decodedToken === undefined) {
       throw new Error('Token is invalid');
     }
-    const axiosResponse = await http.getInstance().get(`/users/${decodedToken.userId}`, { headers: { Authorization: `Bearer ${token}` } });
-    if (axiosResponse.status !== 200) {
-      return {
-        status: axiosResponse.status,
-        isError: true,
-        errors: parseBmsErrors(axiosResponse.data),
-      };
-    }
+    const axiosResponse = await http.getInstance().get(`/users/${decodedToken.userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status === 200,
+    });
     return {
       status: axiosResponse.status,
       isError: false,
@@ -109,38 +115,17 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
         clientId: axiosResponse.data.client.id,
       },
     };
-  } catch (error: any) {
-    if (isAxiosError(error) && (error as AxiosError).response) {
-      const response = (error as AxiosError).response as AxiosResponse;
-      return {
-        status: response.status,
-        isError: true,
-        errors: parseBmsErrors(response.data),
-      };
-    }
-    throw new Error(error);
-  }
+  });
 }
 
 async function createOrganization(token: AuthenticationToken, query: CreateOrganizationQueryData): Promise<BmsResponse> {
-  try {
-    const decodedToken = decodeToken(token);
-    if (decodedToken === undefined) {
-      throw new Error('Token is invalid');
-    }
+  return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
       `/users/${query.userId}/clients/${query.clientId}/organizations`,
       // eslint-disable-next-line camelcase
       { organization_id: query.organizationName },
-      { headers: { Authorization: `Bearer ${token}` } },
+      { headers: { Authorization: `Bearer ${token}` }, validateStatus: (status) => status === 201 },
     );
-    if (axiosResponse.status !== 201) {
-      return {
-        status: axiosResponse.status,
-        isError: true,
-        errors: parseBmsErrors(axiosResponse.data),
-      };
-    }
     return {
       status: axiosResponse.status,
       isError: false,
@@ -149,21 +134,113 @@ async function createOrganization(token: AuthenticationToken, query: CreateOrgan
         bootstrapLink: axiosResponse.data.bootstrap_link,
       },
     };
-  } catch (error: any) {
-    if (isAxiosError(error) && (error as AxiosError).response) {
-      const response = (error as AxiosError).response as AxiosResponse;
-      return {
-        status: response.status,
-        isError: true,
-        errors: parseBmsErrors(response.data),
-      };
-    }
-    throw new Error(error);
-  }
+  });
+}
+
+async function listOrganizations(token: AuthenticationToken, query: ListOrganizationsQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/organizations`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status === 200,
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.ListOrganizations,
+        organizations: (axiosResponse.data.results as Array<any>).map((org) => {
+          return {
+            bmsId: org.pk,
+            createdAt: DateTime.fromISO(org.created_at, { zone: 'utc' }),
+            expirationDate: org.created_at ? DateTime.fromISO(org.expiration_date, { zone: 'utc' }) : undefined,
+            name: org.suffix,
+            parsecId: org.parsec_id,
+            stripeSubscriptionId: org.stripe_subscription_id,
+            bootstrapLink: org.bootstrap_link,
+          };
+        }),
+      },
+    };
+  });
+}
+
+async function getOrganizationStats(token: AuthenticationToken, query: OrganizationStatsQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http
+      .getInstance()
+      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.OrganizationStats,
+        dataSize: axiosResponse.data.data_size,
+        status: axiosResponse.data.status,
+        users: axiosResponse.data.users,
+      },
+    };
+  });
+}
+
+async function getOrganizationStatus(token: AuthenticationToken, query: OrganizationStatusQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http
+      .getInstance()
+      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.OrganizationStatus,
+        activeUsersLimit: axiosResponse.data.active_users_limit ?? undefined,
+        isBootstrapped: axiosResponse.data.is_bootstrapped,
+        isFrozen: axiosResponse.data.is_frozen,
+        isInitialized: axiosResponse.data.is_initialized,
+        outsidersAllowed: axiosResponse.data.user_profile_outsider_allowed,
+      },
+    };
+  });
+}
+
+async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/invoices`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status === 200,
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.Invoices,
+        invoices: [
+          {
+            id: axiosResponse.data.id,
+            pdf: axiosResponse.data.pdf,
+            start: DateTime.fromISO(axiosResponse.data.start, { zone: 'utc' }),
+            end: DateTime.fromISO(axiosResponse.data.end, { zone: 'utc' }),
+            total: axiosResponse.data.total,
+            status: axiosResponse.data.status,
+            organizationId: axiosResponse.data.organization,
+          },
+        ],
+      },
+    };
+  });
 }
 
 export const BmsApi = {
   login,
   getPersonalInformation,
   createOrganization,
+  listOrganizations,
+  getOrganizationStats,
+  getOrganizationStatus,
+  getInvoices,
 };

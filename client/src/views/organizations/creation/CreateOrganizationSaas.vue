@@ -61,7 +61,7 @@ import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } 
 import { ServerType } from '@/services/parsecServers';
 import { IonPage } from '@ionic/vue';
 import { isProxy, onMounted, ref, toRaw } from 'vue';
-import BmsLogin from '@/views/bms/BmsLogin.vue';
+import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
 import {
   AvailableDevice,
