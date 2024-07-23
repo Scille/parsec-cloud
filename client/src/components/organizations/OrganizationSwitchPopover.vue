@@ -3,9 +3,9 @@
 <template>
   <div class="popover-switch">
     <ion-title class="popover-switch-title body">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
-    <ion-list class="orga-list">
+    <ion-list class="organization-list">
       <ion-item
-        class="orga-list__item body"
+        class="organization-list__item body"
         button
         lines="none"
         v-for="org in connectedOrgs"
@@ -13,17 +13,17 @@
         :disabled="org.active"
         @click="onOrganizationClick(org)"
       >
-        <div class="orga">
-          <ion-avatar class="orga-avatar">
+        <div class="organization">
+          <ion-avatar class="organization-avatar">
             <span>{{ org.id.substring(0, 2) }}</span>
           </ion-avatar>
-          <div class="orga-text-content">
-            <ion-label class="orga-text-content__name">
+          <div class="organization-text-content">
+            <ion-label class="organization-text-content__name">
               <span class="body">
                 {{ org.id }}
               </span>
             </ion-label>
-            <ion-label class="orga-text-content__email">
+            <ion-label class="organization-text-content__email">
               <span class="body-sm">
                 {{ org.userLabel }}
               </span>
@@ -41,17 +41,17 @@
       </ion-item>
 
       <ion-item
-        class="orga-list__item body"
+        class="organization-list__item body"
         button
         lines="none"
         @click="onAllOrganizationClick"
       >
-        <div class="orga">
-          <ion-avatar class="orga-avatar ellipsis">
+        <div class="organization">
+          <ion-avatar class="organization-avatar ellipsis">
             <ion-icon :icon="ellipsisHorizontal" />
           </ion-avatar>
-          <div class="orga-text-content">
-            <ion-label class="orga-text-content__name">
+          <div class="organization-text-content">
+            <ion-label class="organization-text-content__name">
               <span class="body">
                 {{ $msTranslate('OrganizationSwitch.myOrgs') }}
               </span>
@@ -117,7 +117,7 @@ async function onAllOrganizationClick(): Promise<void> {
   }
 }
 
-.orga-list {
+.organization-list {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -139,14 +139,14 @@ async function onAllOrganizationClick(): Promise<void> {
     }
 
     &:hover {
-      .orga-avatar {
+      .organization-avatar {
         background-color: var(--parsec-color-light-secondary-white);
       }
     }
   }
 }
 
-.orga {
+.organization {
   padding: 0.5rem;
   display: flex;
   align-items: center;

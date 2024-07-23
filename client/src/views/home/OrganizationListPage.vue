@@ -11,12 +11,12 @@
     <template v-if="deviceList.length === 0 && !querying">
       <!-- No organization -->
       <ion-card-content class="organization-content no-devices">
-        <div class="create-orga">
-          <div class="create-orga-text">
-            <ion-card-title class="create-orga-text__title title-h3">
+        <div class="create-organization">
+          <div class="create-organization-text">
+            <ion-card-title class="create-organization-text__title title-h3">
               {{ $msTranslate('HomePage.noDevices.titleCreateOrga') }}
             </ion-card-title>
-            <ion-text class="create-orga-text__subtitle body">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
+            <ion-text class="create-organization-text__subtitle body">{{ $msTranslate('HomePage.noDevices.subtitle') }}</ion-text>
             <ion-button
               @click="$emit('createOrganizationClick')"
               size="default"
@@ -32,7 +32,7 @@
           </div>
           <ms-image
             :image="NoOrganization"
-            class="create-orga-image"
+            class="create-organization-image"
           />
         </div>
         <div class="invitation">
@@ -105,51 +105,11 @@
               class="organization-list-row__col"
               size="3"
             >
-              <ion-card
-                button
-                class="organization-card"
+              <organization-card
+                :device="device"
+                :last-login-device="storedDeviceDataDict[device.deviceId]?.lastLogin"
                 @click="$emit('organizationSelect', device)"
-              >
-                <ion-card-content class="card-content">
-                  <ion-grid class="card-content-grid">
-                    <organization-card
-                      :device="device"
-                      class="card-content-body"
-                    />
-                    <ion-row class="card-content-footer">
-                      <ion-col
-                        size="auto"
-                        v-show="!isDeviceLoggedIn(device)"
-                        class="card-content-footer-login"
-                      >
-                        <ion-icon
-                          :icon="time"
-                          class="time"
-                        />
-                        <ion-text class="body-sm">
-                          {{
-                            device.deviceId in storedDeviceDataDict
-                              ? $msTranslate(formatTimeSince(storedDeviceDataDict[device.deviceId].lastLogin, '--'))
-                              : '--'
-                          }}
-                        </ion-text>
-                      </ion-col>
-                      <ion-col
-                        v-show="isDeviceLoggedIn(device)"
-                        class="card-content-footer-login connected"
-                      >
-                        <ion-icon
-                          :icon="ellipse"
-                          class="success"
-                        />
-                        <ion-text class="body-sm">
-                          {{ $msTranslate('HomePage.organizationList.loggedIn') }}
-                        </ion-text>
-                      </ion-col>
-                    </ion-row>
-                  </ion-grid>
-                </ion-card-content>
-              </ion-card>
+              />
             </ion-col>
           </ion-row>
         </ion-grid>
@@ -161,7 +121,6 @@
 <script setup lang="ts">
 import { claimAndBootstrapLinkValidator, bootstrapLinkValidator } from '@/common/validators';
 import {
-  formatTimeSince,
   MsImage,
   NoOrganization,
   MsSorter,
@@ -173,7 +132,7 @@ import {
   Validity,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
+import { AvailableDevice, listAvailableDevices } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -191,7 +150,7 @@ import {
   IonTitle,
   popoverController,
 } from '@ionic/vue';
-import { addCircle, ellipse, time } from 'ionicons/icons';
+import { addCircle } from 'ionicons/icons';
 import { DateTime } from 'luxon';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 
@@ -422,68 +381,6 @@ const filteredDevices = computed(() => {
       padding: 0.5rem;
     }
   }
-
-  .organization-card {
-    background: var(--parsec-color-light-secondary-background);
-    user-select: none;
-    transition: box-shadow 150ms linear;
-    border: 1px solid var(--parsec-color-light-secondary-medium);
-    box-shadow: none;
-    border-radius: 0.5em;
-    margin-inline: 0;
-    margin-top: 0;
-    margin-bottom: 0;
-    width: 100%;
-    cursor: pointer;
-
-    &:hover {
-      box-shadow: var(--parsec-shadow-light);
-    }
-
-    .card-content {
-      padding: 1rem;
-
-      &-body {
-        padding-bottom: 0.75rem;
-      }
-
-      &-footer {
-        color: var(--parsec-color-light-secondary-grey);
-
-        &-login {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          padding: 0;
-
-          .time {
-            color: var(--parsec-color-light-secondary-light);
-            font-size: 1.125rem;
-          }
-        }
-
-        .connected {
-          display: flex;
-          align-items: center;
-          gap: 0.5rem;
-          color: var(--parsec-color-light-success-700);
-
-          .success {
-            color: var(--parsec-color-light-success-700);
-            font-size: 0.675rem;
-          }
-        }
-      }
-
-      &:hover {
-        background: var(--parsec-color-light-primary-50);
-
-        .card-content-footer {
-          background: var(--parsec-color-light-primary-50);
-        }
-      }
-    }
-  }
 }
 
 .no-devices {
@@ -493,7 +390,7 @@ const filteredDevices = computed(() => {
   overflow: hidden;
   margin: auto;
 
-  .create-orga {
+  .create-organization {
     display: flex;
     align-items: center;
     padding: 3rem 2rem;

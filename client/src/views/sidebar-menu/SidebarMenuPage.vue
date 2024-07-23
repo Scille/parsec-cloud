@@ -21,10 +21,15 @@
                 @click="openOrganizationChoice($event)"
               >
                 <div class="header-container">
-                  <ion-avatar class="orga-avatar">
-                    <span>{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                  <ion-avatar class="organization-avatar body-lg">
+                    <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                    <ms-image
+                      v-else
+                      :image="LogoIconGradient"
+                      class="organization-avatar-logo"
+                    />
                   </ion-avatar>
-                  <div class="orga-text">
+                  <div class="organization-text">
                     <ion-card-title class="title-h3">
                       {{ userInfo?.organizationId }}
                     </ion-card-title>
@@ -74,6 +79,24 @@
         </ion-header>
 
         <ion-content class="ion-padding sidebar-content">
+          <!-- trial section -->
+          <div
+            v-show="isTrialOrg"
+            v-if="expirationDuration"
+            class="trial-card"
+          >
+            <ion-text class="trial-card__tag button-medium">{{ $msTranslate('SideMenu.trial.tag') }}</ion-text>
+            <div class="trial-card-text">
+              <ion-text class="trial-card-text__time title-h3">{{ $msTranslate(formatExpirationTime(expirationDuration)) }}</ion-text>
+              <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
+            </div>
+            <ion-button class="trial-card__button">
+              <a href="https://parsec.cloud/tarification">
+                {{ $msTranslate('SideMenu.trial.subscribe') }}
+              </a>
+            </ion-button>
+          </div>
+
           <!-- workspaces -->
           <div
             v-show="!currentRouteIsOrganizationManagementRoute()"
@@ -252,7 +275,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -281,6 +304,8 @@ import { EventData, EventDistributor, EventDistributorKey, Events } from '@/serv
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
+import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
+
 import {
   GestureDetail,
   IonAvatar,
@@ -305,6 +330,7 @@ import {
 } from '@ionic/vue';
 import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart, star } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
+import { Duration } from 'luxon';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -317,6 +343,8 @@ const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const isTrialOrg = ref(false);
+const expirationDuration = ref<Duration | undefined>(undefined);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -390,6 +418,13 @@ onMounted(async () => {
       onMove,
     });
     gesture.enable();
+  }
+
+  if (currentDevice.value) {
+    isTrialOrg.value = isTrialOrganizationDevice(currentDevice.value);
+    if (isTrialOrg.value) {
+      expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
+    }
   }
 });
 
@@ -483,13 +518,13 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
 .sidebar,
 .sidebar ion-content {
+  --background: var(--parsec-color-light-primary-800);
   --padding-end: 0;
   --padding-start: 0;
   --padding-top: 0;
 }
 
 .sidebar {
-  --background: var(--parsec-color-light-primary-800);
   border: none;
   user-select: none;
   border-radius: 0 0.5rem 0.5rem 0;
@@ -500,23 +535,23 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     gap: 1.5rem;
   }
 
+  // logo parsec
+  &::before {
+    content: url('@/assets/images/background/logo-icon-white.svg');
+    opacity: 0.03;
+    width: 100%;
+    max-width: 270px;
+    max-height: 170px;
+    position: absolute;
+    bottom: 16px;
+    right: -60px;
+    z-index: 0;
+  }
+
   .sidebar-content {
     --background: transparent;
     position: relative;
     z-index: 12;
-
-    // logo parsec
-    &::before {
-      content: url('@/assets/images/background/logo-icon-white.svg');
-      opacity: 0.03;
-      width: 100%;
-      max-width: 270px;
-      max-height: 170px;
-      position: absolute;
-      bottom: 16px;
-      right: -60px;
-      z-index: 0;
-    }
   }
 
   .organization-workspaces {
@@ -553,7 +588,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     z-index: 2;
     min-width: 0;
 
-    .orga-avatar {
+    .organization-avatar {
       background-color: var(--parsec-color-light-secondary-premiere);
       color: var(--parsec-color-light-primary-600);
       width: 2rem;
@@ -566,9 +601,13 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       flex-shrink: 0;
       position: relative;
       z-index: 1;
+
+      &-logo {
+        width: 1.5rem;
+      }
     }
 
-    .orga-text {
+    .organization-text {
       display: flex;
       flex-direction: column;
       white-space: nowrap;
@@ -779,6 +818,57 @@ ion-menu {
     white-space: nowrap;
     overflow: hidden;
     --color: var(--parsec-color-light-primary-100);
+  }
+}
+
+.trial-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0 1rem 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-white);
+
+  &__tag {
+    color: var(--parsec-color-light-secondary-white);
+    background: var(--parsec-color-light-gradient-background);
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--parsec-radius-6);
+    width: fit-content;
+  }
+
+  &-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &__time {
+      color: var(--parsec-color-light-secondary-white);
+    }
+
+    &__info {
+      color: var(--parsec-color-light-primary-30);
+      opacity: 0.8;
+    }
+  }
+
+  // !important is used when waiting for a custom button
+  &__button {
+    --background: var(--parsec-color-light-secondary-white) !important;
+    --color: var(--parsec-color-light-primary-600) !important;
+    --background-hover: var(--parsec-color-light-secondary-premiere) !important;
+    --color-hover: var(--parsec-color-light-primary-700) !important;
+    --border-radius: var(--parsec-radius-8);
+    --padding-start: 0;
+    --padding-end: 0;
+    --padding-top: 0;
+    --padding-bottom: 0;
+
+    a {
+      color: var(--parsec-color-light-primary-600);
+      padding: 0.625rem 1rem;
+      width: 100%;
+    }
   }
 }
 

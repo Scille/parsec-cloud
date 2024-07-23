@@ -132,7 +132,8 @@
                 "days": "1 day remaining | {days} days remaining",
                 "hours": "Less than one hour | {hours} hours remaining",
                 "expired": "Expired"
-            }
+            },
+            "noLastLogin": "--"
         },
         "noExistingOrganization": {
             "createOrJoin": "Create or join",
@@ -619,7 +620,12 @@
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
-        "back": "Back"
+        "back": "Back",
+        "trial": {
+            "tag": "Trial version",
+            "description": "You are currently on the free trial version.",
+            "subscribe": "Subscribe now"
+        }
     },
     "DevicesPage": {
         "addDevice": "Add",

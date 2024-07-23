@@ -132,7 +132,8 @@
                 "days": "1 jour restant | {days} jours restants",
                 "hours": "Moins d'une heure | {hours} heures restantes",
                 "expired": "Expiré"
-            }
+            },
+            "noLastLogin": "--"
         },
         "noExistingOrganization": {
             "createOrJoin": "Créer ou rejoindre",
@@ -619,7 +620,12 @@
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
-        "back": "Retour"
+        "back": "Retour",
+        "trial": {
+            "tag": "Version d'essai",
+            "description": "Vous êtes actuellement sur la version d'essai gratuite.",
+            "subscribe": "S'abonner maintenant"
+        }
     },
     "DevicesPage": {
         "addDevice": "Ajouter",

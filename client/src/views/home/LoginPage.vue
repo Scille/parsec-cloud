@@ -10,7 +10,10 @@
     </div>
     <ion-card class="login-card">
       <ion-card-header class="login-card-header">
-        <organization-card :device="device" />
+        <organization-card
+          :device="device"
+          :org-name-only="true"
+        />
       </ion-card-header>
       <ion-card-content class="login-card-content">
         <ms-input
