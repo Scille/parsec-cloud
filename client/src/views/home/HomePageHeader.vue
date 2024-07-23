@@ -57,6 +57,13 @@
           <ion-icon :icon="cog" />
           {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-button>
+        <ion-button
+          fill="solid"
+          v-show="true"
+          @click="goToClientArea"
+        >
+          Customer Area
+        </ion-button>
       </ion-buttons>
     </div>
   </div>
@@ -67,6 +74,7 @@ import { APP_VERSION } from '@/common/mocks';
 import { LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
+import { navigateTo, Routes } from '@/router';
 
 defineProps<{
   showBackButton: boolean;
@@ -77,6 +85,10 @@ defineEmits<{
   (e: 'aboutClick'): void;
   (e: 'backClick'): void;
 }>();
+
+async function goToClientArea(): Promise<void> {
+  await navigateTo(Routes.ClientAreaLogin);
+}
 </script>
 
 <style lang="scss" scoped>

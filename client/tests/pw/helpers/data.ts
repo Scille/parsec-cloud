@@ -2,6 +2,7 @@
 
 export const DEFAULT_USER_INFORMATION = {
   id: '4242',
+  clientId: '1337',
   name: 'Gordon Freeman',
   firstName: 'Gordon',
   lastName: 'Freeman',
@@ -15,4 +16,5 @@ export const DEFAULT_ORGANIZATION_INFORMATION = {
   addr: 'parsec3://blackmesa.com/BlackMesa',
   // cspell:disable-next-line
   serverAddr: 'parsec3://blackmesa.com',
+  bmsId: '42',
 };

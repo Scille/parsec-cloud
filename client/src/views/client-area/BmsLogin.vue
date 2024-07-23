@@ -4,6 +4,7 @@
   <ion-page class="saas-login">
     <div class="saas-login-container">
       <create-organization-modal-header
+        v-if="!hideHeader"
         @close-clicked="$emit('closeRequested')"
         title="ClientApplication.title"
       />
@@ -90,11 +91,12 @@ import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'meg
 import { emailValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
+import { AuthenticationToken, BmsAccessInstance, DataType, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 const props = defineProps<{
   email?: string;
+  hideHeader?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -126,17 +128,13 @@ async function onLoginClicked(): Promise<void> {
   }
   querying.value = true;
   try {
-    const response = await BmsApi.login({ email: email.value, password: password.value });
+    const response = await BmsAccessInstance.get().login(email.value, password.value);
 
     if (response.isError || !response.data || response.data.type !== DataType.Login) {
       loginError.value = 'ClientApplication.loginFailed';
     } else {
-      const dataResponse = await BmsApi.getPersonalInformation(response.data.token);
-      if (dataResponse.isError || !dataResponse.data || dataResponse.data.type !== DataType.PersonalInformation) {
-        loginError.value = 'ClientApplication.retrieveInformationFailed';
-      } else {
-        emits('loginSuccess', response.data.token, dataResponse.data);
-      }
+      const userInfo = await BmsAccessInstance.get().getPersonalInformation();
+      emits('loginSuccess', response.data.token, userInfo);
     }
   } catch (error: any) {
     window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
