@@ -81,7 +81,7 @@ macro_rules! generate_field_type_enum {
                     }
 
                     // Invalid type :(
-                    _ => panic!("Invalid type `{}`", s),
+                    _ => panic!("Invalid type `{}`. Is it in `generate_field_type_enum!` ?", s),
                 }
             }
 
