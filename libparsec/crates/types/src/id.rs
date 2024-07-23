@@ -255,6 +255,8 @@ new_uuid_type!(pub BlockID);
 new_uuid_type!(pub ChunkID);
 new_uuid_type!(pub SequesterServiceID);
 new_uuid_type!(pub EnrollmentID);
+new_uuid_type!(pub GreetingAttemptID);
+
 impl_from_maybe!(std::collections::HashSet<VlobID>);
 
 // ChunkID are often created from file BlockID, so conversion is useful

@@ -251,10 +251,10 @@ generate_field_type_enum!(
     UsersPerProfileDetailItem => libparsec_types::UsersPerProfileDetailItem,
     PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
     X509Certificate => libparsec_types::X509Certificate,
+    GreetingAttemptID => libparsec_types::GreetingAttemptID,
     // Used only in protocol
     IntegerBetween1And100 => libparsec_types::IntegerBetween1And100,
     // Used only in shamir
     ShamirRecoveryShareData => libparsec_types::ShamirRecoveryShareData,
-    ShamirShare =>  libparsec_types::ShamirShare,
-
+    ShamirShare =>  libparsec_types::ShamirShare
 );
