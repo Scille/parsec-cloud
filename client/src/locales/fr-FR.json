@@ -619,7 +619,12 @@
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
-        "back": "Retour"
+        "back": "Retour",
+        "trial": {
+            "tag": "version d'essai",
+            "description": "Vous êtes sur actuellement sur la version d'essai gratuite.",
+            "subscribe": "S'abonnez maintenant"
+        }
     },
     "DevicesPage": {
         "addDevice": "Ajouter",

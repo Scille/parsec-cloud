@@ -619,7 +619,12 @@
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
-        "back": "Back"
+        "back": "Back",
+        "trial": {
+            "tag": "Trial version",
+            "description": "You are currently on the free trial version.",
+            "subscribe": "Subscribe now"
+        }
     },
     "DevicesPage": {
         "addDevice": "Add",

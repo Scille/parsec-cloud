@@ -429,7 +429,7 @@ const filteredDevices = computed(() => {
     transition: box-shadow 150ms linear;
     border: 1px solid var(--parsec-color-light-secondary-medium);
     box-shadow: none;
-    border-radius: 0.5em;
+    border-radius: var(--parsec-radius-12);
     margin-inline: 0;
     margin-top: 0;
     margin-bottom: 0;
