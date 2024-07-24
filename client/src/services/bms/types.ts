@@ -138,6 +138,7 @@ interface InvoicesQueryData extends _ClientQueryData {}
 export {
   AuthenticationToken,
   BmsError,
+  BmsInvoice,
   BmsOrganization,
   BmsResponse,
   CreateOrganizationQueryData,

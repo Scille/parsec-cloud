@@ -1,11 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { BmsApi } from '@/services/bms/api';
-import { AuthenticationToken, BmsResponse, DataType, PersonalInformationResultData } from '@/services/bms/types';
-
-function getDevBmsCredentials(): string | undefined {
-  return import.meta.env.VITE_DEV_BMS_CREDENTIALS;
-}
+import { AuthenticationToken, BmsError, BmsResponse, DataType, PersonalInformationResultData } from '@/services/bms/types';
+import { storageManagerInstance } from '@/services/storageManager';
 
 function assertLoggedIn<T>(value: T): asserts value is NonNullable<T> {
   if (value === null) {
@@ -13,110 +10,136 @@ function assertLoggedIn<T>(value: T): asserts value is NonNullable<T> {
   }
 }
 
-interface Connection {
-  token: AuthenticationToken;
-  customerInformation: PersonalInformationResultData;
-}
-
 class BmsAccess {
-  private connection: Connection | null = null;
+  private token: AuthenticationToken | null = null;
+  private customerInformation: PersonalInformationResultData | null = null;
+  private storeCredentials: boolean = true;
+  public reloadKey: number = 0;
 
   constructor() {}
 
-  async login(email: string, password: string): Promise<BmsResponse> {
-    if (this.connection) {
-      this.logout();
+  async tryAutoLogin(): Promise<boolean> {
+    this.reloadKey += 1;
+    if (this.storeCredentials) {
+      await this.restoreAccess();
     }
+    if (!this.token) {
+      return false;
+    }
+    const infoResponse = await BmsApi.getPersonalInformation(this.token);
+    if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
+      this.customerInformation = infoResponse.data;
+      return true;
+    }
+    this.token = null;
+    return false;
+  }
+
+  async login(email: string, password: string): Promise<{ ok: boolean; errors?: Array<BmsError> }> {
+    this.reloadKey += 1;
     const response = await BmsApi.login({ email: email, password: password });
     if (!response.isError && response.data && response.data.type === DataType.Login) {
-      const infoResponse = await BmsApi.getPersonalInformation(response.data.token);
-      if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
-        this.connection = {
-          token: response.data.token,
-          customerInformation: infoResponse.data,
-        };
-      }
+      this.token = response.data.token;
+    } else {
+      this.token = null;
+      return { ok: false, errors: response.errors };
     }
-    return response;
+    const infoResponse = await BmsApi.getPersonalInformation(this.token);
+    if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
+      this.customerInformation = infoResponse.data;
+    } else {
+      this.token = null;
+    }
+    if (this.storeCredentials) {
+      await this.storeAccess();
+    }
+    return { ok: true };
   }
 
   async logout(): Promise<void> {
-    this.connection = null;
+    this.token = null;
+    this.customerInformation = null;
+    await this.clearStoredAccess();
   }
 
   async getPersonalInformation(): Promise<PersonalInformationResultData> {
-    if (this._useDevLogin()) {
-      await this._devLogin();
-    }
-    assertLoggedIn(this.connection);
-    return this.connection.customerInformation;
+    assertLoggedIn(this.customerInformation);
+    return this.customerInformation;
+  }
+
+  async getToken(): Promise<AuthenticationToken> {
+    assertLoggedIn(this.token);
+    return this.token;
   }
 
   async listOrganizations(): Promise<BmsResponse> {
-    if (this._useDevLogin()) {
-      await this._devLogin();
-    }
-    assertLoggedIn(this.connection);
-    return await BmsApi.listOrganizations(this.connection.token, {
-      userId: this.connection.customerInformation.id,
-      clientId: this.connection.customerInformation.clientId,
+    assertLoggedIn(this.token);
+    assertLoggedIn(this.customerInformation);
+    return await BmsApi.listOrganizations(this.token, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
     });
   }
 
   async getOrganizationStatus(organizationId: string): Promise<BmsResponse> {
-    if (this._useDevLogin()) {
-      await this._devLogin();
-    }
-    assertLoggedIn(this.connection);
-    return await BmsApi.getOrganizationStatus(this.connection.token, {
-      userId: this.connection.customerInformation.id,
-      clientId: this.connection.customerInformation.clientId,
+    assertLoggedIn(this.token);
+    assertLoggedIn(this.customerInformation);
+    return await BmsApi.getOrganizationStatus(this.token, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
       organizationId: organizationId,
     });
   }
 
   async getOrganizationStats(organizationId: string): Promise<BmsResponse> {
-    if (this._useDevLogin()) {
-      await this._devLogin();
-    }
-    assertLoggedIn(this.connection);
-    return await BmsApi.getOrganizationStats(this.connection.token, {
-      userId: this.connection.customerInformation.id,
-      clientId: this.connection.customerInformation.clientId,
+    assertLoggedIn(this.token);
+    assertLoggedIn(this.customerInformation);
+    return await BmsApi.getOrganizationStats(this.token, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
       organizationId: organizationId,
     });
   }
 
   async getInvoices(): Promise<BmsResponse> {
-    if (this._useDevLogin()) {
-      await this._devLogin();
-    }
-    assertLoggedIn(this.connection);
-    return await BmsApi.getInvoices(this.connection.token, {
-      userId: this.connection.customerInformation.id,
-      clientId: this.connection.customerInformation.clientId,
+    assertLoggedIn(this.token);
+    assertLoggedIn(this.customerInformation);
+    return await BmsApi.getInvoices(this.token, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
     });
   }
 
+  async rememberCredentials(): Promise<void> {
+    this.storeCredentials = true;
+    await this.storeAccess();
+  }
+
+  async forgetCredentials(): Promise<void> {
+    this.storeCredentials = false;
+    await this.clearStoredAccess();
+  }
+
+  async clearStoredAccess(): Promise<void> {
+    await storageManagerInstance.get().clearBmsAccess();
+  }
+
+  async storeAccess(): Promise<void> {
+    if (this.token) {
+      await storageManagerInstance.get().storeBmsAccess({ token: this.token });
+    }
+  }
+
+  async restoreAccess(): Promise<void> {
+    const bmsAccess = await storageManagerInstance.get().retrieveBmsAccess();
+
+    if (bmsAccess) {
+      this.token = bmsAccess.token;
+    }
+  }
+
   isLoggedIn(): boolean {
-    if (this._useDevLogin()) {
-      this._devLogin();
-      return true;
-    }
-    return this.connection !== null;
-  }
-
-  private async _devLogin(): Promise<void> {
-    if (this.connection) {
-      return;
-    }
-    console.debug('Using dev credentials for BMS requests');
-    const parts = getDevBmsCredentials()?.split(':') as Array<string>;
-    await this.login(parts[0], parts[1]);
-  }
-
-  private _useDevLogin(): boolean {
-    return getDevBmsCredentials() !== undefined;
+    return this.token !== null;
   }
 }
 

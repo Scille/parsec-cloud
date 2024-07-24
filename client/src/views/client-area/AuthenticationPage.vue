@@ -26,6 +26,11 @@ const loginInProgress = ref(false);
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
     await goToClientArea();
+    return;
+  }
+  const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
+  if (loggedIn) {
+    await goToClientArea();
   }
 });
 

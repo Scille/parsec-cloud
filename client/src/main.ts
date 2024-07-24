@@ -13,7 +13,7 @@ import {
   navigateTo,
   switchOrganization,
 } from '@/router';
-import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
+import { Config, StorageManagerKey, ThemeManagerKey, storageManagerInstance } from '@/services/storageManager';
 import { IonicVue, isPlatform, modalController } from '@ionic/vue';
 
 /* Theme variables */
@@ -36,8 +36,8 @@ enum AppState {
 }
 
 async function setupApp(): Promise<void> {
-  const storageManager = new StorageManager();
-  await storageManager.create();
+  await storageManagerInstance.init();
+  const storageManager = storageManagerInstance.get();
 
   const config = await storageManager.retrieveConfig();
 
