@@ -193,21 +193,53 @@ pub(super) fn merge_local_folder_manifest(
         return MergeLocalFolderManifestOutcome::NoChange;
     }
 
-    let local_from_remote = LocalFolderManifest::from_remote_with_local_context(
-        remote,
-        prevent_sync_pattern,
-        local,
-        timestamp,
-    );
+    // TODO: The next step is rarely actually needed, we could optimize this
+    //       by passing a `force_apply_pattern` parameter to this function.
 
-    // 2) Shortcut in case only the remote has changed
+    // 2) Ensure the prevent sync pattern is applied (idempotent)
+    //
+    // The prevent sync pattern can change at any time, which in turn triggers
+    // a full refresh of all local manifest to update their confinement points.
+    // Here we make sure the local manifest doesn't have its confinement points
+    // outdated, which would cause inconsistency in the next step.
+    let local = &local.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp);
+
+    // 3) Confinement points is a special case: given any entry that match the prevent
+    // sync pattern is kept appart, there is no possibility of conflict here (i.e.
+    // confined local entries stay in `local.children`, confined remote entries stay in
+    // `local.base.children`).
+    //
+    // So if the current local manifest only changes are confined entries, then the merge
+    // operation only consist of converting the remote into a local and adding those
+    // confined entries back.
+    // This is precisely what we are doing in this step, and why the resulting manifest
+    // is called `merge_in_progress`: if the local manifest contains other changes, then
+    // we must do a proper children merge and update the manifest accordingly.
+
+    let mut merge_in_progress =
+        LocalFolderManifest::from_remote_with_restored_local_confinement_points(
+            remote,
+            prevent_sync_pattern,
+            local,
+            timestamp,
+        );
+    let remote = &merge_in_progress.base;
+
+    // 4) Shortcut in case only the remote has changed
     if !local_need_sync {
-        return MergeLocalFolderManifestOutcome::Merged(Arc::new(local_from_remote));
+        // Note a weird corner case here:
+        // If the prevent sync pattern has changed but the local manifest hasn't had
+        // time to be updated yet, then it's possible to end up with
+        // `local_need_sync == false`, but `merge_in_progress.need_sync == true` !
+
+        // TODO: determine if that's an issue !!!
+        //       (also see https://github.com/Scille/parsec-cloud/issues/7885)
+        return MergeLocalFolderManifestOutcome::Merged(Arc::new(merge_in_progress));
     }
 
     // Both the remote and the local have changed
 
-    // 3) The remote changes are ours (our current local changes occurs while
+    // 5) The remote changes are ours (our current local changes occurs while
     // we were uploading previous local changes that became the remote changes),
     // simply acknowledge the remote changes and keep our local changes
     //
@@ -229,21 +261,51 @@ pub(super) fn merge_local_folder_manifest(
     //   that would be considered as bug :/
     // - the fixtures and server data binder system used in the tests
     //   makes it much more likely
-    if local_from_remote.base.author == local_author && !local_speculative {
-        let mut new_local = local.to_owned();
-        new_local.base = local_from_remote.base;
-        return MergeLocalFolderManifestOutcome::Merged(Arc::new(new_local));
+    if remote.author == local_author && !local_speculative {
+        // We should end up with a new local manifest that is strictly equivalent
+        // to the previous one, except that it is now based on the new remote.
+
+        let LocalFolderManifest {
+            base: _, // New remote already set
+            // All the other fields should be overwritten according to previous local manifest
+            parent: merged_parent,
+            need_sync: merged_need_sync,
+            updated: merged_updated,
+            children: merged_children,
+            local_confinement_points: merged_local_confinement_points,
+            remote_confinement_points: merged_remote_confinement_points,
+            speculative: merged_speculative,
+        } = &mut merge_in_progress;
+
+        *merged_speculative = false;
+        *merged_parent = *local_parent;
+        *merged_need_sync = *local_need_sync;
+        *merged_updated = local.updated;
+        *merged_children = local.children.to_owned();
+        *merged_local_confinement_points = local.local_confinement_points.to_owned();
+        *merged_remote_confinement_points = local.remote_confinement_points.to_owned();
+
+        return MergeLocalFolderManifestOutcome::Merged(Arc::new(merge_in_progress));
     }
 
-    // 4) Merge data and ensure the sync is still needed
+    // 6) Merge data and ensure the sync is still needed
 
     // Solve the folder conflict
     let merged_children = merge_children(
         local_base_children,
         local_children,
-        &local_from_remote.children,
+        // Why not using `remote.children` here ?
+        // This is to handle the confinement points: given `merge_children` has no
+        // concept of confinement points, it will see as conflict any confined entry
+        // that is in both local and remote children !
+        // So the solution is to use the children in `merge_in_progress` since at this
+        // point they have been created from the remote children, remote confined entry
+        // has been removed and local confined entry from the previous local manifest
+        // has been added (which is correctly handled by `merge_children` given those
+        // entries are also present with same ID&name in `local_children`).
+        &merge_in_progress.children,
     );
-    let merged_parent = merge_parent(*local_base_parent, *local_parent, local_from_remote.parent);
+    let merged_parent = merge_parent(*local_base_parent, *local_parent, remote.parent);
 
     // Children merge can end up with nothing to sync.
     //
@@ -264,25 +326,19 @@ pub(super) fn merge_local_folder_manifest(
     // /!\ with their own sync logic, as this optimization may shadow them!
 
     let merge_need_sync =
-        merged_children != local_from_remote.children || merged_parent != local_from_remote.parent;
-    let merge_update = if merge_need_sync {
+        merged_children != merge_in_progress.children || merged_parent != remote.parent;
+    let merge_updated = if merge_need_sync {
         timestamp
     } else {
-        local_from_remote.base.updated
+        merge_in_progress.updated
     };
 
-    let manifest = LocalFolderManifest {
-        children: merged_children,
-        parent: merged_parent,
-        need_sync: merge_need_sync,
-        updated: merge_update,
-        speculative: false,
-        base: local_from_remote.base,
-        local_confinement_points: local_from_remote.local_confinement_points,
-        remote_confinement_points: local_from_remote.remote_confinement_points,
-    };
+    merge_in_progress.children = merged_children;
+    merge_in_progress.parent = merged_parent;
+    merge_in_progress.need_sync = merge_need_sync;
+    merge_in_progress.updated = merge_updated;
 
-    MergeLocalFolderManifestOutcome::Merged(Arc::new(manifest))
+    MergeLocalFolderManifestOutcome::Merged(Arc::new(merge_in_progress))
 }
 
 fn merge_parent(base: VlobID, local: VlobID, remote: VlobID) -> VlobID {

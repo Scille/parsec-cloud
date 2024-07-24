@@ -377,7 +377,7 @@ fn from_remote(
     ".tmp~",
 )]
 // Note there is no `remote_children_confined_with_outdated_pattern` test given the
-// remote confinement points are just ignored by `LocalFolderManifest::from_remote_with_local_context`
+// remote confinement points are just ignored by `LocalFolderManifest::from_remote_with_restored_local_confinement_points`
 #[case::local_children_not_confined(
     HashMap::new(),
     // Local data are not confined, hence they are just ignored
@@ -452,7 +452,7 @@ fn from_remote_with_restored_local_confinement_points(
 
     let lfm = LocalFolderManifest {
         // Note we always use the same base for all tests, which is also the remote
-        // later use to call `LocalFolderManifest::from_remote_with_local_context`.
+        // later use to call `LocalFolderManifest::from_remote_with_restored_local_confinement_points`.
         // This isn't a big deal given the tested method never use the local manifest's base
         // (i.e. this `base` field).
         // Of course this is not great to rely on implementation details in tests, but
@@ -464,13 +464,13 @@ fn from_remote_with_restored_local_confinement_points(
         children: local_children.clone(),
         local_confinement_points: local_local_confinement_points,
         // Just like for `base`, we don't care about the remote confinement points
-        // given `LocalFolderManifest::from_remote_with_local_context`
+        // given `LocalFolderManifest::from_remote_with_restored_local_confinement_points`
         // ignores it and rebuilds it from the remote manifest only.
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
 
-    let lfm = LocalFolderManifest::from_remote_with_local_context(
+    let lfm = LocalFolderManifest::from_remote_with_restored_local_confinement_points(
         fm.clone(),
         &Regex::from_regex_str(regex).unwrap(),
         &lfm,
