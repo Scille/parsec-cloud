@@ -15,6 +15,24 @@ import textwrap
 from pathlib import Path
 from typing import Iterable, Union
 
+CYAN = "\x1b[36m"
+GREY = "\x1b[37m"
+PINK = "\x1b[35m"
+BOLD_RED = "\x1b[1;31m"
+BOLD_YELLOW = "\x1b[1;33m"
+NO_COLOR = "\x1b[0;0m"
+CUTENESS = [
+    "ฅ^◕ﻌ◕^ฅ",
+    "(^･㉨･^)∫",
+    "^•ﻌ•^ฅ",
+    "✺◟(⏓ᴥ⏓▽)◞✺",
+    "ฅ(・㉨・˶)ฅ",
+    "(ﾐꆤ ﻌ ꆤﾐ)∫",
+    "(ﾐㆁ㉨ㆁﾐ)",
+    "ฅ(=ච ω ච=)",
+]
+
+
 # Depending on packer's needs, we may or may not want to vendor OpenSSL
 # (e.g. Docker image already ships openssl so no need to vendor, wheel
 # distributed on pypi requires vendoring to comply with manylinux)
@@ -50,28 +68,47 @@ WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for rele
 WEB_DEV_CARGO_FLAGS = "--dev -- --features test-utils"
 WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
+# TL;DR: ONLY USE THE REAL ZSTD IN PRODUCTION !!!
+#
+# `libparsec_zstd` is just a shim over `zstd` crate to provide a simpler-to-build
+# pure Rust implementation when compiling for WASM on Windows/MacOS (see
+# https://github.com/gyscos/zstd-rs/issues/93).
+#
+# However `Cargo.toml` doesn't support specifying dependencies based on the host platform,
+# so we have to do the detection here and pass a cfg parameter accordingly.
+
+USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV = {"RUSTFLAGS": "--cfg use_pure_rust_but_dirty_zstd"}
+
+web_non_release_build_uses_pure_rust_but_dirty_zstd = False
+if platform.system().lower() in ("windows", "darwin"):
+    web_non_release_build_uses_pure_rust_but_dirty_zstd = True
+match os.environ.get("LIBPARSEC_FORCE_ZSTD", "").lower():
+    case "real":
+        web_non_release_build_uses_pure_rust_but_dirty_zstd = False
+    case "dirty":
+        web_non_release_build_uses_pure_rust_but_dirty_zstd = True
+    case _:
+        pass
+
+if web_non_release_build_uses_pure_rust_but_dirty_zstd:
+    print(
+        f"{BOLD_RED}WARNING: Enabling `libparsec_zstd`'s pure Rust but dirty implementation` cfg !{NO_COLOR}",
+        file=sys.stderr,
+    )
+    print(
+        f"{BOLD_RED}WARNING: This is done to simplify compilation on Windows&MacOS and should be compatible with the real Zstd implementation, but DON'T USE THAT FOR PRODUCTION !{NO_COLOR}",
+        file=sys.stderr,
+    )
+    print(
+        f"{BOLD_RED}WARNING: You can set `LIBPARSEC_FORCE_ZSTD=real` to switch to disable this (you may need to install LLVM){NO_COLOR}",
+        file=sys.stderr,
+    )
+
 
 BASE_DIR = Path(__file__).parent.resolve()
 SERVER_DIR = BASE_DIR / "server"
 BINDINGS_ELECTRON_DIR = BASE_DIR / "bindings/electron"
 BINDINGS_WEB_DIR = BASE_DIR / "bindings/web"
-
-
-CYAN = "\x1b[36m"
-GREY = "\x1b[37m"
-PINK = "\x1b[35m"
-BOLD_YELLOW = "\x1b[1;33m"
-NO_COLOR = "\x1b[0;0m"
-CUTENESS = [
-    "ฅ^◕ﻌ◕^ฅ",
-    "(^･㉨･^)∫",
-    "^•ﻌ•^ฅ",
-    "✺◟(⏓ᴥ⏓▽)◞✺",
-    "ฅ(・㉨・˶)ฅ",
-    "(ﾐꆤ ﻌ ꆤﾐ)∫",
-    "(ﾐㆁ㉨ㆁﾐ)",
-    "ฅ(=ච ω ච=)",
-]
 
 
 class Op:
@@ -124,7 +161,7 @@ class Cmd(Op):
 
     def display(self, extra_cmd_args: Iterable[str]) -> str:
         display_extra_env = " ".join(
-            [f"{GREY}{k}={v}{NO_COLOR}" for k, v in self.extra_env.items()]
+            [f"{GREY}{k}='{v}'{NO_COLOR}" for k, v in self.extra_env.items()]
         )
         display_cmds = []
         display_extra_cmds = f" {' '.join(extra_cmd_args)}" if extra_cmd_args else ""
@@ -235,6 +272,9 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cmd(
             cmd="npm run build:dev",
+            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
+            if web_non_release_build_uses_pure_rust_but_dirty_zstd
+            else {},
         ),
     ),
     ("web-dev-rebuild", "wr"): (
@@ -242,6 +282,9 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         Rmdir(BINDINGS_WEB_DIR / "pkg"),
         Cmd(
             cmd="npm run build:dev",
+            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
+            if web_non_release_build_uses_pure_rust_but_dirty_zstd
+            else {},
         ),
     ),
     ("web-ci-install",): (
@@ -251,6 +294,9 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         ),
         Cmd(
             cmd="npm run build:ci",
+            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
+            if web_non_release_build_uses_pure_rust_but_dirty_zstd
+            else {},
         ),
     ),
     ("web-release-install",): (
@@ -260,6 +306,8 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         ),
         Cmd(
             cmd="npm run build:release",
+            # Don't add USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV here !
+            # Release should ALWAYS uses the real Zstd implementation !
         ),
     ),
     ("run-testbed-server", "rts"): (

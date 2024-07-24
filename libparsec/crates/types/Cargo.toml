@@ -14,16 +14,12 @@ workspace = true
 [features]
 test-mock-time = []
 test-fixtures = ["dep:hex-literal", "dep:rstest"]
-# TODO: `use-zstd-in-serialization-format` is a temporary feature to disable the
-#       use of zstd, as its compilation with WASM is buggy on some host (e.g.
-#       MacOS/Windows/Ubuntu 20.04).
-#       TL;DR: ALWAYS ENABLE `use-zstd-in-serialization-format` FOR PRODUCTION !!!
-use-zstd-in-serialization-format = ["zstd", "zstd-sys"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }
 libparsec_serialization_format = { workspace = true }
 libparsec_platform_async = { workspace = true }
+libparsec_zstd = { workspace = true }
 
 serde = { workspace = true, features = ["derive"] }
 bytes = { workspace = true, features = ["serde"] }
@@ -54,10 +50,6 @@ fnmatch-regex = { workspace = true }
 hex-literal = { workspace = true, optional = true }
 rstest = { workspace = true, optional = true }
 sharks = { workspace = true }
-zstd = { workspace = true, optional = true }
-# TODO: temporary to fix parquet wasm build
-# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
-zstd-sys = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 chrono = { workspace = true, features = ["wasmbind"] }
