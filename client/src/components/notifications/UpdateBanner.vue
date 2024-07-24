@@ -5,11 +5,6 @@
     v-if="updateAvailability !== null"
     class="banner"
   >
-    <!-- TODO: replace LogoIconGradient by a LogoIconWhite when it will be existing in megashark-lib -->
-    <ms-image
-      :image="LogoIconGradient"
-      class="logo-img"
-    />
     <ion-label class="subtitles-normal">{{ $msTranslate('notificationCenter.newVersionAvailable') }}</ion-label>
     <ion-button
       fill="outline"
@@ -24,7 +19,7 @@
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { IonButton, IonLabel } from '@ionic/vue';
-import { Answer, LogoIconGradient, askQuestion, MsImage } from 'megashark-lib';
+import { Answer, askQuestion } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -70,10 +65,6 @@ async function update(): Promise<void> {
   border-left: 3px solid var(--parsec-color-light-secondary-white);
   background: var(--parsec-color-light-primary-30-opacity15);
   box-shadow: var(--parsec-shadow-light);
-
-  .logo-img {
-    width: 2.5em;
-  }
 
   // TODO: improve :hover colors when mockups will be available
   ion-button {
