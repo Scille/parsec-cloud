@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { TRIAL_EXPIRATION_DAYS } from '@/services/parsecServers';
+import { AvailableDevice } from '@/parsec';
+import { ServerType, TRIAL_EXPIRATION_DAYS, getServerTypeFromHost } from '@/services/parsecServers';
 import { DateTime, Duration } from 'luxon';
 import { Translatable } from 'megashark-lib';
 
@@ -36,4 +37,11 @@ export function formatExpirationTime(duration: Duration): Translatable {
     };
   }
   return 'HomePage.organizationList.expiration.expired';
+}
+
+export function isTrialOrganizationDevice(device: AvailableDevice): boolean {
+  const url = new URL(device.serverUrl);
+  const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
+
+  return serverType === ServerType.Trial;
 }

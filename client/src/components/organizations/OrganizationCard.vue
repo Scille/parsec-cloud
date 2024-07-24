@@ -1,55 +1,85 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-card class="organization-card__body">
-    <ion-card-header class="card-content">
-      <div class="organization-info">
-        <ion-avatar class="orga-avatar body-lg">
-          <span v-if="!isTrialOrg">{{ device.organizationId?.substring(0, 2) }}</span>
-          <ms-image
-            v-else
-            :image="LogoIconGradient"
-            class="orga-avatar-logo"
-          />
-        </ion-avatar>
-        <ion-text
-          v-if="expirationDuration"
-          class="orga-expiration button-small"
-          :class="{ expired: isExpired(expirationDuration) }"
+  <div
+    class="organization-card"
+    :class="orgNameOnly ? 'header-only' : ''"
+  >
+    <div class="organization-card-header">
+      <ion-avatar class="organization-card-header__avatar body-lg">
+        <span v-if="!isTrialOrg">{{ device.organizationId?.substring(0, 2) }}</span>
+        <ms-image
+          v-else
+          :image="LogoIconGradient"
+          class="organization-avatar-logo"
+        />
+      </ion-avatar>
+      <ion-card-title class="organization-card-header__title title-h4">{{ device.organizationId }}</ion-card-title>
+    </div>
+    <ion-card-content
+      v-if="!orgNameOnly"
+      class="organization-card-content"
+    >
+      <div class="organization-card-login">
+        <ion-text class="organization-card-login__name body">{{ device.humanHandle.label }}</ion-text>
+        <div
+          v-show="!isDeviceLoggedIn(device)"
+          class="organization-card-login-time"
         >
-          {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
-        </ion-text>
-        <div class="orga-text">
-          <ion-card-title class="card-title">
-            <span class="title-h4">{{ device.organizationId }}</span>
-          </ion-card-title>
+          <ion-icon
+            :icon="time"
+            class="organization-card-login-time__icon"
+          />
+          <ion-text
+            class="body-sm"
+            v-if="lastLoginDevice"
+          >
+            {{ device.deviceId in lastLoginDevice ? $msTranslate(formatTimeSince(lastLoginDevice, '--')) : '--' }}
+          </ion-text>
+        </div>
+        <div
+          v-show="isDeviceLoggedIn(device)"
+          class="organization-card-login-time connected"
+        >
+          <ion-icon
+            :icon="ellipse"
+            class="success"
+          />
+          <ion-text class="body-sm">{{ $msTranslate('HomePage.organizationList.loggedIn') }}</ion-text>
         </div>
       </div>
-    </ion-card-header>
-    <ion-text class="orga-email body">{{ device.humanHandle.label }}</ion-text>
-  </ion-card>
+      <!-- trial expiration badge -->
+      <ion-text
+        v-if="expirationDuration"
+        class="organization-card-expiration button-small"
+        :class="{ expired: isExpired(expirationDuration) }"
+      >
+        {{ $msTranslate(formatExpirationTime(expirationDuration)) }}
+      </ion-text>
+    </ion-card-content>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { AvailableDevice } from '@/parsec';
-import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
-import { IonAvatar, IonCard, IonCardHeader, IonCardTitle, IonText } from '@ionic/vue';
+import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
+import { IonAvatar, IonCardTitle, IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { Duration } from 'luxon';
-import { MsImage, LogoIconGradient } from 'megashark-lib';
-import { getDurationBeforeExpiration, formatExpirationTime, isExpired } from '@/common/organization';
+import { ellipse, time } from 'ionicons/icons';
+import { MsImage, LogoIconGradient, formatTimeSince } from 'megashark-lib';
+import { formatExpirationTime, isExpired, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
+import { Duration, DateTime } from 'luxon';
+
+const isTrialOrg = ref(false);
+const expirationDuration = ref<Duration>();
 
 const props = defineProps<{
   device: AvailableDevice;
+  lastLoginDevice?: DateTime;
+  orgNameOnly?: boolean;
 }>();
 
-const isTrialOrg = ref(false);
-const expirationDuration = ref<Duration | undefined>(undefined);
-
 onMounted(async () => {
-  const url = new URL(props.device.serverUrl);
-  const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
-  isTrialOrg.value = serverType === ServerType.Trial;
+  isTrialOrg.value = isTrialOrganizationDevice(props.device);
   if (isTrialOrg.value) {
     expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
   }
@@ -57,20 +87,36 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.organization-card__body {
+.organization-card {
+  background: var(--parsec-color-light-secondary-background);
+  transition: box-shadow 150ms linear;
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  box-shadow: none;
+  border-radius: var(--parsec-radius-12);
+  padding: 0.75rem;
+  width: 100%;
+  margin: 0;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   user-select: none;
   box-shadow: none;
-  background: none;
-  margin: 0;
+  cursor: pointer;
 
-  .card-content {
+  // when using the card as a header only
+  &.header-only {
     padding: 0;
+    box-shadow: none;
+    border: none;
+    background: none;
+    cursor: inherit;
   }
 
-  .organization-info {
+  &:hover:not(.header-only) {
+    box-shadow: var(--parsec-shadow-light);
+  }
+
+  &-header {
     display: flex;
     align-items: center;
     flex-direction: row;
@@ -78,7 +124,7 @@ onMounted(async () => {
     position: relative;
     z-index: 1;
 
-    .orga-avatar {
+    &__avatar {
       background-color: var(--parsec-color-light-secondary-white);
       color: var(--parsec-color-light-primary-600);
       width: 2.5rem;
@@ -92,36 +138,73 @@ onMounted(async () => {
       z-index: 1;
       border: 1px solid var(--parsec-color-light-secondary-medium);
 
-      &-logo {
+      .organization-avatar-logo {
         width: 1.5rem;
       }
     }
 
-    .card-title {
+    &__title {
       display: flex;
       flex-direction: column;
       gap: 0.375rem;
       color: var(--parsec-color-light-primary-700);
     }
+  }
 
-    .orga-expiration {
-      border-radius: var(--parsec-radius-12);
-      padding: 0.25rem 0.5rem;
-      position: absolute;
-      top: 0;
-      right: 0;
-      background: var(--parsec-color-light-primary-700);
-      color: var(--parsec-color-light-secondary-white);
+  &-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0;
+  }
+}
 
-      &.expired {
-        background: var(--parsec-color-light-secondary-grey);
-        color: var(--parsec-color-light-secondary-white);
+.organization-card-login {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__name {
+    color: var(--parsec-color-light-secondary-hard-grey);
+  }
+
+  &-time {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-light);
+      font-size: 1.125rem;
+    }
+
+    &.connected {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-success-700);
+
+      .success {
+        color: var(--parsec-color-light-success-700);
+        font-size: 0.675rem;
       }
     }
   }
+}
 
-  .orga-email {
-    color: var(--parsec-color-light-secondary-hard-grey);
+.organization-card-expiration {
+  border-radius: var(--parsec-radius-12);
+  padding: 0.25rem 0.5rem;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background: var(--parsec-color-light-primary-700);
+  color: var(--parsec-color-light-secondary-white);
+
+  &.expired {
+    background: var(--parsec-color-light-secondary-grey);
+    color: var(--parsec-color-light-secondary-white);
   }
 }
 </style>

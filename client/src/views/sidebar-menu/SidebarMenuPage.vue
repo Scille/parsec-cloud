@@ -21,15 +21,15 @@
                 @click="openOrganizationChoice($event)"
               >
                 <div class="header-container">
-                  <ion-avatar class="orga-avatar body-lg">
-                    <span v-if="isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                  <ion-avatar class="organization-avatar body-lg">
+                    <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
                     <ms-image
                       v-else
                       :image="LogoIconGradient"
-                      class="orga-avatar-logo"
+                      class="organization-avatar-logo"
                     />
                   </ion-avatar>
-                  <div class="orga-text">
+                  <div class="organization-text">
                     <ion-card-title class="title-h3">
                       {{ userInfo?.organizationId }}
                     </ion-card-title>
@@ -303,9 +303,8 @@ import {
 import { EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { getServerTypeFromHost, ServerType } from '@/services/parsecServers';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import { formatExpirationTime, getDurationBeforeExpiration } from '@/common/organization';
+import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 
 import {
   GestureDetail,
@@ -422,11 +421,7 @@ onMounted(async () => {
   }
 
   if (currentDevice.value) {
-    const url = new URL(currentDevice.value.serverUrl);
-    const serverType = getServerTypeFromHost(url.hostname, url.port.length > 0 ? parseInt(url.port) : undefined);
-    isTrialOrg.value = serverType === ServerType.Trial;
-    console.log(isTrialOrg.value);
-
+    isTrialOrg.value = isTrialOrganizationDevice(currentDevice.value);
     if (isTrialOrg.value) {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
@@ -540,18 +535,18 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     gap: 1.5rem;
   }
 
-    // logo parsec
-    &::before {
-      content: url('@/assets/images/background/logo-icon-white.svg');
-      opacity: 0.03;
-      width: 100%;
-      max-width: 270px;
-      max-height: 170px;
-      position: absolute;
-      bottom: 16px;
-      right: -60px;
-      z-index: 0;
-    }
+  // logo parsec
+  &::before {
+    content: url('@/assets/images/background/logo-icon-white.svg');
+    opacity: 0.03;
+    width: 100%;
+    max-width: 270px;
+    max-height: 170px;
+    position: absolute;
+    bottom: 16px;
+    right: -60px;
+    z-index: 0;
+  }
 
   .sidebar-content {
     --background: transparent;
@@ -593,7 +588,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     z-index: 2;
     min-width: 0;
 
-    .orga-avatar {
+    .organization-avatar {
       background-color: var(--parsec-color-light-secondary-premiere);
       color: var(--parsec-color-light-primary-600);
       width: 2rem;
@@ -612,7 +607,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       }
     }
 
-    .orga-text {
+    .organization-text {
       display: flex;
       flex-direction: column;
       white-space: nowrap;

@@ -55,9 +55,9 @@
         <!-- part 1 (wait for host)-->
         <div
           v-show="pageStep === UserJoinOrganizationStep.WaitForHost"
-          class="step orga-name"
+          class="step organization-name"
         >
-          <div class="orga-name-content">
+          <div class="organization-name-content">
             <ms-informative-text>
               {{ $msTranslate('JoinOrganization.instructions.start.first') }}
             </ms-informative-text>
@@ -496,7 +496,7 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-.orga-name {
+.organization-name {
   display: flex;
   flex-direction: column;
 

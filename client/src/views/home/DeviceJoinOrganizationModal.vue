@@ -54,7 +54,7 @@
         <!-- part 1 (information message join)-->
         <div
           v-show="pageStep === DeviceJoinOrganizationStep.Information"
-          class="step orga-name"
+          class="step organization-name"
         >
           <information-join-device />
         </div>
@@ -420,7 +420,7 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.orga-name {
+.organization-name {
   display: flex;
   flex-direction: column;
 }
