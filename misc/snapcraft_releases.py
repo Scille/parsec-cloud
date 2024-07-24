@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 """
-For a given Parsec version, this script outputs the `--release=<channel>` options intended for snapcraft.
+For a given Parsec version, this script outputs the `<channel>` value intended to be used in the `--releases=<channel>` option for `snapcraft upload`.
 
 - A channel is formed with <track>/<risk-level>/<branch>
 - Parsec currently has 4 tracks: latest, v2, v3, nigthly
@@ -9,17 +9,17 @@ For a given Parsec version, this script outputs the `--release=<channel>` option
 E.g.
 
 $ python misc/snapcraft_releases.py 2.0.0
---release=v2/stable
+v2/stable
 $ python misc/snapcraft_releases.py 3.0.0-b.0
---release=v3/beta
---release=latest/beta
+v3/beta
+latest/beta
 $ python misc/snapcraft_releases.py 3.0.0-b.0 --nightly
---release=v3/edge
---release=latest/edge
---release=nightly/stable
---release=nightly/beta
---release=nightly/edge
---release=nightly/candidate
+v3/edge
+latest/edge
+nightly/stable
+nightly/beta
+nightly/edge
+nightly/candidate
 """
 
 import logging
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     parser = ArgumentParser(
         "snapcraft_releases",
         description="""
-    Output as many snapcraft's `--release=<channel>` options based on the given Parsec version.
+    Output as many snapcraft's `<channel>` values based on the given Parsec version.
     """,
         epilog="See https://snapcraft.io/docs/channels",
     )
@@ -118,16 +118,12 @@ if __name__ == "__main__":
     release_channels: list[str] = []
     if args.nightly:
         # Update channels "<tracks>/edge"
-        release_channels.extend(
-            map(lambda track: f"--release={track}/{RiskLevel.Edge}", tracks_for_version)
-        )
+        release_channels.extend(map(lambda track: f"{track}/{RiskLevel.Edge}", tracks_for_version))
         # Update channels "nightly/<risk>"
-        release_channels.extend(
-            map(lambda risk: f"--release={Track.Nightly}/{risk}", ALL_RISK_LEVEL)
-        )
+        release_channels.extend(map(lambda risk: f"{Track.Nightly}/{risk}", ALL_RISK_LEVEL))
     else:
         risk = get_risk_level_for_version(version)
-        release_channels.extend(map(lambda track: f"--release={track}/{risk}", tracks_for_version))
+        release_channels.extend(map(lambda track: f"{track}/{risk}", tracks_for_version))
 
     log.debug(" ".join(release_channels))
     print(*release_channels, sep="\n")
