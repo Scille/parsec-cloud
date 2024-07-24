@@ -12,6 +12,10 @@ export interface StoredDeviceData {
   lastLogin: DateTime;
 }
 
+export interface BmsAccessData {
+  token: string;
+}
+
 export interface Config {
   locale: Locale;
   theme: Theme;
@@ -26,6 +30,7 @@ export class StorageManager {
   static STORED_DEVICE_DATA_KEY = 'devicesData';
   static STORED_CONFIG_KEY = 'config';
   static STORED_COMPONENT_PREFIX = 'comp';
+  static STORED_BMS_ACCESS_KEY = 'bmsAccess';
 
   static get DEFAULT_CONFIG(): Config {
     return {
@@ -165,4 +170,35 @@ export class StorageManager {
     };
     return config;
   }
+
+  async storeBmsAccess(access: BmsAccessData): Promise<void> {
+    await this.internalStore.set(StorageManager.STORED_BMS_ACCESS_KEY, {
+      token: access.token,
+    });
+  }
+
+  async clearBmsAccess(): Promise<void> {
+    await this.internalStore.remove(StorageManager.STORED_BMS_ACCESS_KEY);
+  }
+
+  async retrieveBmsAccess(): Promise<BmsAccessData | undefined> {
+    return await this.internalStore.get(StorageManager.STORED_BMS_ACCESS_KEY);
+  }
 }
+
+class StorageManagerInstance {
+  private _instance: StorageManager | null = null;
+
+  get(): StorageManager {
+    if (!this._instance) {
+      this._instance = new StorageManager();
+    }
+    return this._instance;
+  }
+
+  async init(): Promise<void> {
+    await this.get().create();
+  }
+}
+
+export const storageManagerInstance = new StorageManagerInstance();

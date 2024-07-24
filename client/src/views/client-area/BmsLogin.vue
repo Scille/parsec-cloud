@@ -91,7 +91,7 @@ import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'meg
 import { emailValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { AuthenticationToken, BmsAccessInstance, DataType, PersonalInformationResultData } from '@/services/bms';
+import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 const props = defineProps<{
@@ -112,6 +112,15 @@ const querying = ref(false);
 const loginError = ref<Translatable>('');
 
 onMounted(async () => {
+  if (BmsAccessInstance.get().isLoggedIn()) {
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
+    return;
+  }
+  const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
+  if (loggedIn) {
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
+  }
+
   if (emailInputRef.value) {
     if (email.value.length > 0) {
       await emailInputRef.value.validate(email.value);
@@ -130,11 +139,10 @@ async function onLoginClicked(): Promise<void> {
   try {
     const response = await BmsAccessInstance.get().login(email.value, password.value);
 
-    if (response.isError || !response.data || response.data.type !== DataType.Login) {
+    if (!response.ok) {
       loginError.value = 'ClientApplication.loginFailed';
     } else {
-      const userInfo = await BmsAccessInstance.get().getPersonalInformation();
-      emits('loginSuccess', response.data.token, userInfo);
+      emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
     }
   } catch (error: any) {
     window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
