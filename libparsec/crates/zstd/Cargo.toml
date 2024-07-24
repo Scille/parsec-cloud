@@ -1,0 +1,30 @@
+[package]
+name = "libparsec_zstd"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[target.'cfg(not(use_pure_rust_but_dirty_zstd))'.dependencies]
+# Zstd & Zstd-sys are the official bindings to the ZSTD C library.
+# They are the one we want to use in production !
+zstd = { workspace = true }
+# TODO: temporary to fix parquet wasm build
+# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
+zstd-sys = { workspace = true }
+
+[target.'cfg(use_pure_rust_but_dirty_zstd)'.dependencies]
+# RuZSTD provides a pure-Rust decoder, over which we add our own custom minimal
+# encoder to end up with the "dirty" alternative implementation.
+ruzstd = { workspace = true }
+
+[dev-dependencies]
+ruzstd = { workspace = true }
+zstd = { workspace = true }
+zstd-sys = { workspace = true }
