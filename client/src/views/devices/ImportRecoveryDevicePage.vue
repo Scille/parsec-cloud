@@ -13,7 +13,10 @@
     </div>
     <ion-card class="recovery-card">
       <ion-card-content class="card-container">
-        <organization-card :device="device" />
+        <organization-card
+          :device="device"
+          :org-name-only="true"
+        />
         <ms-report-text
           :theme="MsReportTheme.Warning"
           id="warning-text"
