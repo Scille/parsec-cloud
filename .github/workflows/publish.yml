@@ -132,6 +132,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Publish wheel on PyPI
+        if: steps.version.outputs.local == ''
         uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # pin v1.9.0
         with:
           user: __token__
