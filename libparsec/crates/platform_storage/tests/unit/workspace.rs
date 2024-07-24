@@ -1023,13 +1023,13 @@ async fn start_workspace(env: &TestbedEnv) -> WorkspaceStorage {
 
 #[parsec_test(testbed = "minimal")]
 async fn check_prevent_sync_pattern_initialized_with_empty_pattern(env: &TestbedEnv) {
-    let mut workspace = start_workspace(env).await;
+    let workspace = start_workspace(env).await;
 
-    let (regex, bool) = workspace.get_prevent_sync_pattern().await.unwrap();
+    let (regex, bool) = workspace.get_prevent_sync_pattern();
 
     p_assert_eq!(
         regex,
-        Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
+        &Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
     );
     assert_eq!(bool, false);
 }
@@ -1081,9 +1081,9 @@ async fn set_prevent_sync_pattern(env: &TestbedEnv) {
     let res = workspace.set_prevent_sync_pattern(&regex).await.unwrap();
 
     assert_eq!(res, false);
-    let (got_regex, bool) = workspace.get_prevent_sync_pattern().await.unwrap();
+    let (got_regex, bool) = workspace.get_prevent_sync_pattern();
 
-    assert_eq!(got_regex, regex);
+    assert_eq!(got_regex, &regex);
     assert_eq!(bool, false);
 }
 

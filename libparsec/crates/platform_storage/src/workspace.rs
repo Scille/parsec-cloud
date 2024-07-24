@@ -20,6 +20,8 @@ pub const TYPICAL_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
 #[derive(Debug)]
 pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
+    prevent_sync_pattern: Regex,
+    prevent_sync_pattern_applied: bool,
 }
 
 pub struct UpdateManifestData {
@@ -97,14 +99,19 @@ impl WorkspaceStorage {
         cache_size: u64,
     ) -> anyhow::Result<Self> {
         let cache_max_blocks = cache_size / TYPICAL_BLOCK_SIZE;
-        let platform = PlatformWorkspaceStorage::no_populate_start(
+        let mut platform = PlatformWorkspaceStorage::no_populate_start(
             data_base_dir,
             device,
             realm_id,
             cache_max_blocks,
         )
         .await?;
-        Ok(Self { platform })
+        let (pattern, pattern_applied) = platform.get_prevent_sync_pattern().await?;
+        Ok(Self {
+            platform,
+            prevent_sync_pattern: pattern,
+            prevent_sync_pattern_applied: pattern_applied,
+        })
     }
 
     pub async fn stop(self) -> anyhow::Result<()> {
@@ -217,20 +224,35 @@ impl WorkspaceStorage {
     }
 
     pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
-        self.platform.set_prevent_sync_pattern(pattern).await
+        // TODO: Should we skip the next call if the pattern is the same?
+        let applied = self.platform.set_prevent_sync_pattern(pattern).await?;
+
+        self.prevent_sync_pattern = pattern.clone();
+        self.prevent_sync_pattern_applied = applied;
+
+        Ok(applied)
     }
 
-    pub async fn get_prevent_sync_pattern(&mut self) -> anyhow::Result<(Regex, bool)> {
-        self.platform.get_prevent_sync_pattern().await
+    pub fn get_prevent_sync_pattern(&self) -> (&Regex, bool) {
+        (
+            &self.prevent_sync_pattern,
+            self.prevent_sync_pattern_applied,
+        )
     }
 
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
         pattern: &Regex,
     ) -> anyhow::Result<bool> {
-        self.platform
+        // TODO: Should we skip the next call if the pattern is different?
+        let applied = self
+            .platform
             .mark_prevent_sync_pattern_fully_applied(pattern)
-            .await
+            .await?;
+
+        self.prevent_sync_pattern_applied = applied;
+
+        Ok(applied)
     }
 }
 
