@@ -30,9 +30,7 @@
             :icon="time"
             class="organization-card-login-time__icon"
           />
-          <ion-text
-            class="organization-card-login-time__text body-sm"
-          >
+          <ion-text class="organization-card-login-time__text body-sm">
             {{ getLastLoginText() }}
           </ion-text>
         </div>
