@@ -134,6 +134,7 @@ impl FilterKind<'_> {
 /// with their timestamp strictly growing.
 /// We need this group of information in the storage so that we can retrieve
 /// the last timestamp of each topic when polling the server for new ones.
+#[cfg_attr(target_arch = "wasm32", allow(unused))]
 pub(super) trait StorableCertificateTopic {
     const TYPES: &'static [&'static str];
     /// This method is not meant to be executed, instead it acts as a canary by making
