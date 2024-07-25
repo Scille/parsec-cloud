@@ -92,6 +92,7 @@ impl UserStore {
     /// Updating the manifest is error prone:
     /// 1) the lock must be held
     /// 2) the user manifest must be fetched *after* the lock is held
+    ///
     /// This method (and the related updater structure) make sure both requirements
     /// are met before providing the method to actually update the manifest.
     pub async fn for_update(&self) -> (UserStoreUpdater, Arc<LocalUserManifest>) {

@@ -14,7 +14,7 @@
 //!   point to the Parsec server and then redirect to the final `parsec3://` URL.
 //! - Parsec URLs are not serializable with serde as we shouldn't use them in the data
 //!   schemes. This is so that we can change the URL format without breaking the data
-//!  serialization format.
+//!   serialization format.
 
 use std::str::FromStr;
 
