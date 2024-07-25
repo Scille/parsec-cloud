@@ -474,15 +474,23 @@ fn get_conflict_filename(
     let mut new_filename = rename_with_suffix(filename, suffix);
     while is_reserved(&new_filename) {
         count += 1;
-        let suffix_with_count = format!("{} ({})", suffix, count);
+        let suffix_with_count = format!("{} {}", suffix, count);
         new_filename = rename_with_suffix(filename, &suffix_with_count);
     }
     new_filename
 }
 
 fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
+    // Leading dot (e.g. `.bashrc`) is a special case given it is not considered
+    // as an extension separator.
+    // We handle it by stripping it for our algorithm and only re-adding it
+    // right before constructing the candidate name.
+    let (raw, has_leading_dot) = if name.as_ref().starts_with('.') {
+        (&name.as_ref()[1..], true)
+    } else {
+        (name.as_ref(), false)
+    };
     // Separate file name from the extensions (if any)
-    let raw = name.as_ref();
     let (original_base_name, original_extension) = match raw.split_once('.') {
         None => (raw, None),
         Some((base, ext)) => (base, Some(ext)),
@@ -492,10 +500,12 @@ fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
     let mut extension = original_extension;
     loop {
         // Convert to EntryName
-        let raw = if let Some(extension) = extension {
-            format!("{} ({}).{}", base_name, suffix, extension)
-        } else {
-            format!("{} ({})", base_name, suffix)
+        let raw = match (extension, has_leading_dot) {
+            (Some(extension), false) => format!("{} ({}).{}", base_name, suffix, extension),
+            (None, false) => format!("{} ({})", base_name, suffix),
+            // Leading dot cases
+            (Some(extension), true) => format!(".{} ({}).{}", base_name, suffix, extension),
+            (None, true) => format!(".{} ({})", base_name, suffix),
         };
         match raw.parse::<EntryName>() {
             Ok(name) => return name,
@@ -523,3 +533,8 @@ fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/workspace/merge_get_conflict_filename.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests_get_conflict_filename;
