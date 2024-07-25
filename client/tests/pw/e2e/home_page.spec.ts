@@ -16,8 +16,9 @@ msTest('Home default state with devices', async ({ home }) => {
   await expect(cards).toHaveCount(USER_NAMES.length);
 
   for (const card of await cards.all()) {
+    const lastLogin = card.locator('.organization-card-login-time__text');
     await expect(card.locator('.organization-card-header').locator('.title-h4')).toHaveText(/Org\d+/);
-    await expect(card.locator('organization-card-login-time__text')).toHaveText('--');
+    await expect(lastLogin).toHaveText('--');
   }
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 });
