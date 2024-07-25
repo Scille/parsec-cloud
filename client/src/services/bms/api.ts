@@ -86,7 +86,8 @@ async function login(query: LoginQueryData): Promise<BmsResponse> {
       isError: false,
       data: {
         type: DataType.Login,
-        token: axiosResponse.data.access,
+        accessToken: axiosResponse.data.access,
+        refreshToken: axiosResponse.data.refresh,
       },
     };
   });
@@ -235,6 +236,28 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
   });
 }
 
+async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      '/api/token/refresh',
+      {
+        refresh: refreshToken,
+      },
+      {
+        validateStatus: (status) => status === 200,
+      },
+    );
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.RefreshToken,
+        token: axiosResponse.data.access,
+      },
+    };
+  });
+}
+
 export const BmsApi = {
   login,
   getPersonalInformation,
@@ -243,4 +266,5 @@ export const BmsApi = {
   getOrganizationStats,
   getOrganizationStatus,
   getInvoices,
+  refreshToken,
 };

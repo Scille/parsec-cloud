@@ -16,23 +16,14 @@
 <script setup lang="ts">
 import { IonPage, IonContent } from '@ionic/vue';
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
-import { AuthenticationToken, PersonalInformationResultData, BmsAccessInstance } from '@/services/bms';
+import { AuthenticationToken, PersonalInformationResultData } from '@/services/bms';
 import { ref, onMounted } from 'vue';
 import { navigateTo, Routes } from '@/router';
 import { MsSpinner } from 'megashark-lib';
 
 const loginInProgress = ref(false);
 
-onMounted(async () => {
-  if (BmsAccessInstance.get().isLoggedIn()) {
-    await goToClientArea();
-    return;
-  }
-  const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
-  if (loggedIn) {
-    await goToClientArea();
-  }
-});
+onMounted(async () => {});
 
 async function onLoginSuccess(_token: AuthenticationToken, _personalInformation: PersonalInformationResultData): Promise<void> {
   await goToClientArea();
