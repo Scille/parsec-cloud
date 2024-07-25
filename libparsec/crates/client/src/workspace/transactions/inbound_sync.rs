@@ -342,15 +342,27 @@ async fn merge_manifest_and_update_store(
             Some(ArcLocalChildManifest::Folder(local_manifest)),
             ChildManifest::Folder(remote_manifest),
         ) => {
+            let (current_pattern, fully_applied) = ops
+                .store
+                .get_prevent_sync_pattern()
+                .await
+                .map_err(|e| match e {
+                    WorkspaceStoreOperationError::Stopped => WorkspaceSyncError::Stopped,
+                    WorkspaceStoreOperationError::Internal(err) => {
+                        err.context("cannot get prevent sync pattern").into()
+                    }
+                })?;
+
             // Note merge may end up with nothing to sync, typically if the remote version is
             // already the one local is based on
             let merge_outcome = super::super::merge::merge_local_folder_manifest(
                 ops.device.device_id,
                 ops.device.now(),
-                // TODO: Pass prevent sync pattern
-                None,
+                Some(&current_pattern),
                 &local_manifest,
                 remote_manifest,
+                // We force the apply of the prevent sync pattern when it's not fully applied to a workspace.
+                !fully_applied,
             );
             match merge_outcome {
                 MergeLocalFolderManifestOutcome::NoChange => Ok(InboundSyncOutcome::NoChange),

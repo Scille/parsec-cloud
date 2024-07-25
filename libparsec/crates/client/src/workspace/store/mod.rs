@@ -624,6 +624,20 @@ impl WorkspaceStore {
             .await?;
         Ok(())
     }
+
+    pub async fn get_prevent_sync_pattern(
+        &self,
+    ) -> Result<(Regex, bool), WorkspaceStoreOperationError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or(WorkspaceStoreOperationError::Stopped)?;
+
+        storage
+            .get_prevent_sync_pattern()
+            .await
+            .map_err(WorkspaceStoreOperationError::Internal)
+    }
 }
 
 fn recursive_apply_prevent_sync_pattern(

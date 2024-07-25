@@ -150,7 +150,19 @@ pub(super) fn merge_local_folder_manifest(
     prevent_sync_pattern: Option<&Regex>,
     local: &LocalFolderManifest,
     remote: FolderManifest,
+    force_apply_pattern: bool,
 ) -> MergeLocalFolderManifestOutcome {
+    // 0) Sanity checks, caller is responsible to handle them properly !
+    debug_assert_eq!(local.base.id, remote.id);
+
+    let cleaned_up_local_manifest = if force_apply_pattern {
+        Some(local.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp))
+    } else {
+        None
+    };
+
+    let local_manifest = cleaned_up_local_manifest.as_ref().unwrap_or(local);
+
     // Destruct local and remote manifests to ensure this code with fail to compile whenever a new field is introduced.
     let LocalFolderManifest {
         base:
@@ -181,15 +193,7 @@ pub(super) fn merge_local_folder_manifest(
         local_confinement_points: _,
         // Ignored, we don't merge data that change on each sync
         updated: _,
-    } = local;
-
-    // 0) Sanity checks, caller is responsible to handle them properly !
-    debug_assert_eq!(local_base_id, &remote.id);
-
-    // TODO: Allow to force re-applying the prevent sync pattern (idempotent)
-    // if force_apply_pattern {
-    //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
-    // }
+    } = local_manifest;
 
     // 1) Shortcut in case the remote is outdated
     if remote.version <= *local_base_version {
