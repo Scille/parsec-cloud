@@ -1,7 +1,7 @@
 [toolchain]
-channel = "1.78.0"
+channel = "1.80.0"
 # The default profile includes rustc, rust-std, cargo, rust-docs, rustfmt and clippy.
 # https://rust-lang.github.io/rustup/concepts/profiles.html
 profile = "default"
 # Cross-compilation targets (the host target is implicitly added)
-targets = [ "wasm32-unknown-unknown" ]
+targets = ["wasm32-unknown-unknown"]

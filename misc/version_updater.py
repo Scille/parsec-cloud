@@ -174,7 +174,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
 
 
 TOOLS_VERSION: dict[Tool, str] = {
-    Tool.Rust: "1.78.0",
+    Tool.Rust: "1.80.0",
     Tool.Python: "3.12.0",
     Tool.Poetry: "1.5.1",
     Tool.Node: "18.12.0",
