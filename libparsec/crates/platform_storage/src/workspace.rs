@@ -21,7 +21,7 @@ pub const TYPICAL_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
 pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
     prevent_sync_pattern: Regex,
-    prevent_sync_pattern_applied: bool,
+    prevent_sync_pattern_fully_applied: bool,
 }
 
 pub struct UpdateManifestData {
@@ -110,7 +110,7 @@ impl WorkspaceStorage {
         Ok(Self {
             platform,
             prevent_sync_pattern: pattern,
-            prevent_sync_pattern_applied: pattern_applied,
+            prevent_sync_pattern_fully_applied: pattern_applied,
         })
     }
 
@@ -228,7 +228,7 @@ impl WorkspaceStorage {
         let applied = self.platform.set_prevent_sync_pattern(pattern).await?;
 
         self.prevent_sync_pattern = pattern.clone();
-        self.prevent_sync_pattern_applied = applied;
+        self.prevent_sync_pattern_fully_applied = applied;
 
         Ok(applied)
     }
@@ -236,7 +236,7 @@ impl WorkspaceStorage {
     pub fn get_prevent_sync_pattern(&self) -> (&Regex, bool) {
         (
             &self.prevent_sync_pattern,
-            self.prevent_sync_pattern_applied,
+            self.prevent_sync_pattern_fully_applied,
         )
     }
 
@@ -250,7 +250,7 @@ impl WorkspaceStorage {
             .mark_prevent_sync_pattern_fully_applied(pattern)
             .await?;
 
-        self.prevent_sync_pattern_applied = applied;
+        self.prevent_sync_pattern_fully_applied = applied;
 
         Ok(applied)
     }
