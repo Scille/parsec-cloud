@@ -44,8 +44,8 @@ msTest('Filter devices', async ({ home }) => {
   await fillIonInput(searchInput, 'cey');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
   await fillIonInput(searchInput, 'al');
-  await expect(cards.locator('.organization-card-header__avatar')).toHaveCount(2);
-  await expect(cards.locator('.organization-card-header__avatar')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
+  await expect(cards.locator('.organization-card-login__name')).toHaveCount(2);
+  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
 });
 
 msTest('Filter devices no match', async ({ home }) => {
