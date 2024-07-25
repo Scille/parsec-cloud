@@ -10,12 +10,13 @@ mod resolve_path;
 mod sync_updater;
 
 use std::{
+    future::Future,
     path::Path,
     sync::{Arc, Mutex},
 };
 
 use libparsec_client_connection::AuthenticatedCmds;
-use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_async::{future::TryFutureExt, lock::Mutex as AsyncMutex};
 use libparsec_platform_storage::workspace::{UpdateManifestData, WorkspaceStorage};
 use libparsec_types::prelude::*;
 
@@ -98,6 +99,16 @@ pub(super) enum EnsureManifestExistsWithParentError {
     InvalidManifest(#[from] Box<InvalidManifestError>),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub(super) enum ApplyPreventSyncPatternError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Could not find manifest {}", .0)]
+    ManifestNotFound(VlobID),
+    #[error(transparent)]
+    Internal(anyhow::Error),
 }
 
 /*
@@ -562,4 +573,65 @@ impl WorkspaceStore {
             .await
             .map_err(UpdateRealmCheckpointError::Internal)
     }
+
+    pub async fn apply_prevent_sync_pattern(&self) -> Result<(), ApplyPreventSyncPatternError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or(ApplyPreventSyncPatternError::Stopped)?;
+
+        let (pattern, applied) = storage
+            .get_prevent_sync_pattern()
+            .await
+            .map_err(ApplyPreventSyncPatternError::Internal)?;
+        if applied {
+            return Ok(()); // Already applied
+        }
+
+        recursive_apply_prevent_sync_pattern(storage, self.realm_id, &pattern, &self.device)
+            .await?;
+        storage
+            .mark_prevent_sync_pattern_fully_applied(&pattern)
+            .map_err(ApplyPreventSyncPatternError::Internal)
+            .await?;
+        Ok(())
+    }
+}
+
+fn recursive_apply_prevent_sync_pattern(
+    storage: &mut WorkspaceStorage,
+    entry_id: VlobID,
+    pattern: &Regex,
+    device: &LocalDevice,
+) -> Box<dyn Future<Output = Result<(), ApplyPreventSyncPatternError>>> {
+    Box::new(async {
+        let Some(manifest) = storage
+            .get_manifest(entry_id)
+            .map_err(ApplyPreventSyncPatternError::Internal)
+            .await?
+        else {
+            return Ok(());
+        };
+
+        // Try folder first
+        let Ok(children) = LocalFolderManifest::decrypt_and_load(&manifest, &device.local_symkey)
+            .map(|folder| folder.children)
+            .or_else(|_| {
+                // Fallback to workspace.
+                LocalWorkspaceManifest::decrypt_and_load(&manifest, &device.local_symkey)
+                    .map(|workspace| workspace.0.children)
+            })
+        else {
+            // TODO: Should it handle `DataError` in case the decryption failed or something else ?
+            return Ok(()); // Not a folder or workspace
+        };
+
+        // TODO: Apply prevent sync pattern
+
+        // Recurse to all children
+        for (_name, child_id) in children {
+            recursive_apply_prevent_sync_pattern(storage, child_id, pattern, device).await?;
+        }
+        Ok(())
+    })
 }
