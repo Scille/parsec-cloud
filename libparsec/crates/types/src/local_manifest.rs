@@ -20,6 +20,7 @@ use std::{
     cmp::Ordering,
     collections::{hash_map::RandomState, HashMap, HashSet},
     num::NonZeroU64,
+    ops::{Deref, DerefMut},
     sync::Arc,
 };
 
@@ -1191,6 +1192,20 @@ impl LocalWorkspaceManifest {
     /// - After any modification (hence the need for this method to be public)
     fn check_data_integrity(&self) -> DataResult<()> {
         self.0.check_data_integrity_as_root()
+    }
+}
+
+impl Deref for LocalWorkspaceManifest {
+    type Target = LocalFolderManifest;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for LocalWorkspaceManifest {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 
