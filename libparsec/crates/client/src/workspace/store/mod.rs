@@ -185,14 +185,16 @@ impl WorkspaceStore {
 
         // 3) All set !
 
-        Ok(Self {
+        let workspace_store = Self {
             realm_id,
             device,
             cmds,
             certificates_ops,
             current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest.into()))),
             storage: AsyncMutex::new(Some(storage)),
-        })
+        };
+        workspace_store.apply_prevent_sync_pattern().await?;
+        Ok(workspace_store)
     }
 
     pub async fn stop(&self) -> anyhow::Result<()> {
