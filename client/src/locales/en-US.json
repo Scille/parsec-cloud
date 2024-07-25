@@ -132,7 +132,8 @@
                 "days": "1 day remaining | {days} days remaining",
                 "hours": "Less than one hour | {hours} hours remaining",
                 "expired": "Expired"
-            }
+            },
+            "noLastLogin": "--"
         },
         "noExistingOrganization": {
             "createOrJoin": "Create or join",

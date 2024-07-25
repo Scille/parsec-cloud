@@ -33,7 +33,7 @@
           <ion-text
             class="organization-card-login-time__text body-sm"
           >
-            {{ lastLoginDevice ? $msTranslate(formatTimeSince(lastLoginDevice, '--')) : '--' }}
+            {{ getLastLoginText() }}
           </ion-text>
         </div>
         <div
@@ -64,7 +64,7 @@ import { AvailableDevice, isDeviceLoggedIn } from '@/parsec';
 import { IonAvatar, IonCardTitle, IonText, IonIcon, IonCardContent } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { ellipse, time } from 'ionicons/icons';
-import { MsImage, LogoIconGradient, formatTimeSince } from 'megashark-lib';
+import { MsImage, LogoIconGradient, formatTimeSince, Translatable, I18n } from 'megashark-lib';
 import { formatExpirationTime, isExpired, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
 import { Duration, DateTime } from 'luxon';
 
@@ -83,6 +83,15 @@ onMounted(async () => {
     expirationDuration.value = getDurationBeforeExpiration(props.device.createdOn);
   }
 });
+
+function getLastLoginText(): string {
+  if (!props.lastLoginDevice) {
+    return '--';
+  }
+  const defaultTranslatable = 'HomePage.organizationList.noLastLogin';
+  const timeSince = formatTimeSince(props.lastLoginDevice, defaultTranslatable);
+  return I18n.translate(timeSince);
+}
 </script>
 
 <style lang="scss" scoped>
