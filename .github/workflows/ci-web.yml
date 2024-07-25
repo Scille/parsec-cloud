@@ -162,3 +162,10 @@ jobs:
           TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
+
+      - name: Archive test results
+        if: failure()
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # pin v4.3.3
+        with:
+          name: playwright-artifacts
+          path: client/test-results/
