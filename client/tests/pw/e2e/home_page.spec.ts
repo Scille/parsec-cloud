@@ -17,7 +17,7 @@ msTest('Home default state with devices', async ({ home }) => {
 
   for (const card of await cards.all()) {
     await expect(card.locator('.organization-card-header').locator('.title-h4')).toHaveText(/Org\d+/);
-    await expect(card.locator('.organization-card-login-time').locator('.body-sm')).toHaveText('--');
+    await expect(card.locator('organization-card-login-time__text')).toHaveText('--');
   }
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 });
@@ -42,7 +42,7 @@ msTest('Filter devices', async ({ home }) => {
   const searchInput = home.locator('#ms-search-input').locator('ion-input');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'cey');
-  await expect(cards.locator('.organization-card-header:visible').locator('.subtitles-sm')).toHaveText(
+  await expect(cards.locator('.organization-card-login__name')).toHaveText(
     USER_NAMES.filter((u) => u.includes('cey')),
   );
   await fillIonInput(searchInput, 'al');
