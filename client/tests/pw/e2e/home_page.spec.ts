@@ -42,9 +42,7 @@ msTest('Filter devices', async ({ home }) => {
   const searchInput = home.locator('#ms-search-input').locator('ion-input');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'cey');
-  await expect(cards.locator('.organization-card-login__name')).toHaveText(
-    USER_NAMES.filter((u) => u.includes('cey')),
-  );
+  await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
   await fillIonInput(searchInput, 'al');
   await expect(cards.locator('.organization-card-header__avatar')).toHaveCount(2);
   await expect(cards.locator('.organization-card-header__avatar')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
