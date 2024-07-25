@@ -25,10 +25,10 @@ msTest('Opens the create organization modal', async ({ home }) => {
 
   // Select one option
   const nextButton = modal.locator('.server-modal-footer').locator('ion-button').nth(1);
-  await expect(nextButton).toHaveDisabledAttribute();
+  await expect(nextButton).toBeTrulyDisabled();
   await expect(nextButton).toHaveText('Continue');
   await modal.locator('.server-choice-item').nth(0).click();
-  await expect(nextButton).toBeTrulyDisabled();
+  await expect(nextButton).toBeTrulyEnabled();
 
   // Check if the close button closes the modal
   await expect(modal.locator('.closeBtn')).toBeVisible();
