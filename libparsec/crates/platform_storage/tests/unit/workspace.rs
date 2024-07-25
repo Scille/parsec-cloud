@@ -1065,7 +1065,7 @@ async fn check_set_pattern_is_idempotent(env: &TestbedEnv) {
 
     // 2nd, set the empty pattern again.
     let res = workspace
-        .set_prevent_sync_pattern(&empty_pattern)
+        .set_prevent_sync_pattern(empty_pattern)
         .await
         .unwrap();
 
@@ -1078,7 +1078,10 @@ async fn set_prevent_sync_pattern(env: &TestbedEnv) {
 
     let regex = Regex::from_regex_str(r".*\.tmp$").unwrap();
 
-    let res = workspace.set_prevent_sync_pattern(&regex).await.unwrap();
+    let res = workspace
+        .set_prevent_sync_pattern(regex.clone())
+        .await
+        .unwrap();
 
     assert_eq!(res, false);
     let (got_regex, bool) = workspace.get_prevent_sync_pattern();

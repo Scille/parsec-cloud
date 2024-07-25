@@ -223,11 +223,11 @@ impl WorkspaceStorage {
         self.platform.debug_dump().await
     }
 
-    pub async fn set_prevent_sync_pattern(&mut self, pattern: &Regex) -> anyhow::Result<bool> {
+    pub async fn set_prevent_sync_pattern(&mut self, pattern: Regex) -> anyhow::Result<bool> {
         // TODO: Should we skip the next call if the pattern is the same?
-        let applied = self.platform.set_prevent_sync_pattern(pattern).await?;
+        let applied = self.platform.set_prevent_sync_pattern(&pattern).await?;
 
-        self.prevent_sync_pattern = pattern.clone();
+        self.prevent_sync_pattern = pattern;
         self.prevent_sync_pattern_fully_applied = applied;
 
         Ok(applied)
