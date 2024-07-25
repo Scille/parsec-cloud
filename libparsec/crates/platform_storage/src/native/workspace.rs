@@ -14,7 +14,9 @@ use libparsec_types::prelude::*;
 
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
-use crate::workspace::{PopulateManifestOutcome, UpdateManifestData};
+use crate::workspace::{
+    MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, UpdateManifestData,
+};
 
 use super::model::{
     get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
@@ -433,17 +435,16 @@ impl PlatformWorkspaceStorage {
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
         pattern: &Regex,
-    ) -> anyhow::Result<bool> {
+    ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
         let pattern = pattern.to_string();
 
-        let mut transaction = self.conn.begin().await?;
+        let mut transaction = self.conn.begin().await.map_err(anyhow::Error::from)?;
 
-        let fully_applied =
-            db_set_prevent_sync_pattern_as_fully_applied(&mut transaction, &pattern).await?;
+        db_set_prevent_sync_pattern_as_fully_applied(&mut transaction, &pattern).await?;
 
-        transaction.commit().await?;
+        transaction.commit().await.map_err(anyhow::Error::from)?;
 
-        Ok(fully_applied)
+        Ok(())
     }
 }
 
@@ -503,7 +504,7 @@ async fn db_get_prevent_sync_pattern(
 async fn db_set_prevent_sync_pattern_as_fully_applied<T, E>(
     mut trans: T,
     pattern: &str,
-) -> anyhow::Result<bool>
+) -> Result<(), MarkPreventSyncPatternFullyAppliedError>
 where
     T: AsMut<E>,
     for<'c> &'c mut E: sqlx::Executor<'c, Database = sqlx::Sqlite>,
@@ -515,13 +516,14 @@ where
     ))
     .bind(pattern)
     .execute(trans.as_mut())
-    .await?;
+    .await
+    .map_err(anyhow::Error::from)?;
 
     if res.rows_affected() == 1 {
-        Ok(true)
+        Ok(())
     } else {
         // No row was updated, a different pattern is set in the database.
-        db_get_fully_applied(trans.as_mut()).await
+        Err(MarkPreventSyncPatternFullyAppliedError::PatternMismatch)
     }
 }
 

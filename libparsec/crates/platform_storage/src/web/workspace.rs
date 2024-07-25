@@ -16,7 +16,9 @@ use crate::{
         model::{RealmCheckpoint, Vlob},
         DB_VERSION,
     },
-    workspace::{PopulateManifestOutcome, UpdateManifestData},
+    workspace::{
+        MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, UpdateManifestData,
+    },
 };
 
 use super::{db, model::PreventSyncPattern};
@@ -425,34 +427,36 @@ impl PlatformWorkspaceStorage {
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
         pattern: &Regex,
-    ) -> anyhow::Result<bool> {
+    ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
         let tx = PreventSyncPattern::write(&self.conn)?;
 
         let current = PreventSyncPattern::get(&tx).await?;
 
         let regex = pattern.to_string();
-        let value = match current {
+        match current {
             // The provided pattern is already in the database
             Some(current) if current.pattern == regex => {
-                // Already applied
+                // Already applied, nothing to do
                 if current.fully_applied {
-                    return Ok(true);
+                    return Ok(());
                 }
 
-                PreventSyncPattern {
+                let value = PreventSyncPattern {
                     pattern: regex,
                     fully_applied: true,
-                }
+                };
+
+                value.insert(&tx).await?;
+
+                db::commit(tx)
+                    .await
+                    .map_err(MarkPreventSyncPatternFullyAppliedError::Internal)
             }
-            // Either we don't have a prevent sync pattern in the database
-            // or the pattern is different from the one provided
-            None | Some(_) => PreventSyncPattern {
-                pattern: regex,
-                fully_applied: false,
-            },
-        };
-        value.insert(&tx).await?;
-        db::commit(tx).await.and(Ok(value.fully_applied))
+            // Pattern mismatch
+            Some(_) => Err(MarkPreventSyncPatternFullyAppliedError::PatternMismatch),
+            // We don't have a prevent sync pattern in the database
+            None => Err(anyhow::anyhow!("No prevent sync pattern in the database").into()),
+        }
     }
 }
 
