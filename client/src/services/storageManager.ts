@@ -13,7 +13,8 @@ export interface StoredDeviceData {
 }
 
 export interface BmsAccessData {
-  token: string;
+  access: string;
+  refresh: string;
 }
 
 export interface Config {
@@ -171,9 +172,10 @@ export class StorageManager {
     return config;
   }
 
-  async storeBmsAccess(access: BmsAccessData): Promise<void> {
+  async storeBmsAccess(tokens: BmsAccessData): Promise<void> {
     await this.internalStore.set(StorageManager.STORED_BMS_ACCESS_KEY, {
-      token: access.token,
+      access: tokens.access,
+      refresh: tokens.refresh,
     });
   }
 

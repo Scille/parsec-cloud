@@ -3,6 +3,7 @@
 import { BmsApi } from '@/services/bms/api';
 import { AuthenticationToken, BmsError, BmsResponse, DataType, PersonalInformationResultData } from '@/services/bms/types';
 import { storageManagerInstance } from '@/services/storageManager';
+import { decodeToken } from 'megashark-lib';
 
 function assertLoggedIn<T>(value: T): asserts value is NonNullable<T> {
   if (value === null) {
@@ -10,8 +11,13 @@ function assertLoggedIn<T>(value: T): asserts value is NonNullable<T> {
   }
 }
 
+interface Token {
+  access: AuthenticationToken;
+  refresh: AuthenticationToken;
+}
+
 class BmsAccess {
-  private token: AuthenticationToken | null = null;
+  private tokens: Token | null = null;
   private customerInformation: PersonalInformationResultData | null = null;
   private storeCredentials: boolean = true;
   public reloadKey: number = 0;
@@ -23,15 +29,18 @@ class BmsAccess {
     if (this.storeCredentials) {
       await this.restoreAccess();
     }
-    if (!this.token) {
+    if (!this.tokens) {
       return false;
     }
-    const infoResponse = await BmsApi.getPersonalInformation(this.token);
+
+    await this.ensureFreshToken();
+    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
     if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
       this.customerInformation = infoResponse.data;
       return true;
     }
-    this.token = null;
+
+    this.tokens = null;
     return false;
   }
 
@@ -39,16 +48,15 @@ class BmsAccess {
     this.reloadKey += 1;
     const response = await BmsApi.login({ email: email, password: password });
     if (!response.isError && response.data && response.data.type === DataType.Login) {
-      this.token = response.data.token;
+      this.tokens = { access: response.data.accessToken, refresh: response.data.refreshToken };
     } else {
-      this.token = null;
       return { ok: false, errors: response.errors };
     }
-    const infoResponse = await BmsApi.getPersonalInformation(this.token);
+    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
     if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
       this.customerInformation = infoResponse.data;
     } else {
-      this.token = null;
+      this.tokens = null;
     }
     if (this.storeCredentials) {
       await this.storeAccess();
@@ -57,7 +65,7 @@ class BmsAccess {
   }
 
   async logout(): Promise<void> {
-    this.token = null;
+    this.tokens = null;
     this.customerInformation = null;
     await this.clearStoredAccess();
   }
@@ -68,23 +76,25 @@ class BmsAccess {
   }
 
   async getToken(): Promise<AuthenticationToken> {
-    assertLoggedIn(this.token);
-    return this.token;
+    assertLoggedIn(this.tokens);
+    return this.tokens.access;
   }
 
   async listOrganizations(): Promise<BmsResponse> {
-    assertLoggedIn(this.token);
+    assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
-    return await BmsApi.listOrganizations(this.token, {
+    await this.ensureFreshToken();
+    return await BmsApi.listOrganizations(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
   }
 
   async getOrganizationStatus(organizationId: string): Promise<BmsResponse> {
-    assertLoggedIn(this.token);
+    assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
-    return await BmsApi.getOrganizationStatus(this.token, {
+    await this.ensureFreshToken();
+    return await BmsApi.getOrganizationStatus(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -92,9 +102,10 @@ class BmsAccess {
   }
 
   async getOrganizationStats(organizationId: string): Promise<BmsResponse> {
-    assertLoggedIn(this.token);
+    assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
-    return await BmsApi.getOrganizationStats(this.token, {
+    await this.ensureFreshToken();
+    return await BmsApi.getOrganizationStats(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       organizationId: organizationId,
@@ -102,9 +113,10 @@ class BmsAccess {
   }
 
   async getInvoices(): Promise<BmsResponse> {
-    assertLoggedIn(this.token);
+    assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
-    return await BmsApi.getInvoices(this.token, {
+    await this.ensureFreshToken();
+    return await BmsApi.getInvoices(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
     });
@@ -125,8 +137,8 @@ class BmsAccess {
   }
 
   async storeAccess(): Promise<void> {
-    if (this.token) {
-      await storageManagerInstance.get().storeBmsAccess({ token: this.token });
+    if (this.tokens) {
+      await storageManagerInstance.get().storeBmsAccess({ access: this.tokens.access, refresh: this.tokens.refresh });
     }
   }
 
@@ -134,12 +146,38 @@ class BmsAccess {
     const bmsAccess = await storageManagerInstance.get().retrieveBmsAccess();
 
     if (bmsAccess) {
-      this.token = bmsAccess.token;
+      this.tokens = {
+        access: bmsAccess.access,
+        refresh: bmsAccess.refresh,
+      };
     }
   }
 
   isLoggedIn(): boolean {
-    return this.token !== null;
+    return this.tokens !== null && !this.tokenIsExpired(this.tokens.access);
+  }
+
+  private async ensureFreshToken(): Promise<boolean> {
+    if (!this.tokens || this.tokenIsExpired(this.tokens.refresh)) {
+      return false;
+    }
+    if (this.tokenIsExpired(this.tokens.access)) {
+      const refreshResponse = await BmsApi.refreshToken(this.tokens.refresh);
+      if (!refreshResponse.isError && refreshResponse.data && refreshResponse.data.type === DataType.RefreshToken) {
+        this.tokens.access = refreshResponse.data.token;
+      } else {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private tokenIsExpired(token: AuthenticationToken): boolean {
+    const tokenData = decodeToken(token);
+    if (!tokenData) {
+      return true;
+    }
+    return Date.now().valueOf() >= tokenData.expiresAt.toJSDate().valueOf();
   }
 }
 

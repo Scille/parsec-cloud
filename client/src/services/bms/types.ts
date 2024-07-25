@@ -24,6 +24,7 @@ enum DataType {
   OrganizationStats = 'organization-stats',
   OrganizationStatus = 'organization-status',
   Invoices = 'invoices',
+  RefreshToken = 'refresh-token',
 }
 
 type AuthenticationToken = string;
@@ -31,7 +32,8 @@ type AuthenticationToken = string;
 // Data used for result
 interface LoginResultData {
   type: DataType.Login;
-  token: AuthenticationToken;
+  accessToken: AuthenticationToken;
+  refreshToken: AuthenticationToken;
 }
 
 // BMS does return additional infos, ignoring them
@@ -78,6 +80,11 @@ interface InvoicesResultData {
   invoices: Array<BmsInvoice>;
 }
 
+interface RefreshTokenResultData {
+  type: DataType.RefreshToken;
+  token: AuthenticationToken;
+}
+
 type ResultData =
   | LoginResultData
   | PersonalInformationResultData
@@ -85,7 +92,8 @@ type ResultData =
   | ListOrganizationsResultData
   | OrganizationStatsResultData
   | OrganizationStatusResultData
-  | InvoicesResultData;
+  | InvoicesResultData
+  | RefreshTokenResultData;
 
 // Misc data
 interface BmsOrganization {
