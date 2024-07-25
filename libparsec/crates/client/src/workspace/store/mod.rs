@@ -596,6 +596,32 @@ impl WorkspaceStore {
             .await?;
         Ok(())
     }
+
+    pub async fn set_and_apply_prevent_sync_pattern(
+        &self,
+        pattern: &Regex,
+    ) -> Result<(), ApplyPreventSyncPatternError> {
+        let mut storage_guard = self.storage.lock().await;
+        let storage = storage_guard
+            .as_mut()
+            .ok_or(ApplyPreventSyncPatternError::Stopped)?;
+
+        let applied = storage
+            .set_prevent_sync_pattern(pattern)
+            .await
+            .map_err(ApplyPreventSyncPatternError::Internal)?;
+        if applied {
+            return Ok(());
+        }
+
+        recursive_apply_prevent_sync_pattern(storage, self.realm_id, &pattern, &self.device)
+            .await?;
+        storage
+            .mark_prevent_sync_pattern_fully_applied(&pattern)
+            .map_err(ApplyPreventSyncPatternError::Internal)
+            .await?;
+        Ok(())
+    }
 }
 
 fn recursive_apply_prevent_sync_pattern(
