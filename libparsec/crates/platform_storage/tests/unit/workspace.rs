@@ -1088,6 +1088,13 @@ async fn set_prevent_sync_pattern(env: &TestbedEnv) {
 
     assert_eq!(got_regex, &regex);
     assert_eq!(bool, false);
+
+    // Restart the workspace to ensure the new prevent sync pattern is not just in cache
+    workspace.stop().await.unwrap();
+    let workspace = start_workspace(env).await;
+    let (got_regex, bool) = workspace.get_prevent_sync_pattern();
+    assert_eq!(got_regex, &regex);
+    assert_eq!(bool, false);
 }
 
 #[parsec_test(testbed = "minimal")]
