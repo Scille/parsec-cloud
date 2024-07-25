@@ -233,7 +233,9 @@ impl WorkspaceStorage {
     }
 
     pub async fn set_prevent_sync_pattern(&mut self, pattern: Regex) -> anyhow::Result<bool> {
-        // TODO: Should we skip the next call if the pattern is the same?
+        if pattern == self.prevent_sync_pattern {
+            return Ok(self.prevent_sync_pattern_fully_applied);
+        }
         let applied = self.platform.set_prevent_sync_pattern(&pattern).await?;
 
         self.prevent_sync_pattern = pattern;
