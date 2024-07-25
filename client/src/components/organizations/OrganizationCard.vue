@@ -32,9 +32,8 @@
           />
           <ion-text
             class="organization-card-login-time__text body-sm"
-            v-if="lastLoginDevice"
           >
-            {{ device.deviceId in lastLoginDevice ? $msTranslate(formatTimeSince(lastLoginDevice, '--')) : '--' }}
+            {{ lastLoginDevice ? $msTranslate(formatTimeSince(lastLoginDevice, '--')) : '--' }}
           </ion-text>
         </div>
         <div
