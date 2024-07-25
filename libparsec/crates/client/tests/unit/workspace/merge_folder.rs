@@ -95,24 +95,132 @@ async fn no_remote_change(
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn remote_only_change(
+async fn no_remote_change_but_local_uses_outdated_prevent_sync_pattern(
     #[values(
-        "no_confinement",
-        "with_local_confinement",
-        "with_existing_remote_confinement",
-        "with_new_remote_confinement",
-        "with_outdated_remote_confinement",
-        "with_outdated_prevent_sync_pattern_local",
-        "with_outdated_prevent_sync_pattern_remote"
+        "local_entry_matching_outdated_pattern",
+        "remote_entry_matching_outdated_pattern",
+        "local_entry_matching_new_pattern",
+        "remote_entry_matching_new_pattern"
     )]
     kind: &str,
     env: &TestbedEnv,
 ) {
-    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
     let local_author = "alice@dev1".parse().unwrap();
     let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
     let parent_id = VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap();
+
+    let mut remote = FolderManifest {
+        author: "bob@dev1".parse().unwrap(),
+        timestamp: "2021-01-03T00:00:00Z".parse().unwrap(),
+        id: vlob_id,
+        parent: parent_id,
+        version: 2,
+        created: "2021-01-01T00:00:00Z".parse().unwrap(),
+        updated: "2021-01-02T00:00:00Z".parse().unwrap(),
+        children: HashMap::new(),
+    };
+    let mut local = LocalFolderManifest {
+        base: remote.clone(),
+        parent: parent_id,
+        need_sync: false,
+        updated: "2021-01-02T00:00:00Z".parse().unwrap(),
+        children: HashMap::new(),
+        local_confinement_points: HashSet::new(),
+        remote_confinement_points: HashSet::new(),
+        speculative: false,
+    };
+
+    match kind {
+        "local_entry_matching_outdated_pattern" => {
+            // An entry is currently confined locally, but the prevent sync pattern
+            // has changed so after the merge there should no longer be any confinement
+            let child_id = VlobID::from_hex("9D1E5C787E014D5382B800A566CFA29D").unwrap();
+            local
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            // Pretent the outdated prevent sync pattern is `.tmp~`
+            local.local_confinement_points.insert(child_id);
+        }
+        "remote_entry_matching_outdated_pattern" => {
+            // An entry is currently confined remotely, but the prevent sync pattern
+            // has changed so after the merge there should no longer be any confinement
+            let child_id = VlobID::from_hex("9D1E5C787E014D5382B800A566CFA29D").unwrap();
+            remote
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            // Pretent the outdated prevent sync pattern is `.tmp~`
+            local.remote_confinement_points.insert(child_id);
+        }
+        "local_entry_matching_new_pattern" => {
+            let child_id = VlobID::from_hex("9D1E5C787E014D5382B800A566CFA29D").unwrap();
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+        }
+        "remote_entry_matching_new_pattern" => {
+            let child_id = VlobID::from_hex("9D1E5C787E014D5382B800A566CFA29D").unwrap();
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
+    let new_prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
+    let outcome = merge_local_folder_manifest(
+        local_author,
+        timestamp,
+        &new_prevent_sync_pattern,
+        &local,
+        remote,
+    );
+    // Plot twist: no matter what, the merge algorithm should first detect no merge is needed !
+    p_assert_eq!(outcome, MergeLocalFolderManifestOutcome::NoChange);
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn remote_only_change(
+    #[values(
+        "only_updated_field_modified",
+        "parent_field_modified",
+        "new_entry_added",
+        "new_entry_added_overwriting_existing_entry",
+        "entry_renamed",
+        "entry_renamed_overwriting_existing_entry",
+        "entry_removed",
+        "existing_confined_entry_then_new_non_confined_entry_added",
+        "confined_entry_renamed_so_no_longer_confined",
+        "confined_entry_renamed_but_still_confined",
+        "confined_entry_removed",
+        "new_confined_entry_added",
+        "non_confined_entry_renamed_into_confined",
+        // TODO: This test currently fail due to `LocalFolderManifest::restore_local_confinement_points`
+        // (used in `LocalFolderManifest::apply_prevent_sync_pattern` to ensure `local` uses
+        // the expected prevent sync pattern) restoring the remote confinement points as
+        // local confinement points...
+        "outdated_prevent_sync_pattern_non_confined_becomes_confined",
+        "outdated_prevent_sync_pattern_confined_becomes_non_confined",
+    )]
+    kind: &str,
+    env: &TestbedEnv,
+) {
+    let local_author = "alice@dev1".parse().unwrap();
+    let merge_timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
+    let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
+    let parent_id = VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap();
+
+    // Start by creating `local` and `remote` manifests with minimal changes:
+    // `remote` is just version n+1 with `updated` field set to a new timestamp.
+    // Then this base will be customized in the following `match kind` statement.
 
     let mut remote = FolderManifest {
         author: "bob@dev1".parse().unwrap(),
@@ -135,95 +243,273 @@ async fn remote_only_change(
         speculative: false,
     };
 
-    let new_parent_id = VlobID::from_hex("b95472b9c6d9415fa65297835d1feca5").unwrap();
-    let new_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
     remote.version = 2;
-    remote.parent = new_parent_id;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("child.txt".parse().unwrap(), new_child_id);
+    remote.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+    remote.timestamp = "2021-01-05T00:00:00Z".parse().unwrap();
 
     let mut expected = LocalFolderManifest {
         base: FolderManifest {
             author: "bob@dev1".parse().unwrap(),
-            timestamp: "2021-01-03T00:00:00Z".parse().unwrap(),
+            timestamp: "2021-01-05T00:00:00Z".parse().unwrap(),
             id: vlob_id,
-            parent: new_parent_id,
+            parent: parent_id,
             version: 2,
             created: "2021-01-01T00:00:00Z".parse().unwrap(),
-            updated: "2021-01-03T00:00:00Z".parse().unwrap(),
-            children: HashMap::from_iter([("child.txt".parse().unwrap(), new_child_id)]),
+            updated: "2021-01-04T00:00:00Z".parse().unwrap(),
+            children: HashMap::new(), // Set in the match kind below
         },
-        parent: new_parent_id,
+        parent: parent_id,
         need_sync: false,
-        updated: "2021-01-03T00:00:00Z".parse().unwrap(),
-        children: HashMap::from_iter([("child.txt".parse().unwrap(), new_child_id)]),
+        updated: "2021-01-04T00:00:00Z".parse().unwrap(),
+        children: HashMap::new(), // Set in the match kind below
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
         speculative: false,
     };
 
+    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
+    let child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
     let confined_id = VlobID::from_hex("9100fa0bfca94e4d96077dd274a243c0").unwrap();
-    let confined_name: EntryName = "child.tmp".parse().unwrap();
     match kind {
-        "no_confinement" => (),
-        "with_local_confinement" => {
-            local.children.insert(confined_name.clone(), confined_id);
-            local.local_confinement_points.insert(confined_id);
-            expected.children.insert(confined_name, confined_id);
-            expected.local_confinement_points.insert(confined_id);
+        "only_updated_field_modified" => (),
+        "parent_field_modified" => {
+            let new_parent_id = VlobID::from_hex("b95472b9c6d9415fa65297835d1feca5").unwrap();
+            remote.parent = new_parent_id;
+            expected.base.parent = new_parent_id;
+            expected.parent = new_parent_id;
         }
-        // Remote confinement was already known in `local`, and is still there in the new `remote`
-        "with_existing_remote_confinement" => {
+        // And entry is added in the remote
+        "new_entry_added" => {
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+        }
+        "new_entry_added_overwriting_existing_entry" => {
+            let new_child_id = VlobID::from_hex("f023096c9b774a67bb6c35b82a4ed71f").unwrap();
             local
                 .base
                 .children
-                .insert(confined_name.clone(), confined_id);
-            local.remote_confinement_points.insert(confined_id);
-            remote.children.insert(confined_name.clone(), confined_id);
-            expected.base.children.insert(confined_name, confined_id);
-            expected.remote_confinement_points.insert(confined_id);
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
         }
-        // Remote confinement was not known in `local`, and appeared in the new `remote`
-        "with_new_remote_confinement" => {
-            remote.children.insert(confined_name.clone(), confined_id);
-            expected.base.children.insert(confined_name, confined_id);
-            expected.remote_confinement_points.insert(confined_id);
-        }
-        // Remote confinement was known in `local`, but is no longer there in the new `remote`
-        "with_outdated_remote_confinement" => {
-            local.base.children.insert(confined_name, confined_id);
-            local.remote_confinement_points.insert(confined_id);
-        }
-        // The prevent sync pattern has changed, but `local_confinement_points` hasn't been updated yet
-        "with_outdated_prevent_sync_pattern_local" => {
-            // Name that doesn't match the current `*.tmp` prevent sync pattern
-            let confined_name: EntryName = "child.tmp~".parse().unwrap();
-            local.children.insert(confined_name.clone(), confined_id);
-            local.local_confinement_points.insert(confined_id);
-            expected.children.insert(confined_name, confined_id);
-            expected.need_sync = true;
-            expected.updated = timestamp;
-        }
-        "with_outdated_prevent_sync_pattern_remote" => {
-            // Name that doesn't match the current `*.tmp` prevent sync pattern
-            let confined_name: EntryName = "child.tmp~".parse().unwrap();
-            remote.children.insert(confined_name.clone(), confined_id);
+        // And entry is renamed in the remote
+        "entry_renamed" => {
             local
                 .base
                 .children
-                .insert(confined_name.clone(), confined_id);
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-renamed.txt".parse().unwrap(), child_id);
+            expected
+                .base
+                .children
+                .insert("child-renamed.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-renamed.txt".parse().unwrap(), child_id);
+        }
+        "entry_renamed_overwriting_existing_entry" => {
+            let child2_id = VlobID::from_hex("f023096c9b774a67bb6c35b82a4ed71f").unwrap();
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child2_id);
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child2_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), child2_id);
+        }
+        // And entry is removed in the remote
+        "entry_removed" => {
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+        }
+        // A remote confined entry already exists in local, then the remote
+        // manifest introduces a new unrelated entry.
+        "existing_confined_entry_then_new_non_confined_entry_added" => {
+            local
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
             local.remote_confinement_points.insert(confined_id);
-            expected.children.insert(confined_name.clone(), confined_id);
-            expected.base.children.insert(confined_name, confined_id);
+            remote
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(confined_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+        }
+        // A remote confined entry already exists in local, then the remote
+        // rename this entry with a name not matching the prevent sync pattern
+        "confined_entry_renamed_so_no_longer_confined" => {
+            local
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+            remote
+                .children
+                .insert("confined-renamed.txt".parse().unwrap(), confined_id);
+            expected
+                .base
+                .children
+                .insert("confined-renamed.txt".parse().unwrap(), confined_id);
+            expected
+                .children
+                .insert("confined-renamed.txt".parse().unwrap(), confined_id);
+        }
+        // A remote confined entry already exists in local, then the remote
+        // renames this entry with a name still matching the prevent sync pattern
+        "confined_entry_renamed_but_still_confined" => {
+            local
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+            remote
+                .children
+                .insert("confined-renamed.tmp".parse().unwrap(), confined_id);
+            expected
+                .base
+                .children
+                .insert("confined-renamed.tmp".parse().unwrap(), confined_id);
+            expected.remote_confinement_points.insert(confined_id);
+        }
+        // A remote confined entry already exists in local, then the remote
+        // remove this entry
+        "confined_entry_removed" => {
+            local
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+        }
+        // The remote manifest brings a new entry which name matches the prevent sync pattern
+        "new_confined_entry_added" => {
+            remote
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            expected
+                .base
+                .children
+                .insert("confined.tmp".parse().unwrap(), confined_id);
+            expected.remote_confinement_points.insert(confined_id);
+        }
+        // An entry already exists in local and is not confined, then the remote
+        // renames this entry with a name matching the prevent sync pattern
+        "non_confined_entry_renamed_into_confined" => {
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-renamed.tmp".parse().unwrap(), child_id);
+            expected
+                .base
+                .children
+                .insert("child-renamed.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        // The local manifest has it confinement points build with an outdated prevent
+        // sync pattern (i.e. not `.tmp`), when the merge occurs with the remote manifest
+        // the new prevent sync pattern is applied and an entry that was not confined
+        // becomes confined.
+        "outdated_prevent_sync_pattern_non_confined_becomes_confined" => {
+            local
+                .base
+                .children
+                // Not at this point `child.tmp` doesn't match the prevent sync pattern
+                // used to build `local`, and hence is present among `local.children`
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        // The local manifest has it confinement points build with an outdated prevent
+        // sync pattern (i.e. not `.tmp`), when the merge occurs with the remote manifest
+        // the new prevent sync pattern is applied and an entry that was confined becomes
+        // not confined.
+        "outdated_prevent_sync_pattern_confined_becomes_non_confined" => {
+            local
+                .base
+                .children
+                // Not at this point `confined.tmp~` matches the prevent sync pattern
+                // used to build `local`, and hence is not among `local.children`
+                .insert("confined.tmp~".parse().unwrap(), confined_id);
+            local.remote_confinement_points.insert(confined_id);
+            remote
+                .children
+                .insert("confined.tmp~".parse().unwrap(), confined_id);
+            expected
+                .base
+                .children
+                .insert("confined.tmp~".parse().unwrap(), confined_id);
+            expected
+                .children
+                .insert("confined.tmp~".parse().unwrap(), confined_id);
         }
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
     let outcome = merge_local_folder_manifest(
         local_author,
-        timestamp,
+        merge_timestamp,
         &prevent_sync_pattern,
         &local,
         remote,
@@ -235,329 +521,121 @@ async fn remote_only_change(
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-#[case::update_field_only(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-
-    let mut expected = local.clone();
-    expected.need_sync = false;
-    expected.updated = remote.updated;
-    expected.base = remote.clone();
-
-    expected
-})]
-#[case::children_no_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
-    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local
-        .children
-        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-    let mut expected = local.clone();
-    expected.updated = timestamp;
-    expected.base = remote.clone();
-    expected
-        .children
-        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-    expected
-        .children
-        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-    expected
-})]
-#[case::children_same_id_and_name(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    let new_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("child.txt".parse().unwrap(), new_child_id);
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local
-        .children
-        .insert("child.txt".parse().unwrap(), new_child_id);
-
-    let mut expected = local.clone();
-    expected.need_sync = false;
-    expected.updated = remote.updated;
-    expected.base = remote.clone();
-    expected
-        .children
-        .insert("child.txt".parse().unwrap(), new_child_id);
-
-    expected
-})]
-#[case::children_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
-    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("child.txt".parse().unwrap(), new_remote_child_id);
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local
-        .children
-        .insert("child.txt".parse().unwrap(), new_local_child_id);
-
-    let mut expected = local.clone();
-    expected.updated = timestamp;
-    expected.base = remote.clone();
-    expected
-        .children
-        .insert("child.txt".parse().unwrap(), new_remote_child_id);
-    expected.children.insert(
-        "child (Parsec - name conflict).txt".parse().unwrap(),
-        new_local_child_id,
-    );
-
-    expected
-})]
-#[case::parent_modified_on_local(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
-    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local.parent = new_parent_id;
-
-    let mut expected = local.clone();
-    expected.updated = timestamp;
-    expected.base = remote.clone();
-    expected.parent = new_parent_id;
-
-    expected
-})]
-#[case::parent_modified_on_remote(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote.parent = new_parent_id;
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-
-    let mut expected = local.clone();
-    expected.need_sync = false;
-    expected.updated = remote.updated;
-    expected.base = remote.clone();
-    expected.parent = new_parent_id;
-
-    expected
-})]
-#[case::parent_no_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    let new_parent_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote.parent = new_parent_id;
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local.parent = new_parent_id;
-
-    let mut expected = local.clone();
-    expected.need_sync = false;
-    expected.base = remote.clone();
-    expected.updated = remote.updated;
-    expected.parent = new_parent_id;
-
-    expected
-})]
-#[case::parent_conflict(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    let new_remote_parent_id =
-        VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote.parent = new_remote_parent_id;
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local.parent = new_local_parent_id;
-
-    let mut expected = local.clone();
-    expected.need_sync = false;
-    expected.base = remote.clone();
-    // Parent conflict is simply resolved by siding with remote
-    expected.updated = remote.updated;
-    expected.parent = new_remote_parent_id;
-
-    expected
-})]
-#[case::remote_parent_change_are_ours(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, local_author: DeviceID| {
-    remote.author = local_author;
-
-    let new_remote_parent_id =
-        VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_parent_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote.parent = new_remote_parent_id;
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local.parent = new_local_parent_id;
-
-    let mut expected = local.clone();
-    expected.base = remote.clone();
-
-    expected
-})]
-#[case::remote_children_changes_are_ours(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, _: DateTime, local_author: DeviceID| {
-    remote.author = local_author;
-
-    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-    local.need_sync = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local
-        .children
-        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-    let mut expected = local.clone();
-    expected.base = remote.clone();
-
-    expected
-})]
-#[case::remote_changes_are_ours_but_speculative(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, local_author: DeviceID| {
-    remote.author = local_author;
-    local.speculative = true;
-
-    let new_remote_child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
-    let new_local_child_id = VlobID::from_hex("df2edbe0d1c647bf9cea980f58dac4dc").unwrap();
-
-    remote.version = 2;
-    remote.updated = "2021-01-03T00:00:00Z".parse().unwrap();
-    remote
-        .children
-        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-
-    local.need_sync = true;
-    local.speculative = true;
-    local.updated = "2021-01-04T00:00:00Z".parse().unwrap();
-    local
-        .children
-        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-    let mut expected = local.clone();
-    expected.updated = timestamp;
-    expected.base = remote.clone();
-    expected.speculative = false;
-    // Given `local` was a speculative manifest, it is considered the client wasn't
-    // aware of `remote`, and hence a regular merge is done instead of considering
-    // `remote_child.txt` was willingly locally removed while uploading the remote.
-    expected
-        .children
-        .insert("remote_child.txt".parse().unwrap(), new_remote_child_id);
-    expected
-        .children
-        .insert("local_child.txt".parse().unwrap(), new_local_child_id);
-
-    expected
-})]
-#[case::remote_with_confined_children(|remote: &mut FolderManifest, _: &mut LocalFolderManifest, _: DateTime, _: DeviceID| {
-    remote.version = 2;
-    remote.children.insert("a.txt".parse().unwrap(), VlobID::default());
-    remote.children.insert("b.txt".parse().unwrap(), VlobID::default());
-    let c_file_vid = VlobID::default();
-    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
-    remote.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
-
-    let mut expected = LocalFolderManifest::from_remote(remote.clone(), &libparsec_types::Regex::empty());
-    expected.children.remove(&c_file_entry);
-    expected.remote_confinement_points.insert(c_file_vid);
-
-    expected
-})]
-#[case::local_with_confined_children(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
-    let d_name: EntryName = "d.txt".parse().unwrap();
-    let d_vid = VlobID::default();
-    remote.children.insert(d_name.clone(), d_vid);
-    remote.version = 2;
-
-    local.need_sync = true;
-    local.children.insert("a.txt".parse().unwrap(), VlobID::default());
-    local.children.insert("b.txt".parse().unwrap(), VlobID::default());
-    let c_file_vid = VlobID::default();
-    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
-    local.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
-    local.local_confinement_points.insert(c_file_vid);
-
-    let mut expected = local.clone();
-    expected.base = remote.clone();
-    expected.children.insert(d_name, d_vid);
-    expected.updated = timestamp;
-    expected
-})]
-#[case::both_remote_local_with_confined_children(|remote: &mut FolderManifest, local: &mut LocalFolderManifest, timestamp: DateTime, _: DeviceID| {
-    let d_name: EntryName = "d.txt".parse().unwrap();
-    let d_vid = VlobID::default();
-    remote.children.insert(d_name.clone(), d_vid);
-    let e_name: EntryName = "e.txt.tmp".parse().unwrap();
-    let e_vid = VlobID::default();
-    remote.children.insert(e_name.clone(), e_vid); // This one match the version sync pattern
-    remote.version = 2;
-
-    local.need_sync = true;
-    local.children.insert("a.txt".parse().unwrap(), VlobID::default());
-    local.children.insert("b.txt".parse().unwrap(), VlobID::default());
-    let c_file_vid = VlobID::default();
-    let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
-    local.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
-    local.local_confinement_points.insert(c_file_vid);
-
-    let mut expected = local.clone();
-    expected.base = remote.clone();
-    expected.children.insert(d_name, d_vid);
-    expected.updated = timestamp;
-    expected.remote_confinement_points.insert(e_vid);
-    expected
-})]
 async fn local_and_remote_changes(
-    #[case] prepare: impl FnOnce(
-        &mut FolderManifest,
-        &mut LocalFolderManifest,
-        DateTime,
-        DeviceID,
-    ) -> LocalFolderManifest,
+    #[values(
+        // 1) Tests without confined entries
+
+        "only_updated_field_modified",
+        "parent_modified_in_remote_and_only_update_field_modified_in_local",
+        "parent_modified_in_remote_and_unrelated_child_change_in_local",
+        "parent_modified_in_local_and_only_update_field_modified_in_remote",
+        "parent_modified_in_local_and_unrelated_child_change_in_remote",
+        "parent_modified_in_both_with_different_value",
+        "parent_modified_in_both_with_same_value",
+        "parent_modified_in_both_with_unrelated_child_change_in_local",
+        "parent_modified_in_both_with_remote_from_ourself",
+        "children_modified_in_both_with_remote_from_ourself",
+        // TODO: this test is flaky and often leads to an invalid entry name:
+        // "child (Parsec - name conflict) (Parsec - name conflict).txt"
+        // This is most likely due to an iteration on the children (given
+        // hashmap iteration is not stable).
+        "conflicting_children_then_conflict_name_already_taken",
+        "children_modified_in_local_or_remote",
+        "child_added_in_both_with_same_id_and_name",
+        "child_added_in_both_with_same_id_different_name",
+        "children_added_in_both_with_same_name_different_id",
+        "child_renamed_in_both_with_different_name",
+        "child_renamed_in_both_with_same_name",
+        "different_entries_renamed_into_same_name",
+        "child_removed_in_both",
+        "child_removed_in_local_and_renamed_in_remote",
+        "child_removed_in_remote_and_renamed_in_local",
+        "child_removed_in_local_and_name_taken_by_add_in_remote",
+        "child_removed_in_remote_and_name_taken_by_add_in_local",
+        "child_renamed_in_local_and_previous_name_taken_by_add_in_remote",
+        "child_renamed_in_remote_and_previous_name_taken_by_add_in_local",
+        "child_removed_in_local_and_name_taken_by_rename_in_remote",
+        "child_removed_in_remote_and_name_taken_by_rename_in_local",
+        "children_swapping_name_by_local_and_remote_renames",
+        "speculative_local_with_no_modifications",
+        "speculative_local_with_modifications",
+        "speculative_local_with_child_added_in_remote",
+        "speculative_local_with_children_modified_in_both_with_remote_from_ourself",
+
+        // 2) Test with confined entries
+
+        "local_confined_child_and_unrelated_remote_changes",
+        "added_remote_confined_child_and_unrelated_local_changes",
+        "existing_remote_confined_child_then_unrelated_remote_changes",
+        "confined_child_added_in_both_with_same_name",
+        // TODO: this test fails by considering the old name of the entry
+        // should be present in `local.children` (what is expected is the
+        // entry should be seen as removed from local's point of view)
+        "child_renamed_in_remote_becomes_confined",
+        "child_renamed_in_both_becomes_confined",
+        // TODO: this test fails by having need_sync == true and no local
+        // confinement points, while it local children contains an entry
+        // with a name matching the prevent sync pattern.
+        "child_already_renamed_into_confined_in_local",
+        "child_renamed_in_local_becomes_confined_and_removed_in_remote",
+        "child_renamed_in_remote_becomes_confined_and_removed_in_local",
+        "child_renamed_in_local_becomes_confined_and_renamed_in_remote",
+        // TODO: this test fails by having need_sync == false, while also
+        // keeping the local changes...
+        "child_renamed_in_remote_becomes_confined_and_renamed_in_local",
+        "confined_child_renamed_in_remote_still_confined",
+        "confined_child_renamed_in_remote_becomes_non_confined",
+        "confined_child_renamed_in_both_becomes_non_confined",
+        // TODO: this test fails by having need_sync == false, while also
+        // keeping the local changes...
+        "remote_confined_child_renamed_in_local_becomes_non_confined",
+        "remote_confined_child_renamed_in_local_stays_confined",
+        "remote_confined_child_removed_in_remote",
+        "children_modified_in_both_with_confined_entries_and_remote_from_ourself",
+
+        // 3) Test with outdated prevent sync pattern in local and confined entries
+        // Outdated prevent sync pattern means the local manifest has been created
+        // with a different prevent sync pattern (we use `.tmp~` here) than the
+        // one that will be used in the merge (`.tmp` here).
+
+        // Note we call it "psp" instead of "prevent_sync_pattern" to save some
+        // space, otherwise some test names becomes similar in `cargo nextest`
+        // given a test name is limited in size.
+
+        // "outdated_psp_and_only_updated_field_modified_in_remote",
+        "outdated_psp_local_child_becomes_non_confined",
+        // TODO: this test fails by having need_sync == true and children empty
+        // (while there is no local change, and the new local children should
+        // contains the remote children since nothing is confined anymore)
+        "outdated_psp_remote_child_becomes_non_confined",
+        "outdated_psp_local_child_matches_new_pattern",
+        // TODO: this test fails by considering the remote confined entry to be
+        // local (so present in local children and in local confined entries)
+        "outdated_psp_remote_child_matches_new_pattern",
+        "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name",
+        "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename",
+        "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name",
+        // TODO: this test fails by having the confined remote child name ending
+        // up in the local children
+        // "outdated_psp_remote_child_becomes_non_confined_with_remote_from_ourself",
+        "outdated_psp_local_child_becomes_non_confined_with_remote_from_ourself",
+        "outdated_psp_remote_child_becomes_confined_with_remote_from_ourself",
+        // TODO: this test fails by having need_sync == true (while the only
+        // local change is confined, and hence no synchronization is needed)
+        "outdated_psp_local_child_becomes_confined_with_remote_from_ourself",
+    )]
+    kind: &str,
     env: &TestbedEnv,
 ) {
-    let local_author: DeviceID = "alice@dev1".parse().unwrap();
-    let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
+    let local_author = "alice@dev1".parse().unwrap();
+    let merge_timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
     let parent_id = VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap();
-    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
+
+    // Start by creating `local` and `remote` manifests with minimal changes:
+    // - `local` has just its `updated` field set to a new timestamp.
+    // - `remote` is just version n+1 with `updated` field set to a new timestamp.
+    // Then this base will be customized in the following `match kind` statement.
 
     let mut remote = FolderManifest {
         author: "bob@dev1".parse().unwrap(),
@@ -571,20 +649,1617 @@ async fn local_and_remote_changes(
     };
     let mut local = LocalFolderManifest {
         base: remote.clone(),
-        speculative: false,
-        need_sync: false,
-        updated: remote.updated,
-        parent: remote.parent,
-        children: remote.children.clone(),
+        parent: parent_id,
+        need_sync: true,
+        updated: "2021-01-10T00:00:00Z".parse().unwrap(),
+        children: HashMap::new(),
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
+        speculative: false,
     };
 
-    let expected = prepare(&mut remote, &mut local, timestamp, local_author);
+    remote.version = 2;
+    remote.timestamp = "2021-01-05T00:00:00Z".parse().unwrap();
+    remote.updated = "2021-01-04T00:00:00Z".parse().unwrap();
+
+    let mut expected = LocalFolderManifest {
+        base: FolderManifest {
+            author: "bob@dev1".parse().unwrap(),
+            timestamp: "2021-01-05T00:00:00Z".parse().unwrap(),
+            id: vlob_id,
+            parent: parent_id,
+            version: 2,
+            created: "2021-01-01T00:00:00Z".parse().unwrap(),
+            updated: "2021-01-04T00:00:00Z".parse().unwrap(),
+            children: HashMap::new(), // Set in the match kind below
+        },
+        parent: parent_id,
+        need_sync: true,
+        updated: "2021-01-10T00:00:00Z".parse().unwrap(),
+        children: HashMap::new(), // Set in the match kind below
+        local_confinement_points: HashSet::new(),
+        remote_confinement_points: HashSet::new(),
+        speculative: false,
+    };
+
+    let prevent_sync_pattern = Regex::from_glob_pattern("*.tmp").unwrap();
+    match kind {
+        "only_updated_field_modified" => {
+            // Since only `updated` has been modified on local, then
+            // it is overwritten by the remote value, then the merge
+            // determine there is nothing more to sync here
+            expected.updated = remote.updated;
+            expected.need_sync = false;
+        }
+        "parent_modified_in_remote_and_only_update_field_modified_in_local" => {
+            let new_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            remote.parent = new_parent_id;
+
+            expected.base.parent = new_parent_id;
+            expected.parent = new_parent_id;
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "parent_modified_in_remote_and_unrelated_child_change_in_local" => {
+            let new_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            remote.parent = new_parent_id;
+            // Also add an unrelated change on local side
+            let child_a_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            local
+                .children
+                .insert("childA.txt".parse().unwrap(), child_a_id);
+
+            expected.base.parent = new_parent_id;
+            expected.parent = new_parent_id;
+            expected
+                .children
+                .insert("childA.txt".parse().unwrap(), child_a_id);
+        }
+        "parent_modified_in_local_and_only_update_field_modified_in_remote" => {
+            let new_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            local.parent = new_parent_id;
+
+            expected.parent = new_parent_id;
+        }
+        "parent_modified_in_local_and_unrelated_child_change_in_remote" => {
+            let new_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            local.parent = new_parent_id;
+            // Also add an unrelated change on remote side
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            remote
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+
+            expected.parent = new_parent_id;
+            expected
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            expected
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+        }
+        "parent_modified_in_both_with_different_value" => {
+            let new_local_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_remote_parent_id =
+                VlobID::from_hex("44a80da765bd41ed984fdee9e7b0fd0b").unwrap();
+            local.parent = new_local_parent_id;
+            remote.parent = new_remote_parent_id;
+
+            // Parent conflict is simply resolved by siding with remote.
+            // The only change in local was the re-parenting, which got overwritten.
+            // So the local is no longer need sync now.
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+            expected.parent = new_remote_parent_id;
+            expected.base.parent = new_remote_parent_id;
+        }
+        "parent_modified_in_both_with_same_value" => {
+            let new_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            local.parent = new_parent_id;
+            remote.parent = new_parent_id;
+
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+            expected.parent = new_parent_id;
+            expected.base.parent = new_parent_id;
+        }
+        "parent_modified_in_both_with_unrelated_child_change_in_local" => {
+            let new_local_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_remote_parent_id =
+                VlobID::from_hex("44a80da765bd41ed984fdee9e7b0fd0b").unwrap();
+            local.parent = new_local_parent_id;
+            remote.parent = new_remote_parent_id;
+            // Also add an unrelated change on local side
+            let child_a_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            local
+                .children
+                .insert("childA.txt".parse().unwrap(), child_a_id);
+
+            // The re-parent in local got overwritten, but there is still changes
+            // in children that require sync.
+            expected.parent = new_remote_parent_id;
+            expected.base.parent = new_remote_parent_id;
+            expected
+                .children
+                .insert("childA.txt".parse().unwrap(), child_a_id);
+        }
+        "parent_modified_in_both_with_remote_from_ourself" => {
+            let new_local_parent_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_remote_parent_id =
+                VlobID::from_hex("44a80da765bd41ed984fdee9e7b0fd0b").unwrap();
+            local.parent = new_local_parent_id;
+            remote.parent = new_remote_parent_id;
+            remote.author = local_author;
+
+            // Merge should detect the remote is from ourself, and hence the changes
+            // in local are new ones that shouldn't be overwritten.
+            expected.base.author = local_author;
+            expected.parent = new_local_parent_id;
+            expected.base.parent = new_remote_parent_id;
+        }
+        "children_modified_in_both_with_remote_from_ourself" => {
+            let local_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let remote_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            // The same name is used in both remote and local to create a new entry,
+            // this should lead to a conflict...
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), local_child_id);
+            // ...but the remote change are from ourself, hence instead of conflict
+            // we should just acknowledge the remote and keep the local changes.
+            remote.author = local_author;
+
+            expected.base.author = local_author;
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), local_child_id);
+        }
+        "conflicting_children_then_conflict_name_already_taken" => {
+            let local_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let local_child2_id = VlobID::from_hex("87dfd188ff2f417da8417cafec9d10b5").unwrap();
+            let remote_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            // The same name is used in both remote and local to create a new entry,
+            // this lead to a conflict...
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), local_child_id);
+            // ...conflict which is supposed to be resolved by renaming the local
+            // entry, but the name normally used for this is already taken !
+            local.children.insert(
+                "child (Parsec - name conflict).txt".parse().unwrap(),
+                local_child2_id,
+            );
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected.children.insert(
+                "child (Parsec - name conflict).txt".parse().unwrap(),
+                local_child2_id,
+            );
+            expected.children.insert(
+                "child (Parsec - name conflict 2).txt".parse().unwrap(),
+                local_child_id,
+            );
+        }
+        "children_modified_in_local_or_remote" => {
+            // This test contains all the possible entry modifications (add, rename, remove)
+            // made in local or remote (in this test, no entry is modified by both local
+            // and remote, hence no conflict is possible).
+            //
+            // Previous remote has 5 children: `child0.txt`, `child1.txt`, `child2.txt`, `child3.txt`, `child4.txt`
+            // Local manifest has 3 local changes:
+            // - `child1.txt` renamed into `child1-renamed.txt`
+            // - `child2.txt` removed
+            // - `childB.txt` which is a new entry
+            // Then new remote has 3 changes:
+            // - `child3.txt` renamed into `child3-renamed.txt`
+            // - `child4.txt` removed
+            // - a new `child5.txt`
+
+            let child0_id = VlobID::from_hex("beb059a4121d4ee996fef65cda3667db").unwrap();
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("65277afff09548f885fa7ed7bd65de33").unwrap();
+            let child3_id = VlobID::from_hex("2998bd200ebd4f0e87bd977b763459ca").unwrap();
+            let child4_id = VlobID::from_hex("d3cf9aa5350f480f8e49a62aadc77027").unwrap();
+            let child5_id = VlobID::from_hex("15a4186b8a6f4eeebc15067da5a6c0b6").unwrap();
+            let child_b_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child0.txt".parse().unwrap(), child0_id);
+            local
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            local
+                .base
+                .children
+                .insert("child3.txt".parse().unwrap(), child3_id);
+            local
+                .base
+                .children
+                .insert("child4.txt".parse().unwrap(), child4_id);
+            local
+                .children
+                .insert("child0.txt".parse().unwrap(), child0_id);
+            local
+                .children
+                .insert("child1-renamed.txt".parse().unwrap(), child1_id);
+            local
+                .children
+                .insert("childB.txt".parse().unwrap(), child_b_id);
+            local
+                .children
+                .insert("child3.txt".parse().unwrap(), child3_id);
+            local
+                .children
+                .insert("child4.txt".parse().unwrap(), child4_id);
+
+            remote
+                .children
+                .insert("child0.txt".parse().unwrap(), child0_id);
+            remote
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            remote
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            remote
+                .children
+                .insert("child3-renamed.txt".parse().unwrap(), child3_id);
+            remote
+                .children
+                .insert("child5.txt".parse().unwrap(), child5_id);
+
+            expected
+                .base
+                .children
+                .insert("child0.txt".parse().unwrap(), child0_id);
+            expected
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            expected
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            expected
+                .base
+                .children
+                .insert("child3-renamed.txt".parse().unwrap(), child3_id);
+            expected
+                .base
+                .children
+                .insert("child5.txt".parse().unwrap(), child5_id);
+            expected
+                .children
+                .insert("child0.txt".parse().unwrap(), child0_id);
+            expected
+                .children
+                .insert("child1-renamed.txt".parse().unwrap(), child1_id);
+            expected
+                .children
+                .insert("childB.txt".parse().unwrap(), child_b_id);
+            expected
+                .children
+                .insert("child3-renamed.txt".parse().unwrap(), child3_id);
+            expected
+                .children
+                .insert("child5.txt".parse().unwrap(), child5_id);
+        }
+        "child_added_in_both_with_same_id_and_name" => {
+            // Note this case is not supposed to happen in reality (as two separated
+            // devices shouldn't be able to generate the same VlobID)
+            let child_id = VlobID::from_hex("beb059a4121d4ee996fef65cda3667db").unwrap();
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_added_in_both_with_same_id_different_name" => {
+            // Note this case is not supposed to happen in reality (as two separated
+            // devices shouldn't be able to generate the same VlobID)
+            let child_id = VlobID::from_hex("beb059a4121d4ee996fef65cda3667db").unwrap();
+            local
+                .children
+                .insert("childA.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child1.txt".parse().unwrap(), child_id);
+
+            // The merge algorithm simply choose to overwrite the local changes, this
+            // is an acceptable outcome.
+            // Also note that if the merge algorithm is modified and the new outcome
+            // is to keep the local changes, this is also an acceptable (again we
+            // are dealing with an exotic edge case here !).
+            expected
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child1.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "children_added_in_both_with_same_name_different_id" => {
+            let local_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let remote_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), local_child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected.children.insert(
+                "child (Parsec - name conflict).txt".parse().unwrap(),
+                local_child_id,
+            );
+        }
+        "child_renamed_in_both_with_different_name" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            // Conflict is simply resolved by siding with remote.
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_both_with_same_name" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            // Both local and remote agree on the change so there is no conflict
+            // and no need for any sync !
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "different_entries_renamed_into_same_name" => {
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("f023096c9b774a67bb6c35b82a4ed71f").unwrap();
+
+            // We start with two entries: child 1 & 2
+            local
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            // Local renames child 1
+            local
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child1_id);
+            local
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            // Remote renames child 2
+            remote
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            remote
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child2_id);
+
+            expected
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            expected
+                .base
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child2_id);
+            expected.children.insert(
+                "child-rename (Parsec - name conflict).txt".parse().unwrap(),
+                child1_id,
+            );
+            expected
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child2_id);
+        }
+        "child_removed_in_both" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+
+            // Both local and remote agree on the change so there is no conflict
+            // and no need for any sync !
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_removed_in_local_and_renamed_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            // Merge give priority to rename over remove
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_removed_in_remote_and_renamed_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+
+            // Merge give priority to rename over remove
+            expected
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+        }
+        "child_removed_in_local_and_name_taken_by_add_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_child_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_removed_in_remote_and_name_taken_by_add_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_child_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+        }
+        "child_renamed_in_local_and_previous_name_taken_by_add_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_child_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            expected
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+        }
+        "child_renamed_in_remote_and_previous_name_taken_by_add_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let new_child_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+            remote
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), new_child_id);
+        }
+        "child_removed_in_local_and_name_taken_by_rename_in_remote" => {
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            local
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            remote
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+
+            expected
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+            expected
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_removed_in_remote_and_name_taken_by_rename_in_local" => {
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            local
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+            remote
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+
+            expected
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            expected
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+        }
+        "children_swapping_name_by_local_and_remote_renames" => {
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("d7c1206cf1eb4331a0508ee5687fd53a").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child1.txt".parse().unwrap(), child1_id);
+            local
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            local
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+            remote
+                .children
+                .insert("child2.txt".parse().unwrap(), child1_id);
+
+            expected
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child1_id);
+            expected
+                .children
+                .insert("child1.txt".parse().unwrap(), child2_id);
+            expected
+                .children
+                .insert("child2.txt".parse().unwrap(), child1_id);
+        }
+        "speculative_local_with_no_modifications" => {
+            local = LocalFolderManifest::new_root(
+                local_author,
+                local.base.id,
+                // timestamp is more recent than the remote but should get overwritten
+                "2024-01-01T00:00:00Z".parse().unwrap(),
+                true,
+            );
+            // Speculative manifest is only allowed for root manifest which must
+            // have parent pointing on itself.
+            remote.parent = local.base.id;
+            expected.parent = local.base.id;
+            expected.base.parent = local.base.id;
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "speculative_local_with_modifications" => {
+            local = LocalFolderManifest::new_root(
+                local_author,
+                local.base.id,
+                // timestamp is more recent than the remote but should get overwritten
+                "2024-01-01T00:00:00Z".parse().unwrap(),
+                true,
+            );
+            // Speculative manifest is only allowed for root manifest which must
+            // have parent pointing on itself.
+            remote.parent = local.base.id;
+            expected.parent = local.base.id;
+            expected.base.parent = local.base.id;
+
+            // Add modification to local than should be preserved by the merge
+            let child_b_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+            local
+                .children
+                .insert("childB.txt".parse().unwrap(), child_b_id);
+            expected
+                .children
+                .insert("childB.txt".parse().unwrap(), child_b_id);
+        }
+        "speculative_local_with_child_added_in_remote" => {
+            local = LocalFolderManifest::new_root(
+                local_author,
+                local.base.id,
+                // timestamp is more recent than the remote but should get overwritten
+                "2024-01-01T00:00:00Z".parse().unwrap(),
+                true,
+            );
+            // Speculative manifest is only allowed for root manifest which must
+            // have parent pointing on itself.
+            remote.parent = local.base.id;
+            expected.parent = local.base.id;
+            expected.base.parent = local.base.id;
+
+            // Add modification to remote than should be preserved by the merge,
+            // this is a specific behavior for speculative manifest given in this
+            // case we cannot assume missing entries in the speculative manifest
+            // means it was known and has been removed (like the merge normally does).
+            let child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "speculative_local_with_children_modified_in_both_with_remote_from_ourself" => {
+            local = LocalFolderManifest::new_root(
+                local_author,
+                local.base.id,
+                // timestamp is more recent than the remote but should get overwritten
+                "2024-01-01T00:00:00Z".parse().unwrap(),
+                true,
+            );
+            // Speculative manifest is only allowed for root manifest which must
+            // have parent pointing on itself.
+            remote.parent = local.base.id;
+            expected.parent = local.base.id;
+            expected.base.parent = local.base.id;
+
+            let local_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let remote_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            // The same name is used in both remote and local to create a new entry,
+            // this should lead to a conflict...
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), local_child_id);
+            // ...but the remote change are from ourself so instead the remote
+            // manifest should just be acknowledge...
+            // ...but but but ! Having a local speculative manifest means we
+            // cannot assume missing entries in the speculative manifest means
+            // it was known and has been removed (like the merge normally does).
+            // So in the end we must do a merge between local and remote changes,
+            // which leads to a conflict !
+            remote.author = local_author;
+
+            expected.base.author = local_author;
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("child.txt".parse().unwrap(), remote_child_id);
+            expected.children.insert(
+                "child (Parsec - name conflict).txt".parse().unwrap(),
+                local_child_id,
+            );
+        }
+        "local_confined_child_and_unrelated_remote_changes" => {
+            let remote_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let local_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            local
+                .children
+                .insert("local_child.tmp".parse().unwrap(), local_child_id);
+            local.local_confinement_points.insert(local_child_id);
+            remote
+                .children
+                .insert("remote_child.txt".parse().unwrap(), remote_child_id);
+
+            expected
+                .base
+                .children
+                .insert("remote_child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("remote_child.txt".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("local_child.tmp".parse().unwrap(), local_child_id);
+            expected.local_confinement_points.insert(local_child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "added_remote_confined_child_and_unrelated_local_changes" => {
+            let remote_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let local_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            local
+                .children
+                .insert("local_child.txt".parse().unwrap(), local_child_id);
+            remote
+                .children
+                .insert("remote_child.tmp".parse().unwrap(), remote_child_id);
+
+            expected
+                .base
+                .children
+                .insert("remote_child.tmp".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("local_child.txt".parse().unwrap(), local_child_id);
+            expected.remote_confinement_points.insert(remote_child_id);
+        }
+        "existing_remote_confined_child_then_unrelated_remote_changes" => {
+            let child1_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let child2_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child1.tmp".parse().unwrap(), child1_id);
+            local.remote_confinement_points.insert(child1_id);
+            remote
+                .children
+                .insert("child1.tmp".parse().unwrap(), child1_id);
+            remote
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+
+            expected
+                .base
+                .children
+                .insert("child1.tmp".parse().unwrap(), child1_id);
+            expected
+                .base
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            expected
+                .children
+                .insert("child2.txt".parse().unwrap(), child2_id);
+            expected.remote_confinement_points.insert(child1_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "confined_child_added_in_both_with_same_name" => {
+            let remote_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let local_child_id = VlobID::from_hex("9a20331879744a149f55bc3ba16e8225").unwrap();
+
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), local_child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), remote_child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), remote_child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), local_child_id);
+            expected.remote_confinement_points.insert(remote_child_id);
+            expected.local_confinement_points.insert(local_child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_remote_becomes_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_both_becomes_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_already_renamed_into_confined_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_local_becomes_confined_and_removed_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_remote_becomes_confined_and_removed_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_local_becomes_confined_and_renamed_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            // The merge simply side with remote, so nothing is confined anymore !
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "child_renamed_in_remote_becomes_confined_and_renamed_in_local" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.txt".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+            // The merge prioritize rename over remove, so the local changes
+            // are conserved (given the remote confined entry is seen as a
+            // removal from local point of view).
+            expected
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        "confined_child_renamed_in_remote_still_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "confined_child_renamed_in_remote_becomes_non_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "confined_child_renamed_in_both_becomes_non_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "remote_confined_child_renamed_in_local_becomes_non_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        "remote_confined_child_renamed_in_local_stays_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "remote_confined_child_removed_in_remote" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "children_modified_in_both_with_confined_entries_and_remote_from_ourself" => {
+            let initial_child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+            let initial_confined_child_id = VlobID::from_hex("fec4e512c3304019b01ba81619ddf563").unwrap();
+            let new_shared_child_id = VlobID::from_hex("68a698cc8f7e40b884fac9a4dd152459").unwrap();
+            let new_shared_confined_child_id = VlobID::from_hex("71994e1d17fd498cbd90e3319e823b97").unwrap();
+            let new_local_child_id = VlobID::from_hex("51d73d55ca8c4de19a6295d7c0445648").unwrap();
+            let new_local_confined_child_id = VlobID::from_hex("bb1e9b16ccd349e4bf2d6bfdea8e5f9a").unwrap();
+            let new_remote_confined_child_id = VlobID::from_hex("766c1021232f41eaa258f820865637d5").unwrap();
+            let new_remote_child_id = VlobID::from_hex("c75621ee01824e5ebdde4fcdc84e47e2").unwrap();
+
+            local
+                .base
+                .children
+                .insert("initial.txt".parse().unwrap(), initial_child_id);
+            local
+                .base
+                .children
+                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            local
+                .children
+                .insert("initial.txt".parse().unwrap(), initial_child_id);
+            local
+                .children
+                .insert("new_local.txt".parse().unwrap(), new_local_child_id);
+            local
+                .children
+                .insert("new_local_confined.tmp".parse().unwrap(), new_local_confined_child_id);
+            local
+                .children
+                .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
+            local
+                .children
+                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+            local.remote_confinement_points.insert(initial_confined_child_id);
+            local.local_confinement_points.insert(new_local_confined_child_id);
+            remote
+                .children
+                .insert("initial.txt".parse().unwrap(), initial_child_id);
+            remote
+                .children
+                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            remote
+                .children
+                .insert("new_remote.txt".parse().unwrap(), new_remote_child_id);
+            remote
+                .children
+                .insert("new_remote_confined.tmp".parse().unwrap(), new_remote_confined_child_id);
+            remote
+                .children
+                .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
+            remote
+                .children
+                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+            remote.author = local_author;
+
+            // Modifications from entries are considered already known (given we are the
+            // author of those modification), and has since been reverted in local.
+            // So the merge should acknowledge the remote manifest, but not changing
+            // the local children.
+
+            expected.base.author = local_author;
+            expected
+                .base
+                .children
+                .insert("initial.txt".parse().unwrap(), initial_child_id);
+            expected
+                .base
+                .children
+                .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            expected
+                .base
+                .children
+                .insert("new_remote.txt".parse().unwrap(), new_remote_child_id);
+            expected
+                .base
+                .children
+                .insert("new_remote_confined.tmp".parse().unwrap(), new_remote_confined_child_id);
+            expected
+                .base
+                .children
+                .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
+            expected
+                .base
+                .children
+                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+
+            expected
+                .children
+                .insert("initial.txt".parse().unwrap(), initial_child_id);
+            expected
+                .children
+                .insert("new_local.txt".parse().unwrap(), new_local_child_id);
+            expected
+                .children
+                .insert("new_local_confined.tmp".parse().unwrap(), new_local_confined_child_id);
+            expected
+                .children
+                .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
+            expected
+                .children
+                .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
+
+            expected.remote_confinement_points.insert(initial_confined_child_id);
+            expected.remote_confinement_points.insert(new_remote_confined_child_id);
+            expected.remote_confinement_points.insert(new_shared_confined_child_id);
+            expected.local_confinement_points.insert(new_local_confined_child_id);
+            expected.local_confinement_points.insert(new_shared_confined_child_id);
+        }
+        "outdated_psp_local_child_becomes_non_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
+
+            expected
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+        }
+        "outdated_psp_remote_child_becomes_non_confined" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            remote
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "outdated_psp_local_child_matches_new_pattern" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // At this point, the prevent sync pattern is not `.tmp`, so `child.tmp`
+            // is just a non confined regular file.
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "outdated_psp_remote_child_matches_new_pattern" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // At this point, the prevent sync pattern is not `.tmp`, so `child.tmp`
+            // is just a non confined regular file.
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially confined...
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            // ...then gets renamed in both local and remote, with remote name
+            // matching the new prevent sync pattern.
+            //
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially confined...
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            // ...then gets renamed in both local and remote, with local names
+            // matching the new prevent sync pattern.
+            //
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            // The merge simply side with remote rename, so nothing is confined anymore !
+            expected
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially confined...
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            // ...then gets renamed in both local and remote, with names matching
+            // the new prevent sync pattern.
+            //
+            // This is a weird case given local is normally not able to rename
+            // this child given it was confined (but this may occur if the entry
+            // has not always been confined).
+            local
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            remote
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        "outdated_psp_remote_child_becomes_non_confined_with_remote_from_ourself" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially confined...
+            local
+                .base
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.remote_confinement_points.insert(child_id);
+            // ...then gets renamed in remote, with a name not matching the new
+            // prevent sync pattern.
+            remote
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+           remote.author = local_author;
+
+            // Given the remote is from ourself, the merge considers we already know
+            // about it and hence acknowledges it and preserve the local children
+            // (and hence the entry is considered removed in local).
+            expected.base.author = local_author;
+            expected
+                .base
+                .children
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+        }
+        "outdated_psp_local_child_becomes_non_confined_with_remote_from_ourself" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially confined...
+            local
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
+            local.need_sync = false;
+            local.updated = local.base.updated;
+            // ...the remote hasn't anything important to merge, but this should
+            // refresh the confinement in local with the new prevent sync pattern.
+           remote.author = local_author;
+
+            // Given the remote is from ourself, the merge considers we already know
+            // about it and hence acknowledges it and preserve the local children.
+            // However the new prevent sync pattern means the local child should
+            // now be synchronized.
+            expected.base.author = local_author;
+            expected
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
+        }
+        "outdated_psp_remote_child_becomes_confined_with_remote_from_ourself" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially not confined...
+            local
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            // ...then an unrelated changed (only `updated` field) occurs in the
+            // remote, which will trigger the refresh of the confined entries.
+            remote
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+           remote.author = local_author;
+
+            expected.base.author = local_author;
+            expected
+                .base
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.remote_confinement_points.insert(child_id);
+        }
+        "outdated_psp_local_child_becomes_confined_with_remote_from_ourself" => {
+            let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
+
+            // The entry is initially not confined...
+            local
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            // ...the remote hasn't anything important to merge, but this should
+            // refresh the confinement in local with the new prevent sync pattern.
+           remote.author = local_author;
+
+            // Given the remote is from ourself, the merge considers we already know
+            // about it and hence acknowledges it and preserve the local children.
+            // However the new prevent sync pattern means the local child is now
+            // confined and there is nothing to synchronize.
+            expected.base.author = local_author;
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
 
     let outcome = merge_local_folder_manifest(
         local_author,
-        timestamp,
+        merge_timestamp,
         &prevent_sync_pattern,
         &local,
         remote,
@@ -594,5 +2269,3 @@ async fn local_and_remote_changes(
         MergeLocalFolderManifestOutcome::Merged(Arc::new(expected))
     );
 }
-
-// TODO: test prevent sync pattern !
