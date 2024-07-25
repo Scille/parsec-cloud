@@ -17,7 +17,7 @@ msTest('Home default state with devices', async ({ home }) => {
 
   for (const card of await cards.all()) {
     await expect(card.locator('.organization-card-header').locator('.title-h4')).toHaveText(/Org\d+/);
-    await expect(card.locator('.card-content-footer-login').nth(0)).toHaveText('--');
+    await expect(card.locator('.organization-card-login-time').nth(0)).toHaveText('--');
   }
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
 });
@@ -46,10 +46,8 @@ msTest('Filter devices', async ({ home }) => {
     USER_NAMES.filter((u) => u.includes('cey')),
   );
   await fillIonInput(searchInput, 'al');
-  await expect(cards.locator('.organization-card-header:visible').locator('.subtitles-sm')).toHaveCount(2);
-  await expect(cards.locator('.organization-card-header:visible').locator('.subtitles-sm')).toHaveText(
-    USER_NAMES.filter((u) => u.toLowerCase().includes('al')),
-  );
+  await expect(cards.locator('.organization-card-header__avatar')).toHaveCount(2);
+  await expect(cards.locator('.organization-card-header__avatar')).toHaveText(USER_NAMES.filter((u) => u.toLowerCase().includes('al')));
 });
 
 msTest('Filter devices no match', async ({ home }) => {
