@@ -17,6 +17,15 @@ pub use crate::platform::workspace::workspace_storage_non_speculative_init;
 
 pub const TYPICAL_BLOCK_SIZE: u64 = 512 * 1024; // 512 KB
 
+#[derive(Debug, thiserror::Error)]
+pub enum MarkPreventSyncPatternFullyAppliedError {
+    /// Error returned when `mark_prevent_sync_pattern_fully_applied` is called with a pattern that is not the same as the current one.
+    #[error("Provided prevent sync pattern does not match the one in use")]
+    PatternMismatch,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
 #[derive(Debug)]
 pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
@@ -240,7 +249,7 @@ impl WorkspaceStorage {
     pub async fn mark_prevent_sync_pattern_fully_applied(
         &mut self,
         pattern: &Regex,
-    ) -> anyhow::Result<bool> {
+    ) -> Result<(), MarkPreventSyncPatternFullyAppliedError> {
         self.platform
             .mark_prevent_sync_pattern_fully_applied(pattern)
             .await

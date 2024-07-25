@@ -10,7 +10,10 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob, UpdateManifestData},
+    workspace::{
+        DebugBlock, DebugChunk, DebugDump, DebugVlob, MarkPreventSyncPatternFullyAppliedError,
+        UpdateManifestData,
+    },
     PREVENT_SYNC_PATTERN_EMPTY_PATTERN,
 };
 
@@ -1093,10 +1096,9 @@ async fn mark_empty_pattern_as_fully_applied(env: &TestbedEnv) {
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
-        .await
-        .unwrap();
+        .await;
 
-    assert!(res);
+    p_assert_matches!(res, Ok(()));
 }
 
 /// Using `set_prevent_sync_pattern` should not change the `fully applied` status if the pattern is the same.
@@ -1109,10 +1111,9 @@ async fn check_set_pattern_is_idempotent(env: &TestbedEnv) {
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
-        .await
-        .unwrap();
+        .await;
 
-    assert!(res);
+    p_assert_matches!(res, Ok(()));
 
     // 2nd, set the empty pattern again.
     let res = workspace
@@ -1146,10 +1147,12 @@ async fn nop_mark_prevent_sync_pattern_with_different_pat(env: &TestbedEnv) {
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&regex)
-        .await
-        .unwrap();
+        .await;
 
-    assert!(!res);
+    p_assert_matches!(
+        res,
+        Err(MarkPreventSyncPatternFullyAppliedError::PatternMismatch)
+    );
 }
 
 // TODO: test get/set blocks
