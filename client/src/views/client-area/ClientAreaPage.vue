@@ -12,6 +12,7 @@
           :current-page="currentPage"
           :organization="currentOrganization"
           @page-selected="switchPage"
+          @organization-selected="onOrganizationSelected"
         />
         <div class="main-content">
           <client-area-header v-show="true" />
@@ -85,6 +86,10 @@ onMounted(async () => {
 
 async function switchPage(page: ClientAreaPages): Promise<void> {
   currentPage.value = page;
+}
+
+async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
+  currentOrganization.value = organization;
 }
 </script>
 

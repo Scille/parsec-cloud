@@ -2,6 +2,13 @@
 
 <template>
   <div class="sidebar-content">
+    <ms-dropdown
+      class="dropdown"
+      :options="organizationsOptions"
+      :default-option-key="organization.bmsId"
+      :label="I18n.valueAsTranslatable(organization.name)"
+      @change="onOrganizationSelected"
+    />
     <ul>
       <li :class="{ 'current-page': currentPage === ClientAreaPages.Summary }">
         <ion-button @click="goToPageClicked(ClientAreaPages.Summary)">Summary</ion-button>
@@ -23,18 +30,50 @@
 </template>
 
 <script setup lang="ts">
-import { BmsOrganization } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { IonButton } from '@ionic/vue';
 import { ClientAreaPages } from '@/views/client-area/types';
+import { MsDropdown, MsDropdownChangeEvent, MsOptions, I18n } from 'megashark-lib';
+import { ref, onMounted, computed } from 'vue';
 
-defineProps<{
+const props = defineProps<{
   organization: BmsOrganization;
   currentPage: ClientAreaPages;
 }>();
 
+const organizations = ref<Array<BmsOrganization>>([]);
+const organizationsOptions = computed(() => {
+  return new MsOptions(
+    organizations.value.map((org) => {
+      return {
+        key: org.bmsId,
+        label: I18n.valueAsTranslatable(org.name),
+      };
+    }),
+  );
+});
+
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
+  (e: 'organizationSelected', organization: BmsOrganization): void;
 }>();
+
+onMounted(async () => {
+  const result = await BmsAccessInstance.get().listOrganizations();
+  if (!result.isError && result.data && result.data.type === DataType.ListOrganizations) {
+    organizations.value = result.data.organizations;
+  } else {
+    organizations.value.push(props.organization);
+  }
+});
+
+async function onOrganizationSelected(event: MsDropdownChangeEvent): Promise<void> {
+  const org = organizations.value.find((o) => o.bmsId === event.option.key);
+
+  if (org && org.bmsId !== props.organization.bmsId) {
+    emits('organizationSelected', org);
+  }
+}
 
 async function goToPageClicked(page: ClientAreaPages): Promise<void> {
   emits('pageSelected', page);
