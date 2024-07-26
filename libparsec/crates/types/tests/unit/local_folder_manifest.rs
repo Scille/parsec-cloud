@@ -493,7 +493,15 @@ fn from_remote_with_restored_local_confinement_points(
 }
 
 #[rstest]
-fn to_remote() {
+fn to_remote(
+    #[values(
+        "no_confinement",
+        "with_local_confined",
+        "with_remote_confined",
+        "with_local_and_remote_confined_on_same_entry"
+    )]
+    kind: &str,
+) {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
     let t2 = "2000-01-02T00:00:00Z".parse().unwrap();
     let t3 = "2000-01-03T00:00:00Z".parse().unwrap();
@@ -516,8 +524,41 @@ fn to_remote() {
     lfm.updated = t3;
 
     let expected_author = DeviceID::default();
-    let fm = lfm.to_remote(expected_author, t4);
+    let mut expected_children = lfm.children.clone();
 
+    match kind {
+        "no_confinement" => (),
+        "with_local_confined" => {
+            let confined_id = VlobID::from_hex("58bf714d79454de39bf070c7e47f7fd2").unwrap();
+            lfm.children
+                .insert("local_confined.tmp".parse().unwrap(), confined_id);
+            lfm.local_confinement_points.insert(confined_id);
+        }
+        "with_remote_confined" => {
+            let confined_id = VlobID::from_hex("58bf714d79454de39bf070c7e47f7fd2").unwrap();
+            lfm.base
+                .children
+                .insert("remote_confined.tmp".parse().unwrap(), confined_id);
+            lfm.remote_confinement_points.insert(confined_id);
+            expected_children.insert("remote_confined.tmp".parse().unwrap(), confined_id);
+        }
+        "with_local_and_remote_confined_on_same_entry" => {
+            let local_confined_id = VlobID::from_hex("58bf714d79454de39bf070c7e47f7fd2").unwrap();
+            let remote_confined_id = VlobID::from_hex("f13cb3bb9c1542cb87d0c690e3183999").unwrap();
+
+            lfm.children
+                .insert("local_confined.tmp".parse().unwrap(), local_confined_id);
+            lfm.local_confinement_points.insert(local_confined_id);
+            lfm.base
+                .children
+                .insert("remote_confined.tmp".parse().unwrap(), remote_confined_id);
+            lfm.remote_confinement_points.insert(remote_confined_id);
+            expected_children.insert("remote_confined.tmp".parse().unwrap(), remote_confined_id);
+        }
+        unknown => panic!("Unknown kind: {}", unknown),
+    }
+
+    let fm = lfm.to_remote(expected_author, t4);
     // Destruct manifests to ensure this code with fail to compile whenever a new field is introduced.
     let FolderManifest {
         author: fm_author,
@@ -537,7 +578,7 @@ fn to_remote() {
     p_assert_eq!(fm_version, lfm.base.version + 1);
     p_assert_eq!(fm_created, lfm.base.created);
     p_assert_eq!(fm_updated, lfm.updated);
-    p_assert_eq!(fm_children, lfm.children);
+    p_assert_eq!(fm_children, expected_children);
 }
 
 #[rstest]
