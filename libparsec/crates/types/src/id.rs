@@ -3,9 +3,9 @@
 use email_address_parser::EmailAddress;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
-use std::convert::TryFrom;
 use std::hash::Hash;
 use std::str::FromStr;
+use std::{convert::TryFrom, fmt::Display};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::impl_from_maybe;
@@ -647,16 +647,14 @@ crate::impl_from_maybe!(Option<HumanHandle>);
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum UserProfile {
-    /// Standard user can create new realms and invite new devices for himself.
-    ///
     /// Admin can invite and revoke users and on top of what standard user can do.
-    ///
+    Admin,
+    /// Standard user can create new realms and invite new devices for himself.
+    Standard,
     /// Outsider is only able to collaborate on existing realm and can only
     /// access redacted certificates (i.e. the realms created by an outsider
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
-    Admin,
-    Standard,
     Outsider,
 }
 
@@ -673,12 +671,12 @@ impl FromStr for UserProfile {
     }
 }
 
-impl ToString for UserProfile {
-    fn to_string(&self) -> String {
+impl Display for UserProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Admin => String::from("ADMIN"),
-            Self::Standard => String::from("STANDARD"),
-            Self::Outsider => String::from("OUTSIDER"),
+            Self::Admin => write!(f, "ADMIN"),
+            Self::Standard => write!(f, "STANDARD"),
+            Self::Outsider => write!(f, "OUTSIDER"),
         }
     }
 }
