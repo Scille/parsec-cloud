@@ -1,42 +1,83 @@
-# Parsec client with Ionic & Electron
+# Parsec client
 
-## 1 - Install
+This directory contains source code for Parsec client.
 
-### a. Dependencies
+For general setup, take a look at [development quickstart guide](../docs/development/README.md#Hacking-the-clients).
+
+## Install
+
+### Dependencies
 
 ```bash
-# In /client
 npm install
 ```
 
-> Among other things, it installs `Ionic` / `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx ionic --help`
+Among other things, it installs `Ionic` / `Vue` / `Capacitor` CLI locally, you can use them with npx like this: `npx ionic --help`
 
-> This command will automatically execute a `npm install` in the ELectron folder, this is normally done by `npx cap add @capacitor-community/electron`, nevertheless since we have custom configuration in this folder, we can't override it.
+This command will also automatically execute `npm install` in the electron directory, this is normally done by `npx cap add @capacitor-community/electron`, nevertheless since we have custom configuration in this folder, we can't override it.
 
-### b. LibParsec Bindings requirements
+### Libparsec bindings
 
-Follow this [bindings guide](../bindings/README.md)
+Follow this [guide](../bindings/README.md).
 
-## 2 - Web dev
+## Tests
+
+### Unit tests
 
 ```bash
-# In /client
+npm run test:unit
+```
+
+### End-to-End tests
+
+To run these tests, you first need to [start the testbed server locally](../docs/development/README.md#starting-the-testbed-server).
+
+```bash
+export TESTBED_SERVER_URL="parsec3://localhost:6777?no_ssl=true"
+```
+
+#### Playwright
+
+Install Playwright dependencies:
+
+```bash
+npx playwright install --with-deps
+```
+
+Then, run the tests with:
+
+```bash
+npm run pw:e2e:headless
+```
+
+#### Cypress (legacy)
+
+Most of the Cypress tests have been migrated to Playwright.
+
+You can run the remaining ones with:
+
+```bash
+npm run test:e2e:headless
+```
+
+## Web dev
+
+> Libparsec is not yet available on web platform :(
+
+```bash
 npm run web:open
 ```
 
-> LibParsec is not available on web platform so far :(
-
-## 3 - Electron dev
+## Electron dev
 
 ```bash
-# In /client
-# Update Electron folder after main project changes
+# Update electron directory after main project changes
 npm run electron:copy
-# ----
-# Update Electron folder after main project changes and launch the desktop app
+
+# Update electron directory after main project changes and launch the desktop app
 npm run electron:open
-# ----
-# Generate Electron dist for release
+
+# Generate electron dist for release
 npm run electron:dist
 npm run electron:dist -- -- --dir  # To debug the generated payload
 npm run electron:dist -- -- --linux snap  # To generate a subset (see `npx electron-builder build --help`)
@@ -45,20 +86,20 @@ npm run electron:dist -- -- --linux snap  # To generate a subset (see `npx elect
 > The `index.node` will be automatically copied by electron on build (see
 > `libparsec` script defined in `client/electron/package.json`)
 
-## 4 - Android dev
+## Android dev
 
 ```bash
-# In /client
-# Update Android folder after main project changes
+# Update android directory after main project changes
 npm run android:copy
-# ----
-# Update Android folder after main project changes and launch an Android Studio project
+
+# Update android directory after main project changes and launch an Android Studio project
 npm run android:open
 ```
 
-> LibParsec is automatically (re)build as needed when building the Android project.
+Libparsec is automatically (re)built as needed.
 
-## 5 - iOS dev
+<!-- TODO: iOS platform not yet available
+## iOS dev
 
 ```bash
 # In /client
@@ -67,7 +108,7 @@ npm run ios:copy
 # ----
 # Update iOS folder after main project changes and launch a XCode project
 npm run ios:open
-```
+``` -->
 
 ## BONUS - How to start a blank Ionic project with Electron
 
