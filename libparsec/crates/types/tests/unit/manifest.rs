@@ -12,383 +12,65 @@ use crate::{
 };
 
 #[rstest]
-#[case::blocksize(
-    // Generated from Python implementation (Parsec v2.6.0+dev)
-    // Content:
-    //   type: "file_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   blocks: []
-    //   blocksize: 2  <-- Invalid value, must be >= 8 !
-    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //   size: 700
-    &hex!(
-        "789ceb5e5e965a549c999fa7b5ac20b12835afe406137b49fffef4656e4e2dea6df1d7"
-        "0df6db2d4f2e4a4d2c494db9cee87823eb6acbd9d8e04599293798da8f6dfd6bedea33"
-        "65d756d9ac8fc726732f2f2d484155b6a4a4b220756d5a664e6a7c6e625e665a6a71c9"
-        "b2a49cfce4ece2094b8a33ab52cf32ed5996585a92915fb42a31273339d52125b5cc70"
-        "6549662e5061626e01c2a095105d402d4c0066eb5178"
-    ),
-    DataError::BadSerialization { format: Some(0), step: "msgpack+validation" },
-)]
-#[case::dummy(b"dummy", DataError::BadSerialization { format: None, step: "format detection" })]
-#[case::dummy_compressed(
-    &hex!("789c4b29cdcdad04000667022d"),
+#[case::cannot_detect_format(b"dummy", DataError::BadSerialization { format: None, step: "format detection" })]
+#[case::format_0x00_cannot_decompress(
+    &hex!("00789c4b29cdcdad04000667022d"),
     DataError::BadSerialization { format: Some(0), step: "zstd" }
 )]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
+#[case::format_0x00_cannot_deserialize(
+    &hex!("0028b52ffd005829000064756d6d79"),
+    DataError::BadSerialization { format: Some(0), step: "msgpack+validation" }
+)]
 fn invalid_deserialize_data(#[case] data: &[u8], #[case] error: DataError) {
-    let manifest = ChildManifest::deserialize_data(data);
+    let outcome = UserManifest::deserialize_data(data);
+    p_assert_eq!(outcome, Err(error.clone()));
 
-    p_assert_eq!(manifest, Err(error));
+    let outcome = ChildManifest::deserialize_data(data);
+    p_assert_eq!(outcome, Err(error));
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
-fn dump_load(alice: &Device) {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
+fn serde_file_manifest_ok_and_invalid_checks(alice: &Device) {
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "file_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   version: 0
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   blocks: []
-    //   blocksize: 8
-    //   parent: ext(2, hex!("09e679aa6e1147fbaa5580073202fc7f"))
-    //   size: 0
-    // see: [docs/development/generate_blob.md]
-    let signed = hex!(
-        "86f116d8cad06b67df476f0738750a937330f1cb20475f3c1197ea16d069ab6ce1f867"
-        "fd555fd7b4861058c128fa9c68872efed5284135a041e451d4ded93403789c558cb10e"
-        "c1501440ab0b62f2013e82d5c220169b18459ebedbb8d5bebebcbe36a9854162b048f8"
-        "0269dab489b18b0fe86614fd02bb19096210dbc939c95907d2e770d0d184914518eae0"
-        "c890b872628b8498a8418b82578f255aef402c7e29b473e3bc3c0dfb7ba4b9bacad267"
-        "b3d3db1dd39a71cbb6959013014ce66af9ea27acdabd278345b1a13ee69107c2419b29"
-        "91268048a0bf51e472fa6f020767a0c463d3d6a61f2c855fdcbc0073734fdf"
-    );
-    let signed_encrypted = hex!(
-        "be4be31375b99ebf3e76c54b1e91d05f5739e7e11b631b0c51cf2a91c3ca92c3a074e4"
-        "d0449dfd02c55444d9bc500402680daa04bcbf13d8d38f8a296597cb31cc2bc277c7d1"
-        "c8bb5bb42321b134055351d9a81ce423d42c85ede0cf8bc8722662ce1227e4bef0645c"
-        "7ae934df708b397cdc582d6eabe8155cf3a00bde4cc2f2ff58e9bd415829fb4e985bc5"
-        "c170b94bfe05378c03bd86a5c074eacef07dfb5760fe6b072960c70d7ca95c9a1ec6ab"
-        "5769e4bd700d7f31258ae24e5a8f1525950fea50d447082c90e4599d30833d2776b268"
-        "b0b59804ead23967e5ef3e2cf86ad132cc806f23bfcc2be8a2daae49139f9a3fb0a6cf"
-        "53a3affa839e2b3ee8fae63fc991d4b644954559695f0c61219e0551edec7123466a20"
-        "e9"
-    );
-
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let parent = VlobID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
-    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
-
-    let expected_file_manifest = FileManifest {
-        author: alice.device_id,
-        timestamp: now,
-        id,
-        parent,
-        version: 0,
-        created: now,
-        updated: now,
-        size: 0,
-        blocksize: Blocksize::try_from(8).unwrap(),
-        blocks: vec![],
-    };
-
-    assert!(expected_file_manifest
-        .verify(alice.device_id, now, Some(id), Some(0))
-        .is_ok());
-
-    p_assert_eq!(
-        ChildManifest::verify_and_load(
-            &signed,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0),
-        )
-        .unwrap()
-        .into_file_manifest()
-        .unwrap(),
-        expected_file_manifest
-    );
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &signed_encrypted,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0),
-        )
-        .unwrap()
-        .into_file_manifest()
-        .unwrap(),
-        expected_file_manifest
-    );
-
-    // Also test round trip
-    p_assert_eq!(
-        ChildManifest::verify_and_load(
-            &expected_file_manifest.dump_and_sign(&alice.signing_key),
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0),
-        )
-        .unwrap()
-        .into_file_manifest()
-        .unwrap(),
-        expected_file_manifest
-    );
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &expected_file_manifest.dump_sign_and_encrypt(&alice.signing_key, &alice.local_symkey),
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0),
-        )
-        .unwrap()
-        .into_file_manifest()
-        .unwrap(),
-        expected_file_manifest
-    );
-}
-
-#[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
-fn invalid_load(alice: &Device) {
-    // Generated from Rust implementation (Parsec v2.15.0+dev)
-    // Content:
-    //   type: "file_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   version: 0
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   blocks: []
-    //   blocksize: 8
-    //   parent: ext(2, hex!("09e679aa6e1147fbaa5580073202fc7f"))
-    //   size: 0
-    let data = hex!(
-        "be4be31375b99ebf3e76c54b1e91d05f5739e7e11b631b0c51cf2a91c3ca92c3a074e4"
-        "d0449dfd02c55444d9bc500402680daa04bcbf13d8d38f8a296597cb31cc2bc277c7d1"
-        "c8bb5bb42321b134055351d9a81ce423d42c85ede0cf8bc8722662ce1227e4bef0645c"
-        "7ae934df708b397cdc582d6eabe8155cf3a00bde4cc2f2ff58e9bd415829fb4e985bc5"
-        "c170b94bfe05378c03bd86a5c074eacef07dfb5760fe6b072960c70d7ca95c9a1ec6ab"
-        "5769e4bd700d7f31258ae24e5a8f1525950fea50d447082c90e4599d30833d2776b268"
-        "b0b59804ead23967e5ef3e2cf86ad132cc806f23bfcc2be8a2daae49139f9a3fb0a6cf"
-        "53a3affa839e2b3ee8fae63fc991d4b644954559695f0c61219e0551edec7123466a20"
-        "e9"
-    );
-    let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
-    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
-
-    let dummy_without_compression = hex!(
-        "d6e76bcf3b749f3b5e70f2e17ccb4a397c382921bea368c57cca7000ada6bcfad4622f"
-        "dce6637a6b7290d8c764b3ca5c1ca6504b873773db6d61546bd4e50f7e3cba3b7f2503"
-        "6d35ed0a267b5c4b531e2131884c287ff803994b9d4b2fe5ee1b91fff5963aae8d6c7e"
-        "479f042f"
-    );
-    let dummy = hex!(
-        "e2a8070aa052bfda83732d9ab5fb7177b5d9c6c4986f0563dfc18fd136d250b0283632"
-        "548e26987d4902e6448133ea1288eed9f0d8a3d4cb78b4c09a469896f326f839fff79e"
-        "185ff40f5a42ed59880c6aa1c0576e332b4428bac7b9da4a188198a055e237ea6e0c3d"
-        "f4864877f57af6cfb243b0b7"
-    );
-    let expected_author = "bob@dev1".parse().unwrap();
-    let expected_timestamp = "2021-12-04T11:50:43.000000Z".parse().unwrap();
-    let expected_id = VlobID::from_hex("09e679aa6e1147fbaa5580073202fc7f").unwrap();
-    let expected_version = 1;
-
-    // Check that the compression is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &dummy_without_compression,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::BadSerialization {
-            format: Some(0),
-            step: "zstd"
-        })
-    );
-
-    // Check that the serialization is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &dummy,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::BadSerialization {
-            format: Some(0),
-            step: "msgpack+validation"
-        })
-    );
-
-    // Check that the encryption is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &SecretKey::generate(),
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::Decryption)
-    );
-
-    // Check that the signature is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &alice.local_symkey,
-            &SigningKey::generate().verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::Signature)
-    );
-
-    // Check that the author is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            expected_author,
-            now,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::UnexpectedAuthor {
-            expected: expected_author,
-            got: Some(alice.device_id),
-        })
-    );
-
-    // Check that the timestamp is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            expected_timestamp,
-            Some(id),
-            Some(0)
-        ),
-        Err(DataError::UnexpectedTimestamp {
-            expected: expected_timestamp,
-            got: now,
-        })
-    );
-
-    // Check that the id is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(expected_id),
-            Some(0)
-        ),
-        Err(DataError::UnexpectedId {
-            expected: expected_id,
-            got: id,
-        })
-    );
-
-    // Check that the version is incorrect
-    p_assert_eq!(
-        ChildManifest::decrypt_verify_and_load(
-            &data,
-            &alice.local_symkey,
-            &alice.verify_key(),
-            alice.device_id,
-            now,
-            Some(id),
-            Some(expected_version)
-        ),
-        Err(DataError::UnexpectedVersion {
-            expected: expected_version,
-            got: 0,
-        })
-    );
-}
-
-#[rstest]
-fn serde_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
-    // Content:
-    //   type: "file_manifest"
-    //   author: ext(2, de10a11cec0010000000000000000000)
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   type: 'file_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
+    //   parent: ext(2, 0x07748fbf67a646428427865fd730bf3e)
     //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   size: 700
+    //   blocksize: 512
     //   blocks: [
     //     {
-    //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //       digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //       offset: 0
-    //       size: 512
-    //     }
+    //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //       offset: 0,
+    //       size: 512,
+    //       digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
+    //     },
     //     {
-    //       id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-    //       digest: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
-    //       offset: 512
-    //       size: 188
-    //     }
+    //       id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
+    //       offset: 512,
+    //       size: 188,
+    //       digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6,
+    //     },
     //   ]
-    //   blocksize: 512
-    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //   size: 700
-    let data = hex!(
-        "b1c255a968225dc9dfb30e7f8d942895b66ade79c5924c1f425579c6dd27750f3de61e"
-        "41a2f132e1c0d994493c16ff4df9f8972211519c1b92bf04b88fd4a6d03cbcd2125492"
-        "28a7402f7fa1b15161a2c521f6aa6058c52b344ee39bff593e17da2b61c90bd67f4d73"
-        "a9abe43140d920dd287a832a28d2319d6d47a3545921df48b96963f61767882e301ed6"
-        "a0fe605ade9e86b264cdc9afda41ec217a2e200a663659a350d4560d62086ba5824e55"
-        "7ad1f76f3b50148dbcdb7fd3c27f7b53587f76c5bdca9c2d62879143528a8b7392a67a"
-        "4b6e27d4d5765620e9b2d89f6a7019df8c17d373aec46d32207d8f27435e11de179e8d"
-        "c146bbd0d673bf40379b45390d95eb84793ef52b3500c529dd3ea542cd00713b61030f"
-        "924a0d55f5bb40746596942944f5d875eafce6bcfe0921561397899a95dbd9248f29fb"
-        "a2cd24ffec9df96d095afb3aebde0aaed3238ec4d480d9958ad1e202a62034c2e7c23e"
-        "ab0906a4cd0ca62cb569702adff82bdc9047f0a798dc038af88c5dfdf402d306202e14"
-        "9997de859ad44a92e8216b266ea1e8e88b0120f6a816b90c6cd85ff9d8cb435ad6bbb1"
-        "251654931c5c68f10b9894ba6cc6cc5c3b2f1f88f5dcbb5f581073762e"
-    );
+    let data = &hex!(
+    "0018aab6ae0ea6116fbfd96c0375f9fa23a74fbb778f1e7c4f5e419f28b34cc52a7c85"
+    "c74ed81f01c6e8313b8bcdaa37afd72467c941974760bb7d8131b1c14be3c98ebe4670"
+    "43eab7723b90c5f35f17ea136ce40f8dc7633a36b0b6949554a895122c1dce1ac7c589"
+    "f303ee01371fcbaacf8023c3f5e0677b53302e326478423651e6faa47f8eb290f6a364"
+    "f68519e4070e4d99a503d533fbc9425b614608b25c13c500e69ef1ab0f6414a74fc394"
+    "377a10a840afd0f76b90288774de0213850120cc481f42ab4609b4b386394f039d01e3"
+    "ee7d707a251b87136c56f0759c66b4983870171b170360d984802bad52ed33e26c3020"
+    "ef94002a8c0690692ad10ee710fdaab6d46463978b58e7a8814602a904ecda74e7ea40"
+    "2b250591834d74dbfa8d8ba2efd0b7552f5b9d089a5f4f5713f63e5a5ec2f02520ae96"
+    "c506ba82d01a1109197983672f7e4787cf8e3c077806c9de775c4851cba40c41abf512"
+    "b05f19f983727338128c8e707cc8ee9022cec5bb8129b53aeaefc515a53cd643c6b79f"
+    "5841c283f267b82e9c4a01e0082f11a15d8888cc"
+    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -425,7 +107,7 @@ fn serde_file_manifest_ok(alice: &Device) {
     };
 
     let manifest = ChildManifest::decrypt_verify_and_load(
-        &data,
+        data,
         &key,
         &alice.verify_key(),
         alice.device_id,
@@ -455,41 +137,163 @@ fn serde_file_manifest_ok(alice: &Device) {
     .into_file_manifest()
     .unwrap();
     p_assert_eq!(manifest2, expected);
+
+    // Now that we know our payload is valid, let's make
+    // sure invalid checks are detected...
+
+    // Invalid decryption key
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &SecretKey::generate(),
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Decryption)
+    );
+
+    // Invalid signature verification key
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &SigningKey::generate().verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Signature)
+    );
+
+    // Invalid expected author
+    let bad_author = DeviceID::default();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            bad_author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedAuthor {
+            expected: bad_author,
+            got: Some(expected.author),
+        })
+    );
+
+    // Invalid expected timestamp
+    let bad_timestamp = "2000-01-01T00:00:00Z".parse().unwrap();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            bad_timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedTimestamp {
+            expected: bad_timestamp,
+            got: expected.timestamp,
+        })
+    );
+
+    // Invalid expected ID
+    let bad_id = VlobID::default();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(bad_id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedId {
+            expected: bad_id,
+            got: expected.id,
+        })
+    );
+
+    // Invalid version
+    let bad_version = 1000;
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(bad_version)
+        ),
+        Err(DataError::UnexpectedVersion {
+            expected: bad_version,
+            got: expected.version,
+        })
+    );
 }
 
 #[rstest]
-#[ignore = "TODO: scheme has changed, must regenerate the dump"]
 fn serde_file_manifest_invalid_blocksize(alice: &Device) {
-    // Generated from Python implementation (Parsec v2.6.0+dev)
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "file_manifest"
-    //   author: "alice@dev1"
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   type: 'file_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
+    //   parent: ext(2, 0x07748fbf67a646428427865fd730bf3e)
     //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    //   blocks: []
-    //   blocksize: 2
-    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
     //   size: 700
-    let data = hex!(
-        "3d24370f85424221a83a0dd4bc5d27b0d5816fc62ef3a6c3186a9211f0b2ec0955ec20"
-        "204a9b351224b789537d478b2a5d8a047c3fb9b3a039d90ff8a00cb53ee1ae1f2a24ba"
-        "fd14dbf674e1c7bcf7a782dd9aa695ff93263e83cb1611d6d18b8348d2f2f184fdbdcb"
-        "8979640fe7fcc0c1d39c930dda0ccb243d298e357b0830774fbb630bbe3009982cc880"
-        "6c89e709bd4d4e33b43966b3d0cf55440a57bb84bd3c78da48f04512c386afa17a1bfa"
-        "2e14fcc0a6210661086b7427eb7ca77b28078b496c984bf5d51da7023e13485a6c34b2"
-        "d80d1380cc94b2546f06aa993dbbfe3c6d6aa46820ea7bed353d14892048cfb622144d"
-        "99659e6ea429f54cc0e53840c86c9ac81147860b3e"
-    );
+    //   blocksize: 2
+    //   blocks: [ ]
+    let data = &hex!(
+    "bab54461c0af35956cfb8060f7af4534e6b7bc17ddef217d6d3f4ae258ae3f075a8ae4"
+    "329c2c763115cd28699a0561c62bdeb4cf210ab7c5ff66eca96d00511ec3eae4c65353"
+    "73a4c17063a71f920ed3fd8bf504ae0aa501b91140b923002f6a020a733b46476d1f1c"
+    "6a1a39089f442f9d1bfc71be927b7707d8aeccf599bddfa2e9890fec811708ff1bd2ef"
+    "6a1d35087dafee5f9e002b02eb9b90b9e49aa55b497c847e616cb448464bab2215eac0"
+    "43c0128f676a5b9c70ee39bf324fbd38a87e496f4d99c48783c1a77b121684ad163ebf"
+    "7dd37d17dc232a6cdc031f6ff496e4848a5cd8be20023e9e4c8c7a426a7a2efb620fb8"
+    "53ef9b45fa4f3b004674e47667e5da048d77fec282dd34e386b3d6e501b3e8925a"
+    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
+    // How to regenerate this test payload ???
+    // 1) Disable checks in `Blocksize::try_from` to accept any value
+    // 2) uncomment the following code:
+    //
+    //     let expected = FileManifest {
+    //         author: alice.device_id,
+    //         timestamp: now,
+    //         id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+    //         parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+    //         version: 42,
+    //         created: now,
+    //         updated: now,
+    //         size: 700,
+    //         blocksize: Blocksize::try_from(2).unwrap(),
+    //         blocks: vec![
+    //         ],
+    //     };
+    //
+    // 3) Uses `misc/test_expected_payload_cooker.py`
+
     let outcome = ChildManifest::decrypt_verify_and_load(
-        &data,
+        data,
         &key,
         &alice.verify_key(),
         alice.device_id,
@@ -507,33 +311,32 @@ fn serde_file_manifest_invalid_blocksize(alice: &Device) {
 }
 
 #[rstest]
-fn serde_folder_manifest(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+fn serde_folder_manifest_ok_and_invalid_checks(alice: &Device) {
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "folder_manifest"
-    //   author: ext(2, de10a11cec0010000000000000000000)
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
+    //   type: 'folder_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
+    //   parent: ext(2, 0x07748fbf67a646428427865fd730bf3e)
     //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
     //   children: {
-    //     "wksp1": hex!("b82954f1138b4d719b7f5bd78915d20f")
-    //     "wksp2": hex!("d7e3af6a03e1414db0f4682901e9aa4b")
+    //     wksp1: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //     wksp2: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
     //   }
-    let data = hex!(
-        "816426b30ff69bbfda1232fc85708987c8556a9a25a32d6f3031282abd8a7040a9d2e2"
-        "eed40f839e0ef0af0c416585e49e685e9df1e15e1d11b6991689a8e1102a98325a6d7d"
-        "3cbf5d129053e0e99e77074b9858f7990b8993c0c79defab4768d4407e7facbc1efa42"
-        "2cbc9242dddd389019a418367afe4f4c35295dd24480f80270a2e6e2e22c62439ce8cd"
-        "2cf3fa44afa66bb4dc554c6a9d422ce46836f070aca9919ca89555a385c9d1ccf64897"
-        "5cc72838e452cdcd74428d00802bc204e1d4dd5cf9b272b827d5333c73da27e3ea3d96"
-        "6f311889ee3e6804be13d16105c534fde987b80c58e3910001f7e3076abe2e634215fb"
-        "4ae259131c8e5c4070165713301cd7027d0759f6dc1822c91bd30d90c2e7a954983a17"
-        "dc08014817994b6a7ff7e42037409218cd3126a9fbf43962f91422664c44ec9e3bb5ec"
-        "300cfe5b269e"
-    );
+    let data = &hex!(
+    "7c34b29d49ec4128ee27d06da5dd1f434e94f10ff3b6fb569b5a6cb3e431373bc4337f"
+    "8ef20bfa3306d6918e9b15d65e4cdccbd355fed125ff733b4f021d745b4492cf063c13"
+    "76264682125be1481440c41b4ad6159098c33ef5c3547ae216b99f7ee398a976f2809e"
+    "95c0a1ca3d086f16eaf688c1605922b3e4803bcca1752e00189685940108ddba4ca421"
+    "8a8ac98a061ee165293e850a0e1c56ae0d4380c2cd9a397625b027b50cb7bc729915b7"
+    "97e5183afb880cc022f41c5273c608e46b58a41e79443955ab4b699f025eaaaded1369"
+    "313c3bd3836a1ab688eab9bb0570a435e51cb9b8da01389eed472667801277d4faa182"
+    "bd567e75eca7e2915ad3f4fe526664ae1c5140c588f94e5a8575d4b6c3cc40fcfde1af"
+    "a453f30703c082d2c93ba6bc57d699ae5189dc4cf8b2e4f8ddc9dc7d"
+    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -560,7 +363,7 @@ fn serde_folder_manifest(alice: &Device) {
     };
 
     let manifest = ChildManifest::decrypt_verify_and_load(
-        &data,
+        data,
         &key,
         &alice.verify_key(),
         alice.device_id,
@@ -590,28 +393,131 @@ fn serde_folder_manifest(alice: &Device) {
     .into_folder_manifest()
     .unwrap();
     p_assert_eq!(manifest2, expected);
+
+    // Now that we know our payload is valid, let's make
+    // sure invalid checks are detected...
+
+    // Invalid decryption key
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &SecretKey::generate(),
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Decryption)
+    );
+
+    // Invalid signature verification key
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &SigningKey::generate().verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Signature)
+    );
+
+    // Invalid expected author
+    let bad_author = DeviceID::default();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            bad_author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedAuthor {
+            expected: bad_author,
+            got: Some(expected.author),
+        })
+    );
+
+    // Invalid expected timestamp
+    let bad_timestamp = "2000-01-01T00:00:00Z".parse().unwrap();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            bad_timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedTimestamp {
+            expected: bad_timestamp,
+            got: expected.timestamp,
+        })
+    );
+
+    // Invalid expected ID
+    let bad_id = VlobID::default();
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(bad_id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedId {
+            expected: bad_id,
+            got: expected.id,
+        })
+    );
+
+    // Invalid version
+    let bad_version = 1000;
+    p_assert_eq!(
+        ChildManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(bad_version)
+        ),
+        Err(DataError::UnexpectedVersion {
+            expected: bad_version,
+            got: expected.version,
+        })
+    );
 }
 
 #[rstest]
-fn serde_user_manifest(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+fn serde_user_manifest_ok_and_invalid_checks(alice: &Device) {
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "user_manifest"
-    //   author: ext(2, de10a11cec0010000000000000000000)
-    //   timestamp: ext(1, 1638618643.208821)
-    //   id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
+    //   type: 'user_manifest'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b)
     //   version: 42
-    //   created: ext(1, 1638618643.208821)
-    //   updated: ext(1, 1638618643.208821)
-    let data = hex!(
-        "92c7286c12e48b9790d55713dd33a0c447ae96b1ee03537ce46c64eac982d957483dd9"
-        "9f7725220c2bed5c76f02caca992daec30e8fe9c46986f61555e8c7009a9895b8ab0bb"
-        "843cb63c96f02f756fafdee6d991b18fd0090003de20e12a96e23f19298f78d0e451dd"
-        "a7559776a519fa5bdd3adb398ccc6fa3222a293c19ac80dd400c6fb61d667848c2071b"
-        "6acfe752d20bb6e8a1cd1dd91616c29bf2a19367c197ea8e5dd3b09f2ca886ff8b9c85"
-        "9b726fe2bcd9fc6eb56c14067b8383c462c55fe1eff51c6d60f99105820d99bcf70f47"
-        "3cca12385f6b184ce9b737d36f1b6489791a4a4183cccf4fa094"
-    );
+    //   created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    let data = &hex!(
+    "ae48d1ded09d700e227723599ea232a266822aecc50e96f0d647f5afc31c35c8355646"
+    "7827d317284b2c8ccb39c8d46a4ce4ec40f067b21e8625381e21d94c3657c1c304f1ee"
+    "c4b54d3b610393c83624d6cb67612d7fc750472836434e724c6c22619a29fbbad99570"
+    "557adb0c0fc794e6cf053ca1aae2f4e4c3656118970dbd12421f6b80c2f5f337ab81b4"
+    "57a18f06a7883e01d3fb9321c987f5c0d1379b90393ae76b99d1f1359b1ba3afc63672"
+    "09f82371c4d1d0b84ed4fcdeb89d14c77e978f49f83a745955560d966450aaf6a249c5"
+    "cd69b85acc8eaec2aeb1946046e94d"
+    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -627,7 +533,7 @@ fn serde_user_manifest(alice: &Device) {
     };
 
     let manifest = UserManifest::decrypt_verify_and_load(
-        &data,
+        data,
         &key,
         &alice.verify_key(),
         alice.device_id,
@@ -653,73 +559,108 @@ fn serde_user_manifest(alice: &Device) {
     )
     .unwrap();
     p_assert_eq!(manifest2, expected);
-}
 
-#[rstest]
-#[case::valid(None, None, None, None, None)]
-#[case::valid_id(None, None, Some(VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap()), None, None)]
-#[case::valid_version(None, None, None, Some(42), None)]
-#[case::invalid_dev_id(
-    Some(DeviceID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
-    None,
-    None,
-    None,
-    Some("Invalid author: expected `6b398b3d-c680-4bb7-84bb-07b0d7038c63`, got `de10a11c-ec00-1000-0000-000000000000`".to_string())
-)]
-#[case::invalid_timestamp(
-    None,
-    Some("2021-10-24T11:50:43.208821Z".parse().unwrap()),
-    None,
-    None,
-    Some("Invalid timestamp: expected `2021-10-24T11:50:43.208821Z`, got `2021-12-04T11:50:43.208821Z`".to_string())
-)]
-#[case::invalid_id(
-    None,
-    None,
-    Some(VlobID::from_hex("6b398b3dc6804bb784bb07b0d7038c63").unwrap()),
-    None,
-    Some("Invalid entry ID: expected `6b398b3d-c680-4bb7-84bb-07b0d7038c63`, got `87c6b5fd-3b45-4c94-bab5-1d6af1c6930b`".to_string())
-)]
-#[case::invalid_version(None, None, None, Some(0x1337), Some("Invalid version: expected `4919`, got `42`".to_string()))]
-fn file_manifest_verify(
-    alice: &Device,
-    #[case] expected_author: Option<DeviceID>,
-    #[case] expected_timestamp: Option<DateTime>,
-    #[case] expected_id: Option<VlobID>,
-    #[case] expected_version: Option<u32>,
-    #[case] expected_result: Option<String>,
-) {
-    let now = "2021-12-04T11:50:43.208821Z".parse::<DateTime>().unwrap();
-    let id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
-    let version = 42;
+    // Now that we know our payload is valid, let's make
+    // sure invalid checks are detected...
 
-    let expected_author = expected_author.unwrap_or(alice.device_id);
-    let expected_timestamp = expected_timestamp.unwrap_or(now);
-
-    let manifest = FileManifest {
-        author: alice.device_id,
-        timestamp: now,
-        id,
-        parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
-        version,
-        created: now,
-        updated: now,
-        size: 700,
-        blocksize: Blocksize::try_from(512).unwrap(),
-        blocks: vec![],
-    };
-
+    // Invalid decryption key
     p_assert_eq!(
-        manifest
-            .verify(
-                expected_author,
-                expected_timestamp,
-                expected_id,
-                expected_version,
-            )
-            .map_err(|e| e.to_string())
-            .err(),
-        expected_result
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &SecretKey::generate(),
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Decryption)
+    );
+
+    // Invalid signature verification key
+    p_assert_eq!(
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &SigningKey::generate().verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::Signature)
+    );
+
+    // Invalid expected author
+    let bad_author = DeviceID::default();
+    p_assert_eq!(
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            bad_author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedAuthor {
+            expected: bad_author,
+            got: Some(expected.author),
+        })
+    );
+
+    // Invalid expected timestamp
+    let bad_timestamp = "2000-01-01T00:00:00Z".parse().unwrap();
+    p_assert_eq!(
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            bad_timestamp,
+            Some(expected.id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedTimestamp {
+            expected: bad_timestamp,
+            got: expected.timestamp,
+        })
+    );
+
+    // Invalid expected ID
+    let bad_id = VlobID::default();
+    p_assert_eq!(
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(bad_id),
+            Some(expected.version)
+        ),
+        Err(DataError::UnexpectedId {
+            expected: bad_id,
+            got: expected.id,
+        })
+    );
+
+    // Invalid version
+    let bad_version = 1000;
+    p_assert_eq!(
+        UserManifest::decrypt_verify_and_load(
+            data,
+            &key,
+            &alice.verify_key(),
+            expected.author,
+            expected.timestamp,
+            Some(expected.id),
+            Some(bad_version)
+        ),
+        Err(DataError::UnexpectedVersion {
+            expected: bad_version,
+            got: expected.version,
+        })
     );
 }
 
@@ -1114,7 +1055,6 @@ fn generate_file_manifest_in_between_block_span(
     "dd76ec29d7c609730d2a094d2d39247db1cf048774edb53688d55fe1dd06ad703d2c65"
     "cb14b8e6d0fe3524fa295bf6298d0a909a63126f576365ca586b139bac8aea19c65722"
     "7ea635684e8c044b9fef16cf67a1a16032cb47c03bbd5c48fde55ca4"
-
     );
     (
         now,

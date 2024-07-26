@@ -7,22 +7,22 @@ use crate::prelude::*;
 
 #[rstest]
 fn serde_invite_user_data(bob: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "invite_user_data"
-    //   requested_device_label: "My dev1 machine"
-    //   requested_human_handle: ("bob@example.com", "Boby McBobFace")
-    //   public_key: <bob.public_key as bytes>
-    //   verify_key: <bob.verify_key as bytes>
+    //   type: 'invite_user_data'
+    //   requested_device_label: 'My dev1 machine'
+    //   requested_human_handle: ['bob@example.com', 'Boby McBobFace']
+    //   public_key: 0x7c999e9980bef37707068b07d975591efc56335be9634ceef7c932a09c891e25
+    //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
     let encrypted = &hex!(
-        "e4f5ba3abc4d45355a5977e0bfd07bfdeff13ffe2a82f7079f214250a479d9c0084fb1"
-        "600b3de09b8064419fd14fd36b4ed3acf1778804695d21030b78c903f033e0d8193e93"
-        "88368b386a3939c442c2eb081eb72682c441d3a92a62ceeb99c6d7f7c182bc4e8b4994"
-        "806a49a41ffd8e20b30205517ee33012b9360f52dc20b6f725963ba2cda55a611e1add"
-        "8bf76b4d7b2906a62e0b89871a37f3a267bc0ee21460334b212e1c39ad7b3a3054e15c"
-        "d12b1b2c1bc4a43bd693711f37acc5b2f774b478c8d2a2457b3f24ff3ca84564a6b223"
-        "625c5507cd2710eace856e8c4d9084b294c3cc1147cec211036d4f8c570fd2958f378a"
-        "44b318"
+    "8a3e68b9894a1a1b2aaa1cbd60b78e8a6dbbb552ee103d4154afd04e9e519c8ff20430"
+    "b11bd542dc9e67652d1e40b90dda660b56c6c2b602b3bfdcf23b810073af6ae58515df"
+    "a395bdbed5cd1509402f23e8582fa60139b3f99acbebacb1d0b50091248fd066ed77a9"
+    "c7145350550ed0dd897fb3cc68238239f0e531b61e18d746334d4b161b14f503ecc69a"
+    "c2c36b327a5d74fc21ea37868e18c42429d84a5540eba2c3eb2739efb5a6fe2ab0c263"
+    "d5ca907f8ffc202094e7aff3a86919553936f584b50290a33136133a9847d8ca51f482"
+    "3be23632e678f980bc758287d1388e42b2916ee8aa5fa081d39235845bdae35a7db4dd"
+    "8a91923ed640"
     );
 
     let expected = InviteUserData {
@@ -49,24 +49,24 @@ fn serde_invite_user_data(bob: &Device) {
 
 #[rstest]
 fn serde_invite_user_confirmation(bob: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "invite_user_confirmation"
-    //   user_id: ext(2, 808c0010000000000000000000000000)
-    //   device_id: ext(2, de10808c001000000000000000000000)
-    //   device_label: "My dev1 machine"
-    //   human_handle: ("bob@example.com", "Boby McBobFace")
-    //   profil: "STANDARD"
-    //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
+    //   type: 'invite_user_confirmation'
+    //   user_id: ext(2, 0x808c0010000000000000000000000000)
+    //   device_id: ext(2, 0xde10808c001000000000000000000000)
+    //   device_label: 'My dev1 machine'
+    //   human_handle: ['bob@example.com', 'Boby McBobFace']
+    //   profile: 'STANDARD'
+    //   root_verify_key: 0xbe2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd
     let encrypted = &hex!(
-        "da506f3f3431ec1f18849c94f4e4e76ce792c147d31a195ed831036ce1ab803930ce29"
-        "ae62ecae189601befa743ec9b73a0a76118bdb5e26a01360bd337ab3cb3b3298932250"
-        "7b6c2c3528b7a26c6eb9ad11fd5057fc0a72b2c93f7b412d76bbce5d992a7cf0c8025f"
-        "b32f2d12c92872fb44e3306fc16f57400f6b303cce8aa7063fa064eb50dfdd5ae3898e"
-        "5e1d2804ebba18a1c6558eb2a92e3ca2088659001963b5aa844fa5de61ea7a06e71598"
-        "8c993ed10a42ab2aa6d5e40455d4aeb6365473c486f1ebb6318e9d8ef047e0407a7736"
-        "d6d3607196afebec66c920c99a3dd17656085d787d6b0f7303ec374cf3275745bfe799"
-        "77160c6001054dd6af082a62a358f72252fd57f5ae83"
+    "edce3bf9e7829de37eb47bfe7f1e7214dd0853fb0c4e37c3f175dfc7e67439355328dc"
+    "cf6998494e2410b87a70f1c9170f808cc22b37c636f3ec67e16d6545adae87dc393dd0"
+    "041ed9d05a4013a0d391fad3c0061934ca3bc24ac3b912c2bc4187215a9bd24126c9aa"
+    "021f77f1fef817ba007681f191f59916b7e04bbcbcd8bb74fa043784eab84716a74cf6"
+    "a3a9e2b84390a81594caf1969f17f7e4a615317372f6d48faa762c7033407e3d38a5f7"
+    "a988c62e8d00b8d9f78f350f1b5c0810dcdccfff0f843a76131013a58a0f4bc69a2f6f"
+    "9352ab9a1563891fbbb8a8184d21c6a301f40bb7228fae27978eb75a197a0eb693e7ef"
+    "745b63f4e955"
     );
 
     let expected = InviteUserConfirmation {
@@ -95,17 +95,17 @@ fn serde_invite_user_confirmation(bob: &Device) {
 
 #[rstest]
 fn serde_invite_device_data(bob: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "invite_device_data"
-    //   requested_device_label: "My dev1 machine"
-    //   verify_key: <bob.verify_key as bytes>
+    //   type: 'invite_device_data'
+    //   requested_device_label: 'My dev1 machine'
+    //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
     let encrypted = &hex!(
-        "04040f06a106396d6d53e03abb5cfb77088cda9683bb54e434ca2fad0187c0a78d00ac"
-        "99727b980ba0eba6586a4db4b6575ee37b37178ff9f2b8623d045cf8fa8981a8cf7c76"
-        "0fccf4c324e6da00142bc382c6365fc4255bf57026e83d463b7241d89175edc90d8726"
-        "7a6839b5c867a7b630f30bb13e0f0a01b02c2c0ff107cf98212f0cc87ab903cef8380f"
-        "ad96a704e1907946ed48"
+    "71df358a1c069d7c7532282cfc2fbb3ac9c3a303d5e51cd78665150ddaf11ff794c4ba"
+    "b74edb34ff5fbfc7e18f7398a0a204b63411a1c4ec50824d49f5916621bd048ce98cb5"
+    "f93c14e7ebdede85dc90fc9deae51c261cb971b462fd5564f416b9ed5da4147c5a0142"
+    "7a2d94b9ca5bb02b9ffd54e5c1ae3c32e20a65ea70d1999bf4af3b3fb6a92ab979541e"
+    "4ca45c3e070fbe2e40d4868a9c29bf9973cb2b"
     );
 
     let expected = InviteDeviceData {
@@ -130,31 +130,30 @@ fn serde_invite_device_data(bob: &Device) {
 
 #[rstest]
 fn serde_invite_device_confirmation(bob: &Device) {
-    // Generated from Parsec v3.0.0-b.11+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "invite_device_confirmation"
-    //   user_id: ext(2, 808c0010000000000000000000000000)
-    //   device_id: ext(2, de10808c001000000000000000000000)
-    //   device_label: "My dev1 machine"
-    //   human_handle: ("bob@example.com", "Boby McBobFace")
-    //   profil: "STANDARD"
-    //   private_key: <bob.private_key as bytes>
-    //   user_manifest_id: ext(2, hex!("71568d41afcb4e2380b3d164ace4fb85"))
-    //   user_manifest_key: <bob.user_manifest_key as bytes>
-    //   root_verify_key: hex!("be2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd")
+    //   type: 'invite_device_confirmation'
+    //   user_id: ext(2, 0x808c0010000000000000000000000000)
+    //   device_id: ext(2, 0xde10808c001000000000000000000000)
+    //   device_label: 'My dev1 machine'
+    //   human_handle: ['bob@example.com', 'Boby McBobFace']
+    //   profile: 'STANDARD'
+    //   private_key: 0x16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49
+    //   user_realm_id: ext(2, 0x71568d41afcb4e2380b3d164ace4fb85)
+    //   user_realm_key: 0x65de53d2c6cd965aa53a1ba5cc7e54b331419e6103466121996fa99a97197a48
+    //   root_verify_key: 0xbe2976732cec8ca94eedcf0aafd413cd159363e0fadc9e68572c77a1e17d9bbd
     let encrypted = &hex!(
-        "06733269843fadca366b5f1a4328eeebfbd9ee0c33b11435ddbba1721c317ebcded96b"
-        "e030e5cc768faebd91b09c4370f4153f7bc134b803253b5911377f5558d81c79c173d2"
-        "859f1d52b5baa7ceafd03e8259c45eca8522f05b35c7c5c297ee7303b12b19bd1c9a87"
-        "d76d103098baa2b423c314749416a95b4381f40d9899666f10f4866f618ec91a711ff4"
-        "55738e009854013f4b2772e4d9c69eac81a6c0df27bf0c3e0c98965e29ee4272d23471"
-        "a1537485fe6c03dc29e8dbe7c81903cf54aae45bc9994d1028f4de9e8f57abdedecd16"
-        "30aec2414f714944f864484d87d3fd93c8ae2af9dab9695c60936043452e679d92c55e"
-        "c2b39a5c720ae04579b419d3be360936c535824c7d7f109ba4c72340fda07435b28891"
-        "412a9b2a1164dac3b607fb236c715896ea029ed64aa1c77afab39c2447bc2eba85415e"
-        "26860e463e0b6fde8a77e709d5991db925f6f6c2051388228f5c3a17797fb9000c7502"
-        "80026b4f239c2a4ec112eaf29aaedbf6f9fba0be3af96aa119a4ebbb031d81d880069d"
-        "2210ca4999db6ecf2f5ecc"
+    "9ce694da6243270f4b33931ef3c82d7f7b17c8710463f4cbefcf98fad5277ffb09c7b0"
+    "82a2e6cbfba3735c953053ea330a1bb5132d515b9a08e33f662d13b8942f778cae2d19"
+    "5e43a20da5b7567f0f70d9f5e8b450b4f129e3380fe2068190f12c216d9f619c938ea4"
+    "623fad23c7f94807c77748515b8c56473d117a4649c3b907d61e1ba2200ad532ceea03"
+    "f37c5975b05c2c803ed597d28aa29877dd0d0ccc0f1a2bb6f73c22c611631143684023"
+    "942e5ed8cc6c9193e282cfc4edd675b91c37bcd772e0270ee425647e304903b7e3455b"
+    "177a90016a9ad3e01cab26c5351c455fb3b67894da89d5b68c43fe7a5ff36c83404b9d"
+    "7e3d87e2b3af1ffeb7707695219fdf5c9a4bda33daca60658a705168c0aea797e64991"
+    "9ed4e66b93e19c7ec28a5380c66278aea167cec45eeed22f376a338a6a84018b750eec"
+    "4fd6ba983c0a5bd3b75e1cf9a118b7b92308e939b3ce00aa6310e60862b7d3bc2dc7df"
+    "7f55abbb6c8cc501db70d3ca"
     );
 
     let expected = InviteDeviceConfirmation {
