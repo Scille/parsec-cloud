@@ -20,7 +20,7 @@ Example:
     let expected =
         // ...
     ;
-    println!("***expected: {:?}", expected.dump().unwrap());
+    println!("***expected: {:?}", expected.dump());
     // ...
     p_assert_eq!(data, expected);
 
@@ -59,6 +59,7 @@ You should then:
 
 import binascii
 import datetime
+import io
 import os
 import re
 import struct
@@ -86,7 +87,7 @@ LIBPARSEC_VERSION_FILE = os.path.join(os.path.dirname(__file__), "..", "libparse
 FAILING_TEST_HEADER_PATTERN = re.compile(r"\W*FAIL \[[ 0-9.]+s\] ([ \w::]+)")
 
 # Expected print message: `***expected: <dump>`
-##     println!("***expected: {:?}", expected.dump().unwrap());
+##     println!("***expected: {:?}", expected.dump());
 TAG_PATTERN = re.compile(r"\W*\*\*\*expected: \[([ 0-9,]*)\]")
 
 KEY_CANDIDATES = [
@@ -103,12 +104,6 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
             except nacl.exceptions.CryptoError:
                 continue
 
-    def attempt_decompression(raw: bytes) -> bytes | None:
-        try:
-            return zstandard.decompress(raw)
-        except ValueError:
-            return None
-
     def attempt_deserialization(raw: bytes) -> dict[str, object] | None:
         if raw[0] == 0xFF:
             try:
@@ -121,12 +116,18 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
             return None
 
         try:
-            decompressed = zstandard.decompress(raw[1:])
-        except ValueError:
+            io_input = io.BytesIO(raw[1:])
+            io_output = io.BytesIO()
+            decompressor = zstandard.ZstdDecompressor()
+            decompressor.copy_stream(io_input, io_output)
+            decompressed = io_output.getvalue()
+        except zstandard.ZstdError:
             return None
 
         try:
-            return msgpack.unpackb(decompressed)
+            # `strict_map_key` is needed because shamir_recovery_brief_certificate
+            # uses `DeviceID` (i.e. ExtType) as dict key.
+            return msgpack.unpackb(decompressed, strict_map_key=False)
         except ValueError:
             return None
 
@@ -141,20 +142,22 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
     if deserialized is not None:
         return deserialized
 
-    # Last attempt: consider the data is signed and encrypted
+    # Last attempt: consider the data is encrypted...
     decrypted = attempt_decrypt(raw)
     assert decrypted is not None
+    # ...and signed ?
     decrypted_without_signature = decrypted[64:]
-    decompressed = attempt_decompression(decrypted_without_signature)
-    assert decompressed is not None
-    deserialized = attempt_deserialization(decompressed)
+    deserialized = attempt_deserialization(decrypted_without_signature)
+    if deserialized is None:
+        # ...or not signed ?
+        deserialized = attempt_deserialization(decrypted)
     assert deserialized is not None
     return deserialized
 
 
 def cook_msgpack_type(value):
     if isinstance(value, bytes):
-        return value.hex()
+        return f"0x{value.hex()}"
 
     if isinstance(value, msgpack.ExtType):
         match value.code:
@@ -165,12 +168,28 @@ def cook_msgpack_type(value):
                 return f"ext(1, {ts}) i.e. {dt}"
             # UUID
             case 2:
-                return f"ext(2, {value.data.hex()})"
+                return f"ext(2, 0x{value.data.hex()})"
 
             case _:
                 pass
 
-    return value
+    if isinstance(value, dict):
+        out = "{ "
+        for k, v in value.items():
+            if not isinstance(k, str):
+                k = cook_msgpack_type(k)
+            out += f"{k}: {cook_msgpack_type(v)}, "
+        out += "}"
+        return out
+
+    if isinstance(value, list):
+        out = "[ "
+        for v in value:
+            out += f"{cook_msgpack_type(v)}, "
+        out += "]"
+        return out
+
+    return repr(value)
 
 
 def parse_lines(lines):
@@ -189,11 +208,7 @@ def parse_lines(lines):
             bytearray([int(byte.strip()) for byte in match_print_expected.group(1).split(",")])
         )
 
-        # TODO: decode does not seem to work for all tests
-        try:
-            expected_decoded = decode_expected_raw(expected_raw)
-        except Exception:
-            expected_decoded = None
+        expected_decoded = decode_expected_raw(expected_raw)
 
         output_lines = []
 
@@ -202,22 +217,17 @@ def parse_lines(lines):
 
         output_lines.append(f"    // Generated from Parsec {libparsec_version}")
 
-        # TODO: this output was written for libparsec_types certif tests, but is not the general case
-        #       as some tests do not follow the same structure
-        if expected_decoded:
-            output_lines.append("    // Content:")
-            for k, v in expected_decoded.items():
-                output_lines.append(f"    //   {k}: {cook_msgpack_type(v)}")
+        output_lines.append("    // Content:")
+        for k, v in expected_decoded.items():
+            output_lines.append(f"    //   {k}: {cook_msgpack_type(v)}")
 
-            output_lines.append("    let data = Bytes::from_static(&hex!(")
+        output_lines.append("    let data = &hex!(")
 
         # The raw value (payload) to be used in the test
         for part in textwrap.wrap(expected_raw.hex()):
             output_lines.append(f'    "{part}"')
 
-        # See TODO comment above
-        if expected_decoded:
-            output_lines.append("    ));")
+        output_lines.append("    );")
 
         print()
         print(f"================== {current_test} ==================")
