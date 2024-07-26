@@ -267,13 +267,16 @@ pub(super) fn merge_local_folder_manifest(
 
         let LocalFolderManifest {
             base: _, // New remote already set
+            // We cannot use `local`'s confinement points since the remote may have
+            // introduce new confined entries. However this is fine since the confinement has
+            // already been computed by `LocalFolderManifest::from_remote_with_restored_local_confinement_points`.
+            local_confinement_points: _,
+            remote_confinement_points: _,
             // All the other fields should be overwritten according to previous local manifest
             parent: merged_parent,
             need_sync: merged_need_sync,
             updated: merged_updated,
             children: merged_children,
-            local_confinement_points: merged_local_confinement_points,
-            remote_confinement_points: merged_remote_confinement_points,
             speculative: merged_speculative,
         } = &mut merge_in_progress;
 
@@ -282,8 +285,6 @@ pub(super) fn merge_local_folder_manifest(
         *merged_need_sync = *local_need_sync;
         *merged_updated = local.updated;
         *merged_children = local.children.to_owned();
-        *merged_local_confinement_points = local.local_confinement_points.to_owned();
-        *merged_remote_confinement_points = local.remote_confinement_points.to_owned();
 
         return MergeLocalFolderManifestOutcome::Merged(Arc::new(merge_in_progress));
     }
