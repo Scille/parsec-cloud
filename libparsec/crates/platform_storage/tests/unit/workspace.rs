@@ -620,8 +620,7 @@ async fn promote_chunk_to_block(env: &TestbedEnv) {
                 size: 8,
                 offline: false,
                 accessed_on: "2000-01-31T00:00:00Z".into()
-            }],
-            ..Default::default()
+            }]
         }
     );
 
