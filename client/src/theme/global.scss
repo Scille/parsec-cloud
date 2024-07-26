@@ -117,4 +117,10 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+
+  &:hover {
+    color: var(--parsec-color-light-secondary-contrast);
+    background: var(--parsec-color-light-secondary-premiere);
+    border: 1px solid var(--parsec-color-light-secondary-disabled);
+  }
 }
