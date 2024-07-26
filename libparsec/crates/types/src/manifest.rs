@@ -554,6 +554,13 @@ impl UserManifest {
     fn check_data_integrity(&self) -> DataResult<()> {
         Ok(())
     }
+
+    // Test methods
+
+    #[cfg(test)]
+    pub fn deserialize_data(raw: &[u8]) -> DataResult<Self> {
+        format_vx_load(raw)
+    }
 }
 
 /*
@@ -605,6 +612,7 @@ impl ChildManifest {
 
     // Test methods
 
+    #[cfg(test)]
     pub fn into_file_manifest(self) -> Option<FileManifest> {
         match self {
             Self::File(file) => Some(file),
@@ -612,6 +620,7 @@ impl ChildManifest {
         }
     }
 
+    #[cfg(test)]
     pub fn into_folder_manifest(self) -> Option<FolderManifest> {
         match self {
             Self::Folder(folder) => Some(folder),
@@ -619,6 +628,7 @@ impl ChildManifest {
         }
     }
 
+    #[cfg(test)]
     pub fn deserialize_data(raw: &[u8]) -> DataResult<Self> {
         format_vx_load(raw)
     }

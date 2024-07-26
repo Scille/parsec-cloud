@@ -18,82 +18,81 @@ type AliceLocalUserManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalUs
 
 #[rstest]
 fn serde_local_file_manifest_ok(alice: &Device) {
-    // Generated from Parsec v3.0.0-b.7+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "local_file_manifest"
-    //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
-    //   updated: ext(1, 1638618643.208821)
+    //   type: 'local_file_manifest'
     //   base: {
-    //     type: "file_manifest"
-    //     author: "alice@dev1"
-    //     timestamp: ext(1, 1638618643.208821)
-    //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //     version: 42
-    //     created: ext(1, 1638618643.208821)
-    //     updated: ext(1, 1638618643.208821)
+    //     type: 'file_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     size: 700,
+    //     blocksize: 512,
     //     blocks: [
     //       {
-    //         id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //         digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //         offset: 0
-    //         size: 512
-    //       }
+    //         id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //         offset: 0,
+    //         size: 512,
+    //         digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
+    //       },
     //       {
-    //         id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-    //         digest: hex!("e37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6")
-    //         offset: 512
-    //         size: 188
-    //       }
-    //     ]
-    //     blocksize: 512
-    //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //     size: 700
+    //         id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
+    //         offset: 512,
+    //         size: 188,
+    //         digest: 0xe37ce3b00a1f15b3de62029972345420b76313a885c6ccc6e3b5547857b3ecc6,
+    //       },
+    //     ],
     //   }
+    //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   size: 500
+    //   blocksize: 512
     //   blocks: [
     //     [
     //       {
-    //         id: ext(2, hex!("ad67b6b5b9ad4653bf8e2b405bb6115f"))
-    //         access: {
-    //           id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-    //           digest: hex!("076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560")
-    //           offset: 0
-    //           size: 512
-    //         }
-    //         raw_offset: 0
-    //         raw_size: 512
-    //         start: 0
-    //         stop: 250
-    //       }
+    //         id: ext(2, 0xad67b6b5b9ad4653bf8e2b405bb6115f),
+    //         start: 0,
+    //         stop: 250,
+    //         raw_offset: 0,
+    //         raw_size: 512,
+    //         access: { id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //           offset: 0,
+    //           size: 512,
+    //           digest: 0x076a27c79e5ace2a3d47f9dd2e83e4ff6ea8872b3c2218f66c92b89b55f36560,
+    //         },
+    //       },
     //       {
-    //         id: ext(2, hex!("2f99258022a94555b3109e81d34bdf97"))
-    //         access: None
-    //         raw_offset: 250
-    //         raw_size: 250
-    //         start: 0
-    //         stop: 250
-    //       }
-    //     ]
+    //         id: ext(2, 0x2f99258022a94555b3109e81d34bdf97),
+    //         start: 250,
+    //         stop: 500,
+    //         raw_offset: 250,
+    //         raw_size: 250,
+    //         access: None,
+    //       },
+    //     ],
     //   ]
-    //   blocksize: 512
-    //   need_sync: true
-    //   size: 500
-    let data = hex!(
-    "8532379b73c11d0b4466427afa62198e32d69a04c0218627c371a7dc933a8bcd2af1d3"
-    "3e3b83e1e3972e0e80249f1f526e2f92d71487d3495ee17becfbc5165a5a52c3c3213b"
-    "852d639235fd37f8477af942064b16124aa4f4f522c25ca7ef132845d92d1ceb47971f"
-    "dc460bfab187a61d4735d9ffa68d6e13d61a968ed0af65ab9451cd8eadf197345aeb5a"
-    "f29f763483a72c277654f1465a60dca866a1c591d9cfbc78088c63eec31037d2be0a8b"
-    "46fdfa7776704f602981e1909f30ebc2ab404555d5334a2c220ae42418a6a46f7fb2a2"
-    "1cef66dc43e4f8cc3959def32b40cd458572023ae9cc09fde5aadb0da442c43f892c62"
-    "e09ecb4c0b098cbc07ec9b14fcafa8e55352d861f007221b8d5c527a307cda5d5f113e"
-    "ca12e3fee0dd2e89314563a514ed0935903b6b11c09d90bd7ad622238e8f4e49672162"
-    "2178680ff2a70cbba92b314d62046930c7614b68bd5449cd0b6a698a7044b204a54ece"
-    "e65b8f18b0195c6f2f28de8064408c2b2ccba0063a7cb72b6632d8c0fc5c43c21f510d"
-    "cc209093b35e8738dcdc35c290ebec0c2f7ca10c67edc6dc7bd5040ba1999a2098f693"
-    "af7e6c1740ec4991e7d72650cf97cd490d4dcb1bc93bf98ee5374e325feb2cc031c34f"
-    "77d48f1f1d33fe667185b8fd6e832944b2b59b72c010b6e7a776844d75bfd61298af71"
-    "08a5c0c8b29913715df21f3d92df"
-    );
+    let data = &hex!(
+    "9c71be661347b29f96b31b32976c4bce3997dbc1f6033999dc2ffd14c73c5c2e81db1f"
+    "59735067b4c7e1afc74bfa35b5395b2371e30c3b3945265ea2df504ecc82e0cfb2395e"
+    "c93cf04e92516e3c543b612dd8e42a2466fdb98505f78baeba6d5dad78ee97f25e5513"
+    "bff5bf471822e5210adb9caa4e01acdbd8b7e959d678d1815a437e33c57c431c433375"
+    "ea491c086d095beca33d74d8ba5b9ee70cd1e91259e431b486eb6b9fe8644e5d323542"
+    "f157ca168ba2809e368a1299a6f24b0e58d5704e9d5838312c0b41d012c79d7da356cb"
+    "e1ffc4b0eab584dcf48600fd0a40ef622c96fab9983040db9b17e4e14cf1a8709d1990"
+    "91624259e21e78e813f34b999a15fbc5defc68caac902a4497eec7a6acee6b1904cba2"
+    "4b845aab519deabdaa57f8b353e43ada8c32dcc1f86c2c31e64f8db4f1ed79cf0e752a"
+    "605833a2069f28e37d1a9a32ac97bbfae1b4740ee93097d4a5fb2cec89b1e84eca3380"
+    "2e04bc5a53af9b44a3ac921166aa474d6baf9b81dc9538833f25e77263553cbbc0cd24"
+    "86e0a19e70fb7effb13640e4e9e0f09c3cf568ef74f74f7ead10c8a61e566f841d9362"
+    "1ae29b363411bac33da28aa120d942ab96a12d92399e6a593e39a37056271e8355eba2"
+    "8e384f90787165215c4e5ebef6492f4af1aa7a6bdb78cc40e061a1f78e6f3e96db4cad"
+    "48f5291e3c23fd929876f1a5d064"
+    )[..];
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
@@ -160,7 +159,7 @@ fn serde_local_file_manifest_ok(alice: &Device) {
         need_sync: true,
         size: 500,
     };
-    let manifest = LocalChildManifest::decrypt_and_load(&data, &key).unwrap();
+    let manifest = LocalChildManifest::decrypt_and_load(data, &key).unwrap();
 
     p_assert_eq!(manifest, LocalChildManifest::File(expected.clone()));
 
@@ -175,91 +174,120 @@ fn serde_local_file_manifest_ok(alice: &Device) {
 
 #[rstest]
 fn serde_local_file_manifest_invalid_blocksize() {
-    // Generated from Parsec v3.0.0-b.6+dev
+    // Generated from Parsec 3.0.0-b.12+dev
     // Content:
-    //   type: "local_file_manifest"
-    //   parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //   updated: ext(1, 1638618643.208821)
+    //   type: 'local_file_manifest'
     //   base: {
-    //     type: "file_manifest"
-    //     author: "alice@dev1"
-    //     timestamp: ext(1, 1638618643.208821)
-    //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-    //     version: 42
-    //     created: ext(1, 1638618643.208821)
-    //     updated: ext(1, 1638618643.208821)
-    //     blocks: []
-    //     blocksize: 512
-    //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-    //     size: 0
+    //     type: 'file_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     size: 0,
+    //     blocksize: 512,
+    //     blocks: [ ],
     //   }
-    //   blocks: []
+    //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   size: 500
     //   blocksize: 2
-    //   need_sync: true
-    //   size: 0
-    let data = hex!(
-        "499cd965c263dd61f437d04caec66a0f73a50d2a27ea54aa38a1b45af1bc037911f87c"
-        "4487cdb3484f0121d21da7b612bca847ac193b6f0b16a40ebb59fff3d153f9f7ca1582"
-        "e4c34450f1b7dcf53a9fa5b2edea8655410a479856865234969fd51cdcfbdde01928df"
-        "b88405fd61d3e43b28316680dbbff6a78b97e72e8e3b3f61aa033e6036550e8902ab40"
-        "d7393f48a1d1017033af349fff6e718e08b6e9f81a97c18826bb81d22e12a5a7a9bda1"
-        "368ec38dd3436dcd7ce8688c7d14560b25117dc44630d7c0431fb0b19b967442fa6697"
-        "620be5d2f47eb7e08300b66e7a19902186d516f79f4091e39038f2c19b7430c0623ced"
-        "99ba3575ad2f28b4d24d958bd42d20eebb0593b7ccf3e13256974298de75ec793dba99"
-        "25942a2a12b9eb91b085a44fdc2ff0f214df58102fe350c139dab6353a18e07a269c78"
-        "8eacbf6cc7b9c4698d04b6"
-    );
+    //   blocks: [ ]
+    let data = &hex!(
+    "80a5fde9bf5bdda170b7492482dec446f38d549bf33447f5af08e4015f38f3c3500111"
+    "e76b1a629fc385e3687a2fdbaadca9b513540a49dca401caf7b8ad09337b49789c321c"
+    "7edec8924ed65bc58eb792bf6eb173de45755b4b70b3bedfa4bbe888e10d44bbf6be48"
+    "13745e17a8a749121a0433348acce6741e94ce58c122a2e6f423e91df5174e6670b1e5"
+    "6b3266c5d3d6206dd9b8bb3099294ed601426a8a342a040118a1a84ec4b5910b098791"
+    "ea593e958d2abe054b0d564289e4567de31f46e9c3272da6ff83f96c158d9937a6e9f8"
+    "eb3656d6e58a462355244c5da1f56e1e4b2e59e641acc10ae83b9d49a984843e21f9f9"
+    "4ac720c561d3ad10e73fdf38f4b7791127d861ba1972f28e57da7bf1c6d8"
+    )[..];
 
     let key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
 
-    let manifest = LocalChildManifest::decrypt_and_load(&data, &key);
+    // How to regenerate this test payload ???
+    // 1) Disable checks in `Blocksize::try_from` to accept any value
+    // 2) uncomment the following code:
+    //
+    //     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
+    //     let expected = LocalFileManifest {
+    //         parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
+    //         updated: now,
+    //         base: FileManifest {
+    //             author: "alice@dev1".parse().unwrap(),
+    //             timestamp: now,
+    //             id: VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap(),
+    //             version: 42,
+    //             created: now,
+    //             updated: now,
+    //             blocks: vec![],
+    //             blocksize: Blocksize::try_from(512).unwrap(),
+    //             parent: VlobID::from_hex("07748fbf67a646428427865fd730bf3e").unwrap(),
+    //             size: 0,
+    //         },
+    //         blocks: vec![],
+    //         blocksize: Blocksize::try_from(2).unwrap(),
+    //         need_sync: true,
+    //         size: 500,
+    //     };
+    //
+    // 3) Uses `misc/test_expected_payload_cooker.py`
 
-    assert!(manifest.is_err());
+    let outcome = LocalChildManifest::decrypt_and_load(data, &key);
+    assert_eq!(
+        outcome,
+        Err(DataError::BadSerialization {
+            format: Some(0),
+            step: "msgpack+validation"
+        })
+    );
 }
 
 #[rstest]
 #[case::folder_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Parsec v3.0.0-b.11+dev
-        // Content:
-        //   type: "local_folder_manifest"
-        //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
-        //   updated: ext(1, 1638618643.208821)
-        //   base: {
-        //     type: "folder_manifest"
-        //     author: ext(2, de10a11cec0010000000000000000000)
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //     children: {wksp1:ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))}
-        //   }
-        //   children: {wksp2:ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))}
-        //   local_confinement_points: [ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))]
-        //   remote_confinement_points: [ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))]
-        //   need_sync: true
-        //   speculative: false
-        &hex!(
-            "ab892bdf53c956853286db81fc065764581d7b4814f826665d7703f67be19079cf886b"
-            "d620679ec8e2c686b6ba432968aa3ed1a034e5a0551cf0632446e55bea7338829d2ba4"
-            "987d3cd5de8f885403fcddac91e50c2829c3e71556616d40f62e47087ab2fc59a67e58"
-            "f277f0606b5f1e2867dffac5324a41029b77ec028acc9115531cc5cd683f95ec5bd83c"
-            "a9533a6a2194ff2e763f05370509c137bb6e39263dc2ea879127d40eba075d8b05e167"
-            "295b218c1e31f914065147d64d3baf2c386c78f97a57e0d857bc8c947432eaf0d90055"
-            "e1297e99c89cf723c6306e4de954b71974026b31826a8657463aedaec5741d1ddec006"
-            "a914d636276f0d80ddb77841d7308ac776bc50cf4daa7a62cd0c0fbfe7b79a8dbd1d63"
-            "6b820a8760a233da7b1be6520469c4a09def3aaebc4679a4617b2cce451163372bab55"
-            "e9e948f7ad5fd5355a8585d58bd058306d90a445dc6b0a2c192d6af176a95db3a8fd51"
-            "63e9937bc85751afbc80a159bf01446c36484db99c873be3ee7d7e71b9cebede27b438"
-            "93265e1636549948bc084b1e45dff4a32af757905bf10e70c8527429ee857716ef0d5a"
-            "8e194dbd7af90f6820b9c21fdfff3e8291fa814cba96c6ac12a19a089a2e1ca622fad6"
-            "40"
-        )[..],
+    // Generated from Parsec 3.0.0-b.12+dev
+    // Content:
+    //   type: 'local_folder_manifest'
+    //   base:
+    //     type: 'folder_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     children: {
+    //       wksp1: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //     },
+    //   }
+    //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   children: { wksp2: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b), }
+    //   local_confinement_points: [ ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b), ]
+    //   remote_confinement_points: [ ext(2, 0xb82954f1138b4d719b7f5bd78915d20f), ]
+    //   speculative: False
+    &hex!(
+    "7335c86779af273389ee30d90a70c9f95e2bc395a97ef804bb84abe0f08b6411abe5b7"
+    "cb9fda6d14a16375c488254473a60ca456fa1d735bedf2d8f73ab5cdafcbc1121a6def"
+    "62c2b7b8e02b35fffc12fc41ee9cfb2b6cbdcf2f08b5ed869179d2287b74810714a570"
+    "fe81f558dba5a7c86f69008e6b34caef79c3ed8cafa55ba5d5fdc63f3a076f583dae5b"
+    "da729b02f0e3481b929182c4a459b95b5e4fd45d6ebc07d0619fc1cecdb01df1a819ff"
+    "c532a33768f2971421672cdd3582279350b739735d7027cbe6bba65d60f39d74a63a0d"
+    "25acff95df7c87a7022ec6aebd7ff758407ffc82bb203725be5ed6cdd2d90a842cf043"
+    "181c322dde2e3ccdcbe59921fe1011b09451fd905dc2c4b6f35fd8e69d003f29752e60"
+    "68cff472236aa2a92edfe8d207bd71469207f9b3816c21c88e59e1f16c65197124877a"
+    "af1e0b4e5354f483946219287a03b4396bac37549f52b30145067750"
+    )[..],
         LocalFolderManifest {
             parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
@@ -288,40 +316,37 @@ fn serde_local_file_manifest_invalid_blocksize() {
 #[case::folder_manifest_speculative(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Parsec v3.0.0-b.11+dev
-        // Content:
-        //   type: "local_folder_manifest"
-        //   parent: ext(2, hex!("40c8fe8cd69742479f418f1a6d54ea7a"))
-        //   updated: ext(1, 1638618643.208821)
-        //   base: {
-        //     type: "folder_manifest"
-        //     author: ext(2, de10a11cec0010000000000000000000)
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     parent: ext(2, hex!("07748fbf67a646428427865fd730bf3e"))
-        //     version: 0
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //     children: {}
-        //   }
-        //   children: {}
-        //   local_confinement_points: []
-        //   remote_confinement_points: []
-        //   need_sync: true
-        //   speculative: true
-        &hex!(
-            "c731bca8d0cb4aa5a0865a9f107a155ce56771464fb32779c461b10fa0926a190fb100"
-            "9bc7381c6d7e60ac6a6e591bf32d8c643642e80cef1dcc39425052798d569658d277a9"
-            "679278e37338485e9bea40e68eb00baccd004895af85170c1c7d629c3a865ad0541a96"
-            "44d3c9dd47d7118d4381028d080b799b5689414dc4b73f94a27eaec8dc2a87cb2ff27d"
-            "660883818415e6d5643b130c860cf0e3d7cfa0d2b668857b0cab7e073a88b547ec01d7"
-            "d6f799aa39003c86e1f2c53c3836f4f7214055dc6492e2771dc437b848e6ee7f0adc71"
-            "2d94ac5b44b98bd5b2f1b16ed301e8791899f88689bb015e1cd167f077ba2c557bf482"
-            "5989515d78a067a00edb00476246110e4f6e9b065315299c6e965151b663b8e025ac54"
-            "4f7843b8dc66cea69bdac349c096c5c6c7ea5a76561ca6979e3fe235b07a30d5c8f1ad"
-            "93d88b255e5c599722600107d25dbb6135d28bce8e37044e0d888cd3d202f06b5e7154"
-            "c8a1e8030cfa03e6828a150f1a260e974e53bee1bdd5"
-        )[..],
+    // Generated from Parsec 3.0.0-b.12+dev
+    // Content:
+    //   type: 'local_folder_manifest'
+    //   base: { type: 'folder_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     parent: ext(2, 0x07748fbf67a646428427865fd730bf3e),
+    //     version: 0,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     children: { },
+    //   }
+    //   parent: ext(2, 0x40c8fe8cd69742479f418f1a6d54ea7a)
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   children: { }
+    //   local_confinement_points: [ ]
+    //   remote_confinement_points: [ ]
+    //   speculative: True
+    &hex!(
+    "9f3fa66cd290bd883d465ffd4d69a0022de3821265ff8a9d73ffe6cec71648b13fd8a1"
+    "f12828d8fa7f546e6e3e522db59de612d99eb78e916c27c352e702710f16d0284f2ad7"
+    "8a0d637c404c3813cca6192df094581c9536f8c2739a2eac516ad0a46a6e61f5fe06c1"
+    "54dc26b88334fbfaaecc1278a9938298275acd178df7320bf07e0d55162213dfce122d"
+    "5aee5c0cd336ddb7e19d512bed90c22d7ad4901b80f3929b1668eab56867009c981fa3"
+    "2637e55bb4527769882d618fa05158aae94307ee875b3f752cca7acdc6fc92652ab3f9"
+    "5fea223fe98aef3c5180e50030c24d8175dd44dc3eeb70713a14073fb0ad390732c440"
+    "0c43f1ab71e646212ae8a454221fcf3afa90b1ea7babdb04399319f4ec100308edcf7f"
+    "f54217977fcd2784e05e5ae9b5d9"
+    )[..],
         LocalFolderManifest {
             parent: VlobID::from_hex("40c8fe8cd69742479f418f1a6d54ea7a").unwrap(),
             updated: now,
@@ -369,63 +394,56 @@ fn serde_local_folder_manifest(
 #[case::need_sync(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Parsec v3.0.0-b.11+dev
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: true
-        //   speculative: false
-        //   local_workspaces: [
-        //     {
-        //       name: "wksp1"
-        //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //       name_origin: {
-        //         type: "CERTIFICATE",
-        //         timestamp: ext(1, 1638618643.208821)
-        //       }
-        //       role: "CONTRIBUTOR"
-        //       role_origin: {
-        //         type: "CERTIFICATE",
-        //         timestamp: ext(1, 1638618643.208821)
-        //       }
-        //     },
-        //     {
-        //       name: "wksp2"
-        //       id: ext(2, hex!("d7e3af6a03e1414db0f4682901e9aa4b"))
-        //       name_origin: {
-        //         type: "PLACEHOLDER"
-        //       }
-        //       role: "CONTRIBUTOR"
-        //       role_origin: {
-        //         type: "PLACEHOLDER"
-        //       }
-        //     }
-        //   ]
-        //   base: {
-        //     type: "user_manifest"
-        //     device_id: ext(2, de10a11cec0010000000000000000000)
-        //     timestamp: ext(1, 1638618643.208821)
-        //     created: ext(1, 1638618643.208821)}
-        //     updated: ext(1, 1638618643.208821)
-        //     version: 42
-        //   }
-        &hex!(
-            "e1ddd0d0c31cc06de56514b4d2dd684a074d24e8a1843163900c1042bc7330c947eabf"
-            "5d41e986ae4d5bc7e603356774a87fb9ee43ee447a3cb17c730cbf85d729b2645f968f"
-            "193c9edaac1636c7445f1eb510348f1d7868a7e4fe10a6d24b2e2818f3237b8eeb2310"
-            "b8075fa062451786efc1902106d0d67c9f5985ad066acdb005c94d4d987c2b0ffb4f61"
-            "8b54260d8aab4f49f1acc1bcd67ced2ff5f52f62a3477449f9051719cced881b1bef8f"
-            "ffb3d906ac75b0cd55940b474ca96df8fc4b51447a7d96a4666401556300becc49e86c"
-            "2610f4f838e784b5bf41e880cb76f53c77267167f4000b5ba5c2b868d4dc082faf341c"
-            "74a9df66481e0aca6bf8e308a3ad62962edf345458ddab102951b1458059b9b2a9391e"
-            "564a283e66669641e4be87263fe79fe827eeddf25ce48ac1ac5e2598b5b2b559dbab91"
-            "0efcd702b8ab07555d0757e7070a1ef07738fe9df2c2fc3a54658c6d3798fc53bd6603"
-            "6b0dfb9815a3f4283c8460d4c1aa6923324146937edb4957184a0c77aac5ac6dcdde57"
-            "25fb3b85f0a47d4996a57af35757eef2fc6a1d258eca5d968cf60331379679c75f5816"
-            "9eb959da3ee7f9913ac1c6b325c1a759b3d09dab65007d97e817bd28c688a51e85ff57"
-            "87ef8de336742c196b73e2f2d9eba53905c736b8e5f5c77a7872fdd8d6270ffbc5fbf8"
-            "e672c5b4ed0fc260b42369da4c436e8387048223c7ef22404008fef6a98e40b882"
-        )[..],
+    // Generated from Parsec 3.0.0-b.12+dev
+    // Content:
+    //   type: 'local_user_manifest'
+    //   base: {
+    //     type: 'user_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //   }
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   local_workspaces: [
+    //     {
+    //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //       name: 'wksp1',
+    //       name_origin: {
+    //         type: 'CERTIFICATE',
+    //         timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //       },
+    //       role: 'CONTRIBUTOR',
+    //       role_origin: {
+    //         type: 'CERTIFICATE',
+    //         timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //       },
+    //     },
+    //     {
+    //       id: ext(2, 0xd7e3af6a03e1414db0f4682901e9aa4b),
+    //       name: 'wksp2',
+    //       name_origin: { type: 'PLACEHOLDER' },
+    //       role: 'CONTRIBUTOR',
+    //       role_origin: { type: 'PLACEHOLDER' },
+    //     },
+    //   ]
+    //   speculative: False
+    &hex!(
+    "0f753820f7e25cf7af67272fa482b0d7d9c473f958864fa39568da1da3bfaf7b7b1498"
+    "3e0e07cfa3fb9dc9cd16c1fd128a80a344e5546cd93ebb58fec559665d61fe81734748"
+    "17fe97e88736b518abd2f75528cd6f08b8aa4ae54bbb87b1e30c1e2a2b3d5be569eb41"
+    "7454916eb6360ebd7680f423eef60909bc7cb9e570c20bcb3af6ce2f525c79ffc7e090"
+    "ab18993db144f7e1e6a83bfc0602a43443ca423a7f9ea8a8773927c2859f50ef97eea3"
+    "96fe3589349f04b384c88b7d983dc27b98adfe042fdbd04f92fa6b4172402f9a4d761f"
+    "8ffd72a939ae63f81e355d170f9fcb2fb518b65cb99667d61ecf97886180edfa734f74"
+    "53816f16e09b90c10d051acdf2e4b436712d9cff46f07729b3faeaf506f7046df071e7"
+    "26635bb62866131a6d5413eb3666498dcdc76e0718f152a55fb12720201e6202ad8213"
+    "4ab79f12aaa74ed69002c90c4727863dcc44768d8e02838251c9168466688af704583f"
+    "f6"
+    )[..],
         LocalUserManifest {
             updated: now,
             need_sync: true,
@@ -460,47 +478,41 @@ fn serde_local_folder_manifest(
 #[case::synced(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Parsec v3.0.0-b.11+dev
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: false
-        //   speculative: false
-        //   local_workspaces: [
-        //     {
-        //       name: "wksp1"
-        //       id: ext(2, hex!("b82954f1138b4d719b7f5bd78915d20f"))
-        //       name_origin: {
-        //         type: "PLACEHOLDER"
-        //       }
-        //       role: "CONTRIBUTOR"
-        //       role_origin: {
-        //         type: "PLACEHOLDER"
-        //       }
-        //     },
-        //   ]
-        //   base: {
-        //     type: "user_manifest"
-        //     device_id: ext(2, de10a11cec0010000000000000000000)
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 42
-        //     created: ext(1, 1638618643.208821)}
-        //     updated: ext(1, 1638618643.208821)
-        //   }
-        &hex!(
-            "39679fb1d1b531e046a667e8c10030ad219218864cd6df033755b48330fc51088fd218"
-            "e167f8035456d89129b4959225401a00759d828ce8f3f8139e309cbf29e9223f73633c"
-            "abf15620478aafadd9cbfd51b22438a3b5c66036b7d8e5b3eb83c5aebcb2f02c8b5c2e"
-            "25b22e8963847346b21c564164f1d049ea556f7d3bbbe0e0ff7a60f742ceef2bb9789c"
-            "4ad2a33cfb4467ee5eafcb529f17d69e9d78042c45fffb6e3dce20bfcf8166f5749284"
-            "f21f3ad776aef0a7f58ea215408478e24132cb330ad7f9f81ce14ce055e8b7a3421678"
-            "959a9031a2613e6aa1c3756d90fe6ade7c621df8f63e500babcd0ca432764ab6b760f6"
-            "f67358bf369de860dc0719d42f78b68666cdc526674961d90df8060c29d0d1ce41abfa"
-            "5d976156ab8e95113aaf35e3f3c00d372a3a3f506fd346d99d1424bf6150293646b050"
-            "46147340166b046654d8c95a82e06864e2baf28e1e050198083a2c7eb09544e7863ed2"
-            "892a99fb2df4932550a763c347abdcce4d78256b230831"
-        )[..],
+    // Generated from Parsec 3.0.0-b.12+dev
+    // Content:
+    //   type: 'local_user_manifest'
+    //   base: {
+    //     type: 'user_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     version: 42,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //   }
+    //   need_sync: False
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   local_workspaces: [
+    //     {
+    //       id: ext(2, 0xb82954f1138b4d719b7f5bd78915d20f),
+    //       name: 'wksp1',
+    //       name_origin: { type: 'PLACEHOLDER' },
+    //       role: 'CONTRIBUTOR',
+    //       role_origin: { type: 'PLACEHOLDER' },
+    //     },
+    //   ]
+    //   speculative: False
+    &hex!(
+    "c2fbefd3eb566c936946ff3dba967816e71309af7c08629b388afe0f13c8d576e6fedb"
+    "6c222276d37cb75f22f839bfbd988a44bb2bb30d400451992c739a39f5d2257beefce3"
+    "66893af3153c02c2f7a07473c1ee9b42158800165a74151139fbadb424315cb20183a1"
+    "678204a3ee48d7053d261c7c88d1b00095e1d4c93b857a4873daf8b1f5da9d7d870406"
+    "6c53ff3f00d7480fba95faa42b6d453fbd0451c325617212c1e795cca0db31f24bec99"
+    "5bccab4975f46cf5fc80c1aea6afeda5f715a97abc7eee902157353033e0c56c72226a"
+    "8037e96f4580b9a381e19f924238fd27c40e6fa6f5ab34e05b8cfae95a9b51b459fa48"
+    "a1c6f951a362da351a2d4e65fb75268bed8451b4adcd28cb504d286d59caf4b802bf4a"
+    "133252a22eb7b511e43acf944890c41a0ded5ce78e356a"
+    )[..],
         LocalUserManifest {
             updated: now,
             need_sync: false,
@@ -528,32 +540,31 @@ fn serde_local_folder_manifest(
 #[case::speculative(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
     (
-        // Generated from Parsec v3.0.0-b.11+dev
-        // Content:
-        //   type: "local_user_manifest"
-        //   updated: ext(1, 1638618643.208821)
-        //   need_sync: true
-        //   speculative: true
-        //   local_workspaces: []
-        //   base: {
-        //     type: "user_manifest"
-        //     device_id: ext(2, de10a11cec0010000000000000000000)
-        //     timestamp: ext(1, 1638618643.208821)
-        //     id: ext(2, hex!("87c6b5fd3b454c94bab51d6af1c6930b"))
-        //     version: 0
-        //     created: ext(1, 1638618643.208821)
-        //     updated: ext(1, 1638618643.208821)
-        //   }
-        &hex!(
-            "63bd4da3423a061d0719d5c550bde6d4a6402d694d5ddb20cff209ddf57c1608812660"
-            "69b80b8993a588480e129e9393c357701681d51adc85825cab244f7bdadc1d636b40af"
-            "a544bff9b92048e9a2ef35617db6468e89b3e7cc35102c639d1782375e1379f3fe171b"
-            "f44a1552525bf0f9c5e011253a2ca50f3b0de0c161ac37417edfdbdec2912aeeb386d3"
-            "3a2a10a1705493600a20dbc326cfd4ed25dbe299a6ea1f2fa28da5b91f2f97f91d2291"
-            "0c6488b0064e418a6848de7f47611271aa86f900d0704a2436302411e57c0994b0829b"
-            "65278f92da9f5b2cb6d40e11dcf81fba6c5fca5a9bf5f9fbc9bfae74f247e553bf6bd2"
-            "eb1567bd99711d7986135498a1aadb5c7f07"
-        )[..],
+    // Generated from Parsec 3.0.0-b.12+dev
+    // Content:
+    //   type: 'local_user_manifest'
+    //   base: {
+    //     type: 'user_manifest',
+    //     author: ext(2, 0xde10a11cec0010000000000000000000),
+    //     timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     id: ext(2, 0x87c6b5fd3b454c94bab51d6af1c6930b),
+    //     version: 0,
+    //     created: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //     updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z,
+    //   }
+    //   need_sync: True
+    //   updated: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+    //   local_workspaces: [ ]
+    //   speculative: True
+    &hex!(
+    "d579acddc4dc982ce72bc15753a3e5743b791813be9790ac984af8e8cd99688ffb1dfe"
+    "8b4e6fdbfba6acec7f29d098469186160e9b1d90501a63fea75c90ff2f325a13665e63"
+    "bd5c5c9b603470084e6a9767b31d3da2ef27c80f24ae16dc44374d734388caebf02ba9"
+    "e069312011883ecde33977890510fbc3cfaf94f6585f3e1314c769d76d0723d8bcc040"
+    "14356e64c41360c9e93d6ee62ee666cabc9dc930b691e1d0f2a3cadb5fdbfc3b25541e"
+    "a971427811fa39acc4609c938fec7ca457901f1e74b1da623bf63b69f77a84e876936d"
+    "7fcead51737ebc8afd6b3d"
+    )[..],
         LocalUserManifest {
             updated: now,
             need_sync: true,
