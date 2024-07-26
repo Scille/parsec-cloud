@@ -9,3 +9,8 @@ export enum ClientAreaPages {
   PersonalData = 'personal-data',
   Statistics = 'statistics',
 }
+
+export enum BillingSystem {
+  MonthlySubscription = 'monthlySubscription',
+  CustomOrder = 'customOrder',
+}

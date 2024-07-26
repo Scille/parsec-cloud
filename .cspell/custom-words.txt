@@ -82,6 +82,7 @@ CFFI
 cfoo
 chacha
 chatbubbles
+chatbubbleEllipses
 CHECKICONHANDLER
 chgtime
 choco

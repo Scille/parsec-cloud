@@ -1173,6 +1173,31 @@
             "createAccountUrl": "https://parsec.cloud/en/tarification/",
             "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
         },
+        "sidebar": {
+            "goToOrganization": "Go to organization",
+            "allOrganization": "All organizations",
+            "state": {
+                "title": "State: ",
+                "active": "Active",
+                "freeze": "Freeze"
+            },
+            "menu": {
+                "summary": "Dashboard",
+                "stats": "Statistics",
+                "invoices": "Invoices",
+                "billingMethod": "Billing method",
+                "billingDetails": "Billing details",
+                "contracts": "Contracts"
+            },
+            "help": {
+                "title": "Do you need any help?",
+                "button": "Contact us"
+            },
+            "switchOrganization": {
+                "title": "Organizations",
+                "create": "Create new organization"
+            }
+        },
         "header": {
             "titles": {
                 "billingDetails": "Billing details",
