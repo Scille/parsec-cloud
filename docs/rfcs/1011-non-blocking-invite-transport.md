@@ -86,7 +86,7 @@ Getters:
   * for user invitation: all administrators
   * for device invitation: same as claimer id
   * for Shamir invitation: all recipients
-- get channel for greeter
+- get greeting session for greeter
 
 Methods:
 - create invitation
@@ -94,35 +94,35 @@ Methods:
 - complete invitation
 
 
-### Channel
+### Greeting session
 
-A channel is dedicated to the verification of the claimer identity by a specific greeter.
+A greeting session is dedicated to the verification of the claimer identity by a specific greeter.
 
-A channel is identified by:
+A greeting session is identified by:
 - organization id
 - invitation token
 - greeter id
 
 Mutable properties:
-- attempts ids: list of attempts
-   * Invariant: most recent attempt is active, all the rest is cancelled
+- greeting attempts ids: list of greeting attempts
+   * Invariant: only the most recent greeting attempt is active, all the rest is cancelled
 
 Getters:
-- get active attempt
+- get active greeting attempt
 
 Methods:
-- cancel active attempt (and create a new one)
+- cancel active greeting attempt (and create a new one)
 
 
-### Attempt
+### Greeting attempt
 
-An attempt is the steps followed by the peers of a given channel when trying to establish a secure communication channel.
+A greeting attempt is the steps followed by the peers of a given greeting session when trying to establish a secure communication channel.
 
-A new type of id called "attempt id" is introduced to identify uniquely a specific attempt in the context of a given organization.
+A new type of id called "greeting attempt id" is introduced to identify uniquely a specific greeting attempt in the context of a given organization.
 
 Identified by:
 - organization id
-- attempt id
+- greeting attempt id
 
 Immutable properties:
 - invitation token
@@ -141,19 +141,19 @@ Getters:
 - get steps
 
 Methods:
-- claimer join attempt
-- greeter join attempt
-- claimer cancel attempt
-- greeter cancel attempt
+- claimer join greeting attempt
+- greeter join greeting attempt
+- claimer cancel greeting attempt
+- greeter cancel greeting attempt
 
 
 ### Step
 
-A step corresponds to the exchange of two messages between the peers in the context of an attempt.
+A step corresponds to the exchange of two messages between the peers in the context of a greeting attempt.
 
 A step is identified by:
 - organization id
-- attempt id
+- greeting attempt id
 - step count
 
 Immutable properties:
@@ -178,44 +178,44 @@ Methods:
 
 7 commands are added in total:
 - 3 new invited commands
-    - [`invite_claimer_start_attempt`](#invite_claimer_start_attempt-command)
-    - [`invite_claimer_cancel_attempt`](#invite_claimer_cancel_attempt-command)
+    - [`invite_claimer_start_greeting_attempt`](#invite_claimer_start_greeting_attempt-command)
+    - [`invite_claimer_cancel_greeting_attempt`](#invite_claimer_cancel_greeting_attempt-command)
     - [`invite_claimer_step`](#invite_claimer_step-command)
 - 4 new authenticated commands
-    - [`invite_greeter_start_attempt`](#invite_greeter_start_attempt-command)
-    - [`invite_greeter_cancel_attempt`](#invite_greeter_cancel_attempt-command)
+    - [`invite_greeter_start_greeting_attempt`](#invite_greeter_start_greeting_attempt-command)
+    - [`invite_greeter_cancel_greeting_attempt`](#invite_greeter_cancel_greeting_attempt-command)
     - [`invite_greeter_step`](#invite_greeter_step-command)
     - [`invite_complete`](#invite_complete-command)
 
-#### `invite_greeter_start_attempt` command
+#### `invite_greeter_start_greeting_attempt` command
 
-Two new commands are introduced to start an attempt, which returns an attempt ID used in the subsequent queries. This attempt ID is the same for the greeter and the claimer, it is a UUID that uniquely identifies the attempt in the context of the organization. For the greeter, an authenticated command is exposed.
+Two new commands are introduced to start a greeting attempt, which returns a greeting attempt ID used in the subsequent queries. This greeting attempt ID is the same for the greeter and the claimer, it is a UUID that uniquely identifies the greeting attempt in the context of the organization. For the greeter, an authenticated command is exposed.
 
-In order for a greeter to start an attempt, a couple of checks have to be performed:
+In order for a greeter to start a greeting attempt, a couple of checks have to be performed:
 - the invitation exists
 - the invitation is pending (i.e. not completed or cancelled)
 - the author is allowed (i.e. it is part of the greeters)
 
-It's possible for the active attempt to be in a state where the greeter has already joined. Usually, previous attempts are expected to be cancelled by one of the peers, but one can think of many cases where this cancellation didn't occur (e.g. the greeter device shutdown, or another device has an ongoing attempt running that hasn't been cancelled by the user).
+It's possible for the active greeting attempt to be in a state where the greeter has already joined. Usually, previous attempts are expected to be cancelled by one of the peers, but one can think of many cases where this cancellation didn't occur (e.g. the greeter device shutdown, or another device has an ongoing attempt running that hasn't been cancelled by the user).
 
-In this case, the `invite_greeter_start_attempt` command cancels the active attempts automatically (using a dedicated reason), and joins the new active attempt. This means that the last device calling `start_attempt` always has the priority.
+In this case, the `invite_greeter_start_greeting_attempt` command cancels the active greeting attempts automatically (using a dedicated reason), and joins the new active greeting attempt. This means that the last device calling `start_greeting_attempt` always has the priority.
 
-If no cancellation of the active attempt is required, the greeter simply joins it and the command returns the corresponding attempt ID.
+If no cancellation of the active greeting attempt is required, the greeter simply joins it and the command returns the corresponding greeting attempt ID.
 
 Pseudo-code:
 
 ```python
-def invite_greeter_start_attempt(
+def invite_greeter_start_greeting_attempt(
     token: InvitationToken,
 ) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled
-  GreeterNotAllowed | OK[AttemptID]:
-    # If the greeter has already joined the active attempt:
-    #    -> cancel the active attempt and create a new one
+  GreeterNotAllowed | OK[GreetingAttemptID]:
+    # If the greeter has already joined the active greeting attempt:
+    #    -> cancel the active greeting attempt and create a new one
     [...]
-    # Get the active attempt and call `greeter_join_attempt()`
+    # Get the active greeting attempt and call `greeter_join_greeting_attempt()`
     [...]
-    # Return the attempt ID
+    # Return the greeting attempt ID
     [...]
 ```
 
@@ -228,7 +228,7 @@ Schema definition:
             4
         ],
         "req": {
-            "cmd": "invite_greeter_start_attempt",
+            "cmd": "invite_greeter_start_greeting_attempt",
             "fields": [
                 {
                     "name": "token",
@@ -241,8 +241,8 @@ Schema definition:
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "attempt",
-                        "type": "AttemptID"
+                        "name": "greeting_attempt",
+                        "type": "GreetingAttemptID"
                     }
                 ]
             },
@@ -268,11 +268,11 @@ Schema definition:
 ```
 
 
-#### `invite_claimer_start_attempt` command
+#### `invite_claimer_start_greeting_attempt` command
 
-This is the new invited command introduced for the claimer to start an attempt and get the corresponding attempt ID.
+This is the new invited command introduced for the claimer to start a greeting attempt and get the corresponding greeting attempt ID.
 
-In order for the claimer to start an attempt, a couple of checks have to be performed:
+In order for the claimer to start a greeting attempt, a couple of checks have to be performed:
 - the greeter exists
 - the greeter is allowed (i.e. it is part of the greeters)
 
@@ -282,26 +282,26 @@ In order for the claimer to start an attempt, a couple of checks have to be perf
 > [!NOTE]
 > The claimer chooses the greeter ID using the information it received from calling the existing `invite_info` command.
 
-Otherwise this command has the same logic as `invite_greeter_start_attempt`.
+Otherwise this command has the same logic as `invite_greeter_start_greeting_attempt`.
 
 Pseudo-code:
 
 ```python
-def invite_claimer_start_attempt(
+def invite_claimer_start_greeting_attempt(
     token: InvitationToken,
     greeter: UserID,
 ) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled |
   GreeterNotFound | GreeterRevoked | GreeterNotAllowed
-  OK[AttemptID]:
+  OK[GreetingAttemptID]:
     # Perform checks
     [...]
-    # If the claimer has already joined the active attempt:
-    #    -> cancel the active attempt and create a new one
+    # If the claimer has already joined the active greeting attempt:
+    #    -> cancel the active greeting attempt and create a new one
     [...]
-    # Get the active attempt and call `claimer_join_attempt()`
+    # Get the active greeting attempt and call `claimer_join_greeting_attempt()`
     [...]
-    # Return the attempt ID
+    # Return the greeting attempt ID
     [...]
 ```
 
@@ -314,7 +314,7 @@ Schema definition:
             4
         ],
         "req": {
-            "cmd": "invite_claimer_start_attempt",
+            "cmd": "invite_claimer_start_greeting_attempt",
             "fields": [
                 {
                     "name": "token",
@@ -331,8 +331,8 @@ Schema definition:
                 "status": "ok",
                 "fields": [
                     {
-                        "name": "attempt",
-                        "type": "AttemptID"
+                        "name": "greeting_attempt",
+                        "type": "GreetingAttemptID"
                     }
                 ]
             },
@@ -372,41 +372,41 @@ Schema definition:
 ```
 
 
-#### `invite_greeter_cancel_attempt` command
+#### `invite_greeter_cancel_greeting_attempt` command
 
-Two new commands are introduced to cancel an attempt, which registers a cancellation reason for the given attempt. For the greeter, an authenticated command is exposed. After using `invite_greeter_cancel_attempt`, the greeter can start a new attempt by using the `invite_greeter_start_attempt` command.
+Two new commands are introduced to cancel an attempt, which registers a cancellation reason for the given greeting attempt. For the greeter, an authenticated command is exposed. After using `invite_greeter_cancel_greeting_attempt`, the greeter can start a new greeting attempt by using the `invite_greeter_start_greeting_attempt` command.
 
-In order for a greeter to cancel an attempt, a couple of checks have to be performed:
+In order for a greeter to cancel a greeting attempt, a couple of checks have to be performed:
 - the invitation exists
 - the invitation is pending (i.e. not completed or cancelled)
 - the author is allowed (i.e. it is part of the greeters)
-- the attempt exists
-- the attempt is active (i.e. joined and not cancelled)
+- the greeting attempt exists
+- the greeting attempt is active (i.e. joined and not cancelled)
 
-Then, the active attempt is cancelled with the provided reason and a new active attempt is created. The cancellation reason covers several cases:
-- the user manually cancelled the attempt
+Then, the active greeting attempt is cancelled with the provided reason and a new active greeting attempt is created. The cancellation reason covers several cases:
+- the user manually cancelled the greeting attempt
 - the hashed nonce didn't match the provided nonce
 - the SAS code communicated to the user was invalid
 - the payload could not be deciphered
 - the payload could not be deserialized
 - the payload contained inconsistent information
-- the attempt has been automatically cancelled by a new `start_attempt` command
+- the greeting attempt has been automatically cancelled by a new `start_greeting_attempt` command
 
-It is also registered that the greeter cancelled the attempt, so that this information can be provided in subsequent `invitation_cancelled` replies, along with the corresponding reason and timestamp. This way, the front-end application has all the information to properly communicate to the user what happened during the attempt.
+It is also registered that the greeter cancelled the greeting attempt, so that this information can be provided in subsequent `invitation_cancelled` replies, along with the corresponding reason and timestamp. This way, the front-end application has all the information to properly communicate to the user what happened during the greeting attempt.
 
 Pseudo-code:
 
 ```python
-def invite_greeter_cancel_attempt(
-    attempt: AttemptID,
-    reason: CancelledAttemptReason,
+def invite_greeter_cancel_greeting_attempt(
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) ->
   InvitationCompleted | InvitationCancelled
-  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreetingAttemptNotFound | GreetingAttemptNotJoined | GreetingAttemptCancelled
   GreeterNotAllowed | OK:
     # Perform checks
     [...]
-    # Call `greeter_cancel_attempt(reason)`
+    # Call `greeter_cancel_greeting_attempt(reason)`
     [...]
 ```
 
@@ -419,15 +419,15 @@ Schema definition:
             4
         ],
         "req": {
-            "cmd": "invite_greeter_cancel_attempt",
+            "cmd": "invite_greeter_cancel_greeting_attempt",
             "fields": [
                 {
-                    "name": "attempt",
-                    "type": "AttemptID"
+                    "name": "greeting_attempt",
+                    "type": "GreetingAttemptID"
                 },
                 {
                     "name": "reason",
-                    "type": "CancelledAttemptReason"
+                    "type": "CancelledGreetingAttemptReason"
                 }
             ]
         },
@@ -447,21 +447,21 @@ Schema definition:
                 // The author is no longer part of the allowed greeters for this invitation
                 // An example of valid case for this error happens for a user invitation,
                 // if the profile of the author changes from ADMIN to NORMAL after
-                // `invite_greeter_start_attempt` was called by the claimer
+                // `invite_greeter_start_greeting_attempt` was called by the claimer
                 "status": "author_not_allowed"
             },
             {
-                // The attempt id doesn't correspond to any existing attempt
-                "status": "attempt_not_found"
+                // The greeting attempt id doesn't correspond to any existing attempt
+                "status": "greeting_attempt_not_found"
             },
             {
-                // The author did not join the attempt
-                // This should not happen, since joining is required to get the attempt ID
-                "status": "attempt_not_joined"
+                // The author did not join the greeting attempt
+                // This should not happen, since joining is required to get the greeting attempt ID
+                "status": "greeting_attempt_not_joined"
             },
             {
-                // The attempt has been already cancelled
-                "status": "attempt_already_cancelled",
+                // The greeting attempt has been already cancelled
+                "status": "greeting_attempt_already_cancelled",
                 "fields": [
                     {
                         "name": "origin",
@@ -473,7 +473,7 @@ Schema definition:
                     },
                     {
                         "name": "reason",
-                        "type": "CancelledAttemptReason"
+                        "type": "CancelledGreetingAttemptReason"
                     }
                 ]
             }
@@ -483,34 +483,34 @@ Schema definition:
 ```
 
 
-#### `invite_claimer_cancel_attempt` command
+#### `invite_claimer_cancel_greeting_attempt` command
 
-This is the new invited command introduced for the claimer to cancel an attempt with a provided reason.
+This is the new invited command introduced for the claimer to cancel a greeting attempt with a provided reason.
 
-In order for the claimer to cancel an attempt, a couple of checks have to be performed:
+In order for the claimer to cancel a greeting attempt, a couple of checks have to be performed:
 - the greeter exists
 - the greeter is allowed (i.e. it is part of the greeters)
-- the attempt exists
-- the attempt is active (i.e. joined and not cancelled)
+- the greeting attempt exists
+- the greeting attempt is active (i.e. joined and not cancelled)
 
 > [!NOTE]
 > The state of the invitation doesn't have to be checked since it is already checked by the `/invited` HTTP route.
 
-Otherwise this command has the same logic as `invite_greeter_cancel_attempt`.
+Otherwise this command has the same logic as `invite_greeter_cancel_greeting_attempt`.
 
 Pseudo-code:
 
 ```python
-def invite_claimer_cancel_attempt(
-    attempt: AttemptID,
-    reason: CancelledAttemptReason,
+def invite_claimer_cancel_greeting_attempt(
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) ->
   InvitationCompleted | InvitationCancelled
-  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreetingAttemptNotFound | GreetingAttemptNotJoined | GreetingAttemptCancelled
   GreeterRevoked | GreeterNotAllowed | OK:
     # Perform checks
     [...]
-    # Call `claimer_cancel_attempt(reason)`
+    # Call `claimer_cancel_greeting_attempt(reason)`
     [...]
 ```
 
@@ -523,15 +523,15 @@ Schema definition:
             4
         ],
         "req": {
-            "cmd": "invite_claimer_cancel_attempt",
+            "cmd": "invite_claimer_cancel_greeting_attempt",
             "fields": [
                 {
-                    "name": "attempt",
-                    "type": "AttemptID"
+                    "name": "greeting_attempt",
+                    "type": "GreetingAttemptID"
                 },
                 {
                     "name": "reason",
-                    "type": "CancelledAttemptReason"
+                    "type": "CancelledGreetingAttemptReason"
                 }
             ]
         },
@@ -558,21 +558,21 @@ Schema definition:
                 // The greeter is no longer part of the allowed greeters for this invitation
                 // An example of valid case for this error happens for a user invitation,
                 // if the profile of the greeter changes from ADMIN to NORMAL after
-                // `invite_claimer_start_attempt` was called by the claimer
+                // `invite_claimer_start_greeting_attempt` was called by the claimer
                 "status": "greeter_not_allowed"
             },
             {
-                // The attempt id doesn't correspond to any existing attempt
-                "status": "attempt_not_found"
+                // The greeting attempt id doesn't correspond to any existing attempt
+                "status": "greeting_attempt_not_found"
             },
             {
-                // The author did not join the attempt
-                // This should not happen, since joining is required to get the attempt ID
-                "status": "attempt_not_joined"
+                // The author did not join the greeting attempt
+                // This should not happen, since joining is required to get the greeting attempt ID
+                "status": "greeting_attempt_not_joined"
             },
             {
-                // The attempt has already been cancelled
-                "status": "attempt_already_cancelled",
+                // The greeting attempt has already been cancelled
+                "status": "greeting_attempt_already_cancelled",
                 "fields": [
                     {
                         "name": "origin",
@@ -584,7 +584,7 @@ Schema definition:
                     },
                     {
                         "name": "reason",
-                        "type": "CancelledAttemptReason"
+                        "type": "CancelledGreetingAttemptReason"
                     }
                 ]
             }
@@ -599,15 +599,15 @@ Schema definition:
 This authenticated command, along with `invite_claimer_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the greeter to submit the data for a given step. The step is identified by:
-- the provided attempt id
+- the provided greeting attempt id
 - the type of the submitted step data
 
 For the step data to be accepted, it has to pass the following checks:
 - the invitation exists
 - the invitation is pending (i.e. not completed nor cancelled)
 - the author is allowed (i.e. it is part of the greeters)
-- the attempt exists
-- the attempt is active (i.e. joined and not cancelled)
+- the greeting attempt exists
+- the greeting attempt is active (i.e. joined and not cancelled)
 - the previous steps must have been completed by both peers
 
 Once the data is accepted, it either returns:
@@ -622,12 +622,12 @@ Pseudo-code:
 
 ```python
 def invite_greeter_step(
-    attempt: AttemptID,
+    greeting_attempt: GreetingAttemptID,
     step: GreeterStep,
 ) ->
   InvitationCompleted | InvitationCancelled
   GreeterNotAllowed
-  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreetingAttemptNotFound | GreetingAttemptNotJoined | GreetingAttemptCancelled
   StepTooAdvanced | PayloadMismatch
   NotReady | OK[ClaimerStep]:
     # Perform checks
@@ -650,8 +650,8 @@ Schema definition:
             "cmd": "invite_greeter_step",
             "fields": [
                 {
-                    "name": "attempt",
-                    "type": "AttemptID"
+                    "name": "greeting_attempt",
+                    "type": "GreetingAttemptID"
                 },
                 {
                     "name": "greeter_step",
@@ -685,21 +685,21 @@ Schema definition:
                 // The author is no longer part of the allowed greeters for this invitation
                 // An example of valid case for this error happens for a user invitation,
                 // if the profile of the author changes from ADMIN to NORMAL after
-                // `invite_greeter_start_attempt` was called by the claimer
+                // `invite_greeter_start_greeting_attempt` was called by the claimer
                 "status": "author_not_allowed"
             },
             {
-                // The attempt id doesn't correspond to any existing attempt
-                "status": "attempt_not_found"
+                // The greeting attempt id doesn't correspond to any existing attempt
+                "status": "greeting_attempt_not_found"
             },
             {
-                // The author did not join the attempt
-                // This should not happen, since joining is required to get the attempt ID
-                "status": "attempt_not_joined"
+                // The author did not join the greeting attempt
+                // This should not happen, since joining is required to get the greeting attempt ID
+                "status": "greeting_attempt_not_joined"
             },
             {
-                // The attempt has been cancelled
-                "status": "attempt_cancelled",
+                // The greeting attempt has been cancelled
+                "status": "greeting_attempt_cancelled",
                 "fields": [
                     {
                         "name": "origin",
@@ -711,7 +711,7 @@ Schema definition:
                     },
                     {
                         "name": "reason",
-                        "type": "CancelledAttemptReason"
+                        "type": "CancelledGreetingAttemptReason"
                     }
                 ]
             },
@@ -752,14 +752,14 @@ Schema definition:
 This invited command, along with `invite_greeter_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the claimer to submit the data for a given step. The step is identified by:
-- the provided attempt id
+- the provided greeting attempt id
 - the type of the submitted step data
 
 For the step data to be accepted, it has to pass the following the checks:
 - the greeter exists
 - the greeter is allowed (i.e. it is part of the greeters)
-- the attempt exists
-- the attempt is active (i.e. joined and not cancelled)
+- the greeting attempt exists
+- the greeting attempt is active (i.e. joined and not cancelled)
 - the previous steps must have been completed by both peers
 
 > [!NOTE]
@@ -777,12 +777,12 @@ Pseudo-code:
 
 ```python
 def invite_claimer_step(
-    attempt: AttemptID,
+    greeting_attempt: GreetingAttemptID,
     step: ClaimerStep
 ) ->
   InvitationCompleted | InvitationCancelled
   GreeterRevoked | GreeterNotAllowed
-  AttemptNotFound | AttemptNotJoined | AttemptCancelled
+  GreetingAttemptNotFound | GreetingAttemptNotJoined | GreetingAttemptCancelled
   StepTooAdvanced | PayloadMismatch
   NotReady | OK[GreeterStep]:
     # Perform checks
@@ -805,8 +805,8 @@ Schema definition:
             "cmd": "invite_claimer_step",
             "fields": [
                 {
-                    "name": "attempt",
-                    "type": "AttemptID"
+                    "name": "greeting_attempt",
+                    "type": "GreetingAttemptID"
                 },
                 {
                     "name": "claimer_step",
@@ -847,21 +847,21 @@ Schema definition:
                 // The greeter is no longer part of the allowed greeters for this invitation
                 // An example of valid case for this error happens for a user invitation,
                 // if the profile of the greeter changes from ADMIN to NORMAL after
-                // `invite_claimer_start_attempt` was called by the claimer
+                // `invite_claimer_start_greeting_attempt` was called by the claimer
                 "status": "greeter_not_allowed"
             },
             {
-                // The attempt id doesn't correspond to any existing attempt
-                "status": "attempt_not_found"
+                // The greeting attempt id doesn't correspond to any existing attempt
+                "status": "greeting_attempt_not_found"
             },
             {
-                // The author did not join the attempt
-                // This should not happen, since joining is required to get the attempt ID
-                "status": "attempt_not_joined"
+                // The author did not join the greeting attempt
+                // This should not happen, since joining is required to get the greeting attempt ID
+                "status": "greeting_attempt_not_joined"
             },
             {
-                // The attempt has been cancelled
-                "status": "attempt_cancelled",
+                // The greeting attempt has been cancelled
+                "status": "greeting_attempt_cancelled",
                 "fields": [
                     {
                         "name": "origin",
@@ -873,7 +873,7 @@ Schema definition:
                     },
                     {
                         "name": "reason",
-                        "type": "CancelledAttemptReason"
+                        "type": "CancelledGreetingAttemptReason"
                     }
                 ]
             },
@@ -915,7 +915,7 @@ An extra authenticated command is added to complete an invitation.
 
 In the previous implementation, this was done automatically when the last exchange was performed. However, this is confusing in some cases:
 - Maybe the last exchange worked but the reply didn't reach one of the peers. In this case, the peer cannot retry the exchange since the invite is now completed.
-- In a shared recovery (Shamir) invitation, the invitation must not complete after a successful attempt since there might be more exchanges to complete with other recipients.
+- In a shared recovery (Shamir) invitation, the invitation must not complete after a successful greeting attempt since there might be more exchanges to complete with other recipients.
 
 A better approach is then to explicitly complete the invitation with a dedicated command. The allowed authors for this command depends on the invitation type:
 - User invitation: any administrator or the freshly registered user are allowed
@@ -1169,26 +1169,26 @@ Here's how a typical workflow for a user invitation can play out:
 invite_new_user(...) -> token
 
 # Later the user receives the invitation and starts polling
-invite_claimer_start_attempt(token, greeter) -> attempt ID
-invite_claimer_step(attempt, claimer_step_0) -> NotReady
+invite_claimer_start_greeting_attempt(token, greeter) -> greeting attempt ID
+invite_claimer_step(greeting_attempt, claimer_step_0) -> NotReady
 
 # Later a greeter connects
-invite_greeter_start_attempt(token) -> attempt ID
-invite_greeter_step(attempt, greeter_step_0) -> claimer_step_0
+invite_greeter_start_greeting_attempt(token) -> greeting attempt ID
+invite_greeter_step(greeting_attempt, greeter_step_0) -> claimer_step_0
 
 # ... while the claimer is still polling
-invite_claimer_step(attempt, claimer_step_0) -> greeter_step_0
+invite_claimer_step(greeting_attempt, claimer_step_0) -> greeter_step_0
 
 # Steps keep being submitted
-invite_greeter_step(attempt, greeter_step_1) -> NotReady
-invite_claimer_step(attempt, claimer_step_1) -> greeter_step_1
-invite_greeter_step(attempt, greeter_step_1) -> claimer_step_1
+invite_greeter_step(greeting_attempt, greeter_step_1) -> NotReady
+invite_claimer_step(greeting_attempt, claimer_step_1) -> greeter_step_1
+invite_greeter_step(greeting_attempt, greeter_step_1) -> claimer_step_1
 [...]
 
 # The step 8 is performed
-invite_greeter_step(attempt, greeter_step_8) -> NotReady
-invite_claimer_step(attempt, claimer_step_8) -> greeter_step_8
-invite_greeter_step(attempt, greeter_step_8) -> claimer_step_8
+invite_greeter_step(greeting_attempt, greeter_step_8) -> NotReady
+invite_claimer_step(greeting_attempt, claimer_step_8) -> greeter_step_8
+invite_greeter_step(greeting_attempt, greeter_step_8) -> claimer_step_8
 
 # The greeter can now mark the invitation as completed
 invite_greeter_complete(token)
@@ -1205,7 +1205,7 @@ But considering the expected simplifications over the current model, this RFC ad
 
 ## Security/Privacy/Compliance
 
-Those changes have few security implications. The main point to be careful with is to make sure that the attempt system cannot be abused to brute-force the SAS exchange. However, since user interaction is part of the process, it's hard to see how cancelling many attempts would help an attacker in this regard.
+Those changes have few security implications. The main point to be careful with is to make sure that the greeting attempt system cannot be abused to brute-force the SAS exchange. However, since user interaction is part of the process, it's hard to see how cancelling many attempts would help an attacker in this regard.
 
 ## Risks
 
