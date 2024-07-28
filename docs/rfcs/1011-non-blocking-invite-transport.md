@@ -292,7 +292,7 @@ def invite_claimer_start_attempt(
     greeter: UserID,
 ) ->
   InvitationNotFound | InvitationCompleted | InvitationCancelled |
-  GreeterNotFound | GreeterNotAllowed |
+  GreeterNotFound | GreeterRevoked | GreeterNotAllowed
   OK[AttemptID]:
     # Perform checks
     [...]
@@ -356,7 +356,14 @@ Schema definition:
                 "status": "greeter_not_found"
             },
             {
+                // The greeter has been revoked from the organization
+                "status": "greeter_revoked"
+            },
+            {
                 // The greeter is not part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the chosen greeter changes from ADMIN to NORMAL after
+                // `invite_info` was called by the claimer
                 "status": "greeter_not_allowed"
             }
         ]
@@ -437,7 +444,10 @@ Schema definition:
                 "status": "invitation_cancelled"
             },
             {
-                // The author is not part of the allowed greeters for this invitation
+                // The author is no longer part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the author changes from ADMIN to NORMAL after
+                // `invite_greeter_start_attempt` was called by the claimer
                 "status": "author_not_allowed"
             },
             {
@@ -497,7 +507,7 @@ def invite_claimer_cancel_attempt(
 ) ->
   InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
-  GreeterNotAllowed | OK:
+  GreeterRevoked | GreeterNotAllowed | OK:
     # Perform checks
     [...]
     # Call `claimer_cancel_attempt(reason)`
@@ -541,7 +551,14 @@ Schema definition:
             //     "status": "invitation_cancelled"
             // },
             {
-                // The greeter is not part of the allowed greeters for this invitation
+                // The greeter has been revoked from the organization
+                "status": "greeter_revoked"
+            },
+            {
+                // The greeter is no longer part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the greeter changes from ADMIN to NORMAL after
+                // `invite_claimer_start_attempt` was called by the claimer
                 "status": "greeter_not_allowed"
             },
             {
@@ -665,7 +682,10 @@ Schema definition:
                 "status": "invitation_cancelled"
             },
             {
-                // The author is not part of the allowed greeters for this invitation
+                // The author is no longer part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the author changes from ADMIN to NORMAL after
+                // `invite_greeter_start_attempt` was called by the claimer
                 "status": "author_not_allowed"
             },
             {
@@ -761,7 +781,7 @@ def invite_claimer_step(
     step: ClaimerStep
 ) ->
   InvitationCompleted | InvitationCancelled
-  GreeterNotAllowed
+  GreeterRevoked | GreeterNotAllowed
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   StepTooAdvanced | PayloadMismatch
   NotReady | OK[GreeterStep]:
@@ -820,7 +840,14 @@ Schema definition:
             //     "status": "invitation_cancelled"
             // },
             {
-                // The greeter is not part of the allowed greeters for this invitation
+                // The greeter has been revoked from the organization
+                "status": "greeter_revoked"
+            },
+            {
+                // The greeter is no longer part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the greeter changes from ADMIN to NORMAL after
+                // `invite_claimer_start_attempt` was called by the claimer
                 "status": "greeter_not_allowed"
             },
             {
