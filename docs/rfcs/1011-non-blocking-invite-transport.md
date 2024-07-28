@@ -118,11 +118,15 @@ Methods:
 
 An attempt is the steps followed by the peers of a given channel when trying to establish a secure communication channel.
 
-An attempt is identified by:
+A new type of id called "attempt id" is introduced to identify uniquely a specific attempt in the context of a given organization.
+
+Identified by:
 - organization id
+- attempt id
+
+Immutable properties:
 - invitation token
 - greeter id
-- attempt id
 
 Mutable properties:
 - claimer joined: `NotSet` | `Timestamp`
@@ -149,10 +153,12 @@ A step corresponds to the exchange of two messages between the peers in the cont
 
 A step is identified by:
 - organization id
-- invitation token
-- greeter id
 - attempt id
 - step count
+
+Immutable properties:
+- invitation token
+- greeter id
 
 Mutable properties:
 - claimer data: `NotSet` | `ClaimerStep`
@@ -183,7 +189,7 @@ Methods:
 
 #### `invite_greeter_start_attempt` command
 
-Two new commands are introduced to start an attempt, which returns an attempt ID used in the subsequent queries. This attempt ID is the same for the greeter and the claimer. For the greeter, an authenticated command is exposed.
+Two new commands are introduced to start an attempt, which returns an attempt ID used in the subsequent queries. This attempt ID is the same for the greeter and the claimer, it is a UUID that uniquely identifies the attempt in the context of the organization. For the greeter, an authenticated command is exposed.
 
 In order for a greeter to start an attempt, a couple of checks have to be performed:
 - the invitation exists
@@ -385,11 +391,10 @@ Pseudo-code:
 
 ```python
 def invite_greeter_cancel_attempt(
-    token: InvitationToken,
     attempt: AttemptID,
     reason: CancelledAttemptReason,
 ) ->
-  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   GreeterNotAllowed | OK:
     # Perform checks
@@ -410,10 +415,6 @@ Schema definition:
             "cmd": "invite_greeter_cancel_attempt",
             "fields": [
                 {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
                     "name": "attempt",
                     "type": "AttemptID"
                 },
@@ -426,10 +427,6 @@ Schema definition:
         "reps": [
             {
                 "status": "ok"
-            },
-            {
-                // The invitation token doesn't correspond to any existing invitation
-                "status": "invitation_not_found"
             },
             {
                 // The invitation has already been completed
@@ -495,14 +492,12 @@ Pseudo-code:
 
 ```python
 def invite_claimer_cancel_attempt(
-    token: InvitationToken,
-    greeter: GreeterID,
     attempt: AttemptID,
     reason: CancelledAttemptReason,
 ) ->
-  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  InvitationCompleted | InvitationCancelled
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
-  GreeterNotFound | GreeterNotAllowed | OK:
+  GreeterNotAllowed | OK:
     # Perform checks
     [...]
     # Call `claimer_cancel_attempt(reason)`
@@ -521,14 +516,6 @@ Schema definition:
             "cmd": "invite_claimer_cancel_attempt",
             "fields": [
                 {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
-                    "name": "greeter",
-                    "type": "UserID"
-                },
-                {
                     "name": "attempt",
                     "type": "AttemptID"
                 },
@@ -546,10 +533,6 @@ Schema definition:
             // Instead, in those cases, the claimer would get an HTTP 410 error, defined
             // as `InvitationAlreadyUsedOrDeleted`.
             // {
-            //     // The invitation token doesn't correspond to any existing invitation
-            //     "status": "invitation_not_found"
-            // },
-            // {
             //     // The invitation has already been completed
             //     "status": "invitation_completed"
             // },
@@ -557,10 +540,6 @@ Schema definition:
             //     // The invitation has been cancelled
             //     "status": "invitation_cancelled"
             // },
-            {
-                // The provided greeter ID doesn't correspond to any existing greeter
-                "status": "greeter_not_found"
-            },
             {
                 // The greeter is not part of the allowed greeters for this invitation
                 "status": "greeter_not_allowed"
@@ -603,8 +582,7 @@ Schema definition:
 This authenticated command, along with `invite_claimer_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the greeter to submit the data for a given step. The step is identified by:
-- the author of the command (being the greeter)
-- the invitation token
+- the provided attempt id
 - the type of the submitted step data
 
 For the step data to be accepted, it has to pass the following checks:
@@ -627,11 +605,10 @@ Pseudo-code:
 
 ```python
 def invite_greeter_step(
-    token: InvitationToken,
     attempt: AttemptID,
     step: GreeterStep,
 ) ->
-  InvitationNotFound | InvitationCompleted | InvitationCancelled
+  InvitationCompleted | InvitationCancelled
   GreeterNotAllowed
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   StepTooAdvanced | PayloadMismatch
@@ -656,10 +633,6 @@ Schema definition:
             "cmd": "invite_greeter_step",
             "fields": [
                 {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
                     "name": "attempt",
                     "type": "AttemptID"
                 },
@@ -682,10 +655,6 @@ Schema definition:
             {
                 // The claimer has not submitted its step yet
                 "status": "not_ready"
-            },
-            {
-                // The invitation token doesn't correspond to any existing invitation
-                "status": "invitation_not_found"
             },
             {
                 // The invitation has already been completed
@@ -763,8 +732,7 @@ Schema definition:
 This invited command, along with `invite_greeter_step`, is the main route used to establish a secure channel between both peers.
 
 It is used by the claimer to submit the data for a given step. The step is identified by:
-- the provided greeter
-- the invitation token
+- the provided attempt id
 - the type of the submitted step data
 
 For the step data to be accepted, it has to pass the following the checks:
@@ -789,13 +757,11 @@ Pseudo-code:
 
 ```python
 def invite_claimer_step(
-    token: InvitationToken,
-    greeter: UserID,
     attempt: AttemptID,
     step: ClaimerStep
 ) ->
-  InvitationNotFound | InvitationCompleted | InvitationCancelled
-  GreeterNotFound | GreeterNotAllowed
+  InvitationCompleted | InvitationCancelled
+  GreeterNotAllowed
   AttemptNotFound | AttemptNotJoined | AttemptCancelled
   StepTooAdvanced | PayloadMismatch
   NotReady | OK[GreeterStep]:
@@ -818,14 +784,6 @@ Schema definition:
         "req": {
             "cmd": "invite_claimer_step",
             "fields": [
-                {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
-                    "name": "greeter",
-                    "type": "UserID"
-                },
                 {
                     "name": "attempt",
                     "type": "AttemptID"
@@ -854,10 +812,6 @@ Schema definition:
             // Instead, in those cases, the claimer would get an HTTP 410 error, defined
             // as `InvitationAlreadyUsedOrDeleted`.
             // {
-            //     // The invitation token doesn't correspond to any existing invitation
-            //     "status": "invitation_not_found"
-            // },
-            // {
             //     // The invitation has already been completed
             //     "status": "invitation_completed"
             // },
@@ -865,10 +819,6 @@ Schema definition:
             //     // The invitation has been cancelled
             //     "status": "invitation_cancelled"
             // },
-            {
-                // The provided greeter ID doesn't correspond to any existing greeter
-                "status": "greeter_not_found"
-            },
             {
                 // The greeter is not part of the allowed greeters for this invitation
                 "status": "greeter_not_allowed"
@@ -1193,25 +1143,25 @@ invite_new_user(...) -> token
 
 # Later the user receives the invitation and starts polling
 invite_claimer_start_attempt(token, greeter) -> attempt ID
-invite_claimer_step(token, greeter, attempt, claimer_step_0) -> NotReady
+invite_claimer_step(attempt, claimer_step_0) -> NotReady
 
 # Later a greeter connects
 invite_greeter_start_attempt(token) -> attempt ID
-invite_greeter_step(token, attempt, greeter_step_0) -> claimer_step_0
+invite_greeter_step(attempt, greeter_step_0) -> claimer_step_0
 
 # ... while the claimer is still polling
-invite_claimer_step(token, greeter, attempt, claimer_step_0) -> greeter_step_0
+invite_claimer_step(attempt, claimer_step_0) -> greeter_step_0
 
 # Steps keep being submitted
-invite_greeter_step(token, attempt, greeter_step_1) -> NotReady
-invite_claimer_step(token, greeter, attempt, claimer_step_1) -> greeter_step_1
-invite_greeter_step(token, attempt, greeter_step_1) -> claimer_step_1
+invite_greeter_step(attempt, greeter_step_1) -> NotReady
+invite_claimer_step(attempt, claimer_step_1) -> greeter_step_1
+invite_greeter_step(attempt, greeter_step_1) -> claimer_step_1
 [...]
 
 # The step 8 is performed
-invite_greeter_step(token, attempt, greeter_step_8) -> NotReady
-invite_claimer_step(token, greeter, attempt, claimer_step_8) -> greeter_step_8
-invite_greeter_step(token, attempt, greeter_step_8) -> claimer_step_8
+invite_greeter_step(attempt, greeter_step_8) -> NotReady
+invite_claimer_step(attempt, claimer_step_8) -> greeter_step_8
+invite_greeter_step(attempt, greeter_step_8) -> claimer_step_8
 
 # The greeter can now mark the invitation as completed
 invite_greeter_complete(token)
