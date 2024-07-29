@@ -81,7 +81,7 @@ macro_rules! generate_field_type_enum {
                     }
 
                     // Invalid type :(
-                    _ => panic!("Invalid type `{}`", s),
+                    _ => panic!("Invalid type `{}`. Is it in `generate_field_type_enum!` ?", s),
                 }
             }
 
@@ -253,4 +253,5 @@ generate_field_type_enum!(
     X509Certificate => libparsec_types::X509Certificate,
     // Used only in protocol
     IntegerBetween1And100 => libparsec_types::IntegerBetween1And100,
+    AttemptID => libparsec_types::AttemptID
 );
