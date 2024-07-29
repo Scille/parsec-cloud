@@ -11,6 +11,7 @@ pub type Integer = i64;
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct DeviceID(pub String);
 
+#[allow(dead_code)]
 pub trait ProtocolRequest<const V: u32> {
     type Response: for<'de> Deserialize<'de>;
 

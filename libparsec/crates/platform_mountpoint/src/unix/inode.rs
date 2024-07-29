@@ -31,9 +31,9 @@ impl Default for PathsStore {
 /// `Counter` wrapper used to interface with `FUSE` low level `API`
 ///
 /// - Every time `reply_entry` or `reply_created` are called, `inode's counter`
-/// should be incremented.
+///   should be incremented.
 /// - Every time `forget` is called, `inode's counter` should be decremented by
-/// `nlookup`.
+///   `nlookup`.
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(test, derive(PartialEq, Eq))]
 pub(crate) struct Counter(u64);

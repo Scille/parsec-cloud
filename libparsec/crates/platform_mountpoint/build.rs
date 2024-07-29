@@ -11,6 +11,10 @@ fn main() {
     // loaded ("delayload" option in MSVC) so that we will have time to first configure the
     // lookup directory.
     winfsp_wrs_build::build();
+    // TODO: enable this once cargo>1.80 is used
+    // #[cfg(target_family = "unix")]
+    // Tell rust about the config `skip_fuse_atime_option`.
+    // println!("cargo::rustc-check-cfg=cfg(skip_fuse_atime_option)");
     #[cfg(target_os = "linux")]
     {
         // The atime option is not supported in fuse >= 3.15.
