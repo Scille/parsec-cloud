@@ -93,6 +93,59 @@ where
         .map_err(|e| anyhow::anyhow!("{e:?}"))
 }
 
+pub(super) async fn list<V>(
+    tx: &IdbTransaction<'_>,
+    store: &str,
+    offset: u32,
+    limit: u32,
+) -> anyhow::Result<Vec<V>>
+where
+    V: DeserializeOwned,
+{
+    use js_sys::Number;
+    use web_sys::IdbKeyRange;
+
+    // Index start at 1
+    let start = offset + 1;
+    let end = start + limit;
+
+    let range = IdbKeyRange::bound_with_lower_open_and_upper_open(
+        &Number::from(start),
+        &Number::from(end),
+        false,
+        true,
+    )
+    .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    let store = tx
+        .object_store(store)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?;
+
+    let Some(cursor) = store
+        .open_cursor_with_range_owned(range)
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:?}"))?
+    else {
+        return Ok(Vec::new());
+    };
+
+    cursor
+        .into_vec(0)
+        .await
+        .map_err(|e| anyhow::anyhow!("{e:?}"))
+        .and_then(|v: Vec<_>| {
+            v.into_iter()
+                .map(|key_val|
+                    // TODO: Sad that KeyVal does not provide it's internal value without a reference.
+                    // That reference force us to clone the value, which is not optimal.
+                    // Could be improved if https://github.com/Alorel/rust-indexed-db/issues/39 is fixed
+                    serde_wasm_bindgen::from_value(key_val.value().clone())
+                        .map_err(|e| anyhow::anyhow!("{e:?}")))
+                .collect::<anyhow::Result<Vec<V>>>()
+        })
+}
+
 pub(super) async fn count(
     tx: &IdbTransaction<'_>,
     store: &str,

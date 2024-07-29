@@ -143,6 +143,19 @@ impl PlatformWorkspaceStorage {
         )
     }
 
+    pub async fn list_manifests(
+        &mut self,
+        offset: u32,
+        limit: u32,
+    ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
+        Vlob::list(&self.conn, offset, limit).await.map(|vlobs| {
+            vlobs
+                .into_iter()
+                .map(|vlob| RawEncryptedManifest::from(vlob.blob))
+                .collect()
+        })
+    }
+
     pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
         let transaction = super::model::Chunk::read(&self.conn)?;
         db_get_chunk(&transaction, chunk_id).await

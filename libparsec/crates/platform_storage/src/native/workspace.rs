@@ -4,6 +4,7 @@
 // validation work and takes care of handling concurrency issues.
 // Hence no unique violation should occur under normal circumstances here.
 
+use libparsec_platform_async::stream::{StreamExt, TryStreamExt};
 use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
@@ -197,6 +198,14 @@ impl PlatformWorkspaceStorage {
         entry_id: VlobID,
     ) -> anyhow::Result<Option<RawEncryptedManifest>> {
         db_get_manifest(&mut self.conn, entry_id).await
+    }
+
+    pub async fn list_manifests(
+        &mut self,
+        offset: u32,
+        limit: u32,
+    ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
+        db_list_manifests(&mut self.conn, offset, limit).await
     }
 
     pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
@@ -639,6 +648,33 @@ async fn db_get_manifest(
             Ok(Some(blob))
         }
     }
+}
+
+async fn db_list_manifests(
+    executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
+    offset: u32,
+    limit: u32,
+) -> anyhow::Result<Vec<RawEncryptedManifest>> {
+    let rows = sqlx::query("SELECT blob FROM vlobs LIMIT ?1 OFFSET ?2")
+        .bind(limit)
+        .bind(offset)
+        .fetch_many(executor);
+
+    let res: anyhow::Result<Vec<RawEncryptedManifest>> = rows
+        .filter_map(|row_res| async {
+            match row_res {
+                // `fetch_many` returns a single "left" element for the query result (containing, among others,
+                // the number of changes), then (what we are actually interested into here) one "right"
+                // elements for each row in the result.
+                Ok(sqlx::Either::Left(_res)) => None,
+                Ok(sqlx::Either::Right(row)) => Some(row.try_get(0).map_err(anyhow::Error::from)),
+                Err(e) => Some(Err(e.into())),
+            }
+        })
+        .try_collect()
+        .await;
+
+    res
 }
 
 pub async fn db_get_chunk(

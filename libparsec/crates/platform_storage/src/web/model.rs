@@ -574,6 +574,15 @@ impl Vlob {
         super::db::get_all(&tx, Self::STORE).await
     }
 
+    pub(super) async fn list(
+        conn: &IdbDatabase,
+        offset: u32,
+        limit: u32,
+    ) -> anyhow::Result<Vec<Self>> {
+        let tx = Self::read(conn)?;
+        super::db::list(&tx, Self::STORE, offset, limit).await
+    }
+
     pub(super) async fn remove(tx: &IdbTransaction<'_>, vlob_id: &Bytes) -> anyhow::Result<()> {
         let vlob_id =
             serde_wasm_bindgen::to_value(vlob_id).map_err(|e| anyhow::anyhow!("{e:?}"))?;
