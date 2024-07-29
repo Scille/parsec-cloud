@@ -74,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@245201e3f58019204d99920deeb78aade6724230 # pin v6.6.0
+        uses: streetsidesoftware/cspell-action@2db9e5fb6d08776bed383767ef4e5dd84650546c # pin v6.7.1
         with:
           config: .cspell/cspell.config.yml
           # Only check for changed files on a PR
