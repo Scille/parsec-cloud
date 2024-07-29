@@ -130,7 +130,7 @@ glob = { version = "0.3.1", default-features = false }
 gloo-timers = { version = "0.3.0", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
 hex = { version = "0.4.3", default-features = false }
-indexed_db_futures = { version = "0.4.2", default-features = false }
+indexed_db_futures = { version = "0.5.0", default-features = false }
 instant = { version = "0.1.13", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
