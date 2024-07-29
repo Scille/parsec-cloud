@@ -11,36 +11,11 @@ use indexed_db_futures::IdbDatabase;
 use libparsec_types::prelude::*;
 
 use crate::certificates::{
-    FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps, UpTo,
+    FilterKind, GetCertificateError, GetCertificateQuery, PerTopicLastTimestamps,
+    StorableCertificateTopic, UpTo,
 };
 use crate::web::model::{Certificate, CertificateFilter};
 use crate::web::DB_VERSION;
-
-const COMMON_CERTIFICATES: [&str; 4] = [
-    "user_certificate",
-    "device_certificate",
-    "user_update_certificate",
-    "revoked_user_certificate",
-];
-
-const SEQUESTER_CERTIFICATES: [&str; 3] = [
-    "sequester_authority_certificate",
-    "sequester_service_certificate",
-    "sequester_revoked_service_certificate",
-];
-
-const REALM_CERTIFICATES: [&str; 4] = [
-    "realm_role_certificate",
-    "realm_name_certificate",
-    "realm_key_rotation_certificate",
-    "realm_archiving_certificate",
-];
-
-const SHAMIR_RECOVERY_CERTIFICATES: [&str; 2] = [
-    "shamir_recovery_share_certificate",
-    "shamir_recovery_brief_certificate",
-    // TODO deletion certificate
-];
 
 #[derive(Debug)]
 pub(crate) struct PlatformCertificatesStorageForUpdateGuard<'a> {
@@ -183,7 +158,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
         let mut per_realm_last_timestamps = HashMap::new();
         let mut shamir_recovery_last_timestamp = None;
 
-        for ty in COMMON_CERTIFICATES {
+        for ty in <CommonTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -202,7 +177,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             }
         }
 
-        for ty in SEQUESTER_CERTIFICATES {
+        for ty in <SequesterTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -221,7 +196,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             }
         }
 
-        for ty in REALM_CERTIFICATES {
+        for ty in <RealmTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
@@ -248,7 +223,7 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
             }
         }
 
-        for ty in SHAMIR_RECOVERY_CERTIFICATES {
+        for ty in <ShamirRecoveryTopicArcCertificate as StorableCertificateTopic>::TYPES {
             let certifs = Certificate::get_values(
                 &self.transaction,
                 CertificateFilter(GetCertificateQuery::NoFilter {
