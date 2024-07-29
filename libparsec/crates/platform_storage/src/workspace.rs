@@ -24,10 +24,12 @@ pub struct WorkspaceStorage {
 
 pub struct UpdateManifestData {
     pub entry_id: VlobID,
-    pub encrypted: Vec<u8>,
+    pub encrypted: RawEncryptedManifest,
     pub need_sync: bool,
     pub base_version: VersionInt,
 }
+
+pub type RawEncryptedManifest = Vec<u8>;
 
 pub enum PopulateManifestOutcome {
     Stored,
@@ -133,7 +135,10 @@ impl WorkspaceStorage {
         self.platform.get_outbound_need_sync(limit).await
     }
 
-    pub async fn get_manifest(&mut self, entry_id: VlobID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_manifest(
+        &mut self,
+        entry_id: VlobID,
+    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
         self.platform.get_manifest(entry_id).await
     }
 

@@ -14,7 +14,7 @@ use libparsec_types::prelude::*;
 
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
-use crate::workspace::{PopulateManifestOutcome, UpdateManifestData};
+use crate::workspace::{PopulateManifestOutcome, RawEncryptedManifest, UpdateManifestData};
 
 use super::model::{
     get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
@@ -192,7 +192,10 @@ impl PlatformWorkspaceStorage {
         db_get_outbound_need_sync(&mut self.conn, limit).await
     }
 
-    pub async fn get_manifest(&mut self, entry_id: VlobID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_manifest(
+        &mut self,
+        entry_id: VlobID,
+    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
         db_get_manifest(&mut self.conn, entry_id).await
     }
 
@@ -618,7 +621,7 @@ pub async fn db_update_manifest_remote_version(
 async fn db_get_manifest(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     entry_id: VlobID,
-) -> anyhow::Result<Option<Vec<u8>>> {
+) -> anyhow::Result<Option<RawEncryptedManifest>> {
     let row = sqlx::query(
         "SELECT blob \
         FROM vlobs \
@@ -632,7 +635,7 @@ async fn db_get_manifest(
     match row {
         None => Ok(None),
         Some(row) => {
-            let blob = row.try_get::<Vec<u8>, _>(0)?;
+            let blob = row.try_get::<RawEncryptedManifest, _>(0)?;
             Ok(Some(blob))
         }
     }

@@ -16,7 +16,7 @@ use crate::{
         model::{RealmCheckpoint, Vlob},
         DB_VERSION,
     },
-    workspace::{PopulateManifestOutcome, UpdateManifestData},
+    workspace::{PopulateManifestOutcome, RawEncryptedManifest, UpdateManifestData},
 };
 
 use super::{db, model::PreventSyncPattern};
@@ -130,7 +130,10 @@ impl PlatformWorkspaceStorage {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    pub async fn get_manifest(&mut self, entry_id: VlobID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_manifest(
+        &mut self,
+        entry_id: VlobID,
+    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
         let transaction = Vlob::read(&self.conn)?;
 
         Ok(
