@@ -71,35 +71,3 @@ impl Serialize for HashDigest {
         serializer.serialize_bytes(self.as_ref())
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    trait BaseHashDigest<'de, 'f>:
-        serde::Serialize
-        + serde::Deserialize<'de>
-        + AsRef<[u8]>
-        + TryFrom<&'f [u8]>
-        + From<[u8; HashDigest::SIZE]>
-        + TryFrom<&'f Bytes>
-    {
-        const ALGORITHM: &'static str;
-        const SIZE: usize;
-
-        fn from_data(data: &[u8]) -> Self;
-        fn hexdigest(&self) -> String;
-    }
-
-    impl BaseHashDigest<'_, '_> for HashDigest {
-        const ALGORITHM: &'static str = HashDigest::ALGORITHM;
-        const SIZE: usize = HashDigest::SIZE;
-
-        fn from_data(data: &[u8]) -> Self {
-            HashDigest::from_data(data)
-        }
-        fn hexdigest(&self) -> String {
-            self.hexdigest()
-        }
-    }
-}
