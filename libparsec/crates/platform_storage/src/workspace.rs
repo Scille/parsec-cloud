@@ -142,6 +142,14 @@ impl WorkspaceStorage {
         self.platform.get_manifest(entry_id).await
     }
 
+    pub async fn list_manifests(
+        &mut self,
+        offset: u32,
+        limit: u32,
+    ) -> anyhow::Result<Vec<RawEncryptedManifest>> {
+        self.platform.list_manifests(offset, limit).await
+    }
+
     pub async fn populate_manifest(
         &mut self,
         manifest: &UpdateManifestData,

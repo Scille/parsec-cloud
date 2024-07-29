@@ -326,6 +326,58 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+async fn list_manifests(env: &TestbedEnv) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
+    let entry1_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
+    let entry2_id = VlobID::from_hex("aa0000000000000000000000000000f2").unwrap();
+    let alice = env.local_device("alice@dev1");
+
+    let mut workspace_storage =
+        WorkspaceStorage::start(&env.discriminant_dir, &alice, realm_id, u64::MAX)
+            .await
+            .unwrap();
+
+    workspace_storage
+        .update_manifests(
+            [
+                UpdateManifestData {
+                    entry_id: entry1_id,
+                    encrypted: b"<manifest1_v1>".to_vec(),
+                    need_sync: true,
+                    base_version: 1,
+                },
+                UpdateManifestData {
+                    entry_id: entry2_id,
+                    encrypted: b"<manifest2_v2>".to_vec(),
+                    need_sync: false,
+                    base_version: 2,
+                },
+            ]
+            .into_iter(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_eq!(
+        workspace_storage.list_manifests(0, 1).await.unwrap(),
+        [b"<manifest1_v1>"]
+    );
+    p_assert_eq!(
+        workspace_storage.list_manifests(1, 1).await.unwrap(),
+        [b"<manifest2_v2>"]
+    );
+
+    p_assert_eq!(
+        workspace_storage.list_manifests(0, 10).await.unwrap(),
+        [b"<manifest1_v1>", b"<manifest2_v2>"]
+    );
+    p_assert_eq!(
+        workspace_storage.list_manifests(2, 10).await.unwrap(),
+        [] as [&[u8]; 0]
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
 async fn update_manifests(env: &TestbedEnv) {
     let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
     let entry1_id = VlobID::from_hex("aa0000000000000000000000000000f1").unwrap();
