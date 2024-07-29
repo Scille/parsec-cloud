@@ -139,7 +139,10 @@ pub(super) trait StorableCertificateTopic {
     /// This method is not meant to be executed, instead it acts as a canary by making
     /// the compilation fails if a new certificate is added to a topic without updating
     /// the implementation of `StorableCertificateTopic` trait for said topic.
+    ///
+    /// See the implementation of this method in the [`impl_storable_certificate_topic!`] macro.
     #[cfg(test)]
+    #[allow(unused)]
     fn topic_certifs_correspondance_canary(certif: Self);
 }
 
@@ -151,8 +154,15 @@ macro_rules! impl_storable_certificate_topic {
                     <paste!{ [< $certif Certificate >] } as StorableCertificate>::TYPE,
                 )*
             ];
+
             #[cfg(test)]
             fn topic_certifs_correspondance_canary(certif: Self) {
+                // `certif` is an enum defined in `libparsec_types` (it is considered the
+                // source of truth that gets updated whenever a new certificate is added
+                // to a topic).
+                //
+                // We match it against the possible variants listed in the macro invocation,
+                // so if both are not in sync this will trigger a compilation error.
                 match certif {
                     $(
                         $topic_struct::$certif(_) => (),

@@ -143,6 +143,12 @@ impl RateLimiter {
     }
 }
 
+impl Default for RateLimiter {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl RateLimiter {
     pub async fn wait(&mut self) {
         let duration_to_wait = self.get_duration_to_wait();

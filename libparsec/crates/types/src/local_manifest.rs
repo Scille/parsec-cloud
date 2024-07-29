@@ -449,6 +449,7 @@ impl LocalFileManifest {
     /// - not share the same block span
     /// - not span over multiple block spans
     /// - be internally consistent
+    ///
     /// Also the last block span should not be empty.
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `FileManifest::check_data_integrity`.
@@ -978,6 +979,7 @@ pub struct LocalUserManifest {
     /// - the only non-speculative placeholder is the placeholder initialized
     ///   during the initial user claim (by opposition of subsequent device
     ///   claims on the same user)
+    ///
     /// This speculative information is useful during merge to understand if
     /// a data is not present in the placeholder compared with a remote because:
     /// a) the data is not locally known (speculative is True)
