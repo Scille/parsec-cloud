@@ -169,28 +169,15 @@ macro_rules! impl_events {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, thiserror::Error)]
 pub enum IncompatibleServerReason {
+    #[error("Server is incompatible given it doesn't support API version: {api_version} (supported versions: {supported_api_versions:?})")]
     UnsupportedApiVersion {
         api_version: ApiVersion,
         supported_api_versions: Vec<ApiVersion>,
     },
+    #[error("Server is incompatible due to an unexpected error: {0}")]
     Unexpected(Arc<anyhow::Error>),
-}
-
-impl ToString for IncompatibleServerReason {
-    fn to_string(&self) -> String {
-        match self {
-            IncompatibleServerReason::UnsupportedApiVersion {
-                api_version,
-                supported_api_versions,
-            } => format!(
-                "Server is incompatible given it doesn't support API version: {} (supported versions: {:?})",
-                api_version, supported_api_versions
-            ),
-            IncompatibleServerReason::Unexpected(err) => format!("Server is incompatible due to an unexpected error: {}", err),
-        }
-    }
 }
 
 // All those items will be named with a `Event` prefix (e.g. `Foo` => `EventFoo`)

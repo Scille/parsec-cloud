@@ -334,6 +334,7 @@ impl FileManifest {
     /// - not go passed the file size
     /// - not share the same block span
     /// - not span over multiple block spans
+    ///
     /// Note that they do not have to be contiguous.
     /// Those checks have to remain compatible with `LocalFileManifest::check_data_integrity`.
     /// Also, the id and parent id should be different so the manifest does not point to itself.

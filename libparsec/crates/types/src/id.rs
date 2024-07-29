@@ -3,9 +3,9 @@
 use email_address_parser::EmailAddress;
 use serde::{Deserialize, Serialize};
 use serde_with::{DeserializeFromStr, SerializeDisplay};
-use std::convert::TryFrom;
 use std::hash::Hash;
 use std::str::FromStr;
+use std::{convert::TryFrom, fmt::Display};
 use unicode_normalization::UnicodeNormalization;
 
 use crate::impl_from_maybe;
@@ -677,12 +677,12 @@ impl FromStr for UserProfile {
     }
 }
 
-impl ToString for UserProfile {
-    fn to_string(&self) -> String {
+impl Display for UserProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Admin => String::from("ADMIN"),
-            Self::Standard => String::from("STANDARD"),
-            Self::Outsider => String::from("OUTSIDER"),
+            Self::Admin => write!(f, "ADMIN"),
+            Self::Standard => write!(f, "STANDARD"),
+            Self::Outsider => write!(f, "OUTSIDER"),
         }
     }
 }

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
 use serde::{Deserialize, Serialize};
 use serde_with::*;
@@ -26,19 +26,6 @@ pub enum InvitationType {
     Device,
 }
 
-/*
- * InvitationStatus
- */
-
-#[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
-#[serde(rename_all = "UPPERCASE")]
-pub enum InvitationStatus {
-    Idle,
-    Ready,
-    Finished,
-    Cancelled,
-}
-
 impl FromStr for InvitationType {
     type Err = &'static str;
 
@@ -51,13 +38,26 @@ impl FromStr for InvitationType {
     }
 }
 
-impl ToString for InvitationType {
-    fn to_string(&self) -> String {
+impl Display for InvitationType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::User => String::from("USER"),
-            Self::Device => String::from("DEVICE"),
+            Self::User => write!(f, "USER"),
+            Self::Device => write!(f, "DEVICE"),
         }
     }
+}
+
+/*
+ * InvitationStatus
+ */
+
+#[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum InvitationStatus {
+    Idle,
+    Ready,
+    Finished,
+    Cancelled,
 }
 
 /*
