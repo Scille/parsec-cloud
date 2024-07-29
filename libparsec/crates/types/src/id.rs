@@ -646,17 +646,19 @@ crate::impl_from_maybe!(Option<HumanHandle>);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
+/// `UserProfile` represents the different profiles a user can have in the organization.
+///
+/// This should not be confused with `RealmRole` (which represents the different roles
+/// a user can have in a realm) !
 pub enum UserProfile {
-    /// Standard user can create new realms and invite new devices for himself.
-    ///
-    /// Admin can invite and revoke users and on top of what standard user can do.
-    ///
-    /// Outsider is only able to collaborate on existing realm and can only
+    ///`Admin` can invite and revoke users and on top of what standard user can do.
+    Admin,
+    /// `Standard` user can create new realms and invite new devices for himself.
+    Standard,
+    /// `Outsider` is only able to collaborate on existing realm and can only
     /// access redacted certificates (i.e. the realms created by an outsider
     /// cannot be shared and the outsider cannot be OWNER/MANAGER
     /// on a realm shared with him)
-    Admin,
-    Standard,
     Outsider,
 }
 
