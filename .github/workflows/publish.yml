@@ -129,7 +129,7 @@ jobs:
         run: |
           set -x
           for channel in $(cat ${{ runner.temp }}/snap-release-channels); do
-            snapcraft upload --releases=$channel snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
+            snapcraft upload --release=$channel snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
           done
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}

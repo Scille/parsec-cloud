@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 """
-For a given Parsec version, this script outputs the `<channel>` value intended to be used in the `--releases=<channel>` option for `snapcraft upload`.
+For a given Parsec version, this script outputs the `<channel>` value intended to be used in the `--release=<channel>` option for `snapcraft upload`.
 
 - A channel is formed with <track>/<risk-level>/<branch>
 - Parsec currently has 4 tracks: latest, v2, v3, nigthly
