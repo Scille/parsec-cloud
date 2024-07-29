@@ -33,7 +33,7 @@
     "devDependencies": {
         "axios": "^1.6.8",
         "commander": "^12.0.0",
-        "electron": "^30.1.0",
+        "electron": "^31.3.0",
         "electron-builder": "~24.13.3",
         "typescript": "~5.4.5"
     },
