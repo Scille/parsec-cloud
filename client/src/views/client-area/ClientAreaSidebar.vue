@@ -10,20 +10,20 @@
       @change="onOrganizationSelected"
     />
     <ul>
-      <li :class="{ 'current-page': currentPage === ClientAreaPages.Summary }">
-        <ion-button @click="goToPageClicked(ClientAreaPages.Summary)">Summary</ion-button>
+      <li :class="{ 'current-page': currentPage === ClientAreaPages.Dashboard }">
+        <ion-button @click="goToPageClicked(ClientAreaPages.Dashboard)">Summary</ion-button>
       </li>
-      <li :class="{ 'current-page': currentPage === ClientAreaPages.Stats }">
-        <ion-button @click="goToPageClicked(ClientAreaPages.Stats)">Stats</ion-button>
+      <li :class="{ 'current-page': currentPage === ClientAreaPages.Statistics }">
+        <ion-button @click="goToPageClicked(ClientAreaPages.Statistics)">Stats</ion-button>
       </li>
       <li :class="{ 'current-page': currentPage === ClientAreaPages.Invoices }">
         <ion-button @click="goToPageClicked(ClientAreaPages.Invoices)">Invoices</ion-button>
       </li>
-      <li :class="{ 'current-page': currentPage === ClientAreaPages.Payment }">
-        <ion-button @click="goToPageClicked(ClientAreaPages.Payment)">Paiement</ion-button>
+      <li :class="{ 'current-page': currentPage === ClientAreaPages.PaymentMethods }">
+        <ion-button @click="goToPageClicked(ClientAreaPages.PaymentMethods)">Paiement</ion-button>
       </li>
-      <li :class="{ 'current-page': currentPage === ClientAreaPages.Billing }">
-        <ion-button @click="goToPageClicked(ClientAreaPages.Billing)">Billing</ion-button>
+      <li :class="{ 'current-page': currentPage === ClientAreaPages.BillingDetails }">
+        <ion-button @click="goToPageClicked(ClientAreaPages.BillingDetails)">Billing</ion-button>
       </li>
     </ul>
   </div>

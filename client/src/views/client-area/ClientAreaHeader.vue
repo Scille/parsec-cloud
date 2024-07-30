@@ -2,24 +2,142 @@
 
 <template>
   <div class="header-content">
-    <ion-button @click="logout"> BYE BYE </ion-button>
+    <ion-button
+      v-if="!isMobile() && !isSidebarMenuVisible()"
+      slot="icon-only"
+      id="trigger-toggle-menu-button"
+      class="ion-hide-lg-down topbar-button__item"
+      @click="resetSidebarMenu()"
+    >
+      <ion-icon
+        slot="icon-only"
+        :icon="menu"
+      />
+    </ion-button>
+    <ion-title class="header-title title-h1">{{ $msTranslate(title) }}</ion-title>
+
+    <div class="header-right">
+      <!-- log out -->
+      <ion-text
+        class="button-medium custom-button custom-button-danger-outline"
+        button
+        @click="logout"
+      >
+        <ion-icon :icon="logOut" />
+        {{ $msTranslate('clientArea.header.logout') }}
+      </ion-text>
+
+      <!-- preferences -->
+      <ion-text
+        class="button-medium custom-button"
+        button
+        @click="openPreferencesModal"
+      >
+        <ion-icon :icon="cog" />
+        {{ $msTranslate('clientArea.header.preferences') }}
+      </ion-text>
+
+      <!-- profile -->
+      <div
+        class="header-right-profile"
+        @click="goToPageClicked(ClientAreaPages.PersonalData)"
+      >
+        <user-avatar-name
+          :user-avatar="getUserName()"
+          :user-name="getUserName()"
+          :clickable="true"
+          class="avatar medium"
+        />
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { IonButton } from '@ionic/vue';
-import { BmsAccessInstance } from '@/services/bms';
+import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
+import { IonText, IonTitle, IonIcon } from '@ionic/vue';
 import { navigateTo, Routes } from '@/router';
+import { Translatable } from 'megashark-lib';
+import { onMounted, ref } from 'vue';
+import { logOut, cog, menu } from 'ionicons/icons';
+import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { isMobile } from '@/parsec';
+import useSidebarMenu from '@/services/sidebarMenu';
+import { ClientAreaPages } from '@/views/client-area/types';
+
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
+
+defineProps<{
+  title: Translatable;
+}>();
+
+const personalInformation = ref<PersonalInformationResultData | null>(null);
+
+onMounted(async () => {
+  if (BmsAccessInstance.get().isLoggedIn()) {
+    personalInformation.value = await BmsAccessInstance.get().getPersonalInformation();
+  }
+});
 
 async function logout(): Promise<void> {
   await BmsAccessInstance.get().logout();
   await navigateTo(Routes.Home, { replace: true });
 }
+
+async function openPreferencesModal(): Promise<void> {
+  console.log('openPreferencesModal');
+}
+
+const emits = defineEmits<{
+  (e: 'pageSelected', page: ClientAreaPages): void;
+}>();
+
+async function goToPageClicked(page: ClientAreaPages): Promise<void> {
+  emits('pageSelected', page);
+}
+
+function getUserName(): string {
+  const info = personalInformation.value;
+  if (info === null || !info.firstName || !info.lastName) {
+    return '';
+  }
+  return `${info.firstName} ${info.lastName}`;
+}
 </script>
 
 <style scoped lang="scss">
 .header-content {
-  background-color: red;
-  height: 12em;
+  background: var(--parsec-color-light-secondary-white);
+  padding: 1.5rem 2rem;
+  display: flex;
+  justify-content: space-around;
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
+}
+
+.header-title {
+  background: var(--parsec-color-light-gradient-background);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .custom-button {
+    margin-top: 0;
+  }
+
+  .custom-button-danger-outline {
+    border: none;
+    color: var(--parsec-color-light-danger-500);
+
+    &:hover {
+      color: var(--parsec-color-light-danger-700);
+      background: var(--parsec-color-light-danger-100);
+    }
+  }
 }
 </style>

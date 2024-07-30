@@ -18,8 +18,10 @@ msTest('Log into the customer area', async ({ home }) => {
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.login-button').locator('ion-button').click();
   await expect(home).toHaveURL(/.+\/clientArea$/);
-  await expect(home.locator('.header-content').locator('ion-button')).toHaveText('BYE BYE');
-  await home.locator('.header-content').locator('ion-button').click();
+  await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
+  const logOutButton = home.locator('.header-content').locator('.custom-button').first();
+  await expect(logOutButton).toHaveText('Log out');
+  await logOutButton.click();
   await expect(home).toHaveURL(/.+\/home$/);
 });
 

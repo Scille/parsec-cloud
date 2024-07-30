@@ -15,30 +15,41 @@
           @organization-selected="onOrganizationSelected"
         />
         <div class="main-content">
-          <client-area-header v-show="true" />
+          <client-area-header
+            :title="getTitleByPage()"
+            @page-selected="switchPage"
+          />
 
           <div
             class="main-page"
             v-if="currentOrganization"
           >
-            <summary-page
-              v-if="currentPage === ClientAreaPages.Summary"
+            <billing-details-page
+              v-if="currentPage === ClientAreaPages.BillingDetails"
+              :organization="currentOrganization"
+            />
+            <contracts-page
+              v-if="currentPage === ClientAreaPages.Contracts"
+              :organization="currentOrganization"
+            />
+            <dashboard-page
+              v-if="currentPage === ClientAreaPages.Dashboard"
               :organization="currentOrganization"
             />
             <invoices-page
               v-if="currentPage === ClientAreaPages.Invoices"
               :organization="currentOrganization"
             />
-            <stats-page
-              v-if="currentPage === ClientAreaPages.Stats"
+            <payment-methods-page
+              v-if="currentPage === ClientAreaPages.PaymentMethods"
               :organization="currentOrganization"
             />
-            <billing-page
-              v-if="currentPage === ClientAreaPages.Billing"
+            <personal-data-page
+              v-if="currentPage === ClientAreaPages.PersonalData"
               :organization="currentOrganization"
             />
-            <payment-page
-              v-if="currentPage === ClientAreaPages.Payment"
+            <statistics-page
+              v-if="currentPage === ClientAreaPages.Statistics"
               :organization="currentOrganization"
             />
           </div>
@@ -55,15 +66,18 @@ import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { onMounted, ref } from 'vue';
 import { ClientAreaPages } from '@/views/client-area/types';
-import StatsPage from '@/views/client-area/StatsPage.vue';
+import BillingDetailsPage from '@/views/client-area/BillingDetailsPage.vue';
+import ContractsPage from '@/views/client-area/ContractsPage.vue';
+import DashboardPage from '@/views/client-area/DashboardPage.vue';
 import InvoicesPage from '@/views/client-area/InvoicesPage.vue';
-import SummaryPage from '@/views/client-area/SummaryPage.vue';
-import BillingPage from '@/views/client-area/BillingPage.vue';
-import PaymentPage from '@/views/client-area/PaymentPage.vue';
+import PaymentMethodsPage from '@/views/client-area/PaymentMethodsPage.vue';
+import PersonalDataPage from '@/views/client-area/PersonalDataPage.vue';
+import StatisticsPage from '@/views/client-area/StatisticsPage.vue';
 import { navigateTo, Routes } from '@/router';
+import { Translatable } from 'megashark-lib';
 
 const organizations = ref<Array<BmsOrganization>>([]);
-const currentPage = ref<ClientAreaPages>(ClientAreaPages.Summary);
+const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
 const currentOrganization = ref<BmsOrganization | undefined>(undefined);
 
 onMounted(async () => {
@@ -90,6 +104,27 @@ async function switchPage(page: ClientAreaPages): Promise<void> {
 
 async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
   currentOrganization.value = organization;
+}
+
+function getTitleByPage(): Translatable {
+  switch (currentPage.value) {
+    case ClientAreaPages.BillingDetails:
+      return 'clientArea.header.titles.billingDetails';
+    case ClientAreaPages.Contracts:
+      return 'clientArea.header.titles.contracts';
+    case ClientAreaPages.Dashboard:
+      return 'clientArea.header.titles.dashboard';
+    case ClientAreaPages.Invoices:
+      return 'clientArea.header.titles.invoices';
+    case ClientAreaPages.PaymentMethods:
+      return 'clientArea.header.titles.paymentMethods';
+    case ClientAreaPages.PersonalData:
+      return 'clientArea.header.titles.personalData';
+    case ClientAreaPages.Statistics:
+      return 'clientArea.header.titles.statistics';
+    default:
+      return '';
+  }
 }
 </script>
 

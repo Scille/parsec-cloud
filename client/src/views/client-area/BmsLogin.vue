@@ -6,7 +6,7 @@
       <create-organization-modal-header
         v-if="!hideHeader"
         @close-clicked="$emit('closeRequested')"
-        title="ClientApplication.title"
+        title="clientArea.app.title"
       />
 
       <div class="saas-login-content">
@@ -15,7 +15,7 @@
           class="saas-login-content__input"
           ref="emailInputRef"
           v-model="email"
-          label="ClientApplication.emailLabel"
+          label="clientArea.app.emailLabel"
           :validator="emailValidator"
         />
         <!-- password -->
@@ -24,7 +24,7 @@
             class="saas-login-content__input"
             ref="passwordInputRef"
             v-model="password"
-            label="ClientApplication.password"
+            label="clientArea.app.password"
           />
           <!-- TODO: UPDATE THE LINK -->
           <!-- If changing the link, don't forget to check that it is allowed by electron! -->
@@ -32,9 +32,9 @@
             class="saas-login-inputs__link button-small"
             target="_blank"
             @click="$event.stopPropagation()"
-            :href="$msTranslate('ClientApplication.forgottenPasswordLink')"
+            :href="$msTranslate('clientArea.app.forgottenPasswordLink')"
           >
-            {{ $msTranslate('ClientApplication.forgottenPassword') }}
+            {{ $msTranslate('clientArea.app.forgottenPassword') }}
           </ion-text>
         </div>
         <!-- error -->
@@ -55,7 +55,7 @@
             :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
             @click="onLoginClicked"
           >
-            {{ $msTranslate('ClientApplication.login') }}
+            {{ $msTranslate('clientArea.app.login') }}
           </ion-button>
           <ms-spinner v-show="querying" />
         </div>
@@ -63,15 +63,15 @@
         <!-- TODO: UPDATE THE LINK -->
         <!-- If changing the link, don't forget to check that it is allowed by electron! -->
         <div class="create-account">
-          <ion-text class="create-account__text body">{{ $msTranslate('ClientApplication.noAccount') }}</ion-text>
+          <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
           <ion-button
             class="create-account__link"
             target="_blank"
             fill="clear"
             @click="$event.stopPropagation()"
-            :href="$msTranslate('ClientApplication.createAccountUrl')"
+            :href="$msTranslate('clientArea.app.createAccountUrl')"
           >
-            {{ $msTranslate('ClientApplication.createAccount') }}
+            {{ $msTranslate('clientArea.app.createAccount') }}
           </ion-button>
         </div>
       </ion-footer>
@@ -140,13 +140,13 @@ async function onLoginClicked(): Promise<void> {
     const response = await BmsAccessInstance.get().login(email.value, password.value);
 
     if (!response.ok) {
-      loginError.value = 'ClientApplication.loginFailed';
+      loginError.value = 'clientArea.app.loginFailed';
     } else {
       emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
     }
   } catch (error: any) {
     window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
-    loginError.value = 'ClientApplication.networkFailed';
+    loginError.value = 'clientArea.app.networkFailed';
   } finally {
     querying.value = false;
   }
