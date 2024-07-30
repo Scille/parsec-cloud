@@ -69,7 +69,7 @@ Translations are based on [Sphinx Internationalization](http://www.sphinx-doc.or
 2. Create/update `.po` files for translation
 
     ```bash
-    sphinx-intl update -p _build/locale -l fr
+    make intl-fr
     ```
 
 3. Translate `.po` files (manually or with a tool like [Poedit](https://poedit.net/))
