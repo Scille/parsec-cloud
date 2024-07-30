@@ -24,6 +24,21 @@ class InvitationType:
     @property
     def str(self) -> str: ...
 
+class CancelledGreetingAttemptReason:
+    MANUALLY_CANCELED: CancelledGreetingAttemptReason
+    INVALID_NONCE_HASH: CancelledGreetingAttemptReason
+    INVALID_SAS_CODE: CancelledGreetingAttemptReason
+    UNDECIPHERABLE_PAYLOAD: CancelledGreetingAttemptReason
+    UNDESERIALIZABLE_PAYLOAD: CancelledGreetingAttemptReason
+    INCONSISTENT_PAYLOAD: CancelledGreetingAttemptReason
+    AUTOMATICALLY_CANCELED: CancelledGreetingAttemptReason
+    VALUES: tuple[CancelledGreetingAttemptReason, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> CancelledGreetingAttemptReason: ...
+    @property
+    def str(self) -> str: ...
+
 class RealmRole:
     OWNER: RealmRole
     MANAGER: RealmRole
