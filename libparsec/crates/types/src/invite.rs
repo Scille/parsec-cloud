@@ -73,6 +73,38 @@ pub enum InvitationStatus {
 
 
 /*
+ * GreeterOrClaimer
+ */
+
+#[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum GreeterOrClaimer {
+    Greeter,
+    Claimer,
+}
+
+impl FromStr for GreeterOrClaimer {
+    type Err = &'static str;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "GREETER" => Ok(Self::Greeter),
+            "CLAIMER" => Ok(Self::Claimer),
+            _ => Err("Invalid GreeterOrClaimer"),
+        }
+    }
+}
+
+impl ToString for GreeterOrClaimer {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Greeter => String::from("Greeter"),
+            Self::Claimer => String::from("Claimer"),
+        }
+    }
+}
+
+/*
 * Cancel greeting attempt reason
 */
 

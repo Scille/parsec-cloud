@@ -58,6 +58,7 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<InvitationStatus>()?;
     m.add_class::<InvitationType>()?;
     m.add_class::<CancelledGreetingAttemptReason>()?;
+    m.add_class::<GreeterOrClaimer>()?;
     m.add_class::<RealmRole>()?;
     m.add_class::<UserProfile>()?;
 
