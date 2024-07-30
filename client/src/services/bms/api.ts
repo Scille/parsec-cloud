@@ -184,8 +184,15 @@ async function getOrganizationStats(token: AuthenticationToken, query: Organizat
       data: {
         type: DataType.OrganizationStats,
         dataSize: axiosResponse.data.data_size,
+        metadataSize: axiosResponse.data.metadata_size,
+        users: axiosResponse.data.users ?? 0,
+        activeUsers: axiosResponse.data.active_users ?? 0,
+        adminUsersDetail: axiosResponse.data.users_per_profile_detail.ADMIN,
+        standardUsersDetail: axiosResponse.data.users_per_profile_detail.STANDARD,
+        outsiderUsersDetail: axiosResponse.data.users_per_profile_detail.OUTSIDER,
+        freeSliceSize: axiosResponse.data.free_slice_size ?? 1024 * 1024 * 1024 * 200, // arbitrary value
+        payingSliceSize: axiosResponse.data.paying_slice_size ?? 1024 * 1024 * 1024 * 100, // arbitrary value
         status: axiosResponse.data.status,
-        users: axiosResponse.data.users,
       },
     };
   });

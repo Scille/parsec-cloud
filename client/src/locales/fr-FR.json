@@ -1232,6 +1232,28 @@
         },
         "billingDetails": {
             "retrieveFailed": "Impossible de récupérer les informations de paiement."
+        },
+        "statistics": {
+            "titles": {
+                "stats": "Statistiques",
+                "users": "Utilisateurs",
+                "active": "actifs",
+                "revoked": "révoqués",
+                "storage": "Stockage utilisé"
+            },
+            "admin": "Administrateur",
+            "standard": "Standard",
+            "outsider": "Externe",
+            "admins": "Administrateurs",
+            "standards": "Standards",
+            "outsiders": "Externes",
+            "consumptionDetail": "Détail des consommations",
+            "nonPaying": "Non payant",
+            "paying": "payant",
+            "free": "gratuit",
+            "ofWhich": "dont",
+            "data": "de données",
+            "metadata": "métadonnées"
         }
     }
 }

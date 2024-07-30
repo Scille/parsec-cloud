@@ -26,3 +26,8 @@ export const DEFAULT_ORGANIZATION_INFORMATION = {
   serverAddr: 'parsec3://blackmesa.com',
   bmsId: '42',
 };
+
+export const DEFAULT_ORGANIZATION_DATA_SLICE = {
+  free: 1024 * 1024 * 1024 * 200, // 200 Gb
+  paying: 1024 * 1024 * 1024 * 100, // 100 Gb
+};
