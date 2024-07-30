@@ -1,9 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 export enum ClientAreaPages {
-  Summary = 'summary',
-  Stats = 'stats',
+  BillingDetails = 'billing-details',
+  Contracts = 'contracts',
+  Dashboard = 'dashboard',
   Invoices = 'invoices',
-  Payment = 'payment',
-  Billing = 'billing',
+  PaymentMethods = 'payment-methods',
+  PersonalData = 'personal-data',
+  Statistics = 'statistics',
 }

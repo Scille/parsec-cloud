@@ -2,17 +2,19 @@
 
 <template>
   <div>
-    <h1>SUMMARY</h1>
-    {{ organization }}
+    <h1>PAYMENT METHODS</h1>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BmsOrganization } from '@/services/bms';
+import { onMounted } from 'vue';
 
 defineProps<{
   organization: BmsOrganization;
 }>();
+
+onMounted(async () => {});
 </script>
 
 <style scoped lang="scss"></style>

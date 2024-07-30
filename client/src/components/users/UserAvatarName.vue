@@ -1,7 +1,10 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="avatar-container">
+  <div
+    class="avatar-container"
+    :class="{ clickable: clickable }"
+  >
     <ion-avatar class="avatar person-avatar body-sm">
       {{ userAvatar.substring(0, 2) }}
     </ion-avatar>
@@ -16,10 +19,10 @@
 
 <script setup lang="ts">
 import { IonAvatar, IonText } from '@ionic/vue';
-
 defineProps<{
   userAvatar: string;
   userName?: string;
+  clickable?: boolean;
 }>();
 </script>
 
@@ -85,6 +88,17 @@ defineProps<{
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
+  }
+
+  &.clickable {
+    cursor: pointer;
+    &:hover {
+      .person-name {
+        color: var(--parsec-color-light-secondary-text);
+        text-decoration: underline;
+        text-decoration-color: var(--parsec-color-light-primary-500);
+      }
+    }
   }
 }
 

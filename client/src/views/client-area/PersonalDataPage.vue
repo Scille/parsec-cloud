@@ -2,7 +2,7 @@
 
 <template>
   <div>
-    <h1>PAYMENT</h1>
+    <h1>PERSONAL DATA</h1>
   </div>
 </template>
 

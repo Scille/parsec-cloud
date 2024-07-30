@@ -1158,18 +1158,33 @@
         "noMatch": "Aucun utilisateur trouvé",
         "queryFailed": "Une erreur empêche de trouver les utilisateurs."
     },
-    "ClientApplication": {
-        "title": "Lier votre espace client à votre nouvelle organisation",
-        "emailLabel": "Adresse mail",
-        "password": "Mot de passe",
-        "forgottenPassword": "Mot de passe oublié ?",
-        "login": "Se connecter",
-        "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
-        "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
-        "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
-        "noAccount": "Vous n'avez pas encore d'espace client ?",
-        "createAccount": "Créer un compte",
-        "createAccountUrl": "https://parsec.cloud/tarification/",
-        "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
+    "clientArea": {
+        "app": {
+            "title": "Lier votre espace client à votre nouvelle organisation",
+            "emailLabel": "Adresse mail",
+            "password": "Mot de passe",
+            "forgottenPassword": "Mot de passe oublié ?",
+            "login": "Se connecter",
+            "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
+            "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
+            "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
+            "noAccount": "Vous n'avez pas encore d'espace client ?",
+            "createAccount": "Créer un compte",
+            "createAccountUrl": "https://parsec.cloud/tarification/",
+            "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
+        },
+        "header": {
+            "titles": {
+                "billingDetails": "Coordonnées de facturation",
+                "contracts": "Contrats",
+                "dashboard": "Tableau de bord",
+                "invoices": "Factures",
+                "paymentMethods": "Moyens de paiement",
+                "personalData": "Mon profil",
+                "statistics": "Statistiques"
+            },
+            "logout": "Se déconnecter",
+            "preferences": "Préférences"
+        }
     }
 }

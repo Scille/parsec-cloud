@@ -2,7 +2,7 @@
 
 <template>
   <div>
-    <h1>STATS</h1>
+    <h1>STATISTICS</h1>
     <div v-if="stats">
       {{ stats }}
     </div>
