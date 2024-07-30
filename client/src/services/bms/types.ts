@@ -25,6 +25,12 @@ enum DataType {
   OrganizationStatus = 'organization-status',
   Invoices = 'invoices',
   RefreshToken = 'refresh-token',
+  BillingDetails = 'billing-details',
+}
+
+enum PaymentMethod {
+  Card = 'card',
+  SepaTransfer = 'sepa-transfer',
 }
 
 type AuthenticationToken = string;
@@ -88,6 +94,31 @@ interface RefreshTokenResultData {
   token: AuthenticationToken;
 }
 
+interface BillingDetailsPaymentMethodCard {
+  type: PaymentMethod.Card;
+  id: string;
+  lastDigits: string;
+  isDefault: boolean;
+  expirationDate: DateTime;
+  brand: string;
+}
+
+interface BillingDetailsPaymentMethodSepaTransfer {
+  type: PaymentMethod.SepaTransfer;
+  id: string;
+  lastDigits: string;
+  isDefault: boolean;
+  bankName: string;
+}
+
+interface BillingDetailsResultData {
+  type: DataType.BillingDetails;
+  email: string;
+  name: string;
+  address: string;
+  paymentMethods: Array<BillingDetailsPaymentMethodCard | BillingDetailsPaymentMethodSepaTransfer>;
+}
+
 type ResultData =
   | LoginResultData
   | PersonalInformationResultData
@@ -96,7 +127,8 @@ type ResultData =
   | OrganizationStatsResultData
   | OrganizationStatusResultData
   | InvoicesResultData
-  | RefreshTokenResultData;
+  | RefreshTokenResultData
+  | BillingDetailsResultData;
 
 // Misc data
 interface BmsOrganization {
@@ -154,8 +186,12 @@ interface OrganizationStatusQueryData extends _ClientQueryData {
 
 interface InvoicesQueryData extends _ClientQueryData {}
 
+interface BillingDetailsQueryData extends _ClientQueryData {}
+
 export {
   AuthenticationToken,
+  BillingDetailsQueryData,
+  BillingDetailsResultData,
   BmsError,
   BmsInvoice,
   BmsOrganization,
@@ -171,5 +207,6 @@ export {
   OrganizationStatsResultData,
   OrganizationStatusQueryData,
   OrganizationStatusResultData,
+  PaymentMethod,
   PersonalInformationResultData,
 };

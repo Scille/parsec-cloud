@@ -2,13 +2,13 @@
 
 import { ConnectionHandle, EntryName, WorkspaceHandle } from '@/parsec';
 import { getConnectionHandle } from '@/router/params';
-import { Query, RouteBackup, Routes, getCurrentRoute, getRouter } from '@/router/types';
+import { ClientAreaQuery, Query, RouteBackup, Routes, getCurrentRoute, getRouter } from '@/router/types';
 import { Base64 } from 'megashark-lib';
 import { LocationQueryRaw, RouteParamsRaw } from 'vue-router';
 
 export interface NavigationOptions {
   params?: object;
-  query?: Query;
+  query?: Query | ClientAreaQuery;
   replace?: boolean;
   skipHandle?: boolean;
 }

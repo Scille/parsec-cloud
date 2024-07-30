@@ -163,3 +163,8 @@ export interface Query {
   loginInfo?: string;
   workspaceHandle?: WorkspaceHandle;
 }
+
+export interface ClientAreaQuery {
+  page?: string;
+  organization?: string;
+}

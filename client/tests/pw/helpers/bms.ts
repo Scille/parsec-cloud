@@ -20,7 +20,7 @@ async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promi
 
   await page.route('**/api/token', async (route) => {
     if (success) {
-      route.fulfill({
+      await route.fulfill({
         status: 200,
         json: {
           access: TOKEN,
@@ -31,7 +31,7 @@ async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promi
       if (timeout) {
         route.abort('timedout');
       } else {
-        route.fulfill({
+        await route.fulfill({
           status: 401,
           json: {
             type: 'login_error',
@@ -45,7 +45,7 @@ async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promi
 
 async function mockUserInfo(page: Page): Promise<void> {
   await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}`, async (route) => {
-    route.fulfill({
+    await route.fulfill({
       status: 200,
       json: {
         id: DEFAULT_USER_INFORMATION.id,
@@ -64,7 +64,7 @@ async function mockUserInfo(page: Page): Promise<void> {
 
 async function mockCreateOrganization(page: Page, bootstrapAddr: string): Promise<void> {
   await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/1337/organizations`, async (route) => {
-    route.fulfill({
+    await route.fulfill({
       status: 201,
       json: {
         // eslint-disable-next-line camelcase
@@ -76,7 +76,7 @@ async function mockCreateOrganization(page: Page, bootstrapAddr: string): Promis
 
 async function mockListOrganizations(page: Page): Promise<void> {
   await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`, async (route) => {
-    route.fulfill({
+    await route.fulfill({
       status: 200,
       json: {
         results: [
@@ -119,7 +119,7 @@ async function mockOrganizationStats(page: Page): Promise<void> {
     // eslint-disable-next-line max-len
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/${DEFAULT_ORGANIZATION_INFORMATION.bmsId}/stats`,
     async (route) => {
-      route.fulfill({
+      await route.fulfill({
         status: 200,
         json: {
           // eslint-disable-next-line camelcase
@@ -149,7 +149,7 @@ async function mockOrganizationStatus(page: Page, overload: StatusData = {}): Pr
   await page.route(
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/status`,
     async (route) => {
-      route.fulfill({
+      await route.fulfill({
         status: 200,
         json: {
           // eslint-disable-next-line camelcase
@@ -202,6 +202,56 @@ async function mockGetInvoices(page: Page, { fail, count }: { fail?: boolean; co
   });
 }
 
+async function mockBillingDetails(
+  page: Page,
+  { includeCard, includeSepa, fail }: { includeCard?: boolean; includeSepa?: boolean; fail?: boolean },
+): Promise<void> {
+  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billingDetails`, async (route) => {
+    if (fail) {
+      await route.fulfill({
+        status: 401,
+        json: {
+          type: 'error',
+          errors: [{ code: 'invalid', attr: 'null', detail: 'An error occured' }],
+        },
+      });
+    } else {
+      const paymentMethods = [];
+      if (includeCard) {
+        paymentMethods.push({
+          type: 'card',
+          id: 'card1',
+          brand: 'mastercard',
+          // eslint-disable-next-line camelcase
+          exp_date: '12/47',
+          // eslint-disable-next-line camelcase
+          last_digits: '4444',
+          default: true,
+        });
+      }
+      if (includeSepa) {
+        paymentMethods.push({
+          type: 'debit',
+          id: 'debit1',
+          bankName: 'Bank',
+          // eslint-disable-next-line camelcase
+          last_digits: '1234',
+          default: includeCard ? false : true,
+        });
+      }
+      route.fulfill({
+        status: 200,
+        json: {
+          email: DEFAULT_USER_INFORMATION.email,
+          name: `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
+          address: DEFAULT_USER_INFORMATION.address.full,
+          paymentMethods: paymentMethods,
+        },
+      });
+    }
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserInfo,
@@ -210,4 +260,5 @@ export const MockBms = {
   mockOrganizationStats,
   mockOrganizationStatus,
   mockGetInvoices,
+  mockBillingDetails,
 };

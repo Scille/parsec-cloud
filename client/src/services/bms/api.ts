@@ -2,6 +2,7 @@
 
 import {
   AuthenticationToken,
+  BillingDetailsQueryData,
   BmsError,
   BmsResponse,
   CreateOrganizationQueryData,
@@ -11,6 +12,7 @@ import {
   LoginQueryData,
   OrganizationStatsQueryData,
   OrganizationStatusQueryData,
+  PaymentMethod,
 } from '@/services/bms/types';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
@@ -239,6 +241,51 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
   });
 }
 
+async function getBillingDetails(token: AuthenticationToken, query: BillingDetailsQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/billing_details`, {
+      headers: { Authorization: `Bearer ${token}` },
+      validateStatus: (status) => status === 200,
+    });
+
+    return {
+      status: axiosResponse.status,
+      isError: false,
+      data: {
+        type: DataType.BillingDetails,
+        email: axiosResponse.data.email,
+        name: axiosResponse.data.name,
+        address: axiosResponse.data.address,
+        paymentMethods: axiosResponse.data.payment_methods
+          .map((method: any) => {
+            if (method.type === 'card') {
+              return {
+                type: PaymentMethod.Card,
+                id: method.id,
+                brand: method.brand,
+                expirationDate: DateTime.fromFormat(method.exp_date, 'LL/yy', { zone: 'utc' }),
+                lastDigits: method.last_digits,
+                isDefault: method.default,
+              };
+            } else if (method.type === 'debit') {
+              return {
+                type: PaymentMethod.SepaTransfer,
+                id: method.id,
+                bankName: method.bank_name,
+                lastDigits: method.last_digits,
+                isDefault: method.default,
+              };
+            } else {
+              console.warn(`Unknown payment method type ${method.type}`);
+              return undefined;
+            }
+          })
+          .filter((method: any) => method !== undefined),
+      },
+    };
+  });
+}
+
 async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -270,4 +317,5 @@ export const BmsApi = {
   getOrganizationStatus,
   getInvoices,
   refreshToken,
+  getBillingDetails,
 };

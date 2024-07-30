@@ -50,14 +50,14 @@ export function getCurrentRouteParams(): object {
   return {};
 }
 
-export function getCurrentRouteQuery(): Query {
+export function getCurrentRouteQuery<T = Query>(): T {
   const router = getRouter();
 
   const currentRoute = router.currentRoute.value;
   if (currentRoute) {
-    return currentRoute.query as Query;
+    return currentRoute.query as T;
   }
-  return {};
+  return {} as object as T;
 }
 
 export function getCurrentRouteName(): Routes | null {
