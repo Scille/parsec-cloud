@@ -67,12 +67,25 @@ interface ListOrganizationsResultData {
   organizations: Array<BmsOrganization>;
 }
 
+interface UserPerProfileDetails {
+  active: number;
+  revoked: number;
+}
+
 interface OrganizationStatsResultData {
   type: DataType.OrganizationStats;
+  realms?: number;
   dataSize: number;
+  metadataSize: number;
+  users: number;
+  activeUsers: number;
+  adminUsersDetail: UserPerProfileDetails;
+  standardUsersDetail: UserPerProfileDetails;
+  outsiderUsersDetail: UserPerProfileDetails;
+  freeSliceSize: number;
+  payingSliceSize: number;
   // Add more status
   status: 'ok';
-  users: number;
 }
 
 interface OrganizationStatusResultData {

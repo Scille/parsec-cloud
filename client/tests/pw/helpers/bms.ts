@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page } from '@playwright/test';
-import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
+import { DEFAULT_ORGANIZATION_DATA_SLICE, DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
 import { DateTime } from 'luxon';
 
 async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promise<void> {
@@ -114,7 +114,15 @@ async function mockListOrganizations(page: Page): Promise<void> {
   });
 }
 
-async function mockOrganizationStats(page: Page): Promise<void> {
+async function mockOrganizationStats(page: Page, data?: number): Promise<void> {
+  const usersPerProfileDetail: { [profile: string]: { active: number; revoked: number } } = {};
+  usersPerProfileDetail.ADMIN = { active: 4, revoked: 1 };
+  usersPerProfileDetail.STANDARD = { active: 54, revoked: 1 };
+  usersPerProfileDetail.OUTSIDER = { active: 1, revoked: 142 };
+
+  const dataSize = data ? data * 0.999 : 400000000000;
+  const metadataSize = data ? data - dataSize : 400000000;
+
   await page.route(
     // eslint-disable-next-line max-len
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/${DEFAULT_ORGANIZATION_INFORMATION.bmsId}/stats`,
@@ -123,9 +131,19 @@ async function mockOrganizationStats(page: Page): Promise<void> {
         status: 200,
         json: {
           // eslint-disable-next-line camelcase
-          data_size: 13374242,
+          users_per_profile_detail: usersPerProfileDetail,
+          // eslint-disable-next-line camelcase
+          data_size: dataSize,
+          // eslint-disable-next-line camelcase
+          metadata_size: metadataSize,
+          // eslint-disable-next-line camelcase
+          free_slice_size: DEFAULT_ORGANIZATION_DATA_SLICE.free,
+          // eslint-disable-next-line camelcase
+          paying_slice_size: DEFAULT_ORGANIZATION_DATA_SLICE.paying,
+          users: 1564,
+          // eslint-disable-next-line camelcase
+          active_users: 159,
           status: 'ok',
-          users: 5,
         },
       });
     },

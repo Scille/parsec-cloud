@@ -1232,6 +1232,28 @@
         },
         "billingDetails": {
             "retrieveFailed": "Failed to retrieve billing details."
+        },
+        "statistics": {
+            "titles": {
+                "stats": "Statistics",
+                "users": "Users",
+                "active": "active",
+                "revoked": "revoked",
+                "storage": "Used storage"
+            },
+            "admin": "Administrator",
+            "standard": "Standard",
+            "outsider": "Outsider",
+            "admins": "Administrators",
+            "standards": "Standards",
+            "outsiders": "Outsiders",
+            "consumptionDetail": "Consumption detail",
+            "nonPaying": "Non paying",
+            "paying": "charged",
+            "free": "free",
+            "ofWhich": "of which",
+            "data": "data",
+            "metadata": "metadata"
         }
     }
 }
