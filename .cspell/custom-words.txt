@@ -674,6 +674,7 @@ uncaseified
 uncaseify
 uncatched
 unciphered
+uncollectible
 UNFINISHPAGE
 unhexlify
 Unmarshal

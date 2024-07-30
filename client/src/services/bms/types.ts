@@ -120,7 +120,6 @@ enum InvoiceStatus {
   Paid = 'paid',
   Draft = 'draft',
   Open = 'open',
-  // cspell:disable-next-line
   Uncollectible = 'uncollectible',
   Void = 'void',
 }
