@@ -6,5 +6,6 @@
 Install Linux Parsec client
 ===========================
 
-Administrative operations require the installation of the Snap version of the Parsec client application. Those operations can be performed on another machine than the metadata server.
-You can read more about installation at the :ref:`Install Parsec Client <doc_userguide_install_client>` section.
+Administrative operations must be performed with Parsec client for Linux. They can be performed from another machine.
+
+See :ref:`Install Parsec (User Guide) <doc_userguide_install_parsec>`.

@@ -7,192 +7,246 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 2.16.0-a.0+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-10-26 11:54+0000\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language: fr\n"
+"POT-Creation-Date: 2024-07-30 15:15+0200\n"
+"PO-Revision-Date: 2024-07-30 15:15+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <LL@li.org>\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: Babel 2.13.0\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.4.4\n"
 
 #: ../../userguide/installation.rst:7
-msgid "Install Parsec client"
-msgstr "Installation du client Parsec"
+msgid "Install Parsec"
+msgstr "Installation de Parsec"
 
 #: ../../userguide/installation.rst:10
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: ../../userguide/installation.rst:12
 msgid ""
-"Windows installer is available at the latest stable version on `parsec.cloud "
-"<https://parsec.cloud/get-parsec>`_. Otherwise, it is possible to download a "
-"specific Parsec version on `GitHub <https://github.com/Scille/parsec/"
-"releases/latest>`_, for example to make Parsec work on a 32 bits computer "
-"(installers named ``parsec-vX.Y.Z-win32-setup.exe``)."
+"Windows installer is available at the latest stable version on `Get Parsec`_."
 msgstr ""
-"L'installeur Windows en dernière version stable est téléchargeable "
-"directement sur le site `parsec.cloud <https://parsec.cloud/get-parsec>`_. "
-"Autrement, il est possible de télécharger une version spécifique sur `GitHub "
-"<https://github.com/Scille/parsec/releases/latest>`_, par exemple pour faire "
-"fonctionner Parsec sur un ordinateur 32 bits (installeurs nommées ``parsec-"
-"vX.Y.Z-win32-setup.exe``)."
+"La dernière version stable de l'installateur Windows est disponible sur `Get "
+"Parsec`_."
 
-#: ../../userguide/installation.rst:16
+#: ../../userguide/installation.rst:15
 msgid "Linux"
-msgstr ""
+msgstr "Linux"
 
 #: ../../userguide/installation.rst:18
-msgid "Parsec is available on Snap:"
-msgstr "Parsec est disponible sur Snap:"
+msgid "AppImage"
+msgstr "AppImage"
+
+#: ../../userguide/installation.rst:20
+msgid "AppImage is available at the latest stable version on `Get Parsec`_."
+msgstr "La dernière version stable de l'AppImage est disponible sur `Get Parsec`_."
+
+#: ../../userguide/installation.rst:22
+msgid "To use Parsec via the AppImage:"
+msgstr "Pour utiliser Parsec via AppImage:"
 
 #: ../../userguide/installation.rst:24
-msgid ""
-"If you are familiar with Snap, you may notice that Parsec snap is provided "
-"in classic mode (i.e. without sandbox). This is needed because Parsec needs "
-"`Fuse <https://en.wikipedia.org/wiki/Filesystem_in_Userspace>`_ to mount "
-"your data as a virtual directory, which is not allowed by the Snap sandbox."
-msgstr ""
-"Si vous connaissez Snap, vous avez peut-être remarqué que le snap Parsec "
-"fonctionne en mode classique (c'est à dire sans isolation). Cela est "
-"nécessaire car Parsec utilise `Fuse <https://fr.wikipedia.org/wiki/"
-"Filesystem_in_Userspace>`_ pour exposer vos données comme un disque virtuel, "
-"ce qui n'est pas autorisé par l'isolation de Snap."
+msgid "Download AppImage file"
+msgstr "Télécharger le fichier AppImage"
 
-#: ../../userguide/installation.rst:29
+#: ../../userguide/installation.rst:25
+msgid "Make it executable"
+msgstr "Le rendre exécutable"
+
+#: ../../userguide/installation.rst:27
+msgid "Right-click/Properties/Allow executing file as program"
+msgstr ""
+"Clic droit/Propriétés/Autoriser l'exécution du fichier en tant que programme"
+
+#: ../../userguide/installation.rst:28
+msgid "Or use the `chmod` command:"
+msgstr "Ou utilisez la commande `chmod` :"
+
+#: ../../userguide/installation.rst:34
+msgid "Run it (double-click on AppImage file)"
+msgstr "Exécutez-la (double-cliquez sur le fichier AppImage)"
+
+#: ../../userguide/installation.rst:37
+msgid "Snap"
+msgstr "Snap"
+
+#: ../../userguide/installation.rst:39
+msgid "Parsec is available on Snap Store:"
+msgstr "Parsec est disponible sur Snap Store:"
+
+#: ../../userguide/installation.rst:46
 msgid "You can install the snap from the command line by doing:"
 msgstr "Vous pouvez installer le snap depuis la ligne de commande en faisant :"
 
-#: ../../userguide/installation.rst:38
-msgid "MacOS"
-msgstr ""
-
-#: ../../userguide/installation.rst:40
+#: ../../userguide/installation.rst:52
 msgid ""
-"MacOS (10.15, >= 11.0) installer is available as a DMG installer on `GitHub "
-"<https://github.com/Scille/parsec/releases/latest>`_ (installer named "
-"``parsec-vX.Y.Z-macos-amd64.dmg``)."
+"If you are familiar with Snap, you may notice that Parsec snap is provided in "
+"classic mode (i.e. without sandbox). This is needed because Parsec needs `Fuse "
+"<https://en.wikipedia.org/wiki/Filesystem_in_Userspace>`_ to mount your data as "
+"a virtual directory, which is not allowed by the Snap sandbox."
 msgstr ""
-"L'installeur MacOS (10.15, >= 11.0) est disponible en tant que DMG sur "
-"`GitHub <https://github.com/Scille/parsec/releases/latest>`_ (fichier nommé "
-"``parsec-vX.Y.Z-macos-amd64.dmg``)."
+"Si vous connaissez Snap, vous avez peut-être remarqué que le snap Parsec "
+"fonctionne en mode classique (c'est à dire sans isolation). Cela est nécessaire "
+"car Parsec utilise `Fuse <https://fr.wikipedia.org/wiki/"
+"Filesystem_in_Userspace>`_ pour exposer vos données comme un disque virtuel, ce "
+"qui n'est pas autorisé par l'isolation de Snap."
 
-#: ../../userguide/installation.rst:42
+#: ../../userguide/installation.rst:56
 msgid ""
-"The MacOS version requires `macFUSE <https://osxfuse.github.io/>`_ to be "
-"installed, which can be troublesome on Big Sur and Monterey. See `this "
-"discussion <https://github.com/osxfuse/osxfuse/issues/814>`_ about it and "
-"the OS' limitations."
+"In order to install multiple versions of Parsec, you need to enable snapd "
+"`parallel instances <https://snapcraft.io/blog/parallel-installs-test-and-run-"
+"multiple-instances-of-snaps>`_:"
 msgstr ""
-"La version MacOS nécessite l'installation de `macFUSE <https://osxfuse."
-"github.io/>`_, ce qui peut être problématique sur Big Sur et Monterey. Voir "
-"`cette discussion <https://github.com/osxfuse/osxfuse/issues/814>`_."
+"Afin d'installer plusieurs versions de Parsec, vous devez activer snapd "
+"`parallel instances <https://snapcraft.io/blog/parallel-installs-test-and-run-"
+"multiple-instances-of-snaps>`_ :"
 
-#: ../../userguide/installation.rst:46
+#: ../../userguide/installation.rst:62
 msgid ""
-"Parsec uses userspace filesystems for a smooth integration of created "
-"repositories and ease of access to stored files. This core feature is "
-"enabled by macFUSE, and is required to have the native experience we aim for."
+"Then, to install v3.0 (provided you already have v2.17 installed), give it a "
+"specific name:"
 msgstr ""
-"Parsec utilise des systèmes de fichiers en espace utilisateur pour une "
-"intégration intuitive du contenu partagé sur l'application. Cette "
-"fonctionnalité est dépendante de l'extension macFUSE, et est nécessaire pour "
-"garantir une expérience native sur cette plateforme."
+"Ensuite, pour installer la v3.0 (en supposant que la v2.17 soit déjà installée), "
+"donnez-lui un nom spécifique :"
 
-#: ../../userguide/installation.rst:51
-msgid "MacFUSE installation on MacOS 13"
-msgstr "Installation de macFUSE sur MacOS 13"
+#: ../../userguide/installation.rst:69
+msgid "macOS"
+msgstr "macOS"
 
-#: ../../userguide/installation.rst:53 ../../userguide/installation.rst:71
+#: ../../userguide/installation.rst:73
 msgid ""
-"From the `macFUSE <https://osxfuse.github.io/>`_ website, you can find the "
-"latest version to download at the indicated location."
+"Support for macOS is currently under development for the latest version of "
+"Parsec (v3.x)."
 msgstr ""
-"Vous trouverez la dernière version de macFUSE `à cette adresse <https://"
-"osxfuse.github.io/>`_."
+"Le support de macOS est actuellement en cours de développement pour la dernière "
+"version de Parsec (v3.x)."
+
+#: ../../userguide/installation.rst:75
+msgid "macOS installer is available at the latest stable version on `Get Parsec`_."
+msgstr ""
+"La dernière version stable de l'installateur macOS est disponible sur `Get "
+"Parsec`_."
+
+#: ../../userguide/installation.rst:77
+msgid ""
+"Parsec requires `macFUSE <https://osxfuse.github.io/>`_ in order to provide a "
+"smooth integration with macOS and let you access your documents via Finder "
+"(macOS file manager). The following sections describe how to install macFUSE "
+"(which can be a little bit troublesome, see `this discussion <https://github.com/"
+"osxfuse/osxfuse/issues/814>`_)."
+msgstr ""
+"Parsec nécessite `macFUSE <https://osxfuse.github.io/>`_ afin de fournir une "
+"intégration fluide avec macOS et de vous permettre d'accéder à vos documents via "
+"Finder (le gestionnaire de fichiers de macOS). Les sections suivantes décrivent "
+"comment installer macFUSE (ce qui peut être un peu difficile, voir `cette "
+"discussion <https://github.com/osxfuse/osxfuse/issues/814>`_)."
+
+#: ../../userguide/installation.rst:81
+msgid "Install macFUSE"
+msgstr "Installation de macFUSE"
+
+#: ../../userguide/installation.rst:83
+msgid ""
+"Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ website."
+msgstr ""
+"Téléchargez la dernière version sur le site web de `macFUSE <https://osxfuse."
+"github.io/>`_."
 
 #: ../../userguide/installation.rst:-1
 msgid "macFUSE download screen"
 msgstr "écran de téléchargement de macFUSE"
 
-#: ../../userguide/installation.rst:59
+#: ../../userguide/installation.rst:90
+msgid "Open the ``.dmg`` file and follow instructions to install."
+msgstr "Ouvrez le fichier ``.dmg`` et suivez les instructions d'installation."
+
+#: ../../userguide/installation.rst:92
 msgid ""
-"Open the ``.dmg`` file and follow its instructions to install. If the "
-"opening fails, two options are available in `System Settings > Privacy and "
-"Security`: either check the `App Store and identified developers` box, or "
-"click `Open Anyway` if you don't want to change this setting, which will "
-"need to be done once to open the ``.dmg``, and possibly once more to start "
-"the installer."
+"If the opening fails, two options are available in `System Settings > Privacy "
+"and Security`: either check the `App Store and identified developers` box, or "
+"click `Open Anyway` if you don't want to change this setting, which will need to "
+"be done once to open the ``.dmg``, and possibly once more to start the installer."
 msgstr ""
-"Ouvrez le ``.dmg`` et suivez les instructions d'installation. Si l'ouverture "
-"échoue, il y a deux solutions dans `Réglages du système > Confidentialité et "
-"sécurité` : soit activer l'autorisation pour `L'app store et les "
-"développeurs identifiés`, soit autoriser l'ouverture directement via le "
-"bouton `Ouvrir quand même` si vous ne souhaitez pas activer cette option. "
-"Dans ce deuxième cas, il faudra l'utiliser pour ouvrir le ``.dmg`` et "
-"possiblement une deuxième fois pour lancer l'installeur compris dedans."
+"Si l'ouverture échoue, deux options sont disponibles dans `Réglages Système > "
+"Confidentialité et sécurité` : cochez la case `App Store et développeurs "
+"identifiés`, ou cliquez sur `Ouvrir quand meme` si vous ne voulez pas changer ce "
+"paramètre, ce qui devra être fait une fois pour ouvrir le ``.dmg``, et "
+"éventuellement une fois de plus pour démarrer l'installateur."
 
 #: ../../userguide/installation.rst:-1
 msgid "macFUSE current allow screen"
 msgstr "écran d'autorisation de macFUSE"
 
-#: ../../userguide/installation.rst:66
-msgid "A reboot might be prompted then to finalize the installation."
-msgstr ""
-"Selon les paramètres de votre Mac, un redémarrage vous sera alors peut-être "
-"demandé pour finaliser l'installation."
+#: ../../userguide/installation.rst:98 ../../userguide/installation.rst:125
+msgid "Finally, reboot your Mac to complete the installation."
+msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
-#: ../../userguide/installation.rst:69
-msgid "MacFUSE installation on MacOS versions 12 and lower"
-msgstr "Installation de MacFUSE sur MacOS 12 ou antérieur"
+#: ../../userguide/installation.rst:101
+msgid "Install macFUSE on macOS 12 and older"
+msgstr "Installation de macFUSE sur MacOS 12 ou antérieur"
 
-#: ../../userguide/installation.rst:77
+#: ../../userguide/installation.rst:103
 msgid ""
-"Open the ``.dmg`` file and follow its instructions to install. If the "
-"opening fails, check the `App Store and identified developers` box in System "
-"Preferences > Security & Privacy:"
+"Open the ``.dmg`` file and follow its instructions to install. If the opening "
+"fails, check the `App Store and identified developers` box in `System "
+"Preferences > Security & Privacy`:"
 msgstr ""
 "Ouvrez le fichier en ``.dmg`` et suivez les instruction d'installation. Si "
 "l'ouverture du fichier échoue, cochez la case `App Store et développeurs "
-"identifiés` dans Préférences Système > Sécurité et confidentialité :"
+"identifiés` dans `Confidentialité et sécurité Système > Confidentialité et "
+"sécurité` :"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS path to Security and Privacy"
-msgstr "Chemin vers Sécurité et Confidentialité dans MacOS"
+msgid "macOS path to Security and Privacy"
+msgstr "macOS chemin vers Sécurité et Confidentialité"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS previous allow identified developer"
-msgstr "MacOS ancien autoriser développeurs identifiés"
+msgid "macOS previous allow identified developer"
+msgstr "macOS ancien autoriser développeurs identifiés"
 
-#: ../../userguide/installation.rst:87
+#: ../../userguide/installation.rst:113
 msgid ""
 "To change this setting, click the lock first which will require admin rights."
 msgstr ""
 "Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
 "droits d'administrateur."
 
-#: ../../userguide/installation.rst:89
+#: ../../userguide/installation.rst:115
 msgid ""
-"Once the installation is done, a `System Extension Updated` window will pop "
-"up. Click `Open Security Preferences`, and click the lock, then click "
-"`Allow`:"
+"Once the installation is done, a `System Extension Updated` window will pop up. "
+"Click `Open Security Preferences`, and click the lock, then click `Allow`:"
 msgstr ""
 "Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette "
-"extension système apparaît. Cliquez sur `Ouvrir les préférences de "
-"sécurité`, puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le "
-"cadenas :"
+"extension système apparaît. Cliquez sur `Ouvrir les préférences de sécurité`, "
+"puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le cadenas :"
 
 #: ../../userguide/installation.rst:-1
 msgid "Previous System Extension Updated window"
 msgstr "Ancienne fenêtre de mise à jour d'extension système"
 
 #: ../../userguide/installation.rst:-1
-msgid "MacOS previous allow extension"
-msgstr "Ancien autoriser extension MacOS"
+msgid "macOS previous allow extension"
+msgstr "macOS ancien autoriser extension"
 
-#: ../../userguide/installation.rst:99
-msgid "Finally, reboot your Mac to complete the installation."
-msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
+#: ../../userguide/installation.rst:129
+msgid "Install an older version of Parsec"
+msgstr "Installer une ancienne version de Parsec"
+
+#: ../../userguide/installation.rst:133
+msgid ""
+"For security reasons, you should **always install the latest stable version of "
+"Parsec** as it contains the latest security fixes."
+msgstr ""
+"Pour des raisons de sécurité, vous devriez **toujours installer la dernière "
+"version stable de Parsec** car elle contient les derniers correctifs de sécurité."
+
+#: ../../userguide/installation.rst:135
+msgid "If you need to access older versions, they are available on `GitHub`_."
+msgstr ""
+"Si vous avez besoin d'accéder à des versions plus anciennes, elle sont "
+"disponibles sur `GitHub`_."
