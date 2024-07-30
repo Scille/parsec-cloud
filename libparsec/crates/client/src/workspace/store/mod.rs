@@ -5,6 +5,7 @@ mod file_updater;
 mod folder_updater;
 mod manifest_access;
 mod per_manifest_update_lock;
+mod prevent_sync_pattern;
 mod reparent_updater;
 mod resolve_path;
 mod sync_updater;
@@ -128,6 +129,7 @@ impl WorkspaceStore {
         certificates_ops: Arc<CertificateOps>,
         cache_size: u64,
         realm_id: VlobID,
+        pattern: &Regex,
     ) -> Result<Self, anyhow::Error> {
         // 1) Open the database
 
@@ -172,7 +174,15 @@ impl WorkspaceStore {
             }
         };
 
-        // 3) All set !
+        // 3) Ensure the prevent sync pattern is applied to the workspace
+        prevent_sync_pattern::ensure_prevent_sync_pattern_applied_to_wksp(
+            &mut storage,
+            device.clone(),
+            pattern,
+        )
+        .await?;
+
+        // 4) All set !
 
         Ok(Self {
             realm_id,
