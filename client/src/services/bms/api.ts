@@ -220,17 +220,17 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
       isError: false,
       data: {
         type: DataType.Invoices,
-        invoices: [
-          {
-            id: axiosResponse.data.id,
-            pdf: axiosResponse.data.pdf,
-            start: DateTime.fromISO(axiosResponse.data.start, { zone: 'utc' }),
-            end: DateTime.fromISO(axiosResponse.data.end, { zone: 'utc' }),
-            total: axiosResponse.data.total,
-            status: axiosResponse.data.status,
-            organizationId: axiosResponse.data.organization,
-          },
-        ],
+        invoices: axiosResponse.data.results.map((invoice: any) => {
+          return {
+            id: invoice.id,
+            pdfLink: invoice.pdf,
+            start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),
+            end: DateTime.fromISO(invoice.period_end, { zone: 'utc' }),
+            total: invoice.total,
+            status: invoice.status,
+            organizationId: invoice.organization,
+          };
+        }),
       },
     };
   });

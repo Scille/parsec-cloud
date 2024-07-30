@@ -108,12 +108,21 @@ interface BmsOrganization {
 
 interface BmsInvoice {
   id: string;
-  pdf: string;
+  pdfLink: string;
   start: DateTime;
   end: DateTime;
   total: number;
-  status: string;
+  status: InvoiceStatus;
   organizationId: OrganizationID;
+}
+
+enum InvoiceStatus {
+  Paid = 'paid',
+  Draft = 'draft',
+  Open = 'open',
+  // cspell:disable-next-line
+  Uncollectible = 'uncollectible',
+  Void = 'void',
 }
 
 // Data used for queries

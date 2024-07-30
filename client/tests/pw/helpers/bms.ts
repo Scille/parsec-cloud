@@ -150,6 +150,40 @@ async function mockOrganizationStatus(page: Page, overload: StatusData = {}): Pr
   );
 }
 
+async function mockGetInvoices(page: Page, { fail, count }: { fail?: boolean; count?: number }): Promise<void> {
+  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`, async (route) => {
+    if (fail) {
+      await route.fulfill({
+        status: 400,
+        json: {
+          type: 'error',
+          errors: [{ code: 'invalid', attr: 'null', detail: 'An error occurred' }],
+        },
+      });
+    } else {
+      await route.fulfill({
+        status: 200,
+        json: {
+          count: count,
+          result: Array.from(Array(count).keys()).map((index) => {
+            return {
+              id: `Id${index}`,
+              pdf: `https://fake/pdfs/${index}.pdf`,
+              // eslint-disable-next-line camelcase
+              period_start: '2024-07-01',
+              // eslint-disable-next-line camelcase
+              period_end: '2024-07-01',
+              total: 13.37,
+              status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
+              organization: `Org${index}`,
+            };
+          }),
+        },
+      });
+    }
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserInfo,
@@ -157,4 +191,5 @@ export const MockBms = {
   mockListOrganizations,
   mockOrganizationStats,
   mockOrganizationStatus,
+  mockGetInvoices,
 };
