@@ -663,6 +663,7 @@ impl_transparent_data_format_conversion!(
 );
 
 impl_local_manifest_dump!(LocalFolderManifest);
+impl_local_manifest_load!(LocalFolderManifest);
 
 impl LocalFolderManifest {
     pub fn new(author: DeviceID, parent: VlobID, timestamp: DateTime) -> Self {
