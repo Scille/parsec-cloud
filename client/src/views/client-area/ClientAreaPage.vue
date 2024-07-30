@@ -92,8 +92,8 @@ import PaymentMethodsPage from '@/views/client-area/PaymentMethodsPage.vue';
 import PersonalDataPage from '@/views/client-area/PersonalDataPage.vue';
 import StatisticsPage from '@/views/client-area/StatisticsPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { navigateTo, Routes } from '@/router';
 import { Translatable } from 'megashark-lib';
+import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 
 const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
@@ -123,12 +123,20 @@ onMounted(async () => {
   } else {
     loggedIn.value = true;
   }
-
+  const query = getCurrentRouteQuery<ClientAreaQuery>();
   const response = await BmsAccessInstance.get().listOrganizations();
   if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
     organizations.value = response.data.organizations;
     if (organizations.value.length > 0) {
-      currentOrganization.value = organizations.value[0];
+      if (query.organization) {
+        currentOrganization.value = organizations.value.find((org) => org.bmsId === query.organization);
+      }
+      if (!currentOrganization.value) {
+        currentOrganization.value = organizations.value[0];
+      }
+    }
+    if (query.page) {
+      currentPage.value = query.page as ClientAreaPages;
     }
   }
 
@@ -151,6 +159,7 @@ onUnmounted(() => {
 
 async function switchPage(page: ClientAreaPages): Promise<void> {
   currentPage.value = page;
+  await navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: currentOrganization.value?.bmsId, page: page } });
 }
 
 function onMove(detail: GestureDetail): void {
@@ -170,6 +179,7 @@ function onEnd(): void {
 }
 
 async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
+  await navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: organization.bmsId } });
   currentOrganization.value = organization;
 }
 

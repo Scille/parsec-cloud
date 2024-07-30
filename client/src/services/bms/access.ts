@@ -122,6 +122,16 @@ class BmsAccess {
     });
   }
 
+  async getBillingDetails(): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.getBillingDetails(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+    });
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();
