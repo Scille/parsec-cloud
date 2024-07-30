@@ -36,6 +36,46 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    CancelledGreetingAttemptReason,
+    libparsec_types::CancelledGreetingAttemptReason,
+    [
+        "MANUALLY_CANCELED",
+        manually_canceled,
+        libparsec_types::CancelledGreetingAttemptReason::ManuallyCanceled
+    ],
+    [
+        "INVALID_NONCE_HASH",
+        invalid_nonce_hash,
+        libparsec_types::CancelledGreetingAttemptReason::InvalidNonceHash
+    ],
+    [
+        "INVALID_SAS_CODE",
+        invalid_sas_code,
+        libparsec_types::CancelledGreetingAttemptReason::InvalidSasCode
+    ],
+    [
+        "UNDECIPHERABLE_PAYLOAD",
+        undecipherable_payload,
+        libparsec_types::CancelledGreetingAttemptReason::UndecipherablePayload
+    ],
+    [
+        "UNDESERIALIZABLE_PAYLOAD",
+        undeserializable_payload,
+        libparsec_types::CancelledGreetingAttemptReason::UndeserializablePayload
+    ],
+    [
+        "INCONSISTENT_PAYLOAD",
+        inconsistent_payload,
+        libparsec_types::CancelledGreetingAttemptReason::InconsistentPayload
+    ],
+    [
+        "AUTOMATICALLY_CANCELED",
+        automatically_canceled,
+        libparsec_types::CancelledGreetingAttemptReason::AutomaticallyCanceled
+    ]
+);
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     RealmRole,
     libparsec_types::RealmRole,
     ["OWNER", owner, libparsec_types::RealmRole::Owner],
