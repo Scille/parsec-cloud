@@ -36,6 +36,21 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    GreeterOrClaimer,
+    libparsec_types::GreeterOrClaimer,
+    [
+        "GREETER",
+        greeter,
+        libparsec_types::GreeterOrClaimer::Greeter
+    ],
+    [
+        "CLAIMER",
+        claimer,
+        libparsec_types::GreeterOrClaimer::Claimer
+    ]
+);
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
     CancelledGreetingAttemptReason,
     libparsec_types::CancelledGreetingAttemptReason,
     [

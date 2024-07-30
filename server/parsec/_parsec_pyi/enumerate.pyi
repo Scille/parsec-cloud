@@ -24,6 +24,16 @@ class InvitationType:
     @property
     def str(self) -> str: ...
 
+class GreeterOrClaimer:
+    GREETER: GreeterOrClaimer
+    CLAIMER: GreeterOrClaimer
+    VALUES: tuple[GreeterOrClaimer, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> GreeterOrClaimer: ...
+    @property
+    def str(self) -> str: ...
+
 class CancelledGreetingAttemptReason:
     MANUALLY_CANCELED: CancelledGreetingAttemptReason
     INVALID_NONCE_HASH: CancelledGreetingAttemptReason
