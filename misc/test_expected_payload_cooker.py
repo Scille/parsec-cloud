@@ -20,7 +20,7 @@ Example:
     let expected =
         // ...
     ;
-    println!("***expected: {:?}", expected.dump());
+    println!("***expected: {:?}", expected.dump().unwrap());
     // ...
     p_assert_eq!(data, expected);
 
@@ -87,7 +87,7 @@ LIBPARSEC_VERSION_FILE = os.path.join(os.path.dirname(__file__), "..", "libparse
 FAILING_TEST_HEADER_PATTERN = re.compile(r"\W*FAIL \[[ 0-9.]+s\] ([ \w::]+)")
 
 # Expected print message: `***expected: <dump>`
-##     println!("***expected: {:?}", expected.dump());
+##     println!("***expected: {:?}", expected.dump().unwrap());
 TAG_PATTERN = re.compile(r"\W*\*\*\*expected: \[([ 0-9,]*)\]")
 
 KEY_CANDIDATES = [
@@ -104,13 +104,15 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
             except nacl.exceptions.CryptoError:
                 continue
 
-    def attempt_deserialization(raw: bytes) -> dict[str, object] | None:
-        if raw[0] == 0xFF:
-            try:
-                return msgpack.unpackb(raw[1:])
-            except ValueError:
-                pass
+    def attempt_msgpack_deserialization(raw: bytes) -> dict[str, object] | None:
+        try:
+            # `strict_map_key` is needed because shamir_recovery_brief_certificate
+            # uses `DeviceID` (i.e. ExtType) as dict key.
+            return msgpack.unpackb(raw, strict_map_key=False)
+        except ValueError:
+            return None
 
+    def attempt_format_0x00_deserialization(raw: bytes) -> dict[str, object] | None:
         # First byte is the version
         if raw[0] != 0x00:
             return None
@@ -124,21 +126,21 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
         except zstandard.ZstdError:
             return None
 
-        try:
-            # `strict_map_key` is needed because shamir_recovery_brief_certificate
-            # uses `DeviceID` (i.e. ExtType) as dict key.
-            return msgpack.unpackb(decompressed, strict_map_key=False)
-        except ValueError:
-            return None
+        return attempt_msgpack_deserialization(decompressed)
 
-    # First attempt: consider the data is not signed nor encrypted
-    deserialized = attempt_deserialization(raw)
+    # 1st attempt: consider the data is only msgpack-encoded (what is used for the protocols)
+    deserialized = attempt_msgpack_deserialization(raw)
     if deserialized is not None:
         return deserialized
 
-    # Second attempt: consider the data is only signed
+    # 2nd attempt: consider the data is not signed nor encrypted
+    deserialized = attempt_format_0x00_deserialization(raw)
+    if deserialized is not None:
+        return deserialized
+
+    # 3rd attempt: consider the data is only signed
     raw_without_signature = raw[64:]
-    deserialized = attempt_deserialization(raw_without_signature)
+    deserialized = attempt_format_0x00_deserialization(raw_without_signature)
     if deserialized is not None:
         return deserialized
 
@@ -147,11 +149,11 @@ def decode_expected_raw(raw: bytes) -> dict[str, object]:
     assert decrypted is not None
     # ...and signed ?
     decrypted_without_signature = decrypted[64:]
-    deserialized = attempt_deserialization(decrypted_without_signature)
+    deserialized = attempt_format_0x00_deserialization(decrypted_without_signature)
     if deserialized is None:
         # ...or not signed ?
-        deserialized = attempt_deserialization(decrypted)
-    assert deserialized is not None
+        deserialized = attempt_format_0x00_deserialization(decrypted)
+    assert deserialized is not None, "Cannot deserialize this payload..."
     return deserialized
 
 
@@ -221,13 +223,13 @@ def parse_lines(lines):
         for k, v in expected_decoded.items():
             output_lines.append(f"    //   {k}: {cook_msgpack_type(v)}")
 
-        output_lines.append("    let data = &hex!(")
+        output_lines.append("    let raw: &[u8] = hex!(")
 
         # The raw value (payload) to be used in the test
         for part in textwrap.wrap(expected_raw.hex()):
             output_lines.append(f'    "{part}"')
 
-        output_lines.append("    );")
+        output_lines.append("    ).as_ref();")
 
         print()
         print(f"================== {current_test} ==================")
