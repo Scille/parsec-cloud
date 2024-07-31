@@ -164,7 +164,7 @@ impl WorkspaceStore {
                     entry_id: manifest.0.base.id,
                     base_version: manifest.0.base.version,
                     need_sync: manifest.0.need_sync,
-                    encrypted: manifest.0.dump_and_encrypt(&device.local_symkey),
+                    encrypted: manifest.0.dump_and_encrypt(&device.local_symkey).into(),
                 };
                 storage.update_manifest(&update_data).await?;
 

@@ -195,42 +195,45 @@ impl PlatformWorkspaceStorage {
         db_get_outbound_need_sync(&mut self.conn, limit).await
     }
 
-    pub async fn get_manifest(
+    pub async fn get_manifest<'a>(
         &mut self,
         entry_id: VlobID,
-    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
+    ) -> anyhow::Result<Option<RawEncryptedManifest<'a>>> {
         db_get_manifest(&mut self.conn, entry_id).await
     }
 
-    pub async fn get_chunk(
+    pub async fn get_chunk<'a>(
         &mut self,
         chunk_id: ChunkID,
-    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
+    ) -> anyhow::Result<Option<RawEncryptedChunk<'a>>> {
         db_get_chunk(&mut self.conn, chunk_id).await
     }
 
-    pub async fn get_block(
+    pub async fn get_block<'a>(
         &mut self,
         block_id: BlockID,
         now: DateTime,
-    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock<'a>>> {
         db_get_block_and_update_accessed_on(&mut self.cache_conn, block_id, now).await
     }
 
-    pub async fn populate_manifest(
+    pub async fn populate_manifest<'a>(
         &mut self,
-        manifest: &UpdateManifestData,
+        manifest: &UpdateManifestData<'a>,
     ) -> anyhow::Result<PopulateManifestOutcome> {
         db_populate_manifest(&mut self.conn, manifest).await
     }
 
-    pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
+    pub async fn update_manifest<'a>(
+        &mut self,
+        manifest: &UpdateManifestData<'a>,
+    ) -> anyhow::Result<()> {
         db_update_manifest(&mut self.conn, manifest).await
     }
 
-    pub async fn update_manifests(
+    pub async fn update_manifests<'a>(
         &mut self,
-        manifests: impl Iterator<Item = UpdateManifestData>,
+        manifests: impl Iterator<Item = UpdateManifestData<'a>>,
     ) -> anyhow::Result<()> {
         // Note transaction automatically rollbacks on drop
         let mut transaction = self.conn.begin().await?;
@@ -243,10 +246,10 @@ impl PlatformWorkspaceStorage {
         Ok(())
     }
 
-    pub async fn update_manifest_and_chunks(
+    pub async fn update_manifest_and_chunks<'manifest, 'chunk>(
         &mut self,
-        manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
+        manifest: &UpdateManifestData<'manifest>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk<'chunk>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         // Note transaction automatically rollbacks on drop
@@ -554,7 +557,7 @@ pub async fn workspace_storage_non_speculative_init(
     storage
         .update_manifest(&UpdateManifestData {
             entry_id: manifest.base.id,
-            encrypted: manifest.dump_and_encrypt(&device.local_symkey),
+            encrypted: manifest.dump_and_encrypt(&device.local_symkey).into(),
             need_sync: manifest.need_sync,
             base_version: manifest.base.version,
         })
@@ -624,10 +627,10 @@ pub async fn db_update_manifest_remote_version(
     Ok(())
 }
 
-async fn db_get_manifest(
+async fn db_get_manifest<'a>(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     entry_id: VlobID,
-) -> anyhow::Result<Option<RawEncryptedManifest>> {
+) -> anyhow::Result<Option<RawEncryptedManifest<'a>>> {
     let row = sqlx::query(
         "SELECT blob \
         FROM vlobs \
@@ -641,16 +644,16 @@ async fn db_get_manifest(
     match row {
         None => Ok(None),
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedManifest, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
     }
 }
 
-pub async fn db_get_chunk(
+pub async fn db_get_chunk<'a>(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     chunk_id: ChunkID,
-) -> anyhow::Result<Option<RawEncryptedChunk>> {
+) -> anyhow::Result<Option<RawEncryptedChunk<'a>>> {
     let row = sqlx::query(
         "SELECT data \
         FROM chunks \
@@ -663,18 +666,18 @@ pub async fn db_get_chunk(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedChunk, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
         None => Ok(None),
     }
 }
 
-pub async fn db_get_block_and_update_accessed_on(
+pub async fn db_get_block_and_update_accessed_on<'a>(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     block_id: BlockID,
     timestamp: DateTime,
-) -> anyhow::Result<Option<RawEncryptedBlock>> {
+) -> anyhow::Result<Option<RawEncryptedBlock<'a>>> {
     let row = sqlx::query(
         "UPDATE chunks \
         SET accessed_on = ?1 \
@@ -689,7 +692,7 @@ pub async fn db_get_block_and_update_accessed_on(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedBlock, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
         None => Ok(None),
@@ -698,7 +701,7 @@ pub async fn db_get_block_and_update_accessed_on(
 
 pub async fn db_populate_manifest(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
-    manifest: &UpdateManifestData,
+    manifest: &UpdateManifestData<'_>,
 ) -> anyhow::Result<PopulateManifestOutcome> {
     let result = sqlx::query(
         " \
@@ -714,7 +717,7 @@ pub async fn db_populate_manifest(
     )
     .bind(manifest.entry_id.as_bytes())
     .bind(manifest.need_sync)
-    .bind(&manifest.encrypted)
+    .bind(manifest.encrypted.as_ref())
     .bind(manifest.base_version)
     .bind(manifest.base_version) // Use base version as default for remote version
     .execute(executor)
@@ -729,7 +732,7 @@ pub async fn db_populate_manifest(
 
 async fn db_update_manifest(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
-    manifest: &UpdateManifestData,
+    manifest: &UpdateManifestData<'_>,
 ) -> anyhow::Result<()> {
     sqlx::query(
         " \
@@ -750,7 +753,7 @@ async fn db_update_manifest(
     )
     .bind(manifest.entry_id.as_bytes())
     .bind(manifest.need_sync)
-    .bind(&manifest.encrypted)
+    .bind(manifest.encrypted.as_ref())
     .bind(manifest.base_version)
     .bind(manifest.base_version) // Use base version as default for remote version
     .execute(executor)

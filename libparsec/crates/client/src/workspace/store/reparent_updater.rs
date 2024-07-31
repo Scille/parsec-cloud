@@ -114,27 +114,35 @@ impl ReparentingUpdater<'_> {
             entry_id: src_parent_manifest.base.id,
             base_version: src_parent_manifest.base.version,
             need_sync: src_parent_manifest.need_sync,
-            encrypted: src_parent_manifest.dump_and_encrypt(&store.device.local_symkey),
+            encrypted: src_parent_manifest
+                .dump_and_encrypt(&store.device.local_symkey)
+                .into(),
         };
         let src_child_update_data = match &src_child_manifest {
             ArcLocalChildManifest::File(src_child_manifest) => UpdateManifestData {
                 entry_id: src_child_manifest.base.id,
                 base_version: src_child_manifest.base.version,
                 need_sync: src_child_manifest.need_sync,
-                encrypted: src_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                encrypted: src_child_manifest
+                    .dump_and_encrypt(&store.device.local_symkey)
+                    .into(),
             },
             ArcLocalChildManifest::Folder(src_child_manifest) => UpdateManifestData {
                 entry_id: src_child_manifest.base.id,
                 base_version: src_child_manifest.base.version,
                 need_sync: src_child_manifest.need_sync,
-                encrypted: src_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                encrypted: src_child_manifest
+                    .dump_and_encrypt(&store.device.local_symkey)
+                    .into(),
             },
         };
         let dst_parent_update_data = UpdateManifestData {
             entry_id: dst_parent_manifest.base.id,
             base_version: dst_parent_manifest.base.version,
             need_sync: dst_parent_manifest.need_sync,
-            encrypted: dst_parent_manifest.dump_and_encrypt(&store.device.local_symkey),
+            encrypted: dst_parent_manifest
+                .dump_and_encrypt(&store.device.local_symkey)
+                .into(),
         };
 
         match &dst_child_manifest {
@@ -159,13 +167,17 @@ impl ReparentingUpdater<'_> {
                         entry_id: dst_child_manifest.base.id,
                         base_version: dst_child_manifest.base.version,
                         need_sync: dst_child_manifest.need_sync,
-                        encrypted: dst_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                        encrypted: dst_child_manifest
+                            .dump_and_encrypt(&store.device.local_symkey)
+                            .into(),
                     },
                     ArcLocalChildManifest::Folder(dst_child_manifest) => UpdateManifestData {
                         entry_id: dst_child_manifest.base.id,
                         base_version: dst_child_manifest.base.version,
                         need_sync: dst_child_manifest.need_sync,
-                        encrypted: dst_child_manifest.dump_and_encrypt(&store.device.local_symkey),
+                        encrypted: dst_child_manifest
+                            .dump_and_encrypt(&store.device.local_symkey)
+                            .into(),
                     },
                 };
 

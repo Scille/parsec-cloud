@@ -336,17 +336,17 @@ impl Certificate {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(super) struct Chunk {
+pub(super) struct Chunk<'data> {
     pub chunk_id: Bytes,
     pub size: IndexInt,
     pub offline: bool,
     pub accessed_on: Option<i64>,
-    pub data: RawEncryptedChunk,
+    pub data: RawEncryptedChunk<'data>,
     // IndexedDB cannot index on boolean, so we have to deal with
     pub is_block: u8,
 }
 
-impl Chunk {
+impl<'data> Chunk<'data> {
     const STORE: &'static str = "chunks";
     const INDEX_CHUNK_ID: &'static str = "chunk_id";
     const INDEX_IS_BLOCK: &'static str = "is_block";
@@ -513,15 +513,15 @@ impl Remanence {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub(super) struct Vlob {
+pub(super) struct Vlob<'manifest> {
     pub vlob_id: Bytes,
     pub base_version: VersionInt,
     pub remote_version: VersionInt,
     pub need_sync: bool,
-    pub blob: RawEncryptedManifest,
+    pub blob: RawEncryptedManifest<'manifest>,
 }
 
-impl Vlob {
+impl<'manifest> Vlob<'manifest> {
     const STORE: &'static str = "vlobs";
     const INDEX_VLOB_ID: &'static str = "vlob_id";
     const INDEX_NEED_SYNC: &'static str = "need_sync";

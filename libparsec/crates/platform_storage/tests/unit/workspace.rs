@@ -244,7 +244,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
     workspace_storage
         .update_manifest(&UpdateManifestData {
             entry_id,
-            encrypted: b"<manifest_v1>".to_vec(),
+            encrypted: b"<manifest_v1>".as_ref().into(),
             need_sync: false,
             base_version: 1,
         })
@@ -256,7 +256,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest_v1>"
+        b"<manifest_v1>".as_ref()
     );
 
     // 3) Re-starting the database and check data are still there
@@ -273,7 +273,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest_v1>"
+        b"<manifest_v1>".as_ref()
     );
 
     let dump = workspace_storage.debug_dump().await.unwrap();
@@ -295,7 +295,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
     workspace_storage
         .update_manifest(&UpdateManifestData {
             entry_id,
-            encrypted: b"<manifest_v2>".to_vec(),
+            encrypted: b"<manifest_v2>".as_ref().into(),
             need_sync: true,
             base_version: 2,
         })
@@ -307,7 +307,7 @@ async fn get_and_update_manifest(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest_v2>"
+        b"<manifest_v2>".as_ref()
     );
 
     let dump = workspace_storage.debug_dump().await.unwrap();
@@ -342,13 +342,13 @@ async fn update_manifests(env: &TestbedEnv) {
             [
                 UpdateManifestData {
                     entry_id: entry1_id,
-                    encrypted: b"<manifest1_v1>".to_vec(),
+                    encrypted: b"<manifest1_v1>".as_ref().into(),
                     need_sync: true,
                     base_version: 1,
                 },
                 UpdateManifestData {
                     entry_id: entry2_id,
-                    encrypted: b"<manifest2_v2>".to_vec(),
+                    encrypted: b"<manifest2_v2>".as_ref().into(),
                     need_sync: false,
                     base_version: 2,
                 },
@@ -364,7 +364,7 @@ async fn update_manifests(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest1_v1>"
+        b"<manifest1_v1>".as_ref()
     );
     p_assert_eq!(
         workspace_storage
@@ -372,7 +372,7 @@ async fn update_manifests(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest2_v2>"
+        b"<manifest2_v2>".as_ref()
     );
 
     let dump = workspace_storage.debug_dump().await.unwrap();
@@ -418,13 +418,13 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
         .update_manifest_and_chunks(
             &UpdateManifestData {
                 entry_id,
-                encrypted: b"<manifest_v1>".to_vec(),
+                encrypted: b"<manifest_v1>".as_ref().into(),
                 need_sync: true,
                 base_version: 1,
             },
             [
-                (chunk1_id, b"<chunk1>".to_vec()),
-                (chunk2_id, b"<chunk2chunk2>".to_vec()),
+                (chunk1_id, b"<chunk1>".as_ref().into()),
+                (chunk2_id, b"<chunk2chunk2>".as_ref().into()),
             ]
             .into_iter(),
             [].into_iter(),
@@ -438,7 +438,7 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<manifest_v1>"
+        b"<manifest_v1>".as_ref()
     );
 
     p_assert_eq!(
@@ -447,7 +447,7 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<chunk1>"
+        b"<chunk1>".as_ref()
     );
 
     p_assert_eq!(
@@ -456,7 +456,7 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<chunk2chunk2>"
+        b"<chunk2chunk2>".as_ref()
     );
 
     let dump = workspace_storage.debug_dump().await.unwrap();
@@ -491,7 +491,7 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
         .update_manifest_and_chunks(
             &UpdateManifestData {
                 entry_id,
-                encrypted: b"<manifest_v2>".to_vec(),
+                encrypted: b"<manifest_v2>".as_ref().into(),
                 need_sync: true,
                 base_version: 2,
             },
@@ -507,7 +507,7 @@ async fn update_manifest_and_chunks(env: &TestbedEnv) {
             .await
             .unwrap()
             .unwrap(),
-        b"<chunk1>"
+        b"<chunk1>".as_ref()
     );
 
     p_assert_eq!(workspace_storage.get_chunk(chunk2_id).await.unwrap(), None);
@@ -552,13 +552,13 @@ async fn promote_chunk_to_block(env: &TestbedEnv) {
         .update_manifest_and_chunks(
             &UpdateManifestData {
                 entry_id,
-                encrypted: b"<manifest_v1>".to_vec(),
+                encrypted: b"<manifest_v1>".as_ref().into(),
                 need_sync: true,
                 base_version: 1,
             },
             [
-                (chunk1_id, b"<chunk1>".to_vec()),
-                (chunk2_id, b"<chunk2chunk2>".to_vec()),
+                (chunk1_id, b"<chunk1>".as_ref().into()),
+                (chunk2_id, b"<chunk2chunk2>".as_ref().into()),
             ]
             .into_iter(),
             [].into_iter(),
@@ -632,7 +632,7 @@ async fn promote_chunk_to_block(env: &TestbedEnv) {
             .get_block(chunk1_id.into(), alice.now())
             .await
             .unwrap(),
-        Some(b"<chunk1>".to_vec())
+        Some(b"<chunk1>".as_ref().into())
     );
 }
 

@@ -6,7 +6,7 @@
 //! - No encryption/serialization: simplify code (no need for type dispatching)
 //!   and testing (no need to build valid certificates objects).
 
-use std::path::Path;
+use std::{borrow::Cow, path::Path};
 
 use libparsec_types::prelude::*;
 
@@ -22,17 +22,17 @@ pub struct WorkspaceStorage {
     platform: PlatformWorkspaceStorage,
 }
 
-pub struct UpdateManifestData {
+pub struct UpdateManifestData<'a> {
     pub entry_id: VlobID,
-    pub encrypted: RawEncryptedManifest,
+    pub encrypted: RawEncryptedManifest<'a>,
     pub need_sync: bool,
     pub base_version: VersionInt,
 }
 
-pub type RawEncryptedManifest = Vec<u8>;
-pub type RawEncryptedChunk = Vec<u8>;
-pub type RawEncryptedBlock = Vec<u8>;
-pub type RawEncryptedBytes = Vec<u8>;
+pub type RawEncryptedManifest<'a> = Cow<'a, [u8]>;
+pub type RawEncryptedChunk<'a> = Cow<'a, [u8]>;
+pub type RawEncryptedBlock<'a> = Cow<'a, [u8]>;
+pub type RawEncryptedBytes<'a> = Cow<'a, [u8]>;
 
 pub enum PopulateManifestOutcome {
     Stored,
@@ -138,35 +138,38 @@ impl WorkspaceStorage {
         self.platform.get_outbound_need_sync(limit).await
     }
 
-    pub async fn get_manifest(
+    pub async fn get_manifest<'a>(
         &mut self,
         entry_id: VlobID,
-    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
+    ) -> anyhow::Result<Option<RawEncryptedManifest<'a>>> {
         self.platform.get_manifest(entry_id).await
     }
 
-    pub async fn populate_manifest(
+    pub async fn populate_manifest<'a>(
         &mut self,
-        manifest: &UpdateManifestData,
+        manifest: &UpdateManifestData<'a>,
     ) -> anyhow::Result<PopulateManifestOutcome> {
         self.platform.populate_manifest(manifest).await
     }
 
-    pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
+    pub async fn update_manifest<'a>(
+        &mut self,
+        manifest: &UpdateManifestData<'a>,
+    ) -> anyhow::Result<()> {
         self.platform.update_manifest(manifest).await
     }
 
-    pub async fn update_manifests(
+    pub async fn update_manifests<'a>(
         &mut self,
-        manifests: impl Iterator<Item = UpdateManifestData>,
+        manifests: impl Iterator<Item = UpdateManifestData<'a>>,
     ) -> anyhow::Result<()> {
         self.platform.update_manifests(manifests).await
     }
 
-    pub async fn update_manifest_and_chunks(
+    pub async fn update_manifest_and_chunks<'manifest, 'chunk>(
         &mut self,
-        manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
+        manifest: &UpdateManifestData<'manifest>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk<'manifest>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         self.platform
@@ -174,18 +177,18 @@ impl WorkspaceStorage {
             .await
     }
 
-    pub async fn get_chunk(
+    pub async fn get_chunk<'a>(
         &mut self,
         chunk_id: ChunkID,
-    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
+    ) -> anyhow::Result<Option<RawEncryptedChunk<'a>>> {
         self.platform.get_chunk(chunk_id).await
     }
 
-    pub async fn get_chunk_or_block(
+    pub async fn get_chunk_or_block<'a>(
         &mut self,
         chunk_id: ChunkID,
         now: DateTime,
-    ) -> anyhow::Result<Option<RawEncryptedBytes>> {
+    ) -> anyhow::Result<Option<RawEncryptedBytes<'a>>> {
         match self.platform.get_chunk(chunk_id).await? {
             Some(data) => Ok(Some(data)),
             None => self.platform.get_block(chunk_id.into(), now).await,
@@ -196,11 +199,11 @@ impl WorkspaceStorage {
         self.platform.set_chunk(chunk_id, encrypted).await
     }
 
-    pub async fn get_block(
+    pub async fn get_block<'a>(
         &mut self,
         block_id: BlockID,
         now: DateTime,
-    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock<'a>>> {
         self.platform.get_block(block_id, now).await
     }
 

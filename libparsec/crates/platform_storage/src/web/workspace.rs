@@ -133,40 +133,40 @@ impl PlatformWorkspaceStorage {
             .collect::<Result<Vec<_>, _>>()
     }
 
-    pub async fn get_manifest(
+    pub async fn get_manifest<'a>(
         &mut self,
         entry_id: VlobID,
-    ) -> anyhow::Result<Option<RawEncryptedManifest>> {
+    ) -> anyhow::Result<Option<RawEncryptedManifest<'a>>> {
         let transaction = Vlob::read(&self.conn)?;
 
         Ok(
             Vlob::get(&transaction, &entry_id.as_bytes().to_vec().into())
                 .await?
-                .map(|x| x.blob.to_vec()),
+                .map(|x| Vec::from(x.blob).into()),
         )
     }
 
-    pub async fn get_chunk(
+    pub async fn get_chunk<'a>(
         &mut self,
         chunk_id: ChunkID,
-    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
+    ) -> anyhow::Result<Option<RawEncryptedChunk<'a>>> {
         let transaction = super::model::Chunk::read(&self.conn)?;
         db_get_chunk(&transaction, chunk_id).await
     }
 
-    pub async fn get_block(
+    pub async fn get_block<'a>(
         &mut self,
         block_id: BlockID,
         timestamp: DateTime,
-    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock<'a>>> {
         let transaction = super::model::Chunk::write(&self.conn)?;
 
         match super::model::Chunk::get(&transaction, &block_id.as_bytes().to_vec().into()).await? {
             Some(mut chunk) if chunk.is_block == 1 => {
                 super::model::Chunk::remove(&transaction, &chunk.chunk_id).await?;
                 chunk.accessed_on = Some(timestamp.as_timestamp_micros());
-                let data = chunk.data.to_vec();
                 chunk.insert(&transaction).await?;
+                let data = Vec::from(chunk.data).into();
 
                 Ok(Some(data))
             }
@@ -174,22 +174,25 @@ impl PlatformWorkspaceStorage {
         }
     }
 
-    pub async fn populate_manifest(
+    pub async fn populate_manifest<'a>(
         &mut self,
-        manifest: &UpdateManifestData,
+        manifest: &UpdateManifestData<'a>,
     ) -> anyhow::Result<PopulateManifestOutcome> {
         let transaction = Vlob::write(&self.conn)?;
         db_populate_manifest(&transaction, manifest).await
     }
 
-    pub async fn update_manifest(&mut self, manifest: &UpdateManifestData) -> anyhow::Result<()> {
+    pub async fn update_manifest<'a>(
+        &mut self,
+        manifest: &UpdateManifestData<'a>,
+    ) -> anyhow::Result<()> {
         let transaction = Vlob::write(&self.conn)?;
         db_update_manifest(&transaction, manifest).await
     }
 
-    pub async fn update_manifests(
+    pub async fn update_manifests<'a>(
         &mut self,
-        manifests: impl Iterator<Item = UpdateManifestData>,
+        manifests: impl Iterator<Item = UpdateManifestData<'a>>,
     ) -> anyhow::Result<()> {
         let transaction = Vlob::write(&self.conn)?;
 
@@ -200,10 +203,10 @@ impl PlatformWorkspaceStorage {
         super::db::commit(transaction).await
     }
 
-    pub async fn update_manifest_and_chunks(
+    pub async fn update_manifest_and_chunks<'manifest, 'chunk>(
         &mut self,
-        manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
+        manifest: &UpdateManifestData<'manifest>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk<'chunk>)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         let transaction = Vlob::write(&self.conn)?;
@@ -251,7 +254,7 @@ impl PlatformWorkspaceStorage {
             size: encrypted.len() as IndexInt,
             offline: false,
             accessed_on: None,
-            data: encrypted.to_vec().into(),
+            data: RawEncryptedChunk::Borrowed(encrypted),
             is_block: 0,
         }
         .insert(&transaction)
@@ -486,7 +489,7 @@ pub async fn workspace_storage_non_speculative_init(
     storage
         .update_manifest(&UpdateManifestData {
             entry_id: manifest.base.id,
-            encrypted: manifest.dump_and_encrypt(&device.local_symkey),
+            encrypted: manifest.dump_and_encrypt(&device.local_symkey).into(),
             need_sync: manifest.need_sync,
             base_version: manifest.base.version,
         })
@@ -502,7 +505,7 @@ pub async fn workspace_storage_non_speculative_init(
 
 pub async fn db_populate_manifest<'a>(
     tx: &IdbTransaction<'a>,
-    manifest: &UpdateManifestData,
+    manifest: &UpdateManifestData<'_>,
 ) -> anyhow::Result<PopulateManifestOutcome> {
     match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
         Some(_) => Ok(PopulateManifestOutcome::AlreadyPresent),
@@ -523,7 +526,7 @@ pub async fn db_populate_manifest<'a>(
 
 async fn db_update_manifest<'a>(
     tx: &IdbTransaction<'a>,
-    manifest: &UpdateManifestData,
+    manifest: &UpdateManifestData<'_>,
 ) -> anyhow::Result<()> {
     match Vlob::get(tx, &manifest.entry_id.as_bytes().to_vec().into()).await? {
         Some(old_vlob) => {
@@ -552,12 +555,12 @@ async fn db_update_manifest<'a>(
     }
 }
 
-async fn db_get_chunk(
+async fn db_get_chunk<'a>(
     tx: &IdbTransaction<'_>,
     chunk_id: ChunkID,
-) -> anyhow::Result<Option<RawEncryptedChunk>> {
+) -> anyhow::Result<Option<RawEncryptedChunk<'a>>> {
     match super::model::Chunk::get(tx, &chunk_id.as_bytes().to_vec().into()).await? {
-        Some(chunk) if chunk.is_block == 0 => Ok(Some(chunk.data.to_vec())),
+        Some(chunk) if chunk.is_block == 0 => Ok(Some(Vec::from(chunk.data).into())),
         _ => Ok(None),
     }
 }
@@ -573,7 +576,7 @@ async fn db_insert_block(
         size: encrypted.len() as IndexInt,
         offline: false,
         accessed_on: Some(accessed_on.as_timestamp_micros()),
-        data: encrypted.to_vec().into(),
+        data: RawEncryptedChunk::Borrowed(encrypted),
         is_block: 1,
     }
     .insert(tx)

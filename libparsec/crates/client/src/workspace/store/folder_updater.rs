@@ -211,7 +211,9 @@ impl<'a> FolderUpdater<'a> {
             entry_id: manifest.base.id,
             base_version: manifest.base.version,
             need_sync: manifest.need_sync,
-            encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+            encrypted: manifest
+                .dump_and_encrypt(&self.store.device.local_symkey)
+                .into(),
         };
 
         match new_child {
@@ -235,13 +237,17 @@ impl<'a> FolderUpdater<'a> {
                         entry_id: new_child.base.id,
                         base_version: new_child.base.version,
                         need_sync: new_child.need_sync,
-                        encrypted: new_child.dump_and_encrypt(&self.store.device.local_symkey),
+                        encrypted: new_child
+                            .dump_and_encrypt(&self.store.device.local_symkey)
+                            .into(),
                     },
                     ArcLocalChildManifest::Folder(new_child) => UpdateManifestData {
                         entry_id: new_child.base.id,
                         base_version: new_child.base.version,
                         need_sync: new_child.need_sync,
-                        encrypted: new_child.dump_and_encrypt(&self.store.device.local_symkey),
+                        encrypted: new_child
+                            .dump_and_encrypt(&self.store.device.local_symkey)
+                            .into(),
                     },
                 };
                 storage
