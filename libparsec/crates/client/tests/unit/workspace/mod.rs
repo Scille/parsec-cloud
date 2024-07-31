@@ -17,6 +17,7 @@ mod inbound_sync_file;
 mod inbound_sync_folder;
 mod inbound_sync_root;
 mod link;
+mod merge_file;
 mod merge_folder;
 mod move_entry;
 mod open_file;

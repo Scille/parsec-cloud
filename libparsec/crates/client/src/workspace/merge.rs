@@ -23,25 +23,113 @@ pub(super) enum MergeLocalFolderManifestOutcome {
     Merged(Arc<LocalFolderManifest>),
 }
 
+/// Return `true` if the file manifest has some local changes related to its content.
+///
+/// File manifest fields can be divided into two parts:
+/// - The actual file content (i.e. what is used to read/write the file).
+/// - extra fields (currently there is only `update` and `parent` fields)
+///
+/// The key point here is the extra fields can be merged without conflict, while
+/// the file content cannot (as Parsec has no understanding of the file content's
+/// internal format !).
+fn has_file_content_changed_in_local(
+    base_size: u64,
+    base_blocksize: Blocksize,
+    base_blocks: &[BlockAccess],
+    local_size: u64,
+    local_blocksize: Blocksize,
+    local_blocks: &[Vec<ChunkView>],
+) -> bool {
+    // Test for obvious changes first
+    if base_size != local_size || base_blocksize != local_blocksize {
+        return true;
+    }
+
+    // Now the tricky part: compare the actual content of the file through the
+    // the blocks and chunks.
+    //
+    // Remember the local and remote manifests represent the content in different ways:
+    // - In remote each blocksize area is represented by a block access.
+    // - In local each blocksize area is represented by a list of chunk view.
+    // - A chunk view in turn may refere to a block access (or not if it correspond to new data).
+    // - To have an actual correspondance, a given blocksize area must be represented in
+    //   local as a single chunk view that refers to a block access and use it entirely
+    //   (not referring to a subset of the block).
+    // - A remote manifest can omit some blocksize area if they only contains empty data, on
+    //   the contrary a local manifest will represent such area as an empty list of chunk view.
+    //
+    // For instance considering a blocksize of 1024 bytes and a file of 3072 bytes
+    // containing only zero-filled data between bytes 1024 and 2048:
+    //
+    //          0                1024               2048               3072
+    // remote   |<----block #1---->|                  |<----block #2---->|
+    // local    |<-non-empty area->|<---empty area--->|<-non-empty area->|
+    //
+    // Here the two non-empty areas in local are expected to each contains a single
+    // chunk view corresponding to the same block than in remote.
+
+    // Compare each blocksize area one by one.
+    let mut remote_blocks_iter = base_blocks.iter();
+    for local_blocksize_area in local_blocks.iter() {
+        match local_blocksize_area.len() {
+            // This blocksize area is empty (i.e. it contains only zero-filled data), the
+            // remote manifest should have a hole here (hence nothing to compare here).
+            0 => (),
+            // This blocksize area contains data to compare.
+            1 => {
+                // The blocksize area is made of a single chunk view in local, from there
+                // we can extract the corresponding block access and compare it to the
+                // remote one.
+                // Note that it's possible to have a chunk view referring a block access
+                // but only using part of it (think of truncating a synchronized file),
+                // in this case `ChunkView::get_block_access` works as expected and
+                // return an error (given the chunk view doesn't *correspond* to the block
+                // access but only *uses* it).
+                match (local_blocksize_area[0].get_block_access(), remote_blocks_iter.next()) {
+                    // The local manifest contains local changes in this blocksize area.
+                    (Err(ChunkViewGetBlockAccessError::NotPromotedAsBlock), _)
+                    // The local manifest contains more blocksize areas than the remote.
+                    | (_, None) => {
+                        return true;
+                    }
+                    (Ok(local_block_access), Some(remote_block_access)) => {
+                        // This blocksize area has been modified.
+                        if local_block_access != remote_block_access {
+                            return true;
+                        }
+                    }
+                }
+            }
+            // Multiple chunk views in a given blocksize area indicates there is local
+            // changes (i.e. reshape hasn't been done).
+            _ => {
+                return true;
+            }
+        }
+    }
+
+    // No changes \o/
+    false
+}
+
+/// Merge a local file manifest with a remote file manifest.
 pub(super) fn merge_local_file_manifest(
     local_author: DeviceID,
     timestamp: DateTime,
-    local_manifest: &LocalFileManifest,
-    remote_manifest: FileManifest,
+    local: &LocalFileManifest,
+    remote: FileManifest,
 ) -> MergeLocalFileManifestOutcome {
     // 0) Sanity checks, caller is responsible to handle them properly !
-    debug_assert_eq!(local_manifest.base.id, remote_manifest.id);
+    debug_assert_eq!(local.base.id, remote.id);
 
     // 1) Shortcut in case the remote is outdated
-    if remote_manifest.version <= local_manifest.base.version {
+    if remote.version <= local.base.version {
         return MergeLocalFileManifestOutcome::NoChange;
     }
 
     // 2) Shortcut in case only the remote has changed
-    if !local_manifest.need_sync {
-        return MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(
-            remote_manifest,
-        ));
+    if !local.need_sync {
+        return MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(remote));
     }
 
     // Both the remote and the local have changed
@@ -49,9 +137,9 @@ pub(super) fn merge_local_file_manifest(
     // 3) The remote changes are ours (our current local changes occurs while
     // we were uploading previous local changes that became the remote changes),
     // simply acknowledge the remote changes and keep our local changes
-    if remote_manifest.author == local_author {
-        let mut new_local = local_manifest.to_owned();
-        new_local.base = remote_manifest;
+    if remote.author == local_author {
+        let mut new_local = local.to_owned();
+        new_local.base = remote;
         return MergeLocalFileManifestOutcome::Merged(new_local);
     }
 
@@ -60,88 +148,92 @@ pub(super) fn merge_local_file_manifest(
     // Destruct local and remote manifests to ensure this code with fail to compile
     // whenever a new field is introduced.
     let LocalFileManifest {
+        base:
+            FileManifest {
+                // `id` has already been checked
+                id: _,
+                // Ignore `author`: we don't merge data that change on each sync
+                author: _,
+                // Ignore `timestamp`: we don't merge data that change on each sync
+                timestamp: _,
+                // Ignore `version`: we don't merge data that change on each sync
+                version: _,
+                // Ignore `updated`: we don't merge data that change on each sync
+                updated: _,
+                // `created` should never change, so in theory we should have
+                // `local.base.created == remote.base.created`, but there is no strict
+                // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
+                // so we have no choice but to accept whatever value remote provides.
+                created: _,
+                parent: local_base_parent,
+                size: local_base_size,
+                blocksize: local_base_blocksize,
+                blocks: local_base_blocks,
+            },
         // `need_sync` has already been checked
         need_sync: _,
         // Ignore `updated`: we don't merge data that change on each sync
         updated: _,
-        base: local_base,
         parent: local_parent,
         size: local_size,
         blocksize: local_blocksize,
         blocks: local_blocks,
-    } = local_manifest;
-    let FileManifest {
-        // `id` has already been checked
-        id: _,
-        // Ignore `author`&`timestamp`: we don't merge data that change on each sync
-        author: _,
-        // Ignore `author`: we don't merge data that change on each sync
-        timestamp: _,
-        // Ignore `version`: we don't merge data that change on each sync
-        version: _,
-        // Ignore `updated`: we don't merge data that change on each sync
-        updated: _,
-        // `created` should never change, so in theory we should have
-        // `local.base.created == remote.base.created`, but there is no strict
-        // guarantee (e.g. remote manifest may have been uploaded by a buggy client)
-        // so we have no choice but to accept whatever value remote provides.
-        created: _,
-        parent: remote_parent,
-        size: remote_size,
-        blocksize: remote_blocksize,
-        blocks: remote_blocks,
-    } = &remote_manifest;
+    } = local;
 
-    // Compare data that cause a hard merge conflict
+    let mut local_need_sync = false;
 
-    if *remote_size != *local_size || *remote_blocksize != *local_blocksize {
-        return MergeLocalFileManifestOutcome::Conflict(remote_manifest);
-    }
+    // 4.1) First focus on the file content (i.e. the actual data of the file) given
+    // we cannot merge them in case of conflict.
 
-    let mut remote_blocks_iter = remote_blocks.iter();
-    for local_block_access in local_blocks
-        .iter()
-        // In local manifest each blocksize area is represented by a list of chunks,
-        // on the other hand the remote manifest only store the non-empty list of chunks
-        .filter(|chunks| !chunks.is_empty())
-        // Remote manifest is only composed of reshaped blocks
-        .map(|chunks| chunks[0].get_block_access())
-    {
-        let remote_block_access = remote_blocks_iter.next();
-        match (local_block_access, remote_block_access) {
-            (_, None) | (Err(_), _) => {
-                return MergeLocalFileManifestOutcome::Conflict(remote_manifest);
-            }
-            (Ok(local_block_access), Some(remote_block_access)) => {
-                if local_block_access != remote_block_access {
-                    return MergeLocalFileManifestOutcome::Conflict(remote_manifest);
-                }
-            }
+    let local_content_changed = has_file_content_changed_in_local(
+        *local_base_size,
+        *local_base_blocksize,
+        local_base_blocks,
+        *local_size,
+        *local_blocksize,
+        local_blocks,
+    );
+    // Once this first step is done, we have only partially done the merge (see
+    // next step) and hence why the result is named `merge_in_progress` !
+    let mut merge_in_progress = if local_content_changed {
+        local_need_sync = true;
+        // There is local changes in the content, hence we will have a conflict if there is also remote changes !
+        let remote_content_changed = remote.size != *local_base_size
+            || remote.blocksize != *local_base_blocksize
+            || remote.blocks != *local_base_blocks;
+        if remote_content_changed {
+            return MergeLocalFileManifestOutcome::Conflict(remote);
         }
-    }
-    if remote_blocks_iter.next().is_some() {
-        return MergeLocalFileManifestOutcome::Conflict(remote_manifest);
-    }
 
-    // The data can be merged ! But will the sync still be needed once merged ?
-    //
-    // Like they say in Megaforce "Deeds not words !", so we manually compare
-    // the remaining fields to determine if a sync is still needed.
-    //
-    // /!\ Extra attention should be paid here if we want to add new fields
-    // /!\ with their own sync logic, as this optimization may shadow them!
+        // No conflict, we can keep the local changes
+        let mut merge_in_progress = LocalFileManifest::from_remote(remote);
+        merge_in_progress.size = *local_size;
+        merge_in_progress.blocksize = *local_blocksize;
+        merge_in_progress.blocks = local_blocks.to_owned();
 
-    let new_parent = merge_parent(local_base.parent, *local_parent, *remote_parent);
-
-    if new_parent == *remote_parent {
-        MergeLocalFileManifestOutcome::Merged(LocalFileManifest::from_remote(remote_manifest))
+        merge_in_progress
     } else {
-        let mut local_from_remote = LocalFileManifest::from_remote(remote_manifest);
-        local_from_remote.parent = new_parent;
-        local_from_remote.updated = timestamp;
-        local_from_remote.need_sync = true;
-        MergeLocalFileManifestOutcome::Merged(local_from_remote)
+        // No local changes, so we just apply whatever the remote has done.
+        LocalFileManifest::from_remote(remote)
+    };
+    let remote = &merge_in_progress.base;
+
+    // 4.2) Now we can deal with the extra fields (i.e. not the file actual content) that
+    // can be merged without conflict (currently this is only the `parent` field).
+
+    merge_in_progress.parent = merge_parent(*local_base_parent, *local_parent, remote.parent);
+    if merge_in_progress.parent != remote.parent {
+        local_need_sync = true;
     }
+
+    // 4.3) Finally restore the need sync flag if needed
+
+    if local_need_sync {
+        merge_in_progress.updated = timestamp;
+        merge_in_progress.need_sync = true;
+    }
+
+    MergeLocalFileManifestOutcome::Merged(merge_in_progress)
 }
 
 /// Merge a local folder manifest with a remote folder manifest.
@@ -539,3 +631,7 @@ fn rename_with_suffix(name: &EntryName, suffix: &str) -> EntryName {
 #[path = "../../tests/unit/workspace/merge_get_conflict_filename.rs"]
 #[allow(clippy::unwrap_used)]
 mod tests_get_conflict_filename;
+#[cfg(test)]
+#[path = "../../tests/unit/workspace/merge_has_file_content_changed_in_local.rs"]
+#[allow(clippy::unwrap_used)]
+mod tests_has_file_content_changed_in_local;
