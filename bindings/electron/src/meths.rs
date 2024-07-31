@@ -6499,6 +6499,7 @@ fn variant_workspace_watch_error_rs_to_js<'a>(
 
 // bootstrap_organization
 fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
@@ -6644,6 +6645,7 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // build_parsec_organization_bootstrap_addr
 fn build_parsec_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let addr = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -6684,6 +6686,7 @@ fn build_parsec_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult
 
 // cancel
 fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -6725,6 +6728,7 @@ fn cancel(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // claimer_device_finalize_save_local_device
 fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let handle = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -6779,6 +6783,7 @@ fn claimer_device_finalize_save_local_device(mut cx: FunctionContext) -> JsResul
 
 // claimer_device_in_progress_1_do_signify_trust
 fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -6840,6 +6845,7 @@ fn claimer_device_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsR
 
 // claimer_device_in_progress_2_do_wait_peer_trust
 fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -6901,6 +6907,7 @@ fn claimer_device_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> J
 
 // claimer_device_in_progress_3_do_claim
 fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -6975,6 +6982,7 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
 
 // claimer_device_initial_do_wait_peer
 fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7035,6 +7043,7 @@ fn claimer_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
 
 // claimer_greeter_abort_operation
 fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let handle = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7076,6 +7085,7 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
 
 // claimer_retrieve_info
 fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
@@ -7177,6 +7187,7 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // claimer_user_finalize_save_local_device
 fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let handle = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7231,6 +7242,7 @@ fn claimer_user_finalize_save_local_device(mut cx: FunctionContext) -> JsResult<
 
 // claimer_user_in_progress_1_do_signify_trust
 fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7292,6 +7304,7 @@ fn claimer_user_in_progress_1_do_signify_trust(mut cx: FunctionContext) -> JsRes
 
 // claimer_user_in_progress_2_do_wait_peer_trust
 fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7353,6 +7366,7 @@ fn claimer_user_in_progress_2_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
 
 // claimer_user_in_progress_3_do_claim
 fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7432,6 +7446,7 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
 
 // claimer_user_initial_do_wait_peer
 fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7492,6 +7507,7 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
 
 // client_cancel_invitation
 fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7557,6 +7573,7 @@ fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_change_authentication
 fn client_change_authentication(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client_config = {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
@@ -7614,6 +7631,7 @@ fn client_change_authentication(mut cx: FunctionContext) -> JsResult<JsPromise> 
 
 // client_create_workspace
 fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7685,6 +7703,7 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_get_user_device
 fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7754,6 +7773,7 @@ fn client_get_user_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_info
 fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7803,6 +7823,7 @@ fn client_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_invitations
 fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7860,6 +7881,7 @@ fn client_list_invitations(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_user_devices
 fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7929,6 +7951,7 @@ fn client_list_user_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_users
 fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -7990,6 +8013,7 @@ fn client_list_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_workspace_users
 fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8061,6 +8085,7 @@ fn client_list_workspace_users(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_list_workspaces
 fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8118,6 +8143,7 @@ fn client_list_workspaces(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_new_device_invitation
 fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8172,6 +8198,7 @@ fn client_new_device_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> 
 
 // client_new_user_invitation
 fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8231,6 +8258,7 @@ fn client_new_user_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_rename_workspace
 fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8308,6 +8336,7 @@ fn client_rename_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_revoke_user
 fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8373,6 +8402,7 @@ fn client_revoke_user(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_share_workspace
 fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8460,6 +8490,7 @@ fn client_share_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_start
 fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let config = {
         let js_val = cx.argument::<JsObject>(0)?;
         struct_client_config_js_to_rs(&mut cx, js_val)?
@@ -8552,6 +8583,7 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_start_device_invitation_greet
 fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8614,6 +8646,7 @@ fn client_start_device_invitation_greet(mut cx: FunctionContext) -> JsResult<JsP
 
 // client_start_user_invitation_greet
 fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8676,6 +8709,7 @@ fn client_start_user_invitation_greet(mut cx: FunctionContext) -> JsResult<JsPro
 
 // client_start_workspace
 fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8737,6 +8771,7 @@ fn client_start_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // client_stop
 fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let client = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8790,6 +8825,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_close
 fn fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8859,6 +8895,7 @@ fn fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_flush
 fn fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -8928,6 +8965,7 @@ fn fd_flush(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_read
 fn fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9022,6 +9060,7 @@ fn fd_read(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_resize
 fn fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9106,6 +9145,7 @@ fn fd_resize(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_write
 fn fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9186,6 +9226,7 @@ fn fd_write(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_write_constrained_io
 fn fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9266,6 +9307,7 @@ fn fd_write_constrained_io(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // fd_write_start_eof
 fn fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9335,6 +9377,7 @@ fn fd_write_start_eof(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // get_default_config_dir
 fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::get_default_config_dir();
     let js_ret = JsString::try_new(&mut cx, {
         let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -9355,6 +9398,7 @@ fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // get_default_data_base_dir
 fn get_default_data_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::get_default_data_base_dir();
     let js_ret = JsString::try_new(&mut cx, {
         let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -9375,6 +9419,7 @@ fn get_default_data_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // get_default_mountpoint_base_dir
 fn get_default_mountpoint_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::get_default_mountpoint_base_dir();
     let js_ret = JsString::try_new(&mut cx, {
         let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
@@ -9395,6 +9440,7 @@ fn get_default_mountpoint_base_dir(mut cx: FunctionContext) -> JsResult<JsPromis
 
 // get_platform
 fn get_platform(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::get_platform();
     let js_ret = JsString::try_new(&mut cx, enum_platform_rs_to_js(ret)).or_throw(&mut cx)?;
     let (deferred, promise) = cx.promise();
@@ -9404,6 +9450,7 @@ fn get_platform(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // greeter_device_in_progress_1_do_wait_peer_trust
 fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9465,6 +9512,7 @@ fn greeter_device_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> J
 
 // greeter_device_in_progress_2_do_signify_trust
 fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9528,6 +9576,7 @@ fn greeter_device_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsR
 fn greeter_device_in_progress_3_do_get_claim_requests(
     mut cx: FunctionContext,
 ) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9590,6 +9639,7 @@ fn greeter_device_in_progress_3_do_get_claim_requests(
 
 // greeter_device_in_progress_4_do_create
 fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9665,6 +9715,7 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
 
 // greeter_device_initial_do_wait_peer
 fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9725,6 +9776,7 @@ fn greeter_device_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPr
 
 // greeter_user_in_progress_1_do_wait_peer_trust
 fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9786,6 +9838,7 @@ fn greeter_user_in_progress_1_do_wait_peer_trust(mut cx: FunctionContext) -> JsR
 
 // greeter_user_in_progress_2_do_signify_trust
 fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9849,6 +9902,7 @@ fn greeter_user_in_progress_2_do_signify_trust(mut cx: FunctionContext) -> JsRes
 fn greeter_user_in_progress_3_do_get_claim_requests(
     mut cx: FunctionContext,
 ) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -9911,6 +9965,7 @@ fn greeter_user_in_progress_3_do_get_claim_requests(
 
 // greeter_user_in_progress_4_do_create
 fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10002,6 +10057,7 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
 
 // greeter_user_initial_do_wait_peer
 fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let canceller = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10062,6 +10118,7 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
 
 // is_keyring_available
 fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::is_keyring_available();
     let js_ret = JsBoolean::new(&mut cx, ret);
     let (deferred, promise) = cx.promise();
@@ -10071,6 +10128,7 @@ fn is_keyring_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // list_available_devices
 fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10111,6 +10169,7 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // mountpoint_to_os_path
 fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let mountpoint = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10183,6 +10242,7 @@ fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // mountpoint_unmount
 fn mountpoint_unmount(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let mountpoint = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10236,6 +10296,7 @@ fn mountpoint_unmount(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // new_canceller
 fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let ret = libparsec::new_canceller();
     let js_ret = JsNumber::new(&mut cx, ret as f64);
     let (deferred, promise) = cx.promise();
@@ -10245,6 +10306,7 @@ fn new_canceller(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // parse_parsec_addr
 fn parse_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let url = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10275,6 +10337,7 @@ fn parse_parsec_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // path_filename
 fn path_filename(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10301,6 +10364,7 @@ fn path_filename(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // path_join
 fn path_join(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let parent = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10342,6 +10406,7 @@ fn path_join(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // path_normalize
 fn path_normalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10371,6 +10436,7 @@ fn path_normalize(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // path_parent
 fn path_parent(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10400,6 +10466,7 @@ fn path_parent(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // path_split
 fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10429,6 +10496,7 @@ fn path_split(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // test_drop_testbed
 fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let path = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10482,6 +10550,7 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // test_get_testbed_bootstrap_organization_addr
 fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let discriminant_dir = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10530,6 +10599,7 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
 
 // test_get_testbed_organization_id
 fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let discriminant_dir = {
         let js_val = cx.argument::<JsString>(0)?;
         {
@@ -10572,6 +10642,7 @@ fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromi
 
 // test_new_testbed
 fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let template = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10640,6 +10711,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_device_label
 fn validate_device_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10653,6 +10725,7 @@ fn validate_device_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_email
 fn validate_email(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10666,6 +10739,7 @@ fn validate_email(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_entry_name
 fn validate_entry_name(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10679,6 +10753,7 @@ fn validate_entry_name(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_human_handle_label
 fn validate_human_handle_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10692,6 +10767,7 @@ fn validate_human_handle_label(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_invitation_token
 fn validate_invitation_token(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10705,6 +10781,7 @@ fn validate_invitation_token(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_organization_id
 fn validate_organization_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10718,6 +10795,7 @@ fn validate_organization_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // validate_path
 fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let raw = {
         let js_val = cx.argument::<JsString>(0)?;
         js_val.value(&mut cx)
@@ -10731,6 +10809,7 @@ fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_create_file
 fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10802,6 +10881,7 @@ fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_create_folder
 fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10873,6 +10953,7 @@ fn workspace_create_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_create_folder_all
 fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -10944,6 +11025,7 @@ fn workspace_create_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_decrypt_path_addr
 fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11016,6 +11098,7 @@ fn workspace_decrypt_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_generate_path_addr
 fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11084,6 +11167,7 @@ fn workspace_generate_path_addr(mut cx: FunctionContext) -> JsResult<JsPromise> 
 
 // workspace_info
 fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11133,6 +11217,7 @@ fn workspace_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_mount
 fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11202,6 +11287,7 @@ fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_move_entry
 fn workspace_move_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11283,6 +11369,7 @@ fn workspace_move_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_open_file
 fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11357,6 +11444,7 @@ fn workspace_open_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_remove_entry
 fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11422,6 +11510,7 @@ fn workspace_remove_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_remove_file
 fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11487,6 +11576,7 @@ fn workspace_remove_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_remove_folder
 fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11552,6 +11642,7 @@ fn workspace_remove_folder(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_remove_folder_all
 fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11617,6 +11708,7 @@ fn workspace_remove_folder_all(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_stat_entry
 fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11678,6 +11770,7 @@ fn workspace_stat_entry(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_stat_entry_by_id
 fn workspace_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11739,6 +11832,7 @@ fn workspace_stat_entry_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_stat_folder_children
 fn workspace_stat_folder_children(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11818,6 +11912,7 @@ fn workspace_stat_folder_children(mut cx: FunctionContext) -> JsResult<JsPromise
 
 // workspace_stat_folder_children_by_id
 fn workspace_stat_folder_children_by_id(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11897,6 +11992,7 @@ fn workspace_stat_folder_children_by_id(mut cx: FunctionContext) -> JsResult<JsP
 
 // workspace_stop
 fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
@@ -11950,6 +12046,7 @@ fn workspace_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
 
 // workspace_watch_entry_oneshot
 fn workspace_watch_entry_oneshot(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
     let workspace = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {

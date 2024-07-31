@@ -19,11 +19,14 @@ crate-type = ["cdylib"]
 workspace = true
 
 [dependencies]
-libparsec = { workspace = true }
-lazy_static = { workspace = true }
-tokio = { workspace = true, features = ["rt-multi-thread"] }
-neon = { workspace = true, features = ["napi-8"] }
 env_logger = { workspace = true, features = ["auto-color", "humantime", "regex"] }
+lazy_static = { workspace = true }
+libparsec = { workspace = true }
+neon = { workspace = true, features = ["napi-8"] }
+once_cell = { workspace = true }
+sentry = { workspace = true, features = ["backtrace", "contexts", "debug-images", "log", "native-tls", "panic", "reqwest", "transport"] }
+sentry-log = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winfsp_wrs_build = { workspace = true }
