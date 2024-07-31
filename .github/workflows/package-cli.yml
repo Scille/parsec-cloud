@@ -1,0 +1,113 @@
+name: package-cli
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: The version to use
+        type: string
+        required: true
+      version_patch_run_id:
+        description: |
+          The run id where the version.patch artifact was uploaded.
+          If not provided, the workflow will generate the patch by itself.
+        type: string
+        required: true
+      commit_sha:
+        required: true
+        type: string
+        description: The commit SHA to use when checkout'ing the repository
+        default: ${{ github.sha }}
+  # PS: If you trigger manually the packaging, take into account that it will use the workflow as defined in the main branch not in the target branch.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: The version to use (if not provided will generated one from the code space version)
+        type: string
+        required: false
+  pull_request:
+    paths:
+      - .github/workflows/package-cli.yml
+
+# We set `concurrency` to prevent having this workflow being run on code that is not up-to-date on a PR (a user make multiple push in a quick manner).
+# But on the main branch, we don't want that behavior.
+# Having the workflow run on each merge commit is something we would like, that could help us where a regression was made and missed by previous checks.
+#
+# For that we use `head_ref` that is only defined on `pull-request` and fallback to `run_id` (this is a counter, so it's value is unique between workflow call).
+concurrency:
+  group: package-cli-${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    if: ${{ inputs.version_patch_run_id == '' }}
+    uses: ./.github/workflows/_parse_version.yml
+    with:
+      version: ${{ inputs.version }}
+      commit_sha: ${{ inputs.commit_sha }}
+
+  package-cli:
+    needs: version
+    # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
+    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
+    name: 📦 Packaging CLI for linux 🐧
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+        with:
+          ref: ${{ inputs.commit_sha }}
+        timeout-minutes: 5
+
+      - name: Retrieve runner specs
+        id: runner-specs
+        uses: ./.github/actions/system-info
+        timeout-minutes: 1
+
+      - name: Download version.patch artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
+        with:
+          name: version.patch
+          path: ${{ runner.temp }}/version.patch
+          run-id: ${{ inputs.version_patch_run_id || github.run_id }}
+        timeout-minutes: 2
+
+      - name: Load version config
+        id: version
+        run: tee "$GITHUB_OUTPUT" < ${{ runner.temp }}/version.patch/version.ini
+        timeout-minutes: 1
+
+      - name: Apply version.patch
+        run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
+        timeout-minutes: 1
+
+      # Install fuse for building the CLI (libparsec includes platform_mountpoint)
+      - name: Install fuse
+        shell: bash
+        run: |
+          until sudo apt-get -y install fuse3 libfuse3-dev; do
+            echo "Failed to install APT package, retrying...";
+          done
+        timeout-minutes: 5
+
+      - name: Build CLI
+        run: cargo build -p parsec_cli --release
+        timeout-minutes: 10
+
+      - name: Rename CLI artifact
+        id: rename
+        run: |
+          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_linux_${{ steps.runner-specs.outputs.arch }}"
+          cp -v target/release/parsec_cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
+          echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
+        timeout-minutes: 1
+
+      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+        with:
+          name: ${{ runner.os }}-${{ runner.arch }}-cli
+          path: |
+            ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
+          if-no-files-found: error
+        timeout-minutes: 5
