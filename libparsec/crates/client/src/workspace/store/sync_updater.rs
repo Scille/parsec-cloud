@@ -197,13 +197,17 @@ impl<'a> SyncUpdater<'a> {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
             ArcLocalChildManifest::Folder(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
         };
 
@@ -249,11 +253,16 @@ impl<'a> SyncUpdater<'a> {
             entry_id: manifest.base.id,
             base_version: manifest.base.version,
             need_sync: manifest.need_sync,
-            encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+            encrypted: manifest
+                .dump_and_encrypt(&self.store.device.local_symkey)
+                .into(),
         };
 
         let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
-            (chunk_id, self.store.device.local_symkey.encrypt(cleartext))
+            (
+                chunk_id,
+                self.store.device.local_symkey.encrypt(cleartext).into(),
+            )
         });
         storage
             .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
@@ -477,13 +486,17 @@ impl<'a> SyncConflictUpdater<'a> {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
             ArcLocalChildManifest::Folder(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
         };
 
@@ -491,7 +504,9 @@ impl<'a> SyncConflictUpdater<'a> {
             entry_id: parent_manifest.base.id,
             base_version: parent_manifest.base.version,
             need_sync: parent_manifest.need_sync,
-            encrypted: parent_manifest.dump_and_encrypt(&self.store.device.local_symkey),
+            encrypted: parent_manifest
+                .dump_and_encrypt(&self.store.device.local_symkey)
+                .into(),
         };
 
         let conflicting_new_child_update_data = match &conflicting_new_child_manifest {
@@ -499,13 +514,17 @@ impl<'a> SyncConflictUpdater<'a> {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
             ArcLocalChildManifest::Folder(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&self.store.device.local_symkey),
+                encrypted: manifest
+                    .dump_and_encrypt(&self.store.device.local_symkey)
+                    .into(),
             },
         };
 

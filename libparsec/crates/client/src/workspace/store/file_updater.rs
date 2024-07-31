@@ -174,11 +174,15 @@ impl FileUpdater {
             entry_id: manifest.base.id,
             base_version: manifest.base.version,
             need_sync: manifest.need_sync,
-            encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
+            encrypted: manifest.dump_and_encrypt(&store.device.local_symkey).into(),
         };
 
-        let new_chunks = new_chunks
-            .map(|(chunk_id, cleartext)| (chunk_id, store.device.local_symkey.encrypt(cleartext)));
+        let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
+            (
+                chunk_id,
+                store.device.local_symkey.encrypt(cleartext).into(),
+            )
+        });
         storage
             .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)
             .await?;

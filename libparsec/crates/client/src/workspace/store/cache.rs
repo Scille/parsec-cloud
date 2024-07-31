@@ -358,13 +358,13 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
+                encrypted: manifest.dump_and_encrypt(&store.device.local_symkey).into(),
             },
             ArcLocalChildManifest::Folder(manifest) => UpdateManifestData {
                 entry_id: manifest.base.id,
                 base_version: manifest.base.version,
                 need_sync: manifest.need_sync,
-                encrypted: manifest.dump_and_encrypt(&store.device.local_symkey),
+                encrypted: manifest.dump_and_encrypt(&store.device.local_symkey).into(),
             },
         };
         let outcome = storage

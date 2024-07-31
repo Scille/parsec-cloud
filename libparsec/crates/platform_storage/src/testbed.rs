@@ -293,7 +293,10 @@ pub(crate) async fn maybe_populate_workspace_storage(
                                 entry_id: x.local_manifest.base.id,
                                 need_sync: x.local_manifest.need_sync,
                                 base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                                encrypted: x
+                                    .local_manifest
+                                    .dump_and_encrypt(&device.local_symkey)
+                                    .into(),
                             })
                             .await
                             .unwrap();
@@ -306,7 +309,10 @@ pub(crate) async fn maybe_populate_workspace_storage(
                                 entry_id: x.local_manifest.base.id,
                                 need_sync: x.local_manifest.need_sync,
                                 base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                                encrypted: x
+                                    .local_manifest
+                                    .dump_and_encrypt(&device.local_symkey)
+                                    .into(),
                             })
                             .await
                             .unwrap();
@@ -336,7 +342,10 @@ pub(crate) async fn maybe_populate_workspace_storage(
                                 entry_id: x.local_manifest.base.id,
                                 need_sync: x.local_manifest.need_sync,
                                 base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                                encrypted: x
+                                    .local_manifest
+                                    .dump_and_encrypt(&device.local_symkey)
+                                    .into(),
                             })
                             .await
                             .unwrap();
@@ -349,7 +358,10 @@ pub(crate) async fn maybe_populate_workspace_storage(
                                 entry_id: x.local_manifest.base.id,
                                 need_sync: x.local_manifest.need_sync,
                                 base_version: x.local_manifest.base.version,
-                                encrypted: x.local_manifest.dump_and_encrypt(&device.local_symkey),
+                                encrypted: x
+                                    .local_manifest
+                                    .dump_and_encrypt(&device.local_symkey)
+                                    .into(),
                             })
                             .await
                             .unwrap();
