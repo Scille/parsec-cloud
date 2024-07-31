@@ -114,9 +114,9 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
         firstName: axiosResponse.data.client.firstname,
         lastName: axiosResponse.data.client.lastname,
         clientId: axiosResponse.data.client.id,
-        phone: axiosResponse.data.client.phone,
-        job: axiosResponse.data.client.job,
-        company: axiosResponse.data.client.company,
+        phone: axiosResponse.data.client.phone || undefined,
+        job: axiosResponse.data.client.job || undefined,
+        company: axiosResponse.data.client.company || undefined,
       },
     };
   });
