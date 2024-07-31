@@ -39,6 +39,9 @@ pub struct UpdateManifestData {
 }
 
 pub type RawEncryptedManifest = Vec<u8>;
+pub type RawEncryptedChunk = Vec<u8>;
+pub type RawEncryptedBlock = Vec<u8>;
+pub type RawEncryptedBytes = Vec<u8>;
 
 pub enum PopulateManifestOutcome {
     Stored,
@@ -180,7 +183,7 @@ impl WorkspaceStorage {
     pub async fn update_manifest_and_chunks(
         &mut self,
         manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         self.platform
@@ -188,7 +191,10 @@ impl WorkspaceStorage {
             .await
     }
 
-    pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_chunk(
+        &mut self,
+        chunk_id: ChunkID,
+    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
         self.platform.get_chunk(chunk_id).await
     }
 
@@ -196,7 +202,7 @@ impl WorkspaceStorage {
         &mut self,
         chunk_id: ChunkID,
         now: DateTime,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    ) -> anyhow::Result<Option<RawEncryptedBytes>> {
         match self.platform.get_chunk(chunk_id).await? {
             Some(data) => Ok(Some(data)),
             None => self.platform.get_block(chunk_id.into(), now).await,
@@ -211,7 +217,7 @@ impl WorkspaceStorage {
         &mut self,
         block_id: BlockID,
         now: DateTime,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
         self.platform.get_block(block_id, now).await
     }
 

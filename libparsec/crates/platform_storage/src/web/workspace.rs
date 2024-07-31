@@ -17,8 +17,8 @@ use crate::{
         DB_VERSION,
     },
     workspace::{
-        MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedManifest,
-        UpdateManifestData,
+        MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
+        RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
     },
 };
 
@@ -159,7 +159,10 @@ impl PlatformWorkspaceStorage {
         })
     }
 
-    pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_chunk(
+        &mut self,
+        chunk_id: ChunkID,
+    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
         let transaction = super::model::Chunk::read(&self.conn)?;
         db_get_chunk(&transaction, chunk_id).await
     }
@@ -168,7 +171,7 @@ impl PlatformWorkspaceStorage {
         &mut self,
         block_id: BlockID,
         timestamp: DateTime,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
         let transaction = super::model::Chunk::write(&self.conn)?;
 
         match super::model::Chunk::get(&transaction, &block_id.as_bytes().to_vec().into()).await? {
@@ -213,7 +216,7 @@ impl PlatformWorkspaceStorage {
     pub async fn update_manifest_and_chunks(
         &mut self,
         manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         let transaction = Vlob::write(&self.conn)?;
@@ -567,7 +570,7 @@ async fn db_update_manifest<'a>(
 async fn db_get_chunk(
     tx: &IdbTransaction<'_>,
     chunk_id: ChunkID,
-) -> anyhow::Result<Option<Vec<u8>>> {
+) -> anyhow::Result<Option<RawEncryptedChunk>> {
     match super::model::Chunk::get(tx, &chunk_id.as_bytes().to_vec().into()).await? {
         Some(chunk) if chunk.is_block == 0 => Ok(Some(chunk.data.to_vec())),
         _ => Ok(None),

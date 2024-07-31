@@ -16,8 +16,8 @@ use libparsec_types::prelude::*;
 #[cfg(any(test, feature = "expose-test-methods"))]
 use crate::workspace::{DebugBlock, DebugChunk, DebugDump, DebugVlob};
 use crate::workspace::{
-    MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedManifest,
-    UpdateManifestData,
+    MarkPreventSyncPatternFullyAppliedError, PopulateManifestOutcome, RawEncryptedBlock,
+    RawEncryptedChunk, RawEncryptedManifest, UpdateManifestData,
 };
 
 use super::model::{
@@ -211,7 +211,10 @@ impl PlatformWorkspaceStorage {
         db_list_manifests(&mut self.conn, offset, limit).await
     }
 
-    pub async fn get_chunk(&mut self, chunk_id: ChunkID) -> anyhow::Result<Option<Vec<u8>>> {
+    pub async fn get_chunk(
+        &mut self,
+        chunk_id: ChunkID,
+    ) -> anyhow::Result<Option<RawEncryptedChunk>> {
         db_get_chunk(&mut self.conn, chunk_id).await
     }
 
@@ -219,7 +222,7 @@ impl PlatformWorkspaceStorage {
         &mut self,
         block_id: BlockID,
         now: DateTime,
-    ) -> anyhow::Result<Option<Vec<u8>>> {
+    ) -> anyhow::Result<Option<RawEncryptedBlock>> {
         db_get_block_and_update_accessed_on(&mut self.cache_conn, block_id, now).await
     }
 
@@ -252,7 +255,7 @@ impl PlatformWorkspaceStorage {
     pub async fn update_manifest_and_chunks(
         &mut self,
         manifest: &UpdateManifestData,
-        new_chunks: impl Iterator<Item = (ChunkID, Vec<u8>)>,
+        new_chunks: impl Iterator<Item = (ChunkID, RawEncryptedChunk)>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> anyhow::Result<()> {
         // Note transaction automatically rollbacks on drop
@@ -683,7 +686,7 @@ async fn db_list_manifests(
 pub async fn db_get_chunk(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     chunk_id: ChunkID,
-) -> anyhow::Result<Option<Vec<u8>>> {
+) -> anyhow::Result<Option<RawEncryptedChunk>> {
     let row = sqlx::query(
         "SELECT data \
         FROM chunks \
@@ -696,7 +699,7 @@ pub async fn db_get_chunk(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<Vec<u8>, _>(0)?;
+            let blob = row.try_get::<RawEncryptedChunk, _>(0)?;
             Ok(Some(blob))
         }
         None => Ok(None),
@@ -707,7 +710,7 @@ pub async fn db_get_block_and_update_accessed_on(
     executor: impl sqlx::Executor<'_, Database = sqlx::Sqlite>,
     block_id: BlockID,
     timestamp: DateTime,
-) -> anyhow::Result<Option<Vec<u8>>> {
+) -> anyhow::Result<Option<RawEncryptedBlock>> {
     let row = sqlx::query(
         "UPDATE chunks \
         SET accessed_on = ?1 \
@@ -722,7 +725,7 @@ pub async fn db_get_block_and_update_accessed_on(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<Vec<u8>, _>(0)?;
+            let blob = row.try_get::<RawEncryptedBlock, _>(0)?;
             Ok(Some(blob))
         }
         None => Ok(None),
