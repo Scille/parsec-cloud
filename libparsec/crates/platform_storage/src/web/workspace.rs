@@ -142,7 +142,7 @@ impl PlatformWorkspaceStorage {
         Ok(
             Vlob::get(&transaction, &entry_id.as_bytes().to_vec().into())
                 .await?
-                .map(|x| x.blob.to_vec()),
+                .map(|x| x.blob),
         )
     }
 
@@ -165,10 +165,8 @@ impl PlatformWorkspaceStorage {
             Some(mut chunk) if chunk.is_block == 1 => {
                 super::model::Chunk::remove(&transaction, &chunk.chunk_id).await?;
                 chunk.accessed_on = Some(timestamp.as_timestamp_micros());
-                let data = chunk.data.to_vec();
                 chunk.insert(&transaction).await?;
-
-                Ok(Some(data))
+                Ok(Some(chunk.data))
             }
             _ => Ok(None),
         }
@@ -557,7 +555,7 @@ async fn db_get_chunk(
     chunk_id: ChunkID,
 ) -> anyhow::Result<Option<RawEncryptedChunk>> {
     match super::model::Chunk::get(tx, &chunk_id.as_bytes().to_vec().into()).await? {
-        Some(chunk) if chunk.is_block == 0 => Ok(Some(chunk.data.to_vec())),
+        Some(chunk) if chunk.is_block == 0 => Ok(Some(chunk.data)),
         _ => Ok(None),
     }
 }
@@ -573,7 +571,7 @@ async fn db_insert_block(
         size: encrypted.len() as IndexInt,
         offline: false,
         accessed_on: Some(accessed_on.as_timestamp_micros()),
-        data: encrypted.to_vec().into(),
+        data: RawEncryptedChunk::copy_from_slice(encrypted),
         is_block: 1,
     }
     .insert(tx)

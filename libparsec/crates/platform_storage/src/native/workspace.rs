@@ -641,7 +641,7 @@ async fn db_get_manifest(
     match row {
         None => Ok(None),
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedManifest, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
     }
@@ -663,7 +663,7 @@ pub async fn db_get_chunk(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedChunk, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
         None => Ok(None),
@@ -689,7 +689,7 @@ pub async fn db_get_block_and_update_accessed_on(
 
     match row {
         Some(row) => {
-            let blob = row.try_get::<RawEncryptedBlock, _>(0)?;
+            let blob = row.try_get::<Vec<_>, _>(0)?.into();
             Ok(Some(blob))
         }
         None => Ok(None),
@@ -714,7 +714,7 @@ pub async fn db_populate_manifest(
     )
     .bind(manifest.entry_id.as_bytes())
     .bind(manifest.need_sync)
-    .bind(&manifest.encrypted)
+    .bind(manifest.encrypted.as_ref())
     .bind(manifest.base_version)
     .bind(manifest.base_version) // Use base version as default for remote version
     .execute(executor)
@@ -750,7 +750,7 @@ async fn db_update_manifest(
     )
     .bind(manifest.entry_id.as_bytes())
     .bind(manifest.need_sync)
-    .bind(&manifest.encrypted)
+    .bind(manifest.encrypted.as_ref())
     .bind(manifest.base_version)
     .bind(manifest.base_version) // Use base version as default for remote version
     .execute(executor)

@@ -38,10 +38,10 @@ use crate::{
 macro_rules! impl_local_manifest_dump {
     ($name:ident) => {
         impl $name {
-            pub fn dump_and_encrypt(&self, key: &SecretKey) -> Vec<u8> {
+            pub fn dump_and_encrypt(&self, key: &SecretKey) -> crate::Bytes {
                 self.check_data_integrity().expect("Manifest integrity");
                 let serialized = format_v0_dump(&self);
-                key.encrypt(&serialized)
+                key.encrypt(&serialized).into()
             }
         }
     };
