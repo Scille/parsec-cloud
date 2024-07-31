@@ -1210,6 +1210,24 @@
             },
             "logout": "Log out",
             "preferences": "Preferences"
+        },
+        "personalDataPage": {
+            "personalInfo": {
+                "title": "Personal information",
+                "firstname": "Firstname",
+                "lastname": "Lastname",
+                "phone": "Phone"
+            },
+            "professionalInfo": {
+                "title": "Professional information",
+                "company": "Company",
+                "job": "Job"
+            },
+            "authentication": {
+                "title": "Authentication",
+                "email": "Email",
+                "password": "Password"
+            }
         }
     }
 }

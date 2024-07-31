@@ -1210,6 +1210,24 @@
             },
             "logout": "Se déconnecter",
             "preferences": "Préférences"
+        },
+        "personalDataPage": {
+            "personalInfo": {
+                "title": "Informations personnelles",
+                "firstname": "Prénom",
+                "lastname": "Nom",
+                "phone": "Téléphone"
+            },
+            "professionalInfo": {
+                "title": "Informations professionnelles",
+                "company": "Entreprise",
+                "job": "Poste"
+            },
+            "authentication": {
+                "title": "Authentification",
+                "email": "Email",
+                "password": "Mot de passe"
+            }
         }
     }
 }
