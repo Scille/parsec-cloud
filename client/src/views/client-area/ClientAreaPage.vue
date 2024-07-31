@@ -18,7 +18,7 @@
         class="sidebar"
       >
         <client-area-sidebar
-          v-if="currentOrganization"
+          v-if="loggedIn && currentOrganization"
           :current-page="currentPage"
           :organization="currentOrganization"
           @page-selected="switchPage"
@@ -31,6 +31,7 @@
         id="main"
       >
         <client-area-header
+          v-if="loggedIn"
           :title="getTitleByPage()"
           @page-selected="switchPage"
         />
@@ -38,7 +39,7 @@
           <div class="main-content">
             <div
               class="main-page"
-              v-if="currentOrganization"
+              v-if="loggedIn && currentOrganization"
             >
               <billing-details-page
                 v-if="currentPage === ClientAreaPages.BillingDetails"
@@ -100,6 +101,7 @@ const divider = ref();
 const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
 const currentOrganization = ref<BmsOrganization | undefined>(undefined);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const loggedIn = ref(false);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -113,8 +115,8 @@ function setToastOffset(width: number): void {
 
 onMounted(async () => {
   if (!BmsAccessInstance.get().isLoggedIn()) {
-    const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
-    if (!loggedIn) {
+    loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
+    if (!loggedIn.value) {
       await navigateTo(Routes.ClientAreaLogin);
       return;
     }
