@@ -7,6 +7,7 @@ import path from 'path';
 import { defineConfig, PluginOption, UserConfigExport } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
@@ -47,6 +48,17 @@ if (process.env.PLATFORM !== undefined) {
 
 if (platform === 'web') {
   plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
+}
+
+if (process.env.VITE_SENTRY_AUTH_TOKEN) {
+  const sentryPlugin = sentryVitePlugin({
+    org: 'scille',
+    project: 'parsec3-frontend',
+    authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+  });
+  plugins.push(sentryPlugin);
+} else {
+  console.log('SENTRY_AUTH_TOKEN is not set');
 }
 
 // 3) Finally configure Vite

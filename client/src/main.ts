@@ -28,6 +28,7 @@ import { Events } from '@/services/eventDistributor';
 import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import * as Sentry from '@sentry/vue';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
@@ -56,7 +57,37 @@ async function setupApp(): Promise<void> {
   });
   await megasharkPlugin.init();
 
-  const app = createApp(App)
+  const app = createApp(App);
+
+  if (import.meta.env.SENTRY_DSN_GUI_VITE) {
+    console.log('Configuring Sentry...');
+    Sentry.init({
+      app,
+      dsn: import.meta.env.SENTRY_DSN_GUI_VITE,
+      integrations: [Sentry.browserTracingIntegration({ router }), Sentry.replayIntegration()],
+
+      // Set tracesSampleRate to 1.0 to capture 100% of transactions for tracing.
+      // We recommend adjusting this value in production
+      // From https://docs.sentry.io/platforms/javascript/configuration/sampling/#sampling-error-events
+      //   Changing the error sample rate requires re-deployment.
+      //   In addition, setting an SDK sample rate limits visibility into the
+      //   source of events. Setting a rate limit for your project (which only
+      //   drops events when volume is high) may better suit your needs.
+      tracesSampleRate: 1.0,
+
+      // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled
+      tracePropagationTargets: ['localhost'],
+
+      // Capture Replay for 10% of all sessions,
+      // plus for 100% of sessions with an error
+      replaysSessionSampleRate: 0.1,
+      replaysOnErrorSampleRate: 1.0,
+    });
+  } else {
+    console.log('Sentry not configured');
+  }
+
+  app
     .use(IonicVue, {
       rippleEffect: false,
     })

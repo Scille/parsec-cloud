@@ -26,6 +26,9 @@ apps:
     #   - password-manager-service
     desktop: usr/share/applications/parsec.desktop
     command: bin/desktop-launch
+    environment:
+      SENTRY_DSN_GUI_ELECTRON: https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208
+      SENTRY_DSN_GUI_VITE: https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208
 
 parts:
   libparsec:
