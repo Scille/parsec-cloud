@@ -58,7 +58,7 @@ if (process.env.VITE_SENTRY_AUTH_TOKEN) {
   });
   plugins.push(sentryPlugin);
 } else {
-  console.log('SENTRY_AUTH_TOKEN is not set');
+  console.log('VITE_SENTRY_AUTH_TOKEN is not set');
 }
 
 // 3) Finally configure Vite

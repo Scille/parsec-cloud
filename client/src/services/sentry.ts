@@ -38,9 +38,9 @@ function disable(): void {
   const client = SentryAPI.getClient();
   if (client) {
     enabled = false;
-    console.log('Disabling Sentry');
+    console.log('Sentry disabled');
   } else {
-    console.log('Sentry is not initialized, cant disable');
+    console.log('Sentry is not initialized, cannot disable');
   }
 }
 
@@ -48,9 +48,9 @@ function enable(): void {
   const client = SentryAPI.getClient();
   if (client) {
     enabled = true;
-    console.log('Enabling Sentry');
+    console.log('Sentry enabled');
   } else {
-    console.log('Sentry is not initialized, cant enable');
+    console.log('Sentry is not initialized, cannot enable');
   }
 }
 
