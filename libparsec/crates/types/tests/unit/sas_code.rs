@@ -55,3 +55,48 @@ fn from_str_bad(#[case] val: &str) {
         Err(err) if err == "Invalid SAS code"
     )
 }
+
+#[test]
+fn generate_sas_code_candidates() {
+    let sas: SASCode = "25PA".parse().unwrap();
+
+    p_assert_eq!(sas.generate_sas_code_candidates(0), vec![]);
+
+    p_assert_eq!(sas.generate_sas_code_candidates(1), vec![sas.clone()]);
+
+    let candidates = sas.generate_sas_code_candidates(10);
+    p_assert_eq!(candidates.len(), 10);
+    assert!(candidates.contains(&sas));
+}
+
+#[test]
+fn from_sas_into_string() {
+    let sas: SASCode = "25PA".parse().unwrap();
+
+    p_assert_eq!(String::from(sas), "25PA".to_string());
+}
+
+#[test]
+fn debug() {
+    let sas: SASCode = "25PA".parse().unwrap();
+
+    p_assert_eq!(format!("{:?}", sas), "SASCode(\"25PA\")".to_string());
+}
+
+#[test]
+fn display() {
+    let sas: SASCode = "25PA".parse().unwrap();
+
+    p_assert_eq!(format!("{}", sas), "25PA".to_string());
+}
+
+#[test]
+fn eq_and_partial_ord() {
+    let sas1: SASCode = "25PA".parse().unwrap();
+    let sas2: SASCode = "25PA".parse().unwrap();
+    let sas3: SASCode = "35PA".parse().unwrap();
+
+    p_assert_eq!(sas1, sas2);
+    p_assert_ne!(sas1, sas3);
+    assert!(sas1 < sas3);
+}
