@@ -2,21 +2,21 @@
 
 import { Page } from '@playwright/test';
 import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
+import { DateTime } from 'luxon';
 
 async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promise<void> {
-  const TOKEN = btoa(
-    JSON.stringify({
-      email: DEFAULT_USER_INFORMATION.email,
-      // eslint-disable-next-line camelcase
-      is_staff: true,
-      // eslint-disable-next-line camelcase
-      token_type: 'access',
-      // eslint-disable-next-line camelcase
-      user_id: DEFAULT_USER_INFORMATION.id,
-      exp: 4242,
-      iat: 0,
-    }),
-  );
+  const TOKEN_RAW = {
+    email: DEFAULT_USER_INFORMATION.email,
+    // eslint-disable-next-line camelcase
+    is_staff: true,
+    // eslint-disable-next-line camelcase
+    token_type: 'access',
+    // eslint-disable-next-line camelcase
+    user_id: DEFAULT_USER_INFORMATION.id,
+    exp: DateTime.utc().plus({ years: 42 }).toJSDate().valueOf(),
+    iat: 0,
+  };
+  const TOKEN = btoa(JSON.stringify(TOKEN_RAW));
 
   await page.route('**/api/token', async (route) => {
     if (success) {
@@ -24,6 +24,7 @@ async function mockLogin(page: Page, success: boolean, timeout?: boolean): Promi
         status: 200,
         json: {
           access: TOKEN,
+          refresh: TOKEN,
         },
       });
     } else {
@@ -86,9 +87,25 @@ async function mockListOrganizations(page: Page): Promise<void> {
             // eslint-disable-next-line camelcase
             expiration_date: null,
             name: DEFAULT_ORGANIZATION_INFORMATION.name,
-            parsecId: DEFAULT_ORGANIZATION_INFORMATION.name,
+            // eslint-disable-next-line camelcase
+            parsec_id: DEFAULT_ORGANIZATION_INFORMATION.name,
+            suffix: DEFAULT_ORGANIZATION_INFORMATION.name,
             // eslint-disable-next-line camelcase
             stripe_subscription_id: 'stripe_id',
+            bootstrapLink: '',
+          },
+          {
+            pk: `${DEFAULT_ORGANIZATION_INFORMATION.bmsId}-2`,
+            // eslint-disable-next-line camelcase
+            created_at: '2024-12-04T00:00:00.000',
+            // eslint-disable-next-line camelcase
+            expiration_date: null,
+            name: DEFAULT_ORGANIZATION_INFORMATION.name,
+            // eslint-disable-next-line camelcase
+            parsec_id: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
+            suffix: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
+            // eslint-disable-next-line camelcase
+            stripe_subscription_id: 'stripe_id2',
             bootstrapLink: '',
           },
         ],
@@ -99,7 +116,8 @@ async function mockListOrganizations(page: Page): Promise<void> {
 
 async function mockOrganizationStats(page: Page): Promise<void> {
   await page.route(
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/stats`,
+    // eslint-disable-next-line max-len
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/${DEFAULT_ORGANIZATION_INFORMATION.bmsId}/stats`,
     async (route) => {
       route.fulfill({
         status: 200,
