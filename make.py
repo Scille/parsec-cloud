@@ -82,13 +82,11 @@ USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV = {"RUSTFLAGS": "--cfg use_pure_rust_but_
 web_non_release_build_uses_pure_rust_but_dirty_zstd = False
 if platform.system().lower() in ("windows", "darwin"):
     web_non_release_build_uses_pure_rust_but_dirty_zstd = True
-match os.environ.get("LIBPARSEC_FORCE_ZSTD", "").lower():
-    case "real":
-        web_non_release_build_uses_pure_rust_but_dirty_zstd = False
-    case "dirty":
-        web_non_release_build_uses_pure_rust_but_dirty_zstd = True
-    case _:
-        pass
+libparsec_force_zstd_env = os.environ.get("LIBPARSEC_FORCE_ZSTD", "").lower()
+if libparsec_force_zstd_env == "real":
+    web_non_release_build_uses_pure_rust_but_dirty_zstd = False
+elif libparsec_force_zstd_env == "dirty":
+    web_non_release_build_uses_pure_rust_but_dirty_zstd = True
 
 if web_non_release_build_uses_pure_rust_but_dirty_zstd:
     print(
