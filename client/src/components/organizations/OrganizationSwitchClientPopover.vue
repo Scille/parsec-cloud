@@ -93,8 +93,6 @@ async function openCreateOrganizationModal(): Promise<void> {
 async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   if (org && org.bmsId !== props.currentOrganization.bmsId) {
     await popoverController.dismiss({ organization: org }, MsModalResult.Confirm);
-  } else {
-    await popoverController.dismiss(undefined, MsModalResult.Cancel);
   }
 }
 </script>
