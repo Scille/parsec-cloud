@@ -253,7 +253,10 @@ impl<'a> SyncUpdater<'a> {
         };
 
         let new_chunks = new_chunks.map(|(chunk_id, cleartext)| {
-            (chunk_id, self.store.device.local_symkey.encrypt(cleartext))
+            (
+                chunk_id,
+                self.store.device.local_symkey.encrypt(cleartext).into(),
+            )
         });
         storage
             .update_manifest_and_chunks(&update_data, new_chunks, removed_chunks)

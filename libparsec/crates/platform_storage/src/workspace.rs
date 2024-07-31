@@ -29,10 +29,10 @@ pub struct UpdateManifestData {
     pub base_version: VersionInt,
 }
 
-pub type RawEncryptedManifest = Vec<u8>;
-pub type RawEncryptedChunk = Vec<u8>;
-pub type RawEncryptedBlock = Vec<u8>;
-pub type RawEncryptedBytes = Vec<u8>;
+pub type RawEncryptedManifest = Bytes;
+pub type RawEncryptedChunk = Bytes;
+pub type RawEncryptedBlock = Bytes;
+pub type RawEncryptedBytes = Bytes;
 
 pub enum PopulateManifestOutcome {
     Stored,
