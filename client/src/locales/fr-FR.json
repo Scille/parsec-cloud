@@ -1273,6 +1273,33 @@
                 "description": "L'organisation deviendra indisponible pour tous les utilisateurs.",
                 "button": "Stopper mon abonnement"
             }
+        },
+        "dashboard": {
+            "summary": {
+                "estimatedAmount": "Montant estimé",
+                "estimatedAmountDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
+                "withdrawal": "Prélèvement le {date} | Prélèvement aujourd'hui",
+                "users": "Utilisateurs actifs",
+                "storage": "Stockage utilisé"
+            },
+            "invoices": {
+                "title": "Dernières factures",
+                "noBill": "Aucune facture à afficher.",
+                "date": "Date",
+                "organization": "Organisation",
+                "price": {
+                    "title": "Quantité",
+                    "amount": "{count} €"
+                },
+                "status": "Statut",
+                "download": "Télécharger",
+                "noInvoices": "Vous n'avez pas encore de factures."
+            },
+            "payment": {
+                "title": "Moyens de paiement",
+                "description": "Vous pouvez à tout moment changer votre carte bancaire.",
+                "update": "Modifier"
+            }
         }
     }
 }

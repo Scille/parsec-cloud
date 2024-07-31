@@ -19,7 +19,7 @@
     <div class="header-right">
       <!-- log out -->
       <ion-text
-        class="button-medium custom-button custom-button-danger-outline"
+        class="button-medium custom-button custom-button-ghost custom-button-danger"
         button
         @click="logout"
       >
@@ -29,7 +29,7 @@
 
       <!-- preferences -->
       <ion-text
-        class="button-medium custom-button"
+        class="button-medium custom-button custom-button-fill"
         button
         @click="openPreferencesModal"
       >
@@ -111,7 +111,7 @@ function getUserName(): string {
   padding: 1.5rem 2rem;
   display: flex;
   justify-content: space-around;
-  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
 }
 
 .header-title {
@@ -125,19 +125,5 @@ function getUserName(): string {
   display: flex;
   align-items: center;
   gap: 1rem;
-
-  .custom-button {
-    margin-top: 0;
-  }
-
-  .custom-button-danger-outline {
-    border: none;
-    color: var(--parsec-color-light-danger-500);
-
-    &:hover {
-      color: var(--parsec-color-light-danger-700);
-      background: var(--parsec-color-light-danger-100);
-    }
-  }
 }
 </style>

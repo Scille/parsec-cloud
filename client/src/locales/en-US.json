@@ -1272,6 +1272,33 @@
                 "description": "The organisation will become unavailable to all users.",
                 "button": "Stop my subscription"
             }
+        },
+        "dashboard": {
+            "summary": {
+                "estimatedAmount": "Estimated amount",
+                "withdrawal": "Withdrawal on {date} | Withdrawal today",
+                "estimatedAmountDescription": "Estimated amount based on the number of active users and storage used.",
+                "users": "Active users",
+                "storage": "Used storage"
+            },
+            "invoices": {
+                "title": "Last invoices",
+                "noBill": "You don't have any bill yet",
+                "date": "Date",
+                "organization": "Organization",
+                "price": {
+                    "title": "Amount",
+                    "amount": "€{count}"
+                },
+                "status": "Status",
+                "download": "Download",
+                "noInvoices": "You don't have any invoices yet"
+            },
+            "payment": {
+                "title": "Payment method",
+                "description": "You can change your credit card at any time.",
+                "update": "Update"
+            }
         }
     }
 }
