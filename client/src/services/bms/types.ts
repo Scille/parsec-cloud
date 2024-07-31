@@ -46,6 +46,9 @@ interface PersonalInformationResultData {
   lastName: string;
   email: string;
   clientId: string;
+  phone?: string;
+  company?: string;
+  job?: string;
 }
 
 interface CreateOrganizationResultData {

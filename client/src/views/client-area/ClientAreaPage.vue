@@ -249,7 +249,6 @@ ion-split-pane {
 .main-content {
   width: -webkit-fill-available;
   height: 100%;
-  color: white;
   font-size: 16px;
   display: flex;
   flex-direction: column;
@@ -258,7 +257,5 @@ ion-split-pane {
 .main-page {
   height: -webkit-fill-available;
   width: -webkit-fill-available;
-  background-color: cornsilk;
-  color: black;
 }
 </style>
