@@ -59,7 +59,7 @@
         </ion-button>
         <ion-button
           fill="solid"
-          v-show="true"
+          v-show="!isElectron()"
           @click="goToClientArea"
         >
           Customer Area
@@ -75,6 +75,7 @@ import { LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
 import { navigateTo, Routes } from '@/router';
+import { isElectron } from '@/parsec';
 
 defineProps<{
   showBackButton: boolean;

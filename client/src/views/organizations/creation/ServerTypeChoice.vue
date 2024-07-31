@@ -10,6 +10,7 @@
     <div class="server-choice">
       <!-- Saas -->
       <div
+        v-show="!isElectron()"
         class="server-choice-item"
         @click="serverChoice = ServerType.Saas"
         :class="{ selected: serverChoice === ServerType.Saas }"
@@ -76,6 +77,7 @@ import { IonPage, IonButton, IonText, IonFooter } from '@ionic/vue';
 import { ref } from 'vue';
 import { ServerType } from '@/services/parsecServers';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { isElectron } from '@/parsec';
 
 const emits = defineEmits<{
   (e: 'serverChosen', serverType: ServerType): void;
