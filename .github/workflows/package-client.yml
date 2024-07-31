@@ -167,7 +167,7 @@ jobs:
         run: >-
           sed -i
           -e s'/if (process.env.VITE_SENTRY_AUTH_TOKEN)/if (true)/'
-          -e s'/authToken: process.env.VITE_SENTRY_AUTH_TOKEN/authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}"/'
+          -e s';authToken: process.env.VITE_SENTRY_AUTH_TOKEN;authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
           vite.config.ts
         working-directory: client
 
