@@ -159,22 +159,6 @@ fn verify_key_bad_point_decompression() {
 }
 
 #[test]
-fn signkey_from_too_small_data() {
-    assert_matches!(
-        SigningKey::try_from(b"dummy".as_ref()),
-        Err(CryptoError::DataSize)
-    );
-}
-
-#[test]
-fn verifykey_from_too_small_data() {
-    assert_matches!(
-        VerifyKey::try_from(b"dummy".as_ref()),
-        Err(CryptoError::DataSize)
-    );
-}
-
-#[test]
 fn signed_too_small() {
     let too_small = b"dummy";
 
@@ -212,4 +196,68 @@ fn verifykey_hash() {
 
     assert_eq!(hash(&vk1), hash(&vk1));
     assert_ne!(hash(&vk1), hash(&vk2));
+}
+
+#[test]
+fn signing_key_from() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = SigningKey::from(raw);
+
+    assert_eq!(key.to_bytes(), raw);
+}
+
+#[test]
+fn signing_key_try_from_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = SigningKey::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(key.to_bytes(), raw);
+
+    let outcome = SigningKey::try_from(b"<too_small>".as_ref());
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[test]
+fn signing_key_try_from_serde_bytes() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = SigningKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
+
+    assert_eq!(key.to_bytes(), raw);
+
+    let outcome = SigningKey::try_from(serde_bytes::Bytes::new(b"<too_small>"));
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[test]
+fn verifykey_key_try_from_static_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = VerifyKey::try_from(raw).unwrap();
+
+    assert_eq!(key.as_ref(), raw);
+}
+
+#[test]
+fn verifykey_key_try_from_array_of_u8() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = VerifyKey::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(key.as_ref(), raw);
+
+    let outcome = VerifyKey::try_from(b"<too_small>".as_ref());
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
+}
+
+#[test]
+fn verifykey_key_try_from_serde_bytes() {
+    let raw = hex!("78958e49abad190be2d51bab73af07f87682cfcd65cceedd27e4b2a94bfd8537");
+    let key = VerifyKey::try_from(serde_bytes::Bytes::new(&raw)).unwrap();
+
+    assert_eq!(key.as_ref(), raw);
+
+    let outcome = VerifyKey::try_from(serde_bytes::Bytes::new(b"<too_small>"));
+
+    assert_eq!(outcome, Err(CryptoError::DataSize));
 }
