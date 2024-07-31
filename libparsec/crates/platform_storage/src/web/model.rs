@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use libparsec_types::prelude::*;
 
 use crate::certificates::{FilterKind, GetCertificateQuery};
+use crate::workspace::{RawEncryptedChunk, RawEncryptedManifest};
 use crate::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 
 #[derive(Debug, Clone)]
@@ -340,7 +341,7 @@ pub(super) struct Chunk {
     pub size: IndexInt,
     pub offline: bool,
     pub accessed_on: Option<i64>,
-    pub data: Bytes,
+    pub data: RawEncryptedChunk,
     // IndexedDB cannot index on boolean, so we have to deal with
     pub is_block: u8,
 }
@@ -517,7 +518,7 @@ pub(super) struct Vlob {
     pub base_version: VersionInt,
     pub remote_version: VersionInt,
     pub need_sync: bool,
-    pub blob: Bytes,
+    pub blob: RawEncryptedManifest,
 }
 
 impl Vlob {
