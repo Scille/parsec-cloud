@@ -2,11 +2,11 @@
 
 import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
+import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
 import { MenuItem, app, ipcMain, shell } from 'electron';
 import unhandled from 'electron-unhandled';
 import { electronIsDev } from './utils';
-// import { autoUpdater } from 'electron-updater';
 
 import fs from 'fs';
 import path from 'path';
@@ -15,9 +15,30 @@ import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } 
 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
+const SENTRY_DSN_GUI_ELECTRON = process.env.SENTRY_DSN_GUI_ELECTRON;
+const SENTRY_DSN_GUI_ELECTRON_DEFAULT = 'https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208'
 
 // Graceful handling of unhandled errors.
 unhandled();
+
+function initSentry(): void {
+  // Sentry is initialized in
+  // - dev mode: only if the env var is set
+  // - release mode: always, either with the default DSN or with the env var if set
+  let sentry_dsn = '';
+  if (SENTRY_DSN_GUI_ELECTRON) {
+    sentry_dsn = SENTRY_DSN_GUI_ELECTRON;
+  } else if (!electronIsDev) {
+    sentry_dsn = SENTRY_DSN_GUI_ELECTRON_DEFAULT;
+  }
+  if(sentry_dsn) {
+    console.log('Configuring Sentry...');
+    Sentry.init({ dsn: sentry_dsn });
+  }
+  else {
+    console.log('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
+  }
+}
 
 // Define our menu templates (these are optional)
 const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
@@ -34,11 +55,16 @@ try {
   console.log(`Failed to set config path to '{$newConfigDir}'`);
 }
 
+// Configure Sentry
+// Must be done after changing userData directory as Sentry uses this path to
+// cache scope and events between application restarts.
+// https://docs.sentry.io/platforms/javascript/guides/electron/#app-userdata-directory
+initSentry();
+
 // Get Config options from capacitor.config
 const capacitorFileConfig: CapacitorElectronConfig = getCapacitorElectronConfig();
 
 // Initialize our app. You can pass menu templates into the app here.
-// const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig);
 const myCapacitorApp = new ElectronCapacitorApp(capacitorFileConfig, appMenuBarMenuTemplate);
 
 const lock = app.requestSingleInstanceLock();
