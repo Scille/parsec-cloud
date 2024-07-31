@@ -16,7 +16,7 @@ import { ElectronCapacitorApp, setupContentSecurityPolicy, setupReloadWatcher } 
 const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
 const SENTRY_DSN_GUI_ELECTRON = process.env.SENTRY_DSN_GUI_ELECTRON;
-const SENTRY_DSN_GUI_ELECTRON_DEFAULT = 'https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208'
+const SENTRY_DSN_GUI_ELECTRON_DEFAULT = 'https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208';
 
 // Graceful handling of unhandled errors.
 unhandled();
@@ -29,11 +29,10 @@ function initSentry(): void {
   if (!sentry_dsn && !electronIsDev) {
     sentry_dsn = SENTRY_DSN_GUI_ELECTRON_DEFAULT;
   }
-  if(sentry_dsn) {
+  if (sentry_dsn) {
     console.log('Configuring Sentry...');
     Sentry.init({ dsn: sentry_dsn });
-  }
-  else {
+  } else {
     console.log('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
   }
 }
