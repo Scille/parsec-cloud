@@ -62,11 +62,21 @@ jobs:
       commit_sha: ${{ needs.version.outputs.commit_sha }}
       nightly_build: ${{ github.event_name == 'schedule' || github.ref == 'refs/tags/nightly' }}
 
+  package-parsec-cli:
+    needs: version
+    if: needs.version.result == 'success' && always()
+    uses: ./.github/workflows/package-cli.yml
+    with:
+      version: ${{ needs.version.outputs.full }}
+      version_patch_run_id: ${{ github.run_id }}
+      commit_sha: ${{ needs.version.outputs.commit_sha }}
+
   releaser:
     needs:
       - version
       - package-parsec-server
       - package-parsec-client
+      - package-parsec-cli
     name: 🚛 Releaser
     permissions:
       contents: write
@@ -110,6 +120,9 @@ jobs:
           # EXE
           cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/latest-win-*.yml release-files
+
+          # CLI
+          cp ${CP_ARGS} artifacts/Linux-X64-cli/parsec-cli_${{ needs.version.outputs.full }}_linux_* release-files
         env:
           # TODO: Current version of cp don't support `--update` with argument,
           # recent version (coreutils-9.5) allows for `none-fail` that make `cp` fail if it would have overwritten a file.
@@ -208,6 +221,7 @@ jobs:
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg*
+            release-files/parsec-cli_${{ needs.version.outputs.full }}_linux_*
             release-files/python-*-requirements.txt
             release-files/python-*-requirements.txt.sha256
             release-files/latest-*.yml
