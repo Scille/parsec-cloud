@@ -19,7 +19,8 @@
         "openFileFailed": "L'élément `{path}` n'a pas pu être ouvert.",
         "incompatibleServer": "Votre application et le serveur ne sont pas compatibles. Les fonctionnalités en-ligne ne seront pas disponibles. Veuillez vérifier que votre application est à jour, et si c'est le cas, contactez un administrateur.",
         "clientRevoked": "Vous avez été révoqué(e) de cette organisation. Vous avez toujours accès à certaines données, mais l'accès à la plupart des fonctionnalités vous sera refusé.",
-        "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur."
+        "expiredOrganization": "Cette organisation a expiré. Veuillez contacter un administrateur.",
+        "unexpected": "Une erreur inattendue est survenue. Veuillez réessayer plus tard."
     },
     "formatter": {
         "version": "(v{version}) "
@@ -1225,13 +1226,71 @@
             },
             "professionalInfo": {
                 "title": "Informations professionnelles",
+                "representCompany": {
+                    "title": "Je représente une entreprise",
+                    "yes": "Oui",
+                    "no": "Non"
+                },
                 "company": "Entreprise",
                 "job": "Poste"
             },
             "authentication": {
                 "title": "Authentification",
-                "email": "Email",
+                "email": "Email"
+            },
+            "security": {
+                "title": "Sécurité",
                 "password": "Mot de passe"
+            },
+            "modals": {
+                "personalInfo": {
+                    "title": "Modifier les informations personnelles",
+                    "success": "Les informations personnelles ont bien été mises à jour.",
+                    "firstname": "Prénom",
+                    "lastname": "Nom",
+                    "phone": "Téléphone",
+                    "errors": {
+                        "phone": "Numéro de téléphone invalide"
+                    },
+                    "nextButton": "Confirmer"
+                },
+                "professionalInfo": {
+                    "title": "Modifier les informations professionnelles",
+                    "success": "Les informations professionnelles ont bien été mises à jour.",
+                    "representCompany": "Je représente une entreprise",
+                    "company": "Entreprise",
+                    "job": "Poste",
+                    "nextButton": "Confirmer"
+                },
+                "authentication": {
+                    "title": "Modifier votre email",
+                    "email": "Email",
+                    "newEmail": "Nouvel email",
+                    "password": "Mot de passe",
+                    "confirmPassword": "Confirmation de mot de passe",
+                    "wrongPassword": "Le mot de passe est incorrect.",
+                    "noEmptyFields": "Aucun champ ne doit être vide.",
+                    "newEmailMustBeDifferent": "Le nouvel email doit être différent de l'actuel.",
+                    "changePassword": {
+                        "title": "Modifier votre mot de passe",
+                        "success": "Le mot de passe a bien été mise à jour."
+                    },
+                    "changeEmail": {
+                        "title": "Modifier l'adresse email",
+                        "success": "L'adresse email a bien été mise à jour."
+                    },
+                    "nextButton": "Continuer"
+                },
+                "security": {
+                    "title": "Modifier votre mot de passe",
+                    "password": "Mot de passe",
+                    "confirmPassword": "Confirmation de mot de passe",
+                    "wrongPassword": "Le mot de passe est incorrect.",
+                    "noEmptyFields": "Aucun champ ne doit être vide.",
+                    "newPasswordMustBeDifferent": "Le nouveau mot de passe doit être différent de l'actuel.",
+                    "success": "Le mot de passe a bien été mise à jour.",
+                    "nextButton": "Continuer"
+                }
             }
         },
         "billingDetails": {

@@ -80,6 +80,68 @@ class BmsAccess {
     return this.tokens.access;
   }
 
+  async updatePersonalInformation(data: {
+    firstname?: string;
+    lastname?: string;
+    phone?: string;
+    country?: string;
+    company?: string;
+    job?: string;
+  }): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+
+    const response = await BmsApi.updatePersonalInformation(this.tokens.access, {
+      userId: this.customerInformation.id,
+      client: {
+        firstname: data.firstname,
+        lastname: data.lastname,
+        phone: data.phone,
+        country: data.country,
+        company: data.company,
+        job: data.job,
+      },
+    });
+    if (!response.isError) {
+      // Keep our local information up-to-date
+      const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+      if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
+        this.customerInformation = infoResponse.data;
+      }
+    }
+    return response;
+  }
+
+  async updateEmail(email: string, password: string, lang: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    const response = await BmsApi.updateEmail(this.tokens.access, {
+      userId: this.customerInformation.id,
+      email,
+      password,
+      lang,
+    });
+
+    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+    if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
+      this.customerInformation = infoResponse.data;
+    }
+    return response;
+  }
+
+  async updatePassword(email: string, lang: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.updatePassword(this.tokens.access, {
+      userId: this.customerInformation.id,
+      email,
+      lang,
+    });
+  }
+
   async listOrganizations(): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);

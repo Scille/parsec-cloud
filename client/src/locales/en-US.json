@@ -19,7 +19,8 @@
         "openFileFailed": "Failed to open entry at `{path}`.",
         "incompatibleServer": "Your application and the server are not compatible. Online features will not be available. Please check that your application is up-to-date, and if so, contact an administrator.",
         "clientRevoked": "You have been revoked from this organization. You can still see some of the data you had access to, but most features of Parsec will not work.",
-        "expiredOrganization": "This organization has expired. Please contact an administrator."
+        "expiredOrganization": "This organization has expired. Please contact an administrator.",
+        "unexpected": "An unexpected error occurred. Please try again."
     },
     "formatter": {
         "version": "(v{version})"
@@ -1225,13 +1226,71 @@
             },
             "professionalInfo": {
                 "title": "Professional information",
+                "representCompany": {
+                    "title": "I represent a company",
+                    "yes": "Yes",
+                    "no": "No"
+                },
                 "company": "Company",
                 "job": "Job"
             },
             "authentication": {
                 "title": "Authentication",
-                "email": "Email",
+                "email": "Email"
+            },
+            "security": {
+                "title": "Security",
                 "password": "Password"
+            },
+            "modals": {
+                "personalInfo": {
+                    "title": "Update personal information",
+                    "success": "Personal information has been updated.",
+                    "firstname": "Firstname",
+                    "lastname": "Lastname",
+                    "phone": "Phone",
+                    "errors": {
+                        "phone": "Invalid phone number"
+                    },
+                    "nextButton": "Confirm"
+                },
+                "professionalInfo": {
+                    "title": "Update professional information",
+                    "success": "Professional information has been updated.",
+                    "representCompany": "I represent a company",
+                    "company": "Company",
+                    "job": "Job",
+                    "nextButton": "Confirm"
+                },
+                "authentication": {
+                    "title": "Change your email",
+                    "email": "Email",
+                    "newEmail": "New email",
+                    "password": "Password",
+                    "confirmPassword": "Confirm password",
+                    "wrongPassword": "The password is wrong.",
+                    "noEmptyFields": "No field can be empty.",
+                    "newEmailMustBeDifferent": "The new email must be different from the current one.",
+                    "changePassword": {
+                        "title": "Change password",
+                        "success": "Password has been updated."
+                    },
+                    "changeEmail": {
+                        "title": "Change email",
+                        "success": "Email has been updated."
+                    },
+                    "nextButton": "Confirm"
+                },
+                "security": {
+                    "title": "Change your password",
+                    "password": "Password",
+                    "confirmPassword": "Confirm password",
+                    "wrongPassword": "The password is wrong.",
+                    "noEmptyFields": "No field can be empty.",
+                    "newPasswordMustBeDifferent": "The new password must be different from the current one.",
+                    "success": "Password has been updated.",
+                    "nextButton": "Confirm"
+                }
             }
         },
         "billingDetails": {

@@ -8,40 +8,25 @@
     <div class="personal-data-content">
       <ms-summary-card
         title="clientArea.personalDataPage.personalInfo.title"
-        :rows="[
-          {
-            item: createItem('personalInfo.firstname', personalData.firstName) as MsSummaryCardItemData,
-            secondItem: createItem('personalInfo.lastname', personalData.lastName),
-          },
-          {
-            item: createItem('personalInfo.phone', personalData.phone) as MsSummaryCardItemData,
-          },
-        ]"
+        :rows="getPersonalInfoRows()"
         @update="openPersonalInfoModal"
       />
       <ms-summary-card
         title="clientArea.personalDataPage.professionalInfo.title"
-        :rows="[
-          {
-            item: createItem('professionalInfo.company', personalData.company) as MsSummaryCardItemData,
-            secondItem: createItem('professionalInfo.job', personalData.job),
-          },
-        ]"
+        :rows="getProfessionalInfoRows()"
         @update="openProfessionalInfoModal"
       />
     </div>
     <div class="personal-data-content">
       <ms-summary-card
         title="clientArea.personalDataPage.authentication.title"
-        :rows="[
-          {
-            item: createItem('authentication.email', personalData.email) as MsSummaryCardItemData,
-          },
-          {
-            item: createItem('authentication.password', '*********') as MsSummaryCardItemData,
-          },
-        ]"
+        :rows="getAuthenticationRows()"
         @update="openAuthenticationModal"
+      />
+      <ms-summary-card
+        title="clientArea.personalDataPage.security.title"
+        :rows="getSecurityRows()"
+        @update="openSecurityModal"
       />
     </div>
   </div>
@@ -49,10 +34,24 @@
 
 <script setup lang="ts">
 import { BmsAccessInstance, BmsOrganization, PersonalInformationResultData } from '@/services/bms';
-import { createSummaryCardItem, I18n, MsSummaryCard, MsSummaryCardItemData, Translatable } from 'megashark-lib';
-import { onMounted, ref } from 'vue';
+import { modalController, ModalOptions } from '@ionic/vue';
+import {
+  createSummaryCardItem,
+  I18n,
+  MsModalResult,
+  MsSummaryCard,
+  MsSummaryCardItemData,
+  MsSummaryCardRowData,
+  Translatable,
+} from 'megashark-lib';
+import { computed, onMounted, ref } from 'vue';
+import AuthenticationModal from '@/views/client-area/AuthenticationModal.vue';
+// import SecurityModal from '@/views/client-area/SecurityModal.vue';
+import PersonalInfoModal from '@/views/client-area/PersonalInfoModal.vue';
+import ProfessionalInfoModal from '@/views/client-area/ProfessionalInfoModal.vue';
 
 const personalData = ref<PersonalInformationResultData | null>(null);
+const isRepresentingCompany = computed(() => !!personalData.value?.company && !!personalData.value?.job);
 
 defineProps<{
   organization: BmsOrganization;
@@ -74,15 +73,140 @@ function createItem(
   );
 }
 
+function createItemWithTranslatable(
+  label: Translatable,
+  text: Translatable,
+  error?: Translatable,
+  secondLineText?: Translatable,
+  secondLineError?: Translatable,
+): MsSummaryCardItemData | undefined {
+  return createSummaryCardItem(
+    `clientArea.personalDataPage.${label}`,
+    `clientArea.personalDataPage.${text}`,
+    error,
+    secondLineText ? `clientArea.personalDataPage.${secondLineText}` : undefined,
+    secondLineError,
+  );
+}
+
 onMounted(async () => {
-  personalData.value = await BmsAccessInstance.get().getPersonalInformation();
+  await getPersonalData();
 });
 
-function openAuthenticationModal(): void {}
+async function getPersonalData(): Promise<void> {
+  personalData.value = await BmsAccessInstance.get().getPersonalInformation();
+}
 
-function openPersonalInfoModal(): void {}
+function getPersonalInfoRows(): MsSummaryCardRowData[] {
+  return [
+    {
+      item: createItem('personalInfo.firstname', personalData.value?.firstName) as MsSummaryCardItemData,
+      secondItem: createItem('personalInfo.lastname', personalData.value?.lastName),
+    },
+    {
+      item: createItem('personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData,
+    },
+  ];
+}
 
-function openProfessionalInfoModal(): void {}
+function getProfessionalInfoRows(): MsSummaryCardRowData[] {
+  const rows = [
+    {
+      item: createItemWithTranslatable(
+        'professionalInfo.representCompany.title',
+        isRepresentingCompany.value ? 'professionalInfo.representCompany.yes' : 'professionalInfo.representCompany.no',
+      ) as MsSummaryCardItemData,
+    },
+  ];
+  if (isRepresentingCompany.value) {
+    rows.push({
+      item: createItem('professionalInfo.company', personalData.value?.company) as MsSummaryCardItemData,
+      secondItem: createItem('professionalInfo.job', personalData.value?.job),
+    } as MsSummaryCardRowData);
+  }
+  return rows;
+}
+
+function getAuthenticationRows(): MsSummaryCardRowData[] {
+  return [
+    {
+      item: createItem('authentication.email', personalData.value?.email) as MsSummaryCardItemData,
+    },
+  ];
+}
+
+function getSecurityRows(): MsSummaryCardRowData[] {
+  return [
+    {
+      item: createItem('security.password', '*********') as MsSummaryCardItemData,
+    },
+  ];
+}
+
+async function openAuthenticationModal(): Promise<void> {
+  await openModal({
+    component: AuthenticationModal,
+    canDismiss: true,
+    cssClass: 'authentication-modal',
+    backdropDismiss: false,
+    componentProps: {
+      email: personalData.value?.email,
+    },
+  });
+}
+
+async function openSecurityModal(): Promise<void> {
+  // await openModal({
+  //   component: SecurityModal,
+  //   canDismiss: true,
+  //   cssClass: 'security-modal',
+  //   backdropDismiss: false,
+  //   componentProps: {
+  //     email: personalData.value?.email,
+  //   },
+  // });
+}
+
+async function openPersonalInfoModal(): Promise<void> {
+  await openModal({
+    component: PersonalInfoModal,
+    canDismiss: true,
+    cssClass: 'personal-info-modal',
+    backdropDismiss: false,
+    componentProps: {
+      firstname: personalData.value?.firstName,
+      lastname: personalData.value?.lastName,
+      phone: personalData.value?.phone,
+    },
+  });
+}
+
+async function openProfessionalInfoModal(): Promise<void> {
+  await openModal({
+    component: ProfessionalInfoModal,
+    canDismiss: true,
+    cssClass: 'professional-info-modal',
+    backdropDismiss: false,
+    componentProps: {
+      company: personalData.value?.company,
+      job: personalData.value?.job,
+    },
+  });
+}
+
+async function openModal(options: ModalOptions): Promise<void> {
+  if (!personalData.value) {
+    return;
+  }
+  const modal = await modalController.create(options);
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    await getPersonalData();
+  }
+}
 </script>
 
 <style scoped lang="scss">
@@ -93,7 +217,6 @@ function openProfessionalInfoModal(): void {}
 }
 
 .personal-data-content {
-  background: var(--parsec-color-light-primary-background);
   display: flex;
   gap: 1.5rem;
   flex: 1;

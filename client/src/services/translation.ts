@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { InvitationStatus, UserProfile, WorkspaceRole } from '@/parsec';
-import { Translatable } from 'megashark-lib';
+import { Locale, Translatable } from 'megashark-lib';
 
 export function getProfileTranslationKey(profile: UserProfile): Translatable {
   if (profile === UserProfile.Admin) {
@@ -64,4 +64,8 @@ export function getInvitationStatusTranslationKey(status: InvitationStatus): Tra
     case InvitationStatus.Cancelled:
       return 'UsersPage.invitation.status.cancelled';
   }
+}
+
+export function longLocaleCodeToShort(longCode: Locale): string {
+  return longCode.split('-')[0];
 }
