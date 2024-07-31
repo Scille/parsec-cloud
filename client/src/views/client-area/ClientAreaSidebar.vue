@@ -38,7 +38,7 @@
         <!-- button: go to organization -->
         <!-- <div
           v-if="currentOrganization"
-          class="organization-card-button custom-button"
+          class="organization-card-button custom-button custom-button-fill"
         >
           <ion-text
             class="button-medium"
@@ -196,9 +196,9 @@
       <ion-text class="contact-title subtitles-sm">
         {{ $msTranslate('clientArea.sidebar.help.title') }}
       </ion-text>
-      <ion-text class="contact-button custom-button button-medium">
+      <ion-text class="contact-button custom-button custom-button-fill button-medium">
         <ion-icon
-          class="custom-button-icon"
+          class="custom-button custom-button-icon"
           :icon="chatbubbleEllipses"
         />
         {{ $msTranslate('clientArea.sidebar.help.button') }}

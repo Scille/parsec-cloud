@@ -35,7 +35,7 @@
           :title="getTitleByPage()"
           @page-selected="switchPage"
         />
-        <ion-content class="ion-padding">
+        <ion-content class="main-container">
           <div class="main-content">
             <div
               class="main-page"
@@ -259,7 +259,6 @@ ion-split-pane {
 .main-content {
   width: -webkit-fill-available;
   height: 100%;
-  font-size: 16px;
   display: flex;
   flex-direction: column;
 }

@@ -1,0 +1,88 @@
+/* Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS */
+
+/**** Global CSS overloads for Parsec Client ****/
+
+// class begin with client-page-
+.main-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  &::part(scroll) {
+    padding: 2rem 2rem 0;
+  }
+}
+
+[class^='client-page-'] {
+  height: 100%;
+}
+
+.title-h1-xl,
+.title-h2,
+.title-h3,
+.title-h4 {
+  padding: 0;
+}
+
+.list-md {
+  background: none;
+}
+
+ion-item {
+  --inner-padding-end: 0;
+}
+
+// ------custom button------ //
+
+// trying to add [attribute=^value] but it's not working for now
+.custom-button {
+  padding: 0.5em 0.75em;
+  border-radius: var(--parsec-radius-8);
+  cursor: pointer;
+  align-items: center;
+  text-align: center;
+  transition: all 150ms ease-in-out;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.custom-button {
+  &-fill {
+    color: var(--parsec-color-light-secondary-soft-text);
+    border: 1px solid var(--parsec-color-light-secondary-disabled);
+    background: var(--parsec-color-light-secondary-white);
+
+    &:hover {
+      color: var(--parsec-color-light-secondary-contrast);
+      background: var(--parsec-color-light-secondary-premiere);
+      border: 1px solid var(--parsec-color-light-secondary-disabled);
+    }
+  }
+
+  &-outline {
+    border: 1px solid var(--parsec-color-light-secondary-disabled);
+
+    &:hover {
+      color: var(--parsec-color-light-secondary-contrast);
+      background: var(--parsec-color-light-secondary-premiere);
+      border: 1px solid var(--parsec-color-light-secondary-disabled);
+    }
+  }
+
+  &-ghost {
+    background: transparent;
+  }
+
+  &-danger {
+    color: var(--parsec-color-light-danger-500);
+
+    &:hover {
+      color: var(--parsec-color-light-danger-700);
+      background: var(--parsec-color-light-danger-100);
+    }
+  }
+}
