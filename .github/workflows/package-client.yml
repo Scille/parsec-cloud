@@ -101,6 +101,8 @@ jobs:
 
       - name: Build web app
         run: npm run web:release
+        env:
+          VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
 
       - name: Generate SBOM
@@ -159,6 +161,15 @@ jobs:
         run:
           sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
         working-directory: client/electron
+
+      # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
+      - name: Patch vite config for snap build
+        run: >-
+          sed -i
+          -e s'/if (process.env.VITE_SENTRY_AUTH_TOKEN)/if (true)/'
+          -e s'/authToken: process.env.VITE_SENTRY_AUTH_TOKEN/authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}"/'
+          vite.config.ts
+        working-directory: client
 
       - name: Build snap
         run: |
@@ -293,6 +304,8 @@ jobs:
           npm run electron:release
           ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
           ${{ inputs.nightly_build && '-- --nightly' || '' }}
+        env:
+          VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
         timeout-minutes: 5
 
