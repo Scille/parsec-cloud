@@ -2,11 +2,11 @@
 // eslint-disable-next-line spaced-comment
 /// <reference types="vitest" />
 
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig, PluginOption, UserConfigExport } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
-import { sentryVitePlugin } from '@sentry/vite-plugin';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
