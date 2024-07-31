@@ -6,8 +6,8 @@ import vue from '@vitejs/plugin-vue';
 import path from 'path';
 import { defineConfig, PluginOption, UserConfigExport } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
-// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import { sentryVitePlugin } from '@sentry/vite-plugin';
+// eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
 
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
