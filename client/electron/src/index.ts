@@ -25,10 +25,8 @@ function initSentry(): void {
   // Sentry is initialized in
   // - dev mode: only if the env var is set
   // - release mode: always, either with the default DSN or with the env var if set
-  let sentry_dsn = '';
-  if (SENTRY_DSN_GUI_ELECTRON) {
-    sentry_dsn = SENTRY_DSN_GUI_ELECTRON;
-  } else if (!electronIsDev) {
+  let sentry_dsn = SENTRY_DSN_GUI_ELECTRON;
+  if (!sentry_dsn && !electronIsDev) {
     sentry_dsn = SENTRY_DSN_GUI_ELECTRON_DEFAULT;
   }
   if(sentry_dsn) {
