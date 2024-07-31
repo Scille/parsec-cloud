@@ -55,7 +55,7 @@
 
 <script setup lang="ts">
 import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
-import { IonText, IonTitle, IonIcon } from '@ionic/vue';
+import { IonText, IonTitle, IonIcon, IonButton } from '@ionic/vue';
 import { navigateTo, Routes } from '@/router';
 import { Translatable } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
