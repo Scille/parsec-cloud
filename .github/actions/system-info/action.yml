@@ -14,6 +14,9 @@ outputs:
   release:
     description: The release version of the OS (e.g. 22.04, 10, 12.7.5, ...)
     value: ${{ steps.system-info.outputs.release }}
+  arch:
+    description: The architecture of the system (e.g. x64, arm64, ...)
+    value: ${{ steps.system-info.outputs.arch }}
 
 runs:
   using: composite
