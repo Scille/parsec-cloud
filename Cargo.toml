@@ -168,6 +168,8 @@ rsa = { version = "0.8.2", default-features = false }
 rstest_reuse = { version = "0.6.0", default-features = false }
 rstest = { version = "0.18.2", default-features = false }
 ruzstd = { version = "0.7.0", default-features = true }
+sentry = { version = "0.34.0", default-features = false }
+sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
 serde_json = { version = "1.0.121", default-features = false }
 serde_test = { version = "1.0.176", default-features = false }

@@ -1030,7 +1030,7 @@ async fn check_prevent_sync_pattern_initialized_with_empty_pattern(env: &Testbed
         regex,
         Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
     );
-    assert_eq!(bool, false);
+    assert!(bool);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -1079,11 +1079,11 @@ async fn set_prevent_sync_pattern(env: &TestbedEnv) {
 
     let res = workspace.set_prevent_sync_pattern(&regex).await.unwrap();
 
-    assert_eq!(res, false);
+    assert!(res);
     let (got_regex, bool) = workspace.get_prevent_sync_pattern().await.unwrap();
 
     assert_eq!(got_regex, regex);
-    assert_eq!(bool, false);
+    assert!(bool);
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -1097,7 +1097,7 @@ async fn nop_mark_prevent_sync_pattern_with_different_pat(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    assert_eq!(res, false);
+    assert!(res);
 }
 
 // TODO: test get/set blocks
