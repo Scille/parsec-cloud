@@ -5,10 +5,10 @@
 #![allow(clippy::unwrap_used)]
 
 use hex_literal::hex;
-use pretty_assertions::assert_eq;
+use pretty_assertions::{assert_eq, assert_matches};
 use serde_test::{assert_tokens, Token};
 
-use libparsec_crypto::HashDigest;
+use libparsec_crypto::{CryptoError, HashDigest};
 
 #[macro_use]
 mod common;
@@ -53,5 +53,35 @@ fn hashdigest_should_verify_length_when_deserialize() {
             .unwrap_err()
             .to_string(),
         "Invalid data size"
+    );
+}
+
+#[test]
+fn from() {
+    let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
+    let digest = HashDigest::from(raw);
+
+    assert_eq!(digest.as_ref(), raw,);
+}
+
+#[test]
+fn try_from() {
+    let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
+    let digest = HashDigest::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(digest.as_ref(), raw,);
+
+    let err = HashDigest::try_from(b"<too_small>".as_ref());
+    assert_matches!(err, Err(CryptoError::DataSize))
+}
+
+#[test]
+fn debug() {
+    let raw = hex!("7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5");
+    let digest = HashDigest::try_from(raw.as_ref()).unwrap();
+
+    assert_eq!(
+        format!("{:?}", digest),
+        "HashDigest(7d486915b914332bb5730fd772223e8b276919e51edca2de0f82c5fc1bce7eb5)"
     );
 }
