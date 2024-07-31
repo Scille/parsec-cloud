@@ -243,7 +243,6 @@ ion-split-pane {
 
 // -------- main content ------------
 .main-content {
-  background-color: blue;
   width: -webkit-fill-available;
   height: 100%;
   color: white;
