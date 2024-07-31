@@ -2,8 +2,10 @@
 
 import { Locator, Page, test as base } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
+import { MockBms } from '@tests/pw/helpers/bms';
+import { DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
-import { fillInputModal } from '@tests/pw/helpers/utils';
+import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
 
 export const msTest = base.extend<{
   home: Page;
@@ -16,6 +18,7 @@ export const msTest = base.extend<{
   createOrgModal: Locator;
   userGreetModal: Locator;
   workspaceSharingModal: Locator;
+  clientArea: Page;
 }>({
   home: async ({ page, context }, use) => {
     page.on('console', (msg) => console.log('> ', msg.text()));
@@ -118,5 +121,21 @@ export const msTest = base.extend<{
     const modal = connected.locator('.workspace-sharing-modal');
     await expect(modal).toBeVisible();
     await use(modal);
+  },
+
+  clientArea: async ({ home }, use) => {
+    await MockBms.mockLogin(home, true);
+    await MockBms.mockUserInfo(home);
+    await MockBms.mockListOrganizations(home);
+
+    const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
+    await expect(button).toHaveText('Customer Area');
+    await button.click();
+    await expect(home).toHaveURL(/.+\/clientLogin$/);
+    await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+    await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+    await home.locator('.login-button').locator('ion-button').click();
+    await expect(home).toHaveURL(/.+\/clientArea$/);
+    await use(home);
   },
 });

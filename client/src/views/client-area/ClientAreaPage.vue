@@ -120,6 +120,8 @@ onMounted(async () => {
       await navigateTo(Routes.ClientAreaLogin);
       return;
     }
+  } else {
+    loggedIn.value = true;
   }
 
   const response = await BmsAccessInstance.get().listOrganizations();
