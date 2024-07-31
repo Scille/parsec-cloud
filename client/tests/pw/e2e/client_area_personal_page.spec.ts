@@ -18,8 +18,7 @@ msTest('Switch pages', async ({ clientArea }) => {
     'Firstname',
     'Lastname',
     'Phone',
-    'Company',
-    'Job',
+    'I represent a company',
     'Email',
     'Password',
   ]);
@@ -27,8 +26,7 @@ msTest('Switch pages', async ({ clientArea }) => {
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
     '',
-    '',
-    '',
+    'No',
     DEFAULT_USER_INFORMATION.email,
     '*********',
   ]);

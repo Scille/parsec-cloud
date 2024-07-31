@@ -19,6 +19,9 @@ interface BmsResponse {
 enum DataType {
   Login = 'login',
   PersonalInformation = 'personal-information',
+  UpdatePersonalInformation = 'update-personal-information',
+  UpdateEmail = 'update-email',
+  UpdatePassword = 'update-password',
   CreateOrganization = 'create-organization',
   ListOrganizations = 'list-organizations',
   OrganizationStats = 'organization-stats',
@@ -182,9 +185,34 @@ interface LoginQueryData {
   password: string;
 }
 
-interface _ClientQueryData {
+interface _UserQueryData {
   userId: string;
+}
+
+interface _ClientQueryData extends _UserQueryData {
   clientId: string;
+}
+
+interface UpdatePersonalInformationQueryData extends _UserQueryData {
+  client: {
+    firstname?: string;
+    lastname?: string;
+    phone?: string;
+    country?: string;
+    company?: string;
+    job?: string;
+  };
+}
+
+interface UpdateEmailQueryData extends _UserQueryData {
+  email: string;
+  password: string;
+  lang: string;
+}
+
+interface UpdatePasswordQueryData extends _UserQueryData {
+  email: string;
+  lang: string;
 }
 
 interface CreateOrganizationQueryData extends _ClientQueryData {
@@ -250,4 +278,7 @@ export {
   PersonalInformationResultData,
   SetDefaultPaymentMethodQueryData,
   UpdateAuthenticationQueryData,
+  UpdateEmailQueryData,
+  UpdatePasswordQueryData,
+  UpdatePersonalInformationQueryData,
 };

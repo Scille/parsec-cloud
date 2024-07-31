@@ -17,6 +17,9 @@ import {
   PaymentMethod,
   SetDefaultPaymentMethodQueryData,
   UpdateAuthenticationQueryData,
+  UpdateEmailQueryData,
+  UpdatePasswordQueryData,
+  UpdatePersonalInformationQueryData,
 } from '@/services/bms/types';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
@@ -124,6 +127,42 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
         job: axiosResponse.data.client.job || undefined,
         company: axiosResponse.data.client.company || undefined,
       },
+    };
+  });
+}
+
+async function updatePersonalInformation(token: AuthenticationToken, data: UpdatePersonalInformationQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().patch(`/users/${data.userId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function updateEmail(token: AuthenticationToken, data: UpdateEmailQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(`/users/${data.userId}/update_email`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function updatePassword(token: AuthenticationToken, data: UpdatePasswordQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post('/users/change_password', data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
     };
   });
 }
@@ -405,6 +444,9 @@ async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsRespo
 export const BmsApi = {
   login,
   getPersonalInformation,
+  updatePersonalInformation,
+  updateEmail,
+  updatePassword,
   createOrganization,
   listOrganizations,
   getOrganizationStats,
