@@ -57,9 +57,7 @@ async function setupApp(): Promise<void> {
   });
   await megasharkPlugin.init();
 
-  const app = createApp(App);
-
-  app
+  const app = createApp(App)
     .use(IonicVue, {
       rippleEffect: false,
     })
@@ -255,7 +253,11 @@ async function setupApp(): Promise<void> {
     });
     window.electronAPI.receive('parsec-is-dev-mode', async (devMode) => {
       window.isDev = (): boolean => devMode;
-      devMode ? Sentry.disable() : Sentry.enable();
+      if (devMode) {
+        Sentry.disable();
+      } else {
+        config.enableTelemetry ? Sentry.enable() : Sentry.disable();
+      }
     });
   } else {
     window.electronAPI = {
