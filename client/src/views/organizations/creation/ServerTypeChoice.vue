@@ -10,11 +10,20 @@
     <div class="server-choice">
       <!-- Saas -->
       <div
-        v-show="!isElectron()"
         class="server-choice-item"
         @click="serverChoice = ServerType.Saas"
-        :class="{ selected: serverChoice === ServerType.Saas }"
+        :disabled="isElectron()"
+        :class="{
+          selected: serverChoice === ServerType.Saas,
+          disabled: isElectron(),
+        }"
       >
+        <ion-text
+          class="server-choice-item__badge button-medium"
+          v-show="isElectron()"
+        >
+          {{ $msTranslate('CreateOrganization.server.soon') }}
+        </ion-text>
         <!-- <ms-image
           :image="ParsecMockup"
           class="server-choice-item__image"
@@ -119,6 +128,7 @@ async function onChoiceMade(): Promise<void> {
     gap: 1rem;
     cursor: pointer;
     flex: 1;
+    position: relative;
 
     &:first-child {
       align-items: end;
@@ -166,6 +176,27 @@ async function onChoiceMade(): Promise<void> {
         span {
           color: var(--parsec-color-light-danger-700);
         }
+      }
+    }
+
+    &.disabled {
+      pointer-events: none;
+
+      .server-choice-item__image,
+      .server-choice-item__label {
+        opacity: 0.4;
+      }
+
+      .server-choice-item__badge {
+        background-color: var(--parsec-color-light-secondary-hard-grey);
+        color: var(--parsec-color-light-secondary-white);
+        padding: 0.25rem 0.75rem;
+        border-radius: var(--parsec-radius-32);
+        box-shadow: var(--parsec-shadow-light);
+        position: absolute;
+        z-index: 2;
+        top: 5rem;
+        right: 2.5rem;
       }
     }
   }
