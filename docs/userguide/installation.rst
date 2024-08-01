@@ -63,7 +63,7 @@ If you are familiar with Snap, you may notice that Parsec snap is provided in cl
 
     .. code-block:: shell
 
-        snap install --channel=v3/stable --name parsec-v3 --classic
+        snap install parsec_v3 --classic --channel=v3
 
 macOS
 -----
