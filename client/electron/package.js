@@ -94,7 +94,7 @@ const signOptions = {
 const options = {
   appId: 'cloud.parsec.parsec-v3',
   artifactName: 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}',
-  buildVersion: '3.0.0-b.12+dev',
+  buildVersion: '3.0.0-b.13',
   protocols: {
     name: 'Parsec-v3',
     schemes: [PARSEC_SCHEME],
