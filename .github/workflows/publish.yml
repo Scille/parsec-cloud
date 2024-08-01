@@ -108,9 +108,13 @@ jobs:
         timeout-minutes: 2
 
       - name: Get releases for snapcraft
+        id: snapcraft-channels
         run: |
           set -o pipefail
-          python misc/snapcraft_releases.py ${{ inputs.nightly && '--nightly' || '' }} ${{ steps.version.outputs.full }} | tee ${{ runner.temp }}/snap-release-channels
+          (
+            echo -n "channels=";
+            python misc/snapcraft_releases.py ${{ inputs.nightly && '--nightly' || '' }} ${{ steps.version.outputs.full }}
+          ) | tee $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Check that snapcraft credential is not empty
@@ -126,15 +130,10 @@ jobs:
         timeout-minutes: 2
 
       - name: Upload Snap
-        run: |
-          set -x
-          for channel in $(cat ${{ runner.temp }}/snap-release-channels); do
-            snapcraft upload --release=$channel snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
-          done
+        run: snapcraft upload --release="${{ steps.snapcraft-channels.outputs.channels }}" snap/Parsec_${{ steps.version.outputs.full }}_linux_*.snap
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}
-        # Each upload takes ~2min, we could have up to 4 channels to upload so: `2 * 4 = 8min` (plus a little spare)
-        timeout-minutes: 10
+        timeout-minutes: 3
 
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
