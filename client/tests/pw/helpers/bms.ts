@@ -92,7 +92,8 @@ async function mockListOrganizations(page: Page): Promise<void> {
             suffix: DEFAULT_ORGANIZATION_INFORMATION.name,
             // eslint-disable-next-line camelcase
             stripe_subscription_id: 'stripe_id',
-            bootstrapLink: '',
+            // eslint-disable-next-line camelcase
+            bootstrap_link: '',
           },
           {
             pk: `${DEFAULT_ORGANIZATION_INFORMATION.bmsId}-2`,
@@ -106,7 +107,8 @@ async function mockListOrganizations(page: Page): Promise<void> {
             suffix: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
             // eslint-disable-next-line camelcase
             stripe_subscription_id: 'stripe_id2',
-            bootstrapLink: '',
+            // eslint-disable-next-line camelcase
+            bootstrap_link: '',
           },
         ],
       },
@@ -224,7 +226,6 @@ async function mockBillingDetails(
   page: Page,
   { includeCard, includeSepa, fail }: { includeCard?: boolean; includeSepa?: boolean; fail?: boolean },
 ): Promise<void> {
-  // eslint-disable-next-line max-len
   await page.route(
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`,
     async (route) => {
@@ -254,7 +255,8 @@ async function mockBillingDetails(
           paymentMethods.push({
             type: 'debit',
             id: 'debit1',
-            bankName: 'Bank',
+            // eslint-disable-next-line camelcase
+            bank_name: 'Bank',
             // eslint-disable-next-line camelcase
             last_digits: '1234',
             default: includeCard ? false : true,
@@ -275,6 +277,81 @@ async function mockBillingDetails(
   );
 }
 
+async function mockAddPaymentMethod(page: Page, fail?: boolean): Promise<void> {
+  await page.route(
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/add_payment_method`,
+    async (route) => {
+      if (!fail) {
+        await route.fulfill({
+          status: 200,
+          json: {
+            // eslint-disable-next-line camelcase
+            payment_method: '123456',
+          },
+        });
+      } else {
+        await route.fulfill({
+          status: 401,
+          json: {
+            type: 'payment',
+            errors: [{ code: 'invalid', attr: 'payment_method', detail: 'Invalid payment method' }],
+          },
+        });
+      }
+    },
+  );
+}
+
+async function mockSetDefaultPaymentMethod(page: Page, fail?: boolean): Promise<void> {
+  await page.route(
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/default_payment_method`,
+    async (route) => {
+      if (!fail) {
+        await route.fulfill({
+          status: 200,
+          json: {
+            // eslint-disable-next-line camelcase
+            payment_method: '123456',
+          },
+        });
+      } else {
+        await route.fulfill({
+          status: 401,
+          json: {
+            type: 'payment',
+            errors: [{ code: 'invalid', attr: 'payment_method', detail: 'Invalid payment method' }],
+          },
+        });
+      }
+    },
+  );
+}
+
+async function mockDeletePaymentMethod(page: Page, fail?: boolean): Promise<void> {
+  await page.route(
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/delete_payment_method`,
+    async (route) => {
+      if (!fail) {
+        await route.fulfill({
+          status: 200,
+          json: {
+            // eslint-disable-next-line camelcase
+            payment_method: '123456',
+          },
+        });
+      } else {
+        await route.fulfill({
+          status: 401,
+          json: {
+            type: 'payment',
+            errors: [{ code: 'invalid', attr: 'payment_method', detail: 'Invalid payment method' }],
+          },
+        });
+      }
+    },
+  );
+}
+
 export const MockBms = {
   mockLogin,
   mockUserInfo,
@@ -284,4 +361,7 @@ export const MockBms = {
   mockOrganizationStatus,
   mockGetInvoices,
   mockBillingDetails,
+  mockAddPaymentMethod,
+  mockSetDefaultPaymentMethod,
+  mockDeletePaymentMethod,
 };

@@ -132,6 +132,39 @@ class BmsAccess {
     });
   }
 
+  async addPaymentMethod(paymentMethod: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.addPaymentMethod(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      paymentMethod: paymentMethod,
+    });
+  }
+
+  async setDefaultPaymentMethod(paymentMethod: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.setDefaultPaymentMethod(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      paymentMethod: paymentMethod,
+    });
+  }
+
+  async deletePaymentMethod(paymentMethod: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.deletePaymentMethod(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      paymentMethod: paymentMethod,
+    });
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();

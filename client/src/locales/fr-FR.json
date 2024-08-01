@@ -1254,6 +1254,25 @@
             "ofWhich": "dont",
             "data": "de données",
             "metadata": "métadonnées"
+        },
+        "paymentMethodsPage": {
+            "title": "Votre moyen de paiement",
+            "description": "Le paiement s’effectue automatiquement par votre carte bancaire.",
+            "addCard": "Ajouter",
+            "addPaymentMethodFailed": "Impossible d'enregistrer cette carte.",
+            "addPaymentMethodSuccessSetDefaultFailed": "La carte a été ajoutée avec succès mais n'a pas pu être définie comme moyen de paiement par défaut.",
+            "setDefaultPaymentMethodFailed": "Impossible d'utiliser cette carte comme votre moyen de paiement par défaut.",
+            "addPaymentMethodTitle": "Ajouter une carte bancaire",
+            "addPaymentMethodConfirm": "Ajouter cette carte",
+            "useAsDefault": "Définir comme moyen de paiement actif",
+            "activeMethodLabel": "Active",
+            "retrieveFailed": "Impossible de récupérer les informations de paiement.",
+            "addPaymentMethodSuccess": "La carte a été ajoutée avec succès.",
+            "stopSubscription": {
+                "title": "Vous souhaitez arrêter votre abonnement ?",
+                "description": "L'organisation deviendra indisponible pour tous les utilisateurs.",
+                "button": "Stopper mon abonnement"
+            }
         }
     }
 }

@@ -1254,6 +1254,24 @@
             "ofWhich": "of which",
             "data": "data",
             "metadata": "metadata"
+        },
+        "paymentMethodsPage": {
+            "title": "Your payment method",
+            "description": "Payment is made automatically by credit card.",
+            "addCard": "Add",
+            "addPaymentMethodFailed": "Failed to register this card.",
+            "addPaymentMethodSuccessSetDefaultFailed": "The card was successfully added but it could not be set as the default payment method.",
+            "addPaymentMethodTitle": "Add a card",
+            "addPaymentMethodConfirm": "Add this card",
+            "useAsDefault": "Set as default payment method",
+            "activeMethodLabel": "Active",
+            "retrieveFailed": "Failed to retrieve payment methods.",
+            "addPaymentMethodSuccess": "The card was successfully added.",
+            "stopSubscription": {
+                "title": "Would you like to stop your subscription?",
+                "description": "The organisation will become unavailable to all users.",
+                "button": "Stop my subscription"
+            }
         }
     }
 }
