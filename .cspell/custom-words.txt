@@ -81,8 +81,8 @@ certifs
 CFFI
 cfoo
 chacha
-chatbubbles
 chatbubbleEllipses
+chatbubbles
 CHECKICONHANDLER
 chgtime
 choco
@@ -175,13 +175,13 @@ fileprovider
 firacode
 fireraptor
 fixturenames
-footgun
 flate
 Flaticon
 fncychap
 Folderish
 fontpkg
 fontspec
+footgun
 footnotesize
 fqcn
 freeline
@@ -551,7 +551,6 @@ Reqwest
 rerunfailures
 reseted
 retrier
-ruzstd
 Richcmp
 Rlib
 rmvb
@@ -573,6 +572,7 @@ rustfmt
 rustls
 RUSTSEC
 rustup
+ruzstd
 rwfile
 rwmixread
 salsabox
