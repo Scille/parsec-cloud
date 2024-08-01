@@ -183,7 +183,7 @@ async function mockGetInvoices(page: Page, { fail, count }: { fail?: boolean; co
         status: 200,
         json: {
           count: count,
-          result: Array.from(Array(count).keys()).map((index) => {
+          results: Array.from(Array(count).keys()).map((index) => {
             return {
               id: `Id${index}`,
               pdf: `https://fake/pdfs/${index}.pdf`,
@@ -206,50 +206,55 @@ async function mockBillingDetails(
   page: Page,
   { includeCard, includeSepa, fail }: { includeCard?: boolean; includeSepa?: boolean; fail?: boolean },
 ): Promise<void> {
-  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billingDetails`, async (route) => {
-    if (fail) {
-      await route.fulfill({
-        status: 401,
-        json: {
-          type: 'error',
-          errors: [{ code: 'invalid', attr: 'null', detail: 'An error occured' }],
-        },
-      });
-    } else {
-      const paymentMethods = [];
-      if (includeCard) {
-        paymentMethods.push({
-          type: 'card',
-          id: 'card1',
-          brand: 'mastercard',
-          // eslint-disable-next-line camelcase
-          exp_date: '12/47',
-          // eslint-disable-next-line camelcase
-          last_digits: '4444',
-          default: true,
+  // eslint-disable-next-line max-len
+  await page.route(
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`,
+    async (route) => {
+      if (fail) {
+        await route.fulfill({
+          status: 401,
+          json: {
+            type: 'error',
+            errors: [{ code: 'invalid', attr: 'null', detail: 'An error occured' }],
+          },
+        });
+      } else {
+        const paymentMethods = [];
+        if (includeCard) {
+          paymentMethods.push({
+            type: 'card',
+            id: 'card1',
+            brand: 'mastercard',
+            // eslint-disable-next-line camelcase
+            exp_date: '12/47',
+            // eslint-disable-next-line camelcase
+            last_digits: '4444',
+            default: true,
+          });
+        }
+        if (includeSepa) {
+          paymentMethods.push({
+            type: 'debit',
+            id: 'debit1',
+            bankName: 'Bank',
+            // eslint-disable-next-line camelcase
+            last_digits: '1234',
+            default: includeCard ? false : true,
+          });
+        }
+        route.fulfill({
+          status: 200,
+          json: {
+            email: DEFAULT_USER_INFORMATION.email,
+            name: `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
+            address: DEFAULT_USER_INFORMATION.address.full,
+            // eslint-disable-next-line camelcase
+            payment_methods: paymentMethods,
+          },
         });
       }
-      if (includeSepa) {
-        paymentMethods.push({
-          type: 'debit',
-          id: 'debit1',
-          bankName: 'Bank',
-          // eslint-disable-next-line camelcase
-          last_digits: '1234',
-          default: includeCard ? false : true,
-        });
-      }
-      route.fulfill({
-        status: 200,
-        json: {
-          email: DEFAULT_USER_INFORMATION.email,
-          name: `${DEFAULT_USER_INFORMATION.firstName} ${DEFAULT_USER_INFORMATION.lastName}`,
-          address: DEFAULT_USER_INFORMATION.address.full,
-          paymentMethods: paymentMethods,
-        },
-      });
-    }
-  });
+    },
+  );
 }
 
 export const MockBms = {

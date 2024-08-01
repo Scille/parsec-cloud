@@ -47,13 +47,14 @@ msTest('Switch pages', async ({ clientArea }) => {
   await MockBms.mockOrganizationStats(clientArea);
   await MockBms.mockOrganizationStatus(clientArea);
   await MockBms.mockGetInvoices(clientArea, { count: 2 });
+  await MockBms.mockBillingDetails(clientArea, { includeCard: true });
 
   const pages = [
-    { button: 'Dashboard', title: 'Dashboard', url: '/dashboard' },
-    { button: 'Statistics', title: 'Statistics', url: '/statistics' },
+    { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
+    { button: 'Statistics', title: 'Statistics', url: 'statistics' },
     { button: 'Invoices', title: 'Invoices', url: 'invoices' },
-    { button: 'Billing method', title: 'Payment methods', url: 'billingMethods' },
-    { button: 'Billing details', title: 'Billing details', url: 'billingDetails' },
+    { button: 'Billing method', title: 'Payment methods', url: 'payment-methods' },
+    { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
   ];
 
   const title = clientArea.locator('.header-content').locator('.header-title');
@@ -66,7 +67,9 @@ msTest('Switch pages', async ({ clientArea }) => {
   for (let i = 0; i < pages.length; i++) {
     await menuButtons.nth(i).click();
     await expect(title).toHaveText(pages[i].title);
-    // await expect(clientArea).toHaveURL(pageText[i].url);
+    // eslint-disable-next-line max-len
+    const urlMatch = `https?://[a-z:0-9.]+/clientArea\\?(?:organization=[a-f0-9-]+&)?(?:page=${pages[i].url})&?(?:organization=[a-f0-9-]+)?`;
+    await expect(clientArea).toHaveURL(new RegExp(urlMatch));
   }
 });
 
