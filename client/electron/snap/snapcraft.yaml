@@ -124,7 +124,9 @@ parts:
       # Patch client package.json to use local pre-packaged megashark-lib
       sed -i "s;megashark-lib\": \".*\";megashark-lib\": \"file:${CRAFT_STAGE}/megashark-lib.tar.gz\";" package.json
 
-      npm install
+      # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
+      # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
+      npm install --ignore-scripts
       npm run electron:copy
 
       cd electron
