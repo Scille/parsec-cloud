@@ -256,7 +256,7 @@ async function getBillingDetails(token: AuthenticationToken, query: BillingDetai
         email: axiosResponse.data.email,
         name: axiosResponse.data.name,
         address: axiosResponse.data.address,
-        paymentMethods: axiosResponse.data.payment_methods
+        paymentMethods: (axiosResponse.data.payment_methods ?? [])
           .map((method: any) => {
             if (method.type === 'card') {
               return {
