@@ -226,6 +226,7 @@
         },
         "server": {
             "saas": "Stocker mes données avec Parsec Share",
+            "soon": "Bientôt disponible",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
                 "description": "(Données non conservées après la période d'essai)"

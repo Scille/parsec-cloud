@@ -226,6 +226,7 @@
         },
         "server": {
             "saas": "Store my data with Parsec Share",
+            "soon": "Available soon",
             "trial": {
                 "title": "Try Parsec for 15 days",
                 "description": "(Data are erased after the trial period)"
