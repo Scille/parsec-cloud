@@ -91,6 +91,13 @@
                 >
                   <ion-toggle v-model="config.confirmBeforeQuit" />
                 </settings-option>
+                <!-- send error report -->
+                <settings-option
+                  :title="'SettingsModal.enableTelemetry.label'"
+                  :description="'SettingsModal.enableTelemetry.description'"
+                >
+                  <ion-toggle v-model="config.enableTelemetry" />
+                </settings-option>
               </ion-list>
             </div>
             <!-- advanced -->
@@ -100,13 +107,6 @@
               v-show="false"
             >
               <ion-list class="settings-list">
-                <!-- send error report -->
-                <settings-option
-                  :title="'SettingsModal.enableTelemetry.label'"
-                  :description="'SettingsModal.enableTelemetry.description'"
-                >
-                  <ion-toggle v-model="config.enableTelemetry" />
-                </settings-option>
                 <!-- display unsync files -->
                 <settings-option
                   :title="'SettingsModal.unsyncFiles.label'"
@@ -139,11 +139,15 @@ import { MsModal, MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, Loca
 import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
+import { Sentry } from '@/services/sentry';
 
 const themeManager: ThemeManager = inject(ThemeManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const config = ref<Config>(structuredClone(StorageManager.DEFAULT_CONFIG));
 let justLoaded = false;
+// Local backup, since watch in deep mode gives the same object
+// for both newValue and oldValue.
+let enableTelemetry = config.value.enableTelemetry;
 
 const languageOptions: MsOptions = new MsOptions(LocaleOptions);
 
@@ -177,6 +181,15 @@ const configUnwatch = watch(
       await storageManager.storeConfig(toRaw(newConfig));
     }
     justLoaded = false;
+    if (newConfig.enableTelemetry !== enableTelemetry) {
+      enableTelemetry = newConfig.enableTelemetry;
+      if (window.isDev()) {
+        console.log('Dev mode, not doing anything, Sentry stays disabled');
+        Sentry.disable();
+      } else {
+        newConfig.enableTelemetry ? Sentry.enable() : Sentry.disable();
+      }
+    }
   },
   { deep: true },
 );
@@ -194,6 +207,7 @@ async function changeTheme(selectedTheme: Theme): Promise<void> {
 onMounted(async (): Promise<void> => {
   justLoaded = true;
   config.value = await storageManager.retrieveConfig();
+  enableTelemetry = config.value.enableTelemetry;
 });
 
 onUnmounted(async (): Promise<void> => {
