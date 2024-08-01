@@ -11,15 +11,9 @@ E.g.
 $ python misc/snapcraft_releases.py 2.0.0
 v2/stable
 $ python misc/snapcraft_releases.py 3.0.0-b.0
-v3/beta
-latest/beta
+v3/beta,latest/beta
 $ python misc/snapcraft_releases.py 3.0.0-b.0 --nightly
-v3/edge
-latest/edge
-nightly/stable
-nightly/beta
-nightly/edge
-nightly/candidate
+v3/edge,latest/edge,nightly/stable
 """
 
 import logging
@@ -119,11 +113,11 @@ if __name__ == "__main__":
     if args.nightly:
         # Update channels "<tracks>/edge"
         release_channels.extend(map(lambda track: f"{track}/{RiskLevel.Edge}", tracks_for_version))
-        # Update channels "nightly/<risk>"
-        release_channels.extend(map(lambda risk: f"{Track.Nightly}/{risk}", ALL_RISK_LEVEL))
+        # Update channels "nightly/stable"
+        release_channels.append(f"{Track.Nightly}/{RiskLevel.Stable}")
     else:
         risk = get_risk_level_for_version(version)
         release_channels.extend(map(lambda track: f"{track}/{risk}", tracks_for_version))
 
     log.debug(" ".join(release_channels))
-    print(*release_channels, sep="\n")
+    print(*release_channels, sep=",")
