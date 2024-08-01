@@ -1277,7 +1277,7 @@
             "summary": {
                 "estimatedAmount": "Estimated amount",
                 "withdrawal": "Withdrawal on {date} | Withdrawal today",
-                "estimatedAmountDescription": "Estimated amount based on the number of active users and storage used.",
+                "withdrawalDescription": "Estimated amount based on the number of active users and storage used.",
                 "users": "Active users",
                 "storage": "Used storage"
             },

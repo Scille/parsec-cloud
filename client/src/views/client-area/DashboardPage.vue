@@ -7,7 +7,7 @@
       <!-- month summary -->
       <div class="dashboard-section month-summary-container">
         <ion-title class="dashboard-section-title title-h2">
-          {{ currentMonthYear }}
+          {{ I18n.translate(I18n.formatDate(currentDate, 'short')) }}
         </ion-title>
         <div class="month-summary">
           <!-- amount -->
@@ -39,7 +39,7 @@
                 {{
                   $msTranslate({
                     key: 'clientArea.dashboard.summary.withdrawal',
-                    data: { date: getEndDayOfMonth(currentDate) },
+                    data: { date: I18n.translate(I18n.formatDate(currentDate.endOf('month'), 'short')) },
                   })
                 }}
               </span>
@@ -51,7 +51,10 @@
             <ion-title class="month-summary-item__title title-h4">
               {{ $msTranslate('clientArea.dashboard.summary.users') }}
             </ion-title>
-            <div class="month-summary-item__data title-h1-xl">
+            <div
+              class="month-summary-item__data title-h1-xl"
+              v-if="stats"
+            >
               {{ stats?.users }}
             </div>
           </div>
@@ -61,7 +64,10 @@
             <ion-title class="month-summary-item__title title-h4">
               {{ $msTranslate('clientArea.dashboard.summary.storage') }}
             </ion-title>
-            <div class="month-summary-item__data title-h1-xl">
+            <div
+              class="month-summary-item__data title-h1-xl"
+              v-if="stats"
+            >
               {{ stats?.dataSize }}
             </div>
           </div>
@@ -75,7 +81,7 @@
         </ion-title>
         <div
           class="invoices"
-          v-if="invoices.length > 0"
+          v-if="invoices"
         >
           <div class="invoices-header">
             <ion-list class="invoices-header-list ion-no-padding">
@@ -95,7 +101,10 @@
           </div>
 
           <div class="invoices-content">
-            <ion-list class="invoices-list ion-no-padding">
+            <ion-list
+              class="invoices-list ion-no-padding"
+              v-if="invoices.length > 0"
+            >
               <ion-item
                 class="invoices-list-item ion-no-padding"
                 v-for="invoice in invoices"
@@ -111,6 +120,34 @@
                     {{ $msTranslate('clientArea.dashboard.invoices.download') }}
                   </ion-text>
                 </ion-text>
+              </ion-item>
+            </ion-list>
+
+            <ion-list
+              v-else
+              class="invoices-list ion-no-padding"
+              v-for="index in 3"
+              :key="index"
+            >
+              <ion-item class="invoices-list-item">
+                <div class="skeleton-loading">
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="invoices-date"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="invoices-organization"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="invoices-amount"
+                  />
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="invoices-status"
+                  />
+                </div>
               </ion-item>
             </ion-list>
           </div>
@@ -138,6 +175,15 @@
           :card="defaultCard"
           class="payment-card"
         />
+        <div
+          class="skeleton-loading"
+          v-else
+        >
+          <ion-skeleton-text
+            :animated="true"
+            class="skeleton-loading-card"
+          />
+        </div>
         <ion-text
           class="custom-button custom-button-fill button-medium"
           @click="switchPage(ClientAreaPages.PaymentMethods)"
@@ -150,7 +196,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonTitle, IonText, IonList, IonItem, IonIcon } from '@ionic/vue';
+import { IonTitle, IonText, IonList, IonItem, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { download } from 'ionicons/icons';
 import { ClientAreaPages } from '@/views/client-area/types';
 import {
@@ -159,13 +205,14 @@ import {
   BmsOrganization,
   OrganizationStatsResultData,
   BmsInvoice,
-  BillingDetailsResultData,
   BillingDetailsPaymentMethodCard,
   PaymentMethod,
 } from '@/services/bms';
 import { MsInformationTooltip, I18n, MsStripeCardDetails } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 import { PaymentMethod as MsPaymentMethod } from 'megashark-lib';
+import { navigateTo, Routes } from '@/router';
+import { DateTime } from 'luxon';
 
 const props = defineProps<{
   organization: BmsOrganization;
@@ -173,11 +220,8 @@ const props = defineProps<{
 
 const stats = ref<OrganizationStatsResultData | undefined>(undefined);
 const invoices = ref<Array<BmsInvoice>>([]);
-const billingDetails = ref<BillingDetailsResultData | undefined>(undefined);
 const defaultCard = ref<MsPaymentMethod.Card | undefined>(undefined);
-const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
-const currentMonthYear = new Date().toLocaleDateString(I18n.getLocale(), { month: 'long', year: 'numeric' });
-const currentDate = new Date();
+const currentDate = DateTime.now();
 
 // should be fetched from the backend
 const ADMIN_USER_PRICE = 15;
@@ -195,8 +239,7 @@ onMounted(async () => {
 
   const billingDetailsResponse = await BmsAccessInstance.get().getBillingDetails();
   if (!billingDetailsResponse.isError && billingDetailsResponse.data && billingDetailsResponse.data.type === DataType.BillingDetails) {
-    billingDetails.value = billingDetailsResponse.data;
-    const card = billingDetails.value.paymentMethods.find(
+    const card = billingDetailsResponse.data.paymentMethods.find(
       (method) => method.isDefault && method.type === PaymentMethod.Card,
     ) as BillingDetailsPaymentMethodCard;
     if (card) {
@@ -212,16 +255,8 @@ onMounted(async () => {
   }
 });
 
-function getEndDayOfMonth(date: Date): string {
-  return new Date(date.getFullYear(), date.getMonth() + 1, 0).toLocaleDateString(I18n.getLocale(), {
-    day: '2-digit',
-    month: 'long',
-    year: 'numeric',
-  });
-}
-
 async function switchPage(page: ClientAreaPages): Promise<void> {
-  currentPage.value = page;
+  navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: props.organization.bmsId, page: page } });
 }
 
 // temporary function, should be fetched from the backend
@@ -320,20 +355,23 @@ function calculateEstimatedAmount(users: number, storageSize: number): number {
   flex-direction: column;
   overflow: hidden;
   gap: 0.5rem;
+  --max-width-date: 10rem;
+  --max-width-organization: 12rem;
+  --max-width-amount: 5.625rem;
 
   &-date {
     width: 100%;
-    max-width: 10rem;
+    max-width: var(--max-width-date);
   }
 
   &-organization {
     width: 100%;
-    max-width: 12rem;
+    max-width: var(--max-width-organization);
   }
 
   &-amount {
     width: 100%;
-    max-width: 5.625rem;
+    max-width: var(--max-width-amount);
   }
 
   &-status {
@@ -372,6 +410,7 @@ function calculateEstimatedAmount(users: number, storageSize: number): number {
     .invoices-list {
       display: flex;
       flex-direction: column;
+      --ion-safe-area-left: 0;
 
       &-item {
         display: flex;
@@ -426,6 +465,29 @@ function calculateEstimatedAmount(users: number, storageSize: number): number {
           }
         }
       }
+
+      .skeleton-loading {
+        display: flex;
+        width: 100%;
+        gap: 0.5rem;
+
+        [class^='invoices-'] {
+          height: 1rem;
+          border-radius: var(--parsec-radius-8);
+        }
+
+        .invoices-date {
+          max-width: calc(var(--max-width-date) - 1rem);
+        }
+
+        .invoices-organization {
+          max-width: calc(var(--max-width-organization) - 1rem);
+        }
+
+        .invoices-amount {
+          max-width: calc(var(--max-width-amount) - 1rem);
+        }
+      }
     }
   }
 }
@@ -447,6 +509,12 @@ function calculateEstimatedAmount(users: number, storageSize: number): number {
 
   &-card {
     margin-bottom: 1rem;
+  }
+
+  .skeleton-loading-card {
+    width: 15.625rem;
+    height: 8.625rem;
+    border-radius: var(--parsec-radius-12);
   }
 }
 </style>
