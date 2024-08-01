@@ -29,7 +29,7 @@ import { HotkeyManager, HotkeyManagerKey } from '@/services/hotkeyManager';
 import { Information, InformationDataType, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Sentry } from '@/services/sentry';
-import { Answer, Base64, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
+import { Answer, Base64, EnvironmentType, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
 
 enum AppState {
   Ready = 'ready',
@@ -53,6 +53,13 @@ async function setupApp(): Promise<void> {
         'fr-FR': appFrFR,
         'en-US': appEnUS,
       },
+    },
+    // TODO: Stripe is in dev mode, find a better way to configure it
+    stripeConfig: {
+      // cspell:disable-next-line
+      publishableKey: 'pk_test_P4dfuyoLBQtDHKjTiNDH3JH700TT3mCLbE',
+      environment: EnvironmentType.Development,
+      locale: config.locale,
     },
   });
   await megasharkPlugin.init();

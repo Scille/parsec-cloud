@@ -26,6 +26,9 @@ enum DataType {
   Invoices = 'invoices',
   RefreshToken = 'refresh-token',
   BillingDetails = 'billing-details',
+  AddPaymentMethod = 'add-payment-method',
+  SetDefaultPaymentMethod = 'set-default-payment-method',
+  DeletePaymentMethod = 'delete-payment-method',
 }
 
 enum PaymentMethod {
@@ -201,8 +204,23 @@ interface InvoicesQueryData extends _ClientQueryData {}
 
 interface BillingDetailsQueryData extends _ClientQueryData {}
 
+interface AddPaymentMethodQueryData extends _ClientQueryData {
+  paymentMethod: string;
+}
+
+interface SetDefaultPaymentMethodQueryData extends _ClientQueryData {
+  paymentMethod: string;
+}
+
+interface DeletePaymentMethodQueryData extends _ClientQueryData {
+  paymentMethod: string;
+}
+
 export {
+  AddPaymentMethodQueryData,
   AuthenticationToken,
+  BillingDetailsPaymentMethodCard,
+  BillingDetailsPaymentMethodSepaTransfer,
   BillingDetailsQueryData,
   BillingDetailsResultData,
   BmsError,
@@ -211,6 +229,7 @@ export {
   BmsResponse,
   CreateOrganizationQueryData,
   DataType,
+  DeletePaymentMethodQueryData,
   InvoicesQueryData,
   ListOrganizationsQueryData,
   ListOrganizationsResultData,
@@ -222,4 +241,5 @@ export {
   OrganizationStatusResultData,
   PaymentMethod,
   PersonalInformationResultData,
+  SetDefaultPaymentMethodQueryData,
 };

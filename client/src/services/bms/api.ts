@@ -1,18 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import {
+  AddPaymentMethodQueryData,
   AuthenticationToken,
   BillingDetailsQueryData,
   BmsError,
   BmsResponse,
   CreateOrganizationQueryData,
   DataType,
+  DeletePaymentMethodQueryData,
   InvoicesQueryData,
   ListOrganizationsQueryData,
   LoginQueryData,
   OrganizationStatsQueryData,
   OrganizationStatusQueryData,
   PaymentMethod,
+  SetDefaultPaymentMethodQueryData,
 } from '@/services/bms/types';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
@@ -293,6 +296,66 @@ async function getBillingDetails(token: AuthenticationToken, query: BillingDetai
   });
 }
 
+async function addPaymentMethod(token: AuthenticationToken, query: AddPaymentMethodQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().put(
+      `/users/${query.userId}/clients/${query.clientId}/add_payment_method`,
+      // eslint-disable-next-line camelcase
+      { payment_method: query.paymentMethod },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+
+    return {
+      type: DataType.AddPaymentMethod,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function setDefaultPaymentMethod(token: AuthenticationToken, query: SetDefaultPaymentMethodQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().patch(
+      `/users/${query.userId}/clients/${query.clientId}/default_payment_method`,
+      // eslint-disable-next-line camelcase
+      { payment_method: query.paymentMethod },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+
+    return {
+      type: DataType.SetDefaultPaymentMethod,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function deletePaymentMethod(token: AuthenticationToken, query: DeletePaymentMethodQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${query.userId}/clients/${query.clientId}/delete_payment_method`,
+      // eslint-disable-next-line camelcase
+      { payment_method: query.paymentMethod },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+
+    return {
+      type: DataType.DeletePaymentMethod,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -325,4 +388,7 @@ export const BmsApi = {
   getInvoices,
   refreshToken,
   getBillingDetails,
+  addPaymentMethod,
+  setDefaultPaymentMethod,
+  deletePaymentMethod,
 };
