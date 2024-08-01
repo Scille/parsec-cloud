@@ -55,6 +55,9 @@ parts:
       - -libparsec.node
     build-attributes:
       - enable-patchelf
+    build-environment:
+      - # Be explicit about ZSTD implementation
+        LIBPARSEC_FORCE_ZSTD: real
     override-build: |
       set -x
 
