@@ -1281,8 +1281,8 @@
         "dashboard": {
             "summary": {
                 "estimatedAmount": "Montant estimé",
-                "estimatedAmountDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
                 "withdrawal": "Prélèvement le {date} | Prélèvement aujourd'hui",
+                "withdrawalDescriptionDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
                 "users": "Utilisateurs actifs",
                 "storage": "Stockage utilisé"
             },
