@@ -1,8 +1,8 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="card"
+  <ion-item
+    class="workspace-card-item ion-no-padding"
     :class="{ 'workspace-hovered': isHovered || menuOpened }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
@@ -25,10 +25,10 @@
     >
       <ion-icon :icon="ellipsisHorizontal" />
     </div>
-    <div class="card-content">
-      <ion-avatar class="card-content-icons">
+    <div class="workspace-card">
+      <ion-avatar class="workspace-card-icons">
         <ion-icon
-          class="card-content-icons__item"
+          class="workspace-card-icons__item"
           :icon="business"
         />
         <ion-icon
@@ -38,11 +38,11 @@
         />
       </ion-avatar>
 
-      <ion-title class="card-content__title body-lg">
+      <ion-title class="workspace-card__title body-lg">
         {{ workspace.currentName }}
       </ion-title>
 
-      <ion-text class="card-content-last-update subtitles-sm">
+      <ion-text class="workspace-card-last-update subtitles-sm">
         <ion-icon
           :icon="time"
           class="time"
@@ -75,7 +75,7 @@
         </ion-label>
       </div>
     </div>
-  </div>
+  </ion-item>
 </template>
 
 <script setup lang="ts">
@@ -83,7 +83,7 @@ import { formatTimeSince } from 'megashark-lib';
 import { formatFileSize } from '@/common/file';
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
-import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle } from '@ionic/vue';
+import { IonAvatar, IonIcon, IonLabel, IonText, IonTitle, IonItem } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star, time } from 'ionicons/icons';
 import { ref } from 'vue';
 
@@ -112,11 +112,11 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
-.card {
-  padding: 2rem 1em 1em;
+.workspace-card-item {
+  --background: var(--parsec-color-light-secondary-background);
+  background: var(--parsec-color-light-secondary-background);
   cursor: pointer;
   text-align: center;
-  background-color: var(--parsec-color-light-secondary-background);
   user-select: none;
   border-radius: var(--parsec-radius-12);
   width: 16rem;
@@ -127,19 +127,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .card-option {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: right;
-  position: absolute;
-  display: flex;
-  align-items: center;
   top: 0;
-  right: 1rem;
-  font-size: 1.5rem;
+  right: 0;
   padding: 0.75rem;
-
-  &:hover {
-    color: var(--parsec-color-light-primary-500);
-  }
 }
 
 .workspace-favorite-icon {
@@ -173,67 +163,71 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 }
-
-.card-content-icons {
-  margin: 0 auto 0.5rem;
-  position: relative;
-  height: fit-content;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  color: var(--parsec-color-light-primary-900);
+.workspace-card {
+  padding: 2rem 1em 1em;
   width: 100%;
 
-  &__item {
-    font-size: 2.5rem;
-  }
-
-  .cloud-overlay {
-    position: absolute;
-    font-size: 1.25rem;
-    bottom: -10px;
-    left: 54%;
-    padding: 2px;
-    background: white;
-    border-radius: 50%;
-  }
-
-  .cloud-overlay-ok {
-    color: var(--parsec-color-light-primary-500);
-  }
-
-  .cloud-overlay-ko {
-    color: var(--parsec-color-light-secondary-text);
-  }
-}
-
-.card-content__title {
-  color: var(--parsec-color-light-primary-900);
-  font-size: 18px;
-  text-align: center;
-
-  ion-text {
+  &-icons {
+    margin: 0 auto 0.5rem;
+    position: relative;
+    height: fit-content;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--parsec-color-light-primary-900);
     width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
 
-.card-content-last-update {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: center;
-  margin: 0.5rem 0 2rem;
-  display: flex;
-  gap: 0.25rem;
-  justify-content: center;
-  align-items: center;
+    &__item {
+      font-size: 2.5rem;
+    }
+
+    .cloud-overlay {
+      position: absolute;
+      font-size: 1.25rem;
+      bottom: -10px;
+      left: 54%;
+      padding: 2px;
+      background: white;
+      border-radius: 50%;
+    }
+
+    .cloud-overlay-ok {
+      color: var(--parsec-color-light-primary-500);
+    }
+
+    .cloud-overlay-ko {
+      color: var(--parsec-color-light-secondary-text);
+    }
+  }
+
+  &__title {
+    color: var(--parsec-color-light-primary-900);
+    font-size: 18px;
+    text-align: center;
+
+    ion-text {
+      width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  &-last-update {
+    color: var(--parsec-color-light-secondary-grey);
+    text-align: center;
+    margin: 0.5rem 0 2rem;
+    display: flex;
+    gap: 0.25rem;
+    justify-content: center;
+    align-items: center;
+  }
 }
 
 .workspace-info {
   display: flex;
   justify-content: space-between;
-  padding: 0.625rem 0;
+  padding: 0.625rem 0 0;
   align-items: center;
   color: var(--parsec-color-light-secondary-grey);
   border-top: 1px solid var(--parsec-color-light-secondary-disabled);
@@ -264,9 +258,9 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 /* No idea how to change the color of the ion-item */
-.card-content__title::part(native),
+.workspace-card__title::part(native),
 .workspace-info::part(native),
-.card-content-last-update::part(native) {
+.workspace-card-last-update::part(native) {
   background-color: var(--parsec-color-light-secondary-background);
 }
 </style>
