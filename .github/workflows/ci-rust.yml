@@ -166,10 +166,15 @@ jobs:
         run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli --features testenv
         timeout-minutes: 10
 
+      - name: Retrieve clippy args
+        id: clippy-args
+        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy")) | first | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
+        timeout-minutes: 1
+
       # Clippy basically compile the project, hence it's faster to run it in
       # the job where compilation cache is reused !
       - name: Check cargo-clippy
-        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose
+        run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose ${{ steps.clippy-args.outputs.args }}
         timeout-minutes: 10
 
       - name: Check rust code format
