@@ -144,6 +144,8 @@ pub(super) fn merge_local_file_manifest(
     }
 }
 
+/// Merge a local folder manifest with a remote folder manifest.
+/// The local manifest is assumed to be up-to-date with the current prevent sync pattern.
 pub(super) fn merge_local_folder_manifest(
     local_author: DeviceID,
     timestamp: DateTime,
@@ -185,11 +187,6 @@ pub(super) fn merge_local_folder_manifest(
 
     // 0) Sanity checks, caller is responsible to handle them properly !
     debug_assert_eq!(local_base_id, &remote.id);
-
-    // TODO: Allow to force re-applying the prevent sync pattern (idempotent)
-    // if force_apply_pattern {
-    //     local_manifest = local_manifest.apply_prevent_sync_pattern(prevent_sync_pattern, timestamp)
-    // }
 
     // 1) Shortcut in case the remote is outdated
     if remote.version <= *local_base_version {
