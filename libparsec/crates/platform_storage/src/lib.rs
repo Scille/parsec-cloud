@@ -19,4 +19,4 @@ pub mod workspace;
 mod testbed;
 
 /// Do not match anything (https://stackoverflow.com/a/2302992/2846140)
-pub const PREVENT_SYNC_PATTERN_EMPTY_PATTERN: &str = r"^\b$";
+const PREVENT_SYNC_PATTERN_EMPTY_PATTERN: &str = r"^\b$";

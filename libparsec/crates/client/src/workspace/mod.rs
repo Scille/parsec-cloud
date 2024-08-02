@@ -14,7 +14,6 @@ use std::{
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_storage::PREVENT_SYNC_PATTERN_EMPTY_PATTERN;
 use libparsec_types::prelude::*;
 
 use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
@@ -150,9 +149,7 @@ impl WorkspaceOps {
             certificates_ops.clone(),
             config.workspace_storage_cache_size.cache_size(),
             realm_id,
-            // TODO: https://github.com/Scille/parsec-cloud/issues/7828
-            // Use pattern provided by config
-            &Regex::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN)?,
+            &config.prevent_sync_pattern,
         )
         .await?;
 

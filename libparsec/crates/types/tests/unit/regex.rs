@@ -33,7 +33,7 @@ fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str)
 
 #[test]
 fn load_default_pattern_file() {
-    let regex = Regex::from_file(Path::new("../client/src/workspace/default_pattern.ignore"))
+    let regex = Regex::from_file(Path::new("src/default_pattern.ignore"))
         .expect("Load default pattern file failed");
 
     for pattern in &[

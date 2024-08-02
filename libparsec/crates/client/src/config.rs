@@ -33,6 +33,9 @@ pub enum MountpointMountStrategy {
     Disabled,
 }
 
+/// This is the internal configuration of the client.
+/// Currently, this configuration is "complete" meaning all of its value are set.
+/// For a partial client configuration see the `ClientConfig` defined in `/libparsec/src/config.rs`.
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
     // On web, `config_dir`&`data_base_dir` are converted into String and
@@ -42,7 +45,8 @@ pub struct ClientConfig {
     /// Ignored on web platform
     pub mountpoint_mount_strategy: MountpointMountStrategy,
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
-    // pub prevent_sync_pattern: Option<PathBuf>,
+    /// The pattern used to filter out files that should not be synced with the server like temporary files.
+    pub prevent_sync_pattern: Regex,
     pub proxy: ProxyConfig,
     /// If `false`, nothing runs & react in the background, useful for tests
     /// or CLI where the client is started to only perform a single operation.

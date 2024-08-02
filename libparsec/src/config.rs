@@ -11,6 +11,9 @@ pub use libparsec_platform_device_loader::{
 };
 pub use libparsec_types::prelude::*;
 
+/// Partial client configuration.
+/// This configuration should be configured by the user before converting it to
+/// the proper configuration [`libparsec_client::ClientConfig`] by using default values as fallback.
 #[derive(Debug, Clone)]
 pub struct ClientConfig {
     pub config_dir: PathBuf,
@@ -18,6 +21,9 @@ pub struct ClientConfig {
     pub mountpoint_mount_strategy: MountpointMountStrategy,
     pub workspace_storage_cache_size: WorkspaceStorageCacheSize,
     pub with_monitors: bool,
+    /// The prevent sync pattern, if not provided will use a default pattern.
+    /// The pattern is formatted like a `.gitignore` file.
+    pub prevent_sync_pattern: Option<String>,
 }
 
 impl Default for ClientConfig {
@@ -28,6 +34,7 @@ impl Default for ClientConfig {
             mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
             workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
             with_monitors: false,
+            prevent_sync_pattern: None,
         }
     }
 }
@@ -47,6 +54,14 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             workspace_storage_cache_size: config.workspace_storage_cache_size,
             proxy: ProxyConfig::default(),
             with_monitors: config.with_monitors,
+            prevent_sync_pattern: match config.prevent_sync_pattern {
+                Some(pattern) => Regex::from_glob_reader(
+                    "client_prevent_sync_pattern",
+                    std::io::Cursor::new(pattern),
+                )
+                .expect("Cannot process provided prevent sync pattern file"),
+                None => Regex::default(),
+            },
         }
     }
 }

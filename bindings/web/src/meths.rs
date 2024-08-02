@@ -435,12 +435,27 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             .map_err(|_| TypeError::new("Not a boolean"))?
             .value_of()
     };
+    let prevent_sync_pattern = {
+        let js_val = Reflect::get(&obj, &"preventSyncPattern".into())?;
+        if js_val.is_null() {
+            None
+        } else {
+            Some(
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?,
+            )
+        }
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
         mountpoint_mount_strategy,
         workspace_storage_cache_size,
         with_monitors,
+        prevent_sync_pattern,
     })
 }
 
@@ -489,6 +504,15 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     )?;
     let js_with_monitors = rs_obj.with_monitors.into();
     Reflect::set(&js_obj, &"withMonitors".into(), &js_with_monitors)?;
+    let js_prevent_sync_pattern = match rs_obj.prevent_sync_pattern {
+        Some(val) => val.into(),
+        None => JsValue::NULL,
+    };
+    Reflect::set(
+        &js_obj,
+        &"preventSyncPattern".into(),
+        &js_prevent_sync_pattern,
+    )?;
     Ok(js_obj)
 }
 
