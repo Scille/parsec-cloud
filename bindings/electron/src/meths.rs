@@ -407,12 +407,24 @@ fn struct_client_config_js_to_rs<'a>(
         let js_val: Handle<JsBoolean> = obj.get(cx, "withMonitors")?;
         js_val.value(cx)
     };
+    let prevent_sync_pattern = {
+        let js_val: Handle<JsValue> = obj.get(cx, "preventSyncPattern")?;
+        {
+            if js_val.is_a::<JsNull, _>(cx) {
+                None
+            } else {
+                let js_val = js_val.downcast_or_throw::<JsString, _>(cx)?;
+                Some(js_val.value(cx))
+            }
+        }
+    };
     Ok(libparsec::ClientConfig {
         config_dir,
         data_base_dir,
         mountpoint_mount_strategy,
         workspace_storage_cache_size,
         with_monitors,
+        prevent_sync_pattern,
     })
 }
 
@@ -460,6 +472,11 @@ fn struct_client_config_rs_to_js<'a>(
     )?;
     let js_with_monitors = JsBoolean::new(cx, rs_obj.with_monitors);
     js_obj.set(cx, "withMonitors", js_with_monitors)?;
+    let js_prevent_sync_pattern = match rs_obj.prevent_sync_pattern {
+        Some(elem) => JsString::try_new(cx, elem).or_throw(cx)?.as_value(cx),
+        None => JsNull::new(cx).as_value(cx),
+    };
+    js_obj.set(cx, "preventSyncPattern", js_prevent_sync_pattern)?;
     Ok(js_obj)
 }
 

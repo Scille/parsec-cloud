@@ -22,6 +22,7 @@ pub(crate) async fn client_factory(
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
+        prevent_sync_pattern: Regex::empty(),
     });
     Client::start(config, event_bus, device).await.unwrap()
 }

@@ -17,5 +17,6 @@ export function getClientConfig(): ClientConfig {
     mountpointMountStrategy: { tag: MountpointMountStrategyTag.Directory, baseDir: window.getMountpointBaseDir() },
     workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
     withMonitors: true,
+    preventSyncPattern: null,
   };
 }

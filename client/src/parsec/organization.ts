@@ -53,6 +53,7 @@ export async function createOrganization(
       mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
       withMonitors: false,
+      preventSyncPattern: null,
     };
     const result = await libparsec.bootstrapOrganization(
       config,
@@ -112,6 +113,7 @@ export async function bootstrapOrganization(
       mountpointMountStrategy: { tag: MountpointMountStrategyTag.Disabled },
       workspaceStorageCacheSize: { tag: WorkspaceStorageCacheSizeTag.Default },
       withMonitors: false,
+      preventSyncPattern: null,
     };
     const result = await libparsec.bootstrapOrganization(
       config,

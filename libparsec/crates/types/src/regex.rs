@@ -4,7 +4,7 @@ use std::{
     collections::HashSet,
     fmt::Display,
     fs,
-    io::{BufRead, BufReader, Read},
+    io::{BufRead, BufReader},
     path::Path,
 };
 
@@ -12,6 +12,18 @@ use crate::{RegexError, RegexResult};
 
 #[derive(Clone, Debug)]
 pub struct Regex(pub Vec<regex::Regex>);
+
+const DEFAULT_PREVENT_SYNC_PATTERN: &str = std::include_str!("default_pattern.ignore");
+
+impl Default for Regex {
+    fn default() -> Self {
+        Self::from_glob_reader(
+            stringify!(DEFAULT_PREVENT_SYNC_PATTERN),
+            std::io::Cursor::new(DEFAULT_PREVENT_SYNC_PATTERN),
+        )
+        .expect("Cannot parse default prevent sync pattern")
+    }
+}
 
 /// The fnmatch_regex crate does not escape the character '$'. It is a problem
 /// for us. Since we need to match strings like `$RECYCLE.BIN` we need to escape
@@ -33,10 +45,7 @@ impl Regex {
         Self::from_glob_reader(file_path, reader)
     }
 
-    pub fn from_glob_reader<P: AsRef<Path>, R: Read>(
-        path: P,
-        reader: BufReader<R>,
-    ) -> RegexResult<Self> {
+    pub fn from_glob_reader<P: AsRef<Path>, R: BufRead>(path: P, reader: R) -> RegexResult<Self> {
         reader
             .lines()
             .filter_map(|line| match line {
@@ -79,6 +88,11 @@ impl Regex {
 
     pub fn is_match(&self, string: &str) -> bool {
         self.0.iter().any(|r| r.is_match(string))
+    }
+
+    /// Create an empty regex, that regex will never match anything
+    pub const fn empty() -> Self {
+        Self(Vec::new())
     }
 }
 

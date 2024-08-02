@@ -97,6 +97,7 @@ export interface ClientConfig {
     mountpointMountStrategy: MountpointMountStrategy
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
     withMonitors: boolean
+    preventSyncPattern: string | null
 }
 
 export interface ClientInfo {

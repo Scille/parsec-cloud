@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Optional
 from .common import Path, Structure, U32BasedType, Variant, VariantItemUnit
 
 
@@ -31,6 +32,7 @@ class ClientConfig(Structure):
     mountpoint_mount_strategy: MountpointMountStrategy
     workspace_storage_cache_size: WorkspaceStorageCacheSize
     with_monitors: bool
+    prevent_sync_pattern: Optional[str]
 
 
 def get_default_data_base_dir() -> Path:

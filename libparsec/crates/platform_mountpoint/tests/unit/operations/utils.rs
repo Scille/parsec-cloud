@@ -6,6 +6,7 @@ use libparsec_client::{
     Client, ClientConfig, EventBus, MountpointMountStrategy, ProxyConfig, WorkspaceStorageCacheSize,
 };
 use libparsec_tests_fixtures::prelude::*;
+use libparsec_types::Regex;
 
 #[cfg_attr(target_os = "windows", allow(dead_code))]
 pub async fn start_client(env: &TestbedEnv, start_as: &'static str) -> Arc<Client> {
@@ -27,6 +28,7 @@ pub async fn start_client_with_mountpoint_base_dir(
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
+        prevent_sync_pattern: Regex::empty(),
     });
     let device = env.local_device(start_as);
     Client::start(config, event_bus, device).await.unwrap()

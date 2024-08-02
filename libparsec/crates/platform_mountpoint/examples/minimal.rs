@@ -57,6 +57,7 @@ async fn main() -> ExitCode {
                 workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
                 proxy: ProxyConfig::default(),
                 with_monitors: false,
+                prevent_sync_pattern: Regex::empty(),
             });
             let client = Client::start(config, event_bus, alice).await.unwrap();
             let wksp1_ops = client.start_workspace(wksp1_id).await.unwrap();
