@@ -79,28 +79,40 @@ WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
 USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV = {"RUSTFLAGS": "--cfg use_pure_rust_but_dirty_zstd"}
 
-web_non_release_build_uses_pure_rust_but_dirty_zstd = False
-if platform.system().lower() in ("windows", "darwin"):
-    web_non_release_build_uses_pure_rust_but_dirty_zstd = True
-libparsec_force_zstd_env = os.environ.get("LIBPARSEC_FORCE_ZSTD", "").lower()
-if libparsec_force_zstd_env == "real":
-    web_non_release_build_uses_pure_rust_but_dirty_zstd = False
-elif libparsec_force_zstd_env == "dirty":
-    web_non_release_build_uses_pure_rust_but_dirty_zstd = True
+_web_non_release_build_uses_pure_rust_but_dirty_zstd = None
 
-if web_non_release_build_uses_pure_rust_but_dirty_zstd:
-    print(
-        f"{BOLD_RED}WARNING: Enabling `libparsec_zstd`'s pure Rust but dirty implementation` cfg !{NO_COLOR}",
-        file=sys.stderr,
-    )
-    print(
-        f"{BOLD_RED}WARNING: This is done to simplify compilation on Windows&MacOS and should be compatible with the real Zstd implementation, but DON'T USE THAT FOR PRODUCTION !{NO_COLOR}",
-        file=sys.stderr,
-    )
-    print(
-        f"{BOLD_RED}WARNING: You can set `LIBPARSEC_FORCE_ZSTD=real` to switch to disable this (you may need to install LLVM){NO_COLOR}",
-        file=sys.stderr,
-    )
+
+def get_web_non_release_build_uses_pure_rust_but_dirty_zstd() -> bool:
+    # Use a global variable so that the warning is only displayed once
+    global _web_non_release_build_uses_pure_rust_but_dirty_zstd
+
+    if _web_non_release_build_uses_pure_rust_but_dirty_zstd is not None:
+        return _web_non_release_build_uses_pure_rust_but_dirty_zstd
+
+    _web_non_release_build_uses_pure_rust_but_dirty_zstd = False
+    if platform.system().lower() in ("windows", "darwin"):
+        _web_non_release_build_uses_pure_rust_but_dirty_zstd = True
+    libparsec_force_web_zstd_env = os.environ.get("LIBPARSEC_FORCE_WEB_ZSTD", "").lower()
+    if libparsec_force_web_zstd_env == "real":
+        _web_non_release_build_uses_pure_rust_but_dirty_zstd = False
+    elif libparsec_force_web_zstd_env == "dirty":
+        _web_non_release_build_uses_pure_rust_but_dirty_zstd = True
+
+    if _web_non_release_build_uses_pure_rust_but_dirty_zstd:
+        print(
+            f"{BOLD_RED}WARNING: Enabling `libparsec_zstd`'s pure Rust but dirty implementation cfg for WASM !{NO_COLOR}",
+            file=sys.stderr,
+        )
+        print(
+            f"{BOLD_RED}WARNING: This is done to simplify WASM compilation on Windows&MacOS and should be compatible with the real Zstd implementation, but DON'T USE THAT FOR PRODUCTION !{NO_COLOR}",
+            file=sys.stderr,
+        )
+        print(
+            f"{BOLD_RED}WARNING: You can set `LIBPARSEC_FORCE_WEB_ZSTD=real` to switch to disable this (you may need to install LLVM){NO_COLOR}",
+            file=sys.stderr,
+        )
+
+    return _web_non_release_build_uses_pure_rust_but_dirty_zstd
 
 
 BASE_DIR = Path(__file__).parent.resolve()
@@ -179,6 +191,20 @@ class Cmd(Op):
             env={**os.environ, **self.extra_env},
             cwd=cwd,
         )
+
+
+class CmdWithConfigurableWebZstd(Cmd):
+    def display(self, extra_cmd_args: Iterable[str]) -> str:
+        self.prepare()
+        return super().display(extra_cmd_args)
+
+    def run(self, cwd: Path, extra_cmd_args: Iterable[str]) -> None:
+        self.prepare()
+        return super().run(cwd, extra_cmd_args)
+
+    def prepare(self) -> None:
+        if get_web_non_release_build_uses_pure_rust_but_dirty_zstd():
+            self.extra_env.update(USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV)
 
 
 COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
@@ -268,21 +294,15 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
             cmd="npm install",
         ),
         Rmdir(BINDINGS_WEB_DIR / "pkg"),
-        Cmd(
+        CmdWithConfigurableWebZstd(
             cmd="npm run build:dev",
-            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
-            if web_non_release_build_uses_pure_rust_but_dirty_zstd
-            else {},
         ),
     ),
     ("web-dev-rebuild", "wr"): (
         Cwd(BINDINGS_WEB_DIR),
         Rmdir(BINDINGS_WEB_DIR / "pkg"),
-        Cmd(
+        CmdWithConfigurableWebZstd(
             cmd="npm run build:dev",
-            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
-            if web_non_release_build_uses_pure_rust_but_dirty_zstd
-            else {},
         ),
     ),
     ("web-ci-install",): (
@@ -290,11 +310,8 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         Cmd(
             cmd="npm install",
         ),
-        Cmd(
+        CmdWithConfigurableWebZstd(
             cmd="npm run build:ci",
-            extra_env=USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV
-            if web_non_release_build_uses_pure_rust_but_dirty_zstd
-            else {},
         ),
     ),
     ("web-release-install",): (
@@ -302,10 +319,9 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
         Cmd(
             cmd="npm install",
         ),
+        # Don't use `CmdWithConfigurableWebZstd` here: Release should ALWAYS uses the real Zstd implementation !
         Cmd(
             cmd="npm run build:release",
-            # Don't add USE_PURE_RUST_BUT_DIRTY_ZSTD_EXTRA_ENV here !
-            # Release should ALWAYS uses the real Zstd implementation !
         ),
     ),
     ("run-testbed-server", "rts"): (

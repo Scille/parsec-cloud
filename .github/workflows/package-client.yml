@@ -300,9 +300,6 @@ jobs:
       - name: Build Electron bindings
         run: npm run build:release
         working-directory: bindings/electron
-        env:
-          # Be explicit about ZSTD implementation to avoid warning on Windows & macOS
-          LIBPARSEC_FORCE_ZSTD: real
         # MacOS is really slow when build rust
         timeout-minutes: 30
 
