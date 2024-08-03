@@ -52,6 +52,7 @@ struct OpenedFileCursor {
     write_mode: WriteMode,
 }
 
+#[derive(Debug)]
 struct OpenedFile {
     updater: FileUpdater,
     manifest: Arc<LocalFileManifest>,
@@ -70,6 +71,7 @@ struct OpenedFile {
     flush_needed: bool,
 }
 
+#[derive(Debug)]
 struct OpenedFiles {
     next_file_descriptor: FileDescriptor,
     // TODO: use rustc-hash instead of std hashmap ? (or even vec ?)
