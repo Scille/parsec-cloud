@@ -153,6 +153,7 @@ pub(super) async fn for_update_file(
 /// The reason for this is that, unlike folder updater, the file updater is expected to
 /// have a long lifetime (i.e. the time the file is open). Hence the file update doesn't
 /// keep hold on the store.
+#[derive(Debug)]
 pub(crate) struct FileUpdater {
     _update_guard: ManifestUpdateLockGuard,
 }
