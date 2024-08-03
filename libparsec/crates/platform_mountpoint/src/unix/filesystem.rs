@@ -1100,6 +1100,56 @@ impl fuser::Filesystem for Filesystem {
         });
     }
 
+    /// According to fuse documentation (https://libfuse.github.io/doxygen/structfuse__operations.html#a6bfecd61ddd58f74820953ee23b19ef3):
+    ///
+    /// > Flush is called on each close() of a file descriptor, as opposed to release which
+    /// > is called on the close of the last file descriptor for a file.
+    ///
+    /// The key point here is `flush` is called as part of a `close()`, while `release` is
+    /// called later on when the kernel module decides a given file descriptor is no longer
+    /// referenced (as it could be present in multiple process due to forking).
+    ///
+    /// Hence it is vital to flush the file data here (hence the name !), otherwise reading
+    /// the file right after closing a file descriptor that modified it might end up with
+    /// outdated data !
+    fn flush(
+        &mut self,
+        _req: &fuser::Request<'_>,
+        ino: u64,
+        fh: u64,
+        lock_owner: u64,
+        reply: fuser::ReplyEmpty,
+    ) {
+        log::debug!(
+            "[FUSE] flush(ino: {:#x?}, fh: {}, lock_owner: {:?})",
+            ino,
+            fh,
+            lock_owner
+        );
+
+        let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
+
+        let ops = self.ops.clone();
+        self.tokio_handle.spawn(async move {
+            let fd = FileDescriptor(fh as u32);
+            match ops.fd_flush(fd).await {
+                Ok(()) => {
+                    reply.manual().ok();
+                }
+                Err(err) => match err {
+                    libparsec_client::workspace::WorkspaceFdFlushError::NotInWriteMode => {
+                        reply.manual().ok();
+                    }
+                    libparsec_client::workspace::WorkspaceFdFlushError::Stopped
+                    // Unexpected: FUSE is supposed to only give us valid file descriptors !
+                    | libparsec_client::workspace::WorkspaceFdFlushError::BadFileDescriptor
+                    | libparsec_client::workspace::WorkspaceFdFlushError::Internal(_)
+                    => reply.manual().error(libc::EIO),
+                },
+            }
+        });
+    }
+
     fn release(
         &mut self,
         _req: &fuser::Request<'_>,
