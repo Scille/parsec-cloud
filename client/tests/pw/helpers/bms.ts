@@ -63,7 +63,7 @@ async function mockUserInfo(page: Page): Promise<void> {
 }
 
 async function mockCreateOrganization(page: Page, bootstrapAddr: string): Promise<void> {
-  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/1337/organizations`, async (route) => {
+  await page.route(`**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`, async (route) => {
     await route.fulfill({
       status: 201,
       json: {
@@ -142,9 +142,9 @@ async function mockOrganizationStats(page: Page, data?: number): Promise<void> {
           free_slice_size: DEFAULT_ORGANIZATION_DATA_SLICE.free,
           // eslint-disable-next-line camelcase
           paying_slice_size: DEFAULT_ORGANIZATION_DATA_SLICE.paying,
-          users: 1564,
+          users: 203,
           // eslint-disable-next-line camelcase
-          active_users: 159,
+          active_users: 59,
           status: 'ok',
         },
       });
@@ -199,6 +199,7 @@ async function mockGetInvoices(page: Page, { fail, count }: { fail?: boolean; co
         },
       });
     } else {
+      const BASE_DATE = DateTime.fromISO('1988-04-07');
       await route.fulfill({
         status: 200,
         json: {
@@ -208,12 +209,12 @@ async function mockGetInvoices(page: Page, { fail, count }: { fail?: boolean; co
               id: `Id${index}`,
               pdf: `https://fake/pdfs/${index}.pdf`,
               // eslint-disable-next-line camelcase
-              period_start: '2024-07-01',
+              period_start: BASE_DATE.plus({ months: index }).toFormat('yyyy-LL-dd'),
               // eslint-disable-next-line camelcase
-              period_end: '2024-07-01',
-              total: 13.37,
+              period_end: BASE_DATE.plus({ month: index + 1 }).toFormat('yyyy-LL-dd'),
+              total: Math.round(Math.random() * 1000),
               status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
-              organization: `Org${index}`,
+              organization: DEFAULT_ORGANIZATION_INFORMATION.name,
             };
           }),
         },

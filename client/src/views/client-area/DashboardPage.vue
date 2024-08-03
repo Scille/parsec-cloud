@@ -19,9 +19,7 @@
               {{ $msTranslate('clientArea.dashboard.summary.estimatedAmount') }}
             </ion-title>
             <div class="month-summary-item__data title-h1-xl">
-              <div
-                class="data-content"
-              >
+              <div class="data-content">
                 <ion-text class="data-content-text">
                   {{
                     $msTranslate({
@@ -57,7 +55,7 @@
               class="month-summary-item__data title-h1-xl"
               v-if="stats"
             >
-              {{ stats.users }}
+              {{ stats.activeUsers }}
             </div>
           </div>
 
@@ -70,7 +68,7 @@
               class="month-summary-item__data title-h1-xl"
               v-if="stats"
             >
-              {{ stats.dataSize }}
+              {{ $msTranslate(formatFileSize(stats.dataSize)) }}
             </div>
           </div>
         </div>
@@ -83,7 +81,7 @@
         </ion-title>
         <div
           class="invoices"
-          v-if="invoices"
+          v-if="(invoices && invoices.length) || querying"
         >
           <div class="invoices-header">
             <ion-list class="invoices-header-list ion-no-padding">
@@ -126,7 +124,7 @@
             </ion-list>
 
             <ion-list
-              v-else
+              v-else-if="querying"
               class="invoices-list ion-no-padding"
               v-for="index in 3"
               :key="index"
@@ -155,8 +153,8 @@
           </div>
         </div>
         <ion-text
-          class="body-lg"
-          v-else
+          class="body-lg no-invoices"
+          v-else-if="(!invoices || !invoices.length) && !querying"
         >
           {{ $msTranslate('clientArea.dashboard.invoices.noInvoices') }}
         </ion-text>
@@ -210,9 +208,9 @@ import {
   BillingDetailsPaymentMethodCard,
   PaymentMethod,
 } from '@/services/bms';
-import { MsInformationTooltip, I18n, MsStripeCardDetails } from 'megashark-lib';
+import { MsInformationTooltip, I18n, MsStripeCardDetails, PaymentMethod as MsPaymentMethod } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { PaymentMethod as MsPaymentMethod } from 'megashark-lib';
+import { formatFileSize } from '@/common/file';
 import { DateTime } from 'luxon';
 
 const props = defineProps<{
@@ -220,17 +218,19 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-  (e: 'switchPageRequest', page: ClientPages);
+  (e: 'switchPageRequest', page: ClientAreaPages): void;
 }>();
 
 const stats = ref<OrganizationStatsResultData | undefined>(undefined);
 const invoices = ref<Array<BmsInvoice>>([]);
 const defaultCard = ref<MsPaymentMethod.Card | undefined>(undefined);
 const currentDate = DateTime.now();
+const querying = ref(false);
 // TODO: retrieve this from the backend if it ever becomes available
 const estimations = ref<undefined | { amount: number }>(undefined);
 
 onMounted(async () => {
+  querying.value = true;
   const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
   if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
     stats.value = orgStatsResponse.data;
@@ -257,6 +257,7 @@ onMounted(async () => {
       } as MsPaymentMethod.Card;
     }
   }
+  querying.value = false;
 });
 </script>
 
