@@ -52,6 +52,7 @@
               <dashboard-page
                 v-if="currentPage === ClientAreaPages.Dashboard"
                 :organization="currentOrganization"
+                @switch-page-request="switchPage"
               />
               <invoices-page
                 v-if="currentPage === ClientAreaPages.Invoices"
