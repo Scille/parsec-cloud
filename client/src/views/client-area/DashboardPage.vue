@@ -11,23 +11,25 @@
         </ion-title>
         <div class="month-summary">
           <!-- amount -->
-          <div class="month-summary-item">
+          <div
+            class="month-summary-item"
+            v-if="estimations"
+          >
             <ion-title class="month-summary-item__title title-h4">
               {{ $msTranslate('clientArea.dashboard.summary.estimatedAmount') }}
             </ion-title>
             <div class="month-summary-item__data title-h1-xl">
               <div
                 class="data-content"
-                v-if="stats"
               >
                 <ion-text class="data-content-text">
                   {{
                     $msTranslate({
                       key: 'clientArea.dashboard.invoices.price.amount',
-                      data: { amount: calculateEstimatedAmount(stats.users, stats.dataSize) },
+                      data: { amount: estimations.amount },
                     })
                   }}
-                  {{ calculateEstimatedAmount(stats.users, stats.dataSize) }}
+                  {{ estimations.amount }}
                 </ion-text>
                 <ms-information-tooltip
                   text="clientArea.dashboard.summary.withdrawalDescription"
@@ -55,7 +57,7 @@
               class="month-summary-item__data title-h1-xl"
               v-if="stats"
             >
-              {{ stats?.users }}
+              {{ stats.users }}
             </div>
           </div>
 
@@ -68,7 +70,7 @@
               class="month-summary-item__data title-h1-xl"
               v-if="stats"
             >
-              {{ stats?.dataSize }}
+              {{ stats.dataSize }}
             </div>
           </div>
         </div>
@@ -186,7 +188,7 @@
         </div>
         <ion-text
           class="custom-button custom-button-fill button-medium"
-          @click="switchPage(ClientAreaPages.PaymentMethods)"
+          @click="$emit('switchPageRequest', ClientAreaPages.PaymentMethods)"
         >
           {{ $msTranslate('clientArea.dashboard.payment.update') }}
         </ion-text>
@@ -211,20 +213,22 @@ import {
 import { MsInformationTooltip, I18n, MsStripeCardDetails } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 import { PaymentMethod as MsPaymentMethod } from 'megashark-lib';
-import { navigateTo, Routes } from '@/router';
 import { DateTime } from 'luxon';
 
 const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
+defineEmits<{
+  (e: 'switchPageRequest', page: ClientPages);
+}>();
+
 const stats = ref<OrganizationStatsResultData | undefined>(undefined);
 const invoices = ref<Array<BmsInvoice>>([]);
 const defaultCard = ref<MsPaymentMethod.Card | undefined>(undefined);
 const currentDate = DateTime.now();
-
-// should be fetched from the backend
-const ADMIN_USER_PRICE = 15;
+// TODO: retrieve this from the backend if it ever becomes available
+const estimations = ref<undefined | { amount: number }>(undefined);
 
 onMounted(async () => {
   const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
@@ -254,15 +258,6 @@ onMounted(async () => {
     }
   }
 });
-
-async function switchPage(page: ClientAreaPages): Promise<void> {
-  navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: props.organization.bmsId, page: page } });
-}
-
-// temporary function, should be fetched from the backend
-function calculateEstimatedAmount(users: number, storageSize: number): number {
-  return users * ADMIN_USER_PRICE + storageSize * 0.1;
-}
 </script>
 
 <style scoped lang="scss">
