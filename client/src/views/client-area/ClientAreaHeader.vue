@@ -57,7 +57,7 @@
 import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { IonText, IonTitle, IonIcon, IonButton } from '@ionic/vue';
 import { navigateTo, Routes } from '@/router';
-import { Translatable } from 'megashark-lib';
+import { Translatable, askQuestion, Answer } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
 import { logOut, cog, menu } from 'ionicons/icons';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
@@ -80,8 +80,14 @@ onMounted(async () => {
 });
 
 async function logout(): Promise<void> {
-  await BmsAccessInstance.get().logout();
-  await navigateTo(Routes.Home, { replace: true });
+  const answer = await askQuestion('clientArea.header.logoutConfirmTitle', 'clientArea.header.logoutConfirmQuestion', {
+    yesText: 'clientArea.header.logoutYes',
+    noText: 'clientArea.header.logoutNo',
+  });
+  if (answer === Answer.Yes) {
+    await BmsAccessInstance.get().logout();
+    await navigateTo(Routes.Home, { replace: true });
+  }
 }
 
 async function openPreferencesModal(): Promise<void> {

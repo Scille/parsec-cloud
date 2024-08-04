@@ -1210,7 +1210,11 @@
                 "statistics": "Statistics"
             },
             "logout": "Log out",
-            "preferences": "Preferences"
+            "preferences": "Preferences",
+            "logoutConfirmTitle": "Log out",
+            "logoutConfirmQuestion": "Do you want to log out?",
+            "logoutYes": "Log out",
+            "logoutNo": "Stay connected"
         },
         "personalDataPage": {
             "personalInfo": {
