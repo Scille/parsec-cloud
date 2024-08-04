@@ -1210,7 +1210,11 @@
                 "statistics": "Statistiques"
             },
             "logout": "Se déconnecter",
-            "preferences": "Préférences"
+            "preferences": "Préférences",
+            "logoutConfirmTitle": "Déconnexion",
+            "logoutConfirmQuestion": "Souhaitez-vous vous déconnecter?",
+            "logoutYes": "Me déconnecter",
+            "logoutNo": "Rester connecté"
         },
         "personalDataPage": {
             "personalInfo": {

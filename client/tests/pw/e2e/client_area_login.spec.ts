@@ -4,7 +4,7 @@ import { expect } from '@tests/pw/helpers/assertions';
 import { MockBms } from '@tests/pw/helpers/bms';
 import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { fillIonInput } from '@tests/pw/helpers/utils';
+import { answerQuestion, fillIonInput } from '@tests/pw/helpers/utils';
 
 msTest('Log into the customer area', async ({ home }) => {
   await MockBms.mockLogin(home, true);
@@ -23,6 +23,12 @@ msTest('Log into the customer area', async ({ home }) => {
   const logOutButton = home.locator('.header-content').locator('.custom-button').first();
   await expect(logOutButton).toHaveText('Log out');
   await logOutButton.click();
+  await answerQuestion(home, true, {
+    expectedTitleText: 'Log out',
+    expectedQuestionText: 'Do you want to log out?',
+    expectedPositiveText: 'Log out',
+    expectedNegativeText: 'Stay connected',
+  });
   await expect(home).toHaveURL(/.+\/home$/);
 });
 
