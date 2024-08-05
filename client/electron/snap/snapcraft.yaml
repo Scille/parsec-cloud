@@ -111,6 +111,9 @@ parts:
       - node/18/stable
     build-attributes:
       - enable-patchelf
+    build-environment:
+      - # Define a placeholder for the token, it will be replaced by the CI/CD pipeline.
+        SENTRY_AUTH_TOKEN: __TOKEN__
     override-build: |
       set -x
 
@@ -137,6 +140,12 @@ parts:
 
       # Compile typescript
       npx tsc
+
+      if [ "${SENTRY_AUTH_TOKEN}" != "__TOKEN__" ]; then
+        npm run sentry:sourcemaps
+      else
+        echo "SENTRY_AUTH_TOKEN is not set, skipping source maps upload." >&2
+      fi
 
       # Package
       node package.js --mode prod --platform linux dir

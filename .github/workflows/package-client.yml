@@ -171,6 +171,13 @@ jobs:
           vite.config.ts
         working-directory: client
 
+      - name: Patch snapcraft file for sentry auth token
+        run: >-
+          sed -i
+          -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
+          snap/snapcraft.yaml
+        working-directory: client/electron
+
       - name: Build snap
         run: |
           ln -sv client/electron/snap
@@ -316,6 +323,13 @@ jobs:
           VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
         timeout-minutes: 5
+
+      - name: Upload client electron sourcemaps
+        run: npm run sentry:sourcemaps
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        working-directory: client/electron
+        timeout-minutes: 1
 
       # Install syft
       - uses: taiki-e/install-action@7277a40b4d8760cc11399bd3f8314c3294e270f5 # pin v2.42.9
