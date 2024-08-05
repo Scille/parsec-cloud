@@ -7,7 +7,7 @@ use libparsec::{load_recovery_device, DeviceAccessStrategy};
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir]
+    #[with = config_dir, password_stdin]
     pub struct ImportRecoveryDevice {
         /// Recovery file
         #[arg(short, long)]
@@ -25,6 +25,7 @@ pub async fn import_recovery_device(
         input,
         passphrase,
         config_dir,
+        password_stdin,
     } = import_recovery_device;
     log::trace!(
         "Importing recovery device from {} (confdir={})",
@@ -39,7 +40,13 @@ pub async fn import_recovery_device(
 
     handle.stop_with_newline();
 
-    let password = choose_password()?;
+    let password = choose_password(if password_stdin {
+        ReadPasswordFrom::Stdin
+    } else {
+        ReadPasswordFrom::Tty {
+            prompt: "Enter password for the new device:",
+        }
+    })?;
 
     let key_file = libparsec::get_default_key_file(&config_dir, &device);
 

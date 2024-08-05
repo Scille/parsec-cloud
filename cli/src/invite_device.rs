@@ -8,43 +8,52 @@ use libparsec::{
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct InviteDevice {}
 );
 
 pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
-    let InviteDevice { device, config_dir } = invite_device;
+    let InviteDevice {
+        device,
+        config_dir,
+        password_stdin,
+    } = invite_device;
     log::trace!(
         "Inviting a device (confdir={}, device={})",
         config_dir.display(),
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_cmds_and_run(config_dir, device, |cmds, device| async move {
-        let mut handle = start_spinner("Creating device invitation".into());
+    load_cmds_and_run(
+        &config_dir,
+        device,
+        password_stdin,
+        |cmds, device| async move {
+            let mut handle = start_spinner("Creating device invitation".into());
 
-        let rep = cmds
-            .send(invite_new_device::Req { send_email: false })
-            .await?;
+            let rep = cmds
+                .send(invite_new_device::Req { send_email: false })
+                .await?;
 
-        let url = match rep {
-            InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
-                device.organization_addr.clone(),
-                device.organization_id().clone(),
-                InvitationType::Device,
-                token,
-            )
-            .to_url(),
-            rep => {
-                return Err(anyhow::anyhow!(
-                    "Server refused to create device invitation: {rep:?}"
-                ));
-            }
-        };
+            let url = match rep {
+                InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
+                    device.organization_addr.clone(),
+                    device.organization_id().clone(),
+                    InvitationType::Device,
+                    token,
+                )
+                .to_url(),
+                rep => {
+                    return Err(anyhow::anyhow!(
+                        "Server refused to create device invitation: {rep:?}"
+                    ));
+                }
+            };
 
-        handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
+            handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
 
-        Ok(())
-    })
+            Ok(())
+        },
+    )
     .await
 }

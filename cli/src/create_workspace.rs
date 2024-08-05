@@ -5,7 +5,7 @@ use libparsec::EntryName;
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct CreateWorkspace {
         /// New workspace name
         #[arg(short, long)]
@@ -18,6 +18,7 @@ pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Resu
         name,
         device,
         config_dir,
+        password_stdin,
     } = create_workspace;
     log::trace!(
         "Creating workspace {name} (confdir={}, device={})",
@@ -25,7 +26,7 @@ pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Resu
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_client_and_run(config_dir, device, |client| async move {
+    load_client_and_run(&config_dir, device, password_stdin, |client| async move {
         let mut handle = start_spinner("Creating workspace".into());
 
         let id = client.create_workspace(name).await?.simple();

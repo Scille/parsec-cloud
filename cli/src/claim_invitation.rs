@@ -19,11 +19,18 @@ pub struct ClaimInvitation {
     /// Server invitation address (e.g.: parsec3://127.0.0.1:41905/Org?no_ssl=true&action=claim_user&token=4e45cc21e7604af196173ff6c9184a1f)
     #[arg(short, long)]
     addr: ParsecInvitationAddr,
+    /// Read the password from stdin instead of a TTY.
+    #[arg(long, default_value_t)]
+    password_stdin: bool,
 }
 
 pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Result<()> {
-    log::trace!("Claiming invitation (addr={})", claim_invitation.addr);
-    let ctx = step0(claim_invitation.addr).await?;
+    let ClaimInvitation {
+        addr,
+        password_stdin,
+    } = claim_invitation;
+    log::trace!("Claiming invitation (addr={})", addr);
+    let ctx = step0(addr).await?;
 
     match ctx {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
@@ -31,14 +38,14 @@ pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Resu
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;
             let ctx = step4_user(ctx).await?;
-            save_user(ctx).await
+            save_user(ctx, password_stdin).await
         }
         UserOrDeviceClaimInitialCtx::Device(ctx) => {
             let ctx = step1_device(ctx).await?;
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(ctx).await?;
             let ctx = step4_device(ctx).await?;
-            save_device(ctx).await
+            save_device(ctx, password_stdin).await
         }
     }
 }
@@ -179,8 +186,14 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
     Ok(ctx)
 }
 
-async fn save_user(ctx: UserClaimFinalizeCtx) -> anyhow::Result<()> {
-    let password = choose_password()?;
+async fn save_user(ctx: UserClaimFinalizeCtx, password_stdin: bool) -> anyhow::Result<()> {
+    let password = choose_password(if password_stdin {
+        ReadPasswordFrom::Stdin
+    } else {
+        ReadPasswordFrom::Tty {
+            prompt: "Enter password for the new device:",
+        }
+    })?;
     let key_file = ctx.get_default_key_file();
     let key_file_str = key_file.display();
 
@@ -195,8 +208,14 @@ async fn save_user(ctx: UserClaimFinalizeCtx) -> anyhow::Result<()> {
     Ok(())
 }
 
-async fn save_device(ctx: DeviceClaimFinalizeCtx) -> anyhow::Result<()> {
-    let password = choose_password()?;
+async fn save_device(ctx: DeviceClaimFinalizeCtx, password_stdin: bool) -> anyhow::Result<()> {
+    let password = choose_password(if password_stdin {
+        ReadPasswordFrom::Stdin
+    } else {
+        ReadPasswordFrom::Tty {
+            prompt: "Enter password for the new device:",
+        }
+    })?;
     let key_file = ctx.get_default_key_file();
     let key_file_str = key_file.display();
 

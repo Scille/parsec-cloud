@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use assert_cmd::Command;
+use assert_cmd::{cargo::CommandCargoExt, Command};
 use predicates::prelude::PredicateBooleanExt;
 use std::{
     io::{BufRead, BufReader, Write},
@@ -22,7 +22,7 @@ use crate::{
     create_organization::create_organization_req,
     run_testenv::{
         initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
-        DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER_URL,
+        DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER_URL,
     },
     utils::*,
 };
@@ -154,11 +154,12 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
     let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER_URL).unwrap().parse().unwrap();
 
-    println!("Creating organization {organization_id}");
+    log::debug!("Creating organization {organization_id}");
     let organization_addr = create_organization_req(&organization_id, &addr, "s3cr3t")
         .await
         .unwrap();
 
+    log::debug!("Bootstrapping organization {organization_id}");
     Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
@@ -171,7 +172,9 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             "Alice",
             "--email",
             "alice@example.com",
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Organization bootstrapped"));
 }
@@ -189,7 +192,13 @@ async fn invite_device(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["invite-device", "--device", &alice.device_id.hex()])
+        .args([
+            "invite-device",
+            "--device",
+            &alice.device_id.hex(),
+            "--password-stdin",
+        ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Invitation URL:"));
 }
@@ -213,7 +222,9 @@ async fn invite_user(tmp_path: TmpPath) {
             &alice.device_id.hex(),
             "--email",
             "a@b.c",
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Invitation URL:"));
 }
@@ -264,7 +275,9 @@ async fn cancel_invitation(tmp_path: TmpPath) {
             &alice.device_id.hex(),
             "--token",
             &format!("{}", token.hex()),
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Invitation deleted"));
 }
@@ -342,7 +355,9 @@ async fn export_recovery_device(tmp_path: TmpPath) {
             &alice.device_id.hex(),
             "--output",
             &output.to_string_lossy(),
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Saved in"));
 
@@ -374,7 +389,9 @@ async fn import_recovery_device(tmp_path: TmpPath) {
             &input.to_string_lossy(),
             "--passphrase",
             &passphrase,
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Saved new device"));
 }
@@ -482,7 +499,13 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-invitations", "--device", &alice.device_id.hex()])
+        .args([
+            "list-invitations",
+            "--device",
+            &alice.device_id.hex(),
+            "--password-stdin",
+        ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("No invitation."));
 
@@ -514,7 +537,13 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-invitations", "--device", &alice.device_id.hex()])
+        .args([
+            "list-invitations",
+            "--device",
+            &alice.device_id.hex(),
+            "--password-stdin",
+        ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains(format!(
             "{}\t{YELLOW}idle{RESET}\tdevice",
@@ -542,13 +571,21 @@ async fn create_workspace(tmp_path: TmpPath) {
             &alice.device_id.hex(),
             "--name",
             "new-workspace",
+            "--password-stdin",
         ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("Workspace has been created"));
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-workspaces", "--device", &alice.device_id.hex()])
+        .args([
+            "list-workspaces",
+            "--device",
+            &alice.device_id.hex(),
+            "--password-stdin",
+        ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(predicates::str::contains("new-workspace: owner"));
 }
@@ -567,7 +604,13 @@ async fn list_users(tmp_path: TmpPath) {
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["list-users", "--device", &alice.device_id.hex()])
+        .args([
+            "list-users",
+            "--device",
+            &alice.device_id.hex(),
+            "--password-stdin",
+        ])
+        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
         .assert()
         .stdout(
             predicates::str::contains(format!("Found {GREEN}3{RESET} user(s)"))
@@ -593,9 +636,11 @@ async fn share_workspace(tmp_path: TmpPath) {
 
     set_env(&tmp_path_str, &url);
 
+    // FIXME: The test should not rely on the load_client_and_run since it use the stdin to read the password to unlock the device.
     load_client_and_run(
-        get_default_config_dir(),
-        Some(alice.device_id.hex()),
+        &libparsec::get_default_config_dir(),
+        Some(alice.device_id.to_string()),
+        true,
         |client| async move {
             let wid = client
                 .create_workspace("new-workspace".parse().unwrap())
@@ -676,17 +721,15 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    let p_greeter = std::process::Command::new("cargo")
+    let p_greeter = std::process::Command::cargo_bin("parsec_cli")
+        .unwrap()
         .args([
-            "run",
-            "--profile=ci-rust",
-            "--package=parsec_cli",
-            "--features=testenv",
             "greet-invitation",
             "--token",
             &format!("{}", token.hex()),
             "--device",
             &alice.device_id.hex(),
+            "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -694,15 +737,13 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let p_claimer = std::process::Command::new("cargo")
+    let p_claimer = std::process::Command::cargo_bin("parsec_cli")
+        .unwrap()
         .args([
-            "run",
-            "--profile=ci-rust",
-            "--package=parsec_cli",
-            "--features=testenv",
             "claim-invitation",
             "--addr",
             &invitation_addr.to_url().to_string(),
+            "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -716,6 +757,9 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     let mut stdin_claimer = p_claimer.stdin.unwrap();
     let mut buf = String::new();
 
+    stdin_greeter
+        .write_all(format!("{DEFAULT_DEVICE_PASSWORD}\n").as_bytes())
+        .unwrap();
     wait_for(&mut stdout_greeter, &mut buf, "Code to provide to claimer");
     let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
     wait_for(&mut stdout_claimer, &mut buf, &sas_code);
@@ -738,6 +782,9 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     stdin_claimer.write_all(b"DeviceLabelTest\n").unwrap();
 
     wait_for(&mut stdout_greeter, &mut buf, "Creating the device");
+    stdin_claimer
+        .write_all(format!("{DEFAULT_DEVICE_PASSWORD}\n").as_bytes())
+        .unwrap();
     wait_for(&mut stdout_claimer, &mut buf, "Saved");
 }
 
@@ -781,17 +828,15 @@ async fn invite_user_dance(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    let p_greeter = std::process::Command::new("cargo")
+    let p_greeter = std::process::Command::cargo_bin("parsec_cli")
+        .unwrap()
         .args([
-            "run",
-            "--profile=ci-rust",
-            "--package=parsec_cli",
-            "--features=testenv",
             "greet-invitation",
             "--token",
             &format!("{}", token.hex()),
             "--device",
             &alice.device_id.hex(),
+            "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -799,15 +844,13 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let p_claimer = std::process::Command::new("cargo")
+    let p_claimer = std::process::Command::cargo_bin("parsec_cli")
+        .unwrap()
         .args([
-            "run",
-            "--profile=ci-rust",
-            "--package=parsec_cli",
-            "--features=testenv",
             "claim-invitation",
             "--addr",
             &invitation_addr.to_url().to_string(),
+            "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
@@ -821,6 +864,9 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     let mut stdin_claimer = p_claimer.stdin.unwrap();
     let mut buf = String::new();
 
+    stdin_greeter
+        .write_all(format!("{DEFAULT_DEVICE_PASSWORD}\n").as_bytes())
+        .unwrap();
     wait_for(&mut stdout_greeter, &mut buf, "Code to provide to claimer");
     let sas_code = buf.split_once(YELLOW).unwrap().1[..4].to_string();
     wait_for(&mut stdout_claimer, &mut buf, &sas_code);
@@ -850,6 +896,9 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     stdin_greeter.write_all(b"0\n").unwrap();
 
     wait_for(&mut stdout_greeter, &mut buf, "Creating the user");
+    stdin_claimer
+        .write_all(format!("{DEFAULT_DEVICE_PASSWORD}\n").as_bytes())
+        .unwrap();
     wait_for(&mut stdout_claimer, &mut buf, "Saved");
 }
 

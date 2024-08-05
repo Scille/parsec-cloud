@@ -24,6 +24,9 @@ pub struct BootstrapOrganization {
     /// User email
     #[arg(short, long)]
     email: String,
+    /// Read the password from stdin instead of TTY
+    #[arg(long, default_value_t)]
+    password_stdin: bool,
 }
 
 pub async fn bootstrap_organization_req(
@@ -62,16 +65,20 @@ pub async fn bootstrap_organization(
         label,
         addr,
         device_label,
+        password_stdin,
     } = bootstrap_organization;
     log::trace!("Bootstrapping organization (addr={addr})");
 
     let human_handle = HumanHandle::new(&email, &label)
         .map_err(|e| anyhow::anyhow!("Cannot create human handle: {e}"))?;
 
-    #[cfg(feature = "testenv")]
-    let password = "test".to_string().into();
-    #[cfg(not(feature = "testenv"))]
-    let password = rpassword::prompt_password("password:")?.into();
+    let password = read_password(if password_stdin {
+        ReadPasswordFrom::Stdin
+    } else {
+        ReadPasswordFrom::Tty {
+            prompt: "New device password:",
+        }
+    })?;
 
     let mut handle = start_spinner("Bootstrapping organization in the server".into());
 

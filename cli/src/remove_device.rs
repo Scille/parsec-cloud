@@ -10,9 +10,9 @@ crate::clap_parser_with_shared_opts_builder!(
 pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
     let RemoveDevice { device, config_dir } = remove_device;
     log::trace!(
-        "Removing device {device} (confdir={})",
+        "Removing device {} (confdir={})",
+        device.as_deref().unwrap_or("N/A"),
         config_dir.display(),
-        device = device.as_deref().unwrap_or("N/A")
     );
 
     load_device_file_and_run(config_dir, device, |device| async move {
