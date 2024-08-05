@@ -101,9 +101,9 @@ async-broadcast = { version = "0.5.1", default-features = false }
 base32 = { version = "0.4.0", default-features = false }
 base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
-bytes = { version = "1.6.1", default-features = false }
+bytes = { version = "1.7.1", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
-clap = { version = "4.5.11", default-features = false }
+clap = { version = "4.5.13", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -119,7 +119,7 @@ email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.2", default-features = false }
 event-listener = { version = "5.3.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
-flate2 = { version = "1.0.26", features = ["rust_backend"], default-features = false }
+flate2 = { version = "1.0.31", features = ["rust_backend"], default-features = false }
 flume = { version = "0.11.0", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }
 fuser = { version = "0.14.0", default-features =  false }
@@ -158,10 +158,10 @@ proc-macro2 = { version = "1.0.86", default-features = false }
 pyo3 = { version = "0.21.2", default-features = false }
 quote = { version = "1.0.36", default-features = false }
 rand = { version = "0.8.5", default-features = false }
-regex = { version = "1.10.5", default-features = false }
+regex = { version = "1.10.6", default-features = false }
 regex-syntax = { version = "0.8.4", default-features = false }
 reqwest-eventsource = { version = "0.4.0", default-features = false }
-reqwest = { version = "0.11.27", default-features = false }
+reqwest = { version = "0.12.5", default-features = false }
 rmp-serde = { version = "1.3.0", default-features = false }
 rpassword = { version = "7.3.1", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
@@ -171,7 +171,7 @@ ruzstd = { version = "0.7.0", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
-serde_json = { version = "1.0.121", default-features = false }
+serde_json = { version = "1.0.122", default-features = false }
 serde_test = { version = "1.0.176", default-features = false }
 serde = { version = "1.0.204", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
