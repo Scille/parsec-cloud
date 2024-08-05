@@ -293,8 +293,7 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
             ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(manifest)))
         }
         Ok(ChildManifest::Folder(manifest)) => ArcLocalChildManifest::Folder(Arc::new(
-            // TODO: Pass prevent sync pattern
-            LocalFolderManifest::from_remote(manifest, &libparsec_types::Regex::empty()),
+            LocalFolderManifest::from_remote(manifest, &store.prevent_sync_pattern),
         )),
         Err(err) => {
             return Err(match err {

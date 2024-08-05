@@ -117,6 +117,7 @@ pub(super) struct WorkspaceStore {
     /// Given accessing `storage` requires exclusive access, it is better to have it
     /// under its own lock so that all cache hit operations can occur concurrently.
     storage: AsyncMutex<Option<WorkspaceStorage>>,
+    prevent_sync_pattern: Regex,
 }
 
 impl std::panic::UnwindSafe for WorkspaceStore {}
@@ -191,6 +192,7 @@ impl WorkspaceStore {
             certificates_ops,
             current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest.into()))),
             storage: AsyncMutex::new(Some(storage)),
+            prevent_sync_pattern: pattern.clone(),
         })
     }
 
