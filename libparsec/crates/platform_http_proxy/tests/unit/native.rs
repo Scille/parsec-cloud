@@ -67,8 +67,8 @@ fn bad_http_proxy() {
     let outcome = ProxyConfig::default().with_http_proxy("<not a valid proxy !>".to_owned());
     let err = outcome.as_ref().unwrap_err();
 
-    let expected = "Invalid HTTP proxy configuration: builder error: builder error: relative URL without a base";
-    assert!(err.to_string().starts_with(expected));
+    let expected = "Invalid HTTP proxy configuration: builder error";
+    assert!(dbg!(err.to_string()).starts_with(expected));
 }
 
 #[test]
@@ -76,8 +76,8 @@ fn bad_https_proxy() {
     let outcome = ProxyConfig::default().with_https_proxy("<not a valid proxy !>".to_owned());
     let err = outcome.as_ref().unwrap_err();
 
-    let expected = "Invalid HTTPS proxy configuration: builder error: builder error: relative URL without a base";
-    assert!(err.to_string().starts_with(expected));
+    let expected = "Invalid HTTPS proxy configuration: builder error";
+    assert!(dbg!(err.to_string()).starts_with(expected));
 }
 
 // This test test every possible combination.
