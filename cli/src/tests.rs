@@ -87,7 +87,7 @@ fn version() {
         .assert()
         .stdout(
             // Using `concat!` simplify updating the version using `version-updater`
-            concat!("parsec_cli 3.0.0-b.12+dev", "\n"),
+            concat!("parsec_cli 3.0.0-b.14+dev", "\n"),
         );
 }
 
