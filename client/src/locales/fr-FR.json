@@ -1318,6 +1318,25 @@
             "data": "de données",
             "metadata": "métadonnées"
         },
+        "invoices": {
+            "title": "Aperçu de vos factures",
+            "noInvoice": "Vous n'avez pas encore de facture.",
+            "filter": {
+                "year": "Année",
+                "month": "Mois"
+            },
+            "cell": {
+                "number": "Numéro de facture",
+                "organization": "Organisation",
+                "date": "Date de facturation",
+                "price": {
+                    "title": "Prix",
+                    "amount": "{count} €"
+                },
+                "status": "Status",
+                "download": "Télécharger"
+            }
+        },
         "paymentMethodsPage": {
             "title": "Votre moyen de paiement",
             "description": "Le paiement s’effectue automatiquement par votre carte bancaire.",

@@ -99,3 +99,28 @@
   margin: 0.5rem 0;
   color: var(--parsec-color-light-secondary-soft-text);
 }
+
+//custom button
+.custom-button {
+  padding: 0.5em 0.75em;
+  border-radius: var(--parsec-radius-8);
+  cursor: pointer;
+  align-items: center;
+  text-align: center;
+  color: var(--parsec-color-light-secondary-soft-text);
+  border: 1px solid var(--parsec-color-light-secondary-disabled);
+  background: var(--parsec-color-light-secondary-white);
+  transition: all 150ms ease-in-out;
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+
+  &:hover {
+    color: var(--parsec-color-light-secondary-contrast);
+    background: var(--parsec-color-light-secondary-premiere);
+    border: 1px solid var(--parsec-color-light-secondary-disabled);
+  }
+}

@@ -291,6 +291,8 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
             total: invoice.total,
             status: invoice.status,
             organizationId: invoice.organization,
+            // should be removed when the API is fixed
+            number: 'FACT00120324',
           };
         }),
       },

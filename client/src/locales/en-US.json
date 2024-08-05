@@ -1318,6 +1318,25 @@
             "data": "data",
             "metadata": "metadata"
         },
+        "invoices": {
+            "title": "Preview of your invoices",
+            "noInvoice": "You don't have any invoice yet.",
+            "filter": {
+                "year": "Year",
+                "month": "Month"
+            },
+            "cell": {
+                "number": "Invoice number",
+                "organization": "Organization",
+                "date": "Billing date",
+                "price": {
+                    "title": "Price",
+                    "amount": " €{count}"
+                },
+                "status": "Status",
+                "download": "Download"
+            }
+        },
         "paymentMethodsPage": {
             "title": "Your payment method",
             "description": "Payment is made automatically by credit card.",
