@@ -7,7 +7,10 @@
       <ion-title class="invoices-header-title title-h2">
         {{ $msTranslate('clientArea.invoices.title') }}
       </ion-title>
-      <div class="invoices-header-filter">
+      <div
+        class="invoices-header-filter"
+        v-if="!invoices"
+      >
         <ion-text class="body-lg">
           {{ $msTranslate('clientArea.invoices.filter.year') }}
         </ion-text>
@@ -19,66 +22,68 @@
 
     <!-- invoices -->
     <div
-      class="invoices-content"
+      class="invoices-container"
       v-if="invoices"
     >
       <div
-        class="invoices-main"
-        v-for="year in invoicesByYear"
-        :key="year.start.year"
-        @click="toggleVisibility"
+        class="invoices-year"
+        v-for="year in years"
+        :key="year"
+        @click="toggleVisibility()"
         :class="{ 'visible': isVisible }"
       >
         <!-- year -->
-        <div class="invoices-main-year">
-          <ion-text class="invoices-main-year__title title-h3">
-            {{ year.start.year }}
+        <div class="invoices-year-text">
+          <ion-text class="invoices-year-text__title title-h3">
+            {{ year }}
           </ion-text>
           <ion-icon
-            class="invoices-main-year__icon"
+            class="invoices-year-text__icon"
             :icon="chevronDown"
           />
         </div>
 
         <!-- row header -->
         <ion-list
-          class="invoices-main-header-list ion-no-padding"
+          class="invoices-year-header-list ion-no-padding"
           v-if="isVisible"
         >
-          <ion-item class="invoices-main-header-list-item invoices-date">
+          <ion-item class="invoices-year-header-list-item invoices-date">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.date') }}</ion-text>
           </ion-item>
-          <ion-item class="invoices-main-header-list-item invoices-number">
+          <ion-item class="invoices-year-header-list-item invoices-number">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.number') }}</ion-text>
           </ion-item>
-          <ion-item class="invoices-main-header-list-item invoices-organization">
+          <ion-item class="invoices-year-header-list-item invoices-organization">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.organization') }}</ion-text>
           </ion-item>
-          <ion-item class="invoices-main-header-list-item invoices-amount">
+          <ion-item class="invoices-year-header-list-item invoices-amount">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.price.title') }}</ion-text>
           </ion-item>
-          <ion-item class="invoices-main-header-list-item invoices-status">
+          <ion-item class="invoices-year-header-list-item invoices-status">
             <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.status') }}</ion-text>
           </ion-item>
         </ion-list>
 
         <!-- row invoices -->
         <ion-list
-          class="invoices-main-content-list ion-no-padding"
+          class="invoices-year-content-list ion-no-padding"
           v-if="invoices.length > 0 && isVisible"
         >
           <ion-item
-            class="invoices-main-content-list-item ion-no-padding"
-            v-for="invoice in invoicesByYear"
+            class="invoices-year-content-list-item ion-no-padding"
+            v-for="invoice in getInvoicesByYear(year)"
             :key="invoice.id"
           >
-            <ion-text class="invoices-main-content-list-item__data invoices-date subtitles-sm">
+            <ion-text class="invoices-year-content-list-item__data invoices-date subtitles-sm">
               {{ invoice.start.toFormat('LLLL yyyy') }}
             </ion-text>
-            <ion-text class="invoices-main-content-list-item__data invoices-number body">{{ invoice.number }}</ion-text>
-            <ion-text class="invoices-main-content-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
-            <ion-text class="invoices-main-content-list-item__data invoices-amount body">{{ invoice.total }}</ion-text>
-            <ion-text class="invoices-main-content-list-item__data invoices-status">
+            <ion-text class="invoices-year-content-list-item__data invoices-number body">{{ invoice.number }}</ion-text>
+            <ion-text class="invoices-year-content-list-item__data invoices-organization body">{{ invoice.organizationId }}</ion-text>
+            <ion-text class="invoices-year-content-list-item__data invoices-amount body">
+              {{ invoice.total }}
+            </ion-text>
+            <ion-text class="invoices-year-content-list-item__data invoices-status">
               <span class="badge-status body-sm incoming">{{ invoice.status }}</span>
               <a
                 class="custom-button custom-button-ghost button-medium"
@@ -128,7 +133,7 @@
       class="body-lg"
       v-else
     >
-      {{ $msTranslate('clientArea.dashboard.invoices.noInvoices') }}
+      {{ $msTranslate('clientArea.invoices.noInvoice') }}
     </ion-text>
   </div>
 </template>
@@ -138,22 +143,18 @@ import { download, chevronDown } from 'ionicons/icons';
 import { IonText, IonTitle, IonList, IonItem, IonSkeletonText, IonIcon } from '@ionic/vue';
 import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/services/bms';
 import { ref, onMounted } from 'vue';
-import { DateTime } from 'luxon';
 
 defineProps<{
   organization: BmsOrganization;
 }>();
 
 const invoices = ref<Array<BmsInvoice>>([]);
-const currentYear = DateTime.now().year;
-const invoicesByYear = ref<Array<BmsInvoice>>([]);
-const isVisible = ref(false);
+const isVisible = ref(true);
+const years = ref<Array<number>>([]);
 
 function toggleVisibility() : void {
   isVisible.value = !isVisible.value;
 }
-
-// Add year filter
 
 onMounted(async () => {
   const response = await BmsAccessInstance.get().getInvoices();
@@ -161,10 +162,14 @@ onMounted(async () => {
     invoices.value = response.data.invoices;
   }
 
-  // Add year filter
-  invoicesByYear.value = invoices.value.filter((invoice) => invoice.start.year === currentYear);
-  console.log(invoicesByYear.value);
+  // get each different year of the invoices
+  years.value = invoices.value.map((invoice) => invoice.start.year);
+  years.value = Array.from(new Set(years.value));
 });
+
+function getInvoicesByYear(year: number) : Array<BmsInvoice> {
+  return invoices.value.filter((invoice) => invoice.start.year === year);
+}
 </script>
 
 <style scoped lang="scss">
@@ -189,17 +194,18 @@ onMounted(async () => {
   }
 }
 
-.invoices-content {
+.invoices-container {
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
 
-.invoices-main {
+.invoices-year {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.5rem;
+  margin-top: 0.5rem;
   border-radius: var(--parsec-radius-8);
   background: var(--parsec-color-light-secondary-premiere);
   --max-width-date: 12rem;
@@ -207,14 +213,22 @@ onMounted(async () => {
   --max-width-organization: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
+  position: relative;
 
-  &-year {
+  &:last-of-type {
+    margin-bottom: 3rem;
+  }
+
+  &-text {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.25rem 1rem;
-    border-radius: var(--parsec-radius-6);
+    padding: 0.75rem 1rem;
     cursor: pointer;
+    position: sticky;
+    top: -1rem;
+    background: var(--parsec-color-light-secondary-premiere);
+    z-index: 3;
 
     &:hover {
       background: var(--parsec-color-light-secondary-background);
@@ -232,9 +246,9 @@ onMounted(async () => {
   }
 
   &.visible {
-    padding: 1rem 0.5rem;
+    padding: 0.5rem;
 
-    .invoices-main-year__icon {
+    .invoices-year-text__icon {
       transform: rotate(180deg);
     }
   }
@@ -267,6 +281,7 @@ onMounted(async () => {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 0.5rem;
     }
   }
 
@@ -305,7 +320,7 @@ onMounted(async () => {
 
       &:hover {
         background: var(--parsec-color-light-secondary-background);
-        .invoices-main-content-list-item__data {
+        .invoices-year-content-list-item__data {
           color: var(--parsec-color-light-secondary-contrast);
         }
       }
