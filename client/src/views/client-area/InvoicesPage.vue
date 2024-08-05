@@ -203,7 +203,6 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
 .invoices-year {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
   padding: 0.5rem;
   margin-top: 0.5rem;
   border-radius: var(--parsec-radius-8);
@@ -223,16 +222,17 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 1rem;
     cursor: pointer;
     position: sticky;
-    top: -1rem;
+    top: -2rem;
     background: var(--parsec-color-light-secondary-premiere);
     z-index: 3;
     transition: all 0.20s ease;
 
     &:hover {
       background: var(--parsec-color-light-secondary-background);
+      border-radius: var(--parsec-radius-6);
 
       .invoices-year-text__title {
         color: var(--parsec-color-light-primary-500);
@@ -295,6 +295,11 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
     display: flex;
     width: 100%;
     background: none;
+    margin-bottom: 0.5rem;
+    position: sticky;
+    top: 0.8rem;
+    background: var(--parsec-color-light-secondary-premiere);
+    z-index: 2;
 
     &-item {
       --padding-start: 0;
