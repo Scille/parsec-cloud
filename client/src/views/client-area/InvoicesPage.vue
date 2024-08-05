@@ -229,13 +229,19 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
     top: -1rem;
     background: var(--parsec-color-light-secondary-premiere);
     z-index: 3;
+    transition: all 0.20s ease;
 
     &:hover {
       background: var(--parsec-color-light-secondary-background);
+
+      .invoices-year-text__title {
+        color: var(--parsec-color-light-primary-500);
+      }
     }
 
     &__title {
       color: var(--parsec-color-light-secondary-text);
+      transition: all 0.20s ease;
     }
 
     &__icon {
