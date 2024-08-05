@@ -11,6 +11,7 @@
         "typeRoots": ["./node_modules/@types"],
         "allowJs": true,
         "rootDir": ".",
-        "rootDirs": [".", "build/generated-ts/"]
+        "rootDirs": [".", "build/generated-ts/"],
+        "sourceMap": true
     }
 }
