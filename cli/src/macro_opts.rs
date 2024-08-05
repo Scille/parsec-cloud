@@ -83,6 +83,32 @@ macro_rules! clap_parser_with_shared_opts_builder {
             }
         );
     };
+    // Password stdin option
+    (
+        #[with = password_stdin $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "Read the password from stdin instead of TTY"]
+                #[doc = "Note: this flag need to be explicitly set, that why it does not have a env var"]
+                #[arg(long, default_value_t)]
+                pub(crate) password_stdin: bool,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
     // Server addr option
     (
         #[with = addr $(,$modifier:ident)*]

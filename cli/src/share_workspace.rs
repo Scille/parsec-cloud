@@ -5,7 +5,7 @@ use libparsec::{RealmRole, UserID, VlobID};
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct ShareWorkspace {
         /// Workspace id
         #[arg(short, long, value_parser = VlobID::from_hex)]
@@ -26,6 +26,7 @@ pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<
         role,
         device,
         config_dir,
+        password_stdin,
     } = share_workspace;
     log::trace!(
         "Sharing workspace {workspace_id} to {user_id} with role {role} (confdir={}, device={})",
@@ -33,7 +34,7 @@ pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_client_and_run(config_dir, device, |client| async move {
+    load_client_and_run(&config_dir, device, password_stdin, |client| async move {
         let mut handle = start_spinner("Sharing workspace".into());
 
         client

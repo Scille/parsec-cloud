@@ -5,7 +5,7 @@ use libparsec::{UserID, UserProfile};
 use crate::utils::{load_client_and_run, start_spinner};
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct ShamirSetupCreate {
         /// Share recipients, if missing organization's admins will be used instead
         /// Author must not be included as recipient.
@@ -26,13 +26,15 @@ crate::clap_parser_with_shared_opts_builder!(
 
 pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Result<()> {
     let ShamirSetupCreate {
-        config_dir,
-        device,
         recipients,
         weights,
         threshold,
+        password_stdin,
+        device,
+        config_dir,
     } = shamir_setup;
-    load_client_and_run(config_dir, device, |client| async move {
+
+    load_client_and_run(&config_dir, device, password_stdin, |client| async move {
         let mut handle = start_spinner("Creating shamir setup".into());
 
         let users = client.list_users(true, None, None).await?;

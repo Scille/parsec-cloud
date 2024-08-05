@@ -3,19 +3,23 @@
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct ListWorkspaces {}
 );
 
 pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<()> {
-    let ListWorkspaces { device, config_dir } = list_workspaces;
+    let ListWorkspaces {
+        device,
+        config_dir,
+        password_stdin,
+    } = list_workspaces;
     log::trace!(
         "Listing workspaces (confdir={}, device={})",
         config_dir.display(),
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_client_and_run(config_dir, device, |client| async move {
+    load_client_and_run(&config_dir, device, password_stdin, |client| async move {
         client.poll_server_for_new_certificates().await?;
         client.refresh_workspaces_list().await?;
         let workspaces = client.list_workspaces().await;

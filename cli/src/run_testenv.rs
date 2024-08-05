@@ -25,7 +25,7 @@ use crate::{
 };
 
 pub const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
-const DEFAULT_DEVICE_PASSWORD: &str = "test";
+pub(crate) const DEFAULT_DEVICE_PASSWORD: &str = "test";
 const RESERVED_PORT_OFFSET: u16 = 1024;
 const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
@@ -449,6 +449,7 @@ fn wait_testbed_server_to_be_ready(child: &mut std::process::Child) {
     }
 }
 
+#[cfg(feature = "testenv")]
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     let RunTestenv {
         main_process_id,

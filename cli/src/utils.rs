@@ -1,6 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{future::Future, path::PathBuf, sync::Arc};
+use std::{
+    future::Future,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 
 use libparsec::{
     internal::{Client, EventBus},
@@ -76,15 +80,17 @@ where
 }
 
 pub async fn load_device_and_run<F, Fut>(
-    config_dir: PathBuf,
-    device_short_id: Option<String>,
+    config_dir: &Path,
+    device: Option<String>,
+    password_stdin: bool,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_file_and_run(config_dir.clone(), device_short_id, |device| async move {
+    load_device_file_and_run(config_dir.to_owned(), device, |device| async move {
+        log::debug!("Loading device {:?}", device.ty);
         let device = match device.ty {
             DeviceFileType::Keyring => {
                 return Err(anyhow::anyhow!(
@@ -93,10 +99,13 @@ where
                 ));
             }
             DeviceFileType::Password => {
-                #[cfg(feature = "testenv")]
-                let password = "test".to_string().into();
-                #[cfg(not(feature = "testenv"))]
-                let password = rpassword::prompt_password("password:")?.into();
+                let password = read_password(if password_stdin {
+                    ReadPasswordFrom::Stdin
+                } else {
+                    ReadPasswordFrom::Tty {
+                        prompt: "Enter password for the device:",
+                    }
+                })?;
 
                 let access = DeviceAccessStrategy::Password {
                     key_file: device.key_file_path.clone(),
@@ -104,14 +113,14 @@ where
                 };
 
                 // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-                load_device(&config_dir, &access).await?
+                load_device(config_dir, &access).await?
             }
             DeviceFileType::Smartcard => {
                 let access = DeviceAccessStrategy::Smartcard {
                     key_file: device.key_file_path.clone(),
                 };
 
-                load_device(&config_dir, &access).await?
+                load_device(config_dir, &access).await?
             }
             DeviceFileType::Recovery => {
                 return Err(anyhow::anyhow!(
@@ -127,17 +136,18 @@ where
 }
 
 pub async fn load_cmds_and_run<F, Fut>(
-    config_dir: PathBuf,
-    device_short_id: Option<String>,
+    config_dir: &Path,
+    device: Option<String>,
+    password_stdin: bool,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir.clone(), device_short_id, |device| async move {
+    load_device_and_run(config_dir, device, password_stdin, |device| async move {
         let cmds =
-            AuthenticatedCmds::new(&config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
+            AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
         function(cmds, device).await
     })
@@ -145,15 +155,16 @@ where
 }
 
 pub async fn load_client_and_run<F, Fut>(
-    config_dir: PathBuf,
-    device_short_id: Option<String>,
+    config_dir: &Path,
+    device: Option<String>,
+    password_stdin: bool,
     function: F,
 ) -> anyhow::Result<()>
 where
     F: FnOnce(Arc<Client>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir, device_short_id, |device| async move {
+    load_device_and_run(config_dir, device, password_stdin, |device| async move {
         let client = Client::start(
             Arc::new(
                 ClientConfig {
@@ -176,19 +187,24 @@ pub fn start_spinner(text: String) -> Spinner {
     Spinner::with_stream(Spinners::Dots, text, Stream::Stdout)
 }
 
-pub fn choose_password() -> anyhow::Result<Password> {
-    #[cfg(feature = "testenv")]
-    return Ok("test".to_string().into());
-    #[cfg(not(feature = "testenv"))]
-    loop {
-        let password = rpassword::prompt_password("Enter password for the new device:")?.into();
-        let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
-
-        if password == confirm_password {
-            return Ok(password);
-        } else {
-            eprintln!("Password mismatch")
+pub fn choose_password(from: ReadPasswordFrom) -> anyhow::Result<Password> {
+    match from {
+        ReadPasswordFrom::Stdin => {
+            let stdin = std::io::stdin();
+            rpassword::read_password_from_bufread(&mut stdin.lock())
+                .map(Into::into)
+                .map_err(anyhow::Error::from)
         }
+        ReadPasswordFrom::Tty { prompt } => loop {
+            let password = rpassword::prompt_password(prompt)?.into();
+            let confirm_password = rpassword::prompt_password("Confirm password:")?.into();
+
+            if password == confirm_password {
+                return Ok(password);
+            } else {
+                eprintln!("Password mismatch")
+            }
+        },
     }
 }
 
@@ -256,4 +272,21 @@ pub fn choose_user_profile(input: &mut String) -> anyhow::Result<UserProfile> {
             _ => eprintln!("Invalid input, choose between 0, 1 or 2"),
         }
     }
+}
+
+pub enum ReadPasswordFrom {
+    Stdin,
+    Tty { prompt: &'static str },
+}
+
+pub fn read_password(read_from: ReadPasswordFrom) -> anyhow::Result<libparsec::Password> {
+    match read_from {
+        ReadPasswordFrom::Stdin => {
+            let stdin = std::io::stdin();
+            rpassword::read_password_from_bufread(&mut stdin.lock())
+        }
+        ReadPasswordFrom::Tty { prompt } => rpassword::prompt_password(prompt),
+    }
+    .map(Into::into)
+    .map_err(anyhow::Error::from)
 }

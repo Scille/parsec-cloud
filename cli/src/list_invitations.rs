@@ -8,19 +8,23 @@ use libparsec::{
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device]
+    #[with = config_dir, device, password_stdin]
     pub struct ListInvitations {}
 );
 
 pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Result<()> {
-    let ListInvitations { device, config_dir } = list_invitations;
+    let ListInvitations {
+        device,
+        config_dir,
+        password_stdin,
+    } = list_invitations;
     log::trace!(
         "Listing invitations (confdir={}, device={})",
         config_dir.display(),
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_cmds_and_run(config_dir, device, |cmds, _| async move {
+    load_cmds_and_run(&config_dir, device, password_stdin, |cmds, _| async move {
         let mut handle = start_spinner("Listing invitations".into());
 
         let rep = cmds.send(invite_list::Req).await?;

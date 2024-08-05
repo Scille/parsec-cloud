@@ -16,14 +16,14 @@ mod list_users;
 mod list_workspaces;
 mod macro_opts;
 mod remove_device;
-#[cfg(feature = "testenv")]
+#[cfg(any(test, feature = "testenv"))]
 mod run_testenv;
 mod shamir_setup;
 mod share_workspace;
 mod stats_organization;
 mod stats_server;
 mod status_organization;
-#[cfg(all(test, feature = "testenv"))]
+#[cfg(test)]
 mod tests;
 mod utils;
 
