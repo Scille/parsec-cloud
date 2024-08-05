@@ -28,7 +28,7 @@ async fn ok_first_open(
         env,
         &tmp_path,
         |_client: Arc<Client>, wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut open_options = tokio::fs::OpenOptions::new();
+            let mut open_options = std::fs::OpenOptions::new();
             let (name, expected_size) = match kind {
                 "existing" => {
                     open_options.read(true);
@@ -57,13 +57,14 @@ async fn ok_first_open(
                 unknown => panic!("Unknown kind: {}", unknown),
             };
 
-            // Scope to ensure when the drop occurs, as it closes the file
-            {
-                open_options
-                    .open(&mountpoint_path.join(name))
-                    .await
-                    .unwrap();
-            }
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            tokio::task::spawn_blocking(move || {
+                open_options.open(mountpoint_path.join(name)).unwrap();
+            })
+            .await
+            .unwrap();
 
             let stat = wksp1_ops
                 .stat_entry(&format!("/{}", name).parse().unwrap())
@@ -84,7 +85,7 @@ async fn ok_already_opened(
         env,
         &tmp_path,
         |_client: Arc<Client>, wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut open_options = tokio::fs::OpenOptions::new();
+            let mut open_options = std::fs::OpenOptions::new();
             let (name, expected_size) = match kind {
                 "existing" => {
                     open_options.read(true);
@@ -103,16 +104,19 @@ async fn ok_already_opened(
                 unknown => panic!("Unknown kind: {}", unknown),
             };
 
-            let _fd0 = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join(name))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            tokio::task::spawn_blocking(move || {
+                let _fd0 = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join(name))
+                    .unwrap();
 
-            open_options
-                .open(&mountpoint_path.join(name))
-                .await
-                .unwrap();
+                open_options.open(mountpoint_path.join(name)).unwrap();
+            })
+            .await
+            .unwrap();
 
             let stat = wksp1_ops
                 .stat_entry(&format!("/{}", name).parse().unwrap())
@@ -190,7 +194,7 @@ async fn create_new_and_already_exists(tmp_path: TmpPath, env: &TestbedEnv) {
             let err = tokio::fs::OpenOptions::new()
                 .write(true)
                 .create_new(true)
-                .open(&mountpoint_path.join("bar.txt"))
+                .open(mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap_err();
             p_assert_matches!(err.kind(), std::io::ErrorKind::AlreadyExists);
@@ -222,7 +226,7 @@ async fn stopped(
             }
 
             let err = open_options
-                .open(&mountpoint_path.join("bar.txt"))
+                .open(mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap_err();
             #[cfg(not(target_os = "windows"))]
@@ -280,7 +284,7 @@ async fn offline(
                 unknown => panic!("Unknown kind: {}", unknown),
             }
             let err = open_options
-                .open(&mountpoint_path.join("bar.txt"))
+                .open(mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap_err();
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
@@ -336,7 +340,7 @@ async fn read_only_realm(
     .await;
 
     mount_and_test!(as "bob@dev1", &env, &tmp_path, |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-        let mut open_options = tokio::fs::OpenOptions::new();
+        let mut open_options = std::fs::OpenOptions::new();
         let (should_succeed, name) = match kind {
             "open_for_read" => { open_options.read(true); (true, "bar.txt") },
             "open_for_write" => { open_options.write(true); (false, "bar.txt") },
@@ -346,10 +350,18 @@ async fn read_only_realm(
         };
 
         let path = mountpoint_path.join(name);
+        // Do file open + close in it own dedicated thread. This is needed
+        // to avoid deadlock with tokio single threaded runtime when the
+        // close waits for data flush.
+        let outcome = tokio::task::spawn_blocking(move || {
+            // Note the map to close the file here instead of returning the file descriptor !
+            open_options.open(&path).map(|_fd| ())
+        }).await.unwrap();
+
         if should_succeed {
-            open_options.open(&path).await.unwrap();
+            outcome.unwrap();
         } else {
-            let err = open_options.open(&path).await.unwrap_err();
+            let err = outcome.unwrap_err();
             // TODO: change error to be closer to
             #[cfg(not(target_os = "windows"))]
             p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);

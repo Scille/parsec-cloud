@@ -24,8 +24,15 @@ async fn ok_overwrite(tmp_path: TmpPath, env: &TestbedEnv) {
             fd.write_all(b"01234").await.unwrap();
             fd.seek(tokio::io::SeekFrom::Start(7)).await.unwrap();
             fd.write_all(b"0").await.unwrap();
-            // Flush guarantees that the write is pushed up to the filesystem
-            fd.flush().await.unwrap();
+            // Flush data to guarantees that the write is pushed up to the filesystem
+            // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime
+            // is single threaded, so we have to use threads manually instead.
+            let fd = fd.into_std().await;
+            tokio::task::spawn_blocking(move || {
+                fd.sync_data().unwrap();
+            })
+            .await
+            .unwrap();
 
             p_assert_eq!(
                 ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
@@ -50,8 +57,15 @@ async fn ok_append(tmp_path: TmpPath, env: &TestbedEnv) {
 
             fd.write_all(b"01234").await.unwrap();
             fd.write_all(b"56789").await.unwrap();
-            // Flush guarantees that the write is pushed up to the filesystem
-            fd.flush().await.unwrap();
+            // Flush data to guarantees that the write is pushed up to the filesystem
+            // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime
+            // is single threaded, so we have to use threads manually instead.
+            let fd = fd.into_std().await;
+            tokio::task::spawn_blocking(move || {
+                fd.sync_data().unwrap();
+            })
+            .await
+            .unwrap();
 
             p_assert_eq!(
                 ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
@@ -75,8 +89,15 @@ async fn ok_truncate(tmp_path: TmpPath, env: &TestbedEnv) {
                 .unwrap();
 
             fd.write_all(b"01234").await.unwrap();
-            // Flush guarantees that the write is pushed up to the filesystem
-            fd.flush().await.unwrap();
+            // Flush data to guarantees that the write is pushed up to the filesystem
+            // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime
+            // is single threaded, so we have to use threads manually instead.
+            let fd = fd.into_std().await;
+            tokio::task::spawn_blocking(move || {
+                fd.sync_data().unwrap();
+            })
+            .await
+            .unwrap();
 
             p_assert_eq!(ops_cat!(wksp1_ops.clone(), "/bar.txt").await, b"01234");
         }
@@ -97,8 +118,15 @@ async fn ok_write_past_end(tmp_path: TmpPath, env: &TestbedEnv) {
 
             fd.seek(std::io::SeekFrom::End(10)).await.unwrap();
             fd.write_all(b"0").await.unwrap();
-            // Flush guarantees that the write is pushed up to the filesystem
-            fd.flush().await.unwrap();
+            // Flush data to guarantees that the write is pushed up to the filesystem
+            // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime
+            // is single threaded, so we have to use threads manually instead.
+            let fd = fd.into_std().await;
+            tokio::task::spawn_blocking(move || {
+                fd.sync_data().unwrap();
+            })
+            .await
+            .unwrap();
 
             p_assert_eq!(
                 ops_cat!(wksp1_ops.clone(), "/bar.txt").await,
@@ -122,27 +150,21 @@ async fn not_in_write_mode(tmp_path: TmpPath, env: &TestbedEnv) {
 
             let maybe_error = fd.write_all(b"01234").await;
             // Write is not guaranteed to be pushed up to the filesystem (it can be kept
-            // in some buffer on application side), in that case we need to do a flush.
+            // in some buffer on application side), in that case we need to do a sync_data.
             let err = match maybe_error {
                 Ok(_) => {
-                    let maybe_error = fd.write_all(b"01234").await;
-                    match maybe_error {
-                        Ok(_) => fd.flush().await.unwrap_err(),
-                        Err(err) => err,
-                    }
+                    // Using `tokio::fs::File::sync_data` cause a deadlock if the tokio runtime
+                    // is single threaded, so we have to use threads manually instead.
+                    let fd = fd.into_std().await;
+                    tokio::task::spawn_blocking(move || fd.sync_data())
+                        .await
+                        .unwrap()
+                        .unwrap_err()
                 }
                 Err(err) => err,
             };
 
-            #[cfg(not(target_os = "windows"))]
-            p_assert_eq!(err.raw_os_error(), Some(libc::EBADF), "{}", err);
-            #[cfg(target_os = "windows")]
-            p_assert_eq!(
-                err.raw_os_error(),
-                Some(windows_sys::Win32::Foundation::ERROR_ACCESS_DENIED as i32),
-                "{}",
-                err
-            );
+            p_assert_matches!(err.kind(), std::io::ErrorKind::PermissionDenied);
         }
     );
 }
