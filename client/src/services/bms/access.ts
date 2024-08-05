@@ -165,6 +165,17 @@ class BmsAccess {
     });
   }
 
+  async updateAuthentication(password: string, newPassword: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.updateAuthentication(this.tokens.access, {
+      userId: this.customerInformation.id,
+      password: password,
+      newPassword: newPassword,
+    });
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();

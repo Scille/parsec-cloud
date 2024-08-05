@@ -29,6 +29,7 @@ enum DataType {
   AddPaymentMethod = 'add-payment-method',
   SetDefaultPaymentMethod = 'set-default-payment-method',
   DeletePaymentMethod = 'delete-payment-method',
+  UpdateAuthentication = 'update-authentication',
 }
 
 enum PaymentMethod {
@@ -216,6 +217,12 @@ interface DeletePaymentMethodQueryData extends _ClientQueryData {
   paymentMethod: string;
 }
 
+interface UpdateAuthenticationQueryData {
+  userId: string;
+  password: string;
+  newPassword: string;
+}
+
 export {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -242,4 +249,5 @@ export {
   PaymentMethod,
   PersonalInformationResultData,
   SetDefaultPaymentMethodQueryData,
+  UpdateAuthenticationQueryData,
 };
