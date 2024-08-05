@@ -110,3 +110,12 @@ msTest('Switch org', async ({ clientArea }) => {
   await expect(orgs.nth(0).locator('.organization-icon-current')).toBeHidden();
   await expect(orgs.nth(1).locator('.organization-icon-current')).toBeVisible();
 });
+
+msTest('Open settings modal', async ({ clientArea }) => {
+  const settingsButton = clientArea.locator('.header-content').locator('.custom-button').nth(1);
+  const modal = clientArea.locator('.settings-modal');
+  await expect(modal).toBeHidden();
+  await settingsButton.click();
+  await expect(modal).toBeVisible();
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Settings');
+});

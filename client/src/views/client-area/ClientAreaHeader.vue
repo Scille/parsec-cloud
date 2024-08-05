@@ -64,6 +64,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { isMobile } from '@/parsec';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { ClientAreaPages } from '@/views/client-area/types';
+import { openSettingsModal } from '@/views/settings';
 
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 
@@ -85,7 +86,7 @@ async function logout(): Promise<void> {
 }
 
 async function openPreferencesModal(): Promise<void> {
-  console.log('openPreferencesModal');
+  await openSettingsModal();
 }
 
 const emits = defineEmits<{
