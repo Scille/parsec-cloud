@@ -12,14 +12,22 @@
       <div class="saas-login-content">
         <!-- email -->
         <ms-input
+          v-if="!loading"
           class="saas-login-content__input"
           ref="emailInputRef"
           v-model="email"
           label="clientArea.app.emailLabel"
           :validator="emailValidator"
         />
+        <ion-skeleton-text
+          v-else
+          :animated="true"
+        />
         <!-- password -->
-        <div class="input-password">
+        <div
+          class="input-password"
+          v-if="!loading"
+        >
           <ms-password-input
             class="saas-login-content__input"
             ref="passwordInputRef"
@@ -37,6 +45,10 @@
             {{ $msTranslate('clientArea.app.forgottenPassword') }}
           </ion-text>
         </div>
+        <ion-skeleton-text
+          v-else
+          :animated="true"
+        />
         <!-- error -->
         <ion-text
           class="form-error body login-button-error"
@@ -52,17 +64,25 @@
       <ion-footer class="saas-login-footer">
         <div class="login-button">
           <ion-button
+            v-if="!loading"
             :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
             @click="onLoginClicked"
           >
             {{ $msTranslate('clientArea.app.login') }}
           </ion-button>
+          <ion-skeleton-text
+            v-else
+            :animated="true"
+          />
           <ms-spinner v-show="querying" />
         </div>
 
         <!-- TODO: UPDATE THE LINK -->
         <!-- If changing the link, don't forget to check that it is allowed by electron! -->
-        <div class="create-account">
+        <div
+          class="create-account"
+          v-if="!loading"
+        >
           <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
           <ion-button
             class="create-account__link"
@@ -74,6 +94,10 @@
             {{ $msTranslate('clientArea.app.createAccount') }}
           </ion-button>
         </div>
+        <ion-skeleton-text
+          v-else
+          :animated="true"
+        />
       </ion-footer>
     </div>
     <div class="saas-login-mockup">
@@ -86,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter, IonIcon } from '@ionic/vue';
+import { IonPage, IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
@@ -110,6 +134,7 @@ const emailInputRef = ref();
 const passwordInputRef = ref();
 const querying = ref(false);
 const loginError = ref<Translatable>('');
+const loading = ref(true);
 
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
@@ -129,6 +154,7 @@ onMounted(async () => {
       await emailInputRef.value.setFocus();
     }
   }
+  loading.value = false;
 });
 
 async function onLoginClicked(): Promise<void> {
@@ -161,6 +187,7 @@ async function onLoginClicked(): Promise<void> {
   background: var(--parsec-color-light-primary-50);
   position: relative;
   padding: 2.5rem;
+  min-height: 28em;
 
   &::before {
     content: url('@/assets/images/background/background-shapes.svg');
