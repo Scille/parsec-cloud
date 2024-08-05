@@ -308,8 +308,7 @@ async fn outbound_sync_folder(
 
     let local_from_remote = Arc::new(LocalFolderManifest::from_remote(
         remote,
-        // TODO: Pass prevent sync pattern
-        &libparsec_types::Regex::empty(),
+        &ops.config.prevent_sync_pattern,
     ));
     updater
         .update_manifest(ArcLocalChildManifest::Folder(local_from_remote))

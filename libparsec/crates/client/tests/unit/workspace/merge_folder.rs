@@ -61,7 +61,6 @@ async fn no_remote_change(
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
-        // TODO: Pass prevent sync pattern
         &libparsec_types::Regex::empty(),
         &local,
         remote,
@@ -128,7 +127,6 @@ async fn remote_only_change(env: &TestbedEnv) {
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
-        // TODO: Pass prevent sync pattern
         &libparsec_types::Regex::empty(),
         &local,
         remote,
