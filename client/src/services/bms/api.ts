@@ -314,6 +314,8 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
             total: invoice.total,
             status: invoice.status,
             organizationId: invoice.organization,
+            number: invoice.number,
+            receiptNumber: invoice.receipt_number,
           };
         }),
       },
