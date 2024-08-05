@@ -119,7 +119,8 @@ jobs:
           cd temp
           unzip ../dist/$OLD_WHEEL_NAME
           # Get platform new wheel name
-          python -m pip install -U pip wheel setuptools
+          # FIXME: We fix the version of wheel to 0.43.0 as a temporary fix for the deprecated `bdist_wheel` module
+          python -m pip install -U pip wheel==0.43.0 setuptools
           PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
           NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
           # Update archive and zip back
