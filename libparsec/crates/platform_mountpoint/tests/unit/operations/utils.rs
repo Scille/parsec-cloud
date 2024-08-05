@@ -39,8 +39,8 @@ macro_rules! mount_and_test {
         mount_and_test!(as "alice@dev1", $env, $mountpoint_base_dir, $test)
     };
     (as $start_as:literal, $env:expr, $mountpoint_base_dir:expr, $test:expr) => {{
-        // Ensure we don't take ownership on TmpPath fixture, otherwise it drop will
-        // kicks in too early and will shadow the real error.
+        // Ensure we don't take ownership on TmpPath fixture, otherwise its drop will
+        // kick in too early and will shadow the real error.
         let mountpoint_base_dir: &libparsec_tests_fixtures::TmpPath = $mountpoint_base_dir;
         let mountpoint_base_dir: std::path::PathBuf = (*mountpoint_base_dir).to_owned();
 

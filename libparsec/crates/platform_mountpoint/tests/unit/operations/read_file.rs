@@ -1,7 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
-use tokio::io::{AsyncReadExt, AsyncSeekExt};
+use std::{
+    io::{Read, Seek},
+    path::PathBuf,
+    sync::Arc,
+};
 
 use libparsec_client::{workspace::WorkspaceOps, Client};
 use libparsec_client_connection::{
@@ -18,26 +21,32 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            let mut buff = Vec::new();
-            fd.read_to_end(&mut buff).await.unwrap();
-            p_assert_eq!(buff, b"hello world");
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap();
+                p_assert_eq!(buff, b"hello world");
 
-            // Read with cursor exhausted
-            let mut buff = Vec::new();
-            fd.read_to_end(&mut buff).await.unwrap();
-            p_assert_eq!(buff, b"");
+                // Read with cursor exhausted
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap();
+                p_assert_eq!(buff, b"");
 
-            // Re-wind the cursor, and read a part of the file
-            fd.seek(std::io::SeekFrom::Start(3)).await.unwrap();
-            let mut buff = vec![0; 6];
-            fd.read_exact(&mut buff).await.unwrap();
-            p_assert_eq!(buff, b"lo wor");
+                // Re-wind the cursor, and read a part of the file
+                fd.seek(std::io::SeekFrom::Start(3)).unwrap();
+                let mut buff = vec![0; 6];
+                fd.read_exact(&mut buff).unwrap();
+                p_assert_eq!(buff, b"lo wor");
+            })
+            .await
+            .unwrap();
         }
     );
 }
@@ -48,14 +57,20 @@ async fn read_too_much(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            let mut buff = vec![0; 20];
-            let err = fd.read_exact(&mut buff).await.unwrap_err();
+                let mut buff = vec![0; 20];
+                fd.read_exact(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
 
             p_assert_matches!(err.kind(), std::io::ErrorKind::UnexpectedEof);
         }
@@ -68,14 +83,20 @@ async fn not_in_read_mode(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .write(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .write(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            let mut buff = vec![0; 20];
-            let err = fd.read_exact(&mut buff).await.unwrap_err();
+                let mut buff = vec![0; 20];
+                fd.read_exact(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
 
             #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EBADF), "{}", err);
@@ -96,16 +117,25 @@ async fn stopped(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |client: Arc<Client>, wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
+            let fd = tokio::fs::OpenOptions::new()
                 .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
+                .open(mountpoint_path.join("bar.txt"))
                 .await
                 .unwrap();
 
             client.stop_workspace(wksp1_ops.realm_id()).await;
 
-            let mut buff = Vec::new();
-            let err = fd.read_to_end(&mut buff).await.unwrap_err();
+            // Do file read + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let mut fd = fd.into_std().await;
+            let err = tokio::task::spawn_blocking(move || {
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap_err()
+                // note `fd` getts closed here
+            })
+            .await
+            .unwrap();
 
             #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EIO), "{}", err);
@@ -140,14 +170,21 @@ async fn offline(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            let mut buff = Vec::new();
-            let err = fd.read_to_end(&mut buff).await.unwrap_err();
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
+
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EHOSTUNREACH), "{}", err);
@@ -200,18 +237,25 @@ async fn no_realm_access(tmp_path: TmpPath, env: &TestbedEnv) {
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            // ...and only realized it when she tries to communicate with the server
-            // (note the monitors are not running in the client, hence no risk of
-            // having a concurrent processing of the loss of access)
+                // ...and only realized it when she tries to communicate with the server
+                // (note the monitors are not running in the client, hence no risk of
+                // having a concurrent processing of the loss of access)
 
-            let mut buff = Vec::new();
-            let err = fd.read_to_end(&mut buff).await.unwrap_err();
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
+
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             #[cfg(not(target_os = "windows"))]
             p_assert_eq!(err.raw_os_error(), Some(libc::EACCES), "{}", err);
@@ -254,18 +298,25 @@ async fn server_block_read_but_store_unavailable(tmp_path: TmpPath, env: &Testbe
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            // ...and only realized it when she tries to communicate with the server
-            // (note the monitors are not running in the client, hence no risk of
-            // having a concurrent processing of the loss of access)
+                // ...and only realized it when she tries to communicate with the server
+                // (note the monitors are not running in the client, hence no risk of
+                // having a concurrent processing of the loss of access)
 
-            let mut buff = Vec::new();
-            let err = fd.read_to_end(&mut buff).await.unwrap_err();
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
+
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             // TODO: what should be the error here?
             #[cfg(not(target_os = "windows"))]
@@ -317,18 +368,25 @@ async fn server_block_read_but_bad_decryption(tmp_path: TmpPath, env: &TestbedEn
         env,
         &tmp_path,
         |_client: Arc<Client>, _wksp1_ops: Arc<WorkspaceOps>, mountpoint_path: PathBuf| async move {
-            let mut fd = tokio::fs::OpenOptions::new()
-                .read(true)
-                .open(&mountpoint_path.join("bar.txt"))
-                .await
-                .unwrap();
+            // Do file open + close in it own dedicated thread. This is needed
+            // to avoid deadlock with tokio single threaded runtime when the
+            // close waits for data flush.
+            let err = tokio::task::spawn_blocking(move || {
+                let mut fd = std::fs::OpenOptions::new()
+                    .read(true)
+                    .open(mountpoint_path.join("bar.txt"))
+                    .unwrap();
 
-            // ...and only realized it when she tries to communicate with the server
-            // (note the monitors are not running in the client, hence no risk of
-            // having a concurrent processing of the loss of access)
+                // ...and only realized it when she tries to communicate with the server
+                // (note the monitors are not running in the client, hence no risk of
+                // having a concurrent processing of the loss of access)
 
-            let mut buff = Vec::new();
-            let err = fd.read_to_end(&mut buff).await.unwrap_err();
+                let mut buff = Vec::new();
+                fd.read_to_end(&mut buff).unwrap_err()
+            })
+            .await
+            .unwrap();
+
             // Cannot use `std::io::ErrorKind::HostUnreachable` as it is unstable
             // TODO: what should be the error here?
             #[cfg(not(target_os = "windows"))]

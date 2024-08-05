@@ -10,6 +10,7 @@ mod read_file;
 mod remove_file;
 mod remove_folder;
 mod rename_entry;
+mod stat_entry;
 mod to_os_path;
 mod utils;
 mod write_file;
