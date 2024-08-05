@@ -324,7 +324,11 @@ async fn merge_manifest_and_update_store(
 
         // Folder added remotely
         (None, ChildManifest::Folder(remote_manifest)) => {
-            let local_manifest = Arc::new(LocalFolderManifest::from_remote(remote_manifest, None));
+            let local_manifest = Arc::new(LocalFolderManifest::from_remote(
+                remote_manifest,
+                // TODO: Pass prevent sync pattern
+                &libparsec_types::Regex::empty(),
+            ));
             updater
                 .update_manifest(ArcLocalChildManifest::Folder(local_manifest))
                 .await
@@ -348,7 +352,7 @@ async fn merge_manifest_and_update_store(
                 ops.device.device_id,
                 ops.device.now(),
                 // TODO: Pass prevent sync pattern
-                None,
+                &libparsec_types::Regex::empty(),
                 &local_manifest,
                 remote_manifest,
             );
@@ -435,7 +439,8 @@ async fn handle_conflict_and_update_store(
             ArcLocalChildManifest::File(Arc::new(LocalFileManifest::from_remote(remote_manifest)))
         }
         ChildManifest::Folder(remote_manifest) => ArcLocalChildManifest::Folder(Arc::new(
-            LocalFolderManifest::from_remote(remote_manifest, None),
+            // TODO: Pass prevent sync pattern
+            LocalFolderManifest::from_remote(remote_manifest, &libparsec_types::Regex::empty()),
         )),
     };
 

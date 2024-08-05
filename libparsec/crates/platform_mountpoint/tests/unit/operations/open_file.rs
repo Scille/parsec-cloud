@@ -326,7 +326,11 @@ async fn read_only_realm(
                     .insert("bar.txt".parse().unwrap(), bar_txt_id);
             });
 
-        builder.workspace_data_storage_fetch_workspace_vlob("bob@dev1", wksp1_id, None);
+        builder.workspace_data_storage_fetch_workspace_vlob(
+            "bob@dev1",
+            wksp1_id,
+            libparsec_types::Regex::empty(),
+        );
         builder.workspace_data_storage_fetch_file_vlob("bob@dev1", wksp1_id, bar_txt_id);
     })
     .await;

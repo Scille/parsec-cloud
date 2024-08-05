@@ -2963,7 +2963,7 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
         device: DeviceID,
         realm: VlobID,
         vlob: VlobID,
-        prevent_sync_pattern: Option<Regex>,
+        prevent_sync_pattern: Regex,
     ) -> Self {
         // 1) Consistency checks
 
@@ -2989,7 +2989,7 @@ impl TestbedEventWorkspaceDataStorageFetchFolderVlob {
                 if x.realm == realm && x.manifest.id == vlob => {
                 Some(Arc::new(LocalFolderManifest::from_remote(
                     (*x.manifest).clone(),
-                    prevent_sync_pattern.as_ref(),
+                    &prevent_sync_pattern,
                 )))
             }
             TestbedEvent::CreateOrUpdateOpaqueVlob(x)

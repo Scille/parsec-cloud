@@ -72,7 +72,11 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         .user_storage_local_update("alice@dev1")
         .update_local_workspaces_with_fetched_certificates();
     builder.user_storage_fetch_realm_checkpoint("alice@dev1");
-    builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", wksp1_id, None);
+    builder.workspace_data_storage_fetch_workspace_vlob(
+        "alice@dev1",
+        wksp1_id,
+        libparsec_types::Regex::empty(),
+    );
     builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", wksp1_id);
 
     builder.certificates_storage_fetch_certificates("bob@dev1");
@@ -80,7 +84,11 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         .user_storage_local_update("bob@dev1")
         .update_local_workspaces_with_fetched_certificates();
     builder.user_storage_fetch_realm_checkpoint("bob@dev1");
-    builder.workspace_data_storage_fetch_workspace_vlob("bob@dev1", wksp1_id, None);
+    builder.workspace_data_storage_fetch_workspace_vlob(
+        "bob@dev1",
+        wksp1_id,
+        libparsec_types::Regex::empty(),
+    );
     builder.workspace_data_storage_fetch_realm_checkpoint("bob@dev1", wksp1_id);
 
     builder.certificates_storage_fetch_certificates("mallory@dev1");

@@ -62,13 +62,17 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
                 expected_version = 1;
                 expected_checkpoint = 3;
                 builder.workspace_data_storage_fetch_realm_checkpoint("alice@dev1", realm_id);
-                builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", realm_id, None);
+                builder.workspace_data_storage_fetch_workspace_vlob(
+                    "alice@dev1",
+                    realm_id,
+                    libparsec_types::Regex::empty(),
+                );
                 builder.workspace_data_storage_fetch_file_vlob("alice@dev1", realm_id, file_id);
                 builder.workspace_data_storage_fetch_folder_vlob(
                     "alice@dev1",
                     realm_id,
                     folder_id,
-                    None,
+                    libparsec_types::Regex::empty(),
                 );
                 builder.workspace_cache_storage_fetch_block("alice@dev1", realm_id, block_id);
 
@@ -92,14 +96,14 @@ async fn testbed_support(#[case] fetch_strategy: FetchStrategy, env: &TestbedEnv
                     builder.workspace_data_storage_fetch_workspace_vlob(
                         "alice@dev1",
                         realm_id,
-                        None,
+                        libparsec_types::Regex::empty(),
                     );
                     builder.workspace_data_storage_fetch_file_vlob("alice@dev1", realm_id, file_id);
                     builder.workspace_data_storage_fetch_folder_vlob(
                         "alice@dev1",
                         realm_id,
                         folder_id,
-                        None,
+                        libparsec_types::Regex::empty(),
                     );
                 }
 

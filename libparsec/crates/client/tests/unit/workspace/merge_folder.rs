@@ -62,7 +62,7 @@ async fn no_remote_change(
         local_author,
         timestamp,
         // TODO: Pass prevent sync pattern
-        None,
+        &libparsec_types::Regex::empty(),
         &local,
         remote,
     );
@@ -129,7 +129,7 @@ async fn remote_only_change(env: &TestbedEnv) {
         local_author,
         timestamp,
         // TODO: Pass prevent sync pattern
-        None,
+        &libparsec_types::Regex::empty(),
         &local,
         remote,
     );
@@ -399,7 +399,7 @@ async fn remote_only_change(env: &TestbedEnv) {
     let c_file_entry: EntryName = "c.txt.tmp".parse().unwrap();
     remote.children.insert(c_file_entry.clone(), c_file_vid); // This one match the prevent sync pattern
 
-    let mut expected = LocalFolderManifest::from_remote(remote.clone(), None);
+    let mut expected = LocalFolderManifest::from_remote(remote.clone(), &libparsec_types::Regex::empty());
     expected.children.remove(&c_file_entry);
     expected.remote_confinement_points.insert(c_file_vid);
 
@@ -490,7 +490,7 @@ async fn local_and_remote_changes(
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
-        Some(&prevent_sync_pattern),
+        &prevent_sync_pattern,
         &local,
         remote,
     );

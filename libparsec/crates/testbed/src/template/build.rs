@@ -385,7 +385,7 @@ impl TestbedTemplateBuilder {
         &mut self,
         device: impl TryInto<DeviceID>,
         realm: impl TryInto<VlobID>,
-        prevent_sync_pattern: impl TryInto<Option<Regex>>,
+        prevent_sync_pattern: impl TryInto<Regex>,
     ) -> TestbedEventWorkspaceDataStorageFetchFolderVlobBuilder {
         let realm: VlobID = realm
             .try_into()
@@ -1102,7 +1102,7 @@ impl_event_builder!(
         device: DeviceID,
         realm: VlobID,
         vlob: VlobID,
-        prevent_sync_pattern: Option<Regex>
+        prevent_sync_pattern: Regex
     ]
 );
 

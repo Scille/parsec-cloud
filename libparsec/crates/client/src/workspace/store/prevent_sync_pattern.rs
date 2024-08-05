@@ -39,7 +39,7 @@ pub(super) async fn ensure_prevent_sync_pattern_applied_to_wksp(
             // We assume that workspace manifest and folder manifest could both be deserialize as folder manifest.
             if let Some(folder) = decode_folder(encoded_manifest, &device.local_symkey)? {
                 let new_folder =
-                    folder.apply_prevent_sync_pattern(Some(pattern), device.time_provider.now());
+                    folder.apply_prevent_sync_pattern(pattern, device.time_provider.now());
                 if new_folder != folder {
                     updated_manifest.push(UpdateManifestData {
                         entry_id: new_folder.base.id,

@@ -22,7 +22,11 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
                     let manifest = Arc::make_mut(&mut e.manifest);
                     manifest.children.clear();
                 });
-            builder.workspace_data_storage_fetch_workspace_vlob("alice@dev1", wksp1_id, None);
+            builder.workspace_data_storage_fetch_workspace_vlob(
+                "alice@dev1",
+                wksp1_id,
+                libparsec_types::Regex::empty(),
+            );
         } else {
             builder
                 .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None)
@@ -34,7 +38,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
                 "alice@dev1",
                 wksp1_id,
                 wksp1_foo_id,
-                None,
+                libparsec_types::Regex::empty(),
             );
         }
     })
