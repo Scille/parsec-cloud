@@ -169,6 +169,7 @@ interface BmsInvoice {
   total: number;
   status: InvoiceStatus;
   organizationId: OrganizationID;
+  number: string;
 }
 
 enum InvoiceStatus {
