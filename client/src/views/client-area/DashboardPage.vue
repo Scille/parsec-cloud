@@ -7,7 +7,7 @@
       <!-- month summary -->
       <div class="dashboard-section month-summary-container">
         <ion-title class="dashboard-section-title title-h2">
-          {{ I18n.translate(I18n.formatDate(currentDate, 'short')) }}
+          {{ I18n.translate(I18n.formatDate(currentDate, 'narrow')) }}
         </ion-title>
         <div class="month-summary">
           <!-- amount -->
@@ -115,10 +115,14 @@
                 <ion-text class="invoices-list-item__data invoices-amount body">{{ invoice.total }}</ion-text>
                 <ion-text class="invoices-list-item__data invoices-status">
                   <span class="badge-status body-sm incoming">{{ invoice.status }}</span>
-                  <ion-text class="custom-button custom-button-ghost button-medium">
+                  <a
+                    class="custom-button custom-button-ghost button-medium"
+                    :href="invoice.pdfLink"
+                    download
+                  >
                     <ion-icon :icon="download" />
                     {{ $msTranslate('clientArea.dashboard.invoices.download') }}
-                  </ion-text>
+                  </a>
                 </ion-text>
               </ion-item>
             </ion-list>

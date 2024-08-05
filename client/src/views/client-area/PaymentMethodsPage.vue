@@ -178,17 +178,10 @@ async function onAddPaymentMethodClicked(): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.title-h2,
-.title-h3 {
-  // should be remove when #7855 (dashboard) will be merged
-  padding: 0;
-}
 .client-page-method {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-  // should be remove when #7855 (dashboard) will be merged
-  padding: 2rem;
 }
 
 .method-header {
