@@ -91,7 +91,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@7277a40b4d8760cc11399bd3f8314c3294e270f5 # pin v2.42.9
+      - uses: taiki-e/install-action@c4b9b42ecf7c8bbcd94fa96cf4bf7e8ab56f9315 # pin v2.42.17
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -108,7 +108,7 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/dist/Parsec-SBOM-Web.spdx.json .
 
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # pin v4.3.5
         with:
           name: webapp
           path: client/dist/
@@ -184,14 +184,14 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@7277a40b4d8760cc11399bd3f8314c3294e270f5 # pin v2.42.9
+      - uses: taiki-e/install-action@c4b9b42ecf7c8bbcd94fa96cf4bf7e8ab56f9315 # pin v2.42.17
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # pin v4.3.5
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app-snap
           path: |
@@ -321,7 +321,7 @@ jobs:
         timeout-minutes: 5
 
       # Install syft
-      - uses: taiki-e/install-action@7277a40b4d8760cc11399bd3f8314c3294e270f5 # pin v2.42.9
+      - uses: taiki-e/install-action@c4b9b42ecf7c8bbcd94fa96cf4bf7e8ab56f9315 # pin v2.42.17
         with:
           tool: syft@0.84.0
 
@@ -357,7 +357,7 @@ jobs:
           grep -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
         working-directory: client/electron/dist
 
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # pin v4.3.5
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app-${{ matrix.extension }}
           path: |
@@ -368,7 +368,7 @@ jobs:
           if-no-files-found: error
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@0b2256b8c012f0828dc542b3febcab082c67f72b # pin v4.3.4
+      - uses: actions/upload-artifact@89ef406dd8d7e03cfd12d9e0a4a378f454709029 # pin v4.3.5
         if: matrix.platform == 'windows'
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-electron-app-${{ matrix.extension }}-pre-built
