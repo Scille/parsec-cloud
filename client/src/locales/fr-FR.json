@@ -299,8 +299,8 @@
         "general": "Général",
         "advanced": "Avancé",
         "enableTelemetry": {
-            "label": "Activer la télémétrie",
-            "description": "Envoie automatiquement les rapports d'erreur"
+            "label": "Envoyer les rapports d'erreur",
+            "description": "Les rapports d'erreur aident à améliorer l'application"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",

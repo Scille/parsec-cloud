@@ -26,9 +26,9 @@ async function checkModal(modal: Locator): Promise<void> {
   await expect(theme.locator('.dropdown-container')).toHaveText('Clair');
 
   const telemetry = options.nth(2);
-  await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText('Activer la télémétrie');
+  await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText("Envoyer les rapports d'erreur");
   await expect(telemetry.locator('.settings-option__content').locator('.description')).toHaveText(
-    "Envoie automatiquement les rapports d'erreur",
+    "Les rapports d'erreur aident à améliorer l'application",
   );
 }
 
