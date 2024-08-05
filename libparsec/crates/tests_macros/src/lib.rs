@@ -4,8 +4,8 @@ use proc_macro::TokenStream;
 use proc_macro2::Span;
 use quote::{quote, quote_spanned};
 use syn::{
-    parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitStr, Pat, Type,
-    TypeReference,
+    parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitInt, LitStr, Pat,
+    Type, TypeReference,
 };
 
 #[proc_macro_attribute]
@@ -45,10 +45,23 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #block }
     };
 
+    // By default Tokio uses a single threaded runtime, which is fine for most of our
+    // tests (as on web our application will run in a single threaded environment anyway !).
+    //
+    // However multi-threaded might still be useful when testing the mountpoint (typically
+    // to debug deadlocks in the tests due to unexpected blocking code in `tokio::fs` API).
+    let tokio_flavor = match attributes.tokio_flavor {
+        Some(tokio_flavor) => quote!(, flavor = #tokio_flavor),
+        None => quote!(),
+    };
+    let tokio_worker_threads = match attributes.tokio_worker_threads {
+        Some(tokio_worker_threads) => quote!(, worker_threads = #tokio_worker_threads),
+        None => quote!(),
+    };
     let tokio_decorator = sig
         .asyncness
         .map(|_| quote! {
-            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_lite::tokio::test(crate = "::libparsec_tests_lite::tokio"))]
+            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_lite::tokio::test(crate = "::libparsec_tests_lite::tokio" #tokio_flavor #tokio_worker_threads))]
         })
         .into_iter();
     let attrs = parsec_test_item.attrs;
@@ -121,6 +134,8 @@ fn validate_testbed_argument_name(typed: &syn::PatType) -> Result<(), TokenStrea
 struct Attributes {
     testbed: Option<LitStr>,
     with_server: bool,
+    tokio_flavor: Option<LitStr>,
+    tokio_worker_threads: Option<LitInt>,
 }
 
 impl Attributes {
@@ -130,6 +145,12 @@ impl Attributes {
             Ok(())
         } else if meta.path.is_ident("with_server") {
             self.with_server = true;
+            Ok(())
+        } else if meta.path.is_ident("tokio_flavor") {
+            self.tokio_flavor = Some(meta.value()?.parse::<LitStr>()?);
+            Ok(())
+        } else if meta.path.is_ident("tokio_worker_threads") {
+            self.tokio_worker_threads = Some(meta.value()?.parse::<LitInt>()?);
             Ok(())
         } else {
             Err(meta.error("unsupported parsec_test property"))
