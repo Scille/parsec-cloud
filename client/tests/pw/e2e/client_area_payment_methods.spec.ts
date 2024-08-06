@@ -11,9 +11,12 @@ import { DateTime } from 'luxon';
   { fail: false, setDefault: { set: true, fail: true } },
 ].forEach(({ fail, setDefault }) => {
   msTest(`Add payment method Fail(${fail}) SetDefault(${setDefault.set}) SetDefaultFail(${setDefault.fail})`, async ({ clientArea }) => {
-    await MockBms.mockBillingDetails(clientArea, { includeCard: true });
-    await MockBms.mockAddPaymentMethod(clientArea, fail);
-    await MockBms.mockSetDefaultPaymentMethod(clientArea, setDefault.fail);
+    await MockBms.mockBillingDetails(clientArea);
+    await MockBms.mockAddPaymentMethod(clientArea, fail ? { errors: { status: 401, attribute: 'payment_method' } } : undefined);
+    await MockBms.mockSetDefaultPaymentMethod(
+      clientArea,
+      setDefault.fail ? { errors: { status: 401, attribute: 'payment_method' } } : undefined,
+    );
 
     const title = clientArea.locator('.header-content').locator('.header-title');
     await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
