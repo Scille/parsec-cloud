@@ -83,7 +83,7 @@ import {
 import { onMounted, ref, computed, inject } from 'vue';
 import { MsStripeCardDetails, PaymentMethod as MsPaymentMethod, MsModalResult } from 'megashark-lib';
 import { IonButton, IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
-import CreditCardModal from '@/views/client-area/CreditCardModal.vue';
+import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 

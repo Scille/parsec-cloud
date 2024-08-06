@@ -39,7 +39,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: `/${Routes.ClientAreaLogin}`,
     name: Routes.ClientAreaLogin,
-    component: () => import('@/views/client-area/AuthenticationPage.vue'),
+    component: () => import('@/views/client-area/ClientAreaLoginPage.vue'),
   },
   {
     path: `/${Routes.ClientArea}`,

@@ -45,10 +45,10 @@ import {
   Translatable,
 } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
-import AuthenticationModal from '@/views/client-area/AuthenticationModal.vue';
-// import SecurityModal from '@/views/client-area/SecurityModal.vue';
-import PersonalInfoModal from '@/views/client-area/PersonalInfoModal.vue';
-import ProfessionalInfoModal from '@/views/client-area/ProfessionalInfoModal.vue';
+import AuthenticationModal from '@/views/client-area/personal-data/AuthenticationModal.vue';
+// import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
+import PersonalInfoModal from '@/views/client-area/personal-data/PersonalInfoModal.vue';
+import ProfessionalInfoModal from '@/views/client-area/personal-data/ProfessionalInfoModal.vue';
 
 const personalData = ref<PersonalInformationResultData | null>(null);
 const isRepresentingCompany = computed(() => !!personalData.value?.company && !!personalData.value?.job);
