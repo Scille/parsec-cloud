@@ -9,13 +9,37 @@
       </ion-title>
       <div
         class="invoices-header-filter"
-        v-if="!invoices"
+        v-if="invoices"
       >
-        <ion-text class="body-lg">
+        <!-- year filter -->
+        <ion-text
+          class="invoices-header-filter-button button-medium"
+          @click="openYearFilterPopover($event)"
+        >
+          <ion-icon
+            :icon="calendar"
+            class="invoices-header-filter-button__calendar"
+          />
           {{ $msTranslate('clientArea.invoices.filter.year') }}
+          <ion-icon
+            class="invoices-header-filter-button__chevron"
+            :icon="chevronDown"
+          />
         </ion-text>
-        <ion-text class="body-lg">
+        <!-- month filter -->
+        <ion-text
+          class="invoices-header-filter-button button-medium"
+          @click="openMonthFilterPopover($event)"
+        >
+          <ion-icon
+            :icon="calendar"
+            class="invoices-header-filter-button__calendar"
+          />
           {{ $msTranslate('clientArea.invoices.filter.month') }}
+          <ion-icon
+            class="invoices-header-filter-button__chevron"
+            :icon="chevronDown"
+          />
         </ion-text>
       </div>
     </div>
@@ -139,10 +163,12 @@
 </template>
 
 <script setup lang="ts">
-import { download, chevronDown } from 'ionicons/icons';
-import { IonText, IonTitle, IonList, IonItem, IonSkeletonText, IonIcon } from '@ionic/vue';
+import { download, chevronDown, calendar } from 'ionicons/icons';
+import { IonText, IonTitle, IonList, IonItem, IonSkeletonText, IonIcon, popoverController } from '@ionic/vue';
 import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/services/bms';
+import TimeFilterPopover from '@/components/bms/TimeFilterPopover.vue';
 import { ref, onMounted } from 'vue';
+import { Info } from 'luxon';
 
 defineProps<{
   organization: BmsOrganization;
@@ -151,9 +177,45 @@ defineProps<{
 const invoices = ref<Array<BmsInvoice>>([]);
 const isVisible = ref(true);
 const years = ref<Array<number>>([]);
+const months = ref(Info.months('short'));
 
 function toggleVisibility() : void {
   isVisible.value = !isVisible.value;
+}
+
+async function openYearFilterPopover(event: Event): Promise<void> {
+  event.stopPropagation();
+  const popover = await popoverController.create({
+    component: TimeFilterPopover,
+    alignment: 'end',
+    event: event,
+    cssClass: 'time-filter-popover',
+    showBackdrop: false,
+    componentProps: {
+      times: years.value,
+    },
+  });
+  await popover.present();
+  const result = await popover.onDidDismiss();
+  console.log(result);
+  await popover.dismiss();
+}
+
+async function openMonthFilterPopover(event: Event): Promise<void> {
+  event.stopPropagation();
+  const popover = await popoverController.create({
+    component: TimeFilterPopover,
+    alignment: 'end',
+    event: event,
+    cssClass: 'time-filter-popover',
+    showBackdrop: false,
+    componentProps: {
+      times: months.value,
+    },
+  });
+  await popover.present();
+  const { role, data } = await popover.onDidDismiss();
+  await popover.dismiss();
 }
 
 onMounted(async () => {
@@ -173,6 +235,10 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
 </script>
 
 <style scoped lang="scss">
+* {
+  transition: all 0.20s ease;
+}
+
 .client-page-invoices {
   display: flex;
   flex-direction: column;
@@ -191,6 +257,37 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
     display: flex;
     gap: 0.5rem;
     align-items: center;
+
+    &-button {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--parsec-color-light-secondary-hard-grey);
+      padding: 0.375rem 0.625rem;
+      border-radius: var(--parsec-radius-6);
+      cursor: pointer;
+
+      &__calendar {
+        color: var(--parsec-color-light-secondary-light);
+      }
+
+      &__chevron {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+
+      &:hover {
+        color: var(--parsec-color-light-secondary-text);
+        background: var(--parsec-color-light-primary-100);
+
+        .invoices-header-filter-button__calendar {
+          color: var(--parsec-color-light-primary-700);
+        }
+
+        .invoices-header-filter-button__chevron {
+          color: var(--parsec-color-light-secondary-text);
+        }
+      }
+    }
   }
 }
 
@@ -198,6 +295,7 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  position: relative;
 }
 
 .invoices-year {
@@ -205,14 +303,13 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
   flex-direction: column;
   padding: 0.5rem;
   margin-top: 0.5rem;
-  border-radius: var(--parsec-radius-8);
+  border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-premiere);
   --max-width-date: 12rem;
   --max-width-number: 12rem;
   --max-width-organization: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
-  position: relative;
 
   &:last-of-type {
     margin-bottom: 3rem;
@@ -297,7 +394,7 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
     background: none;
     margin-bottom: 0.5rem;
     position: sticky;
-    top: 0.8rem;
+    top: 0rem;
     background: var(--parsec-color-light-secondary-premiere);
     z-index: 2;
 
