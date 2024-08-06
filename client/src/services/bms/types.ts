@@ -215,6 +215,11 @@ interface UpdatePasswordQueryData extends _UserQueryData {
   lang: string;
 }
 
+interface UpdateAuthenticationQueryData extends _UserQueryData {
+  password: string;
+  newPassword: string;
+}
+
 interface CreateOrganizationQueryData extends _ClientQueryData {
   organizationName: string;
 }
@@ -243,12 +248,6 @@ interface SetDefaultPaymentMethodQueryData extends _ClientQueryData {
 
 interface DeletePaymentMethodQueryData extends _ClientQueryData {
   paymentMethod: string;
-}
-
-interface UpdateAuthenticationQueryData {
-  userId: string;
-  password: string;
-  newPassword: string;
 }
 
 export {

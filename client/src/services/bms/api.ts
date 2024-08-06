@@ -174,6 +174,29 @@ async function updatePassword(token: AuthenticationToken, data: UpdatePasswordQu
   });
 }
 
+async function updateAuthentication(token: AuthenticationToken, data: UpdateAuthenticationQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${data.userId}/update_authentication`,
+      {
+        password: data.password,
+        // eslint-disable-next-line camelcase
+        new_password: data.newPassword,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 204,
+      },
+    );
+
+    return {
+      type: DataType.UpdateAuthentication,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 async function createOrganization(token: AuthenticationToken, query: CreateOrganizationQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -397,29 +420,6 @@ async function deletePaymentMethod(token: AuthenticationToken, query: DeletePaym
 
     return {
       type: DataType.DeletePaymentMethod,
-      status: axiosResponse.status,
-      isError: false,
-    };
-  });
-}
-
-async function updateAuthentication(token: AuthenticationToken, query: UpdateAuthenticationQueryData): Promise<BmsResponse> {
-  return wrapQuery(async () => {
-    const axiosResponse = await http.getInstance().post(
-      `/users/${query.userId}/update_authentication`,
-      {
-        password: query.password,
-        // eslint-disable-next-line camelcase
-        new_password: query.newPassword,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        validateStatus: (status) => status === 204,
-      },
-    );
-
-    return {
-      type: DataType.UpdateAuthentication,
       status: axiosResponse.status,
       isError: false,
     };

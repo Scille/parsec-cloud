@@ -46,7 +46,7 @@ import {
 } from 'megashark-lib';
 import { computed, onMounted, ref } from 'vue';
 import AuthenticationModal from '@/views/client-area/personal-data/AuthenticationModal.vue';
-// import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
+import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
 import PersonalInfoModal from '@/views/client-area/personal-data/PersonalInfoModal.vue';
 import ProfessionalInfoModal from '@/views/client-area/personal-data/ProfessionalInfoModal.vue';
 
@@ -156,15 +156,12 @@ async function openAuthenticationModal(): Promise<void> {
 }
 
 async function openSecurityModal(): Promise<void> {
-  // await openModal({
-  //   component: SecurityModal,
-  //   canDismiss: true,
-  //   cssClass: 'security-modal',
-  //   backdropDismiss: false,
-  //   componentProps: {
-  //     email: personalData.value?.email,
-  //   },
-  // });
+  await openModal({
+    component: SecurityModal,
+    canDismiss: true,
+    cssClass: 'security-modal',
+    backdropDismiss: false,
+  });
 }
 
 async function openPersonalInfoModal(): Promise<void> {
