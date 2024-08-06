@@ -13,8 +13,12 @@
           class="logo-img"
         />
       </div>
-      <div
-        class="topbar-left__version body"
+      <!-- back button -->
+      <ion-button
+        slot="icon-only"
+        id="trigger-version-button"
+        class="topbar-buttons__item body"
+        fill="clear"
         @click="$emit('aboutClick')"
         v-if="!showBackButton"
       >
@@ -23,10 +27,18 @@
           :icon="informationCircle"
           size="small"
         />
-        <span class="version-text">
-          {{ APP_VERSION }}
-        </span>
-      </div>
+      </ion-button>
+      <!-- update button -->
+      <ion-button
+        v-if="updateAvailability !== null && !showBackButton"
+        class="topbar-buttons__item"
+        id="trigger-update-button"
+        fill="clear"
+        @click="update()"
+      >
+        <ion-icon :icon="sparkles" />
+        {{ $msTranslate('notificationCenter.newVersionAvailable') }}
+      </ion-button>
       <ion-button
         @click="$emit('backClick')"
         v-if="showBackButton"
@@ -40,29 +52,32 @@
       </ion-button>
     </div>
     <div class="topbar-right">
-      <ion-buttons class="topbar-right-buttons">
+      <ion-buttons class="topbar-buttons">
+        <!-- contact button -->
         <ion-button
-          class="topbar-right-buttons__item"
+          class="topbar-buttons__item"
           :disabled="true"
         >
           <ion-icon :icon="chatbubbles" />
           {{ $msTranslate('HomePage.topbar.contactUs') }}
         </ion-button>
+        <!-- settings button -->
         <ion-button
-          slot="icon-only"
           id="trigger-settings-button"
-          class="topbar-right-buttons__item"
+          class="topbar-buttons__item"
           @click="$emit('settingsClick')"
         >
           <ion-icon :icon="cog" />
           {{ $msTranslate('HomePage.topbar.settings') }}
         </ion-button>
+        <!-- customer area button -->
         <ion-button
-          fill="solid"
+          class="topbar-buttons__item"
+          id="trigger-customer-area-button"
           v-show="!isElectron()"
-          @click="goToClientArea"
+          @click="$emit('customerAreaClick')"
         >
-          Customer Area
+          {{ $msTranslate('HomePage.topbar.customerArea') }}
         </ion-button>
       </ion-buttons>
     </div>
@@ -70,12 +85,44 @@
 </template>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/common/mocks';
 import { LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
-import { arrowBack, chatbubbles, cog, informationCircle } from 'ionicons/icons';
-import { navigateTo, Routes } from '@/router';
+import { arrowBack, chatbubbles, cog, informationCircle, sparkles } from 'ionicons/icons';
 import { isElectron } from '@/parsec';
+import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { Answer, askQuestion } from 'megashark-lib';
+import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
+
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const eventDistributor = injectionProvider.getDefault().eventDistributor;
+let eventCbId: string | null = null;
+const updateAvailability: Ref<UpdateAvailabilityData | null> = ref(null);
+
+onMounted(async () => {
+  eventCbId = await eventDistributor.registerCallback(Events.UpdateAvailability, async (event: Events, data?: EventData) => {
+    if (event === Events.UpdateAvailability) {
+      updateAvailability.value = data as UpdateAvailabilityData;
+    }
+  });
+  window.electronAPI.getUpdateAvailability();
+});
+
+onUnmounted(async () => {
+  if (eventCbId) {
+    eventDistributor.removeCallback(eventCbId);
+  }
+});
+
+async function update(): Promise<void> {
+  const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
+    yesText: 'HomePage.topbar.updateYes',
+    noText: 'HomePage.topbar.updateNo',
+  });
+  if (answer === Answer.Yes) {
+    window.electronAPI.prepareUpdate();
+  }
+}
 
 defineProps<{
   showBackButton: boolean;
@@ -85,11 +132,8 @@ defineEmits<{
   (e: 'settingsClick'): void;
   (e: 'aboutClick'): void;
   (e: 'backClick'): void;
+  (e: 'customerAreaClick'): void;
 }>();
-
-async function goToClientArea(): Promise<void> {
-  await navigateTo(Routes.ClientAreaLogin);
-}
 </script>
 
 <style lang="scss" scoped>
@@ -143,67 +187,75 @@ async function goToClientArea(): Promise<void> {
       }
     }
   }
-
-  &__version {
-    cursor: pointer;
-    color: var(--parsec-color-light-secondary-premiere);
-    padding: 0.5rem 0.75rem;
-    border-radius: var(--parsec-radius-32);
-    border: 1px solid var(--parsec-color-light-primary-30-opacity15);
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    transition: all 150ms linear;
-
-    .version-text {
-      line-height: 0;
-    }
-
-    ion-icon {
-      font-size: 1.375rem;
-    }
-
-    &:hover {
-      border-color: var(--parsec-color-light-primary-100);
-    }
-  }
 }
 
 .topbar-right {
   display: flex;
   justify-content: flex-end;
   width: 100%;
+}
 
-  &-buttons {
-    display: flex;
-    gap: 1rem;
+.topbar-buttons {
+  display: flex;
+  gap: 1rem;
 
-    &__item {
-      background: var(--parsec-color-light-primary-30-opacity15);
-      color: var(--parsec-color-light-secondary-white);
-      border-radius: var(--parsec-radius-32);
-      transition: all 150ms linear;
+  &:hover {
+    border-color: var(--parsec-color-light-primary-100);
+  }
+}
 
-      &::part(native) {
-        --background-hover: none;
-        border-radius: var(--parsec-radius-32);
-        padding: 0.5rem 0.75rem;
-      }
+.topbar-buttons__item {
+  background: var(--parsec-color-light-primary-30-opacity15);
+  color: var(--parsec-color-light-secondary-white);
+  border-radius: var(--parsec-radius-32);
+  transition: all 150ms linear;
 
-      &:hover {
-        background: var(--parsec-color-light-primary-100);
-        color: var(--parsec-color-light-primary-600);
-        box-shadow: var(--parsec-shadow-strong);
-      }
+  &::part(native) {
+    --background-hover: none;
+    border-radius: var(--parsec-radius-32);
+    padding: 0.5rem 0.75rem;
+  }
 
-      ion-icon {
-        font-size: 1.25rem;
-        margin-right: 0.5rem;
-      }
-    }
+  &:hover {
+    background: var(--parsec-color-light-primary-100);
+    color: var(--parsec-color-light-primary-600);
+    box-shadow: var(--parsec-shadow-strong);
+  }
+
+  ion-icon {
+    font-size: 1.25rem;
+    margin-right: 0.5rem;
+  }
+
+  &#trigger-customer-area-button {
+    background: var(--parsec-color-light-secondary-white);
+    color: var(--parsec-color-light-primary-600);
+    align-self: stretch;
 
     &:hover {
-      border-color: var(--parsec-color-light-primary-100);
+      background: var(--parsec-color-light-secondary-premiere);
+      outline: 1px solid var(--parsec-color-light-primary-100);
+      outline-offset: 2px;
+    }
+  }
+
+  &#trigger-version-button {
+    ion-icon {
+      margin: 0;
+    }
+  }
+
+  &#trigger-update-button {
+    background: linear-gradient(217deg, var(--parsec-color-light-primary-700), var(--parsec-color-light-primary-600)),
+      linear-gradient(127deg, var(--parsec-color-light-primary-100), var(--parsec-color-light-primary-300));
+    color: var(--parsec-color-light-secondary-white);
+    align-self: stretch;
+    transition: all 150ms linear;
+    outline: 0px solid var(--parsec-color-light-primary-700);
+
+    &:hover {
+      outline-width: 1px;
+      outline-offset: 2px;
     }
   }
 }

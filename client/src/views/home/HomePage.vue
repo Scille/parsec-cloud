@@ -16,11 +16,11 @@
             @settings-click="openSettingsModal"
             @about-click="openAboutModal"
             @back-click="backToOrganizations"
-            :show-back-button="state === HomePageState.Login || state === HomePageState.ForgottenPassword"
+            @customer-area-click="goToCustomerAreaLogin"
+            :show-back-button="
+              state === HomePageState.Login || state === HomePageState.ForgottenPassword || state === HomePageState.CustomerArea
+            "
           />
-          <div class="banner-container">
-            <update-banner />
-          </div>
           <slide-horizontal
             :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
             :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
@@ -33,6 +33,9 @@
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
               />
+            </template>
+            <template v-if="state === HomePageState.CustomerArea">
+              <authentication-page />
             </template>
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
               <import-recovery-device-page
@@ -95,12 +98,13 @@ import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
-import UpdateBanner from '@/components/notifications/UpdateBanner.vue';
+import AuthenticationPage from '@/views/client-area/AuthenticationPage.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
   Login = 'login',
   ForgottenPassword = 'forgotten-password',
+  CustomerArea = 'customer-area',
 }
 
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -402,6 +406,10 @@ async function openAboutModal(): Promise<void> {
   await modal.dismiss();
 }
 
+async function goToCustomerAreaLogin(): Promise<void> {
+  state.value = HomePageState.CustomerArea;
+}
+
 async function onJoinOrganizationClicked(): Promise<void> {
   const link = await getTextFromUser({
     title: 'JoinByLinkModal.pageTitle',
@@ -452,29 +460,6 @@ async function onJoinOrganizationClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     position: relative;
-
-    .banner-container {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-      margin-top: 5rem;
-    }
   }
-}
-
-// login view
-
-.login-fullscreen {
-  width: 100%;
-  margin: auto;
-}
-
-// login view
-
-.login-fullscreen {
-  width: 100%;
-  margin: auto;
 }
 </style>

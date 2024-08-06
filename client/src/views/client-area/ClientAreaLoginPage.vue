@@ -1,20 +1,18 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page>
-    <ion-content :fullscreen="true">
-      <bms-login
-        @login-success="onLoginSuccess"
-        v-show="!loginInProgress"
-        :hide-header="true"
-      />
-      <ms-spinner v-show="loginInProgress" />
-    </ion-content>
-  </ion-page>
+  <div class="saas-login-container">
+    <bms-login
+      @login-success="onLoginSuccess"
+      v-show="!loginInProgress"
+      :hide-header="true"
+      class="saas-login"
+    />
+    <ms-spinner v-show="loginInProgress" />
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent } from '@ionic/vue';
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import { AuthenticationToken, PersonalInformationResultData } from '@/services/bms';
 import { ref, onMounted } from 'vue';
@@ -37,4 +35,24 @@ async function goToClientArea(): Promise<void> {
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.saas-login-container {
+  display: flex;
+  height: 100vh;
+  width: 100%;
+  max-width: 48rem;
+  max-height: 32rem;
+  margin: auto;
+}
+
+.saas-login {
+  overflow: hidden;
+
+  border-radius: var(--parsec-radius-12);
+  overflow: hidden;
+
+  &::before {
+    z-index: 0;
+  }
+}
+</style>

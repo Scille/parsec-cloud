@@ -56,7 +56,6 @@ defineEmits<{
   gap: 1rem;
 
   &__title {
-    padding: 0;
     color: var(--parsec-color-light-primary-800);
   }
 

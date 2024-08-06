@@ -140,7 +140,7 @@ defineExpose({
   height: auto;
   width: 100%;
   max-width: 25rem;
-  margin: 0 auto;
+  margin: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
