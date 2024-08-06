@@ -7,16 +7,13 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct InviteDevice {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct InviteDevice {}
+);
 
 pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
-    let InviteDevice {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
-    } = invite_device;
+    let InviteDevice { device, config_dir } = invite_device;
     log::trace!(
         "Inviting a device (confdir={}, device={})",
         config_dir.display(),

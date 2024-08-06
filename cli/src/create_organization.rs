@@ -6,14 +6,14 @@ use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct CreateOrganization {
-    /// OrganizationID
-    #[arg(short, long)]
-    organization_id: OrganizationID,
-    #[clap(flatten)]
-    server: ServerSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = addr, token]
+    pub struct CreateOrganization {
+        /// OrganizationID
+        #[arg(short, long)]
+        organization_id: OrganizationID,
+    }
+);
 
 #[derive(serde::Deserialize)]
 #[serde(untagged)]
@@ -69,7 +69,8 @@ pub async fn create_organization_req(
 pub async fn create_organization(create_organization: CreateOrganization) -> anyhow::Result<()> {
     let CreateOrganization {
         organization_id,
-        server: ServerSharedOpts { addr, token },
+        token,
+        addr,
     } = create_organization;
     log::trace!("Creating organization \"{organization_id}\" (addr={addr})");
 

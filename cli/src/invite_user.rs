@@ -7,23 +7,24 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct InviteUser {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-    /// Claimer email (i.e.: The invitee)
-    #[arg(short, long)]
-    email: String,
-    /// Send email to the invitee
-    #[arg(short, long, default_value_t)]
-    send_email: bool,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct InviteUser {
+        /// Claimer email (i.e.: The invitee)
+        #[arg(short, long)]
+        email: String,
+        /// Send email to the invitee
+        #[arg(short, long, default_value_t)]
+        send_email: bool,
+    }
+);
 
 pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
     let InviteUser {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
         email,
         send_email,
+        device,
+        config_dir,
     } = invite_user;
     log::trace!(
         "Inviting an user (confdir={}, device={})",

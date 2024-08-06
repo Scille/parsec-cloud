@@ -6,25 +6,25 @@ use libparsec::{load_recovery_device, DeviceAccessStrategy};
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct ImportRecoveryDevice {
-    #[clap(flatten)]
-    config: ConfigSharedOpts,
-    /// Recovery file
-    #[arg(short, long)]
-    input: PathBuf,
-    /// Passphrase
-    #[arg(short, long)]
-    passphrase: String,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir]
+    pub struct ImportRecoveryDevice {
+        /// Recovery file
+        #[arg(short, long)]
+        input: PathBuf,
+        /// Passphrase
+        #[arg(short, long)]
+        passphrase: String,
+    }
+);
 
 pub async fn import_recovery_device(
     import_recovery_device: ImportRecoveryDevice,
 ) -> anyhow::Result<()> {
     let ImportRecoveryDevice {
-        config: ConfigSharedOpts { config_dir },
         input,
         passphrase,
+        config_dir,
     } = import_recovery_device;
     log::trace!(
         "Importing recovery device from {} (confdir={})",

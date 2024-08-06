@@ -15,19 +15,20 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct GreetInvitation {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-    /// Invitation token
-    #[arg(short, long, value_parser = InvitationToken::from_hex)]
-    token: InvitationToken,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct GreetInvitation {
+        /// Invitation token
+        #[arg(short, long, value_parser = InvitationToken::from_hex)]
+        token: InvitationToken,
+    }
+);
 
 pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Result<()> {
     let GreetInvitation {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
+        device,
+        config_dir,
     } = greet_invitation;
     log::trace!(
         "Greeting invitation (confdir={}, device={})",

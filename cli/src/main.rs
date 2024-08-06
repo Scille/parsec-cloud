@@ -14,6 +14,7 @@ mod list_devices;
 mod list_invitations;
 mod list_users;
 mod list_workspaces;
+mod macro_opts;
 mod remove_device;
 #[cfg(feature = "testenv")]
 mod run_testenv;

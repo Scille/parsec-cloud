@@ -7,19 +7,20 @@ use libparsec::{
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct CancelInvitation {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-    /// Invitation token
-    #[arg(short, long, value_parser = InvitationToken::from_hex)]
-    token: InvitationToken,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct CancelInvitation {
+        /// Invitation token
+        #[arg(short, long, value_parser = InvitationToken::from_hex)]
+        token: InvitationToken,
+    }
+);
 
 pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::Result<()> {
     let CancelInvitation {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
         token,
+        device,
+        config_dir,
     } = cancel_invitation;
     log::trace!(
         "Cancelling invitation (confdir={}, device={})",

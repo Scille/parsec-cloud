@@ -2,16 +2,13 @@
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct RemoveDevice {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct RemoveDevice {}
+);
 
 pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
-    let RemoveDevice {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
-    } = remove_device;
+    let RemoveDevice { device, config_dir } = remove_device;
     log::trace!(
         "Removing device {device} (confdir={})",
         config_dir.display(),

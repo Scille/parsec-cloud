@@ -5,16 +5,14 @@ use serde_json::Value;
 
 use libparsec::{OrganizationID, ParsecAddr};
 
-use crate::utils::ServerSharedOpts;
-
-#[derive(clap::Parser)]
-pub struct StatsOrganization {
-    /// OrganizationID
-    #[arg(short, long)]
-    organization_id: OrganizationID,
-    #[clap(flatten)]
-    server: ServerSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = addr, token]
+    pub struct StatsOrganization {
+        /// OrganizationID
+        #[arg(short, long)]
+        organization_id: OrganizationID,
+    }
+);
 
 pub async fn stats_organization_req(
     organization_id: &OrganizationID,
@@ -37,7 +35,8 @@ pub async fn stats_organization_req(
 pub async fn stats_organization(stats_organization: StatsOrganization) -> anyhow::Result<()> {
     let StatsOrganization {
         organization_id,
-        server: ServerSharedOpts { addr, token },
+        token,
+        addr,
     } = stats_organization;
     log::trace!("Retrieving stats for organization {organization_id} (addr={addr})");
 

@@ -4,14 +4,13 @@ use libparsec::list_available_devices;
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct ListDevices {
-    #[clap(flatten)]
-    config: ConfigSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir]
+    pub struct ListDevices {}
+);
 
 pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
-    let config_dir = list_devices.config.config_dir;
+    let config_dir = list_devices.config_dir;
     log::trace!("Listing devices under {}", config_dir.display());
     let devices = list_available_devices(&config_dir).await;
     let config_dir_str = config_dir.to_string_lossy();
