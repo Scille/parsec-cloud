@@ -5,7 +5,7 @@ describe('Check about modal', () => {
     cy.visitApp('coolorg');
     cy.contains('Your organizations');
     // Should force the click because the element is not visible on script execution
-    cy.get('.version-text').click({ force: true });
+    cy.get('#trigger-version-button').click({ force: true });
   });
 
   afterEach(() => {
