@@ -102,6 +102,7 @@
             "settings": "Settings",
             "contactUs": "Contact us",
             "logout": "Log out",
+            "customerArea": "Customer area",
             "help": "Help and feedback",
             "myProfile": "My profile",
             "logoutConfirmTitle": "Log out",
@@ -1162,7 +1163,8 @@
     },
     "clientArea": {
         "app": {
-            "title": "Link you customer account to your new organization",
+            "titleLinkOrganization": "Link you customer account to your new organization",
+            "titleLogin": "Log in to your customer account",
             "emailLabel": "Email",
             "password": "Password",
             "forgottenPassword": "Forgot your password?",

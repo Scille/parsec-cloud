@@ -1,13 +1,19 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page class="saas-login">
+  <div class="saas-login">
     <div class="saas-login-container">
       <create-organization-modal-header
         v-if="!hideHeader"
         @close-clicked="$emit('closeRequested')"
-        title="clientArea.app.title"
+        title="clientArea.app.titleLinkOrganization"
       />
+      <ion-text
+        v-else
+        class="saas-login__title title-h2"
+      >
+        {{ $msTranslate('clientArea.app.titleLogin') }}
+      </ion-text>
 
       <div class="saas-login-content">
         <!-- email -->
@@ -138,11 +144,11 @@
         alt="mockup"
       />
     </div>
-  </ion-page>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
+import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
 import { warning } from 'ionicons/icons';
@@ -213,7 +219,7 @@ async function onLoginClicked(): Promise<void> {
 .saas-login {
   display: flex;
   flex-direction: row;
-  height: auto;
+  width: 100%;
   background: var(--parsec-color-light-primary-50);
   position: relative;
   padding: 2.5rem;
@@ -228,11 +234,17 @@ async function onLoginClicked(): Promise<void> {
     z-index: -1;
   }
 
+  &__title {
+    color: var(--parsec-color-light-primary-800);
+    margin-bottom: 2rem;
+  }
+
   &-container {
     display: flex;
     flex-direction: column;
-    width: 100%;
-    width: 22rem;
+    max-width: 22rem;
+    position: relative;
+    z-index: 2;
   }
 
   // include inputs
@@ -337,7 +349,7 @@ async function onLoginClicked(): Promise<void> {
   &-mockup {
     position: absolute;
     right: -0.5rem;
-    bottom: -2rem;
+    bottom: -1rem;
     display: flex;
     align-items: flex-end;
   }

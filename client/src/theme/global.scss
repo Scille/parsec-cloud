@@ -15,6 +15,10 @@
   --overflow: hidden;
 }
 
+ion-title {
+  padding: 0;
+}
+
 .scroll {
   overflow-y: auto;
   padding: 0 2rem;
