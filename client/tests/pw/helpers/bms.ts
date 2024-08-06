@@ -1,47 +1,76 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Page, Route } from '@playwright/test';
-import { DEFAULT_ORGANIZATION_DATA_SLICE, DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
+import {
+  DEFAULT_ORGANIZATION_DATA_SLICE,
+  DEFAULT_ORGANIZATION_INFORMATION,
+  DEFAULT_USER_INFORMATION,
+  UserData,
+} from '@tests/pw/helpers/data';
 import { DateTime } from 'luxon';
 
 async function mockRoute(
   page: Page,
   url: string,
-  methods: Array<string>,
   options: MockRouteOptions | undefined,
   handler: (route: Route) => Promise<void>,
 ): Promise<void> {
+  async function _handleError(route: Route, options: MockMethodOptions): Promise<boolean> {
+    if (options.timeout) {
+      await route.abort('timedout');
+      return true;
+    }
+    if (options.errors) {
+      await route.fulfill({
+        status: options.errors.status ?? 400,
+        json: {
+          type: 'error',
+          errors: [{ code: 'error', attr: options.errors.attribute ?? 'attr', detail: 'Default error' }],
+        },
+      });
+      return true;
+    }
+    return false;
+  }
+
   await page.route(url, async (route) => {
-    if (!methods.some((method) => method.toLowerCase() === route.request().method().toLowerCase())) {
-      await route.continue();
+    const method = route.request().method().toUpperCase();
+
+    if (method === 'GET' && options && options.GET) {
+      if (await _handleError(route, options.GET)) {
+        return;
+      }
+    } else if (method === 'POST' && options && options.POST) {
+      if (await _handleError(route, options.POST)) {
+        return;
+      }
+    } else if (method === 'PUT' && options && options.PUT) {
+      if (await _handleError(route, options.PUT)) {
+        return;
+      }
+    } else if (method === 'PATCH' && options && options.PATCH) {
+      if (await _handleError(route, options.PATCH)) {
+        return;
+      }
     }
 
-    if (options) {
-      if (options.timeout) {
-        await route.abort('timedout');
-        return;
-      }
-      if (options.errors) {
-        await route.fulfill({
-          status: options.errors.status ?? 400,
-          json: {
-            type: 'error',
-            errors: [{ code: 'error', attr: options.errors.attribute ?? 'attr', detail: 'Default error' }],
-          },
-        });
-        return;
-      }
-    }
     await handler(route);
   });
 }
 
-interface MockRouteOptions {
+interface MockMethodOptions {
   timeout?: boolean;
   errors?: {
     attribute?: string;
     status?: number;
   };
+}
+
+interface MockRouteOptions {
+  PATCH?: MockMethodOptions;
+  GET?: MockMethodOptions;
+  PUT?: MockMethodOptions;
+  POST?: MockMethodOptions;
 }
 
 async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> {
@@ -58,7 +87,7 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
   };
   const TOKEN = btoa(JSON.stringify(TOKEN_RAW));
 
-  await mockRoute(page, '**/api/token', ['POST'], options, async (route) => {
+  await mockRoute(page, '**/api/token', options, async (route) => {
     await route.fulfill({
       status: 200,
       json: {
@@ -69,22 +98,49 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
   });
 }
 
-async function mockUserInfo(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, ['GET'], options, async (route) => {
-    await route.fulfill({
-      status: 200,
-      json: {
-        id: DEFAULT_USER_INFORMATION.id,
-        // eslint-disable-next-line camelcase
-        created_at: '2024-07-15T13:21:32.141317Z',
-        email: DEFAULT_USER_INFORMATION.email,
-        client: {
-          firstname: DEFAULT_USER_INFORMATION.firstName,
-          lastname: DEFAULT_USER_INFORMATION.lastName,
-          id: '1337',
+async function mockUserRoute(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, async (route) => {
+    if (route.request().method() === 'GET') {
+      await route.fulfill({
+        status: 200,
+        json: {
+          id: DEFAULT_USER_INFORMATION.id,
+          // eslint-disable-next-line camelcase
+          created_at: '2024-07-15T13:21:32.141317Z',
+          email: UserData.email,
+          client: {
+            firstname: UserData.firstName,
+            lastname: UserData.lastName,
+            id: '1337',
+            job: UserData.job,
+            company: UserData.company,
+            phone: UserData.phone,
+          },
         },
-      },
-    });
+      });
+    } else if (route.request().method() === 'PATCH') {
+      const data = await route.request().postDataJSON();
+      if (data.client) {
+        if (data.client.firstname) {
+          UserData.firstName = data.client.firstname;
+        }
+        if (data.client.lastname) {
+          UserData.lastName = data.client.lastname;
+        }
+        if (data.client.phone) {
+          UserData.phone = data.client.phone;
+        }
+        if (data.client.job || data.client.job === null) {
+          UserData.job = data.client.job;
+        }
+        if (data.client.company || data.client.job === null) {
+          UserData.company = data.client.company;
+        }
+      }
+      await route.fulfill({
+        status: 200,
+      });
+    }
   });
 }
 
@@ -92,7 +148,6 @@ async function mockCreateOrganization(page: Page, bootstrapAddr: string, options
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`,
-    ['POST'],
     options,
     async (route) => {
       await route.fulfill({
@@ -110,7 +165,6 @@ async function mockListOrganizations(page: Page, options?: MockRouteOptions): Pr
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations`,
-    ['GET'],
     options,
     async (route) => {
       await route.fulfill({
@@ -186,7 +240,6 @@ async function mockOrganizationStats(page: Page, overload: MockOrganizationStats
     page,
     // eslint-disable-next-line max-len
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/${DEFAULT_ORGANIZATION_INFORMATION.bmsId}/stats`,
-    ['GET'],
     options,
     async (route) => {
       await route.fulfill({
@@ -228,7 +281,6 @@ async function mockOrganizationStatus(
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/status`,
-    ['GET'],
     options,
     async (route) => {
       await route.fulfill({
@@ -254,7 +306,6 @@ async function mockGetInvoices(page: Page, count: number, options?: MockRouteOpt
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`,
-    ['GET'],
     options,
     async (route) => {
       const BASE_DATE = DateTime.fromISO('1988-04-07');
@@ -293,7 +344,6 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/billing_details`,
-    ['GET'],
     options,
     async (route) => {
       const paymentMethods = [];
@@ -338,7 +388,6 @@ async function mockAddPaymentMethod(page: Page, options?: MockRouteOptions): Pro
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/add_payment_method`,
-    ['PUT'],
     options,
     async (route) => {
       await route.fulfill({
@@ -356,7 +405,6 @@ async function mockSetDefaultPaymentMethod(page: Page, options?: MockRouteOption
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/default_payment_method`,
-    ['PATCH'],
     options,
     async (route) => {
       await route.fulfill({
@@ -374,7 +422,6 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/delete_payment_method`,
-    ['POST'],
     options,
     async (route) => {
       await route.fulfill({
@@ -388,25 +435,29 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
   );
 }
 
-async function mockUpdateUser(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, ['PATCH'], options, async (route) => {
+async function mockUpdateEmail(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, options, async (route) => {
+    const data = await route.request().postDataJSON();
+    if (data.email) {
+      UserData.email = data.email;
+    }
     await route.fulfill({
       status: 200,
     });
   });
 }
 
-async function mockUpdateEmail(page: Page, options?: MockRouteOptions): Promise<void> {
-  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, ['POST'], options, async (route) => {
+async function mockUpdateAuthentication(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_authentication`, options, async (route) => {
     await route.fulfill({
-      status: 200,
+      status: 204,
     });
   });
 }
 
 export const MockBms = {
   mockLogin,
-  mockUserInfo,
+  mockUserRoute,
   mockCreateOrganization,
   mockListOrganizations,
   mockOrganizationStats,
@@ -417,5 +468,5 @@ export const MockBms = {
   mockSetDefaultPaymentMethod,
   mockDeletePaymentMethod,
   mockUpdateEmail,
-  mockUpdateUser,
+  mockUpdateAuthentication,
 };

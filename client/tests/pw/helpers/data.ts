@@ -8,6 +8,9 @@ export const DEFAULT_USER_INFORMATION = {
   lastName: 'Freeman',
   email: 'gordon.freeman@blackmesa.nm',
   password: 'D3@th2N1h1l@nth',
+  job: 'Researcher',
+  company: 'Black Mesa',
+  phone: undefined,
   address: {
     line1: 'Black Mesa Research Facility',
     postalCode: '88201',
@@ -31,3 +34,32 @@ export const DEFAULT_ORGANIZATION_DATA_SLICE = {
   free: 1024 * 1024 * 1024 * 200, // 200 Gb
   paying: 1024 * 1024 * 1024 * 100, // 100 Gb
 };
+
+class _UserData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | undefined;
+  job: string | undefined;
+  company: string | undefined;
+
+  constructor() {
+    this.firstName = DEFAULT_USER_INFORMATION.firstName;
+    this.lastName = DEFAULT_USER_INFORMATION.lastName;
+    this.phone = DEFAULT_USER_INFORMATION.phone;
+    this.email = DEFAULT_USER_INFORMATION.email;
+    this.company = DEFAULT_USER_INFORMATION.company;
+    this.job = DEFAULT_USER_INFORMATION.job;
+  }
+
+  reset(): void {
+    this.firstName = DEFAULT_USER_INFORMATION.firstName;
+    this.lastName = DEFAULT_USER_INFORMATION.lastName;
+    this.phone = DEFAULT_USER_INFORMATION.phone;
+    this.email = DEFAULT_USER_INFORMATION.email;
+    this.company = DEFAULT_USER_INFORMATION.company;
+    this.job = DEFAULT_USER_INFORMATION.job;
+  }
+}
+
+export const UserData = new _UserData();

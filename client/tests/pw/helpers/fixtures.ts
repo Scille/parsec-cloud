@@ -3,7 +3,7 @@
 import { Locator, Page, test as base } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { MockBms } from '@tests/pw/helpers/bms';
-import { DEFAULT_USER_INFORMATION } from '@tests/pw/helpers/data';
+import { DEFAULT_USER_INFORMATION, UserData } from '@tests/pw/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
 import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
 
@@ -125,7 +125,7 @@ export const msTest = base.extend<{
 
   clientArea: async ({ home }, use) => {
     await MockBms.mockLogin(home);
-    await MockBms.mockUserInfo(home);
+    await MockBms.mockUserRoute(home);
     await MockBms.mockListOrganizations(home);
     await MockBms.mockOrganizationStats(home);
     await MockBms.mockOrganizationStatus(home);
@@ -142,4 +142,8 @@ export const msTest = base.extend<{
     await expect(home).toHaveURL(/.+\/clientArea$/);
     await use(home);
   },
+});
+
+msTest.beforeEach(async () => {
+  UserData.reset();
 });

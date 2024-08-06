@@ -70,6 +70,7 @@ async function submit(): Promise<boolean> {
   const response = await BmsAccessInstance.get().updateEmail(newEmailRef.value, passwordRef.value, longLocaleCodeToShort(I18n.getLocale()));
 
   if (response.isError) {
+    error.value = 'globalErrors.unexpected';
     switch (response.status) {
       case 400:
         error.value = 'validators.userInfo.email';
@@ -77,8 +78,6 @@ async function submit(): Promise<boolean> {
       case 403:
         error.value = 'clientArea.personalDataPage.modals.authentication.wrongPassword';
         break;
-      default:
-        error.value = 'globalErrors.unexpected';
     }
     return false;
   }
