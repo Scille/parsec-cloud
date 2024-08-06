@@ -124,13 +124,13 @@ export const msTest = base.extend<{
   },
 
   clientArea: async ({ home }, use) => {
-    await MockBms.mockLogin(home, true);
+    await MockBms.mockLogin(home);
     await MockBms.mockUserInfo(home);
     await MockBms.mockListOrganizations(home);
     await MockBms.mockOrganizationStats(home);
     await MockBms.mockOrganizationStatus(home);
-    await MockBms.mockBillingDetails(home, { includeCard: true, includeSepa: true });
-    await MockBms.mockGetInvoices(home, { count: 2 });
+    await MockBms.mockBillingDetails(home);
+    await MockBms.mockGetInvoices(home, 2);
 
     const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
     await expect(button).toHaveText('Customer Area');

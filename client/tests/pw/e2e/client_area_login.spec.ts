@@ -7,7 +7,7 @@ import { msTest } from '@tests/pw/helpers/fixtures';
 import { answerQuestion, fillIonInput } from '@tests/pw/helpers/utils';
 
 msTest('Log into the customer area', async ({ home }) => {
-  await MockBms.mockLogin(home, true);
+  await MockBms.mockLogin(home);
   await MockBms.mockUserInfo(home);
   await MockBms.mockListOrganizations(home);
 
@@ -33,7 +33,7 @@ msTest('Log into the customer area', async ({ home }) => {
 });
 
 msTest('Log into the customer area failed', async ({ home }) => {
-  await MockBms.mockLogin(home, false);
+  await MockBms.mockLogin(home, { errors: { status: 401, attribute: 'email' } });
   await MockBms.mockUserInfo(home);
   await MockBms.mockListOrganizations(home);
 
@@ -50,11 +50,6 @@ msTest('Log into the customer area failed', async ({ home }) => {
 });
 
 msTest('Switch pages', async ({ clientArea }) => {
-  await MockBms.mockOrganizationStats(clientArea);
-  await MockBms.mockOrganizationStatus(clientArea);
-  await MockBms.mockGetInvoices(clientArea, { count: 2 });
-  await MockBms.mockBillingDetails(clientArea, { includeCard: true });
-
   const pages = [
     { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
     { button: 'Statistics', title: 'Statistics', url: 'statistics' },
