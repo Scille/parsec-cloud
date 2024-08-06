@@ -2,16 +2,13 @@
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct ListWorkspaces {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct ListWorkspaces {}
+);
 
 pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<()> {
-    let ListWorkspaces {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
-    } = list_workspaces;
+    let ListWorkspaces { device, config_dir } = list_workspaces;
     log::trace!(
         "Listing workspaces (confdir={}, device={})",
         config_dir.display(),

@@ -4,19 +4,20 @@ use libparsec::EntryName;
 
 use crate::utils::*;
 
-#[derive(clap::Args)]
-pub struct CreateWorkspace {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-    /// New workspace name
-    #[arg(short, long)]
-    name: EntryName,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct CreateWorkspace {
+        /// New workspace name
+        #[arg(short, long)]
+        name: EntryName,
+    }
+);
 
 pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Result<()> {
     let CreateWorkspace {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
         name,
+        device,
+        config_dir,
     } = create_workspace;
     log::trace!(
         "Creating workspace {name} (confdir={}, device={})",

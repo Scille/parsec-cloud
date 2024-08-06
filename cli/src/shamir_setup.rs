@@ -1,33 +1,28 @@
-use std::{collections::HashMap, path::PathBuf};
+use std::collections::HashMap;
 
-use clap::Args;
-use libparsec::{get_default_config_dir, UserID, UserProfile};
+use libparsec::{UserID, UserProfile};
 
 use crate::utils::{load_client_and_run, start_spinner};
 
-#[derive(Args)]
-pub struct ShamirSetupCreate {
-    /// Parsec config directory
-    #[arg(short, long, default_value_os_t = get_default_config_dir())]
-    config_dir: PathBuf,
-    /// Device ID
-    #[arg(short, long)]
-    device: Option<String>,
-    /// Share recipients, if missing organization's admins will be used instead
-    /// Author must not be included as recipient.
-    /// User email is expected
-    #[arg(short, long,  num_args = 1..)]
-    recipients: Option<Vec<String>>,
-    /// Share weights. Requires Share recipient list.
-    /// Must have the same length as recipients.
-    /// Defaults to one per recipient.
-    #[arg(short, long, requires = "recipients",  num_args = 1..)]
-    weights: Option<Vec<u8>>,
-    /// Threshold number of shares required to proceed with recovery.
-    /// Default to sum of weights. Must be lesser or equal to sum of weights.
-    #[arg(short, long)]
-    threshold: Option<u8>,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct ShamirSetupCreate {
+        /// Share recipients, if missing organization's admins will be used instead
+        /// Author must not be included as recipient.
+        /// User email is expected
+        #[arg(short, long,  num_args = 1..)]
+        recipients: Option<Vec<String>>,
+        /// Share weights. Requires Share recipient list.
+        /// Must have the same length as recipients.
+        /// Defaults to one per recipient.
+        #[arg(short, long, requires = "recipients",  num_args = 1..)]
+        weights: Option<Vec<u8>>,
+        /// Threshold number of shares required to proceed with recovery.
+        /// Default to sum of weights. Must be lesser or equal to sum of weights.
+        #[arg(short, long)]
+        threshold: Option<u8>,
+    }
+);
 
 pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Result<()> {
     let ShamirSetupCreate {

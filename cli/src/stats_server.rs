@@ -5,19 +5,17 @@ use serde_json::Value;
 
 use libparsec::{DateTime, ParsecAddr};
 
-use crate::utils::ServerSharedOpts;
-
-#[derive(clap::Parser)]
-pub struct StatsServer {
-    #[clap(flatten)]
-    server: ServerSharedOpts,
-    /// Output format (json/csv)
-    #[arg(short, long, default_value_t = Format::Json)]
-    format: Format,
-    /// Ignore everything after this date (e.g: 2024-01-01T00:00:00-00:00)
-    #[arg(short, long)]
-    end_date: Option<DateTime>,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = addr, token]
+    pub struct StatsServer {
+        /// Output format (json/csv)
+        #[arg(short, long, default_value_t = Format::Json)]
+        format: Format,
+        /// Ignore everything after this date (e.g: 2024-01-01T00:00:00-00:00)
+        #[arg(short, long)]
+        end_date: Option<DateTime>,
+    }
+);
 
 #[derive(Clone, Copy)]
 pub enum Format {
@@ -70,9 +68,10 @@ pub async fn stats_server_req(
 
 pub async fn stats_server(stats_organization: StatsServer) -> anyhow::Result<()> {
     let StatsServer {
-        server: ServerSharedOpts { addr, token },
         format,
         end_date,
+        token,
+        addr,
     } = stats_organization;
     log::trace!("Retrieving server's stats (addr={addr}, format={format})");
 

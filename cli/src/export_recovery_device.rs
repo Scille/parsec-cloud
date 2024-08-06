@@ -6,21 +6,22 @@ use libparsec::save_recovery_device;
 
 use crate::utils::*;
 
-#[derive(clap::Parser)]
-pub struct ExportRecoveryDevice {
-    #[clap(flatten)]
-    config: ConfigWithDeviceSharedOpts,
-    /// Recovery device output
-    #[arg(short, long)]
-    output: PathBuf,
-}
+crate::clap_parser_with_shared_opts_builder!(
+    #[with = config_dir, device]
+    pub struct ExportRecoveryDevice {
+        /// Recovery device output
+        #[arg(short, long)]
+        output: PathBuf,
+    }
+);
 
 pub async fn export_recovery_device(
     export_recovery_device: ExportRecoveryDevice,
 ) -> anyhow::Result<()> {
     let ExportRecoveryDevice {
-        config: ConfigWithDeviceSharedOpts { config_dir, device },
         output,
+        device,
+        config_dir,
     } = export_recovery_device;
     log::trace!(
         "Exporting recovery device at {} (confdir={}, device={})",
