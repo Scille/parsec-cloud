@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec::list_available_devices;
+use std::{fmt::Write as _, io::Write as _};
 
 use crate::utils::*;
 
@@ -19,8 +20,13 @@ pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
         println!("No devices found in {YELLOW}{config_dir_str}{RESET}");
     } else {
         let n = devices.len();
-        println!("Found {GREEN}{n}{RESET} device(s) in {YELLOW}{config_dir_str}{RESET}:");
-        format_devices(&devices);
+        let mut message = String::new();
+        writeln!(
+            message,
+            "Found {GREEN}{n}{RESET} device(s) in {YELLOW}{config_dir_str}{RESET}:"
+        )?;
+        format_devices(&devices, &mut message)?;
+        std::io::stdout().lock().write_all(message.as_bytes())?;
     }
 
     Ok(())
