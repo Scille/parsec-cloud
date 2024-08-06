@@ -388,6 +388,22 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
   );
 }
 
+async function mockUpdateUser(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, ['PATCH'], options, async (route) => {
+    await route.fulfill({
+      status: 200,
+    });
+  });
+}
+
+async function mockUpdateEmail(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, ['POST'], options, async (route) => {
+    await route.fulfill({
+      status: 200,
+    });
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserInfo,
@@ -400,4 +416,6 @@ export const MockBms = {
   mockAddPaymentMethod,
   mockSetDefaultPaymentMethod,
   mockDeletePaymentMethod,
+  mockUpdateEmail,
+  mockUpdateUser,
 };
