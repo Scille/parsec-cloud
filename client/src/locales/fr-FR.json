@@ -1282,14 +1282,20 @@
                     "nextButton": "Continuer"
                 },
                 "security": {
-                    "title": "Modifier votre mot de passe",
-                    "password": "Mot de passe",
-                    "confirmPassword": "Confirmation de mot de passe",
-                    "wrongPassword": "Le mot de passe est incorrect.",
-                    "noEmptyFields": "Aucun champ ne doit être vide.",
-                    "newPasswordMustBeDifferent": "Le nouveau mot de passe doit être différent de l'actuel.",
-                    "success": "Le mot de passe a bien été mise à jour.",
-                    "nextButton": "Continuer"
+                    "passwordStep": {
+                        "title": "Saisir votre mot de passe actuel",
+                        "password": "Mot de passe actuel",
+                        "wrongPassword": "Le mot de passe est incorrect.",
+                        "nextButton": "Continuer"
+                    },
+                    "newPasswordStep": {
+                        "title": "Choisir votre nouveau mot de passe",
+                        "newPasswordMustBeDifferent": "Le nouveau mot de passe doit être différent de l'actuel.",
+                        "invalidPassword": "Le format du nouveau mot de passe est invalide.",
+                        "success": "Le mot de passe a bien été mise à jour.",
+                        "previousButton": "Retour",
+                        "nextButton": "Confirmer"
+                    }
                 }
             }
         },

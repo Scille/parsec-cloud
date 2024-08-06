@@ -1282,14 +1282,20 @@
                     "nextButton": "Confirm"
                 },
                 "security": {
-                    "title": "Change your password",
-                    "password": "Password",
-                    "confirmPassword": "Confirm password",
-                    "wrongPassword": "The password is wrong.",
-                    "noEmptyFields": "No field can be empty.",
-                    "newPasswordMustBeDifferent": "The new password must be different from the current one.",
-                    "success": "Password has been updated.",
-                    "nextButton": "Confirm"
+                    "passwordStep": {
+                        "title": "Enter your current password",
+                        "password": "Current password",
+                        "wrongPassword": "The password is wrong.",
+                        "nextButton": "Continue"
+                    },
+                    "newPasswordStep": {
+                        "title": "Choose your new password",
+                        "newPasswordMustBeDifferent": "The new password must be different from the current one.",
+                        "invalidPassword": "The new password format is invalid.",
+                        "success": "Password has been updated.",
+                        "previousButton": "Back",
+                        "nextButton": "Confirm"
+                    }
                 }
             }
         },

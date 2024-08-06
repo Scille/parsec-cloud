@@ -142,6 +142,17 @@ class BmsAccess {
     });
   }
 
+  async updateAuthentication(password: string, newPassword: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.updateAuthentication(this.tokens.access, {
+      userId: this.customerInformation.id,
+      password: password,
+      newPassword: newPassword,
+    });
+  }
+
   async listOrganizations(): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
@@ -224,17 +235,6 @@ class BmsAccess {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       paymentMethod: paymentMethod,
-    });
-  }
-
-  async updateAuthentication(password: string, newPassword: string): Promise<BmsResponse> {
-    assertLoggedIn(this.tokens);
-    assertLoggedIn(this.customerInformation);
-    await this.ensureFreshToken();
-    return await BmsApi.updateAuthentication(this.tokens.access, {
-      userId: this.customerInformation.id,
-      password: password,
-      newPassword: newPassword,
     });
   }
 
