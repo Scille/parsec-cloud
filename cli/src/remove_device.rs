@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use libparsec::AvailableDevice;
+
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
@@ -15,28 +17,30 @@ pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
         config_dir.display(),
     );
 
-    load_device_file_and_run(config_dir, device, |device| async move {
-        let short_id = &device.device_id.hex()[..3];
-        let organization_id = &device.organization_id;
-        let human_handle = &device.human_handle;
-        let device_label = &device.device_label;
+    let device = load_device_file(&config_dir, device).await?;
 
-        println!("You are about to remove the following device:");
-        println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-        println!("Are you sure? (y/n)");
+    let short_id = &device.device_id.hex()[..3];
+    let AvailableDevice {
+        organization_id,
+        human_handle,
+        device_label,
+        ..
+    } = &device;
 
-        let mut input = String::new();
-        std::io::stdin().read_line(&mut input)?;
+    println!("You are about to remove the following device:");
+    println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
+    println!("Are you sure? (y/n)");
 
-        match input.trim() {
-            "y" => {
-                std::fs::remove_file(&device.key_file_path)?;
-                println!("The device has been removed");
-            }
-            _ => eprintln!("Operation cancelled"),
+    let mut input = String::new();
+    std::io::stdin().read_line(&mut input)?;
+
+    match input.trim() {
+        "y" => {
+            std::fs::remove_file(&device.key_file_path)?;
+            println!("The device has been removed");
         }
+        _ => eprintln!("Operation cancelled"),
+    }
 
-        Ok(())
-    })
-    .await
+    Ok(())
 }

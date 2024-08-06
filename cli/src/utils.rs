@@ -1,10 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    future::Future,
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{fmt::Display, future::Future, path::Path, sync::Arc};
 
 use libparsec::{
     internal::{Client, EventBus},
@@ -23,8 +19,11 @@ pub const RED: &str = "\x1B[91m";
 pub const RESET: &str = "\x1B[39m";
 pub const YELLOW: &str = "\x1B[33m";
 
-pub fn format_devices(devices: &[AvailableDevice]) {
-    let n = devices.len();
+pub fn format_devices(
+    devices: &[AvailableDevice],
+    mut f: impl std::fmt::Write,
+) -> std::fmt::Result {
+    let n: usize = devices.len();
     // Try to shorten the device ID to make it easier to work with
     let short_id_len = 2 + (n + 1).ilog2() as usize;
 
@@ -33,50 +32,94 @@ pub fn format_devices(devices: &[AvailableDevice]) {
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
-        println!("{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}");
-    }
-}
-
-pub async fn load_device_file_and_run<F, Fut>(
-    config_dir: PathBuf,
-    device_short_id: Option<String>,
-    function: F,
-) -> anyhow::Result<()>
-where
-    F: FnOnce(AvailableDevice) -> Fut,
-    Fut: Future<Output = anyhow::Result<()>>,
-{
-    let devices = list_available_devices(&config_dir).await;
-
-    if let Some(device_short_id) = device_short_id {
-        let mut possible_devices = vec![];
-
-        for device in &devices {
-            if device.device_id.hex().starts_with(&device_short_id) {
-                possible_devices.push(device);
-            }
-        }
-
-        match possible_devices.len() {
-            0 => {
-                println!("Device `{device_short_id}` not found, available devices:");
-                format_devices(&devices);
-            }
-            1 => {
-                function(possible_devices[0].clone()).await?;
-            }
-            _ => {
-                println!("Multiple devices found for `{device_short_id}`:");
-                format_devices(&devices);
-            }
-        }
-    } else {
-        println!("Error: Missing option '--device'\n");
-        println!("Available devices:");
-        format_devices(&devices);
+        writeln!(
+            f,
+            "{YELLOW}{short_id}{RESET} - {organization_id}: {human_handle} @ {device_label}"
+        )?;
     }
 
     Ok(())
+}
+
+#[derive(Debug)]
+pub enum LoadDeviceError {
+    /// No device found for the given prefix device ID
+    DeviceNotFound {
+        short_dev_id: String,
+        devices: Vec<AvailableDevice>,
+    },
+    /// Multiple devices found for the same prefix device ID
+    MultipleDevicesFound {
+        short_dev_id: String,
+        devices: Vec<AvailableDevice>,
+    },
+    /// The user did not provide a device ID with the option `--device=<DEVICE_ID>
+    MissingDeviceOption(Vec<AvailableDevice>),
+}
+
+impl std::error::Error for LoadDeviceError {}
+
+impl Display for LoadDeviceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LoadDeviceError::DeviceNotFound {
+                short_dev_id: dev_id,
+                devices,
+            } => {
+                writeln!(f, "Device `{dev_id}` not found, available devices:")?;
+                format_devices(devices, f)?;
+                Ok(())
+            }
+            LoadDeviceError::MultipleDevicesFound {
+                short_dev_id: dev_id,
+                devices,
+            } => {
+                writeln!(f, "Multiple devices found for `{dev_id}`:")?;
+                format_devices(devices, f)?;
+                Ok(())
+            }
+            LoadDeviceError::MissingDeviceOption(devices) => {
+                writeln!(f, "Missing option '--device'\n")?;
+                writeln!(f, "Available devices:")?;
+                format_devices(devices, f)?;
+                Ok(())
+            }
+        }
+    }
+}
+
+pub async fn load_device_file(
+    config_dir: &Path,
+    device_short_id: Option<String>,
+) -> Result<AvailableDevice, LoadDeviceError> {
+    let devices = list_available_devices(config_dir).await;
+
+    if let Some(device_short_id) = device_short_id {
+        let possible_devices = devices
+            .iter()
+            .filter(|device| device.device_id.hex().starts_with(&device_short_id))
+            .collect::<Vec<_>>();
+
+        match possible_devices.len() {
+            0 => Err(LoadDeviceError::DeviceNotFound {
+                short_dev_id: device_short_id,
+                devices,
+            }),
+            1 => Ok(possible_devices[0].clone()),
+            _ => {
+                let possible_devices = possible_devices
+                    .into_iter()
+                    .cloned()
+                    .collect::<Vec<AvailableDevice>>();
+                Err(LoadDeviceError::MultipleDevicesFound {
+                    short_dev_id: device_short_id,
+                    devices: possible_devices,
+                })
+            }
+        }
+    } else {
+        Err(LoadDeviceError::MissingDeviceOption(devices))
+    }
 }
 
 pub async fn load_device_and_run<F, Fut>(
@@ -89,50 +132,50 @@ where
     F: FnOnce(Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_file_and_run(config_dir.to_owned(), device, |device| async move {
-        log::debug!("Loading device {:?}", device.ty);
-        let device = match device.ty {
-            DeviceFileType::Keyring => {
-                return Err(anyhow::anyhow!(
-                    "Unsupported device file authentication `{:?}`",
-                    device.ty
-                ));
-            }
-            DeviceFileType::Password => {
-                let password = read_password(if password_stdin {
-                    ReadPasswordFrom::Stdin
-                } else {
-                    ReadPasswordFrom::Tty {
-                        prompt: "Enter password for the device:",
-                    }
-                })?;
+    let device = load_device_file(config_dir, device).await?;
 
-                let access = DeviceAccessStrategy::Password {
-                    key_file: device.key_file_path.clone(),
-                    password,
-                };
+    log::debug!("Loading device {:?}", device.ty);
 
-                // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-                load_device(config_dir, &access).await?
-            }
-            DeviceFileType::Smartcard => {
-                let access = DeviceAccessStrategy::Smartcard {
-                    key_file: device.key_file_path.clone(),
-                };
+    let device = match device.ty {
+        DeviceFileType::Keyring => {
+            return Err(anyhow::anyhow!(
+                "Unsupported device file authentication `{:?}`",
+                device.ty
+            ));
+        }
+        DeviceFileType::Password => {
+            let password = read_password(if password_stdin {
+                ReadPasswordFrom::Stdin
+            } else {
+                ReadPasswordFrom::Tty {
+                    prompt: "Enter password for the device:",
+                }
+            })?;
 
-                load_device(config_dir, &access).await?
-            }
-            DeviceFileType::Recovery => {
-                return Err(anyhow::anyhow!(
-                    "Unsupported device file authentication `{:?}`",
-                    device.ty
-                ));
-            }
-        };
+            let access = DeviceAccessStrategy::Password {
+                key_file: device.key_file_path.clone(),
+                password,
+            };
 
-        function(device).await
-    })
-    .await
+            // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
+            load_device(config_dir, &access).await?
+        }
+        DeviceFileType::Smartcard => {
+            let access = DeviceAccessStrategy::Smartcard {
+                key_file: device.key_file_path.clone(),
+            };
+
+            load_device(config_dir, &access).await?
+        }
+        DeviceFileType::Recovery => {
+            return Err(anyhow::anyhow!(
+                "Unsupported device file authentication `{:?}`",
+                device.ty
+            ));
+        }
+    };
+
+    function(device).await
 }
 
 pub async fn load_cmds_and_run<F, Fut>(
