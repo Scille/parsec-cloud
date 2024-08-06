@@ -52,12 +52,12 @@ import { BmsAccessInstance, BmsError } from '@/services/bms';
 const props = defineProps<{
   firstname: string;
   lastname: string;
-  phone: string;
+  phone?: string;
 }>();
 
 const firstnameRef = ref(props.firstname);
 const lastnameRef = ref(props.lastname);
-const phoneRef = ref(props.phone);
+const phoneRef = ref(props.phone ?? '');
 const errors: Ref<BmsError[]> = ref([]);
 
 enum Fields {
@@ -75,7 +75,7 @@ async function submit(): Promise<boolean> {
   const response = await BmsAccessInstance.get().updatePersonalInformation({
     firstname: firstnameRef.value,
     lastname: lastnameRef.value,
-    phone: phoneRef.value,
+    phone: props.phone === undefined && phoneRef.value.length === 0 ? undefined : phoneRef.value,
   });
 
   if (response.isError) {
@@ -86,7 +86,7 @@ async function submit(): Promise<boolean> {
 }
 
 function isFormValid(): boolean {
-  return !!firstnameRef.value && !!lastnameRef.value && !!phoneRef.value;
+  return !!firstnameRef.value && !!lastnameRef.value;
 }
 </script>
 

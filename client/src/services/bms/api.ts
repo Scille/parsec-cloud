@@ -75,13 +75,20 @@ async function wrapQuery(queryFunc: () => Promise<BmsResponse>): Promise<BmsResp
   try {
     return await queryFunc();
   } catch (error: any) {
-    if (isAxiosError(error) && (error as AxiosError).response) {
-      const response = (error as AxiosError).response as AxiosResponse;
-      return {
-        status: response.status,
-        isError: true,
-        errors: parseBmsErrors(response.data),
-      };
+    if (isAxiosError(error)) {
+      if ((error as AxiosError).response) {
+        const response = (error as AxiosError).response as AxiosResponse;
+        return {
+          status: response.status,
+          isError: true,
+          errors: parseBmsErrors(response.data),
+        };
+      } else {
+        return {
+          status: 0,
+          isError: true,
+        };
+      }
     }
     throw new Error(error);
   }
