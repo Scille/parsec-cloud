@@ -19,10 +19,19 @@
           label="clientArea.app.emailLabel"
           :validator="emailValidator"
         />
-        <ion-skeleton-text
+        <div
           v-else
-          :animated="true"
-        />
+          class="input-skeleton"
+        >
+          <ion-skeleton-text
+            class="input-skeleton__label"
+            :animated="true"
+          />
+          <ion-skeleton-text
+            class="input-skeleton__input"
+            :animated="true"
+          />
+        </div>
         <!-- password -->
         <div
           class="input-password"
@@ -45,10 +54,23 @@
             {{ $msTranslate('clientArea.app.forgottenPassword') }}
           </ion-text>
         </div>
-        <ion-skeleton-text
+        <div
           v-else
-          :animated="true"
-        />
+          class="input-skeleton"
+        >
+          <ion-skeleton-text
+            class="input-skeleton__label"
+            :animated="true"
+          />
+          <ion-skeleton-text
+            class="input-skeleton__input"
+            :animated="true"
+          />
+          <ion-skeleton-text
+            class="input-skeleton__button"
+            :animated="true"
+          />
+        </div>
         <!-- error -->
         <ion-text
           class="form-error body login-button-error"
@@ -72,6 +94,7 @@
           </ion-button>
           <ion-skeleton-text
             v-else
+            class="skeleton-login-button"
             :animated="true"
           />
           <ms-spinner v-show="querying" />
@@ -94,10 +117,19 @@
             {{ $msTranslate('clientArea.app.createAccount') }}
           </ion-button>
         </div>
-        <ion-skeleton-text
+        <div
           v-else
-          :animated="true"
-        />
+          class="create-account-skeleton"
+        >
+          <ion-skeleton-text
+            class="create-account-skeleton__text"
+            :animated="true"
+          />
+          <ion-skeleton-text
+            class="create-account-skeleton__link"
+            :animated="true"
+          />
+        </div>
       </ion-footer>
     </div>
     <div class="saas-login-mockup">
@@ -225,6 +257,31 @@ async function onLoginClicked(): Promise<void> {
         }
       }
     }
+
+    .input-skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      border-radius: var(--parsec-radius-6);
+
+      &__label {
+        margin: 0;
+        width: 30%;
+        height: 1rem;
+      }
+
+      &__input {
+        margin: 0;
+        width: 100%;
+        height: 2.75rem;
+      }
+
+      &__button {
+        margin: 0;
+        width: 30%;
+        height: 0.75rem;
+      }
+    }
   }
 
   // include buttons
@@ -241,6 +298,13 @@ async function onLoginClicked(): Promise<void> {
       align-items: center;
     }
 
+    .skeleton-login-button {
+      margin: 0;
+      width: 40%;
+      height: 2.25rem;
+      border-radius: var(--parsec-radius-6);
+    }
+
     .create-account {
       display: flex;
       gap: 0.5rem;
@@ -248,6 +312,26 @@ async function onLoginClicked(): Promise<void> {
 
       &__text {
         color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      &-skeleton {
+        display: flex;
+        gap: 2.5rem;
+        align-items: center;
+
+        &__text {
+          margin: 0;
+          width: 50%;
+          height: 1rem;
+          border-radius: var(--parsec-radius-6);
+        }
+
+        &__link {
+          margin: 0;
+          width: 30%;
+          height: 0.75rem;
+          border-radius: var(--parsec-radius-6);
+        }
       }
     }
   }
