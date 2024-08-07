@@ -272,9 +272,9 @@ msTest('Fail to login to BMS', async ({ home }) => {
 });
 
 msTest('Cannot reach the BMS', async ({ home }) => {
+  await MockBms.mockLogin(home, { POST: { timeout: true } });
   const modal = await openCreateOrganizationModal(home);
 
-  await MockBms.mockLogin(home, { POST: { timeout: true } });
   const bmsContainer = modal.locator('.saas-login-container');
   const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
