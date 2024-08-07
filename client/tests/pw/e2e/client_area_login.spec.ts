@@ -11,14 +11,13 @@ msTest('Log into the customer area', async ({ home }) => {
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
 
-  const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
-  await expect(button).toHaveText('Customer Area');
+  const button = home.locator('.topbar-buttons').locator('ion-button').nth(2);
+  await expect(button).toHaveText('Customer area');
   await button.click();
-  await expect(home).toHaveURL(/.+\/clientLogin$/);
+  await expect(home).toHaveURL(/.+\/home$/);
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-  await home.locator('.login-button').locator('ion-button').click();
-  await expect(home).toHaveURL(/.+\/clientArea$/);
+  await home.locator('.saas-login-button__item').click();
   await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
   const logOutButton = home.locator('.header-content').locator('.custom-button').first();
   await expect(logOutButton).toHaveText('Log out');
@@ -37,13 +36,13 @@ msTest('Log into the customer area failed', async ({ home }) => {
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
 
-  const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
-  await expect(button).toHaveText('Customer Area');
+  const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+  await expect(button).toHaveText('Customer area');
   await button.click();
-  await expect(home).toHaveURL(/.+\/clientLogin$/);
+  await expect(home).toHaveURL(/.+\/home$/);
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), 'invalid_password');
-  await home.locator('.login-button').locator('ion-button').click();
+  await home.locator('.saas-login-button__item').click();
   const error = home.locator('.saas-login-container').locator('.login-button-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Cannot log in. Please check your email and password.');

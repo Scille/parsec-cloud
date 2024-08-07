@@ -38,13 +38,14 @@
         />
       </div>
       <!-- add button -->
-      <ion-button
-        class="custom-button-outline"
+      <ion-text
+        class="custom-button custom-button-outline button-large"
         @click="onAddPaymentMethodClicked"
         fill="outline"
+        id="add-payment-method"
       >
         {{ $msTranslate('clientArea.paymentMethodsPage.addCard') }}
-      </ion-button>
+      </ion-text>
       <div v-if="!billingDetails && error">
         {{ $msTranslate(error) }}
       </div>
@@ -61,12 +62,9 @@
       <ion-text class="method-stop-description body">
         {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.description') }}
       </ion-text>
-      <ion-button
-        class="custom-button-outline"
-        fill="outline"
-      >
+      <ion-text class="custom-button-outline">
         {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.button') }}
-      </ion-button>
+      </ion-text>
     </div>
   </div>
 </template>
@@ -82,7 +80,7 @@ import {
 } from '@/services/bms';
 import { onMounted, ref, computed } from 'vue';
 import { MsStripeCardDetails, PaymentMethod as MsPaymentMethod, MsModalResult } from 'megashark-lib';
-import { IonButton, IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
+import { IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
 import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
@@ -258,13 +256,10 @@ async function onAddPaymentMethodClicked(): Promise<void> {
 }
 
 .custom-button-outline {
-  --color: var(--parsec-color-light-secondary-contrast);
-  --background: none;
-  --background-hover: var(--parsec-color-light-secondary-background);
-  --color-hover: var(--parsec-color-light-secondary-contrast);
-  --border-color: var(--parsec-color-light-secondary-contrast);
-  --border-width: 1px;
-  --border-radius: var(--parsec-radius-8);
+  border: 1px solid var(--parsec-color-light-secondary-text);
+  color: var(--parsec-color-light-secondary-text);
+  border-radius: var(--parsec-radius-8);
+  padding: 0.625rem 0.75rem;
   height: fit-content;
   width: fit-content;
 }

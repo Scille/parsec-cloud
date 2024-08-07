@@ -8,7 +8,7 @@
     <ion-button
       slot="icon-only"
       class="closeBtn"
-      v-show="!hideCloseButton"
+      v-if="!hideCloseButton"
       @click="$emit('closeClicked')"
     >
       <ion-icon

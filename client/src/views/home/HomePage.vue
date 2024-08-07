@@ -35,7 +35,7 @@
               />
             </template>
             <template v-if="state === HomePageState.CustomerArea">
-              <authentication-page />
+              <client-area-login-page />
             </template>
             <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
               <import-recovery-device-page
@@ -98,7 +98,7 @@ import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
-import AuthenticationPage from '@/views/client-area/AuthenticationPage.vue';
+import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 
 enum HomePageState {
   OrganizationList = 'organization-list',

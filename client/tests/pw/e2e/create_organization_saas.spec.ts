@@ -39,9 +39,9 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await MockBms.mockUserRoute(home);
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
-  const bmsContainer = modal.locator('.saas-login-container');
+  const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
-  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
@@ -173,9 +173,9 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await MockBms.mockUserRoute(home);
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
-  const bmsContainer = modal.locator('.saas-login-container');
+  const bmsContainer = modal.locator('.saas-login');
   await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
-  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
@@ -248,10 +248,10 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
 msTest('Open account creation', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
-  const bmsContainer = modal.locator('.saas-login-container');
-  await expect(bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(1)).toHaveText('Create an account');
+  const bmsContainer = modal.locator('.saas-login');
+  await expect(bmsContainer.locator('.saas-login-footer').locator('.create-account__link')).toHaveText('Create an account');
+  await bmsContainer.locator('.saas-login-footer').locator('.create-account__link').click();
   const newTabPromise = home.waitForEvent('popup');
-  await bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(1).click();
   const newTab = await newTabPromise;
   await expect(newTab).toHaveURL(/^https:\/\/parsec\.cloud(?:\/en)\/tarification\/?$/);
 });
@@ -261,8 +261,8 @@ msTest('Fail to login to BMS', async ({ home }) => {
 
   await MockBms.mockLogin(home, { POST: { errors: { status: 401 } } });
 
-  const bmsContainer = modal.locator('.saas-login-container');
-  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  const bmsContainer = modal.locator('.saas-login');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();
@@ -275,8 +275,8 @@ msTest('Cannot reach the BMS', async ({ home }) => {
   await MockBms.mockLogin(home, { POST: { timeout: true } });
   const modal = await openCreateOrganizationModal(home);
 
-  const bmsContainer = modal.locator('.saas-login-container');
-  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  const bmsContainer = modal.locator('.saas-login');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();
@@ -294,8 +294,8 @@ msTest('Edit from summary', async ({ home }) => {
   await MockBms.mockUserRoute(home);
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
-  const bmsContainer = modal.locator('.saas-login-container');
-  const bmsNext = bmsContainer.locator('.saas-login-footer').locator('ion-button').nth(0);
+  const bmsContainer = modal.locator('.saas-login');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();

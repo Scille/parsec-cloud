@@ -2,14 +2,32 @@
 
 <template>
   <div class="saas-login">
+    <ion-buttons
+      slot="end"
+      class="closeBtn-container"
+      v-if="!hideHeader"
+    >
+      <ion-button
+        slot="icon-only"
+        class="closeBtn"
+        @click="$emit('closeRequested')"
+      >
+        <ion-icon
+          :icon="close"
+          size="large"
+          class="closeBtn__icon"
+        />
+      </ion-button>
+    </ion-buttons>
     <div class="saas-login-container">
       <create-organization-modal-header
         v-if="!hideHeader"
         @close-clicked="$emit('closeRequested')"
         title="clientArea.app.titleLinkOrganization"
+        :hide-close-button="true"
       />
       <ion-text
-        v-else
+        v-if="hideHeader"
         class="saas-login__title title-h2"
       >
         {{ $msTranslate('clientArea.app.titleLogin') }}
@@ -49,16 +67,6 @@
             v-model="password"
             label="clientArea.app.password"
           />
-          <!-- TODO: UPDATE THE LINK -->
-          <!-- If changing the link, don't forget to check that it is allowed by electron! -->
-          <ion-text
-            class="saas-login-inputs__link button-small"
-            target="_blank"
-            @click="$event.stopPropagation()"
-            :href="$msTranslate('clientArea.app.forgottenPasswordLink')"
-          >
-            {{ $msTranslate('clientArea.app.forgottenPassword') }}
-          </ion-text>
         </div>
         <div
           v-else
@@ -77,6 +85,51 @@
             :animated="true"
           />
         </div>
+
+        <!-- forgotten password && remember me checkbox-->
+        <div class="saas-login-link">
+          <div
+            class="saas-login-link__checkbox"
+            @click="checkboxValue = !checkboxValue"
+          >
+            <ms-checkbox
+              v-model="checkboxValue"
+              class="checkbox"
+            />
+            <ion-text class="body">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
+          </div>
+
+          <!-- TODO: UPDATE THE LINK -->
+          <!-- If changing the link, don't forget to check that it is allowed by electron! -->
+          <ion-text
+            class="saas-login-link__forgotten-password button-small"
+            target="_blank"
+            @click="$event.stopPropagation()"
+            :href="$msTranslate('clientArea.app.forgottenPasswordLink')"
+          >
+            {{ $msTranslate('clientArea.app.forgottenPassword') }}
+          </ion-text>
+        </div>
+
+        <!-- login button -->
+        <div class="saas-login-button">
+          <ion-button
+            v-if="!loading"
+            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
+            @click="onLoginClicked"
+            class="saas-login-button__item"
+            size="large"
+          >
+            {{ $msTranslate('clientArea.app.login') }}
+          </ion-button>
+          <ion-skeleton-text
+            v-else
+            class="skeleton-login-button"
+            :animated="true"
+          />
+          <ms-spinner v-show="querying" />
+        </div>
+
         <!-- error -->
         <ion-text
           class="form-error body login-button-error"
@@ -90,22 +143,6 @@
       </div>
 
       <ion-footer class="saas-login-footer">
-        <div class="login-button">
-          <ion-button
-            v-if="!loading"
-            :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
-            @click="onLoginClicked"
-          >
-            {{ $msTranslate('clientArea.app.login') }}
-          </ion-button>
-          <ion-skeleton-text
-            v-else
-            class="skeleton-login-button"
-            :animated="true"
-          />
-          <ms-spinner v-show="querying" />
-        </div>
-
         <!-- TODO: UPDATE THE LINK -->
         <!-- If changing the link, don't forget to check that it is allowed by electron! -->
         <div
@@ -113,15 +150,15 @@
           v-if="!loading"
         >
           <ion-text class="create-account__text body">{{ $msTranslate('clientArea.app.noAccount') }}</ion-text>
-          <ion-button
-            class="create-account__link"
+          <a
+            class="create-account__link button-medium"
             target="_blank"
-            fill="clear"
             @click="$event.stopPropagation()"
             :href="$msTranslate('clientArea.app.createAccountUrl')"
           >
             {{ $msTranslate('clientArea.app.createAccount') }}
-          </ion-button>
+            <ion-icon :icon="arrowForward" />
+          </a>
         </div>
         <div
           v-else
@@ -148,10 +185,10 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
-import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner } from 'megashark-lib';
+import { IonButton, IonText, IonButtons, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
+import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { warning } from 'ionicons/icons';
+import { warning, arrowForward, close } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
@@ -173,6 +210,7 @@ const passwordInputRef = ref();
 const querying = ref(false);
 const loginError = ref<Translatable>('');
 const loading = ref(true);
+const checkboxValue = ref(false);
 
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
@@ -243,6 +281,7 @@ async function onLoginClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     max-width: 22rem;
+    width: 100%;
     position: relative;
     z-index: 2;
   }
@@ -252,21 +291,6 @@ async function onLoginClicked(): Promise<void> {
     display: flex;
     flex-direction: column;
     gap: 1rem;
-
-    .input-password {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-
-      .saas-login-inputs__link {
-        cursor: pointer;
-        color: var(--parsec-color-light-secondary-hard-grey);
-
-        &:hover {
-          text-decoration: underline;
-        }
-      }
-    }
 
     .input-skeleton {
       display: flex;
@@ -292,36 +316,99 @@ async function onLoginClicked(): Promise<void> {
         height: 0.75rem;
       }
     }
+
+    .saas-login-link {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      &__forgotten-password {
+        color: var(--parsec-color-light-primary-600);
+        cursor: pointer;
+        border-bottom: 1px solid transparent;
+        transition: border-bottom 150ms linear;
+        padding: 0.125rem 0;
+
+        &:hover {
+          border-bottom: 1px solid var(--parsec-color-light-primary-600);
+        }
+      }
+
+      &__checkbox {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--parsec-color-light-secondary-text);
+        cursor: pointer;
+      }
+    }
+
+    .saas-login-button {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-top: 0.5rem;
+      width: 100%;
+
+      &__item {
+        height: 2.5rem;
+        border-radius: var(--parsec-radius-6);
+      }
+
+      .skeleton-login-button {
+        width: 100%;
+        height: 2.75rem;
+        border-radius: var(--parsec-radius-6);
+      }
+    }
   }
 
   // include buttons
   &-footer {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
     margin-top: 2rem;
-    gap: 2rem;
-
-    .login-button {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-    }
-
-    .skeleton-login-button {
-      margin: 0;
-      width: 40%;
-      height: 2.25rem;
-      border-radius: var(--parsec-radius-6);
-    }
 
     .create-account {
       display: flex;
-      gap: 0.5rem;
-      align-items: center;
+      gap: 1rem;
+      flex-direction: column;
+
+      &::before {
+        content: '';
+        width: 100%;
+        height: 1px;
+        background: var(--parsec-color-light-secondary-disabled);
+        margin-bottom: 0.5rem;
+      }
 
       &__text {
         color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      &__link {
+        display: flex;
+        align-items: center;
+        width: fit-content;
+        color: var(--parsec-color-light-primary-800);
+        padding-bottom: 0.25rem;
+        border-bottom: 1px solid transparent;
+        transition: border-bottom 150ms linear;
+        position: relative;
+
+        ion-icon {
+          position: absolute;
+          right: -2rem;
+          transition: right 150ms linear;
+          color: transparent;
+        }
+
+        &:hover {
+          border-bottom: 1px solid var(--parsec-color-light-primary-800);
+
+          ion-icon {
+            right: -1.25rem;
+            color: var(--parsec-color-light-primary-800);
+          }
+        }
       }
 
       &-skeleton {

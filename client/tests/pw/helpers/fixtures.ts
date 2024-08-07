@@ -132,13 +132,12 @@ export const msTest = base.extend<{
     await MockBms.mockBillingDetails(home);
     await MockBms.mockGetInvoices(home);
 
-    const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
-    await expect(button).toHaveText('Customer Area');
+    const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+    await expect(button).toHaveText('Customer area');
     await button.click();
-    await expect(home).toHaveURL(/.+\/clientLogin$/);
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.login-button').locator('ion-button').click();
+    await home.locator('.saas-login-button__item').click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
     await use(home);
   },

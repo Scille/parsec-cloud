@@ -4,6 +4,7 @@ import { expect } from '@tests/pw/helpers/assertions';
 import { MockBms } from '@tests/pw/helpers/bms';
 import { msTest } from '@tests/pw/helpers/fixtures';
 import { DateTime } from 'luxon';
+import { setTimeout } from 'timers/promises';
 
 [
   { fail: false, setDefault: { set: true, fail: false } },
@@ -21,7 +22,7 @@ import { DateTime } from 'luxon';
     const title = clientArea.locator('.header-content').locator('.header-title');
     await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
     await expect(title).toHaveText('Payment methods');
-    const addButton = clientArea.locator('.client-page-method').locator('ion-button').nth(0);
+    const addButton = clientArea.locator('.client-page-method').locator('#add-payment-method');
     await expect(addButton).toHaveText('Add');
     const modal = clientArea.locator('.credit-card-modal');
     await expect(modal).toBeHidden();
@@ -53,6 +54,7 @@ import { DateTime } from 'luxon';
           'Success',
         );
       } else {
+        setTimeout(1000);
         await expect(clientArea).toShowToast('The card was successfully added.', 'Success');
       }
     }
