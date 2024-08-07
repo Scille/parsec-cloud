@@ -12,6 +12,7 @@ mod list_invitations;
 mod list_users;
 mod ls;
 mod remove_device;
+mod rm;
 mod shamir_setup_create;
 mod share_workspace;
 mod stats_organization;
