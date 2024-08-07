@@ -211,20 +211,15 @@ pub async fn load_and_unlock_device(
     Ok(device)
 }
 
-pub async fn load_cmds_and_run<F, Fut>(
+pub async fn load_cmds(
     config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
-    function: F,
-) -> anyhow::Result<()>
-where
-    F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
-    Fut: Future<Output = anyhow::Result<()>>,
-{
+) -> anyhow::Result<(AuthenticatedCmds, Arc<LocalDevice>)> {
     let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
     let cmds = AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
-    function(cmds, device).await
+    Ok((cmds, device))
 }
 
 pub async fn load_client_and_run<F, Fut>(
