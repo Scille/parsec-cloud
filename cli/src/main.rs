@@ -3,6 +3,7 @@
 mod bootstrap_organization;
 mod cancel_invitation;
 mod claim_invitation;
+mod copy_to;
 mod create_organization;
 mod create_workspace;
 mod export_recovery_device;
@@ -85,6 +86,8 @@ enum Command {
     StatusOrganization(status_organization::StatusOrganization),
     /// Create a shamir setup
     ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
+    /// Copy a local file to a remote workspace
+    CopyTo(copy_to::CopyTo),
 }
 
 #[tokio::main]
@@ -143,5 +146,6 @@ async fn main() -> anyhow::Result<()> {
         Command::ShamirSetupCreate(shamir_setup_create) => {
             shamir_setup::shamir_setup_create(shamir_setup_create).await
         }
+        Command::CopyTo(copy_to) => copy_to::copy_to(copy_to).await,
     }
 }
