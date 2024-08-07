@@ -22,6 +22,7 @@
             @change="errors.password = ''"
             @on-enter-keyup="submit"
             label="clientArea.personalDataPage.modals.security.passwordStep.password"
+            ref="passwordInput"
           />
           <div
             class="form-error form-helperText body"
@@ -66,7 +67,7 @@ import {
   asyncComputed,
 } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
 
 const enum UpdatePasswordStep {
@@ -77,6 +78,7 @@ const currentStep = ref<UpdatePasswordStep>(UpdatePasswordStep.Password);
 const translationPrefix = 'clientArea.personalDataPage.modals.security';
 
 const passwordRef = ref('');
+const passwordInput = ref();
 const choosePasswordInput = ref<typeof MsChoosePasswordInput | null>(null);
 const errors = ref({
   password: '',
@@ -85,6 +87,10 @@ const errors = ref({
 
 const isConfirmButtonDisabled = asyncComputed(async (): Promise<boolean> => {
   return !(await isFormValid());
+});
+
+onMounted(async () => {
+  await passwordInput.value.setFocus();
 });
 
 async function submit(): Promise<boolean> {

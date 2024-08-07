@@ -41,7 +41,7 @@
 <script setup lang="ts">
 import { MsModal, MsInput, MsModalResult, MsPasswordInput, I18n, MsReportTheme, MsReportText, Validity, IValidator } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { emailValidator } from '@/common/validators';
@@ -62,6 +62,10 @@ const newEmailValidator: IValidator = async function (value: string) {
   }
   return result;
 };
+
+onMounted(async () => {
+  await newEmailInput.value.setFocus();
+});
 
 async function submit(): Promise<boolean> {
   if (!isFormValid()) {
