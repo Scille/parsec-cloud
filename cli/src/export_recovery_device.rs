@@ -31,22 +31,18 @@ pub async fn export_recovery_device(
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_device_and_run(&config_dir, device, password_stdin, |device| async move {
-        let mut handle = start_spinner("Saving recovery device file".into());
+    let device = load_and_unlock_device(&config_dir, device, password_stdin).await?;
+    let mut handle = start_spinner("Saving recovery device file".into());
 
-        // TODO save recovery device instead of local device
-        // The recovery device must be generated first
-        let passphrase = save_recovery_device(&output, &device).await?;
+    // TODO: save recovery device instead of local device
+    // The recovery device must be generated first
+    let passphrase = save_recovery_device(&output, &device).await?;
 
-        handle.stop_with_message(
-            format!(
-                "Saved in {}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
-                output.display(),
-                passphrase.as_str()
-            )
-        );
+    handle.stop_with_message(format!(
+        "Saved in {}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
+        output.display(),
+        passphrase.as_str()
+    ));
 
-        Ok(())
-    })
-    .await
+    Ok(())
 }

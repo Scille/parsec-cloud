@@ -4,9 +4,9 @@ use std::{fmt::Display, future::Future, path::Path, sync::Arc};
 
 use libparsec::{
     internal::{Client, EventBus},
-    list_available_devices, load_device, AuthenticatedCmds, AvailableDevice, ClientConfig,
-    DeviceAccessStrategy, DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password,
-    ProxyConfig, SASCode, UserProfile,
+    list_available_devices, AuthenticatedCmds, AvailableDevice, ClientConfig, DeviceAccessStrategy,
+    DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
+    UserProfile,
 };
 use spinners::{Spinner, Spinners, Stream};
 
@@ -122,27 +122,61 @@ pub async fn load_device_file(
     }
 }
 
-pub async fn load_device_and_run<F, Fut>(
+#[derive(Debug)]
+pub enum LoadAndUnlockDeviceError {
+    /// Error while loading the device file
+    LoadDevice(LoadDeviceError),
+    /// The device file authentication is not supported
+    UnsupportedAuthentication(DeviceFileType),
+    /// Error while unlocking the device
+    UnlockDevice(libparsec::LoadDeviceError),
+    /// Internal error
+    Internal(anyhow::Error),
+}
+
+impl std::error::Error for LoadAndUnlockDeviceError {}
+
+impl Display for LoadAndUnlockDeviceError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LoadAndUnlockDeviceError::LoadDevice(e) => e.fmt(f),
+            LoadAndUnlockDeviceError::UnsupportedAuthentication(ty) => {
+                write!(f, "Unsupported device file authentication `{ty:?}`")
+            }
+            LoadAndUnlockDeviceError::UnlockDevice(e) => e.fmt(f),
+            LoadAndUnlockDeviceError::Internal(e) => e.fmt(f),
+        }
+    }
+}
+
+impl From<anyhow::Error> for LoadAndUnlockDeviceError {
+    fn from(e: anyhow::Error) -> Self {
+        LoadAndUnlockDeviceError::Internal(e)
+    }
+}
+
+impl From<libparsec::LoadDeviceError> for LoadAndUnlockDeviceError {
+    fn from(e: libparsec::LoadDeviceError) -> Self {
+        LoadAndUnlockDeviceError::UnlockDevice(e)
+    }
+}
+
+impl From<LoadDeviceError> for LoadAndUnlockDeviceError {
+    fn from(e: LoadDeviceError) -> Self {
+        LoadAndUnlockDeviceError::LoadDevice(e)
+    }
+}
+
+pub async fn load_and_unlock_device(
     config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
-    function: F,
-) -> anyhow::Result<()>
-where
-    F: FnOnce(Arc<LocalDevice>) -> Fut,
-    Fut: Future<Output = anyhow::Result<()>>,
-{
+) -> Result<Arc<LocalDevice>, LoadAndUnlockDeviceError> {
     let device = load_device_file(config_dir, device).await?;
 
     log::debug!("Loading device {:?}", device.ty);
 
     let device = match device.ty {
-        DeviceFileType::Keyring => {
-            return Err(anyhow::anyhow!(
-                "Unsupported device file authentication `{:?}`",
-                device.ty
-            ));
-        }
         DeviceFileType::Password => {
             let password = read_password(if password_stdin {
                 ReadPasswordFrom::Stdin
@@ -158,24 +192,23 @@ where
             };
 
             // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-            load_device(config_dir, &access).await?
+            libparsec::load_device(config_dir, &access).await?
         }
         DeviceFileType::Smartcard => {
             let access = DeviceAccessStrategy::Smartcard {
                 key_file: device.key_file_path.clone(),
             };
 
-            load_device(config_dir, &access).await?
+            libparsec::load_device(config_dir, &access).await?
         }
-        DeviceFileType::Recovery => {
-            return Err(anyhow::anyhow!(
-                "Unsupported device file authentication `{:?}`",
-                device.ty
+        DeviceFileType::Recovery | DeviceFileType::Keyring => {
+            return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
+                device.ty,
             ));
         }
     };
 
-    function(device).await
+    Ok(device)
 }
 
 pub async fn load_cmds_and_run<F, Fut>(
@@ -188,13 +221,10 @@ where
     F: FnOnce(AuthenticatedCmds, Arc<LocalDevice>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir, device, password_stdin, |device| async move {
-        let cmds =
-            AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
+    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let cmds = AuthenticatedCmds::new(config_dir, device.clone(), ProxyConfig::new_from_env()?)?;
 
-        function(cmds, device).await
-    })
-    .await
+    function(cmds, device).await
 }
 
 pub async fn load_client_and_run<F, Fut>(
@@ -207,23 +237,21 @@ where
     F: FnOnce(Arc<Client>) -> Fut,
     Fut: Future<Output = anyhow::Result<()>>,
 {
-    load_device_and_run(config_dir, device, password_stdin, |device| async move {
-        let client = Client::start(
-            Arc::new(
-                ClientConfig {
-                    with_monitors: false,
-                    ..Default::default()
-                }
-                .into(),
-            ),
-            EventBus::default(),
-            device,
-        )
-        .await?;
+    let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
+    let client = Client::start(
+        Arc::new(
+            ClientConfig {
+                with_monitors: false,
+                ..Default::default()
+            }
+            .into(),
+        ),
+        EventBus::default(),
+        device,
+    )
+    .await?;
 
-        function(client).await
-    })
-    .await
+    function(client).await
 }
 
 pub fn start_spinner(text: String) -> Spinner {
