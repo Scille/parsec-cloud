@@ -3,7 +3,6 @@
 <template>
   <div class="time-container">
     <ion-list class="time-list">
-      <!-- add class when a time is selected -->
       <ion-text
         class="time-list-item ion-no-padding button-medium"
         :class="{'selected': selected !== undefined && selected === time.key}"
@@ -12,7 +11,12 @@
         @click="select(time.key)"
       >
         <!-- No ideal, should translate the month properly -->
-        {{ $msTranslate({ key: "common.date.asIs", data: { date: time.label } } ) }}
+        {{
+          $msTranslate({
+            key: "common.date.asIs",
+            data: { date: I18n.translate(time.label) },
+          })
+        }}
       </ion-text>
     </ion-list>
   </div>
@@ -20,13 +24,14 @@
 
 <script setup lang="ts">
 import { IonList, IonText, popoverController } from '@ionic/vue';
-import { MsModalResult, MsOptions } from 'megashark-lib';
+import { MsModalResult, MsOptions, I18n } from 'megashark-lib';
 
 defineProps<{
   times: MsOptions;
   selected?: any,
 }>();
 
+// if not selected, selected else deselect
 async function select(selected: any): Promise<void> {
   await popoverController.dismiss({selected: selected}, MsModalResult.Confirm);
 }
@@ -66,6 +71,11 @@ async function select(selected: any): Promise<void> {
       &.selected {
         background: var(--parsec-color-light-primary-100);
         color: var(--parsec-color-light-primary-700);
+
+        &:hover {
+          background: var(--parsec-color-light-primary-50);
+          color: var(--parsec-color-light-primary-700);
+        }
       }
     }
   }

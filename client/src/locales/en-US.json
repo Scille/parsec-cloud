@@ -1322,6 +1322,7 @@
             "title": "Preview of your invoices",
             "noInvoice": "You don't have any invoice yet.",
             "filter": {
+                "title": "Filters:",
                 "year": "Year",
                 "month": "Month"
             },
