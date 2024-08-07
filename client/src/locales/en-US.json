@@ -1383,6 +1383,19 @@
                 "description": "You can change your credit card at any time.",
                 "update": "Update"
             }
+        },
+        "billingDetailsPage": {
+            "placeholders": {
+                "line1": "Street number, address",
+                "line2": "Additional address details",
+                "postalCode": "Postal code",
+                "city": "City",
+                "country": "Country"
+            },
+            "submit": "Update",
+            "error": "Could not update the information.",
+            "success": "The information have been updated.",
+            "title": "Billing address"
         }
     }
 }

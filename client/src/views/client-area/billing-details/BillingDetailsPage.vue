@@ -1,20 +1,141 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
-    <h1>BILLING DETAILS</h1>
+  <div class="billing-header">
+    <ion-title class="billing-header__title title-h2">{{ $msTranslate('clientArea.billingDetailsPage.title') }}</ion-title>
+  </div>
+
+  <div class="form">
+    <div class="form-item-content">
+      <ms-input
+        class="form-item"
+        v-model="line1"
+        :maxlength="256"
+        label="clientArea.billingDetailsPage.placeholders.line1"
+        @on-enter-keyup="submit"
+      />
+    </div>
+    <div class="form-item-content">
+      <ms-input
+        class="form-item"
+        v-model="line2"
+        :maxlength="256"
+        label="clientArea.billingDetailsPage.placeholders.line2"
+        @on-enter-keyup="submit"
+      />
+    </div>
+    <div class="form-row">
+      <div class="form-item-content">
+        <ms-input
+          type="tel"
+          v-model="postalCode"
+          :maxlength="32"
+          label="clientArea.billingDetailsPage.placeholders.postalCode"
+          @on-enter-keyup="submit"
+        />
+      </div>
+      <div class="form-item-content">
+        <ms-input
+          v-model="city"
+          :maxlength="128"
+          label="clientArea.billingDetailsPage.placeholders.city"
+          @on-enter-keyup="submit"
+        />
+      </div>
+    </div>
+    <ms-input
+      class="form-item"
+      v-model="country"
+      :maxlength="128"
+      label="clientArea.billingDetailsPage.placeholders.country"
+      @on-enter-keyup="submit"
+    />
+  </div>
+
+  <div class="submit">
+    <ion-button
+      @click="submit"
+      class="submit-button"
+      :disabled="!isFormValid"
+    >
+      {{ $msTranslate('clientArea.billingDetailsPage.submit') }}
+    </ion-button>
   </div>
 </template>
 
 <script setup lang="ts">
-import { BmsOrganization } from '@/services/bms';
-import { onMounted } from 'vue';
+import { IonButton } from '@ionic/vue';
+import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
+import { MsInput } from 'megashark-lib';
+import { onMounted, ref, computed, inject } from 'vue';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 
 defineProps<{
   organization: BmsOrganization;
 }>();
 
-onMounted(async () => {});
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
+
+const line1 = ref<string>('');
+const line2 = ref<string | undefined>(undefined);
+const postalCode = ref<string>('');
+const city = ref<string>('');
+const country = ref<string>('');
+
+const isFormValid = computed(() => {
+  return new Boolean(line1.value && postalCode.value && city.value && country.value);
+});
+
+onMounted(async () => {
+  const response = await BmsAccessInstance.get().getBillingDetails();
+
+  if (!response.isError && response.data && response.data.type === DataType.BillingDetails) {
+    line1.value = response.data.address.line1;
+    line2.value = response.data.address.line2;
+    postalCode.value = response.data.address.postalCode;
+    city.value = response.data.address.city;
+    country.value = response.data.address.country;
+  }
+});
+
+async function submit(): Promise<void> {
+  const response = await BmsAccessInstance.get().updateBillingAddress({
+    line1: line1.value,
+    line2: line2.value,
+    postalCode: postalCode.value,
+    city: city.value,
+    country: country.value,
+  });
+  if (response.isError) {
+    informationManager.present(
+      new Information({
+        message: 'clientArea.billingDetailsPage.error',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Toast,
+    );
+  } else {
+    informationManager.present(
+      new Information({
+        message: 'clientArea.billingDetailsPage.success',
+        level: InformationLevel.Success,
+      }),
+      PresentationMode.Toast,
+    );
+  }
+}
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.billing-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  &__title {
+    color: var(--parsec-color-light-primary-700);
+  }
+}
+</style>

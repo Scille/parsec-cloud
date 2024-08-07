@@ -17,6 +17,7 @@ import {
   PaymentMethod,
   SetDefaultPaymentMethodQueryData,
   UpdateAuthenticationQueryData,
+  UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
   UpdatePasswordQueryData,
   UpdatePersonalInformationQueryData,
@@ -338,7 +339,14 @@ async function getBillingDetails(token: AuthenticationToken, query: BillingDetai
         type: DataType.BillingDetails,
         email: axiosResponse.data.email,
         name: axiosResponse.data.name,
-        address: axiosResponse.data.address,
+        address: {
+          line1: axiosResponse.data.address.line1,
+          line2: axiosResponse.data.address.line2 || undefined,
+          city: axiosResponse.data.address.city,
+          postalCode: axiosResponse.data.address.postal_code,
+          state: axiosResponse.data.address.state || undefined,
+          country: axiosResponse.data.address.country,
+        },
         paymentMethods: (axiosResponse.data.payment_methods ?? [])
           .map((method: any) => {
             if (method.type === 'card') {
@@ -429,6 +437,32 @@ async function deletePaymentMethod(token: AuthenticationToken, query: DeletePaym
   });
 }
 
+async function updateBillingDetails(token: AuthenticationToken, query: UpdateBillingDetailsQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().patch(
+      `/users/${query.userId}/clients/${query.clientId}/billing_details`,
+      {
+        address: {
+          line1: query.address.line1,
+          line2: query.address.line2,
+          city: query.address.city,
+          // eslint-disable-next-line camelcase
+          postal_code: query.address.postalCode,
+          country: query.address.country,
+        },
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -468,4 +502,5 @@ export const BmsApi = {
   setDefaultPaymentMethod,
   deletePaymentMethod,
   updateAuthentication,
+  updateBillingDetails,
 };

@@ -1384,6 +1384,19 @@
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
             }
+        },
+        "billingDetailsPage": {
+            "placeholders": {
+                "line1": "Numéro de rue, adresse",
+                "line2": "Complément d'adresse",
+                "postalCode": "Code postal",
+                "city": "Ville",
+                "country": "Pays"
+            },
+            "submit": "Mettre à jour",
+            "error": "Impossible de mettre à jour les informations.",
+            "success": "Les informations ont été mises à jour.",
+            "title": "Adresse de facturation"
         }
     }
 }
