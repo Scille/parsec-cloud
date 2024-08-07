@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Display, future::Future, path::Path, sync::Arc};
+use std::{fmt::Display, path::Path, sync::Arc};
 
 use libparsec::{
     internal::{Client, EventBus},
@@ -222,16 +222,11 @@ pub async fn load_cmds(
     Ok((cmds, device))
 }
 
-pub async fn load_client_and_run<F, Fut>(
+pub async fn load_client(
     config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
-    function: F,
-) -> anyhow::Result<()>
-where
-    F: FnOnce(Arc<Client>) -> Fut,
-    Fut: Future<Output = anyhow::Result<()>>,
-{
+) -> anyhow::Result<Arc<Client>> {
     let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
     let client = Client::start(
         Arc::new(
@@ -246,7 +241,7 @@ where
     )
     .await?;
 
-    function(client).await
+    Ok(client)
 }
 
 pub fn start_spinner(text: String) -> Spinner {
