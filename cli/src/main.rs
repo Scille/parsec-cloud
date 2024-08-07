@@ -18,6 +18,7 @@ mod list_workspaces;
 mod ls;
 mod macro_opts;
 mod remove_device;
+mod rm;
 #[cfg(any(test, feature = "testenv"))]
 mod run_testenv;
 mod shamir_setup;
@@ -91,6 +92,8 @@ enum Command {
     CopyTo(copy_to::CopyTo),
     /// List files in a workspace
     Ls(ls::Ls),
+    /// Remove a file from a workspace
+    Rm(rm::Rm),
 }
 
 #[tokio::main]
@@ -151,5 +154,6 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::CopyTo(copy_to) => copy_to::copy_to(copy_to).await,
         Command::Ls(ls) => ls::ls(ls).await,
+        Command::Rm(rm) => rm::rm(rm).await,
     }
 }
