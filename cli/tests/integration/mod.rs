@@ -18,6 +18,7 @@ mod stats_organization;
 mod stats_server;
 mod status_organization;
 mod version;
+mod workspace_import;
 
 use std::{
     io::BufRead,

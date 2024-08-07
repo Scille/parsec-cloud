@@ -17,10 +17,15 @@ use crate::{
 
 #[derive(Debug)]
 pub struct OpenOptions {
+    /// Open the file for reading
     pub read: bool,
+    /// Open the file for writing
     pub write: bool,
+    /// Truncate the file to 0 bytes after opening
     pub truncate: bool,
+    /// Allow to create a new file if it doesn't exist
     pub create: bool,
+    /// Require to create a new file, failing if the file already exists
     pub create_new: bool,
 }
 
