@@ -29,23 +29,21 @@ pub async fn cancel_invitation(cancel_invitation: CancelInvitation) -> anyhow::R
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_cmds_and_run(&config_dir, device, password_stdin, |cmds, _| async move {
-        let mut handle = start_spinner("Deleting invitation".into());
+    let (cmds, _) = load_cmds(&config_dir, device, password_stdin).await?;
+    let mut handle = start_spinner("Deleting invitation".into());
 
-        let rep = cmds.send(invite_cancel::Req { token }).await?;
+    let rep = cmds.send(invite_cancel::Req { token }).await?;
 
-        match rep {
-            InviteCancelRep::Ok => (),
-            rep => {
-                return Err(anyhow::anyhow!(
-                    "Server error while cancelling invitation: {rep:?}"
-                ));
-            }
-        };
+    match rep {
+        InviteCancelRep::Ok => (),
+        rep => {
+            return Err(anyhow::anyhow!(
+                "Server error while cancelling invitation: {rep:?}"
+            ));
+        }
+    };
 
-        handle.stop_with_message("Invitation deleted".into());
+    handle.stop_with_message("Invitation deleted".into());
 
-        Ok(())
-    })
-    .await
+    Ok(())
 }

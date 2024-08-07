@@ -33,39 +33,32 @@ pub async fn invite_user(invite_user: InviteUser) -> anyhow::Result<()> {
         device.as_deref().unwrap_or("N/A")
     );
 
-    load_cmds_and_run(
-        &config_dir,
-        device,
-        password_stdin,
-        |cmds, device| async move {
-            let mut handle = start_spinner("Creating user invitation".into());
+    let (cmds, device) = load_cmds(&config_dir, device, password_stdin).await?;
+    let mut handle = start_spinner("Creating user invitation".into());
 
-            let rep = cmds
-                .send(invite_new_user::Req {
-                    claimer_email: email,
-                    send_email,
-                })
-                .await?;
+    let rep = cmds
+        .send(invite_new_user::Req {
+            claimer_email: email,
+            send_email,
+        })
+        .await?;
 
-            let url = match rep {
-                InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
-                    device.organization_addr.clone(),
-                    device.organization_id().clone(),
-                    InvitationType::Device,
-                    token,
-                )
-                .to_url(),
-                rep => {
-                    return Err(anyhow::anyhow!(
-                        "Server refused to create user invitation: {rep:?}"
-                    ));
-                }
-            };
+    let url = match rep {
+        InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
+            device.organization_addr.clone(),
+            device.organization_id().clone(),
+            InvitationType::Device,
+            token,
+        )
+        .to_url(),
+        rep => {
+            return Err(anyhow::anyhow!(
+                "Server refused to create user invitation: {rep:?}"
+            ));
+        }
+    };
 
-            handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
+    handle.stop_with_message(format!("Invitation URL: {YELLOW}{url}{RESET}"));
 
-            Ok(())
-        },
-    )
-    .await
+    Ok(())
 }
