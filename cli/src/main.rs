@@ -15,6 +15,7 @@ mod list_devices;
 mod list_invitations;
 mod list_users;
 mod list_workspaces;
+mod ls;
 mod macro_opts;
 mod remove_device;
 #[cfg(any(test, feature = "testenv"))]
@@ -88,6 +89,8 @@ enum Command {
     ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
     /// Copy a local file to a remote workspace
     CopyTo(copy_to::CopyTo),
+    /// List files in a workspace
+    Ls(ls::Ls),
 }
 
 #[tokio::main]
@@ -147,5 +150,6 @@ async fn main() -> anyhow::Result<()> {
             shamir_setup::shamir_setup_create(shamir_setup_create).await
         }
         Command::CopyTo(copy_to) => copy_to::copy_to(copy_to).await,
+        Command::Ls(ls) => ls::ls(ls).await,
     }
 }
