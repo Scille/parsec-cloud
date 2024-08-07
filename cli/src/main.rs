@@ -60,6 +60,8 @@ enum Command {
     StatusOrganization(status_organization::StatusOrganization),
     /// Create a shamir setup
     ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
+    /// Import a local file to a remote workspace
+    WorkspaceImport(workspace_import::WorkspaceImport),
     /// List files in a workspace
     Ls(ls::Ls),
     /// Remove a file from a workspace
@@ -121,6 +123,9 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::ShamirSetupCreate(shamir_setup_create) => {
             shamir_setup::shamir_setup_create(shamir_setup_create).await
+        }
+        Command::WorkspaceImport(workspace_import) => {
+            workspace_import::workspace_import(workspace_import).await
         }
         Command::Ls(ls) => ls::ls(ls).await,
         Command::Rm(rm) => rm::rm(rm).await,
