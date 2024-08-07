@@ -4,17 +4,43 @@
   <div class="client-page-invoices">
     <!-- header -->
     <div class="invoices-header">
-      <ion-title class="invoices-header-title title-h2">
+      <ion-text class="invoices-header-title title-h2">
         {{ $msTranslate('clientArea.invoices.title') }}
-      </ion-title>
+      </ion-text>
+      <div class="selected-choice">
+        <ion-text
+          class="selected-choice-item subtitles-sm"
+          v-if="selectedYear"
+          @click="selectedYear = undefined"
+        >
+          {{ selectedYear }}
+          <ion-icon
+            class="selected-choice-item__icon"
+            :icon="close"
+          />
+        </ion-text>
+        <ion-text
+          class="selected-choice-item subtitles-sm"
+          v-if="selectedMonth"
+          @click="selectedMonth = undefined"
+        >
+          {{ selectedMonth }}
+          <ion-icon
+            class="selected-choice-item__icon"
+            :icon="close"
+          />
+        </ion-text>
+      </div>
       <div
         class="invoices-header-filter"
-        v-if="invoices"
+        v-if="invoices.length > 0"
       >
+        <ion-text class="invoices-header-filter__title body">{{ $msTranslate('clientArea.invoices.filter.title') }}</ion-text>
         <!-- year filter -->
         <ion-text
           class="invoices-header-filter-button button-medium"
           @click="openYearFilterPopover($event)"
+          :class="{ 'selected' : selectedYear }"
         >
           <ion-icon
             :icon="calendar"
@@ -30,6 +56,7 @@
         <ion-text
           class="invoices-header-filter-button button-medium"
           @click="openMonthFilterPopover($event)"
+          :class="{'selected' : selectedMonth }"
         >
           <ion-icon
             :icon="calendar"
@@ -45,7 +72,7 @@
     </div>
 
     <!-- invoices -->
-    <template v-if="invoices !== undefined">
+    <template v-if="invoices !== null">
       <div
         class="invoices-container"
         v-if="invoices.length > 0"
@@ -140,14 +167,14 @@
 </template>
 
 <script setup lang="ts">
-import { chevronDown, calendar } from 'ionicons/icons';
-import { IonText, IonTitle, IonIcon, popoverController } from '@ionic/vue';
+import { chevronDown, calendar, close } from 'ionicons/icons';
+import { IonText, IonIcon, popoverController, IonSkeletonText } from '@ionic/vue';
 import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/services/bms';
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import { ref, onMounted } from 'vue';
 import { Info } from 'luxon';
 import InvoicesContainer from '@/components/client-area/InvoicesContainer.vue';
-import { MsModalResult, MsOptions } from 'megashark-lib';
+import { MsModalResult, MsOptions, Translatable } from 'megashark-lib';
 
 defineProps<{
   organization: BmsOrganization;
@@ -193,7 +220,7 @@ async function openMonthFilterPopover(event: Event): Promise<void> {
     Info.months('short').map((month, index) => {
       return {
         key: index + 1,
-        label: month,
+        label: month as Translatable,
       };
     }),
   );
@@ -246,16 +273,51 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
 
 .invoices-header {
   display: flex;
+  align-items: center;
   gap: 0.5rem;
 
   &-title {
     color: var(--parsec-color-light-primary-700);
   }
 
+  .selected-choice {
+    display: flex;
+    gap: 1rem;
+    margin-inline: 1rem auto;
+
+    &-item {
+      background-color: var(--parsec-color-light-secondary-medium);
+      color: var(--parsec-color-light-secondary-text);
+      align-self: center;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.375rem 0.375rem 0.375rem 0.625rem;
+      border-radius: var(--parsec-radius-32);
+
+      &__icon {
+        color: var(--parsec-color-light-secondary-soft-text);
+        background: var(--parsec-color-light-secondary-white);
+        border-radius: var(--parsec-radius-12);
+        padding: 0.125rem;
+
+        &:hover {
+          cursor: pointer;
+          color: var(--parsec-color-light-secondary-white);
+          background-color: var(--parsec-color-light-secondary-text)
+        }
+      }
+    }
+  }
+
   &-filter {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: center;
+
+    &__title {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
 
     &-button {
       display: flex;
@@ -266,6 +328,7 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
       border-radius: var(--parsec-radius-6);
       border: 1px solid var(--parsec-color-light-secondary-disabled);
       cursor: pointer;
+      position: relative;
 
       &__calendar {
         color: var(--parsec-color-light-secondary-light);
@@ -280,12 +343,24 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
         background: var(--parsec-color-light-secondary-background);
 
         .invoices-header-filter-button__calendar {
-          color: var(--parsec-color-light-secondary-soft-text);
+          color: var(--parsec-color-light-secondary-hard-grey);
         }
 
         .invoices-header-filter-button__chevron {
           color: var(--parsec-color-light-secondary-text);
         }
+      }
+
+      // selected
+      &.selected::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 0.625rem;
+        height: 0.625rem;
+        border-radius: var(--parsec-radius-12);
+        background: var(--parsec-color-light-primary-500);
       }
     }
   }
