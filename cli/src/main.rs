@@ -62,6 +62,8 @@ enum Command {
     ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
     /// List files in a workspace
     Ls(ls::Ls),
+    /// Remove a file from a workspace
+    Rm(rm::Rm),
 }
 
 #[tokio::main]
@@ -121,5 +123,6 @@ async fn main() -> anyhow::Result<()> {
             shamir_setup::shamir_setup_create(shamir_setup_create).await
         }
         Command::Ls(ls) => ls::ls(ls).await,
+        Command::Rm(rm) => rm::rm(rm).await,
     }
 }
