@@ -4,22 +4,17 @@
   <div class="saas-login-container">
     <bms-login
       @login-success="onLoginSuccess"
-      v-show="!loginInProgress"
       :hide-header="true"
       class="saas-login"
     />
-    <ms-spinner v-show="loginInProgress" />
   </div>
 </template>
 
 <script setup lang="ts">
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import { AuthenticationToken, PersonalInformationResultData } from '@/services/bms';
-import { ref, onMounted } from 'vue';
+import { onMounted } from 'vue';
 import { navigateTo, Routes } from '@/router';
-import { MsSpinner } from 'megashark-lib';
-
-const loginInProgress = ref(false);
 
 onMounted(async () => {});
 
@@ -28,10 +23,7 @@ async function onLoginSuccess(_token: AuthenticationToken, _personalInformation:
 }
 
 async function goToClientArea(): Promise<void> {
-  loginInProgress.value = true;
-  setTimeout(async () => {
-    await navigateTo(Routes.ClientArea, { replace: true });
-  }, 500);
+  await navigateTo(Routes.ClientArea, { replace: true });
 }
 </script>
 
