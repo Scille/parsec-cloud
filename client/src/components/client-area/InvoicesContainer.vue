@@ -20,6 +20,7 @@
     <!-- row header -->
     <ion-list
       class="invoices-year-header-list ion-no-padding"
+      v-if="invoices.length > 0 && isVisible"
     >
       <ion-item class="invoices-year-header-list-item invoices-date">
         <ion-text class="menu-active">{{ $msTranslate('clientArea.invoices.cell.date') }}</ion-text>
@@ -70,42 +71,12 @@
         </ion-text>
       </ion-item>
     </ion-list>
-
-    <div v-if="invoices.length === 0 && isVisible">
-      <ion-list
-        class="invoices-list ion-no-padding"
-        v-for="index in 3"
-        :key="index"
-      >
-        <ion-item class="invoices-list-item">
-          <div class="skeleton-loading">
-            <ion-skeleton-text
-              :animated="true"
-              class="invoices-date"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="invoices-organization"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="invoices-amount"
-            />
-            <ion-skeleton-text
-              :animated="true"
-              class="invoices-status"
-            />
-          </div>
-        </ion-item>
-      </ion-list>
-    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BmsInvoice } from '@/services/bms';
 import {
-  IonSkeletonText,
   IonItem,
   IonList,
   IonText,
@@ -290,29 +261,6 @@ const isVisible = ref(true);
           background: var(--parsec-color-light-success-100);
           color: var(--parsec-color-light-success-700);
         }
-      }
-    }
-
-    .skeleton-loading {
-      display: flex;
-      width: 100%;
-      gap: 0.5rem;
-
-      [class^='invoices-'] {
-        height: 1rem;
-        border-radius: var(--parsec-radius-8);
-      }
-
-      .invoices-date {
-        max-width: calc(var(--max-width-date) - 1rem);
-      }
-
-      .invoices-organization {
-        max-width: calc(var(--max-width-organization) - 1rem);
-      }
-
-      .invoices-amount {
-        max-width: calc(var(--max-width-amount) - 1rem);
       }
     }
   }

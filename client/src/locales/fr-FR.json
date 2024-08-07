@@ -1321,8 +1321,8 @@
             "title": "Aperçu de vos factures",
             "noInvoice": "Vous n'avez pas encore de facture.",
             "filter": {
-                "year": "Année",
-                "month": "Mois"
+                "year": "Filtrer par année",
+                "month": "Filtrer par mois"
             },
             "cell": {
                 "number": "Numéro de facture",
