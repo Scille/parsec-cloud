@@ -3,10 +3,10 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      title="clientArea.personalDataPage.modals.personalInfo.title"
+      :title="`${translationPrefix}.title`"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: 'clientArea.personalDataPage.modals.personalInfo.nextButton',
+        label: `${translationPrefix}.nextButton`,
         disabled: !isFormValid(),
         onClick: submit,
       }"
@@ -15,20 +15,20 @@
         <ms-input
           v-model="firstnameRef"
           :maxlength="128"
-          label="clientArea.personalDataPage.modals.personalInfo.firstname"
+          :label="`${translationPrefix}.firstname`"
           @on-enter-keyup="submit"
           ref="firstnameInput"
         />
         <ms-input
           v-model="lastnameRef"
           :maxlength="128"
-          label="clientArea.personalDataPage.modals.personalInfo.lastname"
+          :label="`${translationPrefix}.lastname`"
           @on-enter-keyup="submit"
         />
         <div class="input-container">
           <ms-phone-number-input
             class="form-item-input"
-            label="clientArea.personalDataPage.modals.personalInfo.phone"
+            :label="`${translationPrefix}.phone`"
             v-model="phoneRef"
             @on-enter-keyup="submit"
           />
@@ -36,7 +36,7 @@
             class="form-error form-helperText body"
             v-if="fieldHasError(Fields.Phone)"
           >
-            {{ $msTranslate('clientArea.personalDataPage.modals.personalInfo.errors.phone') }}
+            {{ $msTranslate(`${translationPrefix}.errors.phone`) }}
           </div>
         </div>
         <ms-report-text
@@ -62,6 +62,7 @@ const props = defineProps<{
   phone?: string;
 }>();
 
+const translationPrefix = 'clientArea.personalDataPage.modals.personalInfo';
 const firstnameRef = ref(props.firstname);
 const lastnameRef = ref(props.lastname);
 const phoneRef = ref(props.phone ?? '');
@@ -94,7 +95,7 @@ async function submit(): Promise<boolean> {
     errors.value = response.errors ?? [];
     return false;
   }
-  return await modalController.dismiss({}, MsModalResult.Confirm);
+  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 function isFormValid(): boolean {

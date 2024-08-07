@@ -61,10 +61,12 @@
               <payment-methods-page
                 v-if="currentPage === ClientAreaPages.PaymentMethods"
                 :organization="currentOrganization"
+                :information-manager="informationManager"
               />
               <personal-data-page
                 v-if="currentPage === ClientAreaPages.PersonalData"
                 :organization="currentOrganization"
+                :information-manager="informationManager"
               />
               <statistics-page
                 v-if="currentPage === ClientAreaPages.Statistics"
@@ -83,7 +85,7 @@ import { IonPage, IonContent, IonSplitPane, IonMenu, GestureDetail, createGestur
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
-import { onMounted, onUnmounted, ref, watch } from 'vue';
+import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { ClientAreaPages } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
 import ContractsPage from '@/views/client-area/contracts/ContractsPage.vue';
@@ -95,7 +97,11 @@ import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
+import { InformationManager } from '@/services/informationManager';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
 const divider = ref();

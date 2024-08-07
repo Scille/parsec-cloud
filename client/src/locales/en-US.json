@@ -1271,14 +1271,7 @@
                     "wrongPassword": "The password is wrong.",
                     "noEmptyFields": "No field can be empty.",
                     "newEmailMustBeDifferent": "The new email must be different from the current one.",
-                    "changePassword": {
-                        "title": "Change password",
-                        "success": "Password has been updated."
-                    },
-                    "changeEmail": {
-                        "title": "Change email",
-                        "success": "Email has been updated."
-                    },
+                    "success": "Email has been updated.",
                     "nextButton": "Confirm"
                 },
                 "security": {
@@ -1292,10 +1285,10 @@
                         "title": "Choose your new password",
                         "newPasswordMustBeDifferent": "The new password must be different from the current one.",
                         "invalidPassword": "The new password format is invalid.",
-                        "success": "Password has been updated.",
                         "previousButton": "Back",
                         "nextButton": "Confirm"
-                    }
+                    },
+                    "success": "Password has been updated."
                 }
             }
         },
