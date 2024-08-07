@@ -114,6 +114,15 @@ interface RefreshTokenResultData {
   token: AuthenticationToken;
 }
 
+interface BmsAddress {
+  line1: string;
+  line2?: string;
+  city: string;
+  postalCode: string;
+  country: string;
+  state?: string;
+}
+
 interface BillingDetailsPaymentMethodCard {
   type: PaymentMethod.Card;
   id: string;
@@ -135,7 +144,7 @@ interface BillingDetailsResultData {
   type: DataType.BillingDetails;
   email: string;
   name: string;
-  address: string;
+  address: BmsAddress;
   paymentMethods: Array<BillingDetailsPaymentMethodCard | BillingDetailsPaymentMethodSepaTransfer>;
 }
 
@@ -251,6 +260,10 @@ interface DeletePaymentMethodQueryData extends _ClientQueryData {
   paymentMethod: string;
 }
 
+interface UpdateBillingDetailsQueryData extends _ClientQueryData {
+  address: BmsAddress;
+}
+
 export {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -258,6 +271,7 @@ export {
   BillingDetailsPaymentMethodSepaTransfer,
   BillingDetailsQueryData,
   BillingDetailsResultData,
+  BmsAddress,
   BmsError,
   BmsInvoice,
   BmsOrganization,
@@ -278,6 +292,7 @@ export {
   PersonalInformationResultData,
   SetDefaultPaymentMethodQueryData,
   UpdateAuthenticationQueryData,
+  UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
   UpdatePasswordQueryData,
   UpdatePersonalInformationQueryData,

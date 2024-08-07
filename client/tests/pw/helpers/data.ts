@@ -39,9 +39,16 @@ class _UserData {
   firstName: string;
   lastName: string;
   email: string;
-  phone: string | undefined;
-  job: string | undefined;
-  company: string | undefined;
+  phone?: string;
+  job?: string;
+  company?: string;
+  address: {
+    line1: string;
+    line2?: string;
+    postalCode: string;
+    city: string;
+    country: string;
+  };
 
   constructor() {
     this.firstName = DEFAULT_USER_INFORMATION.firstName;
@@ -50,6 +57,12 @@ class _UserData {
     this.email = DEFAULT_USER_INFORMATION.email;
     this.company = DEFAULT_USER_INFORMATION.company;
     this.job = DEFAULT_USER_INFORMATION.job;
+    this.address = {
+      line1: DEFAULT_USER_INFORMATION.address.line1,
+      postalCode: DEFAULT_USER_INFORMATION.address.postalCode,
+      city: DEFAULT_USER_INFORMATION.address.city,
+      country: DEFAULT_USER_INFORMATION.address.country,
+    };
   }
 
   reset(): void {
@@ -59,6 +72,12 @@ class _UserData {
     this.email = DEFAULT_USER_INFORMATION.email;
     this.company = DEFAULT_USER_INFORMATION.company;
     this.job = DEFAULT_USER_INFORMATION.job;
+    this.address = {
+      line1: DEFAULT_USER_INFORMATION.address.line1,
+      postalCode: DEFAULT_USER_INFORMATION.address.postalCode,
+      city: DEFAULT_USER_INFORMATION.address.city,
+      country: DEFAULT_USER_INFORMATION.address.country,
+    };
   }
 }
 

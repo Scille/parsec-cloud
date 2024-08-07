@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { BmsApi } from '@/services/bms/api';
-import { AuthenticationToken, BmsError, BmsResponse, DataType, PersonalInformationResultData } from '@/services/bms/types';
+import { AuthenticationToken, BmsAddress, BmsError, BmsResponse, DataType, PersonalInformationResultData } from '@/services/bms/types';
 import { storageManagerInstance } from '@/services/storageManager';
 import { decodeToken } from 'megashark-lib';
 
@@ -235,6 +235,17 @@ class BmsAccess {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
       paymentMethod: paymentMethod,
+    });
+  }
+
+  async updateBillingAddress(address: BmsAddress): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.updateBillingDetails(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      address: address,
     });
   }
 
