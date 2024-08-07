@@ -637,45 +637,42 @@ async fn share_workspace(tmp_path: TmpPath) {
     set_env(&tmp_path_str, &url);
 
     // FIXME: The test should not rely on the load_client_and_run since it use the stdin to read the password to unlock the device.
-    load_client_and_run(
+    let client = load_client(
         &libparsec::get_default_config_dir(),
         Some(alice.device_id.to_string()),
-        true,
-        |client| async move {
-            let wid = client
-                .create_workspace("new-workspace".parse().unwrap())
-                .await?;
-            client.ensure_workspaces_bootstrapped().await.unwrap();
-
-            client.poll_server_for_new_certificates().await.unwrap();
-            let users = client.list_users(false, None, None).await.unwrap();
-            let bob_id = &users
-                .iter()
-                .find(|x| x.human_handle == HumanHandle::new("bob@example.com", "Bob").unwrap())
-                .unwrap()
-                .id;
-
-            Command::cargo_bin("parsec_cli")
-                .unwrap()
-                .args([
-                    "share-workspace",
-                    "--device",
-                    &alice.device_id.hex(),
-                    "--workspace-id",
-                    &wid.hex(),
-                    "--user-id",
-                    &bob_id.hex(),
-                    "--role",
-                    "contributor",
-                ])
-                .assert()
-                .stdout(predicates::str::contains("Workspace has been shared"));
-
-            Ok(())
-        },
+        false,
     )
     .await
     .unwrap();
+    let wid = client
+        .create_workspace("new-workspace".parse().unwrap())
+        .await
+        .unwrap();
+    client.ensure_workspaces_bootstrapped().await.unwrap();
+
+    client.poll_server_for_new_certificates().await.unwrap();
+    let users = client.list_users(false, None, None).await.unwrap();
+    let bob_id = &users
+        .iter()
+        .find(|x| x.human_handle == HumanHandle::new("bob@example.com", "Bob").unwrap())
+        .unwrap()
+        .id;
+
+    Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args([
+            "share-workspace",
+            "--device",
+            &alice.device_id.hex(),
+            "--workspace-id",
+            &wid.hex(),
+            "--user-id",
+            &bob_id.hex(),
+            "--role",
+            "contributor",
+        ])
+        .assert()
+        .stdout(predicates::str::contains("Workspace has been shared"));
 
     Command::cargo_bin("parsec_cli")
         .unwrap()

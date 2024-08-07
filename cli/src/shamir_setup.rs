@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use libparsec::{UserID, UserProfile};
 
-use crate::utils::{load_client_and_run, start_spinner};
+use crate::utils::{load_client, start_spinner};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
@@ -34,68 +34,66 @@ pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Res
         config_dir,
     } = shamir_setup;
 
-    load_client_and_run(&config_dir, device, password_stdin, |client| async move {
-        let mut handle = start_spinner("Creating shamir setup".into());
+    let client = load_client(&config_dir, device, password_stdin).await?;
+    let mut handle = start_spinner("Creating shamir setup".into());
 
-        let users = client.list_users(true, None, None).await?;
-        let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
-            let recipient_info: HashMap<_, _> = users
-                .iter()
-                .filter(|info| recipients.contains(&info.human_handle.email().to_owned()))
-                .map(|info| (info.human_handle.email().to_owned(), info.id))
-                .collect();
-            if recipient_info.len() != recipients.len() {
-                handle.stop_with_message("A user in missing".into());
-                client.stop().await;
-                return Ok(());
-            }
-            recipients
-                .iter()
-                .map(|human| *recipient_info.get(human).expect("human should be here"))
-                .collect()
-        } else {
-            users
-                .iter()
-                .filter(|info| info.current_profile == UserProfile::Admin)
-                .map(|info| info.id)
-                .collect()
-        };
+    let users = client.list_users(true, None, None).await?;
+    let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
+        let recipient_info: HashMap<_, _> = users
+            .iter()
+            .filter(|info| recipients.contains(&info.human_handle.email().to_owned()))
+            .map(|info| (info.human_handle.email().to_owned(), info.id))
+            .collect();
+        if recipient_info.len() != recipients.len() {
+            handle.stop_with_message("A user in missing".into());
+            client.stop().await;
+            return Ok(());
+        }
+        recipients
+            .iter()
+            .map(|human| *recipient_info.get(human).expect("human should be here"))
+            .collect()
+    } else {
+        users
+            .iter()
+            .filter(|info| info.current_profile == UserProfile::Admin)
+            .map(|info| info.id)
+            .collect()
+    };
 
-        // TODO check that author is not in recipients
+    // TODO check that author is not in recipients
 
-        let shares: HashMap<UserID, u8> = if let Some(weights) = weights {
-            if recipients_ids.len() != weights.len() {
-                handle.stop_with_message("incoherent weights count".into());
-                client.stop().await;
-                return Ok(());
-            }
-
-            recipients_ids
-                .into_iter()
-                .zip(weights.into_iter())
-                .collect()
-        } else {
-            recipients_ids.into_iter().map(|r| (r, 1)).collect()
-        };
-
-        let t = shares.values().sum();
-        if let Some(threshold) = threshold {
-            if threshold > t {
-                handle.stop_with_message("too big threshold".into());
-                client.stop().await;
-                return Ok(());
-            }
+    let shares: HashMap<UserID, u8> = if let Some(weights) = weights {
+        if recipients_ids.len() != weights.len() {
+            handle.stop_with_message("incoherent weights count".into());
+            client.stop().await;
+            return Ok(());
         }
 
-        client
-            .shamir_setup_create(shares, threshold.unwrap_or(t))
-            .await?;
+        recipients_ids
+            .into_iter()
+            .zip(weights.into_iter())
+            .collect()
+    } else {
+        recipients_ids.into_iter().map(|r| (r, 1)).collect()
+    };
 
-        handle.stop_with_message("Shamir setup has been created".into());
+    let t = shares.values().sum();
+    if let Some(threshold) = threshold {
+        if threshold > t {
+            handle.stop_with_message("too big threshold".into());
+            client.stop().await;
+            return Ok(());
+        }
+    }
 
-        client.stop().await;
+    client
+        .shamir_setup_create(shares, threshold.unwrap_or(t))
+        .await?;
 
-        Ok(())
-    })
-    .await
+    handle.stop_with_message("Shamir setup has been created".into());
+
+    client.stop().await;
+
+    Ok(())
 }
