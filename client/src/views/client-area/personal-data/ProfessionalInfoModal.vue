@@ -3,10 +3,10 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      title="clientArea.personalDataPage.modals.professionalInfo.title"
+      :title="`${translationPrefix}.title`"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: 'clientArea.personalDataPage.modals.professionalInfo.nextButton',
+        label: `${translationPrefix}.nextButton`,
         disabled: !isFormValid(),
         onClick: submit,
       }"
@@ -14,7 +14,7 @@
       <div class="modal-container">
         <div class="input-container represent-company">
           <p class="form-label">
-            {{ $msTranslate('clientArea.personalDataPage.modals.professionalInfo.representCompany') }}
+            {{ $msTranslate(`${translationPrefix}.representCompany`) }}
           </p>
           <ms-boolean-toggle
             v-model="representCompanyRef"
@@ -25,14 +25,14 @@
           v-show="representCompanyRef === Answer.Yes"
           v-model="companyRef"
           :maxlength="128"
-          label="clientArea.personalDataPage.modals.professionalInfo.company"
+          :label="`${translationPrefix}.company`"
           @on-enter-keyup="submit"
         />
         <ms-input
           v-show="representCompanyRef === Answer.Yes"
           v-model="jobRef"
           :maxlength="128"
-          label="clientArea.personalDataPage.modals.professionalInfo.job"
+          :label="`${translationPrefix}.job`"
           @on-enter-keyup="submit"
         />
         <ms-report-text
@@ -57,6 +57,7 @@ const props = defineProps<{
   job?: string;
 }>();
 
+const translationPrefix = 'clientArea.personalDataPage.modals.professionalInfo';
 const companyRef = ref(props.company);
 const jobRef = ref(props.job);
 const representCompanyRef = ref(areFieldsFilled() ? Answer.Yes : Answer.No);
@@ -81,7 +82,7 @@ async function submit(): Promise<boolean> {
     errors.value = response.errors ?? [];
     return false;
   }
-  return await modalController.dismiss({}, MsModalResult.Confirm);
+  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 function areFieldsFilled(): boolean {

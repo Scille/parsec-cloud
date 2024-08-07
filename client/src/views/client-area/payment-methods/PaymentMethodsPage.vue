@@ -80,19 +80,17 @@ import {
   PaymentMethod,
   BillingDetailsPaymentMethodCard,
 } from '@/services/bms';
-import { onMounted, ref, computed, inject } from 'vue';
+import { onMounted, ref, computed } from 'vue';
 import { MsStripeCardDetails, PaymentMethod as MsPaymentMethod, MsModalResult } from 'megashark-lib';
 import { IonButton, IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
 import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 
-defineProps<{
+const props = defineProps<{
   organization: BmsOrganization;
+  informationManager: InformationManager;
 }>();
 
-const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
-const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const billingDetails = ref<BillingDetailsResultData | undefined>(undefined);
 const error = ref('');
 const querying = ref(false);
@@ -150,7 +148,7 @@ async function onAddPaymentMethodClicked(): Promise<void> {
   const setDefault = data.setDefault;
   const response = await BmsAccessInstance.get().addPaymentMethod(card.id);
   if (response.isError) {
-    informationManager.present(
+    props.informationManager.present(
       new Information({
         message: 'clientArea.paymentMethodsPage.addPaymentMethodFailed',
         level: InformationLevel.Error,
@@ -164,7 +162,7 @@ async function onAddPaymentMethodClicked(): Promise<void> {
     const defaultResponse = await BmsAccessInstance.get().setDefaultPaymentMethod(card.id);
     setDefaultFailed = defaultResponse.isError;
   }
-  informationManager.present(
+  props.informationManager.present(
     new Information({
       message: setDefaultFailed
         ? 'clientArea.paymentMethodsPage.addPaymentMethodSuccessSetDefaultFailed'

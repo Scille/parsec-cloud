@@ -21,7 +21,7 @@
             v-model="passwordRef"
             @change="errors.password = ''"
             @on-enter-keyup="submit"
-            label="clientArea.personalDataPage.modals.security.passwordStep.password"
+            :label="`${translationPrefix}.passwordStep.password`"
             ref="passwordInput"
           />
           <div
@@ -123,7 +123,7 @@ async function updatePassword(): Promise<boolean> {
     }
     return false;
   }
-  return await modalController.dismiss({}, MsModalResult.Confirm);
+  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 async function isFormValid(): Promise<boolean> {

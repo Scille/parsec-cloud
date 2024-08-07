@@ -1271,14 +1271,7 @@
                     "wrongPassword": "Le mot de passe est incorrect.",
                     "noEmptyFields": "Aucun champ ne doit être vide.",
                     "newEmailMustBeDifferent": "Le nouvel email doit être différent de l'actuel.",
-                    "changePassword": {
-                        "title": "Modifier votre mot de passe",
-                        "success": "Le mot de passe a bien été mise à jour."
-                    },
-                    "changeEmail": {
-                        "title": "Modifier l'adresse email",
-                        "success": "L'adresse email a bien été mise à jour."
-                    },
+                    "success": "L'adresse email a bien été mise à jour.",
                     "nextButton": "Continuer"
                 },
                 "security": {
@@ -1292,10 +1285,10 @@
                         "title": "Choisir votre nouveau mot de passe",
                         "newPasswordMustBeDifferent": "Le nouveau mot de passe doit être différent de l'actuel.",
                         "invalidPassword": "Le format du nouveau mot de passe est invalide.",
-                        "success": "Le mot de passe a bien été mise à jour.",
                         "previousButton": "Retour",
                         "nextButton": "Confirmer"
-                    }
+                    },
+                    "success": "Le mot de passe a bien été mise à jour."
                 }
             }
         },

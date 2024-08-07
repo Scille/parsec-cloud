@@ -3,10 +3,10 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      title="clientArea.personalDataPage.modals.authentication.title"
+      :title="`${translationPrefix}.title`"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: 'clientArea.personalDataPage.modals.authentication.nextButton',
+        label: `${translationPrefix}.nextButton`,
         disabled: !isFormValid(),
         onClick: submit,
       }"
@@ -17,7 +17,7 @@
           v-model="newEmailRef"
           @change="error = ''"
           @on-enter-keyup="submit"
-          label="clientArea.personalDataPage.modals.authentication.newEmail"
+          :label="`${translationPrefix}.newEmail`"
           :validator="newEmailValidator"
           ref="newEmailInput"
         />
@@ -25,7 +25,7 @@
           v-model="passwordRef"
           @change="error = ''"
           @on-enter-keyup="submit"
-          label="clientArea.personalDataPage.modals.authentication.password"
+          :label="`${translationPrefix}.password`"
         />
         <ms-report-text
           :theme="MsReportTheme.Error"
@@ -50,6 +50,7 @@ const props = defineProps<{
   email: string;
 }>();
 
+const translationPrefix = 'clientArea.personalDataPage.modals.authentication';
 const newEmailRef = ref('');
 const passwordRef = ref('');
 const error = ref('');
@@ -58,7 +59,7 @@ const newEmailInput = ref();
 const newEmailValidator: IValidator = async function (value: string) {
   const result = await emailValidator(value);
   if (result.validity === Validity.Valid && value === props.email) {
-    return { validity: Validity.Invalid, reason: 'clientArea.personalDataPage.modals.authentication.newEmailMustBeDifferent' };
+    return { validity: Validity.Invalid, reason: `${translationPrefix}.newEmailMustBeDifferent` };
   }
   return result;
 };
@@ -80,12 +81,12 @@ async function submit(): Promise<boolean> {
         error.value = 'validators.userInfo.email';
         break;
       case 403:
-        error.value = 'clientArea.personalDataPage.modals.authentication.wrongPassword';
+        error.value = `${translationPrefix}.wrongPassword`;
         break;
     }
     return false;
   }
-  return await modalController.dismiss({}, MsModalResult.Confirm);
+  return await modalController.dismiss(null, MsModalResult.Confirm);
 }
 
 function isFormValid(): boolean {

@@ -49,12 +49,14 @@ import AuthenticationModal from '@/views/client-area/personal-data/Authenticatio
 import SecurityModal from '@/views/client-area/personal-data/SecurityModal.vue';
 import PersonalInfoModal from '@/views/client-area/personal-data/PersonalInfoModal.vue';
 import ProfessionalInfoModal from '@/views/client-area/personal-data/ProfessionalInfoModal.vue';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
 const personalData = ref<PersonalInformationResultData | null>(null);
 const isRepresentingCompany = computed(() => !!personalData.value?.company && !!personalData.value?.job);
 
-defineProps<{
+const props = defineProps<{
   organization: BmsOrganization;
+  informationManager: InformationManager;
 }>();
 
 function createItem(
@@ -144,7 +146,7 @@ function getSecurityRows(): MsSummaryCardRowData[] {
 }
 
 async function openAuthenticationModal(): Promise<void> {
-  await openModal({
+  const role = await openModal({
     component: AuthenticationModal,
     canDismiss: true,
     cssClass: 'authentication-modal',
@@ -153,19 +155,27 @@ async function openAuthenticationModal(): Promise<void> {
       email: personalData.value?.email,
     },
   });
+
+  if (role === MsModalResult.Confirm) {
+    onDataUpdated('clientArea.personalDataPage.modals.authentication.success');
+  }
 }
 
 async function openSecurityModal(): Promise<void> {
-  await openModal({
+  const role = await openModal({
     component: SecurityModal,
     canDismiss: true,
     cssClass: 'security-modal',
     backdropDismiss: false,
   });
+
+  if (role === MsModalResult.Confirm) {
+    onDataUpdated('clientArea.personalDataPage.modals.security.success');
+  }
 }
 
 async function openPersonalInfoModal(): Promise<void> {
-  await openModal({
+  const role = await openModal({
     component: PersonalInfoModal,
     canDismiss: true,
     cssClass: 'personal-info-modal',
@@ -176,10 +186,14 @@ async function openPersonalInfoModal(): Promise<void> {
       phone: personalData.value?.phone,
     },
   });
+
+  if (role === MsModalResult.Confirm) {
+    onDataUpdated('clientArea.personalDataPage.modals.personalInfo.success');
+  }
 }
 
 async function openProfessionalInfoModal(): Promise<void> {
-  await openModal({
+  const role = await openModal({
     component: ProfessionalInfoModal,
     canDismiss: true,
     cssClass: 'professional-info-modal',
@@ -189,9 +203,13 @@ async function openProfessionalInfoModal(): Promise<void> {
       job: personalData.value?.job,
     },
   });
+
+  if (role === MsModalResult.Confirm) {
+    onDataUpdated('clientArea.personalDataPage.modals.professionalInfo.success');
+  }
 }
 
-async function openModal(options: ModalOptions): Promise<void> {
+async function openModal(options: ModalOptions): Promise<MsModalResult | undefined> {
   if (!personalData.value) {
     return;
   }
@@ -200,9 +218,18 @@ async function openModal(options: ModalOptions): Promise<void> {
   const { role } = await modal.onWillDismiss();
   await modal.dismiss();
 
-  if (role === MsModalResult.Confirm) {
-    await getPersonalData();
-  }
+  return role as MsModalResult;
+}
+
+async function onDataUpdated(message: Translatable): Promise<void> {
+  await getPersonalData();
+  props.informationManager.present(
+    new Information({
+      message,
+      level: InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
 }
 </script>
 
