@@ -1164,11 +1164,12 @@
     "clientArea": {
         "app": {
             "titleLinkOrganization": "Lier votre espace client à votre nouvelle organisation",
-            "titleLogin": "Connectez-vous à votre espace client",
+            "titleLogin": "Se connecter à votre espace client",
             "emailLabel": "Adresse mail",
             "password": "Mot de passe",
             "forgottenPassword": "Mot de passe oublié ?",
             "login": "Se connecter",
+            "saveLogin": "Se souvenir de moi",
             "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
             "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
