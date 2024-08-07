@@ -194,20 +194,18 @@ async function onLoginClicked(): Promise<void> {
     return;
   }
   querying.value = true;
-  try {
-    const response = await BmsAccessInstance.get().login(email.value, password.value);
+  const response = await BmsAccessInstance.get().login(email.value, password.value);
 
-    if (!response.ok) {
-      loginError.value = 'clientArea.app.loginFailed';
-    } else {
-      emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
-    }
-  } catch (error: any) {
-    window.electronAPI.log('error', `Connection to the BMS failed: ${error}`);
-    loginError.value = 'clientArea.app.networkFailed';
-  } finally {
+  if (response.ok) {
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
     querying.value = false;
+    return;
   }
+  loginError.value = 'clientArea.app.networkFailed';
+  if (response.errors) {
+    loginError.value = 'clientArea.app.loginFailed';
+  }
+  querying.value = false;
 }
 </script>
 
