@@ -16,7 +16,10 @@
           <p class="form-label">
             {{ $msTranslate('clientArea.personalDataPage.modals.professionalInfo.representCompany') }}
           </p>
-          <ms-boolean-toggle v-model="representCompanyRef" />
+          <ms-boolean-toggle
+            v-model="representCompanyRef"
+            ref="representCompanyInput"
+          />
         </div>
         <ms-input
           v-show="representCompanyRef === Answer.Yes"
@@ -32,15 +35,21 @@
           label="clientArea.personalDataPage.modals.professionalInfo.job"
           @on-enter-keyup="submit"
         />
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errors.length > 0"
+        >
+          {{ $msTranslate('globalErrors.unexpected') }}
+        </ms-report-text>
       </div>
     </ms-modal>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { Answer, MsBooleanToggle, MsModal, MsInput, MsModalResult } from 'megashark-lib';
+import { Answer, MsBooleanToggle, MsModal, MsInput, MsModalResult, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { Ref, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import { BmsAccessInstance, BmsError } from '@/services/bms';
 
 const props = defineProps<{
@@ -52,6 +61,11 @@ const companyRef = ref(props.company);
 const jobRef = ref(props.job);
 const representCompanyRef = ref(areFieldsFilled() ? Answer.Yes : Answer.No);
 const errors: Ref<BmsError[]> = ref([]);
+const representCompanyInput = ref();
+
+onMounted(async () => {
+  await representCompanyInput.value.setFocus();
+});
 
 async function submit(): Promise<boolean> {
   if (!isFormValid()) {

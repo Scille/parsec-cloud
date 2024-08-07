@@ -17,6 +17,7 @@
           :maxlength="128"
           label="clientArea.personalDataPage.modals.personalInfo.firstname"
           @on-enter-keyup="submit"
+          ref="firstnameInput"
         />
         <ms-input
           v-model="lastnameRef"
@@ -32,21 +33,27 @@
             @on-enter-keyup="submit"
           />
           <div
-            class="form-error body"
+            class="form-error form-helperText body"
             v-if="fieldHasError(Fields.Phone)"
           >
             {{ $msTranslate('clientArea.personalDataPage.modals.personalInfo.errors.phone') }}
           </div>
         </div>
+        <ms-report-text
+          :theme="MsReportTheme.Error"
+          v-if="errors.length > 0 && !fieldHasError(Fields.Phone)"
+        >
+          {{ $msTranslate('globalErrors.unexpected') }}
+        </ms-report-text>
       </div>
     </ms-modal>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsInput, MsPhoneNumberInput, MsModalResult } from 'megashark-lib';
+import { MsModal, MsInput, MsPhoneNumberInput, MsModalResult, MsReportTheme, MsReportText } from 'megashark-lib';
 import { IonPage, modalController } from '@ionic/vue';
-import { Ref, ref } from 'vue';
+import { onMounted, Ref, ref } from 'vue';
 import { BmsAccessInstance, BmsError } from '@/services/bms';
 
 const props = defineProps<{
@@ -58,11 +65,16 @@ const props = defineProps<{
 const firstnameRef = ref(props.firstname);
 const lastnameRef = ref(props.lastname);
 const phoneRef = ref(props.phone ?? '');
+const firstnameInput = ref();
 const errors: Ref<BmsError[]> = ref([]);
 
 enum Fields {
   Phone = 'client.phone',
 }
+
+onMounted(async () => {
+  await firstnameInput.value.setFocus();
+});
 
 function fieldHasError(field: Fields): boolean {
   return errors.value.find((error) => error.attr === field) !== undefined;
