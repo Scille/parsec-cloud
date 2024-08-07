@@ -14,6 +14,7 @@ pub mod list_users;
 pub mod list_workspaces;
 pub mod ls;
 pub mod remove_device;
+pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
 pub mod shamir_setup;

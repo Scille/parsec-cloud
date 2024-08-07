@@ -72,6 +72,8 @@ enum Command {
     WorkspaceImport(workspace_import::WorkspaceImport),
     /// List files in a workspace
     Ls(ls::Ls),
+    /// Remove a file from a workspace
+    Rm(rm::Rm),
 }
 
 #[tokio::main]
@@ -134,5 +136,6 @@ async fn main() -> anyhow::Result<()> {
             workspace_import::workspace_import(workspace_import).await
         }
         Command::Ls(ls) => ls::ls(ls).await,
+        Command::Rm(rm) => rm::rm(rm).await,
     }
 }
