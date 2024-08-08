@@ -302,30 +302,43 @@ async function mockOrganizationStatus(
   );
 }
 
-async function mockGetInvoices(page: Page, count: number, options?: MockRouteOptions): Promise<void> {
+interface MockGetInvoicesOverload {
+  count?: number;
+}
+
+async function mockGetInvoices(page: Page, overload: MockGetInvoicesOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(
     page,
     `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/invoices`,
     options,
     async (route) => {
-      const BASE_DATE = DateTime.fromISO('1988-04-07');
+      let invoices = [];
+      for (let year = 2019; year < 2022; year++) {
+        for (let month = 1; month < 13; month++) {
+          invoices.push({
+            id: `Id${year}-${month}`,
+            pdf: `https://fake/pdfs/${year}-${month}.pdf`,
+            // eslint-disable-next-line camelcase
+            period_start: DateTime.fromObject({ year: year, month: month }).toFormat('yyyy-LL-dd'),
+            // eslint-disable-next-line camelcase
+            period_end: DateTime.fromObject({ year: year, month: month }).endOf('month').toFormat('yyyy-LL-dd'),
+            total: Math.round(Math.random() * 1000),
+            status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
+            organization: DEFAULT_ORGANIZATION_INFORMATION.name,
+            number: `${year}-${month}`,
+            receiptNumber: `${year}-${month}`,
+          });
+        }
+      }
+      if (overload.count !== undefined) {
+        invoices = invoices.slice(0, overload.count);
+      }
+
       await route.fulfill({
         status: 200,
         json: {
-          count: count,
-          results: Array.from(Array(count).keys()).map((index) => {
-            return {
-              id: `Id${index}`,
-              pdf: `https://fake/pdfs/${index}.pdf`,
-              // eslint-disable-next-line camelcase
-              period_start: BASE_DATE.plus({ months: index }).toFormat('yyyy-LL-dd'),
-              // eslint-disable-next-line camelcase
-              period_end: BASE_DATE.plus({ month: index + 1 }).toFormat('yyyy-LL-dd'),
-              total: Math.round(Math.random() * 1000),
-              status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
-              organization: DEFAULT_ORGANIZATION_INFORMATION.name,
-            };
-          }),
+          count: invoices.length,
+          results: invoices,
         },
       });
     },
