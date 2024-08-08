@@ -20,7 +20,7 @@ use libparsec::{
 
 use crate::{
     create_organization::create_organization_req,
-    run_testenv::{
+    testenv_utils::{
         initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
         DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER_URL,
     },
