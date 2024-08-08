@@ -301,52 +301,26 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
       validateStatus: (status) => status === 200,
     });
 
-    const invoices: Array<object> = [];
-
-    for (let i = 2012; i < 2024; i++) {
-      for (let j = 1; j < 13; j++) {
-        invoices.push({
-          id: `${i}-${j}`,
-          pdfLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          start: DateTime.fromFormat(`${i}-${j}`, 'yyyy-L'),
-          end: DateTime.fromFormat(`${i}-${j}`, 'yyyy-L').plus({ month: 1 }),
-          total: 13.37,
-          status: 'paid',
-          number: `${i}-${j}`,
-          receiptNumber: `${i}-${j}`,
-        });
-      }
-    }
-
     return {
-      status: 200,
+      status: axiosResponse.status,
       isError: false,
       data: {
         type: DataType.Invoices,
-        invoices: invoices,
+        invoices: axiosResponse.data.results.map((invoice: any) => {
+          return {
+            id: invoice.id,
+            pdfLink: invoice.pdf,
+            start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),
+            end: DateTime.fromISO(invoice.period_end, { zone: 'utc' }),
+            total: invoice.total,
+            status: invoice.status,
+            organizationId: invoice.organization,
+            number: invoice.number,
+            receiptNumber: invoice.receipt_number,
+          };
+        }),
       },
     };
-
-    // return {
-    //   status: axiosResponse.status,
-    //   isError: false,
-    //   data: {
-    //     type: DataType.Invoices,
-    //     invoices: axiosResponse.data.results.map((invoice: any) => {
-    //       return {
-    //         id: invoice.id,
-    //         pdfLink: invoice.pdf,
-    //         start: DateTime.fromISO(invoice.period_start, { zone: 'utc' }),
-    //         end: DateTime.fromISO(invoice.period_end, { zone: 'utc' }),
-    //         total: invoice.total,
-    //         status: invoice.status,
-    //         organizationId: invoice.organization,
-    //         number: invoice.number,
-    //         receiptNumber: invoice.receipt_number,
-    //       };
-    //     }),
-    //   },
-    // };
   });
 }
 

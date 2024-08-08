@@ -7,32 +7,6 @@
       <ion-text class="invoices-header-title title-h2">
         {{ $msTranslate('clientArea.invoices.title') }}
       </ion-text>
-      <div class="selected-choice">
-        <ion-text
-          v-for="selectedYear in selectedYears"
-          :key="selectedYear"
-          class="selected-choice-item subtitles-sm"
-          @click="removeSelectedYear(selectedYear)"
-        >
-          {{ $msTranslate({ key: 'common.date.asIs', data: { date: selectedYear } }) }}
-          <ion-icon
-            class="selected-choice-item__icon"
-            :icon="close"
-          />
-        </ion-text>
-        <ion-text
-          class="selected-choice-item subtitles-sm"
-          v-for="selectedMonth in selectedMonths"
-          :key="selectedMonth"
-          @click="removeSelectedMonth(selectedMonth)"
-        >
-          {{ $msTranslate(getMonthName(selectedMonth)) }}
-          <ion-icon
-            class="selected-choice-item__icon"
-            :icon="close"
-          />
-        </ion-text>
-      </div>
       <div
         class="invoices-header-filter"
         v-if="invoices.length > 0"
@@ -73,6 +47,35 @@
       </div>
     </div>
 
+    <div
+      class="selected-choice"
+      v-if="selectedYears.length > 0 || selectedMonths.length > 0"
+    >
+      <ion-text
+        v-for="selectedYear in selectedYears"
+        :key="selectedYear"
+        class="selected-choice-item subtitles-sm"
+        @click="removeSelectedYear(selectedYear)"
+      >
+        {{ $msTranslate({ key: 'common.date.asIs', data: { date: selectedYear } }) }}
+        <ion-icon
+          class="selected-choice-item__icon"
+          :icon="close"
+        />
+      </ion-text>
+      <ion-text
+        class="selected-choice-item subtitles-sm"
+        v-for="selectedMonth in selectedMonths"
+        :key="selectedMonth"
+        @click="removeSelectedMonth(selectedMonth)"
+      >
+        {{ $msTranslate(getMonthName(selectedMonth)) }}
+        <ion-icon
+          class="selected-choice-item__icon"
+          :icon="close"
+        />
+      </ion-text>
+    </div>
     <!-- invoices -->
     <template v-if="invoices !== null">
       <div
@@ -279,52 +282,24 @@ function removeSelectedMonth(month: number): void {
 .client-page-invoices {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
 }
 
 .invoices-header {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 0.5rem;
 
   &-title {
     color: var(--parsec-color-light-primary-700);
-  }
-
-  .selected-choice {
-    display: flex;
-    gap: 1rem;
-    margin-inline: 1rem auto;
-
-    &-item {
-      background-color: var(--parsec-color-light-secondary-medium);
-      color: var(--parsec-color-light-secondary-text);
-      align-self: center;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.375rem 0.375rem 0.375rem 0.625rem;
-      border-radius: var(--parsec-radius-32);
-
-      &__icon {
-        color: var(--parsec-color-light-secondary-soft-text);
-        background: var(--parsec-color-light-secondary-white);
-        border-radius: var(--parsec-radius-12);
-        padding: 0.125rem;
-
-        &:hover {
-          cursor: pointer;
-          color: var(--parsec-color-light-secondary-white);
-          background-color: var(--parsec-color-light-secondary-text);
-        }
-      }
-    }
   }
 
   &-filter {
     display: flex;
     gap: 1rem;
     align-items: center;
+    margin-left: auto;
 
     &__title {
       color: var(--parsec-color-light-secondary-hard-grey);
@@ -372,6 +347,39 @@ function removeSelectedMonth(month: number): void {
         height: 0.625rem;
         border-radius: var(--parsec-radius-12);
         background: var(--parsec-color-light-primary-500);
+      }
+    }
+  }
+}
+
+.selected-choice {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  flex-wrap: wrap;
+
+  &-item {
+    background-color: var(--parsec-color-light-secondary-medium);
+    color: var(--parsec-color-light-secondary-text);
+    align-self: center;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.25rem 0.25rem 0.625rem;
+    border-radius: var(--parsec-radius-32);
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-grey);
+      border-radius: var(--parsec-radius-12);
+      padding: 0.125rem;
+    }
+
+    &:hover {
+      cursor: pointer;
+
+      .selected-choice-item__icon {
+        color: var(--parsec-color-light-secondary-white);
+        background-color: var(--parsec-color-light-secondary-text);
       }
     }
   }
