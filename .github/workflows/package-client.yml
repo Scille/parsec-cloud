@@ -27,6 +27,9 @@ on:
         type: boolean
         description: The current build is a nightly build
         default: false
+    secrets:
+      SENTRY_AUTH_TOKEN:
+        required: true
   workflow_dispatch:
     inputs:
       version:
