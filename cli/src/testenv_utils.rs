@@ -1,5 +1,3 @@
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 use std::{
     io::{BufRead, BufReader},
     path::{Path, PathBuf},
@@ -8,20 +6,18 @@ use std::{
 };
 
 use libparsec::{
-    authenticated_cmds::latest::{
-        device_create::{self, DeviceCreateRep},
-        user_create::{self, UserCreateRep},
-    },
-    load_device, AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime,
-    DeviceAccessStrategy, DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice,
-    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
-    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
-    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    authenticated_cmds::{latest::device_create, v4::user_create},
+    AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime, DeviceAccessStrategy,
+    DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice, MaybeRedacted,
+    OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm,
+    UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR,
+    PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
     bootstrap_organization::bootstrap_organization_req,
-    create_organization::create_organization_req, utils::*,
+    create_organization::create_organization_req,
+    utils::{RESET, YELLOW},
 };
 
 pub const DEFAULT_ADMINISTRATION_TOKEN: &str = "s3cr3t";
@@ -31,78 +27,72 @@ const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
 pub const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
 
-#[derive(clap::Parser)]
-pub struct RunTestenv {
-    /// Sourced script file
-    #[arg(long)]
-    source_file: Option<PathBuf>,
-    /// Main process id.
-    /// When this process stops, the server will be automatically killed
-    #[arg(long)]
-    main_process_id: Option<u32>,
-    /// Skip initialization
-    #[arg(short, long, default_value_t)]
-    empty: bool,
-}
+pub async fn initialize_test_organization(
+    client_config: ClientConfig,
+    addr: ParsecAddr,
+    organization_id: OrganizationID,
+) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
+    // Create organization
+    let organization_addr =
+        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
 
-/// Maps a process id to a port number
-///
-/// Tests are run parallelized, so multiple servers are running on localhost.
-/// Using the PID allows to retrieve the port in tests without having to store it.
-pub fn process_id_to_port(pid: u32) -> u16 {
-    // The first ports are reserved, so let's take an available port
-    pid as u16 % AVAILABLE_PORT_COUNT + RESERVED_PORT_OFFSET
-}
+    // Bootstrap organization and Alice user and create device "laptop" for Alice
+    let alice_device = bootstrap_organization_req(
+        client_config.clone(),
+        organization_addr,
+        "laptop".parse().expect("Unreachable"),
+        HumanHandle::new("alice@example.com", "Alice").expect("Unreachable"),
+        DEFAULT_DEVICE_PASSWORD.to_string().into(),
+    )
+    .await?;
 
-fn create_new_device(
-    new_device: Arc<LocalDevice>,
-    author: Arc<LocalDevice>,
-    now: DateTime,
-) -> (Bytes, Bytes) {
-    let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
-        timestamp: now,
-        user_id: new_device.user_id,
-        device_id: new_device.device_id,
-        device_label: MaybeRedacted::Real(new_device.device_label.clone()),
-        verify_key: new_device.verify_key(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
+    let access = DeviceAccessStrategy::Password {
+        key_file: client_config
+            .config_dir
+            .join(format!("devices/{}.keys", alice_device.device_id.hex())),
+        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
-    let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
+    let alice_device = libparsec::load_device(&client_config.config_dir, &access).await?;
 
-    let redacted_device_cert = device_cert.into_redacted();
+    let cmds = AuthenticatedCmds::new(
+        &client_config.config_dir,
+        alice_device.clone(),
+        ProxyConfig::default(),
+    )?;
 
-    let redacted_device_certificate = redacted_device_cert
-        .dump_and_sign(&author.signing_key)
-        .into();
+    // Create new device "pc" for Alice
+    let other_alice_device = register_new_device(
+        &client_config,
+        &cmds,
+        alice_device.clone(),
+        "pc".parse().expect("Unreachable"),
+    )
+    .await?;
 
-    (device_certificate, redacted_device_certificate)
-}
+    // Invite Bob in organization
+    let bob_device = register_new_user(
+        &client_config,
+        &cmds,
+        alice_device.clone(),
+        "laptop".parse().expect("Unreachable"),
+        HumanHandle::new("bob@example.com", "Bob").expect("Unreachable"),
+        UserProfile::Standard,
+    )
+    .await?;
 
-fn create_new_user(
-    new_device: Arc<LocalDevice>,
-    author: Arc<LocalDevice>,
-    initial_profile: UserProfile,
-    now: DateTime,
-) -> (Bytes, Bytes) {
-    let user_cert = UserCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
-        timestamp: now,
-        user_id: new_device.user_id,
-        human_handle: MaybeRedacted::Real(new_device.human_handle.clone()),
-        profile: initial_profile,
-        public_key: new_device.public_key().clone(),
-        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
-    };
+    // Invite Toto in organization
+    register_new_user(
+        &client_config,
+        &cmds,
+        alice_device.clone(),
+        "laptop".parse().expect("Unreachable"),
+        HumanHandle::new("toto@example.com", "Toto").expect("Unreachable"),
+        UserProfile::Outsider,
+    )
+    .await?;
 
-    let user_certificate = user_cert.dump_and_sign(&author.signing_key).into();
-
-    let redacted_user_cert = user_cert.into_redacted();
-
-    let redacted_user_certificate = redacted_user_cert.dump_and_sign(&author.signing_key).into();
-
-    (user_certificate, redacted_user_certificate)
+    Ok([alice_device, other_alice_device, bob_device])
 }
 
 async fn register_new_device(
@@ -138,7 +128,7 @@ async fn register_new_device(
         .await
     {
         Ok(rep) => match rep {
-            DeviceCreateRep::Ok => (),
+            device_create::DeviceCreateRep::Ok => (),
             _ => return Err(anyhow::anyhow!("Cannot create device: {rep:?}")),
         },
         Err(e) => return Err(anyhow::anyhow!("{e}")),
@@ -191,7 +181,7 @@ async fn register_new_user(
         .await
     {
         Ok(rep) => match rep {
-            UserCreateRep::Ok => (),
+            user_create::UserCreateRep::Ok => (),
             _ => return Err(anyhow::anyhow!("Cannot create user: {rep:?}")),
         },
         Err(e) => return Err(anyhow::anyhow!("{e}")),
@@ -209,72 +199,55 @@ async fn register_new_user(
     Ok(new_device)
 }
 
-pub async fn initialize_test_organization(
-    client_config: ClientConfig,
-    addr: ParsecAddr,
-    organization_id: OrganizationID,
-) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
-    // Create organization
-    let organization_addr =
-        create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
-
-    // Bootstrap organization and Alice user and create device "laptop" for Alice
-    let alice_device = bootstrap_organization_req(
-        client_config.clone(),
-        organization_addr,
-        "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("alice@example.com", "Alice").expect("Unreachable"),
-        DEFAULT_DEVICE_PASSWORD.to_string().into(),
-    )
-    .await?;
-
-    let access = DeviceAccessStrategy::Password {
-        key_file: client_config
-            .config_dir
-            .join(format!("devices/{}.keys", alice_device.device_id.hex())),
-        password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
+fn create_new_user(
+    new_device: Arc<LocalDevice>,
+    author: Arc<LocalDevice>,
+    initial_profile: UserProfile,
+    now: DateTime,
+) -> (Bytes, Bytes) {
+    let user_cert = UserCertificate {
+        author: CertificateSignerOwned::User(author.device_id),
+        timestamp: now,
+        user_id: new_device.user_id,
+        human_handle: MaybeRedacted::Real(new_device.human_handle.clone()),
+        profile: initial_profile,
+        public_key: new_device.public_key().clone(),
+        algorithm: PrivateKeyAlgorithm::X25519XSalsa20Poly1305,
     };
 
-    let alice_device = load_device(&client_config.config_dir, &access).await?;
+    let user_certificate = user_cert.dump_and_sign(&author.signing_key).into();
 
-    let cmds = AuthenticatedCmds::new(
-        &client_config.config_dir,
-        alice_device.clone(),
-        ProxyConfig::default(),
-    )?;
+    let redacted_user_cert = user_cert.into_redacted();
 
-    // Create new device "pc" for Alice
-    let other_alice_device = register_new_device(
-        &client_config,
-        &cmds,
-        alice_device.clone(),
-        "pc".parse().expect("Unreachable"),
-    )
-    .await?;
+    let redacted_user_certificate = redacted_user_cert.dump_and_sign(&author.signing_key).into();
 
-    // Invite Bob in organization
-    let bob_device = register_new_user(
-        &client_config,
-        &cmds,
-        alice_device.clone(),
-        "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("bob@example.com", "Bob").expect("Unreachable"),
-        UserProfile::Standard,
-    )
-    .await?;
+    (user_certificate, redacted_user_certificate)
+}
 
-    // Invite Toto in organization
-    register_new_user(
-        &client_config,
-        &cmds,
-        alice_device.clone(),
-        "laptop".parse().expect("Unreachable"),
-        HumanHandle::new("toto@example.com", "Toto").expect("Unreachable"),
-        UserProfile::Outsider,
-    )
-    .await?;
+fn create_new_device(
+    new_device: Arc<LocalDevice>,
+    author: Arc<LocalDevice>,
+    now: DateTime,
+) -> (Bytes, Bytes) {
+    let device_cert = DeviceCertificate {
+        author: CertificateSignerOwned::User(author.device_id),
+        timestamp: now,
+        user_id: new_device.user_id,
+        device_id: new_device.device_id,
+        device_label: MaybeRedacted::Real(new_device.device_label.clone()),
+        verify_key: new_device.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
+    };
 
-    Ok([alice_device, other_alice_device, bob_device])
+    let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
+
+    let redacted_device_cert = device_cert.into_redacted();
+
+    let redacted_device_certificate = redacted_device_cert
+        .dump_and_sign(&author.signing_key)
+        .into();
+
+    (device_certificate, redacted_device_certificate)
 }
 
 pub enum TestenvConfig {
@@ -400,6 +373,15 @@ fn kill_last_testbed_server(last_server_id: String) -> anyhow::Result<()> {
     Ok(())
 }
 
+/// Maps a process id to a port number
+///
+/// Tests are run parallelized, so multiple servers are running on localhost.
+/// Using the PID allows to retrieve the port in tests without having to store it.
+pub fn process_id_to_port(pid: u32) -> u16 {
+    // The first ports are reserved, so let's take an available port
+    pid as u16 % AVAILABLE_PORT_COUNT + RESERVED_PORT_OFFSET
+}
+
 fn start_testbed_server(stop_after_process: u32, port: u16) -> anyhow::Result<std::process::Child> {
     let cargo_manifest_dir =
         std::env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR must be set");
@@ -447,56 +429,6 @@ fn wait_testbed_server_to_be_ready(child: &mut std::process::Child) {
         }
         buf.clear();
     }
-}
-
-#[cfg(feature = "testenv")]
-pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
-    let RunTestenv {
-        main_process_id,
-        source_file,
-        empty,
-    } = run_testenv;
-
-    let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
-
-    let testenv_config = match (main_process_id, std::env::var("TESTBED_SERVER")) {
-        (_, Ok(testbed_server)) => {
-            let url = parsec_addr_from_http_url(&testbed_server);
-            TestenvConfig::ConnectToServer(url)
-        }
-        (Some(main_process_id), _) => TestenvConfig::StartNewServer {
-            stop_after_process: main_process_id,
-        },
-        (None, Err(_)) => panic!(concat!(
-            "You must at least provide a main process id (via the CLI) ",
-            "or set the testbed server url (via the env variable TESTBED_SERVER)"
-        )),
-    };
-
-    let url = new_environment(&tmp_dir, source_file, testenv_config, empty).await?;
-
-    if !empty {
-        let url = url.expect("Mismatch condition in new_environment when starting a new server");
-        let org_id = "Org".parse().expect("Unreachable");
-        let [alice_device, other_alice_device, bob_device] =
-            initialize_test_organization(ClientConfig::default(), url, org_id).await?;
-
-        println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
-        println!(
-            "- {YELLOW}{}{RESET} // Alice",
-            &alice_device.device_id.hex()[..3]
-        );
-        println!(
-            "- {YELLOW}{}{RESET} // Alice 2nd device",
-            &other_alice_device.device_id.hex()[..3]
-        );
-        println!(
-            "- {YELLOW}{}{RESET} // Bob",
-            &bob_device.device_id.hex()[..3]
-        );
-    }
-
-    Ok(())
 }
 
 pub fn parsec_addr_from_http_url(url: &str) -> ParsecAddr {

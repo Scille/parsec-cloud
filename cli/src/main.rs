@@ -1,34 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod bootstrap_organization;
-mod cancel_invitation;
-mod claim_invitation;
-mod create_organization;
-mod create_workspace;
-mod export_recovery_device;
-mod greet_invitation;
-mod import_recovery_device;
-mod invite_device;
-mod invite_user;
-mod list_devices;
-mod list_invitations;
-mod list_users;
-mod list_workspaces;
-mod ls;
+mod commands;
 mod macro_opts;
-mod remove_device;
 #[cfg(any(test, feature = "testenv"))]
-mod run_testenv;
-mod shamir_setup;
-mod share_workspace;
-mod stats_organization;
-mod stats_server;
-mod status_organization;
+mod testenv_utils;
 #[cfg(test)]
 mod tests;
 mod utils;
 
 use clap::{Parser, Subcommand};
+pub use commands::*;
 
 /// Parsec cli
 #[derive(Parser)]
