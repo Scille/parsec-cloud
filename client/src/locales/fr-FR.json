@@ -1315,7 +1315,8 @@
             "free": "gratuit",
             "ofWhich": "dont",
             "data": "de données",
-            "metadata": "métadonnées"
+            "metadata": "métadonnées",
+            "error": "Impossible de récupérer les données de l'organisation."
         },
         "invoices": {
             "title": "Aperçu de vos factures",

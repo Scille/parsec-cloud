@@ -1,97 +1,254 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div>
-    <h1>{{ $msTranslate('clientArea.statistics.titles.stats') }}</h1>
-    <div v-if="stats">
-      <div>
-        <div class="subtitle">
-          <h2>{{ $msTranslate('clientArea.statistics.titles.users') }}</h2>
-          <ion-text>{{ $msTranslate('clientArea.statistics.titles.active') }}</ion-text>
+  <div class="client-page-statistics">
+    <template v-if="stats">
+      <!-- active users -->
+      <div class="users active">
+        <div class="users-text">
+          <ion-title class="users-active-text__title title-h2">
+            {{ $msTranslate('clientArea.statistics.titles.users') }}
+            <span class="subtitles-normal">
+              {{ $msTranslate('clientArea.statistics.titles.active') }}
+            </span>
+          </ion-title>
         </div>
-        <div class="card-row">
-          <ion-card class="card card-active">
-            {{ stats.adminUsersDetail.active }}
-            {{ $msTranslate(stats.adminUsersDetail.active > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
-          </ion-card>
-          <ion-card class="card card-active">
-            {{ stats.standardUsersDetail.active }}
-            {{ $msTranslate(stats.standardUsersDetail.active > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard') }}
-          </ion-card>
-          <ion-card class="card card-active">
-            {{ stats.outsiderUsersDetail.active }}
-            {{ $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider') }}
-          </ion-card>
-        </div>
-      </div>
-      <div>
-        <div class="subtitle">
-          <h2>{{ $msTranslate('clientArea.statistics.titles.users') }}</h2>
-          <ion-text>{{ $msTranslate('clientArea.statistics.titles.revoked') }}</ion-text>
-        </div>
-        <div class="card-row">
-          <ion-card class="card card-revoked">
-            {{ stats.adminUsersDetail.revoked }}
-            {{ $msTranslate(stats.adminUsersDetail.revoked > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
-          </ion-card>
-          <ion-card class="card card-revoked">
-            {{ stats.standardUsersDetail.revoked }}
-            {{ $msTranslate(stats.standardUsersDetail.revoked > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard') }}
-          </ion-card>
-          <ion-card class="card card-revoked">
-            {{ stats.outsiderUsersDetail.revoked }}
-            {{ $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider') }}
-          </ion-card>
-        </div>
-      </div>
-      <div class="bottom-part">
-        <h2>{{ $msTranslate('clientArea.statistics.titles.storage') }}</h2>
-        <div class="bottom-part-data">
-          <div>
-            <h2>{{ $msTranslate(formatFileSize(totalData)) }}</h2>
-            {{ $msTranslate('clientArea.statistics.ofWhich') }}
-            {{ $msTranslate(formatFileSize(stats.dataSize)) }} {{ $msTranslate('clientArea.statistics.data') }}
-            {{ $msTranslate(formatFileSize(stats.metadataSize)) }} {{ $msTranslate('clientArea.statistics.metadata') }}
-          </div>
-          <div>
-            {{ $msTranslate('clientArea.statistics.consumptionDetail') }}
-            <div v-if="firstBarData">
-              <div id="firstBar">
-                <ion-progress-bar :value="firstBarData.progress" />
-                {{ $msTranslate(formatFileSize(firstBarData.amount)) }}
-                {{ firstBarData.percentage.toFixed(0) }}%
-              </div>
-              {{ $msTranslate('clientArea.statistics.free') }}
+        <div class="users-cards-list">
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="star"
+              />
             </div>
-            <div v-if="secondBarData">
-              <div id="secondBar">
-                {{ $msTranslate(formatFileSize(secondBarData.amount)) }}
-                {{ secondBarData.multiplier > 0 ? `x${secondBarData.multiplier}` : '' }}
-                {{ secondBarData.percentage.toFixed(0) }}%
-                <ion-progress-bar :value="secondBarData.progress" />
-              </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate(stats.adminUsersDetail.active > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="pencil"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{
+                  $msTranslate(stats.standardUsersDetail.active > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
+                }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="arrowForward"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{
+                  $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
+                }}
+              </ion-text>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- revoked users -->
+      <div class="users revoked">
+        <div class="users-text">
+          <ion-title class="users-active-text__title title-h2">
+            {{ $msTranslate('clientArea.statistics.titles.users') }}
+            <span class="subtitles-normal">
+              {{ $msTranslate('clientArea.statistics.titles.revoked') }}
+            </span>
+          </ion-title>
+        </div>
+        <div class="users-cards-list">
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="star"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.revoked }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate(stats.adminUsersDetail.revoked > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="pencil"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.revoked }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{
+                  $msTranslate(stats.standardUsersDetail.revoked > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
+                }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="arrowForward"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{
+                  $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
+                }}
+              </ion-text>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- storage -->
+      <div class="storage">
+        <ion-text class="storage__title title-h2">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
+        <div class="storage-data">
+          <div class="storage-data-global">
+            <ion-text class="storage-data-global__total title-h1">{{ $msTranslate(formatFileSize(totalData)) }}</ion-text>
+            <div class="storage-data-global-info">
+              <ion-text class="storage-data-global-info__text body">{{ $msTranslate('clientArea.statistics.ofWhich') }}</ion-text>
+              <ion-text class="storage-data-global-info__text">
+                <span class="title-h5">{{ $msTranslate(formatFileSize(stats.dataSize)) }}</span>
+                <span class="body">{{ $msTranslate('clientArea.statistics.data') }}</span>
+              </ion-text>
+              <ion-text class="storage-data-global-info__text">
+                <span class="title-h5">{{ $msTranslate(formatFileSize(stats.metadataSize)) }}</span>
+                <span class="body">{{ $msTranslate('clientArea.statistics.metadata') }}</span>
+              </ion-text>
+            </div>
+          </div>
+          <div class="storage-data-consumption">
+            <ion-text class="storage-data-consumption__title title-h5">
+              {{ $msTranslate('clientArea.statistics.consumptionDetail') }}
+            </ion-text>
+            <div class="storage-data-consumption-content">
               <div
-                v-if="thirdBarData"
-                id="thirdBar"
+                v-if="firstBarData"
+                class="consumption-item"
               >
-                {{ $msTranslate(formatFileSize(thirdBarData.amount)) }}
-                {{ thirdBarData.percentage.toFixed(0) }}%
-                <ion-progress-bar :value="thirdBarData.progress" />
+                <div
+                  id="firstBar"
+                  class="consumption"
+                >
+                  <div class="consumption-number">
+                    <ion-text class="consumption-number__amount title-h4">{{ $msTranslate(formatFileSize(firstBarData.amount)) }}</ion-text>
+                    <ion-text class="consumption-number__percentage title-h5">{{ firstBarData.percentage.toFixed(0) }}%</ion-text>
+                  </div>
+                  <ion-progress-bar
+                    :value="firstBarData.progress"
+                    class="consumption__bar"
+                  />
+                  <ion-text class="consumption__price subtitles-sm">
+                    {{ $msTranslate('clientArea.statistics.free') }}
+                  </ion-text>
+                </div>
               </div>
-              {{ $msTranslate('clientArea.statistics.paying') }}
+              <!-- secondBarData -->
+              <div
+                v-if="secondBarData"
+                class="consumption-item"
+              >
+                <div
+                  id="secondBar"
+                  class="consumption"
+                >
+                  <div class="consumption-number">
+                    <ion-text>
+                      <span class="consumption-number__amount title-h4">{{ $msTranslate(formatFileSize(secondBarData.amount)) }}</span>
+                      <span class="number-multiplier">
+                        {{ secondBarData.multiplier > 0 ? `<span>x${secondBarData.multiplier}</span>` : '' }}
+                      </span>
+                    </ion-text>
+                    <ion-text class="consumption-number__percentage title-h5">{{ secondBarData.percentage.toFixed(0) }}%</ion-text>
+                  </div>
+                  <ion-progress-bar
+                    :value="secondBarData.progress"
+                    class="consumption__bar"
+                  />
+                </div>
+                <div
+                  id="thirdBar"
+                  class="consumption"
+                  v-if="thirdBarData"
+                >
+                  <div class="consumption-number">
+                    <ion-text class="consumption-number__amount title-h4">
+                      {{ $msTranslate(formatFileSize(thirdBarData.amount)) }}
+                    </ion-text>
+                    <ion-text class="consumption-number__percentage title-h5">{{ thirdBarData.percentage.toFixed(0) }}%</ion-text>
+                  </div>
+                  <ion-progress-bar
+                    :value="thirdBarData.progress"
+                    class="consumption__bar"
+                  />
+                </div>
+                <ion-text class="consumption__price paid subtitles-sm">
+                  {{ $msTranslate('clientArea.statistics.paying') }}
+                </ion-text>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      <ion-text class="statistics-error body">{{ $msTranslate('clientArea.statistics.error') }}</ion-text>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData } from '@/services/bms';
 import { onMounted, ref } from 'vue';
-import { IonCard, IonProgressBar, IonText } from '@ionic/vue';
+import { IonCard, IonProgressBar, IonText, IonIcon, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
+import { person, star, pencil, arrowForward } from 'ionicons/icons';
 
 interface ProgressBarData {
   amount: number;
@@ -183,36 +340,226 @@ onMounted(async () => {
 </script>
 
 <style scoped lang="scss">
-.subtitle {
-  color: var(--parsec-color-light-primary-700);
-}
-
-.bottom-part {
-  background-color: var(--parsec-color-light-secondary-premiere);
+.users {
   display: flex;
   flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+
+  &-text {
+    display: flex;
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  &-cards-list {
+    display: flex;
+    gap: 1.5rem;
+
+    &-item {
+      display: flex;
+      border-radius: var(--parsec-radius-8);
+      padding: 0.875rem;
+      box-shadow: none;
+      gap: 1rem;
+      margin: 0;
+      min-width: 11.625rem;
+
+      &-icons {
+        display: flex;
+        position: relative;
+        width: fit-content;
+
+        &__main {
+          font-size: 2rem;
+          color: var(--parsec-color-light-primary-700);
+          border-radius: var(--parsec-radius-circle);
+          padding: 0.5rem;
+        }
+
+        &__secondary {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          border-radius: var(--parsec-radius-12);
+          // should be replaced with a variable in megashark-lib
+          box-shadow: 0px 1px 2px 0px rgba(14, 14, 14, 0.05);
+          font-size: 0.625rem;
+          color: var(--parsec-color-light-secondary-contrast);
+          background: var(--parsec-color-light-secondary-white);
+          padding: 0.25rem;
+        }
+      }
+
+      &-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        &__number {
+          color: var(--parsec-color-light-secondary-contrast);
+        }
+
+        &__text {
+          color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
+    }
+  }
+
+  &.active {
+    .users-cards-list-item {
+      background: var(--parsec-color-light-primary-50);
+    }
+
+    .users-cards-list-item-icons__main {
+      background: var(--parsec-color-light-primary-100);
+    }
+  }
+
+  &.revoked {
+    .users-cards-list-item {
+      background: var(--parsec-color-light-secondary-background);
+    }
+
+    .users-cards-list-item-icons__main {
+      background: var(--parsec-color-light-secondary-disabled);
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+  }
+}
+
+.storage {
+  display: flex;
+  flex-direction: column;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  padding: 2rem;
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: var(--parsec-radius-12);
+  gap: 1.5rem;
+  max-width: 50rem;
+
+  &__title {
+    color: var(--parsec-color-light-primary-700);
+  }
 
   &-data {
     display: flex;
-    flex-direction: row;
+    gap: 3rem;
+
+    &-consumption-content {
+      display: flex;
+      gap: 2rem;
+    }
+    &-consumption {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+      width: 100%;
+
+      &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0.5rem;
+        right: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--parsec-color-light-secondary-disabled);
+      }
+
+      &__title {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        background: var(--parsec-color-light-secondary-inversed-contrast);
+        padding-right: 1rem;
+        width: fit-content;
+        position: relative;
+        z-index: 2;
+      }
+    }
   }
 }
 
-.card {
-  width: 186px;
-  height: 76.1px;
+.storage-data-global {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 9.5rem;
 
-  &-active {
-    background-color: var(--parsec-color-light-primary-30);
+  &__total {
+    color: var(--parsec-color-light-primary-600);
   }
 
-  &-revoked {
-    background-color: var(--parsec-color-light-secondary-background);
-  }
-
-  &-row {
+  &-info {
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__text {
+      color: var(--parsec-color-light-secondary-hard-grey);
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+  }
+}
+
+.consumption {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+
+  &-item {
+    width: 100%;
+    max-width: 20rem;
+  }
+
+  &-number {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+
+    &__amount {
+      color: var(--parsec-color-light-secondary-contrast);
+    }
+
+    .number-multiplier {
+      color: var(--parsec-color-light-primary-500);
+    }
+
+    &__percentage {
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+  }
+
+  &__bar {
+    --progress-background: var(--parsec-color-light-secondary-grey);
+    --buffer-background: var(--parsec-color-light-secondary-disabled);
+    border-radius: var(--parsec-radius-12);
+  }
+
+  &__price {
+    display: flex;
+    color: var(--parsec-color-light-secondary-hard-grey);
+    padding-top: 0.25rem;
+
+    &.paid {
+      color: var(--parsec-color-light-primary-500);
+    }
+  }
+
+  &#thirdBar {
+    margin-top: 1rem;
+  }
+
+  &#secondBar,
+  &#thirdBar {
+    .consumption__bar {
+      --progress-background: var(--parsec-color-light-primary-500);
+      --buffer-background: var(--parsec-color-light-primary-100);
+    }
   }
 }
 </style>
