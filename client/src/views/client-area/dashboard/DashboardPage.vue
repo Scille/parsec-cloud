@@ -242,7 +242,10 @@ onMounted(async () => {
 
   const invoicesResponse = await BmsAccessInstance.get().getInvoices();
   if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.Invoices) {
-    invoices.value = invoicesResponse.data.invoices.filter((invoice) => invoice.organizationId === props.organization.parsecId);
+    invoices.value = invoicesResponse.data.invoices
+      .filter((invoice) => invoice.organizationId === props.organization.parsecId)
+      .sort((invoice1, invoice2) => invoice2.start.toMillis() - invoice1.start.toMillis())
+      .slice(0, 3);
   }
 
   const billingDetailsResponse = await BmsAccessInstance.get().getBillingDetails();

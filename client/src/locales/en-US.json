@@ -1335,7 +1335,8 @@
                 },
                 "status": "Status",
                 "download": "Download"
-            }
+            },
+            "retrieveError": "Could not retrieve your invoices."
         },
         "paymentMethodsPage": {
             "title": "Your payment method",
