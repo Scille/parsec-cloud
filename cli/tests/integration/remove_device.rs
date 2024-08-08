@@ -2,7 +2,7 @@ use std::io::{BufReader, Write};
 
 use libparsec::{tmp_path, TmpPath};
 
-use super::{get_testenv_config, run_local_organization, set_env, wait_for};
+use super::{bootstrap_cli_test, wait_for};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -11,14 +11,7 @@ use super::{get_testenv_config, run_local_organization, set_env, wait_for};
 // and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn remove_device(tmp_path: TmpPath) {
-    let _ = env_logger::builder().is_test(true).try_init();
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-
-    set_env(tmp_path_str, &url);
+    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     // TODO: Replace me with `assert_cmd::Command::cargo_bin` !
     let process = std::process::Command::new("cargo")
