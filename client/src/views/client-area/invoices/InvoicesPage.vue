@@ -183,7 +183,7 @@ import { Info } from 'luxon';
 import InvoicesContainer from '@/components/client-area/InvoicesContainer.vue';
 import { MsOptions, Translatable, I18n } from 'megashark-lib';
 
-defineProps<{
+const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
@@ -251,9 +251,11 @@ async function openMonthFilterPopover(event: Event): Promise<void> {
 onMounted(async () => {
   const response = await BmsAccessInstance.get().getInvoices();
   if (!response.isError && response.data && response.data.type === DataType.Invoices) {
-    invoices.value = response.data.invoices.sort((invoice1, invoice2) => {
-      return invoice2.start.diff(invoice1.start).toMillis();
-    });
+    invoices.value = response.data.invoices
+      .filter((invoice) => invoice.organizationId === props.organization.parsecId)
+      .sort((invoice1, invoice2) => {
+        return invoice2.start.diff(invoice1.start).toMillis();
+      });
     // get each different year of the invoices
     years.value = invoices.value.map((invoice) => invoice.start.year);
     years.value = Array.from(new Set(years.value));
