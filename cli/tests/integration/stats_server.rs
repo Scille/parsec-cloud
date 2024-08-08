@@ -2,21 +2,14 @@ use assert_cmd::Command;
 
 use libparsec::{tmp_path, TmpPath};
 
-use super::{get_testenv_config, run_local_organization, set_env};
+use super::bootstrap_cli_test;
 use crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN;
 
 #[rstest::rstest]
 #[tokio::test]
 // TODO: Split me into different tests
 async fn stats_server(tmp_path: TmpPath) {
-    let _ = env_logger::builder().is_test(true).try_init();
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, _, _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-
-    set_env(tmp_path_str, &url);
+    let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
