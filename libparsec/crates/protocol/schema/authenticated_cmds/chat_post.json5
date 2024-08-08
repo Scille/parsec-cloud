@@ -1,0 +1,55 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "chat_post",
+            "fields": [
+                {
+                    // `ChatMessage` structure serialized and signed
+                    "name": "messageContent",
+                    "type": "String"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // `message` field in the request is not a `ChatMessage` signed by the author
+                "status": "invalid_message"
+            },
+            {
+                "status": "recipient_not_found"
+            },
+            {
+                "status": "recipient_revoked"
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]

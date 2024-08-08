@@ -146,6 +146,25 @@ class EventPinged(BaseModel, ClientBroadcastableEvent):
         )
 
 
+class EventChatReceived(BaseModel, ClientBroadcastableEvent):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["CHATRECEIVED"] = "CHATRECEIVED"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+    messageContent: str
+
+    # check if Bob is Bob
+    # @override
+    # def is_event_for_client(self, client: RegisteredClient) -> bool:
+    #     return self.organization_id == client.organization_id
+
+    # ???
+    # @override
+    # def dump_as_apiv4_sse_payload(self) -> bytes:
+    #     return self._dump_as_apiv4_sse_payload(
+    #         authenticated_cmds.latest.events_listen.APIEventPinged(self.ping), self.event_id
+    #     )
+
 class EventInvitation(BaseModel, ClientBroadcastableEvent):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["INVITATION"] = "INVITATION"

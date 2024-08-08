@@ -157,6 +157,7 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
             };
             event_bus.send(&event);
         }
+        APIEvent::ChatMessageReceived { .. } => (),
     }
 }
 
