@@ -244,7 +244,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.License: [JSON_LICENSE_FIELD],
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
-    ROOT_DIR / "cli/src/tests.rs": {
+    ROOT_DIR / "cli/tests/integration/version.rs": {
         Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
     },
     ROOT_DIR / "client/electron/assets/installer.nsh": {
