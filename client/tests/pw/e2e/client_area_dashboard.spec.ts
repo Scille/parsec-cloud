@@ -14,15 +14,21 @@ msTest('Test dashboard', async ({ clientArea }) => {
   const invoiceContainer = clientArea.locator('.invoices-container');
   await expect(invoiceContainer.locator('.skeleton-loading').nth(0)).toBeHidden();
   const invoices = invoiceContainer.locator('.invoices-list-item');
-  await expect(invoices).toHaveCount(2);
+  await expect(invoices).toHaveCount(3);
   await expect(invoices.nth(0).locator('.invoices-list-item__data')).toHaveText([
-    'April 1988',
+    'December 2021',
     DEFAULT_ORGANIZATION_INFORMATION.name,
     /^\d+$/,
     /^(paid|draft|open) Download$/,
   ]);
   await expect(invoices.nth(1).locator('.invoices-list-item__data')).toHaveText([
-    'May 1988',
+    'November 2021',
+    DEFAULT_ORGANIZATION_INFORMATION.name,
+    /^\d+$/,
+    /^(paid|draft|open) Download$/,
+  ]);
+  await expect(invoices.nth(2).locator('.invoices-list-item__data')).toHaveText([
+    'October 2021',
     DEFAULT_ORGANIZATION_INFORMATION.name,
     /^\d+$/,
     /^(paid|draft|open) Download$/,

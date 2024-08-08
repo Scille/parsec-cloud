@@ -1376,7 +1376,8 @@
                 },
                 "status": "Statut",
                 "download": "Télécharger",
-                "noInvoices": "Vous n'avez pas encore de factures."
+                "noInvoices": "Vous n'avez pas encore de factures.",
+                "retrieveError": "Impossible de récupérer la liste des factures."
             },
             "payment": {
                 "title": "Moyens de paiement",

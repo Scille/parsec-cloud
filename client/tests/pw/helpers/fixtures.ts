@@ -130,7 +130,7 @@ export const msTest = base.extend<{
     await MockBms.mockOrganizationStats(home);
     await MockBms.mockOrganizationStatus(home);
     await MockBms.mockBillingDetails(home);
-    await MockBms.mockGetInvoices(home, 2);
+    await MockBms.mockGetInvoices(home);
 
     const button = home.locator('.topbar-right-buttons').locator('ion-button').nth(2);
     await expect(button).toHaveText('Customer Area');

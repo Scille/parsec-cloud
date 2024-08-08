@@ -74,7 +74,7 @@
     </div>
 
     <!-- invoices -->
-    <template v-if="invoices !== null">
+    <template v-if="invoices.length > 0 || querying">
       <div
         class="invoices-container"
         v-if="invoices.length > 0"
@@ -91,7 +91,7 @@
       <!-- skeleton invoices -->
       <div
         class="skeleton"
-        v-else
+        v-if="querying"
       >
         <!-- skeleton year -->
         <ion-skeleton-text
@@ -156,11 +156,17 @@
     </template>
 
     <!-- no invoices -->
-    <template v-else>
-      <ion-text class="body-lg">
+    <template v-if="!querying && invoices.length === 0 && !error">
+      <ion-text class="body-lg no-invoices">
         {{ $msTranslate('clientArea.invoices.noInvoice') }}
       </ion-text>
     </template>
+    <span
+      v-show="error"
+      class="form-error"
+    >
+      {{ $msTranslate(error) }}
+    </span>
   </div>
 </template>
 
@@ -182,6 +188,8 @@ const invoices = ref<Array<BmsInvoice>>([]);
 const years = ref<Array<number>>([]);
 const selectedYears = ref<Array<number>>([]);
 const selectedMonths = ref<Array<number>>([]);
+const error = ref<string>('');
+const querying = ref(true);
 
 async function openYearFilterPopover(event: Event): Promise<void> {
   event.stopPropagation();
@@ -199,6 +207,7 @@ async function openYearFilterPopover(event: Event): Promise<void> {
     event: event,
     cssClass: 'time-filter-popover',
     showBackdrop: false,
+    backdropDismiss: true,
     componentProps: {
       times: yearOptions,
       selected: selectedYears.value,
@@ -245,7 +254,10 @@ onMounted(async () => {
     // get each different year of the invoices
     years.value = invoices.value.map((invoice) => invoice.start.year);
     years.value = Array.from(new Set(years.value));
+  } else {
+    error.value = 'clientArea.invoices.retrieveError';
   }
+  querying.value = false;
 });
 
 function getInvoicesByYear(year: number): Array<BmsInvoice> {
