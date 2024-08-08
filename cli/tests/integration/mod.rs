@@ -25,7 +25,7 @@ use std::{
 };
 
 use libparsec::{
-    ClientConfig, LocalDevice, OrganizationID, ParsecAddr, PARSEC_BASE_CONFIG_DIR,
+    ClientConfig, LocalDevice, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
 
@@ -82,4 +82,16 @@ fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
         }
         buf.clear();
     }
+}
+
+async fn bootstrap_cli_test(
+    tmp_path: &TmpPath,
+) -> anyhow::Result<(ParsecAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
+    let _ = env_logger::builder().is_test(true).try_init();
+    let tmp_path_str = tmp_path.to_str().unwrap();
+    let config = get_testenv_config();
+    let (url, devices, org_id) = run_local_organization(&tmp_path, None, config).await?;
+
+    set_env(tmp_path_str, &url);
+    Ok((url, devices, org_id))
 }
