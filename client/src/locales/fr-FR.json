@@ -1335,7 +1335,8 @@
                 },
                 "status": "Status",
                 "download": "Télécharger"
-            }
+            },
+            "retrieveError": "Impossible de récupérer la liste des factures."
         },
         "paymentMethodsPage": {
             "title": "Votre moyen de paiement",
@@ -1375,8 +1376,7 @@
                 },
                 "status": "Statut",
                 "download": "Télécharger",
-                "noInvoices": "Vous n'avez pas encore de factures.",
-                "retrieveError": "Impossible de récupérer la liste des factures."
+                "noInvoices": "Vous n'avez pas encore de factures."
             },
             "payment": {
                 "title": "Moyens de paiement",

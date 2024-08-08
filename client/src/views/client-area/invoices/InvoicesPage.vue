@@ -166,7 +166,7 @@
     </template>
     <span
       v-show="error"
-      class="form-error"
+      class="form-error body"
     >
       {{ $msTranslate(error) }}
     </span>
