@@ -40,6 +40,7 @@
             <div
               class="main-page"
               v-if="loggedIn && currentOrganization"
+              :key="refresh"
             >
               <billing-details-page
                 v-if="currentPage === ClientAreaPages.BillingDetails"
@@ -109,6 +110,7 @@ const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
 const currentOrganization = ref<BmsOrganization | undefined>(undefined);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const loggedIn = ref(false);
+const refresh = ref(0);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -188,6 +190,7 @@ function onEnd(): void {
 async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
   await navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: organization.bmsId } });
   currentOrganization.value = organization;
+  refresh.value += 1;
 }
 
 function getTitleByPage(): Translatable {
