@@ -9,11 +9,12 @@
       </ion-text>
       <div class="selected-choice">
         <ion-text
+          v-for="selectedYear in selectedYears"
+          :key="selectedYear"
           class="selected-choice-item subtitles-sm"
-          v-if="selectedYear"
-          @click="selectedYear = undefined"
+          @click="removeSelectedYear(selectedYear)"
         >
-          {{ selectedYear }}
+          {{ $msTranslate({ key: 'common.date.asIs', data: { date: selectedYear } }) }}
           <ion-icon
             class="selected-choice-item__icon"
             :icon="close"
@@ -21,10 +22,11 @@
         </ion-text>
         <ion-text
           class="selected-choice-item subtitles-sm"
-          v-if="selectedMonth"
-          @click="selectedMonth = undefined"
+          v-for="selectedMonth in selectedMonths"
+          :key="selectedMonth"
+          @click="removeSelectedMonth(selectedMonth)"
         >
-          {{ selectedMonth }}
+          {{ $msTranslate(getMonthName(selectedMonth)) }}
           <ion-icon
             class="selected-choice-item__icon"
             :icon="close"
@@ -40,7 +42,7 @@
         <ion-text
           class="invoices-header-filter-button button-medium"
           @click="openYearFilterPopover($event)"
-          :class="{ 'selected' : selectedYear }"
+          :class="{ selected: selectedYears.length > 0 }"
         >
           <ion-icon
             :icon="calendar"
@@ -56,7 +58,7 @@
         <ion-text
           class="invoices-header-filter-button button-medium"
           @click="openMonthFilterPopover($event)"
-          :class="{'selected' : selectedMonth }"
+          :class="{ selected: selectedMonths.length > 0 }"
         >
           <ion-icon
             :icon="calendar"
@@ -79,11 +81,11 @@
       >
         <invoices-container
           v-for="year in years"
-          v-show="selectedYear === undefined || selectedYear === year"
+          v-show="selectedYears.length === 0 || selectedYears.includes(year)"
           :key="year"
           :invoices="getInvoicesByYear(year)"
-          :title="{ key: 'common.date.asIs', data: { date: year.toString() }}"
-          :month-filter="selectedMonth"
+          :title="{ key: 'common.date.asIs', data: { date: year.toString() } }"
+          :months-filter="selectedMonths"
         />
       </div>
       <!-- skeleton invoices -->
@@ -98,9 +100,7 @@
         />
 
         <!-- skeleton row header -->
-        <div
-          class="skeleton-header-list"
-        >
+        <div class="skeleton-header-list">
           <ion-skeleton-text
             :animated="true"
             class="invoices-date"
@@ -157,9 +157,7 @@
 
     <!-- no invoices -->
     <template v-else>
-      <ion-text
-        class="body-lg"
-      >
+      <ion-text class="body-lg">
         {{ $msTranslate('clientArea.invoices.noInvoice') }}
       </ion-text>
     </template>
@@ -174,7 +172,7 @@ import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import { ref, onMounted } from 'vue';
 import { Info } from 'luxon';
 import InvoicesContainer from '@/components/client-area/InvoicesContainer.vue';
-import { MsModalResult, MsOptions, Translatable } from 'megashark-lib';
+import { MsOptions, Translatable, I18n } from 'megashark-lib';
 
 defineProps<{
   organization: BmsOrganization;
@@ -182,8 +180,8 @@ defineProps<{
 
 const invoices = ref<Array<BmsInvoice>>([]);
 const years = ref<Array<number>>([]);
-const selectedYear = ref<number | undefined>(undefined);
-const selectedMonth = ref<number | undefined>(undefined);
+const selectedYears = ref<Array<number>>([]);
+const selectedMonths = ref<Array<number>>([]);
 
 async function openYearFilterPopover(event: Event): Promise<void> {
   event.stopPropagation();
@@ -191,7 +189,7 @@ async function openYearFilterPopover(event: Event): Promise<void> {
     years.value.map((year) => {
       return {
         key: year,
-        label: year.toString(),
+        label: { key: 'common.date.asIs', data: { date: year.toString() } },
       };
     }),
   );
@@ -203,24 +201,22 @@ async function openYearFilterPopover(event: Event): Promise<void> {
     showBackdrop: false,
     componentProps: {
       times: yearOptions,
-      selected: selectedYear.value,
+      selected: selectedYears.value,
+      sortDesc: true,
     },
   });
   await popover.present();
-  const { data, role } = await popover.onDidDismiss();
-  if (role === MsModalResult.Confirm) {
-    selectedYear.value = data.selected;
-  }
+  await popover.onDidDismiss();
   await popover.dismiss();
 }
 
 async function openMonthFilterPopover(event: Event): Promise<void> {
   event.stopPropagation();
   const monthOptions = new MsOptions(
-    Info.months('short').map((month, index) => {
+    Info.months('short', { locale: I18n.getLocale() }).map((month, index) => {
       return {
         key: index + 1,
-        label: month as Translatable,
+        label: { key: 'common.date.asIs', data: { date: month } },
       };
     }),
   );
@@ -232,14 +228,11 @@ async function openMonthFilterPopover(event: Event): Promise<void> {
     showBackdrop: false,
     componentProps: {
       times: monthOptions,
-      selected: selectedMonth.value,
+      selected: selectedMonths.value,
     },
   });
   await popover.present();
-  const { data, role } = await popover.onDidDismiss();
-  if (role === MsModalResult.Confirm) {
-    selectedMonth.value = data.selected;
-  }
+  await popover.onDidDismiss();
   await popover.dismiss();
 }
 
@@ -255,14 +248,32 @@ onMounted(async () => {
   }
 });
 
-function getInvoicesByYear(year: number) : Array<BmsInvoice> {
+function getInvoicesByYear(year: number): Array<BmsInvoice> {
   return invoices.value.filter((invoice) => invoice.start.year === year);
+}
+
+function getMonthName(month: number): Translatable | undefined {
+  return { key: 'common.date.asIs', data: { date: Info.months('short', { locale: I18n.getLocale() })[month - 1] } };
+}
+
+function removeSelectedYear(year: number): void {
+  const index = selectedYears.value.findIndex((y) => y === year);
+  if (index !== -1) {
+    selectedYears.value.splice(index, 1);
+  }
+}
+
+function removeSelectedMonth(month: number): void {
+  const index = selectedMonths.value.findIndex((m) => m === month);
+  if (index !== -1) {
+    selectedMonths.value.splice(index, 1);
+  }
 }
 </script>
 
 <style scoped lang="scss">
 * {
-  transition: all 0.20s ease;
+  transition: all 0.2s ease;
 }
 
 .client-page-invoices {
@@ -304,7 +315,7 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
         &:hover {
           cursor: pointer;
           color: var(--parsec-color-light-secondary-white);
-          background-color: var(--parsec-color-light-secondary-text)
+          background-color: var(--parsec-color-light-secondary-text);
         }
       }
     }
@@ -437,7 +448,7 @@ function getInvoicesByYear(year: number) : Array<BmsInvoice> {
       background: var(--parsec-color-light-secondary-white);
       display: flex;
       justify-content: space-between;
-    gap: 0.5rem;
+      gap: 0.5rem;
       border-radius: var(--parsec-radius-8);
       position: relative;
       align-items: center;

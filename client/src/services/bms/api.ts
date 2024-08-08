@@ -309,7 +309,7 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
           id: `${i}-${j}`,
           pdfLink: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           start: DateTime.fromFormat(`${i}-${j}`, 'yyyy-L'),
-          end: DateTime.fromFormat(`${i}-${j}`, 'yyyy-L').plus({month: 1}),
+          end: DateTime.fromFormat(`${i}-${j}`, 'yyyy-L').plus({ month: 1 }),
           total: 13.37,
           status: 'paid',
           number: `${i}-${j}`,

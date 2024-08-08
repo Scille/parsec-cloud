@@ -4,7 +4,7 @@
   <div
     class="invoices-year"
     @click="isVisible = !isVisible"
-    :class="{ 'visible': isVisible }"
+    :class="{ visible: isVisible }"
   >
     <!-- year -->
     <div class="invoices-year-text">
@@ -48,7 +48,7 @@
         class="invoices-year-content-list-item ion-no-padding"
         v-for="invoice in invoices"
         :key="invoice.id"
-        v-show="monthFilter === undefined || monthFilter === invoice.start.month"
+        v-show="monthsFilter === undefined || monthsFilter.length === 0 || monthsFilter.includes(invoice.start.month)"
       >
         <ion-text class="invoices-year-content-list-item__data invoices-date subtitles-sm">
           {{ $msTranslate(I18n.formatDate(invoice.start, 'narrow')) }}
@@ -76,12 +76,7 @@
 
 <script setup lang="ts">
 import { BmsInvoice } from '@/services/bms';
-import {
-  IonItem,
-  IonList,
-  IonText,
-  IonIcon,
-} from '@ionic/vue';
+import { IonItem, IonList, IonText, IonIcon } from '@ionic/vue';
 import { download, chevronDown } from 'ionicons/icons';
 import { Translatable, I18n } from 'megashark-lib';
 import { ref } from 'vue';
@@ -89,7 +84,7 @@ import { ref } from 'vue';
 defineProps<{
   invoices: Array<BmsInvoice>;
   title: Translatable;
-  monthFilter?: number;
+  monthsFilter?: Array<number>;
 }>();
 
 const isVisible = ref(true);
@@ -123,7 +118,7 @@ const isVisible = ref(true);
     top: -2rem;
     background: var(--parsec-color-light-secondary-premiere);
     z-index: 3;
-    transition: all 0.20s ease;
+    transition: all 0.2s ease;
 
     &:hover {
       background: var(--parsec-color-light-secondary-background);
@@ -136,13 +131,13 @@ const isVisible = ref(true);
 
     &__title {
       color: var(--parsec-color-light-secondary-text);
-      transition: all 0.20s ease;
+      transition: all 0.2s ease;
     }
 
     &__icon {
       color: var(--parsec-color-light-secondary-grey);
       transform: rotate(0deg);
-      transition: transform 0.20s;
+      transition: transform 0.2s;
     }
   }
 
@@ -156,7 +151,6 @@ const isVisible = ref(true);
 
   // eslint-disable-next-line vue-scoped-css/no-unused-selector
   .invoices {
-
     &-date {
       width: 100%;
       max-width: var(--max-width-date);
