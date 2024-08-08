@@ -29,7 +29,7 @@ libparsec_tests_fixtures = { workspace = true, features = ["default"] }
 proptest = { workspace = true, features = ["default"] }
 proptest-state-machine = { workspace = true }
 libparsec_platform_storage = { workspace = true, features = ["expose-test-methods"] }
-libparsec_client = {path = ".",features = ["expose-test-methods"]}
+libparsec_client = { workspace = true, features = ["expose-test-methods"] }
 
 [features]
 expose-test-methods = []
