@@ -2,19 +2,13 @@ use assert_cmd::Command;
 
 use libparsec::{tmp_path, TmpPath};
 
-use super::{get_testenv_config, run_local_organization, set_env};
+use super::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
 #[ignore = "todo"]
 async fn setup_shamir(tmp_path: TmpPath) {
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, [alice, bob, ..], _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-
-    set_env(tmp_path_str, &url);
+    let (_, [alice, bob, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
