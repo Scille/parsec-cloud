@@ -5,18 +5,12 @@
     <ion-list class="time-list">
       <ion-text
         class="time-list-item ion-no-padding button-medium"
-        :class="{'selected': selected !== undefined && selected === time.key}"
+        :class="{ selected: selected !== undefined && selected.includes(time.key) }"
         v-for="time in times.set"
         :key="time.key"
         @click="select(time.key)"
       >
-        <!-- No ideal, should translate the month properly -->
-        {{
-          $msTranslate({
-            key: "common.date.asIs",
-            data: { date: I18n.translate(time.label) },
-          })
-        }}
+        {{ $msTranslate(time.label) }}
       </ion-text>
     </ion-list>
   </div>
@@ -24,22 +18,35 @@
 
 <script setup lang="ts">
 import { IonList, IonText, popoverController } from '@ionic/vue';
-import { MsModalResult, MsOptions, I18n } from 'megashark-lib';
+import { MsModalResult, MsOptions } from 'megashark-lib';
 
-defineProps<{
+const props = defineProps<{
   times: MsOptions;
-  selected?: any,
+  selected?: Array<any>;
+  sortDesc?: boolean;
 }>();
 
-// if not selected, selected else deselect
 async function select(selected: any): Promise<void> {
-  await popoverController.dismiss({selected: selected}, MsModalResult.Confirm);
+  if (props.selected === undefined) {
+    await popoverController.dismiss({ selected: selected }, MsModalResult.Confirm);
+  }
+  const index = (props.selected || []).findIndex((time) => time === selected);
+
+  /* eslint-disable vue/no-mutating-props */
+  // No proper way to do it with ionic popover, we can't use emits
+  if (index === -1) {
+    props.selected?.push(selected);
+    props.selected?.sort((t1, t2) => (props.sortDesc ? t2 - t1 : t1 - t2));
+  } else {
+    props.selected?.splice(index, 1);
+  }
+  /* eslint-enable vue/no-mutating-props */
 }
 </script>
 
 <style lang="scss" scoped>
 * {
-  transition: all 0.150s ease;
+  transition: all 0.15s ease;
 }
 
 .time-container {
