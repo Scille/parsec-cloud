@@ -64,7 +64,7 @@ ion-item {
     }
   }
 
-  &-outline {
+  &-outline:not(ion-button) {
     border: 1px solid var(--parsec-color-light-secondary-disabled);
 
     &:hover {

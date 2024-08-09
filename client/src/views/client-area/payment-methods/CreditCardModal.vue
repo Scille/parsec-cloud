@@ -2,10 +2,10 @@
 
 <template>
   <ms-modal
-    title="clientArea.paymentMethodsPage.addPaymentMethodTitle"
+    title="clientArea.paymentMethodsPage.addPaymentMethod.addCard"
     :close-button="{ visible: true }"
     :confirm-button="{
-      label: 'clientArea.paymentMethodsPage.addPaymentMethodConfirm',
+      label: 'clientArea.paymentMethodsPage.addPaymentMethod.confirm',
       disabled: !cardForm?.isValid,
       onClick: confirm,
     }"

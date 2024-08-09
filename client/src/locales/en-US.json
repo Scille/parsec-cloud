@@ -1342,15 +1342,18 @@
         "paymentMethodsPage": {
             "title": "Your payment method",
             "description": "Payment is made automatically by credit card.",
-            "addCard": "Add",
             "useAsDefault": "Set as default payment method",
-            "activeMethodLabel": "Active",
+            "activeMethodLabel": "active",
+            "activeDefault": "Default card used",
             "retrieveFailed": "Failed to retrieve payment methods.",
+            "savedCard": "Saved card",
+            "setDefault": "Set as default",
+            "delete": "Delete",
             "addPaymentMethod": {
                 "success": "The card was successfully added.",
                 "failed": "Failed to register this card.",
                 "successButSetDefaultFailed": "The card was successfully added but it could not be set as the default payment method.",
-                "title": "Add a card",
+                "addCard": "Add a new card",
                 "confirm": "Add this card"
             },
             "stopSubscription": {

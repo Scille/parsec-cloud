@@ -1341,16 +1341,17 @@
         },
         "paymentMethodsPage": {
             "title": "Votre moyen de paiement",
-            "description": "Le paiement s’effectue automatiquement par votre carte bancaire.",
-            "addCard": "Ajouter",
+            "description": "Le paiement s'effectue automatiquement par votre carte bancaire.",
             "useAsDefault": "Définir comme moyen de paiement actif",
-            "activeMethodLabel": "Active",
+            "activeMethodLabel": "active",
+            "activeDefault": "Carte utilisée par défaut",
             "retrieveFailed": "Impossible de récupérer les informations de paiement.",
+            "savedCard": "Cartes enregitrées",
             "addPaymentMethod": {
                 "success": "La carte a été enregistrée.",
                 "failed": "Impossible d'enregistrer cette carte.",
                 "successButSetDefaultFailed": "La carte a été ajoutée avec succès mais n'a pas pu être définie comme moyen de paiement par défaut.",
-                "title": "Ajouter une carte bancaire",
+                "addCard": "Ajouter une nouvelle carte",
                 "confirm": "Ajouter cette carte"
             },
             "stopSubscription": {
