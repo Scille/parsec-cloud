@@ -59,7 +59,7 @@ pub enum WorkspaceOpenFileError {
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to entry that is not a file")]
-    EntryNotAFile,
+    EntryNotAFile { entry_id: VlobID },
     #[error("Target entry already exists while in create new mode")]
     EntryExistsInCreateNewMode { entry_id: VlobID },
     #[error(transparent)]
@@ -272,8 +272,8 @@ pub async fn open_file_by_id(
                 ForUpdateFileError::EntryNotFound => {
                     return Err(WorkspaceOpenFileError::EntryNotFound)
                 }
-                ForUpdateFileError::EntryNotAFile => {
-                    return Err(WorkspaceOpenFileError::EntryNotAFile)
+                ForUpdateFileError::EntryNotAFile { entry_id } => {
+                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id })
                 }
                 ForUpdateFileError::NoRealmAccess => {
                     return Err(WorkspaceOpenFileError::NoRealmAccess)

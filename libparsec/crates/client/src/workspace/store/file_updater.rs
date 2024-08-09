@@ -26,7 +26,7 @@ pub(crate) enum ForUpdateFileError {
     #[error("Path doesn't exist")]
     EntryNotFound,
     #[error("Path points to entry that is not a file")]
-    EntryNotAFile,
+    EntryNotAFile { entry_id: VlobID },
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
     #[error("Entry is already being updated")]
@@ -134,9 +134,11 @@ pub(super) async fn for_update_file(
 
     let manifest = match manifest {
         ArcLocalChildManifest::File(manifest) => manifest,
-        ArcLocalChildManifest::Folder(_) => {
+        ArcLocalChildManifest::Folder(manifest) => {
             release_guard_on_error!(update_guard);
-            return Err(ForUpdateFileError::EntryNotAFile);
+            return Err(ForUpdateFileError::EntryNotAFile {
+                entry_id: manifest.base.id,
+            });
         }
     };
 
