@@ -633,6 +633,7 @@ sqlfluff
 sqlx
 SRCDIR
 SRSC
+sshfs
 staticlib
 STRINGTABLE
 structlog

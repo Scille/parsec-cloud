@@ -5279,9 +5279,9 @@ checksum = "32b752e52a2da0ddfbdbcc6fceadfeede4c939ed16d13e648833a61dfb611ed8"
 
 [[package]]
 name = "winfsp_wrs"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60507e9dbd1cd95aa5b0ddda1514e266cd6d64f7fc6c9366773e1e94e18d1e64"
+checksum = "941c213ec49cb23373fab1ed20509ddfa419526aeb347295b1fac23f312aefca"
 dependencies = [
  "chrono",
  "widestring",
@@ -5291,15 +5291,15 @@ dependencies = [
 
 [[package]]
 name = "winfsp_wrs_build"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "93ff2ac9ed1c037c1231826129043b3a5d78cadea6290ab8c733491edf824be0"
+checksum = "1e57c1c78a4e148ae6b0fe91cda4dc572cfe7e8c56006f33f4724596c7fd448a"
 
 [[package]]
 name = "winfsp_wrs_sys"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "89ca2956db94529869a95a2319ff4102895f328b1791468d8c1d153a6945dc8a"
+checksum = "d72234e3d393e6dd9d5765f13553a23f80993a56caa65659c45cd8c92c0c5fe4"
 dependencies = [
  "registry",
 ]

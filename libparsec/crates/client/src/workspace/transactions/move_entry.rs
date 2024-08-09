@@ -41,7 +41,7 @@ pub enum WorkspaceMoveEntryError {
     ReadOnlyRealm,
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
-    #[error("Destination already exists")]
+    #[error("Destination already exists (ID `{}`)", .entry_id)]
     DestinationExists { entry_id: VlobID },
     #[error("Destination doesn't exist so exchange is not possible")]
     DestinationNotFound,

@@ -63,7 +63,6 @@ async fn ok(tmp_path: TmpPath, env: &TestbedEnv) {
                         "-create_related_test",
                         // TODO: investigate misc tests
                         "-create_notraverse_test",
-                        "-delete_mmap_test",
                         "-delete_ex_test",
                         "-rdwr_noncached_overlapped_test",
                         "-rdwr_cached_overlapped_test",

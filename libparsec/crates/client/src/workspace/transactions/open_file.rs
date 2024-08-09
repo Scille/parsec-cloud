@@ -58,9 +58,9 @@ pub enum WorkspaceOpenFileError {
     NoRealmAccess,
     #[error("Path doesn't exist")]
     EntryNotFound,
-    #[error("Path points to entry that is not a file")]
-    EntryNotAFile,
-    #[error("Target entry already exists while in create new mode")]
+    #[error("Path points to an entry (ID: `{}`) that is not a file", .entry_id)]
+    EntryNotAFile { entry_id: VlobID },
+    #[error("Target entry already exists (ID: `{}`) while in create new mode", .entry_id)]
     EntryExistsInCreateNewMode { entry_id: VlobID },
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
@@ -272,8 +272,8 @@ pub async fn open_file_by_id(
                 ForUpdateFileError::EntryNotFound => {
                     return Err(WorkspaceOpenFileError::EntryNotFound)
                 }
-                ForUpdateFileError::EntryNotAFile => {
-                    return Err(WorkspaceOpenFileError::EntryNotAFile)
+                ForUpdateFileError::EntryNotAFile { entry_id } => {
+                    return Err(WorkspaceOpenFileError::EntryNotAFile { entry_id })
                 }
                 ForUpdateFileError::NoRealmAccess => {
                     return Err(WorkspaceOpenFileError::NoRealmAccess)

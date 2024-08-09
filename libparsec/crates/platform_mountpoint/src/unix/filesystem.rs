@@ -696,7 +696,9 @@ impl fuser::Filesystem for Filesystem {
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             reply.manual().error(libc::EEXIST)
                         }
-                        WorkspaceOpenFileError::EntryNotAFile => reply.manual().error(libc::EISDIR),
+                        WorkspaceOpenFileError::EntryNotAFile { .. } => {
+                            reply.manual().error(libc::EISDIR)
+                        }
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::Stopped
@@ -806,7 +808,9 @@ impl fuser::Filesystem for Filesystem {
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             reply.manual().error(libc::EEXIST)
                         }
-                        WorkspaceOpenFileError::EntryNotAFile => reply.manual().error(libc::EISDIR),
+                        WorkspaceOpenFileError::EntryNotAFile { .. } => {
+                            reply.manual().error(libc::EISDIR)
+                        }
                         WorkspaceOpenFileError::NoRealmAccess => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::ReadOnlyRealm => reply.manual().error(libc::EPERM),
                         WorkspaceOpenFileError::Stopped
@@ -951,7 +955,7 @@ impl fuser::Filesystem for Filesystem {
                                 WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                                     reply.manual().error(libc::EEXIST)
                                 }
-                                WorkspaceOpenFileError::EntryNotAFile => {
+                                WorkspaceOpenFileError::EntryNotAFile { .. } => {
                                     reply.manual().error(libc::EISDIR)
                                 }
                                 WorkspaceOpenFileError::NoRealmAccess => {

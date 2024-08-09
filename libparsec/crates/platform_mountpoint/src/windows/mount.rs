@@ -7,7 +7,7 @@ use libparsec_client::{MountpointMountStrategy, WorkspaceOps};
 use libparsec_types::prelude::*;
 
 use super::{
-    drive_letter::sorted_drive_letters, filesystem::ParsecFileSystemContext,
+    drive_letter::sorted_drive_letters, filesystem::ParsecFileSystemInterface,
     volume_label::generate_volume_label, winify::winify_entry_name,
 };
 
@@ -23,7 +23,7 @@ const SECTOR_SIZE: u16 = 512;
 #[derive(Debug)]
 pub struct Mountpoint {
     path: std::path::PathBuf,
-    filesystem: Option<FileSystem<ParsecFileSystemContext>>,
+    filesystem: Option<FileSystem<ParsecFileSystemInterface>>,
 }
 
 impl Mountpoint {
@@ -106,7 +106,7 @@ impl Mountpoint {
         };
 
         let context =
-            ParsecFileSystemContext::new(ops, tokio::runtime::Handle::current(), volume_label);
+            ParsecFileSystemInterface::new(ops, tokio::runtime::Handle::current(), volume_label);
         let filesystem = FileSystem::new(params, Some(&mountpoint_path_u16cstr), context)
             .map_err(|status| anyhow::anyhow!("Failed to init FileSystem {status}"))?;
 
