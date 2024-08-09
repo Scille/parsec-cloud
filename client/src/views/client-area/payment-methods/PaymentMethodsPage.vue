@@ -29,6 +29,23 @@
           >
             {{ $msTranslate('clientArea.paymentMethodsPage.activeMethodLabel') }}
           </span>
+          <div class="buttons">
+            <ion-button
+              class="delete-button"
+              @click="deleteCard(card)"
+              v-show="!card.isDefault"
+              color="danger"
+            >
+              Delete
+            </ion-button>
+            <ion-button
+              class="set-default-button"
+              @click="setDefaultCard(card)"
+              v-show="!card.isDefault"
+            >
+              Set default
+            </ion-button>
+          </div>
         </div>
       </div>
       <div v-if="querying">
@@ -52,8 +69,8 @@
 
     <!-- stop subscription -->
     <div
+      v-if="isSubscribed"
       class="method-stop"
-      v-show="false"
     >
       <ion-title class="method-stop-title title-h3">
         {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.title') }}
@@ -64,8 +81,27 @@
       <ion-button
         class="custom-button-outline"
         fill="outline"
+        @click="stopSubscription"
       >
         {{ $msTranslate('clientArea.paymentMethodsPage.stopSubscription.button') }}
+      </ion-button>
+    </div>
+    <!-- resume subscription -->
+    <div
+      v-else
+      class="method-stop"
+    >
+      <ion-title class="method-stop-title title-h3">
+        {{ $msTranslate('clientArea.paymentMethodsPage.restartSubscription.title') }}
+      </ion-title>
+      <ion-text class="method-stop-description body">
+        {{ $msTranslate('clientArea.paymentMethodsPage.restartSubscription.description') }}
+      </ion-text>
+      <ion-button
+        class="custom-button-outline"
+        @click="restartSubscription"
+      >
+        {{ $msTranslate('clientArea.paymentMethodsPage.restartSubscription.button') }}
       </ion-button>
     </div>
   </div>
@@ -81,7 +117,7 @@ import {
   BillingDetailsPaymentMethodCard,
 } from '@/services/bms';
 import { onMounted, ref, computed } from 'vue';
-import { MsStripeCardDetails, PaymentMethod as MsPaymentMethod, MsModalResult } from 'megashark-lib';
+import { MsStripeCardDetails, PaymentMethod as MsPaymentMethod, MsModalResult, askQuestion, Answer } from 'megashark-lib';
 import { IonButton, IonText, IonTitle, IonSkeletonText, modalController } from '@ionic/vue';
 import CreditCardModal from '@/views/client-area/payment-methods/CreditCardModal.vue';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
@@ -94,13 +130,17 @@ const props = defineProps<{
 const billingDetails = ref<BillingDetailsResultData | undefined>(undefined);
 const error = ref('');
 const querying = ref(false);
+const isSubscribed = ref(props.organization.isSubscribed());
 const cards = computed(() => {
   if (!billingDetails.value) {
     return [];
   }
-  return billingDetails.value.paymentMethods.filter(
-    (method) => method.type === PaymentMethod.Card,
-  ) as Array<BillingDetailsPaymentMethodCard>;
+  return billingDetails.value.paymentMethods
+    .filter(
+      (method) => method.type === PaymentMethod.Card,
+      // Always put the active card first
+    )
+    .sort((method1, method2) => Number(method2.isDefault) - Number(method1.isDefault)) as Array<BillingDetailsPaymentMethodCard>;
 });
 
 onMounted(async () => {
@@ -165,13 +205,111 @@ async function onAddPaymentMethodClicked(): Promise<void> {
   props.informationManager.present(
     new Information({
       message: setDefaultFailed
-        ? 'clientArea.paymentMethodsPage.addPaymentMethodSuccessSetDefaultFailed'
-        : 'clientArea.paymentMethodsPage.addPaymentMethodSuccess',
-      level: InformationLevel.Success,
+        ? 'clientArea.paymentMethodsPage.addPaymentMethod.successButSetDefaultFailed'
+        : 'clientArea.paymentMethodsPage.addPaymentMethod.success',
+      level: response.isError ? InformationLevel.Warning : InformationLevel.Success,
     }),
     PresentationMode.Toast,
   );
   await queryBillingDetails();
+}
+
+async function setDefaultCard(card: BillingDetailsPaymentMethodCard): Promise<void> {
+  const response = await BmsAccessInstance.get().setDefaultPaymentMethod(card.id);
+
+  props.informationManager.present(
+    new Information({
+      message: response.isError
+        ? 'clientArea.paymentMethodsPage.setPaymentMethodDefaultFailed'
+        : 'clientArea.paymentMethodsPage.setPaymentMethodDefaultSuccess',
+      level: response.isError ? InformationLevel.Error : InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+  await queryBillingDetails();
+}
+
+async function deleteCard(card: BillingDetailsPaymentMethodCard): Promise<void> {
+  const answer = await askQuestion(
+    'clientArea.paymentMethodsPage.deletePaymentMethod.questionTitle',
+    'clientArea.paymentMethodsPage.deletePaymentMethod.questionMessage',
+    {
+      yesText: 'clientArea.paymentMethodsPage.deletePaymentMethod.confirm',
+      noText: 'clientArea.paymentMethodsPage.deletePaymentMethod.cancel',
+      yesIsDangerous: true,
+    },
+  );
+
+  if (answer === Answer.No) {
+    return;
+  }
+  const response = await BmsAccessInstance.get().deletePaymentMethod(card.id);
+
+  props.informationManager.present(
+    new Information({
+      message: response.isError
+        ? 'clientArea.paymentMethodsPage.deletePaymentMethod.failed'
+        : 'clientArea.paymentMethodsPage.deletePaymentMethod.success',
+      level: response.isError ? InformationLevel.Error : InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+  await queryBillingDetails();
+}
+
+async function stopSubscription(): Promise<void> {
+  const answer = await askQuestion(
+    'clientArea.paymentMethodsPage.stopSubscription.questionTitle',
+    'clientArea.paymentMethodsPage.stopSubscription.questionMessage',
+    {
+      yesText: 'clientArea.paymentMethodsPage.stopSubscription.confirm',
+      noText: 'clientArea.paymentMethodsPage.stopSubscription.cancel',
+      yesIsDangerous: true,
+    },
+  );
+
+  if (answer === Answer.No) {
+    return;
+  }
+  const response = await BmsAccessInstance.get().unsubscribeOrganization(props.organization.bmsId);
+
+  props.informationManager.present(
+    new Information({
+      message: response.isError
+        ? 'clientArea.paymentMethodsPage.stopSubscription.failed'
+        : 'clientArea.paymentMethodsPage.stopSubscription.success',
+      level: response.isError ? InformationLevel.Error : InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+  isSubscribed.value = response.isError;
+}
+
+async function restartSubscription(): Promise<void> {
+  const answer = await askQuestion(
+    'clientArea.paymentMethodsPage.restartSubscription.questionTitle',
+    'clientArea.paymentMethodsPage.restartSubscription.questionMessage',
+    {
+      yesText: 'clientArea.paymentMethodsPage.restartSubscription.confirm',
+      noText: 'clientArea.paymentMethodsPage.restartSubscription.cancel',
+    },
+  );
+
+  if (answer === Answer.No) {
+    return;
+  }
+  const response = await BmsAccessInstance.get().subscribeOrganization(props.organization.bmsId);
+
+  props.informationManager.present(
+    new Information({
+      message: response.isError
+        ? 'clientArea.paymentMethodsPage.restartSubscription.failed'
+        : 'clientArea.paymentMethodsPage.restartSubscription.success',
+      level: response.isError ? InformationLevel.Error : InformationLevel.Success,
+    }),
+    PresentationMode.Toast,
+  );
+  isSubscribed.value = !response.isError;
 }
 </script>
 
@@ -267,5 +405,11 @@ async function onAddPaymentMethodClicked(): Promise<void> {
   --border-radius: var(--parsec-radius-8);
   height: fit-content;
   width: fit-content;
+}
+
+.buttons {
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
 }
 </style>

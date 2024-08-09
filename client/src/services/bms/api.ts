@@ -3,17 +3,14 @@
 import {
   AddPaymentMethodQueryData,
   AuthenticationToken,
-  BillingDetailsQueryData,
   BmsError,
   BmsResponse,
+  ClientQueryData,
   CreateOrganizationQueryData,
   DataType,
   DeletePaymentMethodQueryData,
-  InvoicesQueryData,
-  ListOrganizationsQueryData,
   LoginQueryData,
-  OrganizationStatsQueryData,
-  OrganizationStatusQueryData,
+  OrganizationQueryData,
   PaymentMethod,
   SetDefaultPaymentMethodQueryData,
   UpdateAuthenticationQueryData,
@@ -216,7 +213,7 @@ async function createOrganization(token: AuthenticationToken, query: CreateOrgan
   });
 }
 
-async function listOrganizations(token: AuthenticationToken, query: ListOrganizationsQueryData): Promise<BmsResponse> {
+async function listOrganizations(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/organizations`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -234,8 +231,9 @@ async function listOrganizations(token: AuthenticationToken, query: ListOrganiza
             expirationDate: org.created_at ? DateTime.fromISO(org.expiration_date, { zone: 'utc' }) : undefined,
             name: org.suffix,
             parsecId: org.parsec_id,
-            stripeSubscriptionId: org.stripe_subscription_id,
+            stripeSubscriptionId: org.stripe_subscription_id ?? undefined,
             bootstrapLink: org.bootstrap_link,
+            isSubscribed: () => Boolean(org.stripe_subscription_id),
           };
         }),
       },
@@ -243,7 +241,7 @@ async function listOrganizations(token: AuthenticationToken, query: ListOrganiza
   });
 }
 
-async function getOrganizationStats(token: AuthenticationToken, query: OrganizationStatsQueryData): Promise<BmsResponse> {
+async function getOrganizationStats(token: AuthenticationToken, query: OrganizationQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http
       .getInstance()
@@ -271,11 +269,11 @@ async function getOrganizationStats(token: AuthenticationToken, query: Organizat
   });
 }
 
-async function getOrganizationStatus(token: AuthenticationToken, query: OrganizationStatusQueryData): Promise<BmsResponse> {
+async function getOrganizationStatus(token: AuthenticationToken, query: OrganizationQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http
       .getInstance()
-      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/stats`, {
+      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/status`, {
         headers: { Authorization: `Bearer ${token}` },
         validateStatus: (status) => status === 200,
       });
@@ -294,7 +292,7 @@ async function getOrganizationStatus(token: AuthenticationToken, query: Organiza
   });
 }
 
-async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData): Promise<BmsResponse> {
+async function getInvoices(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/invoices`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -324,7 +322,7 @@ async function getInvoices(token: AuthenticationToken, query: InvoicesQueryData)
   });
 }
 
-async function getBillingDetails(token: AuthenticationToken, query: BillingDetailsQueryData): Promise<BmsResponse> {
+async function getBillingDetails(token: AuthenticationToken, query: ClientQueryData): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/billing_details`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -429,6 +427,44 @@ async function deletePaymentMethod(token: AuthenticationToken, query: DeletePaym
   });
 }
 
+async function unsubscribeOrganization(token: AuthenticationToken, query: OrganizationQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/unsubscribe`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 204,
+      },
+    );
+
+    return {
+      type: DataType.UnsubscribeOrganization,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function subscribeOrganization(token: AuthenticationToken, query: OrganizationQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/subscribe`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 204,
+      },
+    );
+
+    return {
+      type: DataType.UnsubscribeOrganization,
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -468,4 +504,6 @@ export const BmsApi = {
   setDefaultPaymentMethod,
   deletePaymentMethod,
   updateAuthentication,
+  unsubscribeOrganization,
+  subscribeOrganization,
 };
