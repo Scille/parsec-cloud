@@ -99,6 +99,7 @@ import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
+import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -171,6 +172,26 @@ async function handleQuery(): Promise<void> {
       await onOrganizationSelected(device);
     } else {
       console.error('Could not find the corresponding device');
+    }
+  } else if (query.bmsOrganizationId) {
+    const availableDevices = await listAvailableDevices();
+    const device = availableDevices.find((d) => {
+      const serverType = getServerTypeFromAddress(d.serverUrl);
+      return serverType === ServerType.Saas && d.organizationId === query.bmsOrganizationId;
+    });
+    if (device) {
+      await onOrganizationSelected(device);
+    } else {
+      informationManager.present(
+        new Information({
+          message: {
+            key: 'HomePage.bmsOrganizationNotFound',
+            data: { organization: query.bmsOrganizationId },
+          },
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
     }
   }
 }

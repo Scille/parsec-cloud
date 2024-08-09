@@ -160,6 +160,7 @@
         },
         "organizationActionSheet": "Organization",
         "keyringFailed": "Could not log in",
+        "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
         "noDevices": {
             "titleCreateOrga": "New to Parsec?",
             "titleInvitation": "You have received an invitation link?",
@@ -1180,11 +1181,12 @@
         },
         "sidebar": {
             "goToOrganization": "Go to organization",
+            "goToHome": "Go to home",
             "allOrganization": "All organizations",
             "state": {
                 "title": "State: ",
                 "active": "Active",
-                "freeze": "Freeze"
+                "frozen": "Frozen"
             },
             "menu": {
                 "summary": "Dashboard",
