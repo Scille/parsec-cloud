@@ -228,7 +228,13 @@ pub async fn load_client(
     password_stdin: bool,
 ) -> anyhow::Result<Arc<Client>> {
     let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
-    let client = Client::start(
+    let client = start_client(device).await?;
+
+    Ok(client)
+}
+
+pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<Client>> {
+    Client::start(
         Arc::new(
             ClientConfig {
                 with_monitors: false,
@@ -239,9 +245,7 @@ pub async fn load_client(
         EventBus::default(),
         device,
     )
-    .await?;
-
-    Ok(client)
+    .await
 }
 
 pub fn start_spinner(text: String) -> Spinner {

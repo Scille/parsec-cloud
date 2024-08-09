@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use libparsec::{tmp_path, HumanHandle, RealmRole, TmpPath};
 
 use super::bootstrap_cli_test;
-use crate::utils::load_client;
+use crate::utils::start_client;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -14,14 +12,8 @@ use crate::utils::load_client;
 async fn share_workspace(tmp_path: TmpPath) {
     let (_, [alice, bob, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    // FIXME: The test should not rely on the load_client_and_run since it use the stdin to read the password to unlock the device.
-    let client = load_client(
-        &libparsec::get_default_config_dir(),
-        Some(alice.device_id.to_string()),
-        false,
-    )
-    .await
-    .unwrap();
+    let client = start_client(alice.clone()).await.unwrap();
+
     let wid = client
         .create_workspace("new-workspace".parse().unwrap())
         .await
@@ -49,19 +41,7 @@ async fn share_workspace(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Workspace has been shared"));
 
-    let client = libparsec::internal::Client::start(
-        Arc::new(
-            libparsec::ClientConfig {
-                with_monitors: false,
-                ..Default::default()
-            }
-            .into(),
-        ),
-        libparsec::internal::EventBus::default(),
-        bob.clone(),
-    )
-    .await
-    .unwrap();
+    let client = start_client(bob).await.unwrap();
 
     let workspaces = client.list_workspaces().await;
 
