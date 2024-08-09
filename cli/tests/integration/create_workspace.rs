@@ -1,9 +1,7 @@
-use std::sync::Arc;
-
 use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
+use crate::{testenv_utils::DEFAULT_DEVICE_PASSWORD, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -20,19 +18,7 @@ async fn create_workspace(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Workspace has been created"));
 
-    let client = libparsec::internal::Client::start(
-        Arc::new(
-            libparsec::ClientConfig {
-                with_monitors: false,
-                ..Default::default()
-            }
-            .into(),
-        ),
-        libparsec::internal::EventBus::default(),
-        alice.clone(),
-    )
-    .await
-    .unwrap();
+    let client = start_client(alice).await.unwrap();
 
     let workspaces = client.list_workspaces().await;
 
