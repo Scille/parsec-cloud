@@ -189,6 +189,18 @@
                                 "type": "DateTime"
                             }
                         ]
+                    },
+                    // TODO comment
+                    {
+                        "name": "ChatMessageReceived",
+                        "discriminant_value": "CHAT_MESSAGE_RECEIVED",
+                        "fields": [
+                            {
+                                // `ChatMessage` structure serialized and signed
+                                "name": "message",
+                                "type": "Bytes"
+                            }
+                        ]
                     }
                 ]
             }
