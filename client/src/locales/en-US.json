@@ -1348,21 +1348,52 @@
         "paymentMethodsPage": {
             "title": "Your payment method",
             "description": "Payment is made automatically by credit card.",
-            "addCard": "Add",
-            "addPaymentMethodFailed": "Failed to register this card.",
-            "addPaymentMethodSuccessSetDefaultFailed": "The card was successfully added but it could not be set as the default payment method.",
-            "setDefaultPaymentMethodFailed": "You cannot use this card as your default payment method.",
-            "addPaymentMethodTitle": "Add a card",
-            "addPaymentMethodConfirm": "Add this card",
             "useAsDefault": "Set as default payment method",
-            "activeMethodLabel": "Active",
+            "activeMethodLabel": "active",
+            "activeDefault": "Default card used",
             "retrieveFailed": "Failed to retrieve payment methods.",
-            "addPaymentMethodSuccess": "The card was successfully added.",
+            "savedCard": "Saved card",
+            "setDefault": "Set as default",
+            "delete": "Delete",
+            "addPaymentMethod": {
+                "success": "The card was successfully added.",
+                "failed": "Failed to register this card.",
+                "successButSetDefaultFailed": "The card was successfully added but it could not be set as the default payment method.",
+                "addCard": "Add a new card",
+                "confirm": "Add this card"
+            },
             "stopSubscription": {
                 "title": "Would you like to stop your subscription?",
-                "description": "The organisation will become unavailable to all users.",
-                "button": "Stop my subscription"
-            }
+                "description": "The organization will become unavailable to all users.",
+                "button": "Stop my subscription",
+                "questionTitle": "Stop the subscription",
+                "questionMessage": "Are you sure you want to cancel the subscription?",
+                "failed": "Could not stop the subscription.",
+                "success": "The subscription has been stopped.",
+                "confirm": "Unsubscribe",
+                "cancel": "Keep me subscribed"
+            },
+            "restartSubscription": {
+                "title": "Would you like to resume your subscription?",
+                "description": "Your organization will be available again.",
+                "button": "Restart my subscription",
+                "questionTitle": "Restart the subscription",
+                "questionMessage": "Do you want to restart the subscription?",
+                "failed": "Could not restart the subscription.",
+                "success": "The subscription has been restarted.",
+                "confirm": "Restart my subscription",
+                "cancel": "Keep me unsubscribed"
+            },
+            "deletePaymentMethod": {
+                "questionTitle": "Delete the payment method",
+                "questionMessage": "Are you sure you want to delete this payment method?",
+                "success": "The card has been successfully removed.",
+                "failed": "Could not remove this card.",
+                "confirm": "Delete the card",
+                "cancel": "Keep the card"
+            },
+            "setPaymentMethodDefaultSuccess": "The card has been set as your default payment method.",
+            "setPaymentMethodDefaultFailed": "Could not set this card as your default payment method."
         },
         "dashboard": {
             "summary": {

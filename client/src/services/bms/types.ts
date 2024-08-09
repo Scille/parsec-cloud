@@ -33,6 +33,7 @@ enum DataType {
   SetDefaultPaymentMethod = 'set-default-payment-method',
   DeletePaymentMethod = 'delete-payment-method',
   UpdateAuthentication = 'update-authentication',
+  UnsubscribeOrganization = 'unsubscribe-organization',
 }
 
 enum PaymentMethod {
@@ -138,6 +139,7 @@ interface BillingDetailsPaymentMethodCard {
   isDefault: boolean;
   expirationDate: DateTime;
   brand: string;
+  isExpired: () => boolean;
 }
 
 interface BillingDetailsPaymentMethodSepaTransfer {
@@ -176,6 +178,7 @@ interface BmsOrganization {
   bootstrapLink: string;
   expirationDate?: DateTime;
   stripeSubscriptionId?: string;
+  isSubscribed: () => boolean;
 }
 
 interface BmsInvoice {
@@ -203,15 +206,19 @@ interface LoginQueryData {
   password: string;
 }
 
-interface _UserQueryData {
+interface UserQueryData {
   userId: string;
 }
 
-interface _ClientQueryData extends _UserQueryData {
+interface ClientQueryData extends UserQueryData {
   clientId: string;
 }
 
-interface UpdatePersonalInformationQueryData extends _UserQueryData {
+interface OrganizationQueryData extends ClientQueryData {
+  organizationId: string;
+}
+
+interface UpdatePersonalInformationQueryData extends UserQueryData {
   client: {
     firstname?: string;
     lastname?: string;
@@ -222,61 +229,47 @@ interface UpdatePersonalInformationQueryData extends _UserQueryData {
   };
 }
 
-interface UpdateEmailQueryData extends _UserQueryData {
+interface UpdateEmailQueryData extends UserQueryData {
   email: string;
   password: string;
   lang: string;
 }
 
-interface UpdatePasswordQueryData extends _UserQueryData {
+interface UpdatePasswordQueryData extends UserQueryData {
   email: string;
   lang: string;
 }
 
-interface UpdateAuthenticationQueryData extends _UserQueryData {
+interface UpdateAuthenticationQueryData extends UserQueryData {
   password: string;
   newPassword: string;
 }
 
-interface CreateOrganizationQueryData extends _ClientQueryData {
+interface CreateOrganizationQueryData extends ClientQueryData {
   organizationName: string;
 }
 
-interface ListOrganizationsQueryData extends _ClientQueryData {}
-
-interface OrganizationStatsQueryData extends _ClientQueryData {
-  organizationId: string;
-}
-
-interface OrganizationStatusQueryData extends _ClientQueryData {
-  organizationId: string;
-}
-
-interface InvoicesQueryData extends _ClientQueryData {}
-
-interface BillingDetailsQueryData extends _ClientQueryData {}
-
-interface AddPaymentMethodQueryData extends _ClientQueryData {
+interface AddPaymentMethodQueryData extends ClientQueryData {
   paymentMethod: string;
 }
 
-interface SetDefaultPaymentMethodQueryData extends _ClientQueryData {
+interface SetDefaultPaymentMethodQueryData extends ClientQueryData {
   paymentMethod: string;
 }
 
-interface DeletePaymentMethodQueryData extends _ClientQueryData {
+interface DeletePaymentMethodQueryData extends ClientQueryData {
   paymentMethod: string;
 }
 
-interface UpdateBillingDetailsQueryData extends _ClientQueryData {
+interface UpdateBillingDetailsQueryData extends ClientQueryData {
   address: BmsAddress;
 }
 
-interface GetCustomOrderStatusQueryData extends _ClientQueryData {
+interface GetCustomOrderStatusQueryData extends ClientQueryData {
   organizationIds: Array<string>;
 }
 
-interface GetCustomOrderDetailsQueryData extends _ClientQueryData {
+interface GetCustomOrderDetailsQueryData extends ClientQueryData {
   organizationIds: Array<string>;
 }
 
@@ -285,7 +278,6 @@ export {
   AuthenticationToken,
   BillingDetailsPaymentMethodCard,
   BillingDetailsPaymentMethodSepaTransfer,
-  BillingDetailsQueryData,
   BillingDetailsResultData,
   BillingSystem,
   BmsAddress,
@@ -293,19 +285,17 @@ export {
   BmsInvoice,
   BmsOrganization,
   BmsResponse,
+  ClientQueryData,
   CreateOrganizationQueryData,
   DataType,
   DeletePaymentMethodQueryData,
   GetCustomOrderDetailsQueryData,
   GetCustomOrderStatusQueryData,
-  InvoicesQueryData,
-  ListOrganizationsQueryData,
   ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,
-  OrganizationStatsQueryData,
+  OrganizationQueryData,
   OrganizationStatsResultData,
-  OrganizationStatusQueryData,
   OrganizationStatusResultData,
   PaymentMethod,
   PersonalInformationResultData,
@@ -315,4 +305,5 @@ export {
   UpdateEmailQueryData,
   UpdatePasswordQueryData,
   UpdatePersonalInformationQueryData,
+  UserQueryData,
 };
