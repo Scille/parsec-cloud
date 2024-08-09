@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, TmpPath};
 
 use super::{bootstrap_cli_test, unique_org_id};
@@ -23,21 +21,17 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
             .unwrap();
 
     log::debug!("Bootstrapping organization {organization_id}");
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "bootstrap-organization",
-            "--addr",
-            &organization_addr.to_string(),
-            "--device-label",
-            "pc",
-            "--label",
-            "Alice",
-            "--email",
-            "alice@example.com",
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("Organization bootstrapped"));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "bootstrap-organization",
+        "--addr",
+        &organization_addr.to_string(),
+        "--device-label",
+        "pc",
+        "--label",
+        "Alice",
+        "--email",
+        "alice@example.com"
+    )
+    .stdout(predicates::str::contains("Organization bootstrapped"));
 }

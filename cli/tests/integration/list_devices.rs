@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -13,11 +11,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let path = tmp_path.join("config/parsec3/libparsec");
     let path_str = path.to_string_lossy();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .arg("list-devices")
-        .assert()
-        .stdout(predicates::str::contains(format!(
-            "Found {GREEN}4{RESET} device(s) in {YELLOW}{path_str}{RESET}:"
-        )));
+    crate::assert_cmd_success!("list-devices").stdout(predicates::str::contains(format!(
+        "Found {GREEN}4{RESET} device(s) in {YELLOW}{path_str}{RESET}:"
+    )));
 }

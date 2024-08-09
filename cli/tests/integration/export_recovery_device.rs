@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -12,19 +10,15 @@ async fn export_recovery_device(tmp_path: TmpPath) {
 
     let output = tmp_path.join("recovery_device");
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "export-recovery-device",
-            "--device",
-            &alice.device_id.hex(),
-            "--output",
-            &output.to_string_lossy(),
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("Saved in"));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "export-recovery-device",
+        "--device",
+        &alice.device_id.hex(),
+        "--output",
+        &output.to_string_lossy()
+    )
+    .stdout(predicates::str::contains("Saved in"));
 
     assert!(output.exists());
 }

@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -21,17 +19,14 @@ async fn status_organization(tmp_path: TmpPath) {
         })
     );
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "status-organization",
-            "--organization-id",
-            org_id.as_ref(),
-            "--addr",
-            &url.to_string(),
-            "--token",
-            DEFAULT_ADMINISTRATION_TOKEN,
-        ])
-        .assert()
-        .stdout(expect);
+    crate::assert_cmd_success!(
+        "status-organization",
+        "--organization-id",
+        org_id.as_ref(),
+        "--addr",
+        &url.to_string(),
+        "--token",
+        DEFAULT_ADMINISTRATION_TOKEN
+    )
+    .stdout(expect);
 }

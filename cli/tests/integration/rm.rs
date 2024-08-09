@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, ClientConfig, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -46,38 +44,28 @@ async fn rm_files(tmp_path: TmpPath) {
     drop(workspace);
 
     // Remove test.txt
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "rm",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-            "--workspace-id",
-            &wid.hex(),
-            "/test.txt",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .success()
-        .stdout(predicates::str::is_empty());
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "rm",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace-id",
+        &wid.hex(),
+        "/test.txt"
+    )
+    .stdout(predicates::str::is_empty());
 
     // Remove foo
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "rm",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-            "--workspace-id",
-            &wid.hex(),
-            "/foo",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .success()
-        .stdout(predicates::str::is_empty());
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "rm",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace-id",
+        &wid.hex(),
+        "/foo"
+    )
+    .stdout(predicates::str::is_empty());
 
     let workspace = client.start_workspace(wid).await.unwrap();
     let entries = workspace.stat_folder_children_by_id(wid).await.unwrap();

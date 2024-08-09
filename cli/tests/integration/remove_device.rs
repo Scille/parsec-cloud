@@ -13,7 +13,6 @@ use super::{bootstrap_cli_test, wait_for};
 async fn remove_device(tmp_path: TmpPath) {
     let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    // TODO: Replace me with `assert_cmd::Command::cargo_bin` !
     let process = std::process::Command::new("cargo")
         .args([
             "run",
