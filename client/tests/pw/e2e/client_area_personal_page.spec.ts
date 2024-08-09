@@ -14,7 +14,6 @@ async function goToPersonalPage(page: Page): Promise<void> {
 
 msTest('Check personal data page', async ({ clientArea }) => {
   const title = clientArea.locator('.header-content').locator('.header-title');
-  await expect(clientArea).toHaveURL(/.+\/clientArea$/);
   await expect(title).toHaveText('Dashboard');
   const avatar = clientArea.locator('.header-content').locator('.header-right-profile');
   await expect(avatar.locator('.person-name')).toHaveText(DEFAULT_USER_INFORMATION.name);

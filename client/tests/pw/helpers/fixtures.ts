@@ -3,7 +3,7 @@
 import { Locator, Page, test as base } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { MockBms } from '@tests/pw/helpers/bms';
-import { DEFAULT_USER_INFORMATION, UserData } from '@tests/pw/helpers/data';
+import { DEFAULT_ORGANIZATION_INFORMATION, DEFAULT_USER_INFORMATION, UserData } from '@tests/pw/helpers/data';
 import { dropTestbed, newTestbed } from '@tests/pw/helpers/testbed';
 import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
 
@@ -140,6 +140,15 @@ export const msTest = base.extend<{
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
     await home.locator('.login-button').locator('ion-button').click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
+
+    // Switch to first org
+    const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
+    await orgSwitchButton.click();
+    const popover = home.locator('.popover-switch');
+    const orgs = popover.locator('.organization-list').getByRole('listitem');
+    await orgs.nth(0).click();
+    await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+
     await use(home);
   },
 });
