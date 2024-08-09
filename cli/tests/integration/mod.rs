@@ -95,3 +95,23 @@ async fn bootstrap_cli_test(
     set_env(tmp_path_str, &url);
     Ok((url, devices, org_id))
 }
+
+#[macro_export]
+macro_rules! assert_cmd_success {
+    (with_password=$pass:expr, $($cmd:expr),+) => {
+        $crate::assert_cmd_success!(__internal__ $($cmd),+ , "--password-stdin")
+            .write_stdin(format!("{password}\n", password = $pass))
+            .assert()
+            .success()
+    };
+    (__internal__ $($cmd:expr),+) => {
+        assert_cmd::Command::cargo_bin("parsec_cli")
+            .unwrap()
+            .args([$($cmd),+])
+    };
+    ($($cmd:expr),+) => {
+        $crate::assert_cmd_success!(__internal__ $($cmd),+)
+            .assert()
+            .success()
+    }
+}
