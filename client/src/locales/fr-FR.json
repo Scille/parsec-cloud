@@ -160,6 +160,7 @@
         },
         "organizationActionSheet": "Organisation",
         "keyringFailed": "Impossible de se connecter",
+        "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
             "titleCreateOrga": "Vous débutez sur Parsec ?",
             "titleInvitation": "Vous avez reçu un lien d'invitation ?",
@@ -1180,11 +1181,12 @@
         },
         "sidebar": {
             "goToOrganization": "Aller à l'organisation",
+            "goToHome": "Aller à l'accueil",
             "allOrganization": "Toutes les organisations",
             "state": {
                 "title": "État :",
                 "active": "Active",
-                "freeze": "Gelée"
+                "frozen": "Gelée"
             },
             "menu": {
                 "summary": "Tableau de bord",
