@@ -3,11 +3,13 @@
 <template>
   <div
     class="invoices-year"
-    @click="isVisible = !isVisible"
     :class="{ visible: isVisible }"
   >
     <!-- year -->
-    <div class="invoices-year-text">
+    <div
+      class="invoices-year-text"
+      @click="isVisible = !isVisible"
+    >
       <ion-text class="invoices-year-text__title title-h3">
         {{ $msTranslate(title) }}
       </ion-text>
