@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { ConnectionHandle, EntryName, FsPath, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
-import { DeviceID } from '@/plugins/libparsec';
+import { DeviceID, OrganizationID } from '@/plugins/libparsec';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -162,6 +162,7 @@ export interface Query {
   selectFile?: EntryName;
   loginInfo?: string;
   workspaceHandle?: WorkspaceHandle;
+  bmsOrganizationId?: OrganizationID;
 }
 
 export interface ClientAreaQuery {

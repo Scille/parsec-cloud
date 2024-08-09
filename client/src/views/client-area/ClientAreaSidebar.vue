@@ -33,25 +33,25 @@
       </ion-card-header>
 
       <!-- show it only when there is one organization selected -->
-      <template>
+      <template v-if="!isDefaultOrganization(organization) && status">
         <ion-text class="organization-card-state body">
           {{ $msTranslate('clientArea.sidebar.state.title') }}
-          <span>{{ $msTranslate('clientArea.sidebar.state.active') }}</span>
+          <span>{{ $msTranslate(status.isFrozen ? 'clientArea.sidebar.state.frozen' : 'clientArea.sidebar.state.active') }}</span>
         </ion-text>
-
-        <!-- button: go to organization -->
-        <!-- <div
-          v-if="currentOrganization"
-          class="organization-card-button custom-button custom-button-fill"
-        >
-          <ion-text
-            class="button-medium"
-            button
-          >
-            {{ $msTranslate('clientArea.sidebar.goToOrganization') }}
-          </ion-text>
-        </div> -->
       </template>
+
+      <!-- button: go to organization -->
+      <div
+        class="organization-card-button custom-button custom-button-fill"
+        @click="goToHome"
+      >
+        <ion-text
+          class="button-medium"
+          button
+        >
+          {{ $msTranslate(isDefaultOrganization(organization) ? 'clientArea.sidebar.goToHome' : 'clientArea.sidebar.goToOrganization') }}
+        </ion-text>
+      </div>
     </ion-card>
   </ion-header>
 
@@ -214,7 +214,7 @@
 <script setup lang="ts">
 import { ChevronExpand, MsImage, MsModalResult } from 'megashark-lib';
 import { card, chatbubbleEllipses, podium, grid, idCard, newspaper } from 'ionicons/icons';
-import { BmsOrganization } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData } from '@/services/bms';
 import {
   IonAvatar,
   IonCard,
@@ -230,11 +230,14 @@ import {
 } from '@ionic/vue';
 import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
 import { ClientAreaPages, BillingSystem, isDefaultOrganization } from '@/views/client-area/types';
+import { navigateTo, Routes } from '@/router';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   organization: BmsOrganization;
   currentPage: ClientAreaPages;
 }>();
+const status = ref<OrganizationStatusResultData | null>(null);
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
@@ -244,6 +247,13 @@ const emits = defineEmits<{
 async function goToPageClicked(page: ClientAreaPages): Promise<void> {
   emits('pageSelected', page);
 }
+
+onMounted(async () => {
+  if (isDefaultOrganization(props.organization)) {
+    status.value = null;
+  }
+  status.value = (await BmsAccessInstance.get().getOrganizationStatus(props.organization.bmsId)).data as OrganizationStatusResultData;
+});
 
 async function openOrganizationChoice(event: Event): Promise<void> {
   const popover = await popoverController.create({
@@ -261,6 +271,14 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   await popover.dismiss();
   if (role === MsModalResult.Confirm && data) {
     emits('organizationSelected', data.organization);
+  }
+}
+
+async function goToHome(): Promise<void> {
+  if (isDefaultOrganization(props.organization)) {
+    await navigateTo(Routes.Home);
+  } else {
+    await navigateTo(Routes.Home, { query: { bmsOrganizationId: props.organization.parsecId } });
   }
 }
 </script>
