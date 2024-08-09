@@ -44,16 +44,18 @@ async fn not_existing(#[values(true, false)] open_in_root: bool, env: &TestbedEn
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn cannot_open_folder(#[values(true, false)] open_in_root: bool, env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    let path = if open_in_root {
-        "/foo".parse().unwrap()
+    let (path, expected_entry_id) = if open_in_root {
+        ("/foo".parse().unwrap(), wksp1_foo_id)
     } else {
-        "/foo/spam".parse().unwrap()
+        ("/foo/spam".parse().unwrap(), wksp1_foo_spam_id)
     };
 
     let err = ops
@@ -69,7 +71,7 @@ async fn cannot_open_folder(#[values(true, false)] open_in_root: bool, env: &Tes
         )
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceOpenFileError::EntryNotAFile);
+    p_assert_matches!(err, WorkspaceOpenFileError::EntryNotAFile { entry_id } if entry_id == expected_entry_id);
     spy.assert_no_events();
 }
 
@@ -95,7 +97,7 @@ async fn cannot_open_root(env: &TestbedEnv) {
         )
         .await
         .unwrap_err();
-    p_assert_matches!(err, WorkspaceOpenFileError::EntryNotAFile);
+    p_assert_matches!(err, WorkspaceOpenFileError::EntryNotAFile { entry_id} if entry_id == wksp1_id);
     spy.assert_no_events();
 }
 
