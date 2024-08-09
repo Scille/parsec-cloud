@@ -2,6 +2,8 @@ use std::io::{BufReader, Write};
 
 use libparsec::{tmp_path, TmpPath};
 
+use crate::testenv_utils::TestOrganization;
+
 use super::{bootstrap_cli_test, wait_for};
 
 #[rstest::rstest]
@@ -11,7 +13,7 @@ use super::{bootstrap_cli_test, wait_for};
 // and the cli invocation process have different values for `alice.device_id.hex()` !
 #[ignore = "TODO: fix this test !"]
 async fn remove_device(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let process = std::process::Command::new("cargo")
         .args([
