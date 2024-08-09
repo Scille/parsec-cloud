@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -16,17 +14,13 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "import-recovery-device",
-            "--input",
-            &input.to_string_lossy(),
-            "--passphrase",
-            &passphrase,
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("Saved new device"));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "import-recovery-device",
+        "--input",
+        &input.to_string_lossy(),
+        "--passphrase",
+        &passphrase
+    )
+    .stdout(predicates::str::contains("Saved new device"));
 }

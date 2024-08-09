@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{
     authenticated_cmds::v4::invite_new_device, get_default_config_dir, tmp_path, AuthenticatedCmds,
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
@@ -39,17 +37,13 @@ async fn cancel_invitation(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "cancel-invitation",
-            "--device",
-            &alice.device_id.hex(),
-            "--token",
-            &token.hex().to_string(),
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("Invitation deleted"));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "cancel-invitation",
+        "--device",
+        &alice.device_id.hex(),
+        "--token",
+        &token.hex().to_string()
+    )
+    .stdout(predicates::str::contains("Invitation deleted"));
 }
