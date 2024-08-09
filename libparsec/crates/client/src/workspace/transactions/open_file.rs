@@ -58,9 +58,9 @@ pub enum WorkspaceOpenFileError {
     NoRealmAccess,
     #[error("Path doesn't exist")]
     EntryNotFound,
-    #[error("Path points to entry that is not a file")]
+    #[error("Path points to an entry (ID: `{}`) that is not a file", .entry_id)]
     EntryNotAFile { entry_id: VlobID },
-    #[error("Target entry already exists while in create new mode")]
+    #[error("Target entry already exists (ID: `{}`) while in create new mode", .entry_id)]
     EntryExistsInCreateNewMode { entry_id: VlobID },
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),

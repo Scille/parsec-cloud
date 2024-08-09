@@ -30,7 +30,7 @@ pub enum WorkspaceCreateFolderError {
     ParentNotFound,
     #[error("Path points to parent that is not a folder")]
     ParentNotAFolder,
-    #[error("Target entry already exists")]
+    #[error("Target entry already exists (ID: `{}`)", .entry_id)]
     EntryExists { entry_id: VlobID },
     #[error(transparent)]
     InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),

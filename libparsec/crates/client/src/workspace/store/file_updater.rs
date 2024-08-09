@@ -25,7 +25,7 @@ pub(crate) enum ForUpdateFileError {
     Stopped,
     #[error("Path doesn't exist")]
     EntryNotFound,
-    #[error("Path points to entry that is not a file")]
+    #[error("Path points to entry (ID: `{}`) that is not a file", .entry_id)]
     EntryNotAFile { entry_id: VlobID },
     #[error("Not allowed to access this realm")]
     NoRealmAccess,
