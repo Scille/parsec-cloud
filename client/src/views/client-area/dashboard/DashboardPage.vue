@@ -5,7 +5,10 @@
     <!-- summary + invoices section -->
     <div class="dashboard-section-container">
       <!-- month summary -->
-      <div class="dashboard-section month-summary-container">
+      <div
+        class="dashboard-section month-summary-container"
+        v-if="stats"
+      >
         <ion-title class="dashboard-section-title title-h2">
           {{ I18n.translate(I18n.formatDate(currentDate, 'narrow')) }}
         </ion-title>
@@ -51,10 +54,7 @@
             <ion-title class="month-summary-item__title title-h4">
               {{ $msTranslate('clientArea.dashboard.summary.users') }}
             </ion-title>
-            <div
-              class="month-summary-item__data title-h1-xl"
-              v-if="stats"
-            >
+            <div class="month-summary-item__data title-h1-xl">
               {{ stats.activeUsers }}
             </div>
           </div>
@@ -64,10 +64,7 @@
             <ion-title class="month-summary-item__title title-h4">
               {{ $msTranslate('clientArea.dashboard.summary.storage') }}
             </ion-title>
-            <div
-              class="month-summary-item__data title-h1-xl"
-              v-if="stats"
-            >
+            <div class="month-summary-item__data title-h1-xl">
               {{ $msTranslate(formatFileSize(stats.dataSize)) }}
             </div>
           </div>
@@ -202,7 +199,7 @@
 <script setup lang="ts">
 import { IonTitle, IonText, IonList, IonItem, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { download } from 'ionicons/icons';
-import { ClientAreaPages } from '@/views/client-area/types';
+import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import {
   BmsAccessInstance,
   DataType,
@@ -235,15 +232,17 @@ const estimations = ref<undefined | { amount: number }>(undefined);
 
 onMounted(async () => {
   querying.value = true;
-  const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
-  if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
-    stats.value = orgStatsResponse.data;
+  if (!isDefaultOrganization(props.organization)) {
+    const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+    if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
+      stats.value = orgStatsResponse.data;
+    }
   }
 
   const invoicesResponse = await BmsAccessInstance.get().getInvoices();
   if (!invoicesResponse.isError && invoicesResponse.data && invoicesResponse.data.type === DataType.Invoices) {
     invoices.value = invoicesResponse.data.invoices
-      .filter((invoice) => invoice.organizationId === props.organization.parsecId)
+      .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)
       .sort((invoice1, invoice2) => invoice2.start.toMillis() - invoice1.start.toMillis())
       .slice(0, 3);
   }

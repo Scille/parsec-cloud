@@ -237,18 +237,28 @@
         </div>
       </div>
     </template>
-    <template v-else>
-      <ion-text class="statistics-error body">{{ $msTranslate('clientArea.statistics.error') }}</ion-text>
+    <template v-else-if="querying">
+      <ion-skeleton-text :animated="true" />
     </template>
+    <template v-else-if="!querying && !stats && !error">
+      {{ $msTranslate('clientArea.statistics.noStats') }}
+    </template>
+    <ion-text
+      class="statistics-error body"
+      v-show="error"
+    >
+      {{ $msTranslate(error) }}
+    </ion-text>
   </div>
 </template>
 
 <script setup lang="ts">
 import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData } from '@/services/bms';
 import { onMounted, ref } from 'vue';
-import { IonCard, IonProgressBar, IonText, IonIcon, IonTitle } from '@ionic/vue';
+import { IonCard, IonProgressBar, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 import { person, star, pencil, arrowForward } from 'ionicons/icons';
+import { isDefaultOrganization } from '@/views/client-area/types';
 
 interface ProgressBarData {
   amount: number;
@@ -265,6 +275,8 @@ const stats = ref<OrganizationStatsResultData>();
 const totalData = ref<number>(0);
 const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
+const querying = ref(true);
+const error = ref('');
 
 const firstBarData = ref<ProgressBarData>();
 const secondBarData = ref<ProgressBarData>();
@@ -323,6 +335,10 @@ function getThirdBarData(): ProgressBarData | undefined {
 }
 
 onMounted(async () => {
+  if (isDefaultOrganization(props.organization)) {
+    querying.value = false;
+    return;
+  }
   const response = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
 
   if (!response.isError && response.data && response.data.type === DataType.OrganizationStats) {
@@ -335,7 +351,10 @@ onMounted(async () => {
     firstBarData.value = getFirstBarData();
     secondBarData.value = getSecondBarData();
     thirdBarData.value = getThirdBarData();
+  } else {
+    error.value = 'clientArea.statistics.error';
   }
+  querying.value = false;
 });
 </script>
 

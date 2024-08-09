@@ -1319,7 +1319,8 @@
             "ofWhich": "dont",
             "data": "de données",
             "metadata": "métadonnées",
-            "error": "Impossible de récupérer les données de l'organisation."
+            "error": "Impossible de récupérer les données de l'organisation.",
+            "noStats": "Aucune statistique à afficher."
         },
         "invoices": {
             "title": "Aperçu de vos factures",

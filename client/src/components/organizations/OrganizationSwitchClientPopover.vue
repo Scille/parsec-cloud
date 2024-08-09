@@ -14,12 +14,24 @@
         :class="{ 'current-organization': org.bmsId === currentOrganization.bmsId }"
       >
         <div class="organization">
-          <ion-avatar class="organization-avatar">
+          <ion-avatar
+            class="organization-avatar"
+            v-show="!isDefaultOrganization(org)"
+          >
             <span>{{ org.name.substring(0, 2) }}</span>
           </ion-avatar>
           <ion-label class="organization-name">
-            <span class="subtitles-normal">
+            <span
+              class="subtitles-normal"
+              v-show="!isDefaultOrganization(org)"
+            >
               {{ org.name }}
+            </span>
+            <span
+              class="subtitles-normal"
+              v-show="isDefaultOrganization(org)"
+            >
+              All organizations
             </span>
           </ion-label>
           <ion-icon
@@ -72,6 +84,7 @@ import { arrowForward, checkmark, addCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { MsModalResult } from 'megashark-lib';
+import { DefaultBmsOrganization, isDefaultOrganization } from '@/views/client-area/types';
 
 const props = defineProps<{
   currentOrganization: BmsOrganization;
@@ -83,6 +96,7 @@ onMounted(async () => {
   const result = await BmsAccessInstance.get().listOrganizations();
   if (!result.isError && result.data && result.data.type === DataType.ListOrganizations) {
     organizations.value = result.data.organizations;
+    organizations.value.push(DefaultBmsOrganization);
   }
 });
 
