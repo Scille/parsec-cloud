@@ -1,6 +1,6 @@
 use std::io::{BufReader, Write};
 
-use assert_cmd::{cargo::CommandCargoExt, Command};
+use assert_cmd::cargo::CommandCargoExt;
 
 use libparsec::{
     authenticated_cmds::v4::invite_new_device, get_default_config_dir, tmp_path, AuthenticatedCmds,
@@ -15,17 +15,13 @@ use crate::{testenv_utils::DEFAULT_DEVICE_PASSWORD, utils::YELLOW};
 async fn invite_device(tmp_path: TmpPath) {
     let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "invite-device",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("Invitation URL:"));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "invite-device",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains("Invitation URL:"));
 }
 
 #[rstest::rstest]
