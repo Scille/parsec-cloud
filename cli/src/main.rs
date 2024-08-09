@@ -5,6 +5,7 @@ mod macro_opts;
 #[cfg(any(test, feature = "testenv"))]
 mod testenv_utils;
 #[cfg(test)]
+#[path = "../tests/integration/mod.rs"]
 mod tests;
 mod utils;
 
