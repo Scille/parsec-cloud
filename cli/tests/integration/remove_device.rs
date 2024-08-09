@@ -1,5 +1,6 @@
 use std::io::{BufReader, Write};
 
+use assert_cmd::cargo::CommandCargoExt;
 use libparsec::{tmp_path, TmpPath};
 
 use crate::testenv_utils::TestOrganization;
@@ -8,23 +9,12 @@ use super::{bootstrap_cli_test, wait_for};
 
 #[rstest::rstest]
 #[tokio::test]
-// This test seems to fail because alice's device ID is no longer stable (it used
-// to be a string, now it's a UUID regenerated at each run), hence the test process
-// and the cli invocation process have different values for `alice.device_id.hex()` !
-#[ignore = "TODO: fix this test !"]
 async fn remove_device(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let process = std::process::Command::new("cargo")
-        .args([
-            "run",
-            "--profile=ci-rust",
-            "--package=parsec_cli",
-            "--features=testenv",
-            "remove-device",
-            "--device",
-            &alice.device_id.hex(),
-        ])
+    let process = std::process::Command::cargo_bin("parsec_cli")
+        .unwrap()
+        .args(["remove-device", "--device", &alice.device_id.hex()])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::piped())
