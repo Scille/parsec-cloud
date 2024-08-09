@@ -5,20 +5,13 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use super::{get_testenv_config, run_local_organization, set_env};
+use super::bootstrap_cli_test;
 use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
 
 #[rstest::rstest]
 #[tokio::test]
 async fn cancel_invitation(tmp_path: TmpPath) {
-    let _ = env_logger::builder().is_test(true).try_init();
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-
-    set_env(tmp_path_str, &url);
+    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),

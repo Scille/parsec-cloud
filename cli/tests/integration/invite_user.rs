@@ -7,19 +7,13 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use super::{get_testenv_config, run_local_organization, set_env, wait_for};
+use super::{bootstrap_cli_test, wait_for};
 use crate::{testenv_utils::DEFAULT_DEVICE_PASSWORD, utils::YELLOW};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user(tmp_path: TmpPath) {
-    let _ = env_logger::builder().is_test(true).try_init();
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-    set_env(tmp_path_str, &url);
+    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -39,13 +33,7 @@ async fn invite_user(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user_dance(tmp_path: TmpPath) {
-    let _ = env_logger::builder().is_test(true).try_init();
-    let tmp_path_str = tmp_path.to_str().unwrap();
-    let config = get_testenv_config();
-    let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
-        .await
-        .unwrap();
-    set_env(tmp_path_str, &url);
+    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
