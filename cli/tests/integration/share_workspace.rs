@@ -1,4 +1,6 @@
-use libparsec::{tmp_path, HumanHandle, TmpPath};
+use std::sync::Arc;
+
+use libparsec::{tmp_path, HumanHandle, RealmRole, TmpPath};
 
 use super::bootstrap_cli_test;
 use crate::utils::load_client;
@@ -47,7 +49,27 @@ async fn share_workspace(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Workspace has been shared"));
 
-    // TODO: Replace me with a call to list-workspaces from a new `Arc<Client>` initialized with bob's device ID
-    crate::assert_cmd_success!("list-workspaces", "--device", &bob.device_id.hex())
-        .stdout(predicates::str::contains("new-workspace: contributor"));
+    let client = libparsec::internal::Client::start(
+        Arc::new(
+            libparsec::ClientConfig {
+                with_monitors: false,
+                ..Default::default()
+            }
+            .into(),
+        ),
+        libparsec::internal::EventBus::default(),
+        bob.clone(),
+    )
+    .await
+    .unwrap();
+
+    let workspaces = client.list_workspaces().await;
+
+    let workspace_name = "new-workspace".parse().unwrap();
+    assert!(
+        workspaces
+            .iter()
+            .any(|w| w.current_name == workspace_name
+                && w.current_self_role == RealmRole::Contributor)
+    );
 }
