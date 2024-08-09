@@ -11,10 +11,8 @@ use libparsec_types::prelude::*;
 
 #[tokio::main]
 async fn main() -> ExitCode {
-    // Configure logging with DEBUG level by default
-    env_logger::Builder::from_env("LOG_LEVEL")
-        .filter_level(log::LevelFilter::Debug)
-        .init();
+    // Configure logging with WARNING level by default (customize with `RUST_LOG` environ variable)
+    env_logger::init();
 
     let mut args = std::env::args_os();
     let _ = args.next().unwrap(); // Ignore path of the executable
