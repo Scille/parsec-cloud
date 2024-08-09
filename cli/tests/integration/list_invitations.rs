@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{
     authenticated_cmds::v4::invite_new_device, get_default_config_dir, tmp_path, AuthenticatedCmds,
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
@@ -17,17 +15,13 @@ use crate::{
 async fn list_invitations(tmp_path: TmpPath) {
     let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "list-invitations",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains("No invitation."));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "list-invitations",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains("No invitation."));
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -55,18 +49,14 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "list-invitations",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .stdout(predicates::str::contains(format!(
-            "{}\t{YELLOW}idle{RESET}\tdevice",
-            token.hex()
-        )));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "list-invitations",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains(format!(
+        "{}\t{YELLOW}idle{RESET}\tdevice",
+        token.hex()
+    )));
 }
