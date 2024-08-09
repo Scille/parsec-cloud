@@ -54,22 +54,18 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
     if !empty {
         let url = url.expect("Mismatch condition in new_environment when starting a new server");
         let org_id = "Org".parse().expect("Unreachable");
-        let [alice_device, other_alice_device, bob_device] =
-            initialize_test_organization(ClientConfig::default(), url, org_id).await?;
+        let org = initialize_test_organization(ClientConfig::default(), url, org_id).await?;
 
         println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
         println!(
             "- {YELLOW}{}{RESET} // Alice",
-            &alice_device.device_id.hex()[..3]
+            &org.alice.device_id.hex()[..3]
         );
         println!(
             "- {YELLOW}{}{RESET} // Alice 2nd device",
-            &other_alice_device.device_id.hex()[..3]
+            &org.other_alice.device_id.hex()[..3]
         );
-        println!(
-            "- {YELLOW}{}{RESET} // Bob",
-            &bob_device.device_id.hex()[..3]
-        );
+        println!("- {YELLOW}{}{RESET} // Bob", &org.bob.device_id.hex()[..3]);
     }
 
     Ok(())
