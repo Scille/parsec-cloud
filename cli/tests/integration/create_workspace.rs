@@ -1,4 +1,6 @@
-use libparsec::{tmp_path, TmpPath};
+use std::sync::Arc;
+
+use libparsec::{tmp_path, RealmRole, TmpPath};
 
 use super::bootstrap_cli_test;
 use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
@@ -18,12 +20,24 @@ async fn create_workspace(tmp_path: TmpPath) {
     )
     .stdout(predicates::str::contains("Workspace has been created"));
 
-    // TODO: Replace with client.list_workspaces directly instead of using the CLI
-    crate::assert_cmd_success!(
-        with_password = DEFAULT_DEVICE_PASSWORD,
-        "list-workspaces",
-        "--device",
-        &alice.device_id.hex()
+    let client = libparsec::internal::Client::start(
+        Arc::new(
+            libparsec::ClientConfig {
+                with_monitors: false,
+                ..Default::default()
+            }
+            .into(),
+        ),
+        libparsec::internal::EventBus::default(),
+        alice.clone(),
     )
-    .stdout(predicates::str::contains("new-workspace: owner"));
+    .await
+    .unwrap();
+
+    let workspaces = client.list_workspaces().await;
+
+    let workspace_name = "new-workspace".parse().unwrap();
+    assert!(workspaces
+        .iter()
+        .any(|w| w.current_name == workspace_name && w.current_self_role == RealmRole::Owner));
 }
