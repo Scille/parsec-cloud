@@ -276,7 +276,7 @@ async function getOrganizationStatus(token: AuthenticationToken, query: Organiza
   return await wrapQuery(async () => {
     const axiosResponse = await http
       .getInstance()
-      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/stats`, {
+      .get(`/users/${query.userId}/clients/${query.clientId}/organizations/${query.organizationId}/status`, {
         headers: { Authorization: `Bearer ${token}` },
         validateStatus: (status) => status === 200,
       });
