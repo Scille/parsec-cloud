@@ -74,8 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonTitle, IonIcon } from '@ionic/vue';
-import { pencil } from 'ionicons/icons';
+import { IonButton, IonTitle } from '@ionic/vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { MsInput } from 'megashark-lib';
 import { onMounted, ref, computed, inject } from 'vue';
