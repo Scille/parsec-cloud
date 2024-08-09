@@ -1,12 +1,12 @@
 use libparsec::{tmp_path, TmpPath};
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
+use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn import_recovery_device(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let input = tmp_path.join("recovery_device");
 
