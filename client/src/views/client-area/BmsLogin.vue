@@ -88,16 +88,14 @@
 
         <!-- forgotten password && remember me checkbox-->
         <div class="saas-login-link">
-          <div
+          <ms-checkbox
+            v-model="checkboxValue"
             class="saas-login-link__checkbox"
-            @click="checkboxValue = !checkboxValue"
+            label-placement="end"
+            @click="!checkboxValue"
           >
-            <ms-checkbox
-              v-model="checkboxValue"
-              class="checkbox"
-            />
             <ion-text class="body">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
-          </div>
+          </ms-checkbox>
 
           <!-- TODO: UPDATE THE LINK -->
           <!-- If changing the link, don't forget to check that it is allowed by electron! -->
@@ -210,7 +208,7 @@ const passwordInputRef = ref();
 const querying = ref(false);
 const loginError = ref<Translatable>('');
 const loading = ref(true);
-const checkboxValue = ref(false);
+const checkboxValue = ref<boolean>(false);
 
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
