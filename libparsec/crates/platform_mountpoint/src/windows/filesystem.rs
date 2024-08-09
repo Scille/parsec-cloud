@@ -89,6 +89,12 @@ fn parsec_file_stat_to_winfsp_file_info(stat: &FileStat) -> FileInfo {
         .set_change_time(updated)
         // TODO: We truncate the EntryID to 64bits as index number, given EntryID is a UUIDv4 this
         // increases the risk of collision... We should investigate to see if this is really needed.
+        //
+        // Also regarding endianess, `UUID::as_u128` always reads the bytes in big endian,
+        // hence the conversion to `u64` left us with the UUID's bytes 8 to 15.
+        // There is not much reason (apart for simplicity) as to why those bytes are used
+        // given UUIDv4 is just random stuff (well not totally since some bits are used
+        // to indicate version, but this is negligeable).
         .set_index_number(stat.id.as_u128() as u64)
         .set_file_size(stat.size)
         // AllocationSize is the size actually occupied on the storage medium, this is
