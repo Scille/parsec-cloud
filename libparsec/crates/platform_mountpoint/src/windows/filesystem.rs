@@ -4,20 +4,20 @@ use once_cell::sync::Lazy;
 use std::sync::{Arc, Mutex};
 use winfsp_wrs::{
     filetime_from_utc, u16cstr, CleanupFlags, CreateFileInfo, CreateOptions, DirInfo,
-    FileAccessRights, FileAttributes, FileInfo, FileSystemContext, PSecurityDescriptor,
+    FileAccessRights, FileAttributes, FileInfo, FileSystemInterface, PSecurityDescriptor,
     SecurityDescriptor, U16CStr, U16String, VolumeInfo, WriteMode, NTSTATUS, STATUS_ACCESS_DENIED,
     STATUS_DEVICE_NOT_READY, STATUS_DIRECTORY_NOT_EMPTY, STATUS_FILE_IS_A_DIRECTORY,
     STATUS_HOST_UNREACHABLE, STATUS_INVALID_HANDLE, STATUS_MEDIA_WRITE_PROTECTED,
-    STATUS_NOT_A_DIRECTORY, STATUS_NOT_IMPLEMENTED, STATUS_NO_SUCH_DEVICE,
-    STATUS_OBJECT_NAME_COLLISION, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND,
-    STATUS_RESOURCEMANAGER_READ_ONLY,
+    STATUS_NOT_A_DIRECTORY, STATUS_NO_SUCH_DEVICE, STATUS_OBJECT_NAME_COLLISION,
+    STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_NOT_FOUND, STATUS_RESOURCEMANAGER_READ_ONLY,
 };
 
 use libparsec_client::workspace::{
-    EntryStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
+    EntryStat, FileStat, FolderReader, FolderReaderStatEntryError, FolderReaderStatNextOutcome,
     MoveEntryMode, OpenOptions, WorkspaceCreateFolderError, WorkspaceFdFlushError,
-    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError, WorkspaceMoveEntryError,
-    WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps, WorkspaceStatEntryError,
+    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError, WorkspaceFdWriteError,
+    WorkspaceMoveEntryError, WorkspaceOpenFileError, WorkspaceOpenFolderReaderError, WorkspaceOps,
+    WorkspaceStatEntryError,
 };
 use libparsec_types::prelude::*;
 
@@ -49,20 +49,51 @@ fn is_entry_info_path(path: &FsPath) -> bool {
         .unwrap_or_default()
 }
 
+/// In Windows logic opening a file/folder provides an exclusive handle
+/// on it so that no concurrent modification can occur.
+///
+/// `OpenedObj` represents such opened resource.
+///
+/// Note there is a trick here, as in Parsec not all modifications go through
+/// the filesystem (i.e. GUI and remote changes), so a concurrent modification
+/// may move the resource (or event modify its type !).
 #[derive(Debug)]
 pub(crate) enum OpenedObj {
     Folder {
         parsec_file_name: FsPath,
+        id: VlobID,
         folder_reader: Option<FolderReader>,
     },
     File {
+        // Keeping file name here is useful for debug logs
+        #[allow(dead_code)]
         parsec_file_name: FsPath,
+        #[allow(dead_code)]
+        id: VlobID,
         fd: FileDescriptor,
     },
-    // EntryInfo {
-    //     parsec_file_name: FsPath,
-    //     info: FileInfo,
-    // },
+}
+
+fn parsec_file_stat_to_winfsp_file_info(stat: &FileStat) -> FileInfo {
+    let created = filetime_from_utc((stat.created).into());
+    let updated = filetime_from_utc((stat.updated).into());
+    *FileInfo::default()
+        // FILE_ATTRIBUTE_ARCHIVE is a good default attribute
+        // This way, we don't need to deal with the weird semantics of
+        // FILE_ATTRIBUTE_NORMAL which means "no other attributes is set"
+        // Also, this is what the winfsp memfs does.
+        .set_file_attributes(FileAttributes::ARCHIVE | FileAttributes::NOT_CONTENT_INDEXED)
+        .set_creation_time(created)
+        .set_last_access_time(updated)
+        .set_last_write_time(updated)
+        .set_change_time(updated)
+        // TODO: We truncate the EntryID to 64bits as index number, given EntryID is a UUIDv4 this
+        // increases the risk of collision... We should investigate to see if this is really needed.
+        .set_index_number(stat.id.as_u128() as u64)
+        .set_file_size(stat.size)
+        // AllocationSize is the size actually occupied on the storage medium, this is
+        // meaningless for Parsec (however WinFSP requires FileSize <= AllocationSize)
+        .set_allocation_size(stat.size)
 }
 
 fn parsec_entry_stat_to_winfsp_file_info(stat: &EntryStat) -> FileInfo {
@@ -128,13 +159,13 @@ pub(crate) static LOOKUP_HOOK: Mutex<
 > = Mutex::new(None);
 
 #[derive(Debug)]
-pub(crate) struct ParsecFileSystemContext {
+pub(crate) struct ParsecFileSystemInterface {
     ops: Arc<WorkspaceOps>,
     tokio_handle: tokio::runtime::Handle,
     volume_label: Mutex<U16String>,
 }
 
-impl ParsecFileSystemContext {
+impl ParsecFileSystemInterface {
     pub fn new(
         ops: Arc<WorkspaceOps>,
         tokio_handle: tokio::runtime::Handle,
@@ -148,40 +179,43 @@ impl ParsecFileSystemContext {
     }
 }
 
-impl ParsecFileSystemContext {
+impl ParsecFileSystemInterface {
     async fn get_file_info_async(&self, file_context: &OpenedObj) -> Result<FileInfo, NTSTATUS> {
-        let parsec_file_name = match file_context {
-            OpenedObj::Folder {
-                parsec_file_name, ..
-            } => parsec_file_name,
-            OpenedObj::File {
-                parsec_file_name, ..
-            } => parsec_file_name,
-            // OpenedObj::EntryInfo { info, .. } => {
-            //     return Ok(info.clone());
-            // }
-        };
+        match file_context {
+            OpenedObj::File { fd, .. } => {
+                let outcome = self.ops.fd_stat(*fd).await;
+                match outcome {
+                    Ok(stat) => Ok(parsec_file_stat_to_winfsp_file_info(&stat)),
+                    Err(err) => Err(match err {
+                        WorkspaceFdStatError::BadFileDescriptor => STATUS_INVALID_HANDLE,
+                    }),
+                }
+            }
 
-        let outcome = self.ops.stat_entry(parsec_file_name).await;
-        match outcome {
-            Ok(stat) => Ok(parsec_entry_stat_to_winfsp_file_info(&stat)),
-            Err(err) => Err(match err {
-                WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                WorkspaceStatEntryError::NoRealmAccess
-                | WorkspaceStatEntryError::InvalidKeysBundle(_)
-                | WorkspaceStatEntryError::InvalidCertificate(_)
-                | WorkspaceStatEntryError::InvalidManifest(_)
-                | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
-            }),
+            OpenedObj::Folder { id, .. } => {
+                let outcome = self.ops.stat_entry_by_id(*id).await;
+                match outcome {
+                    Ok(stat) => Ok(parsec_entry_stat_to_winfsp_file_info(&stat)),
+                    Err(err) => Err(match err {
+                        WorkspaceStatEntryError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
+                        WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                        WorkspaceStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                        WorkspaceStatEntryError::NoRealmAccess
+                        | WorkspaceStatEntryError::InvalidKeysBundle(_)
+                        | WorkspaceStatEntryError::InvalidCertificate(_)
+                        | WorkspaceStatEntryError::InvalidManifest(_)
+                        | WorkspaceStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                    }),
+                }
+            }
         }
     }
 }
 
-impl FileSystemContext for ParsecFileSystemContext {
+impl FileSystemInterface for ParsecFileSystemInterface {
     type FileContext = Arc<Mutex<OpenedObj>>;
 
+    const GET_VOLUME_INFO_DEFINED: bool = true;
     fn get_volume_info(&self) -> Result<VolumeInfo, NTSTATUS> {
         log::debug!("[WinFSP] get_volume_info()");
 
@@ -196,6 +230,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         .expect("volume label length already checked"))
     }
 
+    const SET_VOLUME_LABEL_DEFINED: bool = true;
     fn set_volume_label(&self, volume_label: &U16CStr) -> Result<VolumeInfo, NTSTATUS> {
         log::debug!("[WinFSP] get_volume_info(volume_label: {:?})", volume_label);
 
@@ -206,6 +241,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         self.get_volume_info()
     }
 
+    const GET_SECURITY_BY_NAME_DEFINED: bool = true;
     fn get_security_by_name(
         &self,
         file_name: &U16CStr,
@@ -236,6 +272,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
+    const CREATE_EX_DEFINED: bool = true;
     fn create_ex(
         &self,
         file_name: &U16CStr,
@@ -261,7 +298,8 @@ impl FileSystemContext for ParsecFileSystemContext {
                 .create_options
                 .is(CreateOptions::FILE_DIRECTORY_FILE)
             {
-                self.ops
+                let id = self
+                    .ops
                     .create_folder(parsec_file_name.clone())
                     .await
                     .map_err(|err| match err {
@@ -284,6 +322,7 @@ impl FileSystemContext for ParsecFileSystemContext {
 
                 let opened_obj = OpenedObj::Folder {
                     parsec_file_name,
+                    id,
                     folder_reader: None,
                 };
                 let file_info = self.get_file_info_async(&opened_obj).await?;
@@ -299,15 +338,15 @@ impl FileSystemContext for ParsecFileSystemContext {
                     create: true,
                     create_new: true,
                 };
-                let fd = self
+                let (fd, id) = self
                     .ops
-                    .open_file(parsec_file_name.clone(), options)
+                    .open_file_and_get_id(parsec_file_name.clone(), options)
                     .await
                     .map_err(|err| match err {
                         WorkspaceOpenFileError::Offline => STATUS_HOST_UNREACHABLE,
                         WorkspaceOpenFileError::Stopped => STATUS_DEVICE_NOT_READY,
                         WorkspaceOpenFileError::EntryNotFound => STATUS_OBJECT_NAME_NOT_FOUND,
-                        WorkspaceOpenFileError::EntryNotAFile => STATUS_FILE_IS_A_DIRECTORY,
+                        WorkspaceOpenFileError::EntryNotAFile { .. } => STATUS_FILE_IS_A_DIRECTORY,
                         WorkspaceOpenFileError::ReadOnlyRealm => STATUS_MEDIA_WRITE_PROTECTED,
                         WorkspaceOpenFileError::EntryExistsInCreateNewMode { .. } => {
                             STATUS_OBJECT_NAME_COLLISION
@@ -321,6 +360,7 @@ impl FileSystemContext for ParsecFileSystemContext {
 
                 let opened_obj = OpenedObj::File {
                     parsec_file_name,
+                    id,
                     fd,
                 };
                 let file_info = self.get_file_info_async(&opened_obj).await?;
@@ -331,6 +371,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
+    const OPEN_DEFINED: bool = true;
     fn open(
         &self,
         file_name: &U16CStr,
@@ -380,16 +421,21 @@ impl FileSystemContext for ParsecFileSystemContext {
                 create: false,
                 create_new: false,
             };
-            let outcome = self.ops.open_file(parsec_file_name.clone(), options).await;
+            let outcome = self
+                .ops
+                .open_file_and_get_id(parsec_file_name.clone(), options)
+                .await;
 
             let opened_obj = match outcome {
-                Ok(fd) => Ok(OpenedObj::File {
+                Ok((fd, id)) => Ok(OpenedObj::File {
                     parsec_file_name,
+                    id,
                     fd,
                 }),
                 Err(err) => match err {
-                    WorkspaceOpenFileError::EntryNotAFile => Ok(OpenedObj::Folder {
+                    WorkspaceOpenFileError::EntryNotAFile { entry_id } => Ok(OpenedObj::Folder {
                         parsec_file_name,
+                        id: entry_id,
                         folder_reader: None,
                     }),
                     WorkspaceOpenFileError::Offline => Err(STATUS_HOST_UNREACHABLE),
@@ -412,7 +458,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Overwrite a file.
+    const OVERWRITE_EX_DEFINED: bool = true;
     fn overwrite_ex(
         &self,
         file_context: Self::FileContext,
@@ -447,7 +493,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Cleanup a file.
+    const CLEANUP_DEFINED: bool = true;
     fn cleanup(
         &self,
         file_context: Self::FileContext,
@@ -474,20 +520,34 @@ impl FileSystemContext for ParsecFileSystemContext {
                 // to delete file and folder here in order to make sure the file/folder
                 // is actually deleted by the time the API call returns.
                 if flags.is(CleanupFlags::DELETE) {
+                    // In Windows logic when we are here we have an exclusive handle on
+                    // the resource (i.e. the file/folder that have been opened), so
+                    // no concurrent modification can occur and hence we know precisely
+                    // what is the resource (file or folder with/without children, see
+                    // `can_delete` method).
+                    //
+                    // BUT ! In Parsec not all modifications go through the filesystem
+                    // (i.e. GUI and remote changes), so a concurrent modification may
+                    // break Windows's assumptions...
+                    //
+                    // For this reason the remove can fail here, in which case we can
+                    // just ignore it: the final situation is similar to what would
+                    // have occured if the removal had occured first, only for *then*
+                    // the concurrent change to arrive.
                     match &*fc {
                         OpenedObj::Folder { .. } => {
                             let _ = self.ops.remove_folder(parsec_file_name).await;
                         }
                         OpenedObj::File { .. } => {
                             let _ = self.ops.remove_file(parsec_file_name).await;
-                        } // OpenedObj::EntryInfo { .. } => (),
+                        }
                     }
                 }
             }
         })
     }
 
-    /// Close a file.
+    const CLOSE_DEFINED: bool = true;
     fn close(&self, file_context: Self::FileContext) {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!("[WinFSP] close(file_context: {:?})", fc);
@@ -501,7 +561,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         }
     }
 
-    /// Read a file.
+    const READ_DEFINED: bool = true;
     fn read(
         &self,
         file_context: Self::FileContext,
@@ -541,7 +601,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Write a file.
+    const WRITE_DEFINED: bool = true;
     fn write(
         &self,
         file_context: Self::FileContext,
@@ -551,9 +611,9 @@ impl FileSystemContext for ParsecFileSystemContext {
         let fc = file_context.lock().expect("Mutex is poisoned");
         // TODO: WriteMode is not Debug yet
         log::debug!(
-            "[WinFSP] write(file_context: {:?}, buffer: {:?}, mode: {:?})",
+            "[WinFSP] write(file_context: {:?}, buffer.len(): {}, mode: {:?})",
             fc,
-            buffer,
+            buffer.len(),
             mode,
         );
 
@@ -586,7 +646,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Flush a file or volume.
+    const FLUSH_DEFINED: bool = true;
     fn flush(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!("[WinFSP] flush(file_context: {:?})", fc);
@@ -609,6 +669,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
+    const GET_FILE_INFO_DEFINED: bool = true;
     fn get_file_info(&self, file_context: Self::FileContext) -> Result<FileInfo, NTSTATUS> {
         let fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!("[WinFSP] get_file_info(file_context: {:?})", fc);
@@ -617,20 +678,36 @@ impl FileSystemContext for ParsecFileSystemContext {
             .block_on(async move { self.get_file_info_async(&fc).await })
     }
 
-    /// Set file or directory basic information.
+    const SET_BASIC_INFO_DEFINED: bool = true;
     fn set_basic_info(
         &self,
-        _file_context: Self::FileContext,
-        _file_attributes: FileAttributes,
-        _creation_time: u64,
-        _last_access_time: u64,
-        _last_write_time: u64,
-        _change_time: u64,
+        file_context: Self::FileContext,
+        file_attributes: FileAttributes,
+        creation_time: u64,
+        last_access_time: u64,
+        last_write_time: u64,
+        change_time: u64,
     ) -> Result<FileInfo, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
+        let fc = file_context.lock().expect("Mutex is poisoned");
+        log::debug!(
+            "[WinFSP] set_basic_info(file_context: {:?}, file_attributes: {:?}, creation_time: {:?}, last_access_time: {:?}, last_write_time: {:?}, change_time: {:?})",
+            fc,
+            file_attributes,
+            creation_time,
+            last_access_time,
+            last_write_time,
+            change_time,
+        );
+
+        // Note this method actually does nothing !
+        // But if we don't define it, `explorer.exe` displays "Invalid MS-DOS function" errors
+        // when copying some directory (see https://github.com/Scille/parsec-cloud/issues/7640).
+
+        self.tokio_handle
+            .block_on(async move { self.get_file_info_async(&fc).await })
     }
 
-    /// Set file/allocation size.
+    const SET_FILE_SIZE_DEFINED: bool = true;
     fn set_file_size(
         &self,
         file_context: Self::FileContext,
@@ -671,82 +748,97 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Determine whether a file or directory can be deleted.
+    const CAN_DELETE_DEFINED: bool = true;
     fn can_delete(
         &self,
         file_context: Self::FileContext,
         file_name: &U16CStr,
     ) -> Result<(), NTSTATUS> {
-        let fc = file_context.lock().expect("Mutex is poisoned");
+        let mut fc = file_context.lock().expect("Mutex is poisoned");
         log::debug!(
             "[WinFSP] can_delete(file_context: {:?}, file_name: {:?})",
             fc,
             file_name
         );
 
-        self.tokio_handle.block_on(async move {
-            let parsec_file_name = os_path_to_parsec_path(file_name)?;
+        // Note Parsec doesn't provide any guarantee against concurrent modification.
+        // Hence this is implemented in "best-effort" mode and may lead to the
+        // removal of new changes (see the `cleanup` implementation for more info).
 
+        self.tokio_handle.block_on(async move {
             if !self.ops.get_current_name_and_self_role().1.can_write() {
                 return Err(STATUS_MEDIA_WRITE_PROTECTED);
             }
 
-            if parsec_file_name.is_root() {
-                // Cannot remove root mountpoint !
-                return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
-            }
+            let reader = match &mut *fc {
+                OpenedObj::File { .. } => return Ok(()),
 
-            let outcome = self.ops.open_folder_reader(&parsec_file_name).await;
-            match outcome {
-                Ok(reader) => {
-                    let mut index = 0;
-                    loop {
-                        let outcome =
-                            reader
-                                .stat_child(&self.ops, index)
-                                .await
-                                .map_err(|err| match err {
-                                    FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
-                                    FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
-                                    FolderReaderStatEntryError::NoRealmAccess
-                                    | FolderReaderStatEntryError::InvalidKeysBundle(_)
-                                    | FolderReaderStatEntryError::InvalidCertificate(_)
-                                    | FolderReaderStatEntryError::InvalidManifest(_)
-                                    | FolderReaderStatEntryError::Internal(_) => {
-                                        STATUS_ACCESS_DENIED
-                                    }
-                                })?;
-                        match outcome {
-                            FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
-                            FolderReaderStatNextOutcome::Entry { .. } => {
-                                break Err(STATUS_DIRECTORY_NOT_EMPTY)
+                OpenedObj::Folder {
+                    parsec_file_name,
+                    id,
+                    ..
+                } => {
+                    if parsec_file_name.is_root() {
+                        // Cannot remove root mountpoint !
+                        return Err(STATUS_RESOURCEMANAGER_READ_ONLY);
+                    }
+
+                    self.ops
+                        .open_folder_reader_by_id(*id)
+                        .await
+                        .map_err(|err| match err {
+                            // Concurrent modification may have changed the type of the entry since it has been opened.
+                            // In this case we shouldn't return ok since we know the opened object and no longer
+                            // corresponds to what Parsec contains, and hence we would remove the wrong thing !
+                            WorkspaceOpenFolderReaderError::EntryIsFile => {
+                                STATUS_OBJECT_NAME_NOT_FOUND
                             }
-                            // Current entry is invalid, just ignore it
-                            FolderReaderStatNextOutcome::InvalidChild => {
-                                index += 1;
-                                continue;
+
+                            WorkspaceOpenFolderReaderError::Offline => STATUS_HOST_UNREACHABLE,
+                            WorkspaceOpenFolderReaderError::Stopped => STATUS_DEVICE_NOT_READY,
+                            WorkspaceOpenFolderReaderError::EntryNotFound => {
+                                STATUS_OBJECT_NAME_NOT_FOUND
                             }
-                        }
+                            WorkspaceOpenFolderReaderError::NoRealmAccess
+                            | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
+                            | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
+                            | WorkspaceOpenFolderReaderError::InvalidManifest(_)
+                            | WorkspaceOpenFolderReaderError::Internal(_) => STATUS_ACCESS_DENIED,
+                        })?
+                }
+            };
+
+            let mut index = 0;
+            loop {
+                let outcome =
+                    reader
+                        .stat_child(&self.ops, index)
+                        .await
+                        .map_err(|err| match err {
+                            FolderReaderStatEntryError::Offline => STATUS_HOST_UNREACHABLE,
+                            FolderReaderStatEntryError::Stopped => STATUS_DEVICE_NOT_READY,
+                            FolderReaderStatEntryError::NoRealmAccess
+                            | FolderReaderStatEntryError::InvalidKeysBundle(_)
+                            | FolderReaderStatEntryError::InvalidCertificate(_)
+                            | FolderReaderStatEntryError::InvalidManifest(_)
+                            | FolderReaderStatEntryError::Internal(_) => STATUS_ACCESS_DENIED,
+                        })?;
+                match outcome {
+                    FolderReaderStatNextOutcome::NoMoreEntries => break Ok(()),
+                    FolderReaderStatNextOutcome::Entry { .. } => {
+                        break Err(STATUS_DIRECTORY_NOT_EMPTY)
+                    }
+                    // Current entry is invalid, just ignore it
+                    FolderReaderStatNextOutcome::InvalidChild => {
+                        index += 1;
+                        continue;
                     }
                 }
-                Err(err) => match err {
-                    WorkspaceOpenFolderReaderError::EntryIsFile => Ok(()),
-                    WorkspaceOpenFolderReaderError::Offline => Err(STATUS_HOST_UNREACHABLE),
-                    WorkspaceOpenFolderReaderError::Stopped => Err(STATUS_DEVICE_NOT_READY),
-                    WorkspaceOpenFolderReaderError::EntryNotFound => {
-                        Err(STATUS_OBJECT_NAME_NOT_FOUND)
-                    }
-                    WorkspaceOpenFolderReaderError::NoRealmAccess
-                    | WorkspaceOpenFolderReaderError::InvalidKeysBundle(_)
-                    | WorkspaceOpenFolderReaderError::InvalidCertificate(_)
-                    | WorkspaceOpenFolderReaderError::InvalidManifest(_)
-                    | WorkspaceOpenFolderReaderError::Internal(_) => Err(STATUS_ACCESS_DENIED),
-                },
             }
         })
     }
 
-    /// Renames a file or directory.
+    const RENAME_DEFINED: bool = true;
     fn rename(
         &self,
         file_context: Self::FileContext,
@@ -790,27 +882,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Get file or directory security descriptor.
-    fn get_security(
-        &self,
-        file_context: Self::FileContext,
-    ) -> Result<PSecurityDescriptor, NTSTATUS> {
-        let fc = file_context.lock().expect("Mutex is poisoned");
-        log::debug!("[WinFSP] get_security(file_context: {:?})", fc);
-
-        Ok(SECURITY_DESCRIPTOR.as_ptr())
-    }
-
-    /// Set file or directory security descriptor.
-    fn set_security(
-        &self,
-        _file_context: Self::FileContext,
-        _security_information: u32,
-        _modification_descriptor: PSecurityDescriptor,
-    ) -> Result<(), NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
+    const READ_DIRECTORY_DEFINED: bool = true;
     fn read_directory(
         &self,
         file_context: Self::FileContext,
@@ -825,14 +897,15 @@ impl FileSystemContext for ParsecFileSystemContext {
         );
 
         self.tokio_handle.block_on(async move {
-            let (dir_path, reader) = match &mut *fc {
+            let (is_root, reader) = match &mut *fc {
                 OpenedObj::Folder {
                     parsec_file_name,
+                    id,
                     folder_reader: folder_reader @ None,
                 } => {
                     let reader = self
                         .ops
-                        .open_folder_reader(parsec_file_name)
+                        .open_folder_reader_by_id(*id)
                         .await
                         .map_err(|err| match err {
                             // Concurrent modification may have changed the type of the entry since it has been opened
@@ -850,23 +923,26 @@ impl FileSystemContext for ParsecFileSystemContext {
                             | WorkspaceOpenFolderReaderError::Internal(_) => STATUS_ACCESS_DENIED,
                         })?;
                     *folder_reader = Some(reader);
-                    (parsec_file_name, folder_reader.as_ref().expect("set above"))
+                    (
+                        parsec_file_name.is_root(),
+                        folder_reader.as_ref().expect("set above"),
+                    )
                 }
 
                 OpenedObj::Folder {
                     folder_reader: Some(folder_reader),
                     parsec_file_name,
-                } => (parsec_file_name, &*folder_reader),
+                    ..
+                } => (parsec_file_name.is_root(), &*folder_reader),
 
                 OpenedObj::File { .. } => return Err(STATUS_NOT_A_DIRECTORY),
-                // OpenedObj::EntryInfo { .. } => Err(STATUS_NOT_A_DIRECTORY),
             };
 
             // NOTE: The "." and ".." directories should ONLY be included
             // if the queried directory is not root
             // (see https://github.com/winfsp/winfsp/blob/507c7944709e42b909c3f0c363d78b62c530ce7f/tst/memfs/memfs.cpp#L1901-L1920)
 
-            if !dir_path.is_root() {
+            if !is_root {
                 if marker.is_none() {
                     let directory_stat = reader.stat_folder();
 
@@ -967,47 +1043,7 @@ impl FileSystemContext for ParsecFileSystemContext {
         })
     }
 
-    /// Get reparse point.
-    fn get_reparse_point(
-        &self,
-        _file_context: Self::FileContext,
-        _file_name: &U16CStr,
-        _buffer: &mut [u8],
-    ) -> Result<usize, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Set reparse point.
-    fn set_reparse_point(
-        &self,
-        _file_context: Self::FileContext,
-        _file_name: &U16CStr,
-        _buffer: &mut [u8],
-    ) -> Result<(), NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Delete reparse point.
-    fn delete_reparse_point(
-        &self,
-        _file_context: Self::FileContext,
-        _file_name: &U16CStr,
-        _buffer: &mut [u8],
-    ) -> Result<(), NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Get named streams information.
-    fn get_stream_info(
-        &self,
-        _file_context: Self::FileContext,
-        _buffer: &mut [u8],
-    ) -> Result<usize, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Get directory information for a single file or directory within a parent
-    /// directory.
+    const GET_DIR_INFO_BY_NAME_DEFINED: bool = true;
     fn get_dir_info_by_name(
         &self,
         file_context: Self::FileContext,
@@ -1054,53 +1090,6 @@ impl FileSystemContext for ParsecFileSystemContext {
             Ok(parsec_entry_stat_to_winfsp_file_info(&stat))
         })
     }
-
-    /// Process control code.
-    fn control(
-        &self,
-        _file_context: Self::FileContext,
-        _control_code: u32,
-        _input_buffer: &[u8],
-        _output_buffer: &mut [u8],
-    ) -> Result<usize, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Set the file delete flag.
-    fn set_delete(
-        &self,
-        _file_context: Self::FileContext,
-        _file_name: &U16CStr,
-        _delete_file: bool,
-    ) -> Result<(), NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Get extended attributes.
-    fn get_ea(&self, _file_context: Self::FileContext, _buffer: &[u8]) -> Result<usize, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Set extended attributes.
-    fn set_ea(
-        &self,
-        _file_context: Self::FileContext,
-        _buffer: &[u8],
-    ) -> Result<FileInfo, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    /// Get reparse point given a file name.
-    fn get_reparse_point_by_name(
-        &self,
-        _file_name: &U16CStr,
-        _is_directory: bool,
-        _buffer: Option<&mut [u8]>,
-    ) -> Result<usize, NTSTATUS> {
-        Err(STATUS_NOT_IMPLEMENTED)
-    }
-
-    fn dispatcher_stopped(&self, _normally: bool) {}
 }
 
 fn os_path_to_parsec_path(path: &U16CStr) -> Result<FsPath, NTSTATUS> {
