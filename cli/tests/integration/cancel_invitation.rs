@@ -4,12 +4,12 @@ use libparsec::{
 };
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
+use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn cancel_invitation(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),

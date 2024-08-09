@@ -27,11 +27,17 @@ const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
 pub const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
 
+pub struct TestOrganization {
+    pub alice: Arc<LocalDevice>,
+    pub other_alice: Arc<LocalDevice>,
+    pub bob: Arc<LocalDevice>,
+}
+
 pub async fn initialize_test_organization(
     client_config: ClientConfig,
     addr: ParsecAddr,
     organization_id: OrganizationID,
-) -> anyhow::Result<[Arc<LocalDevice>; 3]> {
+) -> anyhow::Result<TestOrganization> {
     // Create organization
     let organization_addr =
         create_organization_req(&organization_id, &addr, DEFAULT_ADMINISTRATION_TOKEN).await?;
@@ -92,7 +98,11 @@ pub async fn initialize_test_organization(
     )
     .await?;
 
-    Ok([alice_device, other_alice_device, bob_device])
+    Ok(TestOrganization {
+        alice: alice_device,
+        other_alice: other_alice_device,
+        bob: bob_device,
+    })
 }
 
 async fn register_new_device(
@@ -164,6 +174,12 @@ async fn register_new_user(
         None,
         None,
     ));
+    log::trace!(
+        "New user: user_id={}, human_handle={}, device_id={}",
+        new_device.user_id,
+        new_device.human_handle,
+        new_device.device_id,
+    );
     let now = author.now();
 
     let (user_certificate, redacted_user_certificate) =
