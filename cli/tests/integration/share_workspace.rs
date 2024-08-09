@@ -1,5 +1,3 @@
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, HumanHandle, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -36,26 +34,20 @@ async fn share_workspace(tmp_path: TmpPath) {
         .unwrap()
         .id;
 
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "share-workspace",
-            "--device",
-            &alice.device_id.hex(),
-            "--workspace-id",
-            &wid.hex(),
-            "--user-id",
-            &bob_id.hex(),
-            "--role",
-            "contributor",
-        ])
-        .assert()
-        .stdout(predicates::str::contains("Workspace has been shared"));
+    crate::assert_cmd_success!(
+        "share-workspace",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace-id",
+        &wid.hex(),
+        "--user-id",
+        &bob_id.hex(),
+        "--role",
+        "contributor"
+    )
+    .stdout(predicates::str::contains("Workspace has been shared"));
 
     // TODO: Replace me with a call to list-workspaces from a new `Arc<Client>` initialized with bob's device ID
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args(["list-workspaces", "--device", &bob.device_id.hex()])
-        .assert()
+    crate::assert_cmd_success!("list-workspaces", "--device", &bob.device_id.hex())
         .stdout(predicates::str::contains("new-workspace: contributor"));
 }

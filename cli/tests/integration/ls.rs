@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, ClientConfig, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
@@ -45,18 +43,13 @@ async fn ls_files(tmp_path: TmpPath) {
         .unwrap();
 
     // List the files
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "ls",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-            "--workspace-id",
-            &wid.hex(),
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .success()
-        .stdout(predicates::str::contains("test.txt\n").and(predicates::str::contains("foo\n")));
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "ls",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace-id",
+        &wid.hex()
+    )
+    .stdout(predicates::str::contains("test.txt\n").and(predicates::str::contains("foo\n")));
 }

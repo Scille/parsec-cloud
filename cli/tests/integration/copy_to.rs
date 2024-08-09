@@ -1,7 +1,5 @@
 use std::sync::Arc;
 
-use assert_cmd::Command;
-
 use libparsec::{tmp_path, ClientConfig, TmpPath};
 
 use super::bootstrap_cli_test;
@@ -38,22 +36,17 @@ async fn copy_file(tmp_path: TmpPath) {
     std::fs::write(&file, "Hello, World!").unwrap();
 
     // Copy the file
-    Command::cargo_bin("parsec_cli")
-        .unwrap()
-        .args([
-            "copy-to",
-            "--device",
-            &alice.device_id.hex(),
-            "--password-stdin",
-            "--workspace-id",
-            &wid.hex(),
-            &file.to_string_lossy(),
-            "/test.txt",
-        ])
-        .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
-        .assert()
-        .success()
-        .stdout(predicates::str::is_empty());
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "copy-to",
+        "--device",
+        &alice.device_id.hex(),
+        "--workspace-id",
+        &wid.hex(),
+        &file.to_string_lossy(),
+        "/test.txt"
+    )
+    .stdout(predicates::str::is_empty());
 
     let workspace = client.start_workspace(wid).await.unwrap();
     let entries = workspace
