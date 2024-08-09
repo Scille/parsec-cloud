@@ -60,7 +60,7 @@ msTest('Switch pages', async ({ clientArea }) => {
   ];
 
   const title = clientArea.locator('.header-content').locator('.header-title');
-  await expect(clientArea).toHaveURL(/.+\/clientArea$/);
+  await expect(clientArea).toHaveURL(/.+\/clientArea\\?(?:.*)$/);
   await expect(title).toHaveText('Dashboard');
   await expect(clientArea.locator('.sidebar-header').locator('.card-header-title')).toBeVisible();
   const menuButtons = clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem');
@@ -87,9 +87,10 @@ msTest('Switch org', async ({ clientArea }) => {
   await expect(popover).toBeVisible();
   const orgs = popover.locator('.organization-list').getByRole('listitem');
   const orgNames = orgs.locator('.organization-name');
-  await expect(orgNames).toHaveText([org1, org2]);
+  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
   await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
   await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
+  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
   // Click on backdrop, nothing should change
   await clientArea.locator('.backdrop-hide').click();
   await expect(orgSwitchButton).toHaveText(org1);
@@ -97,9 +98,10 @@ msTest('Switch org', async ({ clientArea }) => {
   await expect(popover).toBeHidden();
   await orgSwitchButton.click();
   await expect(popover).toBeVisible();
-  await expect(orgNames).toHaveText([org1, org2]);
+  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
   await expect(orgs.nth(0).locator('.organization-icon-current')).toBeVisible();
   await expect(orgs.nth(1).locator('.organization-icon-current')).toBeHidden();
+  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
   // Click on second org, should switch
   await orgs.nth(1).click();
   await expect(popover).toBeHidden();
@@ -107,10 +109,11 @@ msTest('Switch org', async ({ clientArea }) => {
 
   await orgSwitchButton.click();
   await expect(popover).toBeVisible();
-  await expect(orgNames).toHaveText([org1, org2]);
+  await expect(orgNames).toHaveText([org1, org2, 'All organizations']);
   // Current one should be second one
   await expect(orgs.nth(0).locator('.organization-icon-current')).toBeHidden();
   await expect(orgs.nth(1).locator('.organization-icon-current')).toBeVisible();
+  await expect(orgs.nth(2).locator('.organization-icon-current')).toBeHidden();
 });
 
 msTest('Open settings modal', async ({ clientArea }) => {

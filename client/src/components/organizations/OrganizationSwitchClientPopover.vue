@@ -23,13 +23,13 @@
           <ion-label class="organization-name">
             <span
               class="subtitles-normal"
-              v-show="!isDefaultOrganization(org)"
+              v-if="!isDefaultOrganization(org)"
             >
               {{ org.name }}
             </span>
             <span
               class="subtitles-normal"
-              v-show="isDefaultOrganization(org)"
+              v-else
             >
               {{ $msTranslate('clientArea.sidebar.allOrganization') }}
             </span>

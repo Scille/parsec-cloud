@@ -9,7 +9,7 @@
       >
         <div
           class="card-header"
-          v-show="!isDefaultOrganization(organization)"
+          v-if="!isDefaultOrganization(organization)"
         >
           <ion-avatar class="card-header-avatar">
             <span>{{ organization.parsecId.substring(0, 2) }}</span>
@@ -20,7 +20,7 @@
         </div>
         <div
           class="card-header"
-          v-show="isDefaultOrganization(organization)"
+          v-else
         >
           <ion-card-title class="card-header-title title-h3">
             {{ $msTranslate('clientArea.sidebar.allOrganization') }}
