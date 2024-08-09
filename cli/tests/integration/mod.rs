@@ -21,17 +21,16 @@ mod version;
 use std::{
     io::BufRead,
     path::{Path, PathBuf},
-    sync::Arc,
 };
 
 use libparsec::{
-    ClientConfig, LocalDevice, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
+    ClientConfig, OrganizationID, ParsecAddr, TmpPath, PARSEC_BASE_CONFIG_DIR,
     PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR,
 };
 
 use crate::testenv_utils::{
-    initialize_test_organization, new_environment, parsec_addr_from_http_url, TestenvConfig,
-    TESTBED_SERVER_URL,
+    initialize_test_organization, new_environment, parsec_addr_from_http_url, TestOrganization,
+    TestenvConfig, TESTBED_SERVER_URL,
 };
 
 fn get_testenv_config() -> TestenvConfig {
@@ -62,7 +61,7 @@ async fn run_local_organization(
     tmp_dir: &Path,
     source_file: Option<PathBuf>,
     config: TestenvConfig,
-) -> anyhow::Result<(ParsecAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
+) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
     let url = new_environment(tmp_dir, source_file, config, false)
         .await?
         .unwrap();
@@ -86,7 +85,7 @@ fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
 
 async fn bootstrap_cli_test(
     tmp_path: &TmpPath,
-) -> anyhow::Result<(ParsecAddr, [Arc<LocalDevice>; 3], OrganizationID)> {
+) -> anyhow::Result<(ParsecAddr, TestOrganization, OrganizationID)> {
     let _ = env_logger::builder().is_test(true).try_init();
     let tmp_path_str = tmp_path.to_str().unwrap();
     let config = get_testenv_config();

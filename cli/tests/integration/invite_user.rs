@@ -8,12 +8,15 @@ use libparsec::{
 };
 
 use super::{bootstrap_cli_test, wait_for};
-use crate::{testenv_utils::DEFAULT_DEVICE_PASSWORD, utils::YELLOW};
+use crate::{
+    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
+    utils::YELLOW,
+};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
@@ -29,7 +32,7 @@ async fn invite_user(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn invite_user_dance(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
