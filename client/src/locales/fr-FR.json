@@ -1347,22 +1347,53 @@
         },
         "paymentMethodsPage": {
             "title": "Votre moyen de paiement",
-            "description": "Le paiement s’effectue automatiquement par votre carte bancaire.",
-            "addCard": "Ajouter",
-            "addPaymentMethodFailed": "Impossible d'enregistrer cette carte.",
-            "addPaymentMethodSuccessSetDefaultFailed": "La carte a été ajoutée avec succès mais n'a pas pu être définie comme moyen de paiement par défaut.",
-            "setDefaultPaymentMethodFailed": "Impossible d'utiliser cette carte comme votre moyen de paiement par défaut.",
-            "addPaymentMethodTitle": "Ajouter une carte bancaire",
-            "addPaymentMethodConfirm": "Ajouter cette carte",
+            "description": "Le paiement s'effectue automatiquement par votre carte bancaire.",
             "useAsDefault": "Définir comme moyen de paiement actif",
-            "activeMethodLabel": "Active",
+            "activeMethodLabel": "active",
+            "activeDefault": "Carte utilisée par défaut",
             "retrieveFailed": "Impossible de récupérer les informations de paiement.",
-            "addPaymentMethodSuccess": "La carte a été ajoutée avec succès.",
+            "savedCard": "Cartes enregistrées",
+            "setDefault": "Définir comme défaut",
+            "delete": "Supprimer",
+            "addPaymentMethod": {
+                "success": "La carte a été enregistrée.",
+                "failed": "Impossible d'enregistrer cette carte.",
+                "successButSetDefaultFailed": "La carte a été ajoutée avec succès mais n'a pas pu être définie comme moyen de paiement par défaut.",
+                "addCard": "Ajouter une nouvelle carte",
+                "confirm": "Ajouter cette carte"
+            },
             "stopSubscription": {
                 "title": "Vous souhaitez arrêter votre abonnement ?",
                 "description": "L'organisation deviendra indisponible pour tous les utilisateurs.",
-                "button": "Stopper mon abonnement"
-            }
+                "button": "Stopper mon abonnement",
+                "questionTitle": "Stopper l'abonnement",
+                "questionMessage": "Souhaitez-vous stopper votre abonnement ?",
+                "failed": "Impossible de suspendre l'abonnement.",
+                "success": "L'abonnement a éte suspendu.",
+                "confirm": "Suspendre",
+                "cancel": "Conserver mon abonnement"
+            },
+            "restartSubscription": {
+                "title": "Vous souhaitez reprendre votre abonnement ?",
+                "description": "Votre organisation sera à nouveau disponible.",
+                "button": "Reprendre mon abonnement",
+                "questionTitle": "Reprendre l'abonnement",
+                "questionMessage": "Souhaitez-vous reprendre votre abonnement ?",
+                "failed": "Impossible de reprendre l'abonnement.",
+                "success": "L'abonnement a redémarré.",
+                "confirm": "Reprendre mon abonnement",
+                "cancel": "Rester désabonné"
+            },
+            "deletePaymentMethod": {
+                "questionTitle": "Supprimer la méthode de paiement",
+                "questionMessage": "Souhaitez-vous supprimer cette méthode de paiement ?",
+                "success": "Cette carte a été supprimée.",
+                "failed": "Impossible de supprimer cette carte.",
+                "confirm": "Supprimer la carte",
+                "cancel": "Conserver la carte"
+            },
+            "setPaymentMethodDefaultSuccess": "Cette carte est maintenant votre méthode de paiement par défaut.",
+            "setPaymentMethodDefaultFailed": "Impossible de sélectionner cette carte comme méthode de paiement par défaut."
         },
         "dashboard": {
             "summary": {

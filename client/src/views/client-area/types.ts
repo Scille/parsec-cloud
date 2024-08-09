@@ -24,6 +24,7 @@ export const DefaultBmsOrganization: BmsOrganization = {
   parsecId: '',
   name: '',
   bootstrapLink: '',
+  isSubscribed: () => false,
 };
 
 export function isDefaultOrganization(organization: BmsOrganization): boolean {

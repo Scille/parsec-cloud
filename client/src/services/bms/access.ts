@@ -279,6 +279,28 @@ class BmsAccess {
     });
   }
 
+  async unsubscribeOrganization(organizationId: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.unsubscribeOrganization(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      organizationId: organizationId,
+    });
+  }
+
+  async subscribeOrganization(organizationId: string): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    return await BmsApi.subscribeOrganization(this.tokens.access, {
+      userId: this.customerInformation.id,
+      clientId: this.customerInformation.clientId,
+      organizationId: organizationId,
+    });
+  }
+
   async rememberCredentials(): Promise<void> {
     this.storeCredentials = true;
     await this.storeAccess();
