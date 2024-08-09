@@ -23,7 +23,7 @@
           v-show="isDefaultOrganization(organization)"
         >
           <ion-card-title class="card-header-title title-h3">
-            {{ 'All Organizations' }}
+            {{ $msTranslate('clientArea.sidebar.allOrganization') }}
           </ion-card-title>
         </div>
 

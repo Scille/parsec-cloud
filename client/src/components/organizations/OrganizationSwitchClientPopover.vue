@@ -31,7 +31,7 @@
               class="subtitles-normal"
               v-show="isDefaultOrganization(org)"
             >
-              All organizations
+              {{ $msTranslate('clientArea.sidebar.allOrganization') }}
             </span>
           </ion-label>
           <ion-icon
