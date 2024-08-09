@@ -7,7 +7,10 @@
         class="organization-card-header"
         @click="openOrganizationChoice($event)"
       >
-        <div class="card-header">
+        <div
+          class="card-header"
+          v-show="!isDefaultOrganization(organization)"
+        >
           <ion-avatar class="card-header-avatar">
             <span>{{ organization.parsecId.substring(0, 2) }}</span>
           </ion-avatar>
@@ -15,14 +18,15 @@
             {{ organization.parsecId }}
           </ion-card-title>
         </div>
-        <!-- <div
+        <div
           class="card-header"
-          v-else
+          v-show="isDefaultOrganization(organization)"
         >
           <ion-card-title class="card-header-title title-h3">
-            {{ $msTranslate('clientArea.sidebar.allOrganization') }}
+            {{ 'All Organizations' }}
           </ion-card-title>
-        </div> -->
+        </div>
+
         <div class="card-header-icon">
           <ms-image :image="ChevronExpand" />
         </div>
@@ -225,7 +229,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
-import { ClientAreaPages, BillingSystem } from '@/views/client-area/types';
+import { ClientAreaPages, BillingSystem, isDefaultOrganization } from '@/views/client-area/types';
 
 const props = defineProps<{
   organization: BmsOrganization;

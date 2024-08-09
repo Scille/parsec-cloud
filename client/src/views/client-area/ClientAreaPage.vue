@@ -87,7 +87,7 @@ import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
-import { ClientAreaPages } from '@/views/client-area/types';
+import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
 import ContractsPage from '@/views/client-area/contracts/ContractsPage.vue';
 import DashboardPage from '@/views/client-area/dashboard/DashboardPage.vue';
@@ -107,7 +107,7 @@ const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
 const organizations = ref<Array<BmsOrganization>>([]);
 const divider = ref();
 const currentPage = ref<ClientAreaPages>(ClientAreaPages.Dashboard);
-const currentOrganization = ref<BmsOrganization | undefined>(undefined);
+const currentOrganization = ref<BmsOrganization>(DefaultBmsOrganization);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const loggedIn = ref(false);
 const refresh = ref(0);
@@ -138,10 +138,10 @@ onMounted(async () => {
     organizations.value = response.data.organizations;
     if (organizations.value.length > 0) {
       if (query.organization) {
-        currentOrganization.value = organizations.value.find((org) => org.bmsId === query.organization);
-      }
-      if (!currentOrganization.value) {
-        currentOrganization.value = organizations.value[0];
+        const org = organizations.value.find((org) => org.bmsId === query.organization);
+        if (org) {
+          currentOrganization.value = org;
+        }
       }
     }
     if (query.page) {
@@ -168,7 +168,13 @@ onUnmounted(() => {
 
 async function switchPage(page: ClientAreaPages): Promise<void> {
   currentPage.value = page;
-  await navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: currentOrganization.value?.bmsId, page: page } });
+  await navigateTo(Routes.ClientArea, {
+    skipHandle: true,
+    query: {
+      organization: isDefaultOrganization(currentOrganization.value) ? undefined : currentOrganization.value.bmsId,
+      page: currentPage.value,
+    },
+  });
 }
 
 function onMove(detail: GestureDetail): void {
@@ -188,7 +194,10 @@ function onEnd(): void {
 }
 
 async function onOrganizationSelected(organization: BmsOrganization): Promise<void> {
-  await navigateTo(Routes.ClientArea, { skipHandle: true, query: { organization: organization.bmsId } });
+  await navigateTo(Routes.ClientArea, {
+    skipHandle: true,
+    query: { organization: isDefaultOrganization(organization) ? undefined : organization.bmsId, page: currentPage.value },
+  });
   currentOrganization.value = organization;
   refresh.value += 1;
 }

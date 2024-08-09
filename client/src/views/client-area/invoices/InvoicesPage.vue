@@ -180,6 +180,7 @@ import { BmsAccessInstance, BmsInvoice, BmsOrganization, DataType } from '@/serv
 import TimeFilterPopover from '@/components/client-area/TimeFilterPopover.vue';
 import { ref, onMounted } from 'vue';
 import { Info } from 'luxon';
+import { isDefaultOrganization } from '@/views/client-area/types';
 import InvoicesContainer from '@/components/client-area/InvoicesContainer.vue';
 import { MsOptions, Translatable, I18n } from 'megashark-lib';
 
@@ -252,7 +253,7 @@ onMounted(async () => {
   const response = await BmsAccessInstance.get().getInvoices();
   if (!response.isError && response.data && response.data.type === DataType.Invoices) {
     invoices.value = response.data.invoices
-      .filter((invoice) => invoice.organizationId === props.organization.parsecId)
+      .filter((invoice) => isDefaultOrganization(props.organization) || invoice.organizationId === props.organization.parsecId)
       .sort((invoice1, invoice2) => {
         return invoice2.start.diff(invoice1.start).toMillis();
       });

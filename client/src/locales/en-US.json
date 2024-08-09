@@ -1316,7 +1316,8 @@
             "ofWhich": "of which",
             "data": "data",
             "metadata": "metadata",
-            "error": "Failed to retrieve organization data."
+            "error": "Failed to retrieve organization data.",
+            "noStats": "No statistics to display."
         },
         "invoices": {
             "title": "Preview of your invoices",
