@@ -10,8 +10,12 @@ msTest('Log into the customer area', async ({ home }) => {
   await MockBms.mockLogin(home);
   await MockBms.mockUserRoute(home);
   await MockBms.mockListOrganizations(home);
+  await MockBms.mockOrganizationStats(home);
+  await MockBms.mockOrganizationStatus(home);
+  await MockBms.mockBillingDetails(home);
+  await MockBms.mockGetInvoices(home);
 
-  const button = home.locator('.topbar-buttons').locator('ion-button').nth(2);
+  const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
@@ -33,8 +37,6 @@ msTest('Log into the customer area', async ({ home }) => {
 
 msTest('Log into the customer area failed', async ({ home }) => {
   await MockBms.mockLogin(home, { POST: { errors: { status: 401, attribute: 'email' } } });
-  await MockBms.mockUserRoute(home);
-  await MockBms.mockListOrganizations(home);
 
   const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
   await expect(button).toHaveText('Customer area');

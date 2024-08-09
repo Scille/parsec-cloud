@@ -340,6 +340,7 @@ async function onLoginClicked(): Promise<void> {
         gap: 0.5rem;
         color: var(--parsec-color-light-secondary-text);
         cursor: pointer;
+        user-select: none;
       }
     }
 
