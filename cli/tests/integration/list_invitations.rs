@@ -11,17 +11,8 @@ use crate::{
 
 #[rstest::rstest]
 #[tokio::test]
-// TODO: Split me into two tests
 async fn list_invitations(tmp_path: TmpPath) {
     let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
-
-    crate::assert_cmd_success!(
-        with_password = DEFAULT_DEVICE_PASSWORD,
-        "list-invitations",
-        "--device",
-        &alice.device_id.hex()
-    )
-    .stdout(predicates::str::contains("No invitation."));
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -59,4 +50,18 @@ async fn list_invitations(tmp_path: TmpPath) {
         "{}\t{YELLOW}idle{RESET}\tdevice",
         token.hex()
     )));
+}
+
+#[rstest::rstest]
+#[tokio::test]
+async fn no_invitations(tmp_path: TmpPath) {
+    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
+    crate::assert_cmd_success!(
+        with_password = DEFAULT_DEVICE_PASSWORD,
+        "list-invitations",
+        "--device",
+        &alice.device_id.hex()
+    )
+    .stdout(predicates::str::contains("No invitation."));
 }
