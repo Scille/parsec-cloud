@@ -3,14 +3,14 @@ use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
 use crate::{
-    testenv_utils::DEFAULT_DEVICE_PASSWORD,
+    testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::{GREEN, RESET},
 };
 
 #[rstest::rstest]
 #[tokio::test]
 async fn list_users(tmp_path: TmpPath) {
-    let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+    let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
