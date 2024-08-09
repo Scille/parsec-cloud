@@ -1,29 +1,15 @@
-use std::sync::Arc;
-
-use libparsec::{tmp_path, ClientConfig, TmpPath};
+use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
 use super::bootstrap_cli_test;
-use crate::testenv_utils::DEFAULT_DEVICE_PASSWORD;
+use crate::{testenv_utils::DEFAULT_DEVICE_PASSWORD, utils::start_client};
 
 #[rstest::rstest]
 #[tokio::test]
 async fn ls_files(tmp_path: TmpPath) {
     let (_, [alice, ..], _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let client = libparsec::internal::Client::start(
-        Arc::new(
-            ClientConfig {
-                with_monitors: false,
-                ..Default::default()
-            }
-            .into(),
-        ),
-        libparsec::internal::EventBus::default(),
-        alice.clone(),
-    )
-    .await
-    .unwrap();
+    let client = start_client(alice.clone()).await.unwrap();
 
     // Create the workspace used to copy the file to
     let wid = client
