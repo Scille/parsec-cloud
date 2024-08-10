@@ -23,6 +23,7 @@
           :organization="currentOrganization"
           @page-selected="switchPage"
           @organization-selected="onOrganizationSelected"
+          :key="refresh"
         />
       </ion-menu>
 

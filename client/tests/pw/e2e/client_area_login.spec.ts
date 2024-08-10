@@ -124,3 +124,31 @@ msTest('Open settings modal', async ({ clientArea }) => {
   await expect(modal).toBeVisible();
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('Settings');
 });
+
+for (const frozen of [false, true]) {
+  msTest(`Check org state ${frozen ? 'frozen' : 'active'}`, async ({ home }) => {
+    await MockBms.mockLogin(home);
+    await MockBms.mockUserRoute(home);
+    await MockBms.mockListOrganizations(home);
+    await MockBms.mockOrganizationStats(home);
+    await MockBms.mockBillingDetails(home);
+    await MockBms.mockGetInvoices(home);
+    await MockBms.mockOrganizationStatus(home, { isFrozen: frozen });
+
+    const button = home.locator('.topbar-buttons').locator('#trigger-customer-area-button');
+    await button.click();
+    await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
+    await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
+    await home.locator('.saas-login-button__item').click();
+    const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
+    await expect(orgSwitchButton).toHaveText('All organizations');
+    await orgSwitchButton.click();
+    const popover = home.locator('.popover-switch');
+    const orgs = popover.locator('.organization-list').getByRole('listitem');
+    await orgs.nth(0).click();
+    await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+
+    const orgState = home.locator('.sidebar').locator('.sidebar-header').locator('.organization-card-state');
+    await expect(orgState).toHaveText(frozen ? 'State: Frozen' : 'State: Active');
+  });
+}

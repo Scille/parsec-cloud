@@ -11,7 +11,7 @@ import { DateTime } from 'luxon';
 
 async function mockRoute(
   page: Page,
-  url: string,
+  url: string | RegExp,
   options: MockRouteOptions | undefined,
   handler: (route: Route) => Promise<void>,
 ): Promise<void> {
@@ -239,7 +239,7 @@ async function mockOrganizationStats(page: Page, overload: MockOrganizationStats
   await mockRoute(
     page,
     // eslint-disable-next-line max-len
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/${DEFAULT_ORGANIZATION_INFORMATION.bmsId}/stats`,
+    `*/**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/*/stats`,
     options,
     async (route) => {
       await route.fulfill({
@@ -280,7 +280,7 @@ async function mockOrganizationStatus(
 ): Promise<void> {
   await mockRoute(
     page,
-    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/status`,
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/*/status`,
     options,
     async (route) => {
       await route.fulfill({
