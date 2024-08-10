@@ -251,8 +251,12 @@ async function goToPageClicked(page: ClientAreaPages): Promise<void> {
 onMounted(async () => {
   if (isDefaultOrganization(props.organization)) {
     status.value = null;
+  } else {
+    const response = await BmsAccessInstance.get().getOrganizationStatus(props.organization.bmsId);
+    if (!response.isError && response.data) {
+      status.value = response.data as OrganizationStatusResultData;
+    }
   }
-  status.value = (await BmsAccessInstance.get().getOrganizationStatus(props.organization.bmsId)).data as OrganizationStatusResultData;
 });
 
 async function openOrganizationChoice(event: Event): Promise<void> {
@@ -276,9 +280,9 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
 async function goToHome(): Promise<void> {
   if (isDefaultOrganization(props.organization)) {
-    await navigateTo(Routes.Home);
+    await navigateTo(Routes.Home, { skipHandle: true });
   } else {
-    await navigateTo(Routes.Home, { query: { bmsOrganizationId: props.organization.parsecId } });
+    await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.organization.parsecId } });
   }
 }
 </script>
