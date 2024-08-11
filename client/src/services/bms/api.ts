@@ -9,6 +9,8 @@ import {
   CreateOrganizationQueryData,
   DataType,
   DeletePaymentMethodQueryData,
+  GetCustomOrderDetailsQueryData,
+  GetCustomOrderStatusQueryData,
   InvoicesQueryData,
   ListOrganizationsQueryData,
   LoginQueryData,
@@ -463,6 +465,46 @@ async function updateBillingDetails(token: AuthenticationToken, query: UpdateBil
   });
 }
 
+async function getCustomOrderStatus(token: AuthenticationToken, query: GetCustomOrderStatusQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_status`,
+      {
+        // eslint-disable-next-line camelcase
+        organization_ids: query.organizationIds,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function getCustomOrderDetails(token: AuthenticationToken, query: GetCustomOrderDetailsQueryData): Promise<BmsResponse> {
+  return wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post(
+      `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_details`,
+      {
+        // eslint-disable-next-line camelcase
+        organization_ids: query.organizationIds,
+      },
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      },
+    );
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
 async function refreshToken(refreshToken: AuthenticationToken): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
@@ -503,4 +545,6 @@ export const BmsApi = {
   deletePaymentMethod,
   updateAuthentication,
   updateBillingDetails,
+  getCustomOrderStatus,
+  getCustomOrderDetails,
 };

@@ -264,6 +264,14 @@ interface UpdateBillingDetailsQueryData extends _ClientQueryData {
   address: BmsAddress;
 }
 
+interface GetCustomOrderStatusQueryData extends _ClientQueryData {
+  organizationIds: Array<string>;
+}
+
+interface GetCustomOrderDetailsQueryData extends _ClientQueryData {
+  organizationIds: Array<string>;
+}
+
 export {
   AddPaymentMethodQueryData,
   AuthenticationToken,
@@ -279,6 +287,8 @@ export {
   CreateOrganizationQueryData,
   DataType,
   DeletePaymentMethodQueryData,
+  GetCustomOrderDetailsQueryData,
+  GetCustomOrderStatusQueryData,
   InvoicesQueryData,
   ListOrganizationsQueryData,
   ListOrganizationsResultData,
