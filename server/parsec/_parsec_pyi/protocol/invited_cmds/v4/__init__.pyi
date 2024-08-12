@@ -11,6 +11,7 @@ from . import (
     invite_3a_claimer_signify_trust,
     invite_3b_claimer_wait_peer_trust,
     invite_4_claimer_communicate,
+    invite_claimer_start_greeting_attempt,
     invite_info,
     ping,
 )
@@ -26,6 +27,7 @@ class AnyCmdReq:
         | invite_3a_claimer_signify_trust.Req
         | invite_3b_claimer_wait_peer_trust.Req
         | invite_4_claimer_communicate.Req
+        | invite_claimer_start_greeting_attempt.Req
         | invite_info.Req
         | ping.Req
     ): ...
@@ -38,6 +40,7 @@ __all__ = [
     "invite_3a_claimer_signify_trust",
     "invite_3b_claimer_wait_peer_trust",
     "invite_4_claimer_communicate",
+    "invite_claimer_start_greeting_attempt",
     "invite_info",
     "ping",
 ]
