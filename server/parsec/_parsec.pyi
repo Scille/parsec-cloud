@@ -61,6 +61,7 @@ from parsec._parsec_pyi.ids import (
     DeviceID,
     DeviceLabel,
     EnrollmentID,
+    GreetingAttemptID,
     HumanHandle,
     InvitationToken,
     OrganizationID,
@@ -151,6 +152,7 @@ __all__ = [
     "BootstrapToken",
     "InvitationToken",
     "ShamirRevealToken",
+    "GreetingAttemptID",
     # Addrs
     "ParsecAddr",
     "ParsecActionAddr",
