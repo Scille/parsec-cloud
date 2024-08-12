@@ -294,7 +294,6 @@ async function onLoginClicked(): Promise<void> {
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
-      border-radius: var(--parsec-radius-6);
 
       &__label {
         margin: 0;
@@ -357,7 +356,6 @@ async function onLoginClicked(): Promise<void> {
       .skeleton-login-button {
         width: 100%;
         height: 2.75rem;
-        border-radius: var(--parsec-radius-6);
       }
     }
   }

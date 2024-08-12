@@ -412,7 +412,6 @@ function removeSelectedMonth(month: number): void {
   flex-direction: column;
   padding: 0.5rem;
   margin-top: 0.5rem;
-  border-radius: var(--parsec-radius-12);
   background: var(--parsec-color-light-secondary-premiere);
   --max-width-date: 12rem;
   --max-width-number: 12rem;
@@ -423,7 +422,6 @@ function removeSelectedMonth(month: number): void {
   [class^='invoices-'] {
     height: 1rem;
     width: 100%;
-    border-radius: var(--parsec-radius-8);
   }
 
   .invoices-date {

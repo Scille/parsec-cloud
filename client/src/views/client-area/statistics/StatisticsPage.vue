@@ -238,7 +238,126 @@
       </div>
     </template>
     <template v-else-if="querying">
-      <ion-skeleton-text :animated="true" />
+      <!-- active users -->
+      <div class="users active skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="users-cards-list">
+          <ion-card
+            class="users-cards-list-item"
+            v-for="index in 3"
+            :key="index"
+          >
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-number"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- revoked users -->
+      <div class="users revoked skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="users-cards-list">
+          <ion-card
+            class="users-cards-list-item"
+            v-for="index in 3"
+            :key="index"
+          >
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-number"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- storage -->
+      <div class="storage skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="storage-data">
+          <div class="storage-data-global">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-loading-number"
+            />
+            <div class="storage-data-global-info">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </div>
+          <div class="storage-data-consumption">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-loading-text"
+            />
+            <div class="storage-data-consumption-content">
+              <div class="consumption-item">
+                <div
+                  id="firstBar"
+                  class="consumption"
+                >
+                  <div class="consumption-number">
+                    <ion-skeleton-text
+                      :animated="true"
+                      class="skeleton-loading-text"
+                    />
+                    <ion-skeleton-text
+                      :animated="true"
+                      class="skeleton-loading-text"
+                    />
+                  </div>
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-loading-text"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </template>
     <template v-else-if="!querying && !stats && !error">
       {{ $msTranslate('clientArea.statistics.noStats') }}
@@ -578,6 +697,29 @@ onMounted(async () => {
     .consumption__bar {
       --progress-background: var(--parsec-color-light-primary-500);
       --buffer-background: var(--parsec-color-light-primary-100);
+    }
+  }
+}
+
+.skeleton {
+  &-loading-number {
+    width: 6rem;
+    height: 1.5rem;
+  }
+
+  &-loading-title {
+    width: 8rem;
+    height: 1rem;
+  }
+
+  .storage-data-consumption::before {
+    content: none;
+  }
+
+  .consumption-number {
+    .skeleton-loading-text {
+      width: 2rem;
+      height: 1rem;
     }
   }
 }
