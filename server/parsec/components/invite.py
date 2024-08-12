@@ -1233,3 +1233,11 @@ class BaseInviteComponent:
         req: authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Req,
     ) -> authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep:
         raise NotImplementedError
+
+    @api
+    async def api_claimer_greeter_cancel_greeting_attempt(
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Req,
+    ) -> invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Rep:
+        raise NotImplementedError

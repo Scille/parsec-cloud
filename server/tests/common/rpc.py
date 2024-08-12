@@ -487,6 +487,15 @@ class BaseInvitedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.invite_4_claimer_communicate.Rep.load(raw_rep)
 
+    async def invite_claimer_cancel_greeting_attempt(
+        self, greeting_attempt: GreetingAttemptID, reason: CancelledGreetingAttemptReason
+    ) -> invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Rep:
+        req = invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Req(
+            greeting_attempt=greeting_attempt, reason=reason
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Rep.load(raw_rep)
+
     async def invite_claimer_start_greeting_attempt(
         self, token: InvitationToken, greeter: UserID
     ) -> invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep:
