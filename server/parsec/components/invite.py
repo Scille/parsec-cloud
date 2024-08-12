@@ -1206,3 +1206,14 @@ class BaseInviteComponent:
                 ) as unexpected
             ):
                 assert False, unexpected
+
+    # New invite transport API
+    # TODO: Remove the old API once the new one is fully functional
+
+    @api
+    async def api_invite_greeter_start_greeting_attempt(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req,
+    ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
+        raise NotImplementedError
