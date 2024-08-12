@@ -475,7 +475,6 @@ onMounted(async () => {
 
         [class^='invoices-'] {
           height: 1rem;
-          border-radius: var(--parsec-radius-8);
         }
 
         .invoices-date {

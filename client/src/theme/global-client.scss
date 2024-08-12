@@ -87,3 +87,7 @@ ion-item {
     }
   }
 }
+
+ion-skeleton-text {
+  border-radius: var(--parsec-radius-8);
+}
