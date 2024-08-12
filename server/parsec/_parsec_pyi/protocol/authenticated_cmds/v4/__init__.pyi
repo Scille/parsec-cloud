@@ -19,6 +19,7 @@ from . import (
     invite_cancel,
     invite_greeter_cancel_greeting_attempt,
     invite_greeter_start_greeting_attempt,
+    invite_greeter_step,
     invite_list,
     invite_new_device,
     invite_new_user,
@@ -62,6 +63,7 @@ class AnyCmdReq:
         | invite_cancel.Req
         | invite_greeter_cancel_greeting_attempt.Req
         | invite_greeter_start_greeting_attempt.Req
+        | invite_greeter_step.Req
         | invite_list.Req
         | invite_new_device.Req
         | invite_new_user.Req
@@ -102,6 +104,7 @@ __all__ = [
     "invite_cancel",
     "invite_greeter_cancel_greeting_attempt",
     "invite_greeter_start_greeting_attempt",
+    "invite_greeter_step",
     "invite_list",
     "invite_new_device",
     "invite_new_user",

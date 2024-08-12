@@ -205,6 +205,17 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep.load(raw_rep)
 
+    async def invite_greeter_step(
+        self,
+        greeting_attempt: GreetingAttemptID,
+        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
+    ) -> authenticated_cmds.latest.invite_greeter_step.Rep:
+        req = authenticated_cmds.latest.invite_greeter_step.Req(
+            greeting_attempt=greeting_attempt, greeter_step=greeter_step
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_greeter_step.Rep.load(raw_rep)
+
     async def invite_list(
         self,
     ) -> authenticated_cmds.latest.invite_list.Rep:
