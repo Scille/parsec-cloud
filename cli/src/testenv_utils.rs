@@ -31,6 +31,7 @@ pub struct TestOrganization {
     pub alice: Arc<LocalDevice>,
     pub other_alice: Arc<LocalDevice>,
     pub bob: Arc<LocalDevice>,
+    pub toto: Arc<LocalDevice>,
 }
 
 pub async fn initialize_test_organization(
@@ -88,7 +89,7 @@ pub async fn initialize_test_organization(
     .await?;
 
     // Invite Toto in organization
-    register_new_user(
+    let toto_device = register_new_user(
         &client_config,
         &cmds,
         alice_device.clone(),
@@ -102,6 +103,7 @@ pub async fn initialize_test_organization(
         alice: alice_device,
         other_alice: other_alice_device,
         bob: bob_device,
+        toto: toto_device,
     })
 }
 

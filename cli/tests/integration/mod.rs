@@ -2,6 +2,7 @@ mod bootstrap_organization;
 mod cancel_invitation;
 mod create_organization;
 mod create_workspace;
+mod device_option;
 mod export_recovery_device;
 mod import_recovery_device;
 mod invite_device;
@@ -98,19 +99,40 @@ async fn bootstrap_cli_test(
 #[macro_export]
 macro_rules! assert_cmd_success {
     (with_password=$pass:expr, $($cmd:expr),+) => {
-        $crate::assert_cmd_success!(__internal__ $($cmd),+ , "--password-stdin")
-            .write_stdin(format!("{password}\n", password = $pass))
+        $crate::assert_cmd!(with_password=$pass, $($cmd),+)
             .assert()
             .success()
     };
-    (__internal__ $($cmd:expr),+) => {
+    ($($cmd:expr),+) => {
+        $crate::assert_cmd!($($cmd),+)
+            .assert()
+            .success()
+    }
+}
+
+#[macro_export]
+macro_rules! assert_cmd {
+    (with_password=$pass:expr, $($cmd:expr),+) => {
+        $crate::assert_cmd!($($cmd),+ , "--password-stdin")
+            .write_stdin(format!("{password}\n", password = $pass))
+    };
+    ($($cmd:expr),+) => {
         assert_cmd::Command::cargo_bin("parsec_cli")
             .unwrap()
             .args([$($cmd),+])
     };
-    ($($cmd:expr),+) => {
-        $crate::assert_cmd_success!(__internal__ $($cmd),+)
+}
+
+#[macro_export]
+macro_rules! assert_cmd_failure {
+    (with_password=$pass:expr, $($cmd:expr),+) => {
+        $crate::assert_cmd!(with_password=$pass, $($cmd),+)
             .assert()
-            .success()
+            .failure()
+    };
+    ($($cmd:expr),+) => {
+        $crate::assert_cmd!($($cmd),+)
+            .assert()
+            .failure()
     }
 }
