@@ -69,10 +69,8 @@ async fn run_local_organization(
 
 fn wait_for(mut reader: impl BufRead, buf: &mut String, text: &str) {
     buf.clear();
-    while let Ok(_) = reader.read_line(buf) {
-        if buf.is_empty() {
-            break;
-        } else if buf.contains(text) {
+    while reader.read_line(buf).is_ok() {
+        if buf.is_empty() || buf.contains(text) {
             break;
         }
         buf.clear();
@@ -100,7 +98,7 @@ async fn list_devices(tmp_path: TmpPath) {
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let path = tmp_path.join("config/parsec3/libparsec");
     let path_str = path.to_string_lossy();
@@ -123,14 +121,14 @@ async fn create_organization(tmp_path: TmpPath) {
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
             "create-organization",
             "--organization-id",
-            &unique_org_id().to_string(),
+            unique_org_id().as_ref(),
             "--addr",
             &std::env::var(TESTBED_SERVER_URL).unwrap(),
             "--token",
@@ -149,7 +147,7 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
     let (url, _, _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let organization_id = unique_org_id();
     let addr = std::env::var(TESTBED_SERVER_URL).unwrap().parse().unwrap();
@@ -188,7 +186,7 @@ async fn invite_device(tmp_path: TmpPath) {
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -212,7 +210,7 @@ async fn invite_user(tmp_path: TmpPath) {
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -239,7 +237,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -274,7 +272,7 @@ async fn cancel_invitation(tmp_path: TmpPath) {
             "--device",
             &alice.device_id.hex(),
             "--token",
-            &format!("{}", token.hex()),
+            &token.hex().to_string(),
             "--password-stdin",
         ])
         .write_stdin(format!("{DEFAULT_DEVICE_PASSWORD}\n"))
@@ -292,7 +290,7 @@ async fn stats_organization(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let expect = format!(
         "{:#}\n",
@@ -324,7 +322,7 @@ async fn stats_organization(tmp_path: TmpPath) {
         .args([
             "stats-organization",
             "--organization-id",
-            &org_id.to_string(),
+            org_id.as_ref(),
             "--addr",
             &url.to_string(),
             "--token",
@@ -345,7 +343,7 @@ async fn export_recovery_device(tmp_path: TmpPath) {
         .unwrap();
     let output = tmp_path.join("recovery_device");
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -375,7 +373,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         .unwrap();
     let input = tmp_path.join("recovery_device");
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let passphrase = libparsec::save_recovery_device(&input, &alice)
         .await
@@ -406,7 +404,7 @@ async fn stats_server(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -457,7 +455,7 @@ async fn status_organization(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let expect = format!(
         "{:#}\n",
@@ -475,7 +473,7 @@ async fn status_organization(tmp_path: TmpPath) {
         .args([
             "status-organization",
             "--organization-id",
-            &org_id.to_string(),
+            org_id.as_ref(),
             "--addr",
             &url.to_string(),
             "--token",
@@ -495,7 +493,7 @@ async fn list_invitations(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -561,7 +559,7 @@ async fn create_workspace(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -600,7 +598,7 @@ async fn list_users(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
@@ -634,7 +632,7 @@ async fn share_workspace(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     // FIXME: The test should not rely on the load_client_and_run since it use the stdin to read the password to unlock the device.
     let client = load_client(
@@ -690,7 +688,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -723,7 +721,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .args([
             "greet-invitation",
             "--token",
-            &format!("{}", token.hex()),
+            &token.hex().to_string(),
             "--device",
             &alice.device_id.hex(),
             "--password-stdin",
@@ -739,7 +737,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .args([
             "claim-invitation",
             "--addr",
-            &invitation_addr.to_url().to_string(),
+            invitation_addr.to_url().as_ref(),
             "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
@@ -794,7 +792,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
     let (url, [alice, ..], _) = run_local_organization(&tmp_path, None, config)
         .await
         .unwrap();
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let cmds = AuthenticatedCmds::new(
         &get_default_config_dir(),
@@ -830,7 +828,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         .args([
             "greet-invitation",
             "--token",
-            &format!("{}", token.hex()),
+            &token.hex().to_string(),
             "--device",
             &alice.device_id.hex(),
             "--password-stdin",
@@ -846,7 +844,7 @@ async fn invite_user_dance(tmp_path: TmpPath) {
         .args([
             "claim-invitation",
             "--addr",
-            &invitation_addr.to_url().to_string(),
+            invitation_addr.to_url().as_ref(),
             "--password-stdin",
         ])
         .stdin(std::process::Stdio::piped())
@@ -913,7 +911,7 @@ async fn remove_device(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let process = std::process::Command::new("cargo")
         .args([
@@ -959,7 +957,7 @@ async fn setup_shamir(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     Command::cargo_bin("parsec_cli")
         .unwrap()
