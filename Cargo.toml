@@ -95,7 +95,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 android_logger = { version = "0.13", default-features = false }
 anyhow = { version = "1.0.86", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
-assert_cmd = { version = "2.0.15", default-features = false }
+assert_cmd = { version = "2.0.16", default-features = false }
 async-lock = { version = "3.4.0", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
 base32 = { version = "0.4.0", default-features = false }
@@ -103,7 +103,7 @@ base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.7.1", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
-clap = { version = "4.5.13", default-features = false }
+clap = { version = "4.5.15", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
@@ -171,9 +171,9 @@ ruzstd = { version = "0.7.0", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
-serde_json = { version = "1.0.122", default-features = false }
-serde_test = { version = "1.0.176", default-features = false }
-serde = { version = "1.0.204", default-features = false }
+serde_json = { version = "1.0.124", default-features = false }
+serde_test = { version = "1.0.177", default-features = false }
+serde = { version = "1.0.206", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_with = { version = "3.9.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
@@ -181,7 +181,7 @@ sha2 = { version = "0.10.8", default-features = false }
 sharks = "0.5.0"
 sodiumoxide = { version = "0.2.7", default-features = false }
 sqlx = { version = "0.7.2", default-features = false }
-syn = { version = "2.0.72", default-features = false }
+syn = { version = "2.0.74", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 thiserror = { version = "1.0.63", default-features = false }
 tokio = { version = "1.39.2", default-features = false }
