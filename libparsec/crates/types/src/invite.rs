@@ -71,7 +71,6 @@ pub enum InvitationStatus {
     Cancelled,
 }
 
-
 /*
  * GreeterOrClaimer
  */
