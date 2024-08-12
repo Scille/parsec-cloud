@@ -1,0 +1,61 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_claimer_start_greeting_attempt",
+            "fields": [
+                {
+                    "name": "token",
+                    "type": "InvitationToken"
+                },
+                {
+                    "name": "greeter",
+                    "type": "UserID"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "greeting_attempt",
+                        "type": "GreetingAttemptID"
+                    }
+                ]
+            },
+            // The following statuses do exist for the greeter, but not for the claimer
+            // Instead, in those cases, the claimer would get an HTTP 410 error, defined
+            // as `InvitationAlreadyUsedOrDeleted`.
+            // {
+            //     // The invitation token doesn't correspond to any existing invitation
+            //     "status": "invitation_not_found"
+            // },
+            // {
+            //     // The invitation has already been completed
+            //     "status": "invitation_completed"
+            // },
+            // {
+            //     // The invitation has been cancelled
+            //     "status": "invitation_cancelled"
+            // },
+            {
+                // The provided greeter ID doesn't correspond to any existing greeter
+                "status": "greeter_not_found"
+            },
+            {
+                // The greeter has been revoked from the organization
+                "status": "greeter_revoked"
+            },
+            {
+                // The greeter is not part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the chosen greeter changes from ADMIN to NORMAL after
+                // `invite_info` was called by the claimer
+                "status": "greeter_not_allowed"
+            }
+        ]
+    }
+]

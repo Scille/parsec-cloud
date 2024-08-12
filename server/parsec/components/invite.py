@@ -1217,3 +1217,11 @@ class BaseInviteComponent:
         req: authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req,
     ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
         raise NotImplementedError
+
+    @api
+    async def api_invite_claimer_start_greeting_attempt(
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_claimer_start_greeting_attempt.Req,
+    ) -> invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep:
+        raise NotImplementedError

@@ -8,3 +8,4 @@ from .test_invite_3b_claimer_wait_peer_trust import *  # noqa
 from .test_invite_4_claimer_communicate import *  # noqa
 from .test_invite_info import *  # noqa
 from .test_ping import *  # noqa
+from .test_invite_claimer_start_greeting_attempt import *  # noqa
