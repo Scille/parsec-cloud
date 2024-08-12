@@ -1,0 +1,67 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "invite_greeter_cancel_greeting_attempt",
+            "fields": [
+                {
+                    "name": "greeting_attempt",
+                    "type": "GreetingAttemptID"
+                },
+                {
+                    "name": "reason",
+                    "type": "CancelledGreetingAttemptReason"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // The invitation has already been completed
+                "status": "invitation_completed"
+            },
+            {
+                // The invitation has been cancelled
+                "status": "invitation_cancelled"
+            },
+            {
+                // The author is no longer part of the allowed greeters for this invitation
+                // An example of valid case for this error happens for a user invitation,
+                // if the profile of the author changes from ADMIN to NORMAL after
+                // `invite_greeter_start_greeting_attempt` was called by the claimer
+                "status": "author_not_allowed"
+            },
+            {
+                // The greeting attempt id doesn't correspond to any existing attempt
+                "status": "greeting_attempt_not_found"
+            },
+            {
+                // The author did not join the greeting attempt
+                // This should not happen, since joining is required to get the greeting attempt ID
+                "status": "greeting_attempt_not_joined"
+            },
+            {
+                // The greeting attempt has been already cancelled
+                "status": "greeting_attempt_already_cancelled",
+                "fields": [
+                    {
+                        "name": "origin",
+                        "type": "GreeterOrClaimer"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "CancelledGreetingAttemptReason"
+                    }
+                ]
+            }
+        ]
+    }
+]

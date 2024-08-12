@@ -35,3 +35,4 @@ from .test_vlob_read_versions import *  # noqa
 from .test_vlob_update import *  # noqa
 from .test_shamir_recovery_setup import *  # noqa
 from .test_invite_greeter_start_greeting_attempt import *  # noqa
+from .test_invite_greeter_cancel_greeting_attempt import *  # noqa

@@ -845,6 +845,10 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
             quote! { crate::shamir::ShamirShare}
         }
         FieldType::GreetingAttemptID => quote! { crate::ids::GreetingAttemptID },
+        FieldType::CancelledGreetingAttemptReason => {
+            quote! { crate::enumerate::CancelledGreetingAttemptReason }
+        }
+        FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
     }
 }
 
@@ -994,6 +998,12 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         FieldType::GreetingAttemptID => {
             quote! { crate::ids::GreetingAttemptID(#field_path.to_owned()) }
         }
+        FieldType::CancelledGreetingAttemptReason => {
+            quote! { crate::enumerate::CancelledGreetingAttemptReason(#field_path.to_owned()) }
+        }
+        FieldType::GreeterOrClaimer => {
+            quote! { crate::enumerate::GreeterOrClaimer(#field_path.to_owned()) }
+        }
     }
 }
 
@@ -1081,6 +1091,10 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
             quote! { crate::shamir::ShamirShare}
         }
         FieldType::GreetingAttemptID => quote! { crate::ids::GreetingAttemptID },
+        FieldType::CancelledGreetingAttemptReason => {
+            quote! { crate::enumerate::CancelledGreetingAttemptReason }
+        }
+        FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
     }
 }
 
@@ -1204,7 +1218,9 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         | FieldType::UsersPerProfileDetailItem
         | FieldType::PkiEnrollmentSubmitPayload
         | FieldType::X509Certificate
-        | FieldType::GreetingAttemptID => quote! { #field_name.0 },
+        | FieldType::GreetingAttemptID
+        | FieldType::CancelledGreetingAttemptReason
+        | FieldType::GreeterOrClaimer => quote! { #field_name.0 },
         // No conversion for the rest
         _ => quote! { #field_name },
     }
