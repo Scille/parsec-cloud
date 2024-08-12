@@ -35,13 +35,13 @@ class GreeterOrClaimer:
     def str(self) -> str: ...
 
 class CancelledGreetingAttemptReason:
-    MANUALLY_CANCELED: CancelledGreetingAttemptReason
+    MANUALLY_CANCELLED: CancelledGreetingAttemptReason
     INVALID_NONCE_HASH: CancelledGreetingAttemptReason
     INVALID_SAS_CODE: CancelledGreetingAttemptReason
     UNDECIPHERABLE_PAYLOAD: CancelledGreetingAttemptReason
     UNDESERIALIZABLE_PAYLOAD: CancelledGreetingAttemptReason
     INCONSISTENT_PAYLOAD: CancelledGreetingAttemptReason
-    AUTOMATICALLY_CANCELED: CancelledGreetingAttemptReason
+    AUTOMATICALLY_CANCELLED: CancelledGreetingAttemptReason
     VALUES: tuple[CancelledGreetingAttemptReason, ...]
 
     @classmethod

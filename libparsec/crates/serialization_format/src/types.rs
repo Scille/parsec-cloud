@@ -252,6 +252,8 @@ generate_field_type_enum!(
     PkiEnrollmentSubmitPayload => PkiEnrollmentSubmitPayload,
     X509Certificate => libparsec_types::X509Certificate,
     GreetingAttemptID => libparsec_types::GreetingAttemptID,
+    GreeterOrClaimer => libparsec_types::GreeterOrClaimer,
+    CancelledGreetingAttemptReason => libparsec_types::CancelledGreetingAttemptReason,
     // Used only in protocol
     IntegerBetween1And100 => libparsec_types::IntegerBetween1And100,
     // Used only in shamir

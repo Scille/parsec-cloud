@@ -54,9 +54,9 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     CancelledGreetingAttemptReason,
     libparsec_types::CancelledGreetingAttemptReason,
     [
-        "MANUALLY_CANCELED",
-        manually_canceled,
-        libparsec_types::CancelledGreetingAttemptReason::ManuallyCanceled
+        "MANUALLY_CANCELLED",
+        manually_cancelled,
+        libparsec_types::CancelledGreetingAttemptReason::ManuallyCancelled
     ],
     [
         "INVALID_NONCE_HASH",
@@ -84,9 +84,9 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
         libparsec_types::CancelledGreetingAttemptReason::InconsistentPayload
     ],
     [
-        "AUTOMATICALLY_CANCELED",
-        automatically_canceled,
-        libparsec_types::CancelledGreetingAttemptReason::AutomaticallyCanceled
+        "AUTOMATICALLY_CANCELLED",
+        automatically_cancelled,
+        libparsec_types::CancelledGreetingAttemptReason::AutomaticallyCancelled
     ]
 );
 

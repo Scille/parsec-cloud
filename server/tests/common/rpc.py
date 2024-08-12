@@ -7,8 +7,10 @@ from __future__ import annotations
 from parsec._parsec import (
     BlockID,
     BootstrapToken,
+    CancelledGreetingAttemptReason,
     DateTime,
     EnrollmentID,
+    GreetingAttemptID,
     HashDigest,
     InvitationToken,
     PublicKey,
@@ -186,6 +188,15 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.invite_cancel.Req(token=token)
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.invite_cancel.Rep.load(raw_rep)
+
+    async def invite_greeter_cancel_greeting_attempt(
+        self, greeting_attempt: GreetingAttemptID, reason: CancelledGreetingAttemptReason
+    ) -> authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep:
+        req = authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Req(
+            greeting_attempt=greeting_attempt, reason=reason
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep.load(raw_rep)
 
     async def invite_greeter_start_greeting_attempt(
         self, token: InvitationToken

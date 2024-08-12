@@ -49,6 +49,8 @@ from parsec._parsec_pyi.crypto import (
     generate_nonce,
 )
 from parsec._parsec_pyi.enumerate import (
+    CancelledGreetingAttemptReason,
+    GreeterOrClaimer,
     InvitationStatus,
     InvitationType,
     RealmRole,
@@ -136,6 +138,8 @@ __all__ = [
     "InvitationType",
     "RealmRole",
     "UserProfile",
+    "GreeterOrClaimer",
+    "CancelledGreetingAttemptReason",
     # Ids
     "OrganizationID",
     "VlobID",

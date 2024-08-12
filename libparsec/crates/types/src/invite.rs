@@ -111,7 +111,7 @@ impl ToString for GreeterOrClaimer {
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum CancelledGreetingAttemptReason {
     /// the user manually cancelled the greeting attempt
-    ManuallyCanceled,
+    ManuallyCancelled,
     /// the hashed nonce didn't match the provided nonce
     InvalidNonceHash,
     /// the SAS code communicated to the user was invalid
@@ -123,7 +123,7 @@ pub enum CancelledGreetingAttemptReason {
     /// the payload contained inconsistent information
     InconsistentPayload,
     /// the greeting attempt has been automatically cancelled by a new start_greeting_attempt command
-    AutomaticallyCanceled,
+    AutomaticallyCancelled,
 }
 
 impl FromStr for CancelledGreetingAttemptReason {
@@ -131,13 +131,13 @@ impl FromStr for CancelledGreetingAttemptReason {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
-            "MANUALLY_CANCELED" => Ok(Self::ManuallyCanceled),
+            "MANUALLY_CANCELLED" => Ok(Self::ManuallyCancelled),
             "INVALID_NONCE_HASH" => Ok(Self::InvalidNonceHash),
             "INVALID_SAS_CODE" => Ok(Self::InvalidSasCode),
             "UNDECIPHERABLE_PAYLOAD" => Ok(Self::UndecipherablePayload),
             "UNDESERIALIZABLE_PAYLOAD" => Ok(Self::UndeserializablePayload),
             "INCONSISTENT_PAYLOAD" => Ok(Self::InconsistentPayload),
-            "AUTOMATICALLY_CANCELED" => Ok(Self::AutomaticallyCanceled),
+            "AUTOMATICALLY_CANCELLED" => Ok(Self::AutomaticallyCancelled),
             _ => Err("Invalid CancelledGreetingAttemptReason"),
         }
     }
@@ -146,13 +146,13 @@ impl FromStr for CancelledGreetingAttemptReason {
 impl ToString for CancelledGreetingAttemptReason {
     fn to_string(&self) -> String {
         match self {
-            Self::ManuallyCanceled => String::from("MANUALLY_CANCELED"),
+            Self::ManuallyCancelled => String::from("MANUALLY_CANCELLED"),
             Self::InvalidNonceHash => String::from("INVALID_NONCE_HASH"),
             Self::InvalidSasCode => String::from("INVALID_SAS_CODE"),
             Self::UndecipherablePayload => String::from("UNDECIPHERABLE_PAYLOAD"),
             Self::UndeserializablePayload => String::from("UNDESERIALIZABLE_PAYLOAD"),
             Self::InconsistentPayload => String::from("INCONSISTENT_PAYLOAD"),
-            Self::AutomaticallyCanceled => String::from("AUTOMATICALLY_CANCELED"),
+            Self::AutomaticallyCancelled => String::from("AUTOMATICALLY_CANCELLED"),
         }
     }
 }
