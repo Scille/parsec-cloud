@@ -675,15 +675,26 @@ pub enum UserProfile {
     Outsider,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct InvalidUserProfile;
+
+impl std::error::Error for InvalidUserProfile {}
+
+impl std::fmt::Display for InvalidUserProfile {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("Invalid UserProfile")
+    }
+}
+
 impl FromStr for UserProfile {
-    type Err = &'static str;
+    type Err = InvalidUserProfile;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
             "ADMIN" => Ok(Self::Admin),
             "STANDARD" => Ok(Self::Standard),
             "OUTSIDER" => Ok(Self::Outsider),
-            _ => Err("Invalid UserProfile"),
+            _ => Err(InvalidUserProfile),
         }
     }
 }
