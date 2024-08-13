@@ -5,6 +5,7 @@ import {
   AuthenticationToken,
   BillingDetailsQueryData,
   BmsError,
+  BmsOrganization,
   BmsResponse,
   CreateOrganizationQueryData,
   DataType,
@@ -219,16 +220,17 @@ async function createOrganization(token: AuthenticationToken, query: CreateOrgan
 
 async function listOrganizations(token: AuthenticationToken, query: ListOrganizationsQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
-    const axiosResponse = await http.getInstance().get(`/users/${query.userId}/clients/${query.clientId}/organizations`, {
-      headers: { Authorization: `Bearer ${token}` },
-      validateStatus: (status) => status === 200,
-    });
-    return {
-      status: axiosResponse.status,
-      isError: false,
-      data: {
-        type: DataType.ListOrganizations,
-        organizations: (axiosResponse.data.results as Array<any>).map((org) => {
+    let fetchedAll = false;
+    let currentUrl = `/users/${query.userId}/clients/${query.clientId}/organizations`;
+    const orgs: Array<BmsOrganization> = [];
+
+    while (!fetchedAll) {
+      const axiosResponse = await http.getInstance().get(currentUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        validateStatus: (status) => status === 200,
+      });
+      orgs.push(
+        ...(axiosResponse.data.results as Array<any>).map((org) => {
           return {
             bmsId: org.pk,
             createdAt: DateTime.fromISO(org.created_at, { zone: 'utc' }),
@@ -239,6 +241,19 @@ async function listOrganizations(token: AuthenticationToken, query: ListOrganiza
             bootstrapLink: org.bootstrap_link,
           };
         }),
+      );
+      if (axiosResponse.data.next) {
+        currentUrl = axiosResponse.data.next;
+      } else {
+        fetchedAll = true;
+      }
+    }
+    return {
+      status: 200,
+      isError: false,
+      data: {
+        type: DataType.ListOrganizations,
+        organizations: orgs,
       },
     };
   });
