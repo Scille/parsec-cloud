@@ -274,7 +274,7 @@ impl HumanHandle {
     pub fn new(email: &str, label: &str) -> PyResult<Self> {
         match libparsec_types::HumanHandle::new(email, label) {
             Ok(human_handle) => Ok(Self(human_handle)),
-            Err(err) => Err(PyValueError::new_err(err)),
+            Err(err) => Err(PyValueError::new_err(err.to_string())),
         }
     }
 

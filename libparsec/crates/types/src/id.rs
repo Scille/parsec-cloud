@@ -520,19 +520,35 @@ impl AsRef<str> for HumanHandle {
     }
 }
 
+#[derive(Debug, thiserror::Error)]
+pub enum HumanHandleParseError {
+    #[error("Email is missing")]
+    MissingEmail,
+    #[error("Invalid email address")]
+    InvalidEmail,
+    #[error("Invalid label")]
+    InvalidLabel,
+}
+
 impl TryFrom<&str> for HumanHandle {
-    type Error = &'static str;
+    type Error = HumanHandleParseError;
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
-        let start = s.chars().position(|c| c == '<').ok_or("Email is missing")?;
-        let stop = s.chars().position(|c| c == '>').ok_or("Email is missing")?;
+        let start = s
+            .chars()
+            .position(|c| c == '<')
+            .ok_or(HumanHandleParseError::MissingEmail)?;
+        let stop = s
+            .chars()
+            .position(|c| c == '>')
+            .ok_or(HumanHandleParseError::MissingEmail)?;
         Self::new(&s[start + 1..stop], &s[..start - 1])
     }
 }
 
 // Note: FromStr is used for Deserialization !
 impl FromStr for HumanHandle {
-    type Err = &'static str;
+    type Err = HumanHandleParseError;
 
     #[inline]
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -541,7 +557,7 @@ impl FromStr for HumanHandle {
 }
 
 impl HumanHandle {
-    pub fn new(email: &str, label: &str) -> Result<Self, &'static str> {
+    pub fn new(email: &str, label: &str) -> Result<Self, HumanHandleParseError> {
         // A word about `<string>.nfc()`: In the unicode code we have multiple forms to represent the same glyph.
         // We have 2 notable forms _Normalization From canonical Decomposition_ (NFD) and _Normalization From canonical Composition_ (NFC)
         // For example: the `small letter A with acute` (á) would be encoded in NFD as `small letter a + acute accent` as for NFC `small letter a with acute`.
@@ -552,10 +568,10 @@ impl HumanHandle {
         let display = format!("{label} <{email}>");
 
         if !Self::email_is_valid(email.as_str()) {
-            return Err("Invalid email address");
+            return Err(HumanHandleParseError::InvalidEmail);
         }
         if !Self::label_is_valid(label.as_str()) {
-            return Err("Invalid label");
+            return Err(HumanHandleParseError::InvalidLabel);
         }
 
         Ok(Self {
@@ -625,10 +641,10 @@ impl HumanHandle {
 }
 
 impl TryFrom<(&str, &str)> for HumanHandle {
-    type Error = &'static str;
+    type Error = HumanHandleParseError;
 
-    fn try_from(id: (&str, &str)) -> Result<Self, Self::Error> {
-        Self::new(id.0, id.1)
+    fn try_from((email, label): (&str, &str)) -> Result<Self, Self::Error> {
+        Self::new(email, label)
     }
 }
 
