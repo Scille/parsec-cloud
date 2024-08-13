@@ -1257,3 +1257,11 @@ class BaseInviteComponent:
         req: invited_cmds.latest.invite_claimer_step.Req,
     ) -> invited_cmds.latest.invite_claimer_step.Rep:
         raise NotImplementedError
+
+    @api
+    async def api_invite_complete(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_complete.Req,
+    ) -> authenticated_cmds.latest.invite_complete.Rep:
+        raise NotImplementedError
