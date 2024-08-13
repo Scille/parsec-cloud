@@ -150,7 +150,7 @@ impl OrganizationID {
         } else if let Ok(organization_id) = organization_id.extract::<&str>() {
             match organization_id.parse::<libparsec_types::OrganizationID>() {
                 Ok(organization_id) => Ok(Self(organization_id)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             }
         } else {
             Err(PyValueError::new_err("Unimplemented"))
@@ -211,7 +211,7 @@ impl DeviceLabel {
         } else if let Ok(device_label) = device_label.extract::<&str>() {
             match device_label.parse::<libparsec_types::DeviceLabel>() {
                 Ok(device_label) => Ok(Self(device_label)),
-                Err(err) => Err(PyValueError::new_err(err)),
+                Err(err) => Err(PyValueError::new_err(err.to_string())),
             }
         } else {
             Err(PyValueError::new_err("Unimplemented"))

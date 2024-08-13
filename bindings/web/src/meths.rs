@@ -242,8 +242,13 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
     };
     let user_id = {
@@ -286,8 +291,13 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let ty = {
@@ -541,8 +551,13 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
     };
     let device_id = {
@@ -581,8 +596,13 @@ fn struct_client_info_js_to_rs(obj: JsValue) -> Result<libparsec::ClientInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let human_handle = {
@@ -1043,8 +1063,13 @@ fn struct_device_greet_in_progress4_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     Ok(libparsec::DeviceGreetInProgress4Info {
@@ -1126,8 +1151,13 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     let created_on = {
@@ -2003,8 +2033,13 @@ fn struct_user_greet_in_progress4_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
     };
     Ok(libparsec::UserGreetInProgress4Info {
@@ -5483,8 +5518,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             let token = {
@@ -5547,8 +5588,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             let token = {
@@ -5611,8 +5658,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             Ok(libparsec::ParsedParsecAddr::Organization {
@@ -5657,8 +5710,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             let token = {
@@ -5718,8 +5777,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             Ok(libparsec::ParsedParsecAddr::PkiEnrollment {
@@ -5799,8 +5864,14 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
             };
             let workspace_id = {
@@ -7446,10 +7517,12 @@ pub fn bootstrapOrganization(
         let human_handle = human_handle.into();
         let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
-        let device_label = device_label
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let sequester_authority_verify_key = match sequester_authority_verify_key {
             Some(sequester_authority_verify_key) => {
                 let sequester_authority_verify_key = sequester_authority_verify_key
@@ -7505,9 +7578,12 @@ pub fn buildParsecOrganizationBootstrapAddr(addr: String, organization_id: Strin
             };
             custom_from_rs_string(addr).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let organization_id = organization_id
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid OrganizationID")))?;
+        let organization_id = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(organization_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret = libparsec::build_parsec_organization_bootstrap_addr(addr, organization_id);
         Ok(JsValue::from_str({
             let custom_to_rs_string =
@@ -7639,10 +7715,12 @@ pub fn claimerDeviceInProgress3DoClaim(
     requested_device_label: String,
 ) -> Promise {
     future_to_promise(async move {
-        let requested_device_label = requested_device_label
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
+        let requested_device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret = libparsec::claimer_device_in_progress_3_do_claim(
             canceller,
             handle,
@@ -7852,10 +7930,12 @@ pub fn claimerUserInProgress3DoClaim(
     requested_human_handle: Object,
 ) -> Promise {
     future_to_promise(async move {
-        let requested_device_label = requested_device_label
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
+        let requested_device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(requested_device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let requested_human_handle = requested_human_handle.into();
         let requested_human_handle = struct_human_handle_js_to_rs(requested_human_handle)?;
 
@@ -8996,10 +9076,12 @@ pub fn greeterDeviceInProgress4DoCreate(
     device_label: String,
 ) -> Promise {
     future_to_promise(async move {
-        let device_label = device_label
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let ret =
             libparsec::greeter_device_in_progress_4_do_create(canceller, handle, device_label)
                 .await;
@@ -9140,10 +9222,12 @@ pub fn greeterUserInProgress4DoCreate(
         let human_handle = human_handle.into();
         let human_handle = struct_human_handle_js_to_rs(human_handle)?;
 
-        let device_label = device_label
-            .parse()
-            .map_err(|_| JsValue::from(TypeError::new("Not a valid DeviceLabel")))?;
-
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
         let profile = enum_user_profile_js_to_rs(&profile)?;
 
         let ret = libparsec::greeter_user_in_progress_4_do_create(
