@@ -1355,6 +1355,8 @@
             "savedCard": "Saved card",
             "setDefault": "Set as default",
             "delete": "Delete",
+            "noPaymentMethods": "You don't have a payment method set.",
+            "noAdditionalPaymentMethods": "You haven't added additional payment methods.",
             "addPaymentMethod": {
                 "success": "The card was successfully added.",
                 "failed": "Failed to register this card.",

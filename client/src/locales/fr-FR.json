@@ -1355,6 +1355,8 @@
             "savedCard": "Cartes enregistrées",
             "setDefault": "Définir comme défaut",
             "delete": "Supprimer",
+            "noPaymentMethods": "Vous n'avez pas encore de méthode de paiement.",
+            "noAdditionalPaymentMethods": "Vous n'avez pas ajouté de méthodes de paiement additionnelles.",
             "addPaymentMethod": {
                 "success": "La carte a été enregistrée.",
                 "failed": "Impossible d'enregistrer cette carte.",
