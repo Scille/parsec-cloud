@@ -40,6 +40,14 @@ enum PaymentMethod {
   SepaTransfer = 'sepa-transfer',
 }
 
+enum BillingSystem {
+  None = 'NONE',
+  CustomOrder = 'CUSTOM_ORDER',
+  Stripe = 'STRIPE',
+  CustomOrderCandidate = 'CUSTOM_ORDER_CANDIDATE',
+  ExperimentalCandidate = 'EXPERIMENTAL_CANDIDATE',
+}
+
 type AuthenticationToken = string;
 
 // Data used for result
@@ -62,6 +70,7 @@ interface PersonalInformationResultData {
   phone?: string;
   company?: string;
   job?: string;
+  billingSystem: BillingSystem;
 }
 
 interface CreateOrganizationResultData {
@@ -279,6 +288,7 @@ export {
   BillingDetailsPaymentMethodSepaTransfer,
   BillingDetailsQueryData,
   BillingDetailsResultData,
+  BillingSystem,
   BmsAddress,
   BmsError,
   BmsInvoice,

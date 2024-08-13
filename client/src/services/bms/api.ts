@@ -4,6 +4,7 @@ import {
   AddPaymentMethodQueryData,
   AuthenticationToken,
   BillingDetailsQueryData,
+  BillingSystem,
   BmsError,
   BmsOrganization,
   BmsResponse,
@@ -123,6 +124,7 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
       headers: { Authorization: `Bearer ${token}` },
       validateStatus: (status) => status === 200,
     });
+
     return {
       status: axiosResponse.status,
       isError: false,
@@ -137,6 +139,7 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
         phone: axiosResponse.data.client.phone || undefined,
         job: axiosResponse.data.client.job || undefined,
         company: axiosResponse.data.client.company || undefined,
+        billingSystem: (axiosResponse.data.client.billing_system as BillingSystem) ?? BillingSystem.None,
       },
     };
   });
