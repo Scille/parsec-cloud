@@ -54,9 +54,10 @@ pub async fn initialize_test_organization(
     .await?;
 
     let access = DeviceAccessStrategy::Password {
-        key_file: client_config
-            .config_dir
-            .join(format!("devices/{}.keys", alice_device.device_id.hex())),
+        key_file: libparsec::get_default_key_file(
+            &client_config.config_dir,
+            &alice_device.device_id,
+        ),
         password: DEFAULT_DEVICE_PASSWORD.to_string().into(),
     };
 
@@ -146,7 +147,8 @@ async fn register_new_device(
         Err(e) => return Err(anyhow::anyhow!("{e}")),
     }
 
-    let key_file = libparsec::get_default_key_file(&client_config.config_dir, &new_device);
+    let key_file =
+        libparsec::get_default_key_file(&client_config.config_dir, &new_device.device_id);
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -205,7 +207,8 @@ async fn register_new_user(
         Err(e) => return Err(anyhow::anyhow!("{e}")),
     }
 
-    let key_file = libparsec::get_default_key_file(&client_config.config_dir, &new_device);
+    let key_file =
+        libparsec::get_default_key_file(&client_config.config_dir, &new_device.device_id);
 
     let access = DeviceAccessStrategy::Password {
         key_file,
@@ -217,7 +220,7 @@ async fn register_new_user(
     Ok(new_device)
 }
 
-fn create_new_user(
+pub(crate) fn create_new_user(
     new_device: Arc<LocalDevice>,
     author: Arc<LocalDevice>,
     initial_profile: UserProfile,
@@ -242,7 +245,7 @@ fn create_new_user(
     (user_certificate, redacted_user_certificate)
 }
 
-fn create_new_device(
+pub(crate) fn create_new_device(
     new_device: Arc<LocalDevice>,
     author: Arc<LocalDevice>,
     now: DateTime,

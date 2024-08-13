@@ -48,7 +48,7 @@ pub async fn import_recovery_device(
         }
     })?;
 
-    let key_file = libparsec::get_default_key_file(&config_dir, &device);
+    let key_file = libparsec::get_default_key_file(&config_dir, &device.device_id);
 
     let access = DeviceAccessStrategy::Password { key_file, password };
 
