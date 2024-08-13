@@ -53,6 +53,18 @@
             {{ $msTranslate('clientArea.paymentMethodsPage.addPaymentMethod.addCard') }}
           </ion-button>
         </div>
+        <span
+          v-show="!querying && !error && cards && cards.length === 0"
+          class="no-payment-method"
+        >
+          {{ $msTranslate('clientArea.paymentMethodsPage.noPaymentMethods') }}
+        </span>
+        <span
+          class="no-additional-payment-method"
+          v-show="!querying && !error && savedCards && savedCards.length === 0 && activeCard"
+        >
+          {{ $msTranslate('clientArea.paymentMethodsPage.noAdditionalPaymentMethods') }}
+        </span>
         <template v-if="savedCards">
           <div class="method-cards-saved-list">
             <div

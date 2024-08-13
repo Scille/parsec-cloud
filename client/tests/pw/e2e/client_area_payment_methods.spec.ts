@@ -6,13 +6,27 @@ import { msTest } from '@tests/pw/helpers/fixtures';
 import { DateTime } from 'luxon';
 import { setTimeout } from 'timers/promises';
 
+msTest('List payment methods', async ({ clientArea }) => {
+  const title = clientArea.locator('.header-content').locator('.header-title');
+  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
+  await expect(title).toHaveText('Payment methods');
+
+  const activeContainer = clientArea.locator('.client-page-method').locator('.method-cards-active');
+  const activeCard = activeContainer.locator('.ms-stripe-card');
+  await expect(activeCard.locator('.title-h4').nth(0)).toHaveText('**** **** **** 4444');
+  await expect(activeCard.locator('.title-h4').nth(1)).toHaveText(/^\d{2}\/\d{2}$/);
+  await expect(clientArea.locator('.client-page-method').locator('.no-additional-payment-method')).toBeVisible();
+  await expect(clientArea.locator('.client-page-method').locator('.no-additional-payment-method')).toHaveText(
+    "You haven't added additional payment methods.",
+  );
+});
+
 [
   { fail: false, setDefault: { set: true, fail: false } },
   { fail: true, setDefault: { set: true, fail: false } },
   { fail: false, setDefault: { set: true, fail: true } },
 ].forEach(({ fail, setDefault }) => {
   msTest(`Add payment method Fail(${fail}) SetDefault(${setDefault.set}) SetDefaultFail(${setDefault.fail})`, async ({ clientArea }) => {
-    await MockBms.mockBillingDetails(clientArea);
     await MockBms.mockAddPaymentMethod(clientArea, fail ? { PUT: { errors: { status: 401, attribute: 'payment_method' } } } : undefined);
     await MockBms.mockSetDefaultPaymentMethod(
       clientArea,
@@ -22,8 +36,8 @@ import { setTimeout } from 'timers/promises';
     const title = clientArea.locator('.header-content').locator('.header-title');
     await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
     await expect(title).toHaveText('Payment methods');
-    const addButton = clientArea.locator('.client-page-method').locator('#add-payment-method');
-    await expect(addButton).toHaveText('Add');
+    const addButton = clientArea.locator('.client-page-method').locator('.method-cards-saved-header').locator('.custom-button');
+    await expect(addButton).toHaveText('Add a new card');
     const modal = clientArea.locator('.credit-card-modal');
     await expect(modal).toBeHidden();
     await addButton.click();
@@ -45,8 +59,11 @@ import { setTimeout } from 'timers/promises';
       await toggle.click();
     }
     await modalButton.click();
+    await expect(modalButton).toBeTrulyDisabled();
     if (fail) {
-      await expect(clientArea).toShowToast('Failed to register this card.', 'Error');
+      await expect(modal.locator('#modal-error')).toHaveText('Failed to register this card.');
+      await expect(modal).toBeVisible();
+      await expect(modalButton).toBeTrulyEnabled();
     } else {
       if (setDefault.set && setDefault.fail) {
         await expect(clientArea).toShowToast(
@@ -57,6 +74,17 @@ import { setTimeout } from 'timers/promises';
         setTimeout(1000);
         await expect(clientArea).toShowToast('The card was successfully added.', 'Success');
       }
+      await expect(modal).toBeHidden();
     }
   });
+});
+
+msTest('No payment methods', async ({ clientArea }) => {
+  await MockBms.mockBillingDetails(clientArea, { cardsCount: 0, sepaCount: 0 });
+  const title = clientArea.locator('.header-content').locator('.header-title');
+  await clientArea.locator('.menu-client').locator('.menu-client-list').getByRole('listitem').nth(3).click();
+  await expect(title).toHaveText('Payment methods');
+
+  await expect(clientArea.locator('.client-page-method').locator('.no-payment-method')).toBeVisible();
+  await expect(clientArea.locator('.client-page-method').locator('.no-payment-method')).toHaveText("You don't have a payment method set.");
 });

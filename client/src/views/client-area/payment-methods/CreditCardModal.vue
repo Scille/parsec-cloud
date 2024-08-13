@@ -24,12 +24,17 @@
       v-show="querying"
       class="loading-spinner"
     />
-    <span v-show="error">{{ error }}</span>
+    <span
+      v-show="error"
+      id="modal-error"
+    >
+      {{ $msTranslate(error) }}
+    </span>
   </ms-modal>
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, MsSpinner } from 'megashark-lib';
+import { MsModal, MsModalResult, MsStripeCardForm, PaymentMethodResult, MsSpinner, I18n, Translatable } from 'megashark-lib';
 import { IonToggle, modalController } from '@ionic/vue';
 import { ref } from 'vue';
 import { BmsAccessInstance } from '@/services/bms';
@@ -41,14 +46,14 @@ const props = defineProps<{
 
 const cardForm = ref();
 const setDefault = ref(false);
-const error = ref('');
+const error = ref<Translatable | undefined>(undefined);
 const querying = ref(false);
 
 async function confirm(): Promise<boolean> {
   querying.value = true;
   const result: PaymentMethodResult = await cardForm.value.submit();
   if (result.error && result.error.message) {
-    error.value = result.error.message;
+    error.value = I18n.valueAsTranslatable(result.error.message);
     querying.value = false;
     return false;
   }
