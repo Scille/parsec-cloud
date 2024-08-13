@@ -45,6 +45,15 @@
           />
         </div>
       </ion-item>
+      <ion-item
+        class="organization-list__item"
+        v-show="querying"
+      >
+        <ion-skeleton-text
+          class="organization"
+          :animated="true"
+        />
+      </ion-item>
     </ion-list>
     <div
       class="organization-divider"
@@ -79,7 +88,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController } from '@ionic/vue';
+import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonTitle, popoverController, IonSkeletonText } from '@ionic/vue';
 import { arrowForward, checkmark, addCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
@@ -90,14 +99,17 @@ const props = defineProps<{
   currentOrganization: BmsOrganization;
 }>();
 
+const querying = ref(true);
 const organizations = ref<Array<BmsOrganization>>([]);
 
 onMounted(async () => {
+  querying.value = true;
   const result = await BmsAccessInstance.get().listOrganizations();
   if (!result.isError && result.data && result.data.type === DataType.ListOrganizations) {
     organizations.value = result.data.organizations;
     organizations.value.push(DefaultBmsOrganization);
   }
+  querying.value = false;
 });
 
 async function openCreateOrganizationModal(): Promise<void> {
