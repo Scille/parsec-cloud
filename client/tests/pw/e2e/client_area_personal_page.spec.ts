@@ -81,7 +81,7 @@ msTest('Update personal information', async ({ clientArea }) => {
   await expect(modal).toBeHidden();
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(['Gregory', 'House', '+1 609-258-3000']);
 
-  await MockBms.mockUserRoute(clientArea, { PATCH: { errors: { status: 401, attribute: 'client.phone' } } });
+  await MockBms.mockUserRoute(clientArea, {}, { PATCH: { errors: { status: 401, attribute: 'client.phone' } } });
   // Try to remove the phone number
   await dataContainer.locator('.update-button').click();
   await expect(modal).toBeVisible();
@@ -96,7 +96,7 @@ msTest('Update personal information', async ({ clientArea }) => {
 });
 
 msTest('Update personal information generic fail', async ({ clientArea }) => {
-  await MockBms.mockUserRoute(clientArea, { PATCH: { errors: { status: 401 } } });
+  await MockBms.mockUserRoute(clientArea, {}, { PATCH: { errors: { status: 401 } } });
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(0).locator('.ms-summary-card').nth(0);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
@@ -129,7 +129,7 @@ msTest('Update personal information generic fail', async ({ clientArea }) => {
 });
 
 msTest('Update personal information timeout', async ({ clientArea }) => {
-  await MockBms.mockUserRoute(clientArea, { PATCH: { timeout: true } });
+  await MockBms.mockUserRoute(clientArea, {}, { PATCH: { timeout: true } });
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(0).locator('.ms-summary-card').nth(0);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
@@ -277,7 +277,7 @@ msTest('Update professional information no job/company', async ({ clientArea }) 
 });
 
 msTest('Update professional information fail', async ({ clientArea }) => {
-  await MockBms.mockUserRoute(clientArea, { PATCH: { errors: { status: 401 } } });
+  await MockBms.mockUserRoute(clientArea, {}, { PATCH: { errors: { status: 401 } } });
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(0).locator('.ms-summary-card').nth(1);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
@@ -307,7 +307,7 @@ msTest('Update professional information fail', async ({ clientArea }) => {
 });
 
 msTest('Update professional information timeout', async ({ clientArea }) => {
-  await MockBms.mockUserRoute(clientArea, { PATCH: { timeout: true } });
+  await MockBms.mockUserRoute(clientArea, {}, { PATCH: { timeout: true } });
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(0).locator('.ms-summary-card').nth(1);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([

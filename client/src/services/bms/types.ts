@@ -44,7 +44,6 @@ enum BillingSystem {
   None = 'NONE',
   CustomOrder = 'CUSTOM_ORDER',
   Stripe = 'STRIPE',
-  CustomOrderCandidate = 'CUSTOM_ORDER_CANDIDATE',
   ExperimentalCandidate = 'EXPERIMENTAL_CANDIDATE',
 }
 

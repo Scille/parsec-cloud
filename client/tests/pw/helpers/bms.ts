@@ -98,13 +98,19 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
   });
 }
 
-async function mockUserRoute(page: Page, options?: MockRouteOptions): Promise<void> {
+interface MockUserOverload {
+  billingSystem?: string;
+}
+
+async function mockUserRoute(page: Page, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}`, options, async (route) => {
     if (route.request().method() === 'GET') {
       await route.fulfill({
         status: 200,
         json: {
           id: DEFAULT_USER_INFORMATION.id,
+          // eslint-disable-next-line camelcase
+          billing_system: overload.billingSystem ?? 'STRIPE',
           // eslint-disable-next-line camelcase
           created_at: '2024-07-15T13:21:32.141317Z',
           email: UserData.email,
