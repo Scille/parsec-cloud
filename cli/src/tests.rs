@@ -983,7 +983,7 @@ async fn ls_files(tmp_path: TmpPath) {
         .await
         .unwrap();
 
-    set_env(&tmp_path_str, &url);
+    set_env(tmp_path_str, &url);
 
     let client = libparsec::internal::Client::start(
         Arc::new(
