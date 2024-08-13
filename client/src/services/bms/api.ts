@@ -274,13 +274,13 @@ async function getOrganizationStats(token: AuthenticationToken, query: Organizat
       isError: false,
       data: {
         type: DataType.OrganizationStats,
-        dataSize: axiosResponse.data.data_size,
-        metadataSize: axiosResponse.data.metadata_size,
+        dataSize: axiosResponse.data.data_size ?? 0,
+        metadataSize: axiosResponse.data.metadata_size ?? 0,
         users: axiosResponse.data.users ?? 0,
         activeUsers: axiosResponse.data.active_users ?? 0,
-        adminUsersDetail: axiosResponse.data.users_per_profile_detail.ADMIN,
-        standardUsersDetail: axiosResponse.data.users_per_profile_detail.STANDARD,
-        outsiderUsersDetail: axiosResponse.data.users_per_profile_detail.OUTSIDER,
+        adminUsersDetail: axiosResponse.data.users_per_profile_detail?.ADMIN ?? 0,
+        standardUsersDetail: axiosResponse.data.users_per_profile_detail?.STANDARD ?? 0,
+        outsiderUsersDetail: axiosResponse.data.users_per_profile_detail?.OUTSIDER ?? 0,
         freeSliceSize: axiosResponse.data.free_slice_size ?? 1024 * 1024 * 1024 * 200, // arbitrary value
         payingSliceSize: axiosResponse.data.paying_slice_size ?? 1024 * 1024 * 1024 * 100, // arbitrary value
         status: axiosResponse.data.status,
@@ -491,6 +491,7 @@ async function getCustomOrderStatus(token: AuthenticationToken, query: GetCustom
       {
         headers: { Authorization: `Bearer ${token}` },
         validateStatus: (status) => status === 200,
+        timeout: 15000,
       },
     );
     return {
@@ -511,6 +512,7 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: GetCusto
       {
         headers: { Authorization: `Bearer ${token}` },
         validateStatus: (status) => status === 200,
+        timeout: 15000,
       },
     );
     return {
