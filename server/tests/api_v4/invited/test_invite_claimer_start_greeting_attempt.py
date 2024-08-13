@@ -7,8 +7,6 @@ import pytest
 from parsec._parsec import UserID, invited_cmds
 from tests.common import Backend, CoolorgRpcClients
 
-Response = invited_cmds.v4.invite_claimer_start_greeting_attempt.Rep | None
-
 
 @pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_start_greeting_attempt_ok(

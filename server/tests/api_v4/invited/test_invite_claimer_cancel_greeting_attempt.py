@@ -12,8 +12,6 @@ from parsec._parsec import (
 )
 from tests.common import Backend, CoolorgRpcClients
 
-Response = invited_cmds.v4.invite_claimer_cancel_greeting_attempt.Rep | None
-
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
