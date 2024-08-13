@@ -2,7 +2,7 @@
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::{SASCode, SecretKey};
+use crate::{SASCode, SASCodeParseError, SecretKey};
 
 #[test]
 fn generate() {
@@ -50,10 +50,7 @@ fn from_str_good() {
 #[case::bad_char_1("AA1A")]
 #[case::bad_char_bang("#AAA")]
 fn from_str_bad(#[case] val: &str) {
-    p_assert_matches!(
-        val.parse::<SASCode>(),
-        Err(err) if err == "Invalid SAS code"
-    )
+    p_assert_eq!(val.parse::<SASCode>(), Err(SASCodeParseError))
 }
 
 #[test]

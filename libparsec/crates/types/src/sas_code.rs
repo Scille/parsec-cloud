@@ -24,8 +24,20 @@ impl std::fmt::Display for SASCode {
     }
 }
 
+#[cfg_attr(test, derive(PartialEq))]
+#[derive(Clone, Debug)]
+pub struct SASCodeParseError;
+
+impl std::error::Error for SASCodeParseError {}
+
+impl std::fmt::Display for SASCodeParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Invalid SAS code")
+    }
+}
+
 impl FromStr for SASCode {
-    type Err = &'static str;
+    type Err = SASCodeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let valid = s.len() == 4 && s.as_bytes().iter().all(|c| SAS_CODE_CHARS.contains(c));
@@ -33,7 +45,7 @@ impl FromStr for SASCode {
         if valid {
             Ok(Self(s.to_string()))
         } else {
-            Err("Invalid SAS code")
+            Err(SASCodeParseError)
         }
     }
 }

@@ -685,7 +685,10 @@ fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -699,7 +702,10 @@ fn struct_device_claim_in_progress1_info_js_to_rs<'a>(
             for i in 0..size {
                 let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
-                    match js_item.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -759,7 +765,10 @@ fn struct_device_claim_in_progress2_info_js_to_rs<'a>(
     let claimer_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -837,7 +846,10 @@ fn struct_device_greet_in_progress1_info_js_to_rs<'a>(
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -883,7 +895,10 @@ fn struct_device_greet_in_progress2_info_js_to_rs<'a>(
     let claimer_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -897,7 +912,10 @@ fn struct_device_greet_in_progress2_info_js_to_rs<'a>(
             for i in 0..size {
                 let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
-                    match js_item.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1596,7 +1614,10 @@ fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1610,7 +1631,10 @@ fn struct_user_claim_in_progress1_info_js_to_rs<'a>(
             for i in 0..size {
                 let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
-                    match js_item.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -1670,7 +1694,10 @@ fn struct_user_claim_in_progress2_info_js_to_rs<'a>(
     let claimer_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1748,7 +1775,10 @@ fn struct_user_greet_in_progress1_info_js_to_rs<'a>(
     let greeter_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "greeterSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1794,7 +1824,10 @@ fn struct_user_greet_in_progress2_info_js_to_rs<'a>(
     let claimer_sas = {
         let js_val: Handle<JsString> = obj.get(cx, "claimerSas")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1808,7 +1841,10 @@ fn struct_user_greet_in_progress2_info_js_to_rs<'a>(
             for i in 0..size {
                 let js_item: Handle<JsString> = js_val.get(cx, i)?;
                 v.push({
-                    match js_item.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_item.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
