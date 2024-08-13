@@ -78,7 +78,7 @@ class BmsAccess {
     await this.clearStoredAccess();
   }
 
-  async getPersonalInformation(): Promise<PersonalInformationResultData> {
+  getPersonalInformation(): PersonalInformationResultData {
     assertLoggedIn(this.customerInformation);
     return this.customerInformation;
   }

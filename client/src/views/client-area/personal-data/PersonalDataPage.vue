@@ -96,7 +96,7 @@ onMounted(async () => {
 });
 
 async function getPersonalData(): Promise<void> {
-  personalData.value = await BmsAccessInstance.get().getPersonalInformation();
+  personalData.value = BmsAccessInstance.get().getPersonalInformation();
 }
 
 function getPersonalInfoRows(): MsSummaryCardRowData[] {
