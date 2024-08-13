@@ -574,7 +574,7 @@ impl UserClaimFinalizeCtx {
     pub fn get_default_key_file(&self) -> PathBuf {
         libparsec_platform_device_loader::get_default_key_file(
             &self.config.config_dir,
-            &self.new_local_device,
+            &self.new_local_device.device_id,
         )
     }
 
@@ -611,7 +611,7 @@ impl DeviceClaimFinalizeCtx {
     pub fn get_default_key_file(&self) -> PathBuf {
         libparsec_platform_device_loader::get_default_key_file(
             &self.config.config_dir,
-            &self.new_local_device,
+            &self.new_local_device.device_id,
         )
     }
 
