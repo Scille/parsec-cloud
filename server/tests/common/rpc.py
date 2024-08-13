@@ -516,6 +516,17 @@ class BaseInvitedRpcClient:
         raw_rep = await self._do_request(req.dump())
         return invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep.load(raw_rep)
 
+    async def invite_claimer_step(
+        self,
+        greeting_attempt: GreetingAttemptID,
+        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
+    ) -> invited_cmds.latest.invite_claimer_step.Rep:
+        req = invited_cmds.latest.invite_claimer_step.Req(
+            greeting_attempt=greeting_attempt, claimer_step=claimer_step
+        )
+        raw_rep = await self._do_request(req.dump())
+        return invited_cmds.latest.invite_claimer_step.Rep.load(raw_rep)
+
     async def invite_info(
         self,
     ) -> invited_cmds.latest.invite_info.Rep:

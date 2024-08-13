@@ -13,8 +13,6 @@ from parsec._parsec import (
 )
 from tests.common import Backend, CoolorgRpcClients
 
-Response = authenticated_cmds.v4.invite_greeter_step.Rep | None
-
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
@@ -73,7 +71,7 @@ async def test_authenticated_invite_greeter_step_invitation_cancelled(
 ) -> None:
     await coolorg.alice.invite_cancel(token=coolorg.invited_alice_dev3.token)
 
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -87,7 +85,7 @@ async def test_authenticated_invite_greeter_step_invitation_completed(
     # Not implemented yet
     # await coolorg.alice.invite_complete(token=coolorg.invited_alice_dev3.token)
 
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -99,7 +97,7 @@ async def test_authenticated_invite_greeter_step_invitation_completed(
 async def test_authenticated_invite_greeter_step_greeting_attempt_not_found(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=GreetingAttemptID.new(),
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -114,7 +112,7 @@ async def test_authenticated_invite_greeter_step_greeting_attempt_not_joined(
     # TODO: Have the claimer join the greeting attempt and use the corresponding ID
     greeting_attempt = GreetingAttemptID.new()
 
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -134,7 +132,7 @@ async def test_authenticated_invite_greeter_step_greeting_attempt_cancelled(
     assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepOk()
 
     # Try a step
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -158,12 +156,12 @@ async def test_authenticated_invite_greeter_step_step_mismatch(
         public_key=greeter_key_2.public_key
     )
     # Run once with first public key
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step_1
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
     # Run once more with second public key
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step_2
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepStepMismatch()
@@ -173,7 +171,7 @@ async def test_authenticated_invite_greeter_step_step_mismatch(
 async def test_authenticated_invite_greeter_step_step_too_advanced(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
@@ -189,12 +187,12 @@ async def test_authenticated_invite_greeter_step_not_ready(
         public_key=greeter_key.public_key
     )
     # Run once
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
     # Run twice
-    rep = await coolorg.bob.invite_greeter_step(
+    rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
