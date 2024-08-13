@@ -209,7 +209,7 @@ class SequesterVerifyKeyDer(BytesBasedType):
 
 
 class SASCode(StrBasedType):
-    pass
+    custom_from_rs_string = "|s: String| -> Result<_, String> { s.parse::<libparsec::SASCode>().map_err(|e| e.to_string()) }"
 
 
 class EntryName(StrBasedType):

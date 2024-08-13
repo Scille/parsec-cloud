@@ -741,8 +741,13 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     let greeter_sas_choices = {
@@ -757,8 +762,13 @@ fn struct_device_claim_in_progress1_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid SASCode"))?;
                 converted.push(x_converted);
             }
@@ -823,8 +833,13 @@ fn struct_device_claim_in_progress2_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     Ok(libparsec::DeviceClaimInProgress2Info {
@@ -902,8 +917,13 @@ fn struct_device_greet_in_progress1_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     Ok(libparsec::DeviceGreetInProgress1Info {
@@ -949,8 +969,13 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     let claimer_sas_choices = {
@@ -965,8 +990,13 @@ fn struct_device_greet_in_progress2_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid SASCode"))?;
                 converted.push(x_converted);
             }
@@ -1707,8 +1737,13 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     let greeter_sas_choices = {
@@ -1723,8 +1758,13 @@ fn struct_user_claim_in_progress1_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid SASCode"))?;
                 converted.push(x_converted);
             }
@@ -1789,8 +1829,13 @@ fn struct_user_claim_in_progress2_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     Ok(libparsec::UserClaimInProgress2Info {
@@ -1868,8 +1913,13 @@ fn struct_user_greet_in_progress1_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     Ok(libparsec::UserGreetInProgress1Info {
@@ -1915,8 +1965,13 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
             .dyn_into::<JsString>()
             .ok()
             .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))?
-            .parse()
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
             .map_err(|_| TypeError::new("Not a valid SASCode"))?
     };
     let claimer_sas_choices = {
@@ -1931,8 +1986,13 @@ fn struct_user_greet_in_progress2_info_js_to_rs(
                     .dyn_into::<JsString>()
                     .ok()
                     .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))?
-                    .parse()
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            s.parse::<libparsec::SASCode>().map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
                     .map_err(|_| TypeError::new("Not a valid SASCode"))?;
                 converted.push(x_converted);
             }
