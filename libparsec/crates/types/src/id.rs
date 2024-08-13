@@ -190,27 +190,40 @@ macro_rules! new_string_based_id_type {
             }
         }
 
-        impl TryFrom<&str> for $name {
-            type Error = &'static str;
+        paste::paste! {
+            #[derive(Debug, Clone, Copy)]
+            pub struct [<Invalid $name>];
 
-            fn try_from(s: &str) -> Result<Self, Self::Error> {
-                let id: String = s.nfc().collect();
+            impl ::std::error::Error for [<Invalid $name>] {}
 
-                if $match_fn(&id) {
-                    Ok(Self(id))
-                } else {
-                    Err(concat!("Invalid ", stringify!($name)))
+            impl ::std::fmt::Display for [<Invalid $name>] {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                    f.write_str(concat!("Invalid ", stringify!($name)))
                 }
             }
-        }
 
-        // Note: FromStr is used for Deserialization !
-        impl FromStr for $name {
-            type Err = &'static str;
+            impl TryFrom<&str> for $name {
+                type Error = [<Invalid $name>];
 
-            #[inline]
-            fn from_str(s: &str) -> Result<Self, Self::Err> {
-                $name::try_from(s)
+                fn try_from(s: &str) -> Result<Self, Self::Error> {
+                    let id: String = s.nfc().collect();
+
+                    if $match_fn(&id) {
+                        Ok(Self(id))
+                    } else {
+                        Err([<Invalid $name>])
+                    }
+                }
+            }
+
+            // Note: FromStr is used for Deserialization !
+            impl FromStr for $name {
+                type Err = [<Invalid $name>];
+
+                #[inline]
+                fn from_str(s: &str) -> Result<Self, Self::Err> {
+                    $name::try_from(s)
+                }
             }
         }
 

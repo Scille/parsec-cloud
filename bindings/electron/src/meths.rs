@@ -230,7 +230,10 @@ fn struct_available_device_js_to_rs<'a>(
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -267,7 +270,10 @@ fn struct_available_device_js_to_rs<'a>(
     let device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -502,7 +508,10 @@ fn struct_client_info_js_to_rs<'a>(
     let organization_id = {
         let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -535,7 +544,10 @@ fn struct_client_info_js_to_rs<'a>(
     let device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -977,7 +989,10 @@ fn struct_device_greet_in_progress4_info_js_to_rs<'a>(
     let requested_device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "requestedDeviceLabel")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1057,7 +1072,10 @@ fn struct_device_info_js_to_rs<'a>(
     let device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -1886,7 +1904,10 @@ fn struct_user_greet_in_progress4_info_js_to_rs<'a>(
     let requested_device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "requestedDeviceLabel")?;
         {
-            match js_val.value(cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -4959,7 +4980,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5010,7 +5034,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5061,7 +5088,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5097,7 +5127,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5145,7 +5178,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -5207,7 +5243,10 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
             let organization_id = {
                 let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
                 {
-                    match js_val.value(cx).parse() {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
                         Ok(val) => val,
                         Err(err) => return cx.throw_type_error(err),
                     }
@@ -6590,7 +6629,10 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let device_label = {
         let js_val = cx.argument::<JsString>(5)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -6678,7 +6720,10 @@ fn build_parsec_organization_bootstrap_addr(mut cx: FunctionContext) -> JsResult
     let organization_id = {
         let js_val = cx.argument::<JsString>(1)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -6950,7 +6995,10 @@ fn claimer_device_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<Js
     let requested_device_label = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -7409,7 +7457,10 @@ fn claimer_user_in_progress_3_do_claim(mut cx: FunctionContext) -> JsResult<JsPr
     let requested_device_label = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -9682,7 +9733,10 @@ fn greeter_device_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<J
     let device_label = {
         let js_val = cx.argument::<JsString>(2)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
@@ -10012,7 +10066,10 @@ fn greeter_user_in_progress_4_do_create(mut cx: FunctionContext) -> JsResult<JsP
     let device_label = {
         let js_val = cx.argument::<JsString>(3)?;
         {
-            match js_val.value(&mut cx).parse() {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
                 Ok(val) => val,
                 Err(err) => return cx.throw_type_error(err),
             }
