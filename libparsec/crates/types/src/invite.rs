@@ -26,14 +26,25 @@ pub enum InvitationType {
     Device,
 }
 
+#[derive(Debug, Clone)]
+pub struct InvitationTypeParseError;
+
+impl std::error::Error for InvitationTypeParseError {}
+
+impl std::fmt::Display for InvitationTypeParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Invalid InvitationType")
+    }
+}
+
 impl FromStr for InvitationType {
-    type Err = &'static str;
+    type Err = InvitationTypeParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
             "USER" => Ok(Self::User),
             "DEVICE" => Ok(Self::Device),
-            _ => Err("Invalid InvitationType"),
+            _ => Err(InvitationTypeParseError),
         }
     }
 }
