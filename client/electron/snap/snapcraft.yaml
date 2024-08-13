@@ -87,14 +87,14 @@ parts:
     build-packages:
       - git
       - jq
+      - wget
     override-build: |
       set -x
 
-      # Clone megashark-lib locally
       MEGASHARK_COMMIT_ID=$(jq -r '.packages."node_modules/megashark-lib".resolved' package-lock.json | cut -d '#' -f 2)
-      git clone https://github.com/Scille/megashark-lib.git
-      cd megashark-lib
-      git reset --hard $MEGASHARK_COMMIT_ID
+      wget https://github.com/Scille/megashark-lib/archive/${MEGASHARK_COMMIT_ID}.tar.gz -O megashark-lib-src.tar.gz
+      mkdir megashark-lib && cd megashark-lib
+      tar --extract --file ../megashark-lib-src.tar.gz --strip-components=1
 
       npm clean-install
       MEGASHARK_ARCHIVE=$(npm pack | tail -n1)
