@@ -18,7 +18,7 @@
         class="sidebar"
       >
         <client-area-sidebar
-          v-if="loggedIn && currentOrganization"
+          v-if="loggedIn && currentOrganization && !querying"
           :current-page="currentPage"
           :organization="currentOrganization"
           @page-selected="switchPage"
@@ -32,7 +32,7 @@
         id="main"
       >
         <client-area-header
-          v-if="loggedIn"
+          v-if="loggedIn && !querying"
           :title="getTitleByPage()"
           @page-selected="switchPage"
         />
@@ -40,7 +40,7 @@
           <div class="main-content">
             <div
               class="main-page"
-              v-if="loggedIn && currentOrganization"
+              v-if="loggedIn && !querying && currentOrganization"
               :key="refresh"
             >
               <billing-details-page
@@ -112,6 +112,7 @@ const currentOrganization = ref<BmsOrganization>(DefaultBmsOrganization);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const loggedIn = ref(false);
 const refresh = ref(0);
+const querying = ref(true);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -124,10 +125,12 @@ function setToastOffset(width: number): void {
 }
 
 onMounted(async () => {
+  querying.value = true;
   if (!BmsAccessInstance.get().isLoggedIn()) {
     loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
     if (!loggedIn.value) {
       await navigateTo(Routes.ClientAreaLogin);
+      querying.value = false;
       return;
     }
   } else {
@@ -148,6 +151,7 @@ onMounted(async () => {
     if (query.page) {
       currentPage.value = query.page as ClientAreaPages;
     }
+    querying.value = false;
   }
 
   setToastOffset(computedWidth.value);
