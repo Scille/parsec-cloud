@@ -46,12 +46,6 @@ macro_rules! new_uuid_type {
                 self.0.as_hyphenated()
             }
 
-            pub fn from_hex(hex: &str) -> Result<Self, &'static str> {
-                ::uuid::Uuid::parse_str(hex)
-                    .map(Self)
-                    .or(Err(concat!("Invalid ", stringify!($name))))
-            }
-
             pub fn hex(&self) -> String {
                 self.0.as_simple().to_string()
             }
@@ -115,13 +109,34 @@ macro_rules! new_uuid_type {
             }
         }
 
-        impl ::std::convert::TryFrom<&[u8]> for $name {
-            type Error = &'static str;
+        paste::paste! {
+            #[derive(Debug, Clone, Copy)]
+            pub struct [<Invalid $name>];
 
-            fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
-                ::uuid::Uuid::from_slice(bytes)
-                    .map(Self)
-                    .or(Err(concat!("Invalid ", stringify!($name))))
+            impl ::std::error::Error for [<Invalid $name>] {}
+
+            impl ::std::fmt::Display for [<Invalid $name>] {
+                fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                    f.write_str(concat!("Invalid ", stringify!($name)))
+                }
+            }
+
+            impl ::std::convert::TryFrom<&[u8]> for $name {
+                type Error = [<Invalid $name>];
+
+                fn try_from(bytes: &[u8]) -> Result<Self, Self::Error> {
+                    ::uuid::Uuid::from_slice(bytes)
+                        .map(Self)
+                        .or(Err([<Invalid $name>]))
+                }
+            }
+
+            impl $name {
+                pub fn from_hex(hex: &str) -> Result<Self, [<Invalid $name>]> {
+                    ::uuid::Uuid::parse_str(hex)
+                        .map(Self)
+                        .or(Err([<Invalid $name>]))
+                }
             }
         }
 

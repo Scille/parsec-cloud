@@ -15,7 +15,7 @@ macro_rules! gen_uuid {
             ) -> PyResult<Self> {
                 libparsec_types::$class::try_from(bytes)
                     .map(Self)
-                    .map_err(::pyo3::exceptions::PyValueError::new_err)
+                    .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
             }
 
             #[classmethod]
@@ -25,7 +25,7 @@ macro_rules! gen_uuid {
             ) -> PyResult<Self> {
                 libparsec_types::$class::from_hex(hex)
                     .map(Self)
-                    .map_err(::pyo3::exceptions::PyValueError::new_err)
+                    .map_err(|e| ::pyo3::exceptions::PyValueError::new_err(e.to_string()))
             }
 
             #[classmethod]
