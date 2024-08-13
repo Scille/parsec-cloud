@@ -141,6 +141,7 @@
         </ion-item>
       </ion-list>
 
+      <!-- v-show should be remove when CustomOrder is set -->
       <ion-list
         v-if="BillingSystem.CustomOrder"
         v-show="false"
@@ -151,8 +152,8 @@
           button
           lines="none"
           class="menu-default menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Dashboard }"
-          @click="goToPageClicked(ClientAreaPages.Dashboard)"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Contracts }"
+          @click="goToPageClicked(ClientAreaPages.Contracts)"
         >
           <ion-icon
             class="menu-client-list-item__icon"

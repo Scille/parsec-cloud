@@ -1403,6 +1403,39 @@
             "error": "Impossible de mettre à jour les informations.",
             "success": "Les informations ont été mises à jour.",
             "title": "Adresse de facturation"
+        },
+        "contracts": {
+            "title": "Contrat n°{number}",
+            "previewOrganization": "Aperçu de votre organisation",
+            "noContract": "Vous n'avez pas encore de contrat.",
+            "duration": "Durée",
+            "from": "Depuis",
+            "to": "Jusqu'au",
+            "amount": "Montant",
+            "user": {
+                "standard": "Standard | Standards",
+                "admin": "Administrateur | Administrateurs",
+                "external": "Externe | Externes",
+                "remaining": "{number} restant | {number} restants",
+                "fullAccess": "Tous les accès",
+                "allFeaturesAccess": "Accès à toutes les fonctionnalités",
+                "rightLimited": "Droits limités"
+            },
+            "storage": {
+                "title": "Stockage",
+                "stack": "par tranche de 100 Go",
+                "used": "utilisé"
+            },
+            "invoice": {
+                "title": "Facture",
+                "noInvoice": "Vous n'avez pas encore de facture.",
+                "paymentMethod": "Méthode de paiement",
+                "transfer": "Virement bancaire",
+                "date": "Date : ",
+                "payment": "Paiement : ",
+                "price": "{count} €",
+                "download": "Télécharger"
+            }
         }
     }
 }

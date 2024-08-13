@@ -1351,6 +1351,7 @@
             "addCard": "Add",
             "addPaymentMethodFailed": "Failed to register this card.",
             "addPaymentMethodSuccessSetDefaultFailed": "The card was successfully added but it could not be set as the default payment method.",
+            "setDefaultPaymentMethodFailed": "You cannot use this card as your default payment method.",
             "addPaymentMethodTitle": "Add a card",
             "addPaymentMethodConfirm": "Add this card",
             "useAsDefault": "Set as default payment method",
@@ -1402,6 +1403,39 @@
             "error": "Could not update the information.",
             "success": "The information have been updated.",
             "title": "Billing address"
+        },
+        "contracts": {
+            "title": "Contract n°{number}",
+            "previewOrganization": "Preview of your organization",
+            "noContract": "You don't have any contract yet",
+            "duration": "Duration",
+            "from": "From",
+            "to": "To",
+            "amount": "Amount",
+            "user": {
+                "standard": "Standard | Standards",
+                "admin": "Administrator | Administrators",
+                "external": "External | Externals",
+                "remaining": "{number} remaining",
+                "fullAccess": "Full access",
+                "allFeaturesAccess": "Access to all features",
+                "rightLimited": "Limited rights"
+            },
+            "storage": {
+                "title": "Storage",
+                "stack": "per 100 Go stack",
+                "used": "used"
+            },
+            "invoice": {
+                "title": "Invoices {number}",
+                "noInvoice": "You don't have any invoice yet",
+                "paymentMethod": "Payment method: ",
+                "transfer": "Transfer",
+                "date": "Date: ",
+                "payment": "Payment: ",
+                "price": "€{count}",
+                "download": "Download"
+            }
         }
     }
 }
