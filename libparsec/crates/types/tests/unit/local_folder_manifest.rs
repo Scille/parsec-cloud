@@ -967,7 +967,6 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     p_assert_eq!(lfm.updated, t2);
 }
 
-#[ignore = "TODO: investigate apply_prevent_sync_pattern !"]
 #[test]
 fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_pattern() {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
@@ -1032,16 +1031,32 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
         lfm.remote_confinement_points,
         HashSet::from_iter([VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap()])
     );
-    p_assert_eq!(lfm.local_confinement_points, HashSet::new());
+    // Since `file3.tmp` was part of the local children, then it also gets locally confined !
+    //
+    // Note another possibility would have been to detect `file3.tmp` hasn't been modified
+    // locally, and hence entirely remove it from the local children once remote confinement
+    // need is detected.
+    // However this is more complicated to implement for a very niche benefit, hence we
+    // choose simplicity in the implementation here ^^.
+    p_assert_eq!(
+        lfm.local_confinement_points,
+        HashSet::from_iter([VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap()])
+    );
     p_assert_eq!(
         lfm.children,
-        HashMap::from_iter([(
-            "file1.png".parse().unwrap(),
-            VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
-        ),])
+        HashMap::from_iter([
+            (
+                "file1.png".parse().unwrap(),
+                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+            ),
+            (
+                "file3.tmp".parse().unwrap(),
+                VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap(),
+            ),
+        ])
     );
     p_assert_eq!(lfm.need_sync, true);
-    p_assert_eq!(lfm.updated, t3);
+    p_assert_eq!(lfm.updated, t2);
 }
 
 #[test]
