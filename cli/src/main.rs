@@ -1,16 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-mod commands;
-mod macro_opts;
-#[cfg(any(test, feature = "testenv"))]
-mod testenv_utils;
-#[cfg(test)]
-#[path = "../tests/integration/mod.rs"]
-mod tests;
-mod utils;
+use parsec_cli::commands::*;
 
 use clap::{Parser, Subcommand};
-pub use commands::*;
 
 /// Parsec cli
 #[derive(Parser)]

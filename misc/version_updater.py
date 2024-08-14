@@ -414,7 +414,12 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     },
     ROOT_DIR / "Cargo.toml": {
         Tool.License: [TOML_LICENSE_FIELD],
-        Tool.Parsec: [ReplaceRegex(r'^version = ".*"$', 'version = "{version}"')],
+        Tool.Parsec: [
+            ReplaceRegex(
+                r'^version = ".*" (\s*)# __PARSEC_VERSION__$',
+                'version = "{version}"' + " " * 35 + "# __PARSEC_VERSION__",
+            )
+        ],
     },
 }
 

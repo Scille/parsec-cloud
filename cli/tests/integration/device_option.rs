@@ -6,6 +6,7 @@ use predicates::prelude::PredicateBooleanExt;
 use super::bootstrap_cli_test;
 use crate::{
     testenv_utils::TestOrganization,
+    utils::get_minimal_short_id_size,
     utils::{RESET, YELLOW},
 };
 
@@ -36,7 +37,7 @@ async fn device_not_found(tmp_path: TmpPath) {
     });
 
     let mut available_devices_string_list = String::new();
-    format_device::<4>(&devices, &mut available_devices_string_list).unwrap();
+    format_devices(&devices, &mut available_devices_string_list).unwrap();
 
     crate::assert_cmd_failure!(
         with_password = "a password",
@@ -50,12 +51,14 @@ async fn device_not_found(tmp_path: TmpPath) {
     );
 }
 
-fn format_device<const SHORT_ID_LEN: usize>(
+fn format_devices(
     devices: &[Arc<LocalDevice>],
     mut writer: impl std::fmt::Write,
 ) -> std::fmt::Result {
+    let short_id_size = get_minimal_short_id_size(devices.iter().map(|d| &d.device_id));
+
     for device in devices {
-        let short_id = &device.device_id.hex()[..SHORT_ID_LEN];
+        let short_id = &device.device_id.hex()[..short_id_size];
         let organization_id = &device.organization_id();
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
@@ -85,7 +88,7 @@ async fn missing_option(tmp_path: TmpPath) {
     devices.sort_by_cached_key(|d| d.device_id.hex());
 
     let mut available_devices_string_list = String::new();
-    format_device::<4>(&devices, &mut available_devices_string_list).unwrap();
+    format_devices(&devices, &mut available_devices_string_list).unwrap();
 
     crate::assert_cmd_failure!("list-users").stderr(
         predicates::str::contains("Error: Missing option '--device'")
@@ -163,7 +166,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
     devices.sort_by_cached_key(|d| d.device_id.hex());
 
     let mut available_devices_string_list = String::new();
-    format_device::<3>(&devices, &mut available_devices_string_list).unwrap();
+    format_devices(&devices, &mut available_devices_string_list).unwrap();
 
     crate::assert_cmd_failure!("list-users", "--device", first_dev_id_prefix).stderr(
         predicates::str::contains(format!(
