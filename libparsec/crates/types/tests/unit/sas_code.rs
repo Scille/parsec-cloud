@@ -4,6 +4,8 @@ use libparsec_tests_lite::prelude::*;
 
 use crate::{SASCode, SecretKey};
 
+use super::SASCodeValueTooLarge;
+
 #[test]
 fn generate() {
     let claimer_nonce = hex!(
@@ -32,8 +34,8 @@ fn generate() {
 #[case::min(0, Ok("AAAA".parse().unwrap()))]
 #[case::typical(123456, Ok("AU2D".parse().unwrap()))]
 #[case::max(2u32.pow(20) - 1, Ok("9999".parse().unwrap()))]
-#[case::too_large(2u32.pow(20), Err("Provided integer is too large"))]
-fn from_int(#[case] val: u32, #[case] result: Result<SASCode, &'static str>) {
+#[case::too_large(2u32.pow(20), Err(SASCodeValueTooLarge))]
+fn from_int(#[case] val: u32, #[case] result: Result<SASCode, SASCodeValueTooLarge>) {
     p_assert_eq!(SASCode::try_from(val), result);
 }
 

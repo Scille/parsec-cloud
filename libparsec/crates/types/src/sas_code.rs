@@ -38,15 +38,27 @@ impl FromStr for SASCode {
     }
 }
 
+#[cfg_attr(test, derive(PartialEq, Eq))]
+#[derive(Debug, Clone, Copy)]
+pub struct SASCodeValueTooLarge;
+
+impl std::error::Error for SASCodeValueTooLarge {}
+
+impl std::fmt::Display for SASCodeValueTooLarge {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        f.write_str("Provided integer is too large")
+    }
+}
+
 impl TryFrom<u32> for SASCode {
-    type Error = &'static str;
+    type Error = SASCodeValueTooLarge;
     fn try_from(num: u32) -> Result<SASCode, Self::Error> {
         let mut num = num as usize;
         if num >= 1 << SAS_CODE_BITS {
             // The valid range number should not exceed 20 bit long
             // because subcode is 5 bits long (remainder by SAS_CODE_CHARS.len() [32])
             // and SAS_CODE_LEN is 4
-            return Err("Provided integer is too large");
+            return Err(SASCodeValueTooLarge);
         }
 
         let mut str = String::with_capacity(SAS_CODE_LEN);
