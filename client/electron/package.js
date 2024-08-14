@@ -82,10 +82,15 @@ const fs = require('node:fs');
 fs.mkdirSync('build/assets', { recursive: true });
 fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
-const signOptions = {
+const SIGN_OPTIONS = {
   certificateSubjectName: 'Scille',
   certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
 };
+
+const UNSIGNED_ARTIFACT_NAME =
+  OPTS.sign || OPTS.platform === 'linux'
+    ? 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}'
+    : 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.unsigned.${ext}';
 
 /**
  * @type {import('electron-builder').Configuration}
@@ -93,7 +98,7 @@ const signOptions = {
  */
 const options = {
   appId: 'cloud.parsec.parsec-v3',
-  artifactName: 'Parsec_${buildVersion}_${os}_${env.BUILD_MACHINE_ARCH}.${ext}',
+  artifactName: UNSIGNED_ARTIFACT_NAME,
   buildVersion: '3.0.0-b.12+dev',
   protocols: {
     name: 'Parsec-v3',
@@ -120,7 +125,7 @@ const options = {
 
   win: {
     target: 'nsis',
-    ...(OPTS.sign ? signOptions : {}),
+    ...(OPTS.sign ? SIGN_OPTIONS : {}),
     extraResources: [
       {
         from: 'node_modules/regedit/vbs',
