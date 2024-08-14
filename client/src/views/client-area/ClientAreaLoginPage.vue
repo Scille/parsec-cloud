@@ -1,43 +1,80 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="saas-login-container">
+  <div :class="getCurrentSectionClass()">
     <bms-login
+      v-if="section === Sections.BmsLogin"
       @login-success="onLoginSuccess"
       :hide-header="true"
       class="saas-login"
+      @forgotten-password-clicked="switchSection(Sections.BmsForgotPassword)"
+    />
+    <bms-forgot-password
+      v-if="section === Sections.BmsForgotPassword"
+      class="saas-forgot-password"
+      :hide-header="true"
+      @cancel="switchSection(Sections.BmsLogin)"
+      @login-requested="switchSection(Sections.BmsLogin)"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
+import BmsForgotPassword from '@/views/client-area/forgot-password/BmsForgotPassword.vue';
 import { AuthenticationToken, PersonalInformationResultData } from '@/services/bms';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 import { navigateTo, Routes } from '@/router';
 
-onMounted(async () => {});
+const enum Sections {
+  BmsLogin,
+  BmsForgotPassword,
+}
+
+const section = ref<Sections>(Sections.BmsLogin);
+
+onMounted(() => {
+  section.value = Sections.BmsLogin;
+});
 
 async function onLoginSuccess(_token: AuthenticationToken, _personalInformation: PersonalInformationResultData): Promise<void> {
   await goToClientArea();
 }
 
+async function switchSection(newSection: Sections): Promise<void> {
+  section.value = newSection;
+}
+
 async function goToClientArea(): Promise<void> {
   await navigateTo(Routes.ClientArea, { replace: true });
+}
+
+function getCurrentSectionClass(): string {
+  switch (section.value) {
+    case Sections.BmsLogin:
+      return 'saas-login-container';
+    case Sections.BmsForgotPassword:
+      return 'saas-forgot-password-container';
+  }
 }
 </script>
 
 <style scoped lang="scss">
-.saas-login-container {
+.saas-login-container,
+.saas-forgot-password-container {
   display: flex;
-  height: 100vh;
-  width: 100%;
   max-width: 48rem;
   max-height: 32rem;
   margin: auto;
 }
 
-.saas-login {
+.saas-login-container {
+  height: 100vh;
+  width: 100%;
+}
+
+.saas-login,
+.saas-forgot-password {
   overflow: hidden;
 
   border-radius: var(--parsec-radius-12);

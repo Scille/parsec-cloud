@@ -19,6 +19,7 @@ msTest('Log into the customer area', async ({ home }) => {
   await expect(button).toHaveText('Customer area');
   await button.click();
   await expect(home).toHaveURL(/.+\/home$/);
+  await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.saas-login-button__item').click();

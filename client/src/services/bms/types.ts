@@ -21,7 +21,7 @@ enum DataType {
   PersonalInformation = 'personal-information',
   UpdatePersonalInformation = 'update-personal-information',
   UpdateEmail = 'update-email',
-  UpdatePassword = 'update-password',
+  ChangePassword = 'change-password',
   CreateOrganization = 'create-organization',
   ListOrganizations = 'list-organizations',
   OrganizationStats = 'organization-stats',
@@ -266,7 +266,7 @@ interface UpdateEmailQueryData extends UserQueryData {
   lang: string;
 }
 
-interface UpdatePasswordQueryData extends UserQueryData {
+interface ChangePasswordQueryData {
   email: string;
   lang: string;
 }
@@ -312,6 +312,7 @@ export {
   BmsInvoice,
   BmsOrganization,
   BmsResponse,
+  ChangePasswordQueryData,
   ClientQueryData,
   CreateOrganizationQueryData,
   CustomOrderDetailsResultData,
@@ -332,7 +333,6 @@ export {
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
-  UpdatePasswordQueryData,
   UpdatePersonalInformationQueryData,
   UserQueryData,
 };

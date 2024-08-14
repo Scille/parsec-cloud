@@ -1177,8 +1177,22 @@
             "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
             "noAccount": "Vous n'avez pas encore d'espace client ?",
             "createAccount": "Créer un compte",
-            "createAccountUrl": "https://parsec.cloud/tarification/",
-            "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
+            "createAccountUrl": "https://parsec.cloud/tarification/"
+        },
+        "forgotPassword": {
+            "getEmailStep": {
+                "title": "Mot de passe oublié",
+                "description": "Pas d'inquiétude, nous allons vous aider à réinitialiser votre mot de passe.",
+                "email": "Adresse mail",
+                "nextButton": "Soumettre",
+                "previousButton": "Retour à la connexion",
+                "error": "Impossible de réinitialiser votre mot de passe. Veuillez vérifier votre email."
+            },
+            "emailSentStep": {
+                "title": "Vérifier votre boîte de réception",
+                "description": "Pour réinitialiser votre mot de passe, suivez les instructions envoyées par email à l'adresse suivante :",
+                "nextButton": "Se connecter"
+            }
         },
         "sidebar": {
             "goToOrganization": "Aller à l'organisation",

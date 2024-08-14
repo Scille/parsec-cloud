@@ -140,17 +140,6 @@ class BmsAccess {
     return response;
   }
 
-  async updatePassword(email: string, lang: string): Promise<BmsResponse> {
-    assertLoggedIn(this.tokens);
-    assertLoggedIn(this.customerInformation);
-    await this.ensureFreshToken();
-    return await BmsApi.updatePassword(this.tokens.access, {
-      userId: this.customerInformation.id,
-      email,
-      lang,
-    });
-  }
-
   async updateAuthentication(password: string, newPassword: string): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
