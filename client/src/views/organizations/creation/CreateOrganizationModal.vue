@@ -11,6 +11,7 @@
       <create-organization-saas
         v-if="serverType === ServerType.Saas"
         :bootstrap-link="bootstrapLink"
+        :information-manager="informationManager"
         @close-requested="onCloseRequested"
         @organization-created="onOrganizationCreated"
       />
@@ -72,10 +73,10 @@ async function onServerChosen(chosenServerType: ServerType): Promise<void> {
   serverType.value = chosenServerType;
 }
 
-async function onCloseRequested(): Promise<void> {
+async function onCloseRequested(force = false): Promise<void> {
   let answer = Answer.Yes;
   // No point in having confirmation at this stage
-  if (serverType.value !== undefined) {
+  if (serverType.value !== undefined && !force) {
     answer = await askQuestion('CreateOrganization.cancelConfirm', 'CreateOrganization.cancelConfirmSubtitle', {
       keepMainModalHiddenOnYes: true,
       yesText: 'CreateOrganization.cancelYes',

@@ -239,7 +239,7 @@ async function onLoginClicked(): Promise<void> {
   const response = await BmsAccessInstance.get().login(email.value, password.value);
 
   if (response.ok) {
-    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
     querying.value = false;
     return;
   }

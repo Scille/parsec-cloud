@@ -351,3 +351,20 @@ msTest('Edit from summary', async ({ home }) => {
   ]);
   await expect(summaryNext).toBeTrulyEnabled();
 });
+
+msTest('Try to create an org with custom order', async ({ home }) => {
+  const modal = await openCreateOrganizationModal(home);
+
+  await MockBms.mockLogin(home);
+  await MockBms.mockUserRoute(home, { billingSystem: 'CUSTOM_ORDER' });
+
+  const bmsContainer = modal.locator('.saas-login');
+  await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+  await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+  await bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').click();
+  await expect(modal).toBeHidden();
+  await expect(home).toShowInformationModal(
+    'Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please contact us.',
+    'Error',
+  );
+});

@@ -99,7 +99,7 @@ async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> 
 }
 
 interface MockUserOverload {
-  billingSystem?: string;
+  billingSystem?: 'STRIPE' | 'CUSTOM_ORDER' | 'NONE' | 'EXPERIMENTAL_CANDIDATE';
 }
 
 async function mockUserRoute(page: Page, overload: MockUserOverload = {}, options?: MockRouteOptions): Promise<void> {

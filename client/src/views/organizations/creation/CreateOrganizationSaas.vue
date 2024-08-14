@@ -5,7 +5,7 @@
     <bms-login
       v-show="step === Steps.BmsLogin"
       @login-success="onLoginSuccess"
-      @close-requested="$emit('closeRequested')"
+      @close-requested="$emit('closeRequested', false)"
     />
     <organization-name-page
       :class="step === Steps.OrganizationName ? 'active' : ''"
@@ -13,13 +13,13 @@
       :organization-name="organizationName ?? ''"
       @organization-name-chosen="onOrganizationNameChosen"
       :error="currentError"
-      @close-requested="$emit('closeRequested')"
+      @close-requested="$emit('closeRequested', false)"
     />
     <organization-authentication-page
       :class="step === Steps.Authentication ? 'active' : ''"
       v-show="step === Steps.Authentication"
       @authentication-chosen="onAuthenticationChosen"
-      @close-requested="$emit('closeRequested')"
+      @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
     />
     <organization-summary-page
@@ -39,7 +39,7 @@
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
       @update-organization-name-clicked="onUpdateOrganizationNameClicked"
-      @close-requested="$emit('closeRequested')"
+      @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
     />
     <organization-creation-page
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-import { AuthenticationToken, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
+import { AuthenticationToken, BillingSystem, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
 import { ServerType } from '@/services/parsecServers';
 import { IonPage } from '@ionic/vue';
 import { isProxy, onMounted, ref, toRaw } from 'vue';
@@ -79,6 +79,7 @@ import OrganizationSummaryPage from '@/views/organizations/creation/Organization
 import OrganizationCreationPage from '@/views/organizations/creation/OrganizationCreationPage.vue';
 import OrganizationCreatedPage from '@/views/organizations/creation/OrganizationCreatedPage.vue';
 import { wait } from '@/parsec/internals';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
 enum Steps {
   BmsLogin,
@@ -91,10 +92,11 @@ enum Steps {
 
 const props = defineProps<{
   bootstrapLink?: string;
+  informationManager: InformationManager;
 }>();
 
 const emits = defineEmits<{
-  (e: 'closeRequested'): void;
+  (e: 'closeRequested', force: boolean): void;
   (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
 }>();
 
@@ -118,6 +120,21 @@ onMounted(async () => {
 async function onLoginSuccess(token: AuthenticationToken, info: PersonalInformationResultData): Promise<void> {
   authenticationToken.value = token;
   personalInformation.value = info;
+
+  if (
+    (info.billingSystem === BillingSystem.CustomOrder || info.billingSystem === BillingSystem.ExperimentalCandidate) &&
+    !props.bootstrapLink
+  ) {
+    emits('closeRequested', true);
+    props.informationManager.present(
+      new Information({
+        message: 'CreateOrganization.errors.customOrderNotAuthorized',
+        level: InformationLevel.Error,
+      }),
+      PresentationMode.Modal,
+    );
+    return;
+  }
 
   if (props.bootstrapLink) {
     step.value = Steps.Authentication;
