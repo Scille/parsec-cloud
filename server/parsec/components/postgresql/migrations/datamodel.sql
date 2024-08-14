@@ -87,10 +87,7 @@ CREATE TABLE user_ (
     revoked_user_certificate BYTEA,
     -- NULL if not yet revoked
     revoked_user_certifier INTEGER,
-    -- `human` field has been introduced in Parsec v1.14, hence it is basically always here.
-    -- If it's not the case, we are in an exotic case (very old certificate) and use the redacted
-    -- system to obtain a device label (i.e. label is user_id, email is `<user_id>@redacted.invalid`).
-    human INTEGER REFERENCES human (_id),
+    human INTEGER REFERENCES human (_id) NOT NULL,
     redacted_user_certificate BYTEA NOT NULL,
     initial_profile USER_PROFILE NOT NULL,
     -- This field is altered in an `ALTER TABLE` statement below
