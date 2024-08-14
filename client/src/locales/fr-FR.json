@@ -1366,6 +1366,29 @@
             },
             "retrieveError": "Impossible de récupérer la liste des factures."
         },
+        "invoicesCustomOrder": {
+            "contract": "Contrat n°{number}",
+            "inProgress": "en cours",
+            "number": "Numéro de facture",
+            "information": "Informations",
+            "startingDate": "Date de début",
+            "endingDate": "Date de fin",
+            "members": {
+                "title": "Licence membre | Licences membres",
+                "admin": "Membre administrateur | Membres administrateur",
+                "adminDescription": "Tous les accès",
+                "standard": "Membre standard | Membres standards",
+                "standardDescription": "Utilisateur classique",
+                "external": "Membre externe | Membres externes",
+                "externalDescription": "Accès limité"
+            },
+            "storage": {
+                "title": "Licence stockage",
+                "storage": "Stockage",
+                "stack": "par tranche de 100 Go"
+            },
+            "download": "Télécharger"
+        },
         "paymentMethodsPage": {
             "title": "Votre moyen de paiement",
             "description": "Le paiement s'effectue automatiquement par votre carte bancaire.",

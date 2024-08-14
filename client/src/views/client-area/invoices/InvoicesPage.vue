@@ -418,6 +418,7 @@ function removeSelectedMonth(month: number): void {
   --max-width-organization: 20rem;
   --max-width-amount: 10rem;
   transition: padding 0.2s;
+  border-radius: var(--parsec-radius-12);
 
   [class^='invoices-'] {
     height: 1rem;

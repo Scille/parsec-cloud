@@ -177,21 +177,6 @@
           {{ $msTranslate('clientArea.sidebar.menu.stats') }}
         </ion-item>
 
-        <!-- invoices -->
-        <ion-item
-          button
-          lines="none"
-          class="sidebar-item menu-default menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
-          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
-        >
-          <ion-icon
-            class="menu-client-list-item__icon"
-            :icon="newspaper"
-          />
-          {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
-        </ion-item>
-
         <!-- billing -->
         <ion-item
           button

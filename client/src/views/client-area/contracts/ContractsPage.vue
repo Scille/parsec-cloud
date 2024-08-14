@@ -2,86 +2,147 @@
 
 <template>
   <div class="client-contract-page">
-    <ion-title
-      class="contract__title title-h2"
+    {{ contractDetails }}
+    <div
+      class="contract"
       v-if="contractDetails"
     >
-      {{ $msTranslate('clientArea.contracts.title') }} {{ contractDetails.number }}
-    </ion-title>
-    <div class="contract-header">
-      <div
-        class="contract-header-data"
-        v-if="contractDetails"
-      >
-        <!-- duration -->
-        <div class="data-item">
-          <ion-text class="data-item__title title-h2">{{ $msTranslate('clientArea.contracts.duration') }}</ion-text>
-          <div class="data-item-text">
-            <ion-text class="data-item-text__value title-h1">2 mois</ion-text>
-            <ion-text class="data-item-text__description breadcrumb-normal">15 jours restants</ion-text>
-          </div>
-          <div class="data-item-divider" />
-          <div class="data-item-time">
-            <div class="time-column">
-              <ion-text class="time-column__title subtitles-sm">{{ $msTranslate('clientArea.contracts.from') }}</ion-text>
-              <ion-text class="time-column__value title-h4">26/02/2023</ion-text>
-            </div>
-            <ion-icon
-              class="time-icon"
-              :icon="arrowForward"
-            />
-            <div class="time-column">
-              <ion-text class="time-column__title subtitles-sm">{{ $msTranslate('clientArea.contracts.to') }}</ion-text>
-              <ion-text class="time-column__value title-h4">26/04/2023</ion-text>
-            </div>
-          </div>
+      <div class="contract-header">
+        <div class="contract-header-title">
+          <ion-text class="contract-header-title__text title-h3">
+            {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
+          </ion-text>
+          <ion-text class="contract-header-title__badge button-small">
+            {{ $msTranslate('clientArea.invoicesCustomOrder.inProgress') }}
+          </ion-text>
         </div>
-        <!-- amount -->
-        <div class="data-item">
-          <ion-text class="data-item__title title-h2">{{ $msTranslate('clientArea.contracts.amount') }}</ion-text>
-          <div class="data-item-text">
-            <ion-text class="data-item-text__value title-h1">{{ contractDetails.amountWithTaxes }} €</ion-text>
-            <ion-text class="data-item-text__description breadcrumb-normal">15 jours restants</ion-text>
-          </div>
-          <div class="data-item-divider" />
-        </div>
-        <!-- invoice -->
-        <div class="data-invoice">
-          <div class="data-invoice-item">
-            <ms-image
-              class="data-invoice-item__image"
-              alt="pdf"
-              :image="File.Pdf"
-            />
-            <ion-text class="data-invoice-item__name title-h4">{{ $msTranslate('clientArea.contracts.invoice.title') }} 14541</ion-text>
-          </div>
-          <div class="data-invoice-text">
-            <ion-text class="data-invoice-text__value subtitles-normal">
-              <span>{{ $msTranslate('clientArea.contracts.invoice.date') }}</span>
-              16 février 2024
-            </ion-text>
-            <ion-text class="data-invoice-text__value subtitles-normal">
-              <span>{{ $msTranslate('clientArea.contracts.invoice.payment') }}</span>
-              {{ $msTranslate('clientArea.contracts.invoice.transfer') }}
-            </ion-text>
-          </div>
-          <div class="data-invoice-button">
+        <div class="contract-header-invoice">
+          <ms-image
+            class="contract-header-invoice__image"
+            alt="pdf"
+            :image="File.Pdf"
+          />
+          <ion-text class="contract-header-invoice__text title-h4">
+            <span class="body">{{ $msTranslate('clientArea.invoicesCustomOrder.number') }}</span>
+            {{ contractDetails.number }}
+          </ion-text>
+          <div class="contract-header-invoice__button">
             <a
+              :href="contractDetails.link"
               class="custom-button custom-button-fill button-medium"
               download
             >
-              {{ $msTranslate('clientArea.invoices.cell.download') }}
+              {{ $msTranslate('clientArea.invoicesCustomOrder.download') }}
             </a>
+          </div>
+        </div>
+      </div>
+
+      <div class="contract-main">
+        <!-- info -->
+        <div class="contract-main-item">
+          <div class="item-header">
+            <ion-icon
+              class="item-header__icon"
+              :icon="informationCircle"
+            />
+            <ion-title class="item-header__title title-h4">
+              {{ $msTranslate('clientArea.invoicesCustomOrder.information') }}
+            </ion-title>
+          </div>
+          <div class="item-content">
+            <div class="item-content-column">
+              <div class="item-content-date">
+                <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.startingDate') }}</ion-text>
+                <ion-text class="item-content-date__date title-h4">12 juillet 2024</ion-text>
+              </div>
+              <div class="item-content-date">
+                <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.endingDate') }}</ion-text>
+                <ion-text class="item-content-date__date title-h4">12 mars 2025</ion-text>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- user -->
+        <div class="contract-main-item">
+          <div class="item-header">
+            <ion-icon
+              class="item-header__icon"
+              :icon="person"
+            />
+            <ion-title class="item-header__title title-h4">{{ $msTranslate('clientArea.invoicesCustomOrder.members.title') }}</ion-title>
+          </div>
+          <div class="item-content">
+            <div class="item-content-row">
+              <div class="data-text">
+                <ion-text class="data-text__title subtitles-normal">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.admin') }}
+                </ion-text>
+                <ion-text class="data-text__description body">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.adminDescription') }}
+                </ion-text>
+              </div>
+              <ion-text class="data-number title-h2">200</ion-text>
+            </div>
+            <div class="item-content-row">
+              <div class="data-text">
+                <ion-text class="data-text__title subtitles-normal">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.standard') }}
+                </ion-text>
+                <ion-text class="data-text__description body">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.standardDescription') }}
+                </ion-text>
+              </div>
+              <ion-text class="data-number title-h2">200</ion-text>
+            </div>
+            <div class="item-content-row">
+              <div class="data-text">
+                <ion-text class="data-text__title subtitles-normal">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.external') }}
+                </ion-text>
+                <ion-text class="data-text__description body">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.externalDescription') }}
+                </ion-text>
+              </div>
+              <ion-text class="data-number title-h2">200</ion-text>
+            </div>
+          </div>
+        </div>
+
+        <!-- storage -->
+        <div class="contract-main-item">
+          <div class="item-header">
+            <ion-icon
+              class="item-header__icon"
+              :icon="pieChart"
+            />
+            <ion-title class="item-header__title title-h4">
+              {{ $msTranslate('clientArea.invoicesCustomOrder.storage.title') }}
+            </ion-title>
+          </div>
+          <div class="item-content">
+            <div class="item-content-row">
+              <div class="data-text">
+                <ion-text class="data-text__title subtitles-normal">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.storage.storage') }}
+                </ion-text>
+                <ion-text class="data-text__description body">
+                  {{ $msTranslate('clientArea.invoicesCustomOrder.storage.stack') }}
+                </ion-text>
+              </div>
+              <ion-text class="data-number title-h2">1, 250 To</ion-text>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <div class="contract-content">
-      <ion-title class="contract-content__title title-h3">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
-      <div class="contract-users">
+    <div class="organization-content">
+      <ion-title class="organization-content__title title-h3">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
+      <div class="organization-users">
         <!-- admins-->
-        <div class="contract-users-item">
+        <div class="organization-users-item">
           <div class="item-licence">
             <ion-icon
               :icon="person"
@@ -109,7 +170,7 @@
           </div>
         </div>
         <!-- standards-->
-        <div class="contract-users-item">
+        <div class="organization-users-item">
           <div class="item-licence">
             <ion-icon
               :icon="person"
@@ -137,7 +198,7 @@
           </div>
         </div>
         <!-- externals-->
-        <div class="contract-users-item">
+        <div class="organization-users-item">
           <div class="item-licence">
             <ion-icon
               :icon="person"
@@ -166,9 +227,9 @@
         </div>
       </div>
 
-      <div class="contract-storage">
+      <div class="organization-storage">
         <!-- storage-->
-        <div class="contract-storage-item">
+        <div class="organization-storage-item">
           <div class="item-licence">
             <ion-icon
               :icon="pieChart"
@@ -204,7 +265,7 @@
 import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MsImage, File } from 'megashark-lib';
-import { arrowForward, person, pieChart } from 'ionicons/icons';
+import { informationCircle, person, pieChart } from 'ionicons/icons';
 import { BmsAccessInstance, BmsOrganization, CustomOrderStatus, CustomOrderDetailsResultData, DataType } from '@/services/bms';
 import { onMounted, ref } from 'vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
@@ -245,114 +306,63 @@ onMounted(async () => {
   padding-bottom: 3rem;
 }
 
-.contract__title {
-  color: var(--parsec-color-light-primary-800);
+.contract {
+  width: 100%;
+  max-width: 70rem;
+  height: fit-content;
+  border: 1px solid var(--parsec-color-light-secondary-medium);
+  border-radius: var(--parsec-radius-12);
+  overflow: hidden;
 }
 
 .contract-header {
   display: flex;
   justify-content: space-between;
+  width: 100%;
+  background: var(--parsec-color-light-secondary-background);
+  padding: 0.75rem 1rem;
 
-  &-data {
+  &-title {
     display: flex;
-    gap: 4rem;
-    width: 100%;
-  }
-
-  .data-item {
-    display: flex;
-    flex-direction: column;
     gap: 1rem;
-    max-width: 15rem;
-    width: 100%;
+    align-items: center;
 
-    &__title {
-      color: var(--parsec-color-light-primary-700);
+    &__text {
+      color: var(--parsec-color-light-secondary-text);
     }
 
-    &-text {
+    &__badge {
+      color: var(--parsec-color-light-primary-600);
+      background: var(--parsec-color-light-primary-100);
+      padding: 0.25rem 0.5rem;
+      border-radius: var(--parsec-radius-32);
+    }
+  }
+
+  &-invoice {
+    display: flex;
+    gap: 1rem;
+    max-width: 20rem;
+    width: 100%;
+    align-items: center;
+
+    &__image {
+      width: 2rem;
+      height: 2rem;
+    }
+
+    &__text {
+      color: var(--parsec-color-light-secondary-text);
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
 
-      &__value {
-        color: var(--parsec-color-light-secondary-contrast);
-      }
-
-      &__description {
+      span {
         color: var(--parsec-color-light-secondary-grey);
       }
     }
 
-    &-divider {
-      width: 100%;
-      height: 1px;
-      background-color: var(--parsec-color-light-secondary-medium);
-    }
-
-    &-time {
-      display: flex;
-      gap: 1rem;
-
-      .time-column {
-        display: flex;
-        flex-direction: column;
-        gap: 0.125rem;
-
-        &__title {
-          color: var(--parsec-color-light-secondary-grey);
-        }
-
-        &__value {
-          color: var(--parsec-color-light-secondary-800);
-        }
-      }
-
-      .time-icon {
-        color: var(--parsec-color-light-secondary-light);
-        font-size: 1.25rem;
-        align-self: self-end;
-      }
-    }
-  }
-
-  .data-invoice {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    background: var(--parsec-color-light-secondary-background);
-    padding: 1.5rem;
-    border-radius: var(--parsec-radius-12);
-    max-width: 18rem;
-    width: 100%;
-
-    &-item {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-
-      &__image {
-        width: 2rem;
-        height: 2rem;
-      }
-
-      &__name {
-        color: var(--parsec-color-light-secondary-soft-text);
-      }
-    }
-
-    &-text {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-
-      &__value {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-    }
-
-    &-button {
-      margin-top: 1rem;
+    &__button {
+      margin-left: auto;
 
       .custom-button {
         background: var(--parsec-color-light-secondary-contrast);
@@ -366,7 +376,96 @@ onMounted(async () => {
   }
 }
 
-.contract-content {
+.contract-main {
+  display: flex;
+  gap: 2rem;
+  padding: 1.5rem 2rem 2rem;
+
+  &-item {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+
+    &:has(.item-content-date) {
+      width: fit-content;
+      min-width: 12rem;
+    }
+  }
+
+  .item-header {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+
+    &__icon {
+      color: var(--parsec-color-light-primary-600);
+      background: var(--parsec-color-light-primary-30);
+      font-size: 1.5rem;
+      padding: 0.25rem;
+      border-radius: var(--parsec-radius-4);
+    }
+
+    &__title {
+      color: var(--parsec-color-light-primary-900);
+    }
+  }
+
+  .item-content {
+    display: flex;
+    flex-direction: column;
+
+    &-row {
+      display: flex;
+      gap: 2rem;
+      justify-content: space-between;
+      min-height: 2.5rem;
+      padding-left: 2.5rem;
+    }
+
+    &-column {
+      display: flex;
+      flex-direction: column;
+      padding-left: 2.5rem;
+      gap: 1rem;
+    }
+
+    &-date {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+
+      &__label {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+
+      &__date {
+        color: var(--parsec-color-light-secondary-text);
+      }
+    }
+
+    .data-text {
+      display: flex;
+      flex-direction: column;
+      padding: 0.5rem 0;
+
+      &__title {
+        color: var(--parsec-color-light-secondary-soft-text);
+      }
+
+      &__description {
+        color: var(--parsec-color-light-secondary-grey);
+      }
+    }
+
+    .data-number {
+      padding: 0.25rem 0;
+      color: var(--parsec-color-light-primary-600);
+    }
+  }
+}
+
+.organization-content {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
@@ -376,8 +475,8 @@ onMounted(async () => {
   }
 }
 
-.contract-users,
-.contract-storage {
+.organization-users,
+.organization-storage {
   display: flex;
   background: var(--parsec-color-light-secondary-inversed-contrast);
   border: 1px solid var(--parsec-color-light-secondary-premiere);
