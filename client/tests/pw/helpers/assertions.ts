@@ -275,4 +275,45 @@ export const expect = baseExpect.extend({
       pass: pass,
     };
   },
+
+  async toShowInformationModal(page: Page, message: string, theme: 'Success' | 'Warning' | 'Error' | 'Info'): Promise<AssertReturnType> {
+    const modal = page.locator('.information-modal');
+    let errorMessage = '';
+    let pass = true;
+
+    try {
+      await baseExpect(modal).toBeVisible();
+    } catch (error: any) {
+      errorMessage = 'Modal is not visible';
+      pass = false;
+    }
+
+    if (pass) {
+      try {
+        await baseExpect(modal.locator('.container-textinfo')).toHaveText(message);
+      } catch (error: any) {
+        errorMessage = `Modal does not contain the text '${message}'. Found: '${error.matcherResult.actual}' instead.`;
+        pass = false;
+      }
+    }
+
+    if (pass) {
+      pass = await modal.locator('.container-textinfo').evaluate((node, theme: string) => {
+        const expectedClass = `ms-${theme.toLowerCase()}`;
+        return node.classList.contains(expectedClass);
+      }, theme);
+      if (!pass) {
+        errorMessage = `Modal does not have the theme '${theme}'`;
+      }
+    }
+
+    // Close toast
+    await modal.locator('#next-button').click();
+    await expect(modal).toBeHidden();
+
+    return {
+      message: () => errorMessage,
+      pass: pass,
+    };
+  },
 });

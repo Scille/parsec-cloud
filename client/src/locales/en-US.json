@@ -240,7 +240,8 @@
             "timestampOutOfBallpark": "Your device time differs from the server time. Please check your device clock and make sure it is up-to-date (your device time is {clientTime}, server time is {serverTime}).",
             "offline": "Failed to contact server. Please make sure you are online.",
             "alreadyExists": "This organization name is not available, please choose another one.",
-            "generic": "Failed to create the organization (reason: {reason})."
+            "generic": "Failed to create the organization (reason: {reason}).",
+            "customOrderNotAuthorized": "Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please contact us."
         },
         "cancelConfirm": "Cancel organization creation",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the process? Information will not be saved, you will have to restart.",
