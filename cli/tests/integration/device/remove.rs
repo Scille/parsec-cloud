@@ -3,9 +3,10 @@ use std::io::{BufReader, Write};
 use assert_cmd::cargo::CommandCargoExt;
 use libparsec::{tmp_path, TmpPath};
 
-use crate::testenv_utils::TestOrganization;
-
-use crate::tests::{bootstrap_cli_test, wait_for};
+use crate::{
+    integration_tests::{bootstrap_cli_test, wait_for},
+    testenv_utils::TestOrganization,
+};
 
 #[rstest::rstest]
 #[tokio::test]

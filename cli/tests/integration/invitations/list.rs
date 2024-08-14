@@ -3,8 +3,8 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use crate::tests::bootstrap_cli_test;
 use crate::{
+    integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::{RESET, YELLOW},
 };

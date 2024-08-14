@@ -3,8 +3,8 @@ use std::sync::Arc;
 use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, LocalDevice, TmpPath, VlobID};
 
 use crate::{
+    integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
-    tests::bootstrap_cli_test,
     utils::{start_client, StartedClient},
 };
 

@@ -1,8 +1,8 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::tests::{bootstrap_cli_test, unique_org_id};
 use crate::{
-    organization::create::create_organization_req,
+    commands::organization::create::create_organization_req,
+    integration_tests::{bootstrap_cli_test, unique_org_id},
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER},
 };
 
