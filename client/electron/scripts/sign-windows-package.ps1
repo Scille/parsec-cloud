@@ -15,7 +15,7 @@ if (-Not ($node_version -eq $expected_node_version)) {
 
 # Cleanup dist directory
 if (Test-Path dist) {
-    rm dist -r -force
+    Remove-Item dist -r -force
 }
 
 # Install node-modules
@@ -23,3 +23,26 @@ npm clean-install
 
 # Build and sign the release
 npm run electron:sign
+
+# Create a fresh upload directory
+if (Test-Path -Path upload) {
+    Remove-Item upload -r -force
+}
+New-Item "upload" -Type Directory | Out-Null
+
+# Loop over `.exe` and `.exe.blockmap` files
+Get-ChildItem "dist" -Filter "Parsec*.exe*" |
+Foreach-Object {
+
+    # Copy file to upload directory
+    Copy-Item $_.FullName upload\$_
+
+    # Create the .sha256 file without line feed
+    (Get-FileHash $_.FullName).Hash | Out-File -Encoding "ASCII" -NoNewline upload\$_.sha256
+
+    # Add a `\n` to the end of the .sha256 file
+    Add-Content -Value "`n" -NoNewline upload\$_.sha256
+}
+
+# Output the items to upload
+Get-ChildItem upload
