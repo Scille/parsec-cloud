@@ -2,7 +2,7 @@ use libparsec::{tmp_path, TmpPath};
 
 use super::{bootstrap_cli_test, unique_org_id};
 use crate::{
-    create_organization::create_organization_req,
+    commands::create_organization::create_organization_req,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER_URL},
 };
 

@@ -23,12 +23,10 @@ pub fn format_devices(
     devices: &[AvailableDevice],
     mut f: impl std::fmt::Write,
 ) -> std::fmt::Result {
-    let n: usize = devices.len();
-    // Try to shorten the device ID to make it easier to work with
-    let short_id_len = 2 + (n + 1).ilog2() as usize;
+    let short_id_size = get_minimal_short_id_size(devices.iter().map(|d| &d.device_id));
 
     for device in devices {
-        let short_id = &device.device_id.hex()[..short_id_len];
+        let short_id = &device.device_id.hex()[..short_id_size];
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
@@ -39,6 +37,30 @@ pub fn format_devices(
     }
 
     Ok(())
+}
+
+pub fn get_minimal_short_id_size<'a, I>(devices: I) -> usize
+where
+    I: Iterator<Item = &'a libparsec::DeviceID>,
+{
+    let mut len = 1;
+    let mut ids = devices.map(|id| (id, id.hex())).collect::<Vec<_>>();
+    while !ids.is_empty() {
+        let mut conflicting_ids = Vec::with_capacity(ids.len());
+        for (id, id_s) in ids.iter() {
+            if ids.iter().any(|(other_id, other_id_s)| {
+                id != other_id && id_s.starts_with(&other_id_s[..len])
+            }) {
+                conflicting_ids.push((*id, id_s.clone()));
+            }
+        }
+        if conflicting_ids.is_empty() {
+            break;
+        }
+        ids = conflicting_ids;
+        len += 1;
+    }
+    return len;
 }
 
 #[derive(Debug)]
