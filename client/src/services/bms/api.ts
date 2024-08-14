@@ -7,6 +7,7 @@ import {
   BmsError,
   BmsOrganization,
   BmsResponse,
+  ChangePasswordQueryData,
   ClientQueryData,
   CreateOrganizationQueryData,
   CustomOrderQueryData,
@@ -19,7 +20,6 @@ import {
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
-  UpdatePasswordQueryData,
   UpdatePersonalInformationQueryData,
 } from '@/services/bms/types';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
@@ -165,11 +165,9 @@ async function updateEmail(token: AuthenticationToken, data: UpdateEmailQueryDat
   });
 }
 
-async function updatePassword(token: AuthenticationToken, data: UpdatePasswordQueryData): Promise<BmsResponse> {
+async function changePassword(data: ChangePasswordQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
-    const axiosResponse = await http.getInstance().post('/users/change_password', data, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const axiosResponse = await http.getInstance().post('/users/change_password', data);
     return {
       status: axiosResponse.status,
       isError: false,
@@ -618,7 +616,7 @@ export const BmsApi = {
   getPersonalInformation,
   updatePersonalInformation,
   updateEmail,
-  updatePassword,
+  changePassword,
   createOrganization,
   listOrganizations,
   getOrganizationStats,

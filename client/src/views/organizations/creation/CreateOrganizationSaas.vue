@@ -6,6 +6,13 @@
       v-show="step === Steps.BmsLogin"
       @login-success="onLoginSuccess"
       @close-requested="$emit('closeRequested', false)"
+      @forgotten-password-clicked="step = Steps.BmsForgotPassword"
+    />
+    <bms-forgot-password
+      v-if="step === Steps.BmsForgotPassword"
+      @cancel="step = Steps.BmsLogin"
+      @login-requested="step = Steps.BmsLogin"
+      @close-requested="$emit('closeRequested', false)"
     />
     <organization-name-page
       :class="step === Steps.OrganizationName ? 'active' : ''"
@@ -62,6 +69,7 @@ import { ServerType } from '@/services/parsecServers';
 import { IonPage } from '@ionic/vue';
 import { isProxy, onMounted, ref, toRaw } from 'vue';
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
+import BmsForgotPassword from '@/views/client-area/forgot-password/BmsForgotPassword.vue';
 import OrganizationNamePage from '@/views/organizations/creation/OrganizationNamePage.vue';
 import {
   AvailableDevice,
@@ -83,6 +91,7 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 
 enum Steps {
   BmsLogin,
+  BmsForgotPassword,
   OrganizationName,
   Authentication,
   Summary,

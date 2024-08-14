@@ -511,6 +511,14 @@ async function mockUpdateAuthentication(page: Page, options?: MockRouteOptions):
   });
 }
 
+async function mockChangePassword(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, '**/users/change_password', options, async (route) => {
+    await route.fulfill({
+      status: 200,
+    });
+  });
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -525,4 +533,5 @@ export const MockBms = {
   mockDeletePaymentMethod,
   mockUpdateEmail,
   mockUpdateAuthentication,
+  mockChangePassword,
 };

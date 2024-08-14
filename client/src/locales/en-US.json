@@ -1177,8 +1177,22 @@
             "retrieveInformationFailed": "Failed to retrieve your personal information from the server.",
             "noAccount": "No customer account yet?",
             "createAccount": "Create an account",
-            "createAccountUrl": "https://parsec.cloud/en/tarification/",
-            "forgottenPasswordLink": "https://parsec.cloud/password_recovery"
+            "createAccountUrl": "https://parsec.cloud/en/tarification/"
+        },
+        "forgotPassword": {
+            "getEmailStep": {
+                "title": "Forgot password",
+                "description": "No worries, we will help you reset your password.",
+                "email": "Email",
+                "nextButton": "Submit",
+                "previousButton": "Back to login",
+                "error": "Could not reset your password. Please check your email address."
+            },
+            "emailSentStep": {
+                "title": "Check Your Inbox",
+                "description": "To reset your password, follow the instructions sent to the following email address:",
+                "nextButton": "Log in"
+            }
         },
         "sidebar": {
             "goToOrganization": "Go to organization",

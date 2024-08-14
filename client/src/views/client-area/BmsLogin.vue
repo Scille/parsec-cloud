@@ -96,14 +96,10 @@
           >
             <ion-text class="body">{{ $msTranslate('clientArea.app.saveLogin') }}</ion-text>
           </ms-checkbox>
-
-          <!-- TODO: UPDATE THE LINK -->
-          <!-- If changing the link, don't forget to check that it is allowed by electron! -->
           <ion-text
             class="saas-login-link__forgotten-password button-small"
             target="_blank"
-            @click="$event.stopPropagation()"
-            :href="$msTranslate('clientArea.app.forgottenPasswordLink')"
+            @click="$emit('forgottenPasswordClicked')"
           >
             {{ $msTranslate('clientArea.app.forgottenPassword') }}
           </ion-text>
@@ -199,6 +195,7 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'loginSuccess', token: AuthenticationToken, personalInformation: PersonalInformationResultData): void;
   (e: 'closeRequested'): void;
+  (e: 'forgottenPasswordClicked'): void;
 }>();
 
 const email = ref<string>(props.email ?? '');
