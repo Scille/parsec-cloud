@@ -53,6 +53,10 @@ enum BillingSystem {
 enum CustomOrderStatus {
   Unknown = 'unknown',
   ContractEnded = 'contract_ended',
+  NothingLinked = 'nothing_linked',
+  EstimateLinked = 'estimate_linked',
+  InvoiceToBePaid = 'invoice_to_be_paid',
+  InvoicePaid = 'invoice_paid',
 }
 
 type AuthenticationToken = string;
