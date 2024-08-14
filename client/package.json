@@ -49,7 +49,7 @@
         "@ionic/vue-router": "^7.6.4",
         "@sentry/vue": "^8.20.0",
         "@types/luxon": "^3.3.4",
-        "axios": "^1.7.2",
+        "axios": "^1.7.4",
         "luxon": "^3.4.4",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#de5588e05e33b6c2e5faa02142de877098bed7b6",
         "qrcode-vue3": "^1.6.8",
