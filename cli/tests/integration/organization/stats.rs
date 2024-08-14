@@ -1,7 +1,6 @@
 use libparsec::{tmp_path, TmpPath};
 
-use crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN;
-use crate::tests::bootstrap_cli_test;
+use crate::{integration_tests::bootstrap_cli_test, testenv_utils::DEFAULT_ADMINISTRATION_TOKEN};
 
 #[rstest::rstest]
 #[tokio::test]

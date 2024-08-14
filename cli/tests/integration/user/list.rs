@@ -1,8 +1,8 @@
 use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
-use crate::tests::bootstrap_cli_test;
 use crate::{
+    integration_tests::bootstrap_cli_test,
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::{GREEN, RESET},
 };

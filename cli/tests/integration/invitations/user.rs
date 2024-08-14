@@ -7,8 +7,8 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use crate::tests::{bootstrap_cli_test, wait_for};
 use crate::{
+    integration_tests::{bootstrap_cli_test, wait_for},
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::YELLOW,
 };

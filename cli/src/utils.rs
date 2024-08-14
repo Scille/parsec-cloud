@@ -26,12 +26,10 @@ pub fn format_devices(
     devices: &[AvailableDevice],
     mut f: impl std::fmt::Write,
 ) -> std::fmt::Result {
-    let n: usize = devices.len();
-    // Try to shorten the device ID to make it easier to work with
-    let short_id_len = 2 + (n + 1).ilog2() as usize;
+    let short_id_size = get_minimal_short_id_size(devices.iter().map(|d| &d.device_id));
 
     for device in devices {
-        let short_id = &device.device_id.hex()[..short_id_len];
+        let short_id = &device.device_id.hex()[..short_id_size];
         let organization_id = &device.organization_id;
         let human_handle = &device.human_handle;
         let device_label = &device.device_label;
@@ -42,6 +40,35 @@ pub fn format_devices(
     }
 
     Ok(())
+}
+
+/// The minimal short id size, even if we could go lower,
+/// we want to keep a lower bound for the size of the short id to keep it simple to select the value via double click.
+pub(crate) const MINIMAL_SHORT_ID_SIZE: usize = 3;
+/// The maximal short id size, could not go higher since it's the size of the device id in hex format.
+pub(crate) const MAXIMAL_SHORT_ID_SIZE: usize = 32;
+
+pub fn get_minimal_short_id_size<'a, I>(devices: I) -> usize
+where
+    I: Iterator<Item = &'a libparsec::DeviceID> + Clone,
+{
+    use itertools::Itertools;
+
+    devices
+        // Generate combinations of the ids
+        .tuple_combinations::<(_, _)>()
+        // Find the first different bit between the two ids:
+        // We use the fact that we will display the id in hex format to compare both ids using the bitwise XOR and count the leading zeros.
+        // Since it takes 4 bits to represent a hex digit, we divide the leading zeros by 4 to get the position of the first different hex digit.
+        .map(|(a, b)| {
+            let cmp = a.as_u128() ^ b.as_u128();
+            let position = cmp.leading_zeros() / 4;
+            position as usize + 1
+        })
+        // Find the max value or fallback to 1 (meaning we have only one device)
+        .max()
+        .unwrap_or(MINIMAL_SHORT_ID_SIZE)
+        .clamp(MINIMAL_SHORT_ID_SIZE, MAXIMAL_SHORT_ID_SIZE)
 }
 
 #[derive(Debug)]
