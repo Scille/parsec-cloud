@@ -9,10 +9,9 @@ import {
   BmsResponse,
   ClientQueryData,
   CreateOrganizationQueryData,
+  CustomOrderQueryData,
   DataType,
   DeletePaymentMethodQueryData,
-  GetCustomOrderDetailsQueryData,
-  GetCustomOrderStatusQueryData,
   LoginQueryData,
   OrganizationQueryData,
   PaymentMethod,
@@ -482,13 +481,13 @@ async function updateBillingDetails(token: AuthenticationToken, query: UpdateBil
   });
 }
 
-async function getCustomOrderStatus(token: AuthenticationToken, query: GetCustomOrderStatusQueryData): Promise<BmsResponse> {
+async function getCustomOrderStatus(token: AuthenticationToken, query: CustomOrderQueryData): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
       `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_status`,
       {
         // eslint-disable-next-line camelcase
-        organization_ids: query.organizationIds,
+        organization_ids: [query.organization.bmsId],
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -496,20 +495,31 @@ async function getCustomOrderStatus(token: AuthenticationToken, query: GetCustom
         timeout: 15000,
       },
     );
+    const orgData = axiosResponse.data[query.organization.parsecId];
+    if (!orgData) {
+      return {
+        status: 404,
+        isError: true,
+      };
+    }
     return {
       status: axiosResponse.status,
       isError: false,
+      data: {
+        type: DataType.CustomOrderStatus,
+        status: orgData.status,
+      },
     };
   });
 }
 
-async function getCustomOrderDetails(token: AuthenticationToken, query: GetCustomOrderDetailsQueryData): Promise<BmsResponse> {
+async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOrderQueryData): Promise<BmsResponse> {
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
       `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_details`,
       {
         // eslint-disable-next-line camelcase
-        organization_ids: query.organizationIds,
+        organization_ids: [query.organization.bmsId],
       },
       {
         headers: { Authorization: `Bearer ${token}` },
@@ -517,9 +527,28 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: GetCusto
         timeout: 15000,
       },
     );
+    const orgData = axiosResponse.data[query.organization.parsecId];
+    if (!orgData) {
+      return {
+        status: 404,
+        isError: true,
+      };
+    }
     return {
       status: axiosResponse.status,
       isError: false,
+      data: {
+        type: DataType.CustomOrderDetails,
+        id: orgData.id,
+        link: orgData.pdf_link,
+        number: orgData.number,
+        amountWithTaxes: orgData.amounts.total_incl_tax,
+        amountNoTaxes: orgData.amounts.total_excl_tax,
+        currency: orgData.currency,
+        created: DateTime.fromISO(orgData.created, { zone: 'utc' }),
+        dueDate: DateTime.fromISO(orgData.due_date, { zone: 'utc' }),
+        status: orgData.status,
+      },
     };
   });
 }

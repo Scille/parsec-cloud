@@ -2,9 +2,17 @@
 
 <template>
   <div class="client-contract-page">
-    <ion-title class="contract__title title-h2"> {{ $msTranslate('clientArea.contracts.title') }}ART14516 </ion-title>
+    <ion-title
+      class="contract__title title-h2"
+      v-if="contractDetails"
+    >
+      {{ $msTranslate('clientArea.contracts.title') }} {{ contractDetails.number }}
+    </ion-title>
     <div class="contract-header">
-      <div class="contract-header-data">
+      <div
+        class="contract-header-data"
+        v-if="contractDetails"
+      >
         <!-- duration -->
         <div class="data-item">
           <ion-text class="data-item__title title-h2">{{ $msTranslate('clientArea.contracts.duration') }}</ion-text>
@@ -32,7 +40,7 @@
         <div class="data-item">
           <ion-text class="data-item__title title-h2">{{ $msTranslate('clientArea.contracts.amount') }}</ion-text>
           <div class="data-item-text">
-            <ion-text class="data-item-text__value title-h1">674,00 €</ion-text>
+            <ion-text class="data-item-text__value title-h1">{{ contractDetails.amountWithTaxes }} €</ion-text>
             <ion-text class="data-item-text__description breadcrumb-normal">15 jours restants</ion-text>
           </div>
           <div class="data-item-divider" />
@@ -197,14 +205,36 @@ import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { MsImage, File } from 'megashark-lib';
 import { arrowForward, person, pieChart } from 'ionicons/icons';
-import { BmsOrganization } from '@/services/bms';
-import { onMounted } from 'vue';
+import { BmsAccessInstance, BmsOrganization, CustomOrderStatus, CustomOrderDetailsResultData, DataType } from '@/services/bms';
+import { onMounted, ref } from 'vue';
+import { isDefaultOrganization } from '@/views/client-area/types';
 
-defineProps<{
+const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
-onMounted(async () => {});
+const contractStatus = ref(CustomOrderStatus.Unknown);
+const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
+const querying = ref(true);
+
+onMounted(async () => {
+  querying.value = true;
+  if (isDefaultOrganization(props.organization)) {
+    querying.value = false;
+    return;
+  }
+  const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+  if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
+    contractStatus.value = statusRep.data.status;
+  }
+  const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+  if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
+    contractDetails.value = detailsRep.data;
+  } else {
+    // TODO: Handle the error (toast? message?)
+  }
+  querying.value = false;
+});
 </script>
 
 <style scoped lang="scss">

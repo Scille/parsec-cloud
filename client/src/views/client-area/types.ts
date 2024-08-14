@@ -5,17 +5,14 @@ import { DateTime } from 'luxon';
 
 export enum ClientAreaPages {
   BillingDetails = 'billing-details',
+  CustomOrderBillingDetails = 'custom-order-billing-details',
   Contracts = 'contracts',
   Dashboard = 'dashboard',
   Invoices = 'invoices',
+  CustomOrderInvoices = 'custom-order-invoices',
   PaymentMethods = 'payment-methods',
   PersonalData = 'personal-data',
   Statistics = 'statistics',
-}
-
-export enum BillingSystem {
-  MonthlySubscription = 'monthlySubscription',
-  CustomOrder = 'customOrder',
 }
 
 export const DefaultBmsOrganization: BmsOrganization = {

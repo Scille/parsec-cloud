@@ -34,6 +34,8 @@ enum DataType {
   DeletePaymentMethod = 'delete-payment-method',
   UpdateAuthentication = 'update-authentication',
   UnsubscribeOrganization = 'unsubscribe-organization',
+  CustomOrderStatus = 'custom-order-status',
+  CustomOrderDetails = 'custom-order-details',
 }
 
 enum PaymentMethod {
@@ -46,6 +48,11 @@ enum BillingSystem {
   CustomOrder = 'CUSTOM_ORDER',
   Stripe = 'STRIPE',
   ExperimentalCandidate = 'EXPERIMENTAL_CANDIDATE',
+}
+
+enum CustomOrderStatus {
+  Unknown = 'unknown',
+  ContractEnded = 'contract_ended',
 }
 
 type AuthenticationToken = string;
@@ -113,6 +120,24 @@ interface OrganizationStatusResultData {
   outsidersAllowed: boolean;
 }
 
+interface CustomOrderStatusResultData {
+  type: DataType.CustomOrderStatus;
+  status: CustomOrderStatus;
+}
+
+interface CustomOrderDetailsResultData {
+  type: DataType.CustomOrderDetails;
+  id: number;
+  link: string;
+  number: string;
+  amountWithTaxes: number;
+  amountNoTaxes: number;
+  currency: string;
+  created: DateTime;
+  dueDate: DateTime;
+  status: InvoiceStatus;
+}
+
 interface InvoicesResultData {
   type: DataType.Invoices;
   invoices: Array<BmsInvoice>;
@@ -167,7 +192,9 @@ type ResultData =
   | OrganizationStatusResultData
   | InvoicesResultData
   | RefreshTokenResultData
-  | BillingDetailsResultData;
+  | BillingDetailsResultData
+  | CustomOrderStatusResultData
+  | CustomOrderDetailsResultData;
 
 // Misc data
 interface BmsOrganization {
@@ -265,12 +292,8 @@ interface UpdateBillingDetailsQueryData extends ClientQueryData {
   address: BmsAddress;
 }
 
-interface GetCustomOrderStatusQueryData extends ClientQueryData {
-  organizationIds: Array<string>;
-}
-
-interface GetCustomOrderDetailsQueryData extends ClientQueryData {
-  organizationIds: Array<string>;
+interface CustomOrderQueryData extends ClientQueryData {
+  organization: BmsOrganization;
 }
 
 export {
@@ -287,10 +310,12 @@ export {
   BmsResponse,
   ClientQueryData,
   CreateOrganizationQueryData,
+  CustomOrderDetailsResultData,
+  CustomOrderQueryData,
+  CustomOrderStatus,
+  CustomOrderStatusResultData,
   DataType,
   DeletePaymentMethodQueryData,
-  GetCustomOrderDetailsQueryData,
-  GetCustomOrderStatusQueryData,
   ListOrganizationsResultData,
   LoginQueryData,
   LoginResultData,

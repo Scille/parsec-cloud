@@ -257,25 +257,25 @@ class BmsAccess {
     });
   }
 
-  async getCustomOrderStatus(orgs: Array<BmsOrganization>): Promise<BmsResponse> {
+  async getCustomOrderStatus(organization: BmsOrganization): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
     return await BmsApi.getCustomOrderStatus(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
-      organizationIds: orgs.map((org) => org.bmsId),
+      organization: organization,
     });
   }
 
-  async getCustomOrderDetails(orgs: Array<BmsOrganization>): Promise<BmsResponse> {
+  async getCustomOrderDetails(organization: BmsOrganization): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
     return await BmsApi.getCustomOrderDetails(this.tokens.access, {
       userId: this.customerInformation.id,
       clientId: this.customerInformation.clientId,
-      organizationIds: orgs.map((org) => org.bmsId),
+      organization: organization,
     });
   }
 

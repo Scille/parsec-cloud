@@ -110,8 +110,6 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
         json: {
           id: DEFAULT_USER_INFORMATION.id,
           // eslint-disable-next-line camelcase
-          billing_system: overload.billingSystem ?? 'STRIPE',
-          // eslint-disable-next-line camelcase
           created_at: '2024-07-15T13:21:32.141317Z',
           email: UserData.email,
           client: {
@@ -121,6 +119,8 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
             job: UserData.job,
             company: UserData.company,
             phone: UserData.phone,
+            // eslint-disable-next-line camelcase
+            billing_system: overload.billingSystem ?? 'STRIPE',
           },
         },
       });
