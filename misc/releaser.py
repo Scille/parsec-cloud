@@ -39,7 +39,7 @@ from collections import defaultdict
 from copy import copy
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import version_updater  # type: ignore (pyright struggles with this when run from server folder)
 
@@ -916,6 +916,24 @@ def acknowledge_main(args: argparse.Namespace) -> None:
 
 
 def cli(description: str) -> argparse.Namespace:
+    def new_parser(
+        name: str,
+        fn: Callable[[argparse.Namespace], None],
+        help: str,
+        subparser: argparse._SubParsersAction[argparse.ArgumentParser],  # type: ignore[reportPrivateUsage]
+        **parser_kwargs: Any,
+    ) -> argparse.ArgumentParser:
+        parser = subparser.add_parser(
+            name=name,
+            description=fn.__doc__,
+            help=help,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            **parser_kwargs,
+        )
+        # We use `set_defaults` to set the function to call when the command is selected.
+        parser.set_defaults(func=fn)
+        return parser
+
     parser = argparse.ArgumentParser(
         description=description,
         # We use `RawDescriptionHelpFormatter` to not have `argparse` mess-up our formatted description.
@@ -929,12 +947,7 @@ def cli(description: str) -> argparse.Namespace:
         dest="command",
     )
 
-    build = subparsers.add_parser(
-        "build",
-        help="Prepare for a new release",
-        description=build_main.__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+    build = new_parser("build", build_main, "Prepare for a new release", subparsers)
     build_exclusion = build.add_mutually_exclusive_group()
     build_exclusion.add_argument("--version", type=Version.parse, help="The new release version")
     build_exclusion.add_argument(
@@ -957,11 +970,11 @@ def cli(description: str) -> argparse.Namespace:
         help="Skip the tag creation",
     )
 
-    check = subparsers.add_parser(
+    check = new_parser(
         "check",
-        help="Verify the we have correctly set the parsec's version across the repository",
-        description=check_main.__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        check_main,
+        "Check that Parsec version is consistent across the repository",
+        subparsers,
     )
     check.add_argument(
         "version",
@@ -970,19 +983,9 @@ def cli(description: str) -> argparse.Namespace:
         help="The version to use (default to `git describe`)",
     )
 
-    subparsers.add_parser(
-        "rollback",
-        help="Rollback the last release",
-        description=rollback_main.__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+    new_parser("rollback", rollback_main, "Rollback the last release", subparsers)
 
-    version = subparsers.add_parser(
-        "version",
-        help="Parse a provided version",
-        description=version_main.__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
+    version = new_parser("version", version_main, "Parse a Parsec version", subparsers)
     version_exclusive_group = version.add_mutually_exclusive_group()
 
     version_exclusive_group.add_argument(
@@ -999,11 +1002,12 @@ def cli(description: str) -> argparse.Namespace:
     for part in ("prerelease", "local", "dev"):
         version.add_argument(f"--{part}", help=f"Overwrite the {part} part present in the version")
 
-    acknowledge = subparsers.add_parser(
+    acknowledge = new_parser(
         "acknowledge",
-        help="Acknowledge a release (i.e. merge it back to the main branch)",
-        description=acknowledge_main.__doc__,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
+        acknowledge_main,
+        "Acknowledge a released version",
+        subparsers,
+        aliases=["ack"],
     )
     acknowledge.add_argument("version", type=Version.parse, help="The version to acknowledge")
     acknowledge.add_argument(
@@ -1017,17 +1021,6 @@ def cli(description: str) -> argparse.Namespace:
 
 
 if __name__ == "__main__":
-    COMMAND = {
-        "build": build_main,
-        "check": check_main,
-        "rollback": rollback_main,
-        "version": version_main,
-        "acknowledge": acknowledge_main,
-    }
-
     args = cli(DESCRIPTION)
 
-    if args.command not in COMMAND.keys():
-        raise ValueError(f"Unknown command `{args.command}`")
-
-    COMMAND[args.command](args)
+    args.func(args)
