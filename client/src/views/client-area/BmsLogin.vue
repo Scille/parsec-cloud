@@ -212,12 +212,12 @@ const checkboxValue = ref<boolean>(false);
 
 onMounted(async () => {
   if (BmsAccessInstance.get().isLoggedIn()) {
-    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
     return;
   }
   const loggedIn = await BmsAccessInstance.get().tryAutoLogin();
   if (loggedIn) {
-    emits('loginSuccess', await BmsAccessInstance.get().getToken(), await BmsAccessInstance.get().getPersonalInformation());
+    emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
   }
 
   if (emailInputRef.value) {

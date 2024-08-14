@@ -1213,7 +1213,9 @@
                 "invoices": "Invoices",
                 "paymentMethods": "Payment methods",
                 "personalData": "My profile",
-                "statistics": "Statistics"
+                "statistics": "Statistics",
+                "customOrderBillingDetails": "Billing details",
+                "customOrderInvoices": "Invoices"
             },
             "logout": "Log out",
             "preferences": "Preferences",

@@ -1213,7 +1213,9 @@
                 "invoices": "Factures",
                 "paymentMethods": "Moyens de paiement",
                 "personalData": "Mon profil",
-                "statistics": "Statistiques"
+                "statistics": "Statistiques",
+                "customOrderBillingDetails": "Coordonnées de facturation",
+                "customOrderInvoices": "Factures"
             },
             "logout": "Se déconnecter",
             "preferences": "Préférences",

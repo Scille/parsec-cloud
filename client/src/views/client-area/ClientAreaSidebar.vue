@@ -60,7 +60,7 @@
     <div class="menu-client">
       <!-- menu list -->
       <ion-list
-        v-if="BillingSystem.MonthlySubscription"
+        v-if="billingSystem === BillingSystem.Stripe"
         class="menu-client-list"
       >
         <!-- summary -->
@@ -110,7 +110,6 @@
 
         <!-- payment -->
         <ion-item
-          v-if="BillingSystem.MonthlySubscription"
           button
           lines="none"
           class="menu-default menu-client-list-item"
@@ -126,7 +125,6 @@
 
         <!-- billing -->
         <ion-item
-          v-if="BillingSystem.MonthlySubscription"
           button
           lines="none"
           class="menu-default menu-client-list-item"
@@ -141,10 +139,8 @@
         </ion-item>
       </ion-list>
 
-      <!-- v-show should be remove when CustomOrder is set -->
       <ion-list
-        v-if="BillingSystem.CustomOrder"
-        v-show="false"
+        v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
         class="menu-client-list"
       >
         <!-- contracts -->
@@ -182,14 +178,29 @@
           button
           lines="none"
           class="sidebar-item menu-default menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Invoices }"
-          @click="goToPageClicked(ClientAreaPages.Invoices)"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderInvoices }"
+          @click="goToPageClicked(ClientAreaPages.CustomOrderInvoices)"
         >
           <ion-icon
             class="menu-client-list-item__icon"
             :icon="newspaper"
           />
           {{ $msTranslate('clientArea.sidebar.menu.invoices') }}
+        </ion-item>
+
+        <!-- billing -->
+        <ion-item
+          button
+          lines="none"
+          class="menu-default menu-client-list-item"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderBillingDetails }"
+          @click="goToPageClicked(ClientAreaPages.CustomOrderBillingDetails)"
+        >
+          <ion-icon
+            class="menu-client-list-item__icon"
+            :icon="idCard"
+          />
+          {{ $msTranslate('clientArea.sidebar.menu.billingDetails') }}
         </ion-item>
       </ion-list>
     </div>
@@ -215,7 +226,7 @@
 <script setup lang="ts">
 import { ChevronExpand, MsImage, MsModalResult } from 'megashark-lib';
 import { card, chatbubbleEllipses, podium, grid, idCard, newspaper } from 'ionicons/icons';
-import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData, BillingSystem } from '@/services/bms';
 import {
   IonAvatar,
   IonCard,
@@ -230,7 +241,7 @@ import {
   popoverController,
 } from '@ionic/vue';
 import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
-import { ClientAreaPages, BillingSystem, isDefaultOrganization } from '@/views/client-area/types';
+import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import { navigateTo, Routes } from '@/router';
 import { onMounted, ref } from 'vue';
 
@@ -239,6 +250,7 @@ const props = defineProps<{
   currentPage: ClientAreaPages;
 }>();
 const status = ref<OrganizationStatusResultData | null>(null);
+const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;

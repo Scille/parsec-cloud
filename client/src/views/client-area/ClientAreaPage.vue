@@ -74,6 +74,14 @@
                 v-if="currentPage === ClientAreaPages.Statistics"
                 :organization="currentOrganization"
               />
+              <custom-order-billing-details-page
+                v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
+                :organization="currentOrganization"
+              />
+              <custom-order-invoices-page
+                v-if="currentPage === ClientAreaPages.CustomOrderInvoices"
+                :organization="currentOrganization"
+              />
             </div>
           </div>
         </ion-content>
@@ -86,7 +94,7 @@
 import { IonPage, IonContent, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -96,6 +104,8 @@ import InvoicesPage from '@/views/client-area/invoices/InvoicesPage.vue';
 import PaymentMethodsPage from '@/views/client-area/payment-methods/PaymentMethodsPage.vue';
 import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage.vue';
 import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
+import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
+import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
@@ -135,6 +145,12 @@ onMounted(async () => {
     }
   } else {
     loggedIn.value = true;
+  }
+  const billingSystem = BmsAccessInstance.get().getPersonalInformation().billingSystem;
+  if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
+    currentPage.value = ClientAreaPages.Contracts;
+  } else {
+    currentPage.value = ClientAreaPages.Dashboard;
   }
   const query = getCurrentRouteQuery<ClientAreaQuery>();
   const response = await BmsAccessInstance.get().listOrganizations();
@@ -223,6 +239,10 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.personalData';
     case ClientAreaPages.Statistics:
       return 'clientArea.header.titles.statistics';
+    case ClientAreaPages.CustomOrderBillingDetails:
+      return 'clientArea.header.titles.customOrderBillingDetails';
+    case ClientAreaPages.CustomOrderInvoices:
+      return 'clientArea.header.titles.customOrderInvoices';
     default:
       return '';
   }
