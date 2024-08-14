@@ -2,7 +2,7 @@
 
 <template>
   <div
-    class="personal-data-container"
+    class="personal-data-page"
     v-if="personalData"
   >
     <div class="personal-data-content">
@@ -234,10 +234,9 @@ async function onDataUpdated(message: Translatable): Promise<void> {
 </script>
 
 <style scoped lang="scss">
-.personal-data-container {
+.personal-data-page {
   display: flex;
   gap: 1.5rem;
-  padding: 1.5rem;
 }
 
 .personal-data-content {

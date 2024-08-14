@@ -1348,6 +1348,29 @@
             },
             "retrieveError": "Could not retrieve your invoices."
         },
+        "invoicesCustomOrder": {
+            "contract": "Contract n°{number}",
+            "inProgress": "in progress",
+            "number": "Invoice number",
+            "information": "Information",
+            "startingDate": "Starting date",
+            "endingDate": "Ending date",
+            "members": {
+                "title": "Licence member | Licences members",
+                "admin": "Administrator member | Administrator members",
+                "adminDescription": "Full access",
+                "standard": "Standard member | Standard members",
+                "standardDescription": "Classic use",
+                "external": "External member | External members",
+                "externalDescription": "Limited use"
+            },
+            "storage": {
+                "title": "Licence storage",
+                "storage": "Storage",
+                "stack": "per 100 GB stack"
+            },
+            "download": "Download"
+        },
         "paymentMethodsPage": {
             "title": "Your payment method",
             "description": "Payment is made automatically by credit card.",

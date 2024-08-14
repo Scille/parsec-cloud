@@ -78,10 +78,6 @@
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
                 :organization="currentOrganization"
               />
-              <custom-order-invoices-page
-                v-if="currentPage === ClientAreaPages.CustomOrderInvoices"
-                :organization="currentOrganization"
-              />
             </div>
           </div>
         </ion-content>
@@ -104,7 +100,6 @@ import InvoicesPage from '@/views/client-area/invoices/InvoicesPage.vue';
 import PaymentMethodsPage from '@/views/client-area/payment-methods/PaymentMethodsPage.vue';
 import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage.vue';
 import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
-import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
 import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from 'megashark-lib';
@@ -241,8 +236,6 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.statistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
-    case ClientAreaPages.CustomOrderInvoices:
-      return 'clientArea.header.titles.customOrderInvoices';
     default:
       return '';
   }

@@ -9,7 +9,6 @@ export enum ClientAreaPages {
   Contracts = 'contracts',
   Dashboard = 'dashboard',
   Invoices = 'invoices',
-  CustomOrderInvoices = 'custom-order-invoices',
   PaymentMethods = 'payment-methods',
   PersonalData = 'personal-data',
   Statistics = 'statistics',
