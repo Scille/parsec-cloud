@@ -116,11 +116,11 @@ jobs:
           cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/latest-linux-*.yml release-files
 
           # DMG
-          cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/Parsec_${{ needs.version.outputs.full }}_mac_*.unsigned.dmg{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/latest-mac-*.yml release-files
 
           # EXE
-          cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec_${{ needs.version.outputs.full }}_win_*.exe{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/latest-win-*.yml release-files
 
           # CLI
