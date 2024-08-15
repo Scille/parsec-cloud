@@ -41,11 +41,12 @@ class BmsAccess {
       return false;
     }
 
-    await this.ensureFreshToken();
-    const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
-    if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
-      this.customerInformation = infoResponse.data;
-      return true;
+    if (await this.ensureFreshToken()) {
+      const infoResponse = await BmsApi.getPersonalInformation(this.tokens.access);
+      if (!infoResponse.isError && infoResponse.data && infoResponse.data.type === DataType.PersonalInformation) {
+        this.customerInformation = infoResponse.data;
+        return true;
+      }
     }
 
     this.tokens = null;
