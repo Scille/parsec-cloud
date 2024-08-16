@@ -43,53 +43,28 @@ pub fn get_minimal_short_id_size<'a, I>(devices: I) -> usize
 where
     I: Iterator<Item = &'a libparsec::DeviceID>,
 {
-    #[derive(PartialEq, Eq, PartialOrd, Ord)]
-    struct Cmp {
-        text: String,
-        conflicted: std::cell::RefCell<bool>,
-    }
+    use itertools::Itertools;
 
-    let mut len = 1;
-    let mut ids = devices
-        .map(|id| Cmp {
-            text: id.hex(),
-            conflicted: false.into(),
+    return devices
+        // Ensure we do not have duplicates in the set.
+        .sorted_by(|a, b| a.cmp(b))
+        .dedup_by(|a, b| a == b)
+        // Generate combinations of the ids
+        .map(|id| id.hex())
+        .tuple_combinations::<(_, _)>()
+        .map(|(a, b)| {
+            a.chars()
+                .zip(b.chars())
+                // Find the position of the first difference
+                .position(|(a, b)| a != b)
+                // Since it's an index that start at 0, we need to + 1 to get the size
+                .map(|pos| pos + 1)
+                // Unwrap or default to the max size of hex id which is 32 char
+                .unwrap_or(32)
         })
-        .collect::<Vec<_>>();
-
-    // Ensure we do not have duplicates in the set.
-    ids.sort_by(|a, b| a.cmp(b));
-    ids.dedup_by(|a, b| a.text == b.text);
-
-    loop {
-        // We check every id against every other id,
-        // ideally we could use something like `itertools::combinations` but that mean another dependency.
-        for a in &ids {
-            for b in &ids {
-                // Check if a is a prefix of b, but we need to ensure that a != b
-                // Since we already removed the duplicates, we can just compare the pointers
-                if !std::ptr::eq(a, b) && a.text.starts_with(&b.text[..len]) {
-                    *a.conflicted.borrow_mut() = true;
-                    *b.conflicted.borrow_mut() = true;
-                }
-            }
-        }
-
-        // Keep only the conflicted ids and reset the conflicted flag
-        ids.retain_mut(|id| {
-            let conflicted = id.conflicted.get_mut();
-            let res = *conflicted;
-            *conflicted = false;
-            res
-        });
-
-        // If empty, that mean we found the minimal size
-        if ids.is_empty() {
-            break;
-        }
-        len += 1; // Otherwise, we increase the prefix size
-    }
-    return len;
+        // Find the max value or fallback to 1 (meaning we have only one device)
+        .max()
+        .unwrap_or(1);
 }
 
 #[derive(Debug)]
