@@ -2996,6 +2996,7 @@ dependencies = [
  "clap",
  "criterion",
  "env_logger",
+ "itertools 0.12.1",
  "libparsec",
  "log",
  "predicates",
