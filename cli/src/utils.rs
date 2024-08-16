@@ -43,22 +43,51 @@ pub fn get_minimal_short_id_size<'a, I>(devices: I) -> usize
 where
     I: Iterator<Item = &'a libparsec::DeviceID>,
 {
+    #[derive(PartialEq, Eq, PartialOrd, Ord)]
+    struct Cmp {
+        text: String,
+        conflicted: std::cell::RefCell<bool>,
+    }
+
     let mut len = 1;
-    let mut ids = devices.map(|id| (id, id.hex())).collect::<Vec<_>>();
-    while !ids.is_empty() {
-        let mut conflicting_ids = Vec::with_capacity(ids.len());
-        for (id, id_s) in ids.iter() {
-            if ids.iter().any(|(other_id, other_id_s)| {
-                id != other_id && id_s.starts_with(&other_id_s[..len])
-            }) {
-                conflicting_ids.push((*id, id_s.clone()));
+    let mut ids = devices
+        .map(|id| Cmp {
+            text: id.hex(),
+            conflicted: false.into(),
+        })
+        .collect::<Vec<_>>();
+
+    // Ensure we do not have duplicates in the set.
+    ids.sort_by(|a, b| a.cmp(b));
+    ids.dedup_by(|a, b| a.text == b.text);
+
+    loop {
+        // We check every id against every other id,
+        // ideally we could use something like `itertools::combinations` but that mean another dependency.
+        for a in &ids {
+            for b in &ids {
+                // Check if a is a prefix of b, but we need to ensure that a != b
+                // Since we already removed the duplicates, we can just compare the pointers
+                if !std::ptr::eq(a, b) && a.text.starts_with(&b.text[..len]) {
+                    *a.conflicted.borrow_mut() = true;
+                    *b.conflicted.borrow_mut() = true;
+                }
             }
         }
-        if conflicting_ids.is_empty() {
+
+        // Keep only the conflicted ids and reset the conflicted flag
+        ids.retain_mut(|id| {
+            let conflicted = id.conflicted.get_mut();
+            let res = *conflicted;
+            *conflicted = false;
+            res
+        });
+
+        // If empty, that mean we found the minimal size
+        if ids.is_empty() {
             break;
         }
-        ids = conflicting_ids;
-        len += 1;
+        len += 1; // Otherwise, we increase the prefix size
     }
     return len;
 }
