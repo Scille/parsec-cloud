@@ -8,8 +8,8 @@
             "fields": [
                 {
                     // `ChatMessage` structure serialized and signed
-                    "name": "messageContent",
-                    "type": "String"
+                    "name": "messageEncrypted",
+                    "type": "Bytes"
                 }
             ]
         },

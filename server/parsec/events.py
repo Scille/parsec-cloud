@@ -151,7 +151,7 @@ class EventChatReceived(BaseModel, ClientBroadcastableEvent):
     type: Literal["CHATRECEIVED"] = "CHATRECEIVED"
     event_id: UUID = Field(default_factory=uuid4)
     organization_id: OrganizationIDField
-    messageContent: str
+    messageContent: bytes
 
     # check if Bob is Bob
     # @override

@@ -37,6 +37,7 @@ from parsec.components.sequester import BaseSequesterComponent
 from parsec.components.shamir import BaseShamirComponent
 from parsec.components.user import BaseUserComponent
 from parsec.components.vlob import BaseVlobComponent
+from parsec.components.chat_message import BaseMessageComponent
 from parsec.config import BackendConfig
 from parsec.webhooks import WebhooksComponent
 
@@ -79,6 +80,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
             sequester=components["sequester"],
             events=components["events"],
             shamir=components["shamir"],
+            message=components["message"],
         )
 
 
@@ -103,6 +105,7 @@ class Backend:
     sequester: BaseSequesterComponent
     events: BaseEventsComponent
     shamir: BaseShamirComponent
+    message: BaseMessageComponent
 
     # Only available if `config.db_url == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
@@ -122,6 +125,7 @@ class Backend:
             self.pki,
             self.events,
             self.shamir,
+            self.message,
             # Ping command is only used in tests
             include_ping=self.config.debug,
         )

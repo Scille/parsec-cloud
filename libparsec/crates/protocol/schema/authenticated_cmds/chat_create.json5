@@ -1,0 +1,59 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "chat_create",
+            "fields": [
+                {
+                    "name": "id",
+                    "type": "Index"
+                },
+                {
+                    "name": "author",
+                    "type": "DeviceID"
+                },
+                {
+                    "name": "timestamp",
+                    "type": "DateTime"
+                },
+                {
+                    "name": "recipient",
+                    "type": "UserID"
+                },
+                {
+                    "name": "messageEncrypted",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "id",
+                        "type": "Index"
+                    },
+                    {
+                        "name": "author",
+                        "type": "DeviceID"
+                    },
+                    {
+                        "name": "timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "recipient",
+                        "type": "UserID"
+                    },
+                    {
+                        "name": "messageEncrypted",
+                        "type": "Bytes"
+                    }
+                ]
+            }
+        ]
+    }
+]

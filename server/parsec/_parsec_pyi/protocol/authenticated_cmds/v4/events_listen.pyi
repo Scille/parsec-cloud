@@ -93,6 +93,11 @@ class APIEventVlob(APIEvent):
     @property
     def vlob_id(self) -> VlobID: ...
 
+class APIEventChatMessageReceived(APIEvent):
+    def __init__(self, message: bytes) -> None: ...
+    @property
+    def message(self) -> bytes: ...
+
 class Req:
     def __init__(
         self,
