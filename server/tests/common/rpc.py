@@ -8,6 +8,7 @@ from parsec._parsec import (
     BlockID,
     BootstrapToken,
     DateTime,
+    DeviceID,
     EnrollmentID,
     HashDigest,
     InvitationToken,
@@ -114,6 +115,29 @@ class BaseAuthenticatedRpcClient:
         )
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.certificate_get.Rep.load(raw_rep)
+
+    async def chat_create(
+        self,
+        id: int,
+        author: DeviceID,
+        timestamp: DateTime,
+        recipient: UserID,
+        messageEncrypted: bytes,
+    ) -> authenticated_cmds.latest.chat_create.Rep:
+        req = authenticated_cmds.latest.chat_create.Req(
+            id=id,
+            author=author,
+            timestamp=timestamp,
+            recipient=recipient,
+            messageEncrypted=messageEncrypted,
+        )
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.chat_create.Rep.load(raw_rep)
+
+    async def chat_post(self, messageEncrypted: bytes) -> authenticated_cmds.latest.chat_post.Rep:
+        req = authenticated_cmds.latest.chat_post.Req(messageEncrypted=messageEncrypted)
+        raw_rep = await self._do_request(req.dump())
+        return authenticated_cmds.latest.chat_post.Rep.load(raw_rep)
 
     async def device_create(
         self, device_certificate: bytes, redacted_device_certificate: bytes

@@ -8,6 +8,8 @@ from . import (
     block_create,
     block_read,
     certificate_get,
+    chat_create,
+    chat_post,
     device_create,
     events_listen,
     invite_1_greeter_wait_peer,
@@ -49,6 +51,8 @@ class AnyCmdReq:
         block_create.Req
         | block_read.Req
         | certificate_get.Req
+        | chat_create.Req
+        | chat_post.Req
         | device_create.Req
         | events_listen.Req
         | invite_1_greeter_wait_peer.Req
@@ -87,6 +91,8 @@ __all__ = [
     "block_create",
     "block_read",
     "certificate_get",
+    "chat_create",
+    "chat_post",
     "device_create",
     "events_listen",
     "invite_1_greeter_wait_peer",

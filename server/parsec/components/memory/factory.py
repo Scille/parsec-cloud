@@ -10,6 +10,7 @@ import httpx
 from parsec.components.blockstore import blockstore_factory
 from parsec.components.memory.auth import MemoryAuthComponent
 from parsec.components.memory.block import MemoryBlockComponent
+from parsec.components.memory.chat_message import MemoryMessageComponent
 from parsec.components.memory.datamodel import MemoryDatamodel
 from parsec.components.memory.events import MemoryEventsComponent, event_bus_factory
 from parsec.components.memory.invite import MemoryInviteComponent
@@ -46,6 +47,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
             pki = MemoryPkiEnrollmentComponent(data, event_bus)
             sequester = MemorySequesterComponent(data, event_bus)
             shamir = MemoryShamirComponent(data, event_bus)
+            message = MemoryMessageComponent(data)
             blockstore = blockstore_factory(config.blockstore_config, mocked_data=data)
             block = MemoryBlockComponent(data, blockstore)
             events = MemoryEventsComponent(data, config, event_bus)
@@ -67,6 +69,7 @@ async def components_factory(config: BackendConfig) -> AsyncGenerator[dict[str, 
                 "block": block,
                 "blockstore": blockstore,
                 "shamir": shamir,
+                "message": message,
             }
 
             yield components
