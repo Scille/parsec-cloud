@@ -45,26 +45,23 @@ where
 {
     use itertools::Itertools;
 
-    return devices
+    devices
         // Ensure we do not have duplicates in the set.
         .sorted_by(|a, b| a.cmp(b))
         .dedup_by(|a, b| a == b)
         // Generate combinations of the ids
-        .map(|id| id.hex())
         .tuple_combinations::<(_, _)>()
+        // Find the first different bit between the two ids:
+        // We use the fact that we will display the id in hex format to compare both ids using the bitwise XOR and count the leading zeros.
+        // Since it takes 4 bits to represent a hex digit, we divide the leading zeros by 4 to get the position of the first different hex digit.
         .map(|(a, b)| {
-            a.chars()
-                .zip(b.chars())
-                // Find the position of the first difference
-                .position(|(a, b)| a != b)
-                // Since it's an index that start at 0, we need to + 1 to get the size
-                .map(|pos| pos + 1)
-                // Unwrap or default to the max size of hex id which is 32 char
-                .unwrap_or(32)
+            let cmp = a.as_u128() ^ b.as_u128();
+            let position = cmp.leading_zeros() / 4;
+            position as usize + 1
         })
         // Find the max value or fallback to 1 (meaning we have only one device)
         .max()
-        .unwrap_or(1);
+        .unwrap_or(1)
 }
 
 #[derive(Debug)]
