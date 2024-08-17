@@ -704,7 +704,36 @@ class MemoryInviteComponent(BaseInviteComponent):
         token: InvitationToken,
         greeter: UserID,
     ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
-        raise NotImplementedError
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            greeter_user = org.users[greeter]
+        except KeyError:
+            return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_FOUND
+
+        if greeter_user.is_revoked:
+            return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_completed:
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
+
+        greeting_session = invitation.get_greeting_session(greeter)
+        greeting_attempt = greeting_session.new_attempt_for_claimer(now)
+        return greeting_attempt.greeting_attempt
 
     @override
     async def greeter_cancel_greeting_attempt(
