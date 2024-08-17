@@ -1,13 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from unittest.mock import ANY
 
 import pytest
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
+    DateTime,
     GreeterOrClaimer,
     GreetingAttemptID,
+    RevokedUserCertificate,
+    UserProfile,
+    UserUpdateCertificate,
+    authenticated_cmds,
     invited_cmds,
 )
 from tests.common import Backend, CoolorgRpcClients
@@ -25,7 +29,6 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
     return rep.greeting_attempt
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
     coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -36,13 +39,40 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
     assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepOk()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowed(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
 ) -> None:
-    # TODO: Use a user invitation and change the greeter profile to STANDARD
+    invitation_token = coolorg.invited_zack.token
 
-    rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
+    rep = await coolorg.invited_zack.invite_claimer_start_greeting_attempt(
+        token=invitation_token,
+        greeter=coolorg.alice.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    greeting_attempt = rep.greeting_attempt
+
+    # Make Bob an admin
+    certif = UserUpdateCertificate(
+        author=coolorg.alice.device_id,
+        new_profile=UserProfile.ADMIN,
+        user_id=coolorg.bob.user_id,
+        timestamp=DateTime.now(),
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.user_update(certif)
+    assert rep == authenticated_cmds.v4.user_update.RepOk()
+
+    # Alice is no longer an admin
+    certif = UserUpdateCertificate(
+        author=coolorg.bob.device_id,
+        new_profile=UserProfile.STANDARD,
+        user_id=coolorg.alice.user_id,
+        timestamp=DateTime.now(),
+    ).dump_and_sign(coolorg.bob.signing_key)
+    rep = await coolorg.bob.user_update(certif)
+    assert rep == authenticated_cmds.v4.user_update.RepOk()
+
+    # Cancel the greeting attempt
+    rep = await coolorg.invited_zack.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
@@ -50,11 +80,28 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowe
     assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreeterNotAllowed()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
-    # TODO: Revoke the greeter
+    # Make Bob an admin
+    certif = UserUpdateCertificate(
+        author=coolorg.alice.device_id,
+        new_profile=UserProfile.ADMIN,
+        user_id=coolorg.bob.user_id,
+        timestamp=DateTime.now(),
+    ).dump_and_sign(coolorg.alice.signing_key)
+    rep = await coolorg.alice.user_update(certif)
+    assert rep == authenticated_cmds.v4.user_update.RepOk()
+
+    # Revoke Alice
+    now = DateTime.now()
+    certif = RevokedUserCertificate(
+        author=coolorg.bob.device_id,
+        timestamp=now,
+        user_id=coolorg.alice.user_id,
+    ).dump_and_sign(coolorg.bob.signing_key)
+    rep = await coolorg.bob.user_revoke(certif)
+    assert rep == authenticated_cmds.v4.user_revoke.RepOk()
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
@@ -63,7 +110,6 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
     assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreeterRevoked()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
@@ -77,15 +123,16 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
     )
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_not_joined(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    # TODO: Have the greeter join the greeting attempt and use the corresponding ID
-    greeting_attempt = GreetingAttemptID.new()
+    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+        token=coolorg.invited_alice_dev3.token,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
-        greeting_attempt=greeting_attempt,
+        greeting_attempt=rep.greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
 
@@ -94,7 +141,6 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
     )
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_already_cancelled(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -110,10 +156,14 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
         greeting_attempt=greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
+    assert isinstance(
+        rep,
+        invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
+    )
     assert (
         rep
         == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
-            timestamp=ANY,
+            timestamp=rep.timestamp,
             reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
             origin=GreeterOrClaimer.CLAIMER,
         )
