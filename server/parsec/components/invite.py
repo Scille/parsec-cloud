@@ -16,8 +16,11 @@ from enum import Enum, auto
 import anyio
 
 from parsec._parsec import (
+    CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    GreeterOrClaimer,
+    GreetingAttemptID,
     HashDigest,
     HumanHandle,
     InvitationStatus,
@@ -42,7 +45,7 @@ from parsec.events import (
 )
 from parsec.logging import get_logger
 from parsec.templates import get_template
-from parsec.types import BadOutcomeEnum
+from parsec.types import BadOutcome, BadOutcomeEnum
 
 logger = get_logger()
 
@@ -274,6 +277,118 @@ class InviteAsInvitedInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     INVITATION_NOT_FOUND = auto()
     INVITATION_DELETED = auto()
+
+
+# New transport definitions
+# TODO: Remove the old ones once fully migrated
+
+
+@dataclass
+class GreetingAttemptCancelledBadOutcome(BadOutcome):
+    origin: GreeterOrClaimer
+    reason: CancelledGreetingAttemptReason
+    timestamp: DateTime
+
+
+@dataclass
+class NotReady:
+    pass
+
+
+class InviteGreeterStartGreetingAttemptBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    # Specific outcomes
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_COMPLETED = auto()
+    INVITATION_CANCELLED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+
+
+class InviteClaimerStartGreetingAttemptBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_CANCELLED = auto()
+    INVITATION_COMPLETED = auto()
+    # Specific outcomes
+    GREETER_NOT_FOUND = auto()
+    GREETER_REVOKED = auto()
+    GREETER_NOT_ALLOWED = auto()
+
+
+class InviteGreeterCancelGreetingAttemptBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    # Specific outcomes
+    INVITATION_COMPLETED = auto()
+    INVITATION_CANCELLED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    GREETING_ATTEMPT_NOT_FOUND = auto()
+    GREETING_ATTEMPT_NOT_JOINED = auto()
+
+
+class InviteClaimerCancelGreetingAttemptBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_CANCELLED = auto()
+    INVITATION_COMPLETED = auto()
+    # Specific outcomes
+    GREETER_REVOKED = auto()
+    GREETER_NOT_ALLOWED = auto()
+    GREETING_ATTEMPT_NOT_FOUND = auto()
+    GREETING_ATTEMPT_NOT_JOINED = auto()
+
+
+class InviteGreeterStepBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    # Specific outcomes
+    INVITATION_COMPLETED = auto()
+    INVITATION_CANCELLED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    GREETING_ATTEMPT_NOT_FOUND = auto()
+    GREETING_ATTEMPT_NOT_JOINED = auto()
+    STEP_TOO_ADVANCED = auto()
+    STEP_MISMATCH = auto()
+
+
+class InviteClaimerStepBadOutcome(BadOutcomeEnum):
+    # Common outcomes
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_CANCELLED = auto()
+    INVITATION_COMPLETED = auto()
+    # Specific outcomes
+    GREETER_REVOKED = auto()
+    GREETER_NOT_ALLOWED = auto()
+    GREETING_ATTEMPT_NOT_FOUND = auto()
+    GREETING_ATTEMPT_NOT_JOINED = auto()
+    STEP_TOO_ADVANCED = auto()
+    STEP_MISMATCH = auto()
+
+
+class InviteCompleteBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_CANCELLED = auto()
+    INVITATION_ALREADY_COMPLETED = auto()
 
 
 class BaseInviteComponent:
@@ -732,9 +847,9 @@ class BaseInviteComponent:
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND:
-                return client_ctx.invitation_invalid_abort()
+                return client_ctx.invitation_not_found_abort()
             case InviteAsInvitedInfoBadOutcome.INVITATION_DELETED:
-                return client_ctx.invitation_invalid_abort()
+                return client_ctx.invitation_already_used_or_deleted_abort()
 
     @api
     async def api_invite_1_claimer_wait_peer(
@@ -759,9 +874,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -827,9 +942,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -855,9 +970,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -988,9 +1103,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -1055,9 +1170,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -1122,9 +1237,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -1196,9 +1311,9 @@ class BaseInviteComponent:
             case InviteConduitExchangeBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_not_found_abort()
             case InviteConduitExchangeBadOutcome.INVITATION_DELETED:
-                client_ctx.invitation_invalid_abort()
+                client_ctx.invitation_already_used_or_deleted_abort()
             case (
                 (
                     InviteConduitExchangeBadOutcome.AUTHOR_NOT_FOUND
@@ -1216,6 +1331,46 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Req,
     ) -> authenticated_cmds.latest.invite_greeter_start_greeting_attempt.Rep:
+        outcome = await self.greeter_start_greeting_attempt(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            greeter=client_ctx.user_id,
+            token=req.token,
+        )
+        match outcome:
+            # OK case
+            case GreetingAttemptID() as greeting_attempt_id:
+                return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepOk(
+                    greeting_attempt_id
+                )
+            # Standard auth errors
+            case InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            # Specific errors
+            case InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND:
+                return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepInvitationNotFound()
+            case InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED:
+                return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepInvitationCancelled()
+            case InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED:
+                return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepInvitationCompleted()
+            case InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_greeter_start_greeting_attempt.RepAuthorNotAllowed()
+
+    async def greeter_start_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        token: InvitationToken,
+    ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
         raise NotImplementedError
 
     @api
@@ -1224,6 +1379,48 @@ class BaseInviteComponent:
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_claimer_start_greeting_attempt.Req,
     ) -> invited_cmds.latest.invite_claimer_start_greeting_attempt.Rep:
+        outcome = await self.claimer_start_greeting_attempt(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            greeter=req.greeter,
+            token=req.token,
+        )
+        match outcome:
+            # OK case
+            case GreetingAttemptID() as greeting_attempt_id:
+                return invited_cmds.latest.invite_claimer_start_greeting_attempt.RepOk(
+                    greeting_attempt_id
+                )
+            # Standard auth errors
+            case InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND:
+                client_ctx.invitation_not_found_abort()
+            case InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            case InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            # Specific errors
+            case InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_FOUND:
+                return (
+                    invited_cmds.latest.invite_claimer_start_greeting_attempt.RepGreeterNotFound()
+                )
+            case InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED:
+                return invited_cmds.latest.invite_claimer_start_greeting_attempt.RepGreeterRevoked()
+            case InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED:
+                return (
+                    invited_cmds.latest.invite_claimer_start_greeting_attempt.RepGreeterNotAllowed()
+                )
+
+    async def claimer_start_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeter: UserID,
+    ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
         raise NotImplementedError
 
     @api
@@ -1232,14 +1429,102 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Req,
     ) -> authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.Rep:
+        outcome = await self.greeter_cancel_greeting_attempt(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            greeter=client_ctx.user_id,
+            greeting_attempt=req.greeting_attempt,
+        )
+        match outcome:
+            # OK case
+            case None:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepOk()
+            # Standard auth errors
+            case InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            # Specific errors
+            case InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCancelled()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepInvitationCompleted()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepAuthorNotAllowed()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+            case InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_JOINED:
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
+            case GreetingAttemptCancelledBadOutcome(origin, reason, timestamp):
+                return authenticated_cmds.latest.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+                    origin=origin, reason=reason, timestamp=timestamp
+                )
+
+    async def greeter_cancel_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        greeting_attempt: GreetingAttemptID,
+    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @api
-    async def api_claimer_greeter_cancel_greeting_attempt(
+    async def api_invite_claimer_cancel_greeting_attempt(
         self,
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Req,
     ) -> invited_cmds.latest.invite_claimer_cancel_greeting_attempt.Rep:
+        outcome = await self.claimer_cancel_greeting_attempt(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            token=client_ctx.token,
+            greeting_attempt=req.greeting_attempt,
+        )
+        match outcome:
+            # OK case
+            case None:
+                return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepOk()
+            # Standard auth errors
+            case InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_NOT_FOUND:
+                client_ctx.invitation_not_found_abort()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            # Specific errors
+            case InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_REVOKED:
+                return (
+                    invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreeterRevoked()
+                )
+            case InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED:
+                return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreeterNotAllowed()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND:
+                return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+            case InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_JOINED:
+                return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotJoined()
+            case GreetingAttemptCancelledBadOutcome(origin, reason, timestamp):
+                return invited_cmds.latest.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+                    origin=origin, reason=reason, timestamp=timestamp
+                )
+
+    async def claimer_cancel_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @api
@@ -1248,14 +1533,130 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_greeter_step.Req,
     ) -> authenticated_cmds.latest.invite_greeter_step.Rep:
+        outcome = await self.greeter_step(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            greeter=client_ctx.user_id,
+            greeting_attempt=req.greeting_attempt,
+            greeter_step=req.greeter_step,
+        )
+        match outcome:
+            # OK case
+            case authenticated_cmds.latest.invite_greeter_step.ClaimerStep() as claimer_step:
+                return authenticated_cmds.latest.invite_greeter_step.RepOk(
+                    claimer_step=claimer_step
+                )
+            # NotReady case
+            case NotReady():
+                return authenticated_cmds.latest.invite_greeter_step.RepNotReady()
+            # Standard auth errors
+            case InviteGreeterStepBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteGreeterStepBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteGreeterStepBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteGreeterStepBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            # Specific errors
+            case InviteGreeterStepBadOutcome.INVITATION_CANCELLED:
+                return authenticated_cmds.latest.invite_greeter_step.RepInvitationCancelled()
+            case InviteGreeterStepBadOutcome.INVITATION_COMPLETED:
+                return authenticated_cmds.latest.invite_greeter_step.RepInvitationCompleted()
+            case InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_greeter_step.RepAuthorNotAllowed()
+            case InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND:
+                return authenticated_cmds.latest.invite_greeter_step.RepGreetingAttemptNotFound()
+            case InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED:
+                return authenticated_cmds.latest.invite_greeter_step.RepGreetingAttemptNotJoined()
+            case InviteGreeterStepBadOutcome.STEP_TOO_ADVANCED:
+                return authenticated_cmds.latest.invite_greeter_step.RepStepTooAdvanced()
+            case InviteGreeterStepBadOutcome.STEP_MISMATCH:
+                return authenticated_cmds.latest.invite_greeter_step.RepStepMismatch()
+            case GreetingAttemptCancelledBadOutcome(origin, reason, timestamp):
+                return authenticated_cmds.latest.invite_greeter_step.RepGreetingAttemptCancelled(
+                    origin=origin, reason=reason, timestamp=timestamp
+                )
+
+    async def greeter_step(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        greeting_attempt: GreetingAttemptID,
+        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
+    ) -> (
+        authenticated_cmds.latest.invite_greeter_step.ClaimerStep
+        | NotReady
+        | InviteGreeterStepBadOutcome
+        | GreetingAttemptCancelledBadOutcome
+    ):
         raise NotImplementedError
 
     @api
-    async def api_claimer_greeter_step(
+    async def api_invite_claimer_step(
         self,
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_claimer_step.Req,
     ) -> invited_cmds.latest.invite_claimer_step.Rep:
+        outcome = await self.claimer_step(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            token=client_ctx.token,
+            greeting_attempt=req.greeting_attempt,
+            claimer_step=req.claimer_step,
+        )
+        match outcome:
+            # OK case
+            case invited_cmds.latest.invite_claimer_step.GreeterStep() as greeter_step:
+                return invited_cmds.latest.invite_claimer_step.RepOk(greeter_step=greeter_step)
+            # NotReady case
+            case NotReady():
+                return invited_cmds.latest.invite_claimer_step.RepNotReady()
+            # Standard auth errors
+            case InviteClaimerStepBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteClaimerStepBadOutcome.INVITATION_NOT_FOUND:
+                client_ctx.invitation_not_found_abort()
+            case InviteClaimerStepBadOutcome.INVITATION_CANCELLED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            case InviteClaimerStepBadOutcome.INVITATION_COMPLETED:
+                client_ctx.invitation_already_used_or_deleted_abort()
+            # Specific errors
+            case InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED:
+                return invited_cmds.latest.invite_claimer_step.RepGreeterNotAllowed()
+            case InviteClaimerStepBadOutcome.GREETER_REVOKED:
+                return invited_cmds.latest.invite_claimer_step.RepGreeterRevoked()
+            case InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND:
+                return invited_cmds.latest.invite_claimer_step.RepGreetingAttemptNotFound()
+            case InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED:
+                return invited_cmds.latest.invite_claimer_step.RepGreetingAttemptNotJoined()
+            case InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED:
+                return invited_cmds.latest.invite_claimer_step.RepStepTooAdvanced()
+            case InviteClaimerStepBadOutcome.STEP_MISMATCH:
+                return invited_cmds.latest.invite_claimer_step.RepStepMismatch()
+            case GreetingAttemptCancelledBadOutcome(origin, reason, timestamp):
+                return invited_cmds.latest.invite_claimer_step.RepGreetingAttemptCancelled(
+                    origin=origin, reason=reason, timestamp=timestamp
+                )
+
+    async def claimer_step(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
+    ) -> (
+        invited_cmds.latest.invite_claimer_step.GreeterStep
+        | NotReady
+        | InviteClaimerStepBadOutcome
+        | GreetingAttemptCancelledBadOutcome
+    ):
         raise NotImplementedError
 
     @api
@@ -1264,4 +1665,35 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_complete.Req,
     ) -> authenticated_cmds.latest.invite_complete.Rep:
+        outcome = await self.complete(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            token=req.token,
+        )
+        match outcome:
+            case None:
+                return authenticated_cmds.latest.invite_complete.RepOk()
+            case InviteCompleteBadOutcome.INVITATION_NOT_FOUND:
+                return authenticated_cmds.latest.invite_complete.RepInvitationNotFound()
+            case InviteCompleteBadOutcome.INVITATION_CANCELLED:
+                return authenticated_cmds.latest.invite_complete.RepInvitationCancelled()
+            case InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED:
+                return authenticated_cmds.latest.invite_complete.RepInvitationAlreadyCompleted()
+            case InviteCompleteBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteCompleteBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteCompleteBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteCompleteBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+    async def complete(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        token: InvitationToken,
+    ) -> None | InviteCompleteBadOutcome:
         raise NotImplementedError
