@@ -4,8 +4,11 @@ from __future__ import annotations
 from typing import override
 
 from parsec._parsec import (
+    CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
+    GreeterOrClaimer,
+    GreetingAttemptID,
     HumanHandle,
     InvitationStatus,
     InvitationToken,
@@ -14,6 +17,7 @@ from parsec._parsec import (
     UserID,
     UserProfile,
 )
+from parsec._parsec_pyi.protocol import authenticated_cmds, invited_cmds
 from parsec.components.events import EventBus
 from parsec.components.invite import (
     NEXT_CONDUIT_STATE,
@@ -21,13 +25,22 @@ from parsec.components.invite import (
     ConduitListenCtx,
     ConduitState,
     DeviceInvitation,
+    GreetingAttemptCancelledBadOutcome,
     Invitation,
     InviteAsInvitedInfoBadOutcome,
     InviteCancelBadOutcome,
+    InviteClaimerCancelGreetingAttemptBadOutcome,
+    InviteClaimerStartGreetingAttemptBadOutcome,
+    InviteClaimerStepBadOutcome,
+    InviteCompleteBadOutcome,
     InviteConduitExchangeBadOutcome,
+    InviteGreeterCancelGreetingAttemptBadOutcome,
+    InviteGreeterStartGreetingAttemptBadOutcome,
+    InviteGreeterStepBadOutcome,
     InviteListBadOutcome,
     InviteNewForDeviceBadOutcome,
     InviteNewForUserBadOutcome,
+    NotReady,
     SendEmailBadOutcome,
     UserInvitation,
 )
@@ -1047,3 +1060,95 @@ class PGInviteComponent(BaseInviteComponent):
                     assert False, unknown
 
         return per_user_invitations
+
+    # New invite transport API
+    # TODO: Remove the old API once the new one is fully functional
+
+    @override
+    async def greeter_start_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        token: InvitationToken,
+    ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
+        raise NotImplementedError
+
+    @override
+    async def claimer_start_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeter: UserID,
+    ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
+        raise NotImplementedError
+
+    @override
+    async def greeter_cancel_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        greeting_attempt: GreetingAttemptID,
+        reason: CancelledGreetingAttemptReason,
+    ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+        GreeterOrClaimer.GREETER
+        raise NotImplementedError
+
+    @override
+    async def claimer_cancel_greeting_attempt(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+        reason: CancelledGreetingAttemptReason,
+    ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
+        GreeterOrClaimer.CLAIMER
+        raise NotImplementedError
+
+    @override
+    async def greeter_step(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        greeter: UserID,
+        greeting_attempt: GreetingAttemptID,
+        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
+    ) -> (
+        authenticated_cmds.latest.invite_greeter_step.ClaimerStep
+        | NotReady
+        | InviteGreeterStepBadOutcome
+        | GreetingAttemptCancelledBadOutcome
+    ):
+        raise NotImplementedError
+
+    @override
+    async def claimer_step(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        greeting_attempt: GreetingAttemptID,
+        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
+    ) -> (
+        invited_cmds.latest.invite_claimer_step.GreeterStep
+        | NotReady
+        | InviteClaimerStepBadOutcome
+        | GreetingAttemptCancelledBadOutcome
+    ):
+        raise NotImplementedError
+
+    @override
+    async def complete(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        token: InvitationToken,
+    ) -> None | InviteCompleteBadOutcome:
+        raise NotImplementedError
