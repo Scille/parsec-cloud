@@ -88,11 +88,19 @@ class InvitedClientContext:
             api_version=self.settled_api_version,
         )
 
-    def invitation_invalid_abort(self) -> NoReturn:
+    def invitation_not_found_abort(self) -> NoReturn:
         from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
 
         _handshake_abort(
             CustomHttpStatus.BadAuthenticationInfo,
+            api_version=self.settled_api_version,
+        )
+
+    def invitation_already_used_or_deleted_abort(self) -> NoReturn:
+        from parsec.asgi.rpc import CustomHttpStatus, _handshake_abort
+
+        _handshake_abort(
+            CustomHttpStatus.InvitationAlreadyUsedOrDeleted,
             api_version=self.settled_api_version,
         )
 
