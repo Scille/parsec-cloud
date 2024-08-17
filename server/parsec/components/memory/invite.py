@@ -7,7 +7,6 @@ from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
     DeviceID,
-    GreeterOrClaimer,
     GreetingAttemptID,
     InvitationStatus,
     InvitationToken,
@@ -693,7 +692,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeting_session = invitation.get_greeting_session(greeter)
-        greeting_attempt = greeting_session.new_attempt_for_greeter(now)
+        greeting_attempt = greeting_session.new_attempt_for_greeter(org, now)
         return greeting_attempt.greeting_attempt
 
     @override
@@ -732,7 +731,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
         greeting_session = invitation.get_greeting_session(greeter)
-        greeting_attempt = greeting_session.new_attempt_for_claimer(now)
+        greeting_attempt = greeting_session.new_attempt_for_claimer(org, now)
         return greeting_attempt.greeting_attempt
 
     @override
@@ -745,8 +744,43 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
     ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
-        GreeterOrClaimer.GREETER
-        raise NotImplementedError
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            greeter_device = org.devices[author]
+            assert greeter_device.cooked.user_id == greeter
+            greeter_user = org.users[greeter]
+        except KeyError:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND
+
+        if greeter_user.is_revoked:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_REVOKED
+
+        try:
+            attempt = org.greeting_attempts[greeting_attempt]
+            invitation = org.invitations[attempt.token]
+        except KeyError:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+
+        if invitation.is_completed:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
+
+        if attempt.cancelled_reason is not None:
+            return GreetingAttemptCancelledBadOutcome(*attempt.cancelled_reason)
+        if attempt.greeter_joined is None:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
+        attempt.greeter_cancel(now, reason)
 
     @override
     async def claimer_cancel_greeting_attempt(
@@ -757,8 +791,38 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeting_attempt: GreetingAttemptID,
         reason: CancelledGreetingAttemptReason,
     ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
-        GreeterOrClaimer.CLAIMER
-        raise NotImplementedError
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            attempt = org.greeting_attempts[greeting_attempt]
+            assert attempt.token == token
+            invitation = org.invitations[attempt.token]
+        except KeyError:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+
+        greeter_user = org.users[attempt.greeter_id]
+        if greeter_user.is_revoked:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_REVOKED
+
+        if invitation.is_completed:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
+
+        if attempt.cancelled_reason is not None:
+            return GreetingAttemptCancelledBadOutcome(*attempt.cancelled_reason)
+        if attempt.claimer_joined is None:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
+        attempt.claimer_cancel(now, reason)
 
     @override
     async def greeter_step(

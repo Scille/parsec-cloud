@@ -67,6 +67,7 @@ class MemoryOrganization:
     users: dict[UserID, MemoryUser] = field(default_factory=dict)
     devices: dict[DeviceID, MemoryDevice] = field(default_factory=dict)
     invitations: dict[InvitationToken, MemoryInvitation] = field(default_factory=dict)
+    greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
     pki_enrollments: dict[EnrollmentID, MemoryPkiEnrollment] = field(default_factory=dict)
     realms: dict[VlobID, MemoryRealm] = field(default_factory=dict)
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
@@ -286,10 +287,11 @@ class MemoryGreetingSession:
     greeter_id: UserID
 
     # Mutable properties
-    greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
+    greeting_attempts: list[GreetingAttemptID] = field(default_factory=list)
 
-    def get_active_greeting_attempt(self) -> MemoryGreetingAttempt:
-        for attempt in self.greeting_attempts.values():
+    def get_active_greeting_attempt(self, org: MemoryOrganization) -> MemoryGreetingAttempt:
+        for attempt_id in self.greeting_attempts:
+            attempt = org.greeting_attempts[attempt_id]
             if attempt.is_active():
                 return attempt
         attempt = MemoryGreetingAttempt(
@@ -297,19 +299,23 @@ class MemoryGreetingSession:
             token=self.token,
             greeter_id=self.greeter_id,
         )
-        self.greeting_attempts[attempt.greeting_attempt] = attempt
+        org.greeting_attempts[attempt.greeting_attempt] = attempt
         return attempt
 
-    def new_attempt_for_greeter(self, now: DateTime) -> MemoryGreetingAttempt:
+    def new_attempt_for_greeter(
+        self, org: MemoryOrganization, now: DateTime
+    ) -> MemoryGreetingAttempt:
         while True:
-            current_attempt = self.get_active_greeting_attempt()
+            current_attempt = self.get_active_greeting_attempt(org)
             current_attempt.greeter_join_or_cancel(now)
             if current_attempt.is_active():
                 return current_attempt
 
-    def new_attempt_for_claimer(self, now: DateTime) -> MemoryGreetingAttempt:
+    def new_attempt_for_claimer(
+        self, org: MemoryOrganization, now: DateTime
+    ) -> MemoryGreetingAttempt:
         while True:
-            current_attempt = self.get_active_greeting_attempt()
+            current_attempt = self.get_active_greeting_attempt(org)
             current_attempt.claimer_join_or_cancel(now)
             if current_attempt.is_active():
                 return current_attempt
