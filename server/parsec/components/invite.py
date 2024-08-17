@@ -1435,6 +1435,7 @@ class BaseInviteComponent:
             author=client_ctx.device_id,
             greeter=client_ctx.user_id,
             greeting_attempt=req.greeting_attempt,
+            reason=req.reason,
         )
         match outcome:
             # OK case
@@ -1472,6 +1473,7 @@ class BaseInviteComponent:
         author: DeviceID,
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
+        reason: CancelledGreetingAttemptReason,
     ) -> None | InviteGreeterCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
@@ -1486,6 +1488,7 @@ class BaseInviteComponent:
             organization_id=client_ctx.organization_id,
             token=client_ctx.token,
             greeting_attempt=req.greeting_attempt,
+            reason=req.reason,
         )
         match outcome:
             # OK case
@@ -1524,6 +1527,7 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         token: InvitationToken,
         greeting_attempt: GreetingAttemptID,
+        reason: CancelledGreetingAttemptReason,
     ) -> None | InviteClaimerCancelGreetingAttemptBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
