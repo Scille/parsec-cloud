@@ -382,10 +382,13 @@ class InviteClaimerStepBadOutcome(BadOutcomeEnum):
 
 
 class InviteCompleteBadOutcome(BadOutcomeEnum):
+    # Common outcomes
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
+    # Specific outcomes
+    AUTHOR_NOT_ALLOWED = auto()
     INVITATION_NOT_FOUND = auto()
     INVITATION_CANCELLED = auto()
     INVITATION_ALREADY_COMPLETED = auto()
@@ -1692,6 +1695,8 @@ class BaseInviteComponent:
                 client_ctx.author_not_found_abort()
             case InviteCompleteBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+            case InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_complete.RepAuthorNotAllowed()
 
     async def complete(
         self,

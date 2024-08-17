@@ -10,10 +10,13 @@ from parsec._parsec import (
     ActiveUsersLimit,
     BlockID,
     BootstrapToken,
+    CancelledGreetingAttemptReason,
     DateTime,
     DeviceCertificate,
     DeviceID,
     EnrollmentID,
+    GreeterOrClaimer,
+    GreetingAttemptID,
     InvitationToken,
     InvitationType,
     OrganizationID,
@@ -249,9 +252,113 @@ class MemoryInvitation:
     conduit_greeter_payload: bytes | None = field(default=None, repr=False)
     conduit_claimer_payload: bytes | None = field(default=None, repr=False)
 
+    # New fields for the new invitation system
+    # TODO: remove the old fields once the new system is fully deployed
+    greeting_sessions: dict[UserID, MemoryGreetingSession] = field(default_factory=dict)
+
     @property
     def is_deleted(self) -> bool:
         return self.deleted_on is not None
+
+    @property
+    def is_completed(self) -> bool:
+        return self.deleted_reason == MemoryInvitationDeletedReason.FINISHED
+
+    @property
+    def is_cancelled(self) -> bool:
+        return self.deleted_reason == MemoryInvitationDeletedReason.CANCELLED
+
+    def get_greeting_session(self, user_id: UserID) -> MemoryGreetingSession:
+        try:
+            return self.greeting_sessions[user_id]
+        except KeyError:
+            greeting_session = MemoryGreetingSession(
+                token=self.token,
+                greeter_id=user_id,
+            )
+            return self.greeting_sessions.setdefault(user_id, greeting_session)
+
+
+@dataclass(slots=True)
+class MemoryGreetingSession:
+    # Unmutable properties
+    token: InvitationToken
+    greeter_id: UserID
+
+    # Mutable properties
+    greeting_attempts: dict[GreetingAttemptID, MemoryGreetingAttempt] = field(default_factory=dict)
+
+    def get_active_greeting_attempt(self) -> MemoryGreetingAttempt:
+        for attempt in self.greeting_attempts.values():
+            if attempt.is_active():
+                return attempt
+        attempt = MemoryGreetingAttempt(
+            greeting_attempt=GreetingAttemptID.new(),
+            token=self.token,
+            greeter_id=self.greeter_id,
+        )
+        self.greeting_attempts[attempt.greeting_attempt] = attempt
+        return attempt
+
+    def new_attempt_for_greeter(self, now: DateTime) -> MemoryGreetingAttempt:
+        while True:
+            current_attempt = self.get_active_greeting_attempt()
+            current_attempt.greeter_join_or_cancel(now)
+            if current_attempt.is_active():
+                return current_attempt
+
+    def new_attempt_for_claimer(self, now: DateTime) -> MemoryGreetingAttempt:
+        while True:
+            current_attempt = self.get_active_greeting_attempt()
+            current_attempt.claimer_join_or_cancel(now)
+            if current_attempt.is_active():
+                return current_attempt
+
+
+@dataclass(slots=True)
+class MemoryGreetingAttempt:
+    # Unmutable properties
+    greeting_attempt: GreetingAttemptID
+    token: InvitationToken
+    greeter_id: UserID
+
+    # Mutable properties
+    claimer_joined: None | DateTime = None
+    greeter_joined: None | DateTime = None
+    cancelled_reason: None | tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] = (
+        None
+    )
+
+    def is_active(self) -> bool:
+        return self.cancelled_reason is None
+
+    def greeter_cancel(
+        self,
+        now: DateTime,
+        reason: CancelledGreetingAttemptReason = CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
+    ):
+        self.cancelled_reason = (GreeterOrClaimer.GREETER, reason, now)
+
+    def claimer_cancel(
+        self,
+        now: DateTime,
+        reason: CancelledGreetingAttemptReason = CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
+    ):
+        self.cancelled_reason = (GreeterOrClaimer.CLAIMER, reason, now)
+
+    def greeter_join_or_cancel(self, now: DateTime):
+        match self.greeter_joined:
+            case None:
+                self.greeter_joined = now
+            case DateTime():
+                self.greeter_cancel(now)
+
+    def claimer_join_or_cancel(self, now: DateTime):
+        match self.claimer_joined:
+            case None:
+                self.claimer_joined = now
+            case DateTime():
+                self.claimer_cancel(now)
 
 
 class MemoryPkiEnrollmentState(Enum):

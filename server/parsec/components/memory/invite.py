@@ -46,6 +46,7 @@ from parsec.components.memory.datamodel import (
     MemoryDatamodel,
     MemoryInvitation,
     MemoryInvitationDeletedReason,
+    MemoryUser,
 )
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -645,6 +646,14 @@ class MemoryInviteComponent(BaseInviteComponent):
     # New invite transport API
     # TODO: Remove the old API once the new one is fully functional
 
+    def is_greeter_allowed(self, invitation: MemoryInvitation, greeter: MemoryUser) -> bool:
+        if invitation.type == InvitationType.DEVICE:
+            return invitation.created_by_user_id == greeter.cooked.user_id
+        elif invitation.type == InvitationType.USER:
+            return greeter.current_profile == UserProfile.ADMIN
+        else:
+            raise NotImplementedError
+
     @override
     async def greeter_start_greeting_attempt(
         self,
@@ -654,7 +663,38 @@ class MemoryInviteComponent(BaseInviteComponent):
         greeter: UserID,
         token: InvitationToken,
     ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
-        raise NotImplementedError
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            greeter_device = org.devices[author]
+            assert greeter_device.cooked.user_id == greeter
+            greeter_user = org.users[greeter]
+        except KeyError:
+            return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND
+
+        if greeter_user.is_revoked:
+            return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_completed:
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
+
+        greeting_session = invitation.get_greeting_session(greeter)
+        greeting_attempt = greeting_session.new_attempt_for_greeter(now)
+        return greeting_attempt.greeting_attempt
 
     @override
     async def claimer_start_greeting_attempt(
@@ -732,4 +772,48 @@ class MemoryInviteComponent(BaseInviteComponent):
         author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCompleteBadOutcome:
-        raise NotImplementedError
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteCompleteBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteCompleteBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            author_device = org.devices[author]
+        except KeyError:
+            return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
+        author_user_id = author_device.cooked.user_id
+
+        try:
+            author_user = org.users[author_user_id]
+        except KeyError:
+            return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
+        if author_user.is_revoked:
+            return InviteCompleteBadOutcome.AUTHOR_REVOKED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_cancelled:
+            return InviteCompleteBadOutcome.INVITATION_CANCELLED
+        if invitation.is_completed:
+            return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
+
+        # Only the greeter or the claimer can complete the invitation
+        if not self.is_greeter_allowed(invitation, author_user):
+            if not invitation.claimer_email == author_user.cooked.human_handle.email:
+                return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+
+        invitation.deleted_on = now
+        invitation.deleted_reason = MemoryInvitationDeletedReason.FINISHED
+
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=author_user_id,
+                status=InvitationStatus.FINISHED,
+            )
+        )
