@@ -300,6 +300,7 @@ class MemoryGreetingSession:
             greeter_id=self.greeter_id,
         )
         org.greeting_attempts[attempt.greeting_attempt] = attempt
+        self.greeting_attempts.append(attempt.greeting_attempt)
         return attempt
 
     def new_attempt_for_greeter(

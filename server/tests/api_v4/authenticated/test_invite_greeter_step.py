@@ -1,7 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from unittest.mock import ANY
-
 import pytest
 
 from parsec._parsec import (
@@ -9,23 +7,11 @@ from parsec._parsec import (
     GreeterOrClaimer,
     GreetingAttemptID,
     PrivateKey,
+    PublicKey,
     authenticated_cmds,
+    invited_cmds,
 )
 from tests.common import Backend, CoolorgRpcClients
-
-
-def test_debug():
-    claimer_step = authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce()
-    x = authenticated_cmds.v4.invite_greeter_step.RepOk(claimer_step=claimer_step)
-    assert isinstance(claimer_step, authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce)
-    assert isinstance(x.claimer_step, authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce)
-
-    greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce()
-    x = authenticated_cmds.v4.invite_greeter_step.Req(
-        greeting_attempt=GreetingAttemptID.new(), greeter_step=greeter_step
-    )
-    assert isinstance(greeter_step, authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce)
-    assert isinstance(x.greeter_step, authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce)
 
 
 @pytest.fixture
@@ -39,31 +25,61 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
     return rep.greeting_attempt
 
 
+@pytest.fixture
+async def claimer_wait_peer_public_key(
+    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+) -> PublicKey:
+    # Claimer start greeting attempt
+    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+        token=coolorg.invited_alice_dev3.token,
+        greeter=coolorg.alice.user_id,
+    )
+    assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk(
+        greeting_attempt=greeting_attempt
+    )
+
+    # Claimer wait peer
+    claimer_key = PrivateKey.generate()
+    claimer_step = invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+        public_key=claimer_key.public_key
+    )
+    rep = await coolorg.invited_alice_dev3.invite_claimer_step(
+        greeting_attempt=greeting_attempt, claimer_step=claimer_step
+    )
+    assert rep == invited_cmds.v4.invite_claimer_step.RepNotReady()
+
+    return claimer_key.public_key
+
+
 async def test_authenticated_invite_greeter_step_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    greeting_attempt: GreetingAttemptID,
+    claimer_wait_peer_public_key: PublicKey,
 ) -> None:
     greeter_key = PrivateKey.generate()
-    claimer_key = PrivateKey.generate()
     greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeer(
         public_key=greeter_key.public_key
     )
-    claimer_step = authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeer(
-        public_key=claimer_key.public_key
+    expected_claimer_step = authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeer(
+        public_key=claimer_wait_peer_public_key
     )
-
-    # TODO: Have the claimer perform the WaitPeer step
 
     # Run once
     rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step
     )
-    assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(claimer_step=claimer_step)
+    assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
+        claimer_step=expected_claimer_step
+    )
 
     # Run once more
     rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt, greeter_step=greeter_step
     )
-    assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(claimer_step=claimer_step)
+    assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
+        claimer_step=expected_claimer_step
+    )
 
 
 async def test_authenticated_invite_greeter_step_author_not_allowed(
@@ -92,8 +108,7 @@ async def test_authenticated_invite_greeter_step_invitation_cancelled(
 async def test_authenticated_invite_greeter_step_invitation_completed(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
-    # Not implemented yet
-    # await coolorg.alice.invite_complete(token=coolorg.invited_alice_dev3.token)
+    await coolorg.alice.invite_complete(token=coolorg.invited_alice_dev3.token)
 
     rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
@@ -117,8 +132,13 @@ async def test_authenticated_invite_greeter_step_greeting_attempt_not_found(
 async def test_authenticated_invite_greeter_step_greeting_attempt_not_joined(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    # TODO: Have the claimer join the greeting attempt and use the corresponding ID
-    greeting_attempt = GreetingAttemptID.new()
+    # Claimer start greeting attempt
+    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+        token=coolorg.invited_alice_dev3.token,
+        greeter=coolorg.alice.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    greeting_attempt = rep.greeting_attempt
 
     rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=greeting_attempt,
@@ -143,8 +163,9 @@ async def test_authenticated_invite_greeter_step_greeting_attempt_cancelled(
         greeting_attempt=greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
     )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_step.RepGreetingAttemptCancelled)
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepGreetingAttemptCancelled(
-        timestamp=ANY,
+        timestamp=rep.timestamp,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
         origin=GreeterOrClaimer.GREETER,
     )
