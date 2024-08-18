@@ -867,7 +867,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
 
         if attempt.cancelled_reason is not None:
-            return InviteGreeterStepBadOutcome(*attempt.cancelled_reason)
+            return GreetingAttemptCancelledBadOutcome(*attempt.cancelled_reason)
         if attempt.greeter_joined is None:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
@@ -922,7 +922,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if attempt.claimer_joined is None:
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
-        match attempt.greeter_step(step_index, claimer_data):
+        match attempt.claimer_step(step_index, claimer_data):
             case attempt.StepOutcome.MISMATCH:
                 return InviteClaimerStepBadOutcome.STEP_MISMATCH
             case attempt.StepOutcome.TOO_ADVANCED:
