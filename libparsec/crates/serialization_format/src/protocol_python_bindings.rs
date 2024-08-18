@@ -318,7 +318,7 @@ fn quote_reps(
         quote! {
             raw_rep @ #protocol_path::Rep::#variant_name {..} => {
                 let init = PyClassInitializer::from(Rep(raw_rep));
-                Py::new(py, init.add_subclass(#subclass_name))?.into_py(py)
+                Bound::new(py, init.add_subclass(#subclass_name))?.into_any()
             }
         }
     });
@@ -336,13 +336,13 @@ fn quote_reps(
         #[pymethods]
         impl Rep {
             #[staticmethod]
-            fn load<'py>(py: Python<'py>, raw: &[u8]) -> PyResult<PyObject> {
+            fn load<'py>(py: Python<'py>, raw: &[u8]) -> PyResult<Bound<'py, PyAny>> {
                 let rep = #protocol_path::Rep::load(raw).map_err(|e| PyValueError::new_err(e.to_string()))?;
                 Ok(match rep {
                     #(#fn_load_subclasses_matches_codes)*
                     raw_rep @ #protocol_path::Rep::UnknownStatus { .. } => {
                         let init = PyClassInitializer::from(Rep(raw_rep));
-                        Py::new(py, init.add_subclass(RepUnknownStatus))?.into_py(py)
+                        Bound::new(py, init.add_subclass(RepUnknownStatus))?.into_any()
                     }
                 })
             }
@@ -647,7 +647,7 @@ fn quote_nested_type(
                 quote! {
                     raw @ #protocol_path::#nested_type_name::#variant_name {..} => {
                         let init = PyClassInitializer::from(#nested_type_name(raw));
-                        Ok(Py::new(py, init.add_subclass(#subclass_name))?.into_py(py).bind(py).to_owned())
+                        Ok(Bound::new(py, init.add_subclass(#subclass_name))?.into_any())
                     }
                 }
             });
@@ -746,7 +746,7 @@ fn quote_nested_type(
 
                 impl #nested_type_name {
                     fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<Bound<'_, PyAny>> {
-                        Ok(Py::new(py, #nested_type_name(raw))?.into_py(py).bind(py).to_owned())
+                        Ok(Bound::new(py, #nested_type_name(raw))?.into_any())
                     }
                 }
 
