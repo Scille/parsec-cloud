@@ -1,10 +1,17 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import pytest
 
 from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds
 from tests.common import Backend, CoolorgRpcClients
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
+
+
+# TODO: Remove once PostgreSQL is supported
+@pytest.fixture(autouse=True)
+def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
+    pass
 
 
 async def test_authenticated_invite_greeter_start_greeting_attempt_ok(

@@ -235,6 +235,12 @@ def with_postgresql(request: pytest.FixtureRequest) -> bool:
 
 
 @pytest.fixture
+def skip_if_postgresql(with_postgresql: bool) -> None:
+    if with_postgresql:
+        pytest.skip("Test is not compatible with PostgreSQL backend yet")
+
+
+@pytest.fixture
 async def db_url(request: pytest.FixtureRequest) -> str:
     if request.config.getoption("--postgresql"):
         url = get_postgresql_url()

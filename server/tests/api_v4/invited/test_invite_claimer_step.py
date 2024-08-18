@@ -19,6 +19,12 @@ from parsec._parsec import (
 from tests.common import Backend, CoolorgRpcClients
 
 
+# TODO: Remove once PostgreSQL is supported
+@pytest.fixture(autouse=True)
+def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
+    pass
+
+
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
     invitation_token = coolorg.invited_alice_dev3.token

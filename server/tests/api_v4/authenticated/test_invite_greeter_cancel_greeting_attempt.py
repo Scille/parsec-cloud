@@ -15,6 +15,12 @@ from tests.common import Backend, CoolorgRpcClients
 Response = authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.Rep | None
 
 
+# TODO: Remove once PostgreSQL is supported
+@pytest.fixture(autouse=True)
+def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
+    pass
+
+
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
     invitation_token = coolorg.invited_alice_dev3.token
