@@ -14,6 +14,20 @@ from parsec._parsec import (
 from tests.common import Backend, CoolorgRpcClients
 
 
+def test_debug():
+    claimer_step = authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce()
+    x = authenticated_cmds.v4.invite_greeter_step.RepOk(claimer_step=claimer_step)
+    assert isinstance(claimer_step, authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce)
+    assert isinstance(x.claimer_step, authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce)
+
+    greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce()
+    x = authenticated_cmds.v4.invite_greeter_step.Req(
+        greeting_attempt=GreetingAttemptID.new(), greeter_step=greeter_step
+    )
+    assert isinstance(greeter_step, authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce)
+    assert isinstance(x.greeter_step, authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce)
+
+
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
     invitation_token = coolorg.invited_alice_dev3.token

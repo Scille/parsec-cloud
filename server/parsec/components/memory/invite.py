@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Buffer
 from typing import Any, override
 
 from parsec._parsec import (
@@ -870,7 +871,15 @@ class MemoryInviteComponent(BaseInviteComponent):
         if attempt.greeter_joined is None:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
-        raise NotImplementedError
+        match attempt.greeter_step(step_index, greeter_data):
+            case attempt.StepOutcome.MISMATCH:
+                return InviteGreeterStepBadOutcome.STEP_MISMATCH
+            case attempt.StepOutcome.TOO_ADVANCED:
+                return InviteGreeterStepBadOutcome.STEP_TOO_ADVANCED
+            case attempt.StepOutcome.NOT_READY:
+                return NotReady()
+            case Buffer() as data:
+                return data
 
     @override
     async def claimer_step(
@@ -913,7 +922,15 @@ class MemoryInviteComponent(BaseInviteComponent):
         if attempt.claimer_joined is None:
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
-        raise NotImplementedError
+        match attempt.greeter_step(step_index, claimer_data):
+            case attempt.StepOutcome.MISMATCH:
+                return InviteClaimerStepBadOutcome.STEP_MISMATCH
+            case attempt.StepOutcome.TOO_ADVANCED:
+                return InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED
+            case attempt.StepOutcome.NOT_READY:
+                return NotReady()
+            case Buffer() as data:
+                return data
 
     @override
     async def complete(

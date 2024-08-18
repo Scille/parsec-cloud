@@ -334,6 +334,13 @@ class MemoryGreetingAttempt:
     cancelled_reason: None | tuple[GreeterOrClaimer, CancelledGreetingAttemptReason, DateTime] = (
         None
     )
+    greeter_steps: list[bytes] = field(default_factory=list)
+    claimer_steps: list[bytes] = field(default_factory=list)
+
+    class StepOutcome(Enum):
+        MISMATCH = auto()
+        NOT_READY = auto()
+        TOO_ADVANCED = auto()
 
     def is_active(self) -> bool:
         return self.cancelled_reason is None
@@ -365,6 +372,28 @@ class MemoryGreetingAttempt:
                 self.claimer_joined = now
             case DateTime():
                 self.claimer_cancel(now)
+
+    def greeter_step(self, index: int, payload: bytes) -> bytes | StepOutcome:
+        if index < len(self.greeter_steps) and self.greeter_steps[index] != payload:
+            return self.StepOutcome.MISMATCH
+        if index > len(self.greeter_steps) or index > len(self.claimer_steps):
+            return self.StepOutcome.TOO_ADVANCED
+        if index == len(self.greeter_steps):
+            self.greeter_steps.append(payload)
+        if index >= len(self.claimer_steps):
+            return self.StepOutcome.NOT_READY
+        return self.claimer_steps[index]
+
+    def claimer_step(self, index: int, payload: bytes) -> bytes | StepOutcome:
+        if index < len(self.claimer_steps) and self.claimer_steps[index] != payload:
+            return self.StepOutcome.MISMATCH
+        if index > len(self.greeter_steps) or index > len(self.claimer_steps):
+            return self.StepOutcome.TOO_ADVANCED
+        if index == len(self.claimer_steps):
+            self.claimer_steps.append(payload)
+        if index >= len(self.greeter_steps):
+            return self.StepOutcome.NOT_READY
+        return self.greeter_steps[index]
 
 
 class MemoryPkiEnrollmentState(Enum):
