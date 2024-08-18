@@ -225,7 +225,7 @@ fn quote_reps(
                         }
 
                         #[getter]
-                        fn unit(_self: PyRef<Self>, py: Python) -> PyResult<PyObject> {
+                        fn unit<'py>(_self: PyRef<Self>, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
                             match &_self.into_super().0 {
                                 #protocol_path::Rep::#variant_name ( unit ) => {
                                     #nested_type_name::from_raw(py, unit.clone())
@@ -426,7 +426,7 @@ fn quote_req(
                     }
 
                     #[getter]
-                    fn unit(&self, py: Python) -> PyResult<PyObject> {
+                    fn unit<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyAny>> {
                         #nested_type_name::from_raw(py, self.0.0.clone())
                     }
 
@@ -647,7 +647,7 @@ fn quote_nested_type(
                 quote! {
                     raw @ #protocol_path::#nested_type_name::#variant_name {..} => {
                         let init = PyClassInitializer::from(#nested_type_name(raw));
-                        Ok(Py::new(py, init.add_subclass(#subclass_name))?.into_py(py))
+                        Ok(Py::new(py, init.add_subclass(#subclass_name))?.into_py(py).bind(py).to_owned())
                     }
                 }
             });
@@ -663,7 +663,7 @@ fn quote_nested_type(
                 crate::binding_utils::gen_proto!(#nested_type_name, __richcmp__, eq);
 
                 impl #nested_type_name {
-                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<PyObject> {
+                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<Bound<'_, PyAny>> {
                         match raw {
                             #(#from_subclasses_matches_codes)*
                         }
@@ -745,8 +745,8 @@ fn quote_nested_type(
                 crate::binding_utils::gen_proto!(#nested_type_name, __richcmp__, eq);
 
                 impl #nested_type_name {
-                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<PyObject> {
-                        Ok(Py::new(py, #nested_type_name(raw))?.into_py(py))
+                    fn from_raw(py: Python, raw: #protocol_path::#nested_type_name) -> PyResult<Bound<'_, PyAny>> {
+                        Ok(Py::new(py, #nested_type_name(raw))?.into_py(py).bind(py).to_owned())
                     }
                 }
 
@@ -788,9 +788,8 @@ fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
         FieldType::Tuple(_) => {
             quote! { Bound<'py, PyTuple> }
         }
-        FieldType::Custom(nested) => {
-            let nested = format_ident!("{}", nested);
-            quote! { #nested }
+        FieldType::Custom(_) => {
+            quote! { Bound<'py, PyAny> }
         }
         FieldType::Boolean => quote! { bool },
         FieldType::String => quote! { Bound<'py, PyString> },
@@ -913,7 +912,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         }
         FieldType::Custom(nested) => {
             let nested_name = format_ident!("{}", nested);
-            quote! { #nested_name(#field_path.to_owned()) }
+            quote! { #nested_name::from_raw(py, #field_path.to_owned()).unwrap() }
         }
         FieldType::String => quote! { PyString::new_bound(py, #field_path) },
         FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path) },
