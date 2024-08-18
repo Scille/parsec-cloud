@@ -17,7 +17,6 @@ from parsec._parsec import (
     UserID,
     UserProfile,
 )
-from parsec._parsec_pyi.protocol import authenticated_cmds, invited_cmds
 from parsec.components.events import EventBus
 from parsec.components.invite import (
     NEXT_CONDUIT_STATE,
@@ -1118,13 +1117,9 @@ class PGInviteComponent(BaseInviteComponent):
         author: DeviceID,
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
-        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
-    ) -> (
-        authenticated_cmds.latest.invite_greeter_step.ClaimerStep
-        | NotReady
-        | InviteGreeterStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        greeter_data: bytes,
+    ) -> bytes | NotReady | InviteGreeterStepBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @override
@@ -1134,13 +1129,9 @@ class PGInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         token: InvitationToken,
         greeting_attempt: GreetingAttemptID,
-        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
-    ) -> (
-        invited_cmds.latest.invite_claimer_step.GreeterStep
-        | NotReady
-        | InviteClaimerStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        claimer_data: bytes,
+    ) -> bytes | NotReady | InviteClaimerStepBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @override

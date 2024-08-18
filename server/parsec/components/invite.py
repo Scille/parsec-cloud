@@ -6,12 +6,14 @@ import ssl
 import sys
 import tempfile
 from collections import defaultdict
+from collections.abc import Buffer
 from dataclasses import dataclass
 from email.header import Header
 from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import Enum, auto
+from typing import Callable
 
 import anyio
 
@@ -392,6 +394,138 @@ class InviteCompleteBadOutcome(BadOutcomeEnum):
     INVITATION_NOT_FOUND = auto()
     INVITATION_CANCELLED = auto()
     INVITATION_ALREADY_COMPLETED = auto()
+
+
+def process_greeter_step(
+    step: authenticated_cmds.v4.invite_greeter_step.GreeterStep,
+) -> tuple[int, bytes, Callable[[bytes], authenticated_cmds.v4.invite_greeter_step.ClaimerStep]]:
+    match step:
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeer():
+            return (
+                0,
+                step.public_key.encode(),
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeer(
+                    PublicKey(data)
+                ),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepGetHashedNonce():
+            return (
+                1,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendHashedNonce(
+                    HashDigest.from_data(data)
+                ),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepSendNonce():
+            return (
+                2,
+                step.greeter_nonce,
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce(),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce():
+            return (
+                3,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendNonce(data),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerTrust():
+            return (
+                4,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepSignifyTrust(),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepSignifyTrust():
+            return (
+                5,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeerTrust(),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepGetPayload():
+            return (
+                6,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendPayload(data),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepSendPayload():
+            return (
+                7,
+                step.greeter_payload,
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetPayload(),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerAcknowledgment():
+            return (
+                8,
+                b"",
+                lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepAcknowledge(),
+            )
+        case authenticated_cmds.v4.invite_greeter_step.GreeterStep():
+            pass
+    assert False, f"Unknown greeter step: {step}"
+
+
+def process_claimer_step(
+    step: invited_cmds.v4.invite_claimer_step.ClaimerStep,
+) -> tuple[int, bytes, Callable[[bytes], invited_cmds.v4.invite_claimer_step.GreeterStep]]:
+    match step:
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer():
+            return (
+                0,
+                step.public_key.encode(),
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeer(
+                    PublicKey(data)
+                ),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepSendHashedNonce():
+            return (
+                1,
+                step.hashed_nonce.digest,
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepGetHashedNonce(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce():
+            return (
+                2,
+                b"",
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepSendNonce(data),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepSendNonce():
+            return (
+                3,
+                step.claimer_nonce,
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepGetNonce(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepSignifyTrust():
+            return (
+                4,
+                b"",
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeerTrust(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeerTrust():
+            return (
+                5,
+                b"",
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepSignifyTrust(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepSendPayload():
+            return (
+                6,
+                step.claimer_payload,
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepGetPayload(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepGetPayload():
+            return (
+                7,
+                b"",
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepSendPayload(data),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStepAcknowledge():
+            return (
+                8,
+                b"",
+                lambda data: invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeerAcknowledgment(),
+            )
+        case invited_cmds.v4.invite_claimer_step.ClaimerStep():
+            pass
+    assert False, f"Unknown claimer step: {step}"
 
 
 class BaseInviteComponent:
@@ -1540,17 +1674,20 @@ class BaseInviteComponent:
         client_ctx: AuthenticatedClientContext,
         req: authenticated_cmds.latest.invite_greeter_step.Req,
     ) -> authenticated_cmds.latest.invite_greeter_step.Rep:
+        step_index, greeter_data, load_claimer_data = process_greeter_step(req.greeter_step)
         outcome = await self.greeter_step(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             greeter=client_ctx.user_id,
             greeting_attempt=req.greeting_attempt,
-            greeter_step=req.greeter_step,
+            step_index=step_index,
+            greeter_data=greeter_data,
         )
         match outcome:
             # OK case
-            case authenticated_cmds.latest.invite_greeter_step.ClaimerStep() as claimer_step:
+            case Buffer() as claimer_data:
+                claimer_step = load_claimer_data(claimer_data)
                 return authenticated_cmds.latest.invite_greeter_step.RepOk(
                     claimer_step=claimer_step
                 )
@@ -1593,13 +1730,9 @@ class BaseInviteComponent:
         author: DeviceID,
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
-        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
-    ) -> (
-        authenticated_cmds.latest.invite_greeter_step.ClaimerStep
-        | NotReady
-        | InviteGreeterStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        greeter_data: bytes,
+    ) -> bytes | NotReady | InviteGreeterStepBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @api
@@ -1608,16 +1741,19 @@ class BaseInviteComponent:
         client_ctx: InvitedClientContext,
         req: invited_cmds.latest.invite_claimer_step.Req,
     ) -> invited_cmds.latest.invite_claimer_step.Rep:
+        step_index, claimer_data, load_greeter_data = process_claimer_step(req.claimer_step)
         outcome = await self.claimer_step(
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             token=client_ctx.token,
             greeting_attempt=req.greeting_attempt,
-            claimer_step=req.claimer_step,
+            step_index=step_index,
+            claimer_data=claimer_data,
         )
         match outcome:
             # OK case
-            case invited_cmds.latest.invite_claimer_step.GreeterStep() as greeter_step:
+            case Buffer() as greeter_data:
+                greeter_step = load_greeter_data(greeter_data)
                 return invited_cmds.latest.invite_claimer_step.RepOk(greeter_step=greeter_step)
             # NotReady case
             case NotReady():
@@ -1657,13 +1793,9 @@ class BaseInviteComponent:
         organization_id: OrganizationID,
         token: InvitationToken,
         greeting_attempt: GreetingAttemptID,
-        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
-    ) -> (
-        invited_cmds.latest.invite_claimer_step.GreeterStep
-        | NotReady
-        | InviteClaimerStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        claimer_data: bytes,
+    ) -> bytes | NotReady | InviteClaimerStepBadOutcome | GreetingAttemptCancelledBadOutcome:
         raise NotImplementedError
 
     @api
