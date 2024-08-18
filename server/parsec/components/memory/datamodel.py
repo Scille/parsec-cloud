@@ -282,7 +282,7 @@ class MemoryInvitation:
 
 @dataclass(slots=True)
 class MemoryGreetingSession:
-    # Unmutable properties
+    # Immutable properties
     token: InvitationToken
     greeter_id: UserID
 
@@ -324,7 +324,7 @@ class MemoryGreetingSession:
 
 @dataclass(slots=True)
 class MemoryGreetingAttempt:
-    # Unmutable properties
+    # Immutable properties
     greeting_attempt: GreetingAttemptID
     token: InvitationToken
     greeter_id: UserID
