@@ -15,7 +15,6 @@ from parsec._parsec import (
     UserID,
     UserProfile,
 )
-from parsec._parsec_pyi.protocol import authenticated_cmds, invited_cmds
 from parsec.components.invite import (
     NEXT_CONDUIT_STATE,
     BaseInviteComponent,
@@ -832,13 +831,45 @@ class MemoryInviteComponent(BaseInviteComponent):
         author: DeviceID,
         greeter: UserID,
         greeting_attempt: GreetingAttemptID,
-        greeter_step: authenticated_cmds.latest.invite_greeter_step.GreeterStep,
-    ) -> (
-        authenticated_cmds.latest.invite_greeter_step.ClaimerStep
-        | NotReady
-        | InviteGreeterStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        greeter_data: bytes,
+    ) -> bytes | NotReady | InviteGreeterStepBadOutcome | GreetingAttemptCancelledBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteGreeterStepBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteGreeterStepBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            greeter_device = org.devices[author]
+            assert greeter_device.cooked.user_id == greeter
+            greeter_user = org.users[greeter]
+        except KeyError:
+            return InviteGreeterStepBadOutcome.AUTHOR_NOT_FOUND
+
+        if greeter_user.is_revoked:
+            return InviteGreeterStepBadOutcome.AUTHOR_REVOKED
+
+        try:
+            attempt = org.greeting_attempts[greeting_attempt]
+            invitation = org.invitations[attempt.token]
+        except KeyError:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+
+        if invitation.is_completed:
+            return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
+
+        if attempt.cancelled_reason is not None:
+            return InviteGreeterStepBadOutcome(*attempt.cancelled_reason)
+        if attempt.greeter_joined is None:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
         raise NotImplementedError
 
     @override
@@ -848,13 +879,40 @@ class MemoryInviteComponent(BaseInviteComponent):
         organization_id: OrganizationID,
         token: InvitationToken,
         greeting_attempt: GreetingAttemptID,
-        claimer_step: invited_cmds.latest.invite_claimer_step.ClaimerStep,
-    ) -> (
-        invited_cmds.latest.invite_claimer_step.GreeterStep
-        | NotReady
-        | InviteClaimerStepBadOutcome
-        | GreetingAttemptCancelledBadOutcome
-    ):
+        step_index: int,
+        claimer_data: bytes,
+    ) -> bytes | NotReady | InviteClaimerStepBadOutcome | GreetingAttemptCancelledBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteClaimerStepBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            attempt = org.greeting_attempts[greeting_attempt]
+            assert attempt.token == token
+            invitation = org.invitations[attempt.token]
+        except KeyError:
+            return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+
+        greeter_user = org.users[attempt.greeter_id]
+        if greeter_user.is_revoked:
+            return InviteClaimerStepBadOutcome.GREETER_REVOKED
+
+        if invitation.is_completed:
+            return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
+        if invitation.is_cancelled:
+            return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(invitation, greeter_user):
+            return InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED
+
+        if attempt.cancelled_reason is not None:
+            return GreetingAttemptCancelledBadOutcome(*attempt.cancelled_reason)
+        if attempt.claimer_joined is None:
+            return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
         raise NotImplementedError
 
     @override

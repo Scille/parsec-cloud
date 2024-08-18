@@ -18,14 +18,14 @@ from tests.common import Backend, CoolorgRpcClients
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
     invitation_token = coolorg.invited_alice_dev3.token
 
-    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
         token=invitation_token,
+        greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
     return rep.greeting_attempt
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_ok(
     coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -53,7 +53,6 @@ async def test_invited_invite_claimer_step_ok(
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(greeter_step=greeter_step)
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_greeter_not_allowed(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -67,7 +66,6 @@ async def test_invited_invite_claimer_step_greeter_not_allowed(
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreeterNotAllowed()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_greeter_revoked(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -81,7 +79,6 @@ async def test_invited_invite_claimer_step_greeter_revoked(
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreeterRevoked()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_greeting_attempt_not_found(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -93,7 +90,6 @@ async def test_invited_invite_claimer_step_greeting_attempt_not_found(
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotFound()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_greeting_attempt_not_joined(
     coolorg: CoolorgRpcClients,
 ) -> None:
@@ -108,7 +104,6 @@ async def test_invited_invite_claimer_step_greeting_attempt_not_joined(
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotJoined()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_greeting_attempt_cancelled(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -131,7 +126,6 @@ async def test_invited_invite_claimer_step_greeting_attempt_cancelled(
     )
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_step_mismatch(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -155,7 +149,6 @@ async def test_invited_invite_claimer_step_step_mismatch(
     assert rep == invited_cmds.v4.invite_claimer_step.RepStepMismatch()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_step_too_advanced(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
@@ -166,7 +159,6 @@ async def test_invited_invite_claimer_step_step_too_advanced(
     assert rep == invited_cmds.v4.invite_claimer_step.RepStepTooAdvanced()
 
 
-@pytest.mark.skip("Not implemented yet")
 async def test_invited_invite_claimer_step_not_ready(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
