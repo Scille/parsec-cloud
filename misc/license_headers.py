@@ -309,14 +309,15 @@ if __name__ == "__main__":
         nargs="*",
         type=Path,
         default=[
-            Path("server"),
+            Path(".github"),
             Path("bindings"),
+            Path("cli"),
+            Path("client"),
+            Path("docs"),
             Path("libparsec"),
             Path("misc"),
-            Path("docs"),
+            Path("server"),
             Path("windows-icon-handler"),
-            Path(".github"),
-            Path("client"),
         ],
     )
 
