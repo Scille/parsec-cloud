@@ -2,8 +2,6 @@
 
 // TODO !!!^
 
-// // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 // use libparsec_tests_lite::prelude::*;
 
 // use super::*;

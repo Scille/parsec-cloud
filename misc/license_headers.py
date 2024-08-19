@@ -53,6 +53,7 @@ class Licenser:
                 print(f"{DIM}{file}:{RESET_DIM} Missing {cls.SPDX_ID} header")
                 return False
 
+            # Scan for possible additional invalid license header in the file.
             for line, line_txt in enumerate(fd.readlines(), 3 if shebang_line else 2):
                 if cls.is_possible_license_line(line_txt):
                     print(f"{DIM}{file}:{line}:{RESET_DIM} Header wrongly present")

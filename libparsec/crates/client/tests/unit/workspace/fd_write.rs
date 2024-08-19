@@ -5,8 +5,6 @@
 // TODO: test write buffer of zero length under constrained_io
 // TODO: test write buffer of zero length under constrained_io and cursor at the end of the file
 
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
