@@ -47,14 +47,15 @@
                 v-if="currentPage === ClientAreaPages.BillingDetails"
                 :organization="currentOrganization"
               />
-              <contracts-page
-                v-if="currentPage === ClientAreaPages.Contracts"
-                :organization="currentOrganization"
-              />
+              <!-- Stripe order -->
               <dashboard-page
                 v-if="currentPage === ClientAreaPages.Dashboard"
                 :organization="currentOrganization"
                 @switch-page-request="switchPage"
+              />
+              <statistics-page
+                v-if="currentPage === ClientAreaPages.Statistics"
+                :organization="currentOrganization"
               />
               <invoices-page
                 v-if="currentPage === ClientAreaPages.Invoices"
@@ -70,8 +71,13 @@
                 :organization="currentOrganization"
                 :information-manager="informationManager"
               />
-              <statistics-page
-                v-if="currentPage === ClientAreaPages.Statistics"
+              <!-- CustomOrder -->
+              <custom-order-statistics-page
+                v-if="currentPage === ClientAreaPages.CustomOrderStatistics"
+                :organization="currentOrganization"
+              />
+              <contracts-page
+                v-if="currentPage === ClientAreaPages.Contracts"
                 :organization="currentOrganization"
               />
               <custom-order-billing-details-page
@@ -106,6 +112,7 @@ import PersonalDataPage from '@/views/client-area/personal-data/PersonalDataPage
 import StatisticsPage from '@/views/client-area/statistics/StatisticsPage.vue';
 import CustomOrderInvoicesPage from '@/views/client-area/invoices/CustomOrderInvoicesPage.vue';
 import CustomOrderBillingDetailsPage from '@/views/client-area/billing-details/CustomOrderBillingDetailsPage.vue';
+import CustomOrderStatisticsPage from '@/views/client-area/statistics/CustomOrderStatisticsPage.vue';
 import useSidebarMenu from '@/services/sidebarMenu';
 import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
@@ -245,6 +252,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.personalData';
     case ClientAreaPages.Statistics:
       return 'clientArea.header.titles.statistics';
+    case ClientAreaPages.CustomOrderStatistics:
+      return 'clientArea.header.titles.customOrderStatistics';
     case ClientAreaPages.CustomOrderBillingDetails:
       return 'clientArea.header.titles.customOrderBillingDetails';
     case ClientAreaPages.CustomOrderInvoices:

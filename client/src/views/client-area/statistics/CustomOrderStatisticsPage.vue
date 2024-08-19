@@ -1,0 +1,667 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <div class="client-page-statistics">
+    <template v-if="organizationStats && contractDetails">
+      <!-- active users -->
+      <div class="users active">
+        <div class="users-text">
+          <ion-title class="users-active-text__title title-h2">
+            {{ $msTranslate('clientArea.statistics.titles.users') }}
+            <span class="subtitles-normal">
+              {{ $msTranslate('clientArea.statistics.titles.active') }}
+            </span>
+          </ion-title>
+        </div>
+        <div class="users-cards-list">
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="star"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.active }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="pencil"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.standardUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.active }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="arrowForward"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.outsiderUsersDetail.active }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.active }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- revoked users -->
+      <div class="users revoked">
+        <div class="users-text">
+          <ion-title class="users-active-text__title title-h2">
+            {{ $msTranslate('clientArea.statistics.titles.users') }}
+            <span class="subtitles-normal">
+              {{ $msTranslate('clientArea.statistics.titles.revoked') }}
+            </span>
+          </ion-title>
+        </div>
+        <div class="users-cards-list">
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="star"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.adminUsersDetail.revoked }}</ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: organizationStats.adminUsersDetail.revoked }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="pencil"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">
+                {{ organizationStats.standardUsersDetail.revoked }}
+              </ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: organizationStats.standardUsersDetail.revoked }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+          <ion-card class="users-cards-list-item">
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+              <ion-icon
+                class="users-cards-list-item-icons__secondary"
+                :icon="arrowForward"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-text class="users-cards-list-item-text__number title-h1">
+                {{ organizationStats.outsiderUsersDetail.revoked }}
+              </ion-text>
+              <ion-text class="users-cards-list-item-text__text subtitles-sm">
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.revoked }) }}
+              </ion-text>
+            </div>
+          </ion-card>
+        </div>
+      </div>
+
+      <!-- storage -->
+      <div class="storage">
+        <ion-text class="storage__title title-h2">{{ $msTranslate('clientArea.statistics.titles.storage') }}</ion-text>
+        <div class="storage-data">
+          <div class="storage-data-global">
+            <ion-text
+              class="storage-data-global__total title-h1"
+              :class="{ overused: storagePercentage >= 100 }"
+            >
+              {{ $msTranslate(formatFileSize(totalData)) }}
+            </ion-text>
+            <div class="storage-data-global-info">
+              <ion-text class="storage-data-global-info__text body">{{ $msTranslate('clientArea.statistics.ofWhich') }}</ion-text>
+              <ion-text class="storage-data-global-info__text">
+                <span class="title-h5">{{ $msTranslate(formatFileSize(organizationStats.dataSize)) }}</span>
+                <span class="body">{{ $msTranslate('clientArea.statistics.data') }}</span>
+              </ion-text>
+              <ion-text class="storage-data-global-info__text">
+                <span class="title-h5">{{ $msTranslate(formatFileSize(organizationStats.metadataSize)) }}</span>
+                <span class="body">{{ $msTranslate('clientArea.statistics.metadata') }}</span>
+              </ion-text>
+            </div>
+          </div>
+          <div class="storage-data-consumption">
+            <ion-text class="storage-data-consumption__title title-h5">
+              {{ $msTranslate('clientArea.statistics.consumptionDetail') }}
+            </ion-text>
+
+            <div class="consumption">
+              <ms-report-text
+                :theme="MsReportTheme.Warning"
+                v-if="storagePercentage === 100"
+              >
+                {{ $msTranslate('clientArea.statistics.fullUsed') }}
+              </ms-report-text>
+              <ms-report-text
+                :theme="MsReportTheme.Error"
+                v-if="storagePercentage > 90 && storagePercentage < 100"
+              >
+                {{ $msTranslate('clientArea.statistics.almostFullUsed') }}
+              </ms-report-text>
+              <ion-text class="consumption-number title-h3">
+                {{ $msTranslate(formatFileSize(remainingStorageSize)) }}
+                <span class="subtitles-sm">{{ $msTranslate('clientArea.statistics.remaining') }}</span>
+              </ion-text>
+              <div class="consumption-progress">
+                <div
+                  class="consumption-progress__bar"
+                  :class="{ overused: storagePercentage >= 100 }"
+                  id="useStorageBar"
+                />
+                <div
+                  class="consumption-progress__bar"
+                  id="remainingStorageBar"
+                />
+              </div>
+              <div class="consumption-caption">
+                <span
+                  class="subtitles-sm"
+                  :class="{ overused: storagePercentage >= 100 }"
+                >
+                  {{ $msTranslate('clientArea.statistics.used') }}
+                </span>
+                <span class="subtitles-sm">{{ $msTranslate('clientArea.statistics.remaining') }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else-if="querying">
+      <!-- active users -->
+      <div class="users active skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="users-cards-list">
+          <ion-card
+            class="users-cards-list-item"
+            v-for="index in 3"
+            :key="index"
+          >
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-number"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- revoked users -->
+      <div class="users revoked skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="users-cards-list">
+          <ion-card
+            class="users-cards-list-item"
+            v-for="index in 3"
+            :key="index"
+          >
+            <div class="users-cards-list-item-icons">
+              <ion-icon
+                class="users-cards-list-item-icons__main"
+                :icon="person"
+              />
+            </div>
+            <div class="users-cards-list-item-text">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-number"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </ion-card>
+        </div>
+      </div>
+      <!-- storage -->
+      <div class="storage skeleton">
+        <ion-skeleton-text
+          :animated="true"
+          class="skeleton-loading-title"
+        />
+        <div class="storage-data">
+          <div class="storage-data-global">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-loading-number"
+            />
+            <div class="storage-data-global-info">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-loading-text"
+              />
+            </div>
+          </div>
+          <div class="storage-data-consumption">
+            <ion-skeleton-text
+              :animated="true"
+              class="skeleton-loading-text"
+            />
+            <div class="storage-data-consumption-content">
+              <div class="consumption-item">
+                <div
+                  id="firstBar"
+                  class="consumption"
+                >
+                  <div class="consumption-number">
+                    <ion-skeleton-text
+                      :animated="true"
+                      class="skeleton-loading-text"
+                    />
+                    <ion-skeleton-text
+                      :animated="true"
+                      class="skeleton-loading-text"
+                    />
+                  </div>
+                  <ion-skeleton-text
+                    :animated="true"
+                    class="skeleton-loading-text"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </template>
+    <template v-else-if="!querying && !organizationStats && !error">
+      {{ $msTranslate('clientArea.statistics.noStats') }}
+    </template>
+    <ion-text
+      class="statistics-error body"
+      v-show="error"
+    >
+      {{ $msTranslate(error) }}
+    </ion-text>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { BmsAccessInstance, DataType, BmsOrganization, OrganizationStatsResultData, CustomOrderDetailsResultData } from '@/services/bms';
+import { onMounted, ref, computed } from 'vue';
+import { IonCard, IonText, IonIcon, IonTitle, IonSkeletonText } from '@ionic/vue';
+import { formatFileSize } from '@/common/file';
+import { person, star, pencil, arrowForward } from 'ionicons/icons';
+import { isDefaultOrganization } from '@/views/client-area/types';
+import { MsReportTheme, MsReportText } from 'megashark-lib';
+
+const props = defineProps<{
+  organization: BmsOrganization;
+}>();
+
+const organizationStats = ref<OrganizationStatsResultData | undefined>(undefined);
+const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
+const storageSize = computed(() => (contractDetails.value ? contractDetails.value.storage.quantityOrdered * 100 * 1024 * 1024 * 1024 : 0));
+const storagePercentage = computed(() =>
+  organizationStats.value ? Math.min(Math.round((totalData.value / storageSize.value) * 100), 100) : 0,
+);
+const storageWidth = computed(() => `${storagePercentage.value}%`);
+const remainingStorageSize = computed(() => (contractDetails.value ? storageSize.value - totalData.value : 0));
+const totalData = ref<number>(0);
+const querying = ref(true);
+const error = ref('');
+
+onMounted(async () => {
+  if (isDefaultOrganization(props.organization)) {
+    querying.value = false;
+    return;
+  }
+  const orgStatsResponse = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+
+  if (!orgStatsResponse.isError && orgStatsResponse.data && orgStatsResponse.data.type === DataType.OrganizationStats) {
+    organizationStats.value = orgStatsResponse.data;
+    totalData.value = organizationStats.value.dataSize + organizationStats.value.metadataSize;
+  } else {
+    error.value = 'clientArea.statistics.error';
+  }
+
+  const contractDetailsResponse = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+  if (
+    !contractDetailsResponse.isError &&
+    contractDetailsResponse.data &&
+    contractDetailsResponse.data.type === DataType.CustomOrderDetails
+  ) {
+    contractDetails.value = contractDetailsResponse.data;
+  }
+  querying.value = false;
+});
+</script>
+
+<style scoped lang="scss">
+.users {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2.5rem;
+
+  &-text {
+    display: flex;
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  &-cards-list {
+    display: flex;
+    gap: 1.5rem;
+
+    &-item {
+      display: flex;
+      border-radius: var(--parsec-radius-8);
+      padding: 0.875rem;
+      box-shadow: none;
+      gap: 1rem;
+      margin: 0;
+      min-width: 11.625rem;
+
+      &-icons {
+        display: flex;
+        position: relative;
+        width: fit-content;
+
+        &__main {
+          font-size: 2rem;
+          color: var(--parsec-color-light-primary-700);
+          border-radius: var(--parsec-radius-circle);
+          padding: 0.5rem;
+        }
+
+        &__secondary {
+          position: absolute;
+          bottom: 0;
+          right: 0;
+          border-radius: var(--parsec-radius-12);
+          // should be replaced with a variable in megashark-lib
+          box-shadow: 0px 1px 2px 0px rgba(14, 14, 14, 0.05);
+          font-size: 0.625rem;
+          color: var(--parsec-color-light-secondary-contrast);
+          background: var(--parsec-color-light-secondary-white);
+          padding: 0.25rem;
+        }
+      }
+
+      &-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25rem;
+
+        &__number {
+          color: var(--parsec-color-light-secondary-contrast);
+        }
+
+        &__text {
+          color: var(--parsec-color-light-secondary-hard-grey);
+        }
+      }
+    }
+  }
+
+  &.active {
+    .users-cards-list-item {
+      background: var(--parsec-color-light-primary-50);
+    }
+
+    .users-cards-list-item-icons__main {
+      background: var(--parsec-color-light-primary-100);
+    }
+  }
+
+  &.revoked {
+    .users-cards-list-item {
+      background: var(--parsec-color-light-secondary-background);
+    }
+
+    .users-cards-list-item-icons__main {
+      background: var(--parsec-color-light-secondary-disabled);
+      color: var(--parsec-color-light-secondary-hard-grey);
+    }
+  }
+}
+
+.storage {
+  display: flex;
+  flex-direction: column;
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  padding: 2rem;
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-radius: var(--parsec-radius-12);
+  gap: 1.5rem;
+  max-width: 50rem;
+
+  &__title {
+    color: var(--parsec-color-light-primary-700);
+  }
+
+  &-data {
+    display: flex;
+    gap: 3rem;
+
+    &-consumption {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      position: relative;
+      width: 100%;
+
+      &::before {
+        content: '';
+        display: block;
+        position: absolute;
+        top: 0.5rem;
+        right: 0;
+        width: 100%;
+        height: 1px;
+        background: var(--parsec-color-light-secondary-disabled);
+      }
+
+      &__title {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        background: var(--parsec-color-light-secondary-inversed-contrast);
+        padding-right: 1rem;
+        width: fit-content;
+        position: relative;
+        z-index: 2;
+      }
+    }
+  }
+}
+
+.storage-data-global {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 9.5rem;
+
+  &__total {
+    color: var(--parsec-color-light-primary-600);
+
+    &.overused {
+      color: var(--parsec-color-light-danger-500);
+    }
+  }
+
+  &-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+
+    &__text {
+      color: var(--parsec-color-light-secondary-hard-grey);
+      display: flex;
+      gap: 0.375rem;
+      align-items: center;
+    }
+  }
+}
+
+.consumption {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 0.25rem;
+
+  &-number {
+    display: flex;
+    align-items: baseline;
+    align-self: flex-end;
+    gap: 0.25rem;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    color: var(--parsec-color-light-secondary-text);
+  }
+
+  &-progress {
+    display: flex;
+    border-radius: var(--parsec-radius-12);
+    overflow: hidden;
+    width: 100%;
+    background: var(--parsec-color-light-secondary-inversed-contrast);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+
+    &__bar {
+      border-radius: var(--parsec-radius-12);
+      height: 0.5rem;
+    }
+
+    #useStorageBar {
+      width: v-bind(storageWidth);
+      background: var(--parsec-color-light-primary-600);
+
+      &.overused {
+        background: var(--parsec-color-light-danger-500);
+      }
+    }
+
+    #remainingStorageBar {
+      width: calc(100% - v-bind(storageWidth));
+      background: var(--parsec-color-light-secondary-disabled);
+    }
+  }
+
+  &-caption {
+    display: flex;
+    margin-top: 0.75rem;
+    width: 100%;
+    gap: 1rem;
+    color: var(--parsec-color-light-secondary-hard-grey);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+
+      &::before {
+        content: '';
+        display: flex;
+        width: 0.5rem;
+        height: 0.5rem;
+        border-radius: var(--parsec-radius-circle);
+      }
+
+      &:nth-child(1)::before {
+        background: var(--parsec-color-light-primary-600);
+      }
+
+      &:nth-child(2)::before {
+        background: var(--parsec-color-light-secondary-disabled);
+      }
+
+      &.overused::before {
+        background: var(--parsec-color-light-danger-500);
+      }
+    }
+  }
+}
+
+.skeleton {
+  &-loading-number {
+    width: 6rem;
+    height: 1.5rem;
+  }
+
+  &-loading-title {
+    width: 8rem;
+    height: 1rem;
+  }
+
+  .storage-data-consumption::before {
+    content: none;
+  }
+
+  .consumption-number {
+    .skeleton-loading-text {
+      width: 2rem;
+      height: 1rem;
+    }
+  }
+}
+</style>

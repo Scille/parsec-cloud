@@ -1230,7 +1230,8 @@
                 "personalData": "Mon profil",
                 "statistics": "Statistiques",
                 "customOrderBillingDetails": "Coordonnées de facturation",
-                "customOrderInvoices": "Factures"
+                "customOrderInvoices": "Factures",
+                "customOrderStatistics": "Statistiques"
             },
             "logout": "Se déconnecter",
             "preferences": "Préférences",
@@ -1325,12 +1326,9 @@
                 "revoked": "révoqués",
                 "storage": "Stockage utilisé"
             },
-            "admin": "Administrateur",
-            "standard": "Standard",
-            "outsider": "Externe",
-            "admins": "Administrateurs",
-            "standards": "Standards",
-            "outsiders": "Externes",
+            "admin": "Administrateur | Administrateurs",
+            "standard": "Standard | Standards",
+            "outsider": "Externe | Externes",
             "consumptionDetail": "Détail des consommations",
             "nonPaying": "Non payant",
             "paying": "payant",
@@ -1339,7 +1337,12 @@
             "data": "de données",
             "metadata": "métadonnées",
             "error": "Impossible de récupérer les données de l'organisation.",
-            "noStats": "Aucune statistique à afficher."
+            "noStats": "Aucune statistique à afficher.",
+            "used": "consommé",
+            "remaining": "restant",
+            "almostFullUsed": "Vous avez presque atteint votre limite de stockage.",
+            "fullUsed": "Vous avez consommé toute la quantité de stockage prévue dans votre contrat.",
+            "overUsed": "Vous avez dépassé la quantité de stockage prévue dans votre contrat, veuillez réajuster."
         },
         "invoices": {
             "title": "Aperçu de vos factures",
