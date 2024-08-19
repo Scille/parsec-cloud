@@ -72,7 +72,7 @@ def test_step_processing():
     # spell-checker: enable
 
     # Step 0
-    greeter_step_0 = authenticated_cmds.latest.invite_greeter_step.GreeterStepWaitPeer(
+    greeter_step_0 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber0WaitPeer(
         public_key=greeter_key
     )
     index, data, convert = process_greeter_step(greeter_step_0)
@@ -80,9 +80,11 @@ def test_step_processing():
     assert data == greeter_key.encode() == greeter_snapshot[index]
     assert convert(
         claimer_snapshot[index]
-    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepWaitPeer(public_key=claimer_key)
+    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber0WaitPeer(
+        public_key=claimer_key
+    )
 
-    claimer_step_0 = invited_cmds.latest.invite_claimer_step.ClaimerStepWaitPeer(
+    claimer_step_0 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber0WaitPeer(
         public_key=claimer_key
     )
     index, data, convert = process_claimer_step(claimer_step_0)
@@ -90,20 +92,22 @@ def test_step_processing():
     assert data == claimer_key.encode() == claimer_snapshot[index]
     assert convert(
         greeter_snapshot[index]
-    ) == invited_cmds.latest.invite_claimer_step.GreeterStepWaitPeer(public_key=greeter_key)
+    ) == invited_cmds.latest.invite_claimer_step.GreeterStepNumber0WaitPeer(public_key=greeter_key)
 
     # Step 1
-    greeter_step_1 = authenticated_cmds.latest.invite_greeter_step.GreeterStepGetHashedNonce()
+    greeter_step_1 = (
+        authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber1GetHashedNonce()
+    )
     index, data, convert = process_greeter_step(greeter_step_1)
     assert index == 1
     assert data == b"" == greeter_snapshot[index]
     assert convert(
         claimer_snapshot[index]
-    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepSendHashedNonce(
+    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber1SendHashedNonce(
         hashed_nonce=hashed_nonce
     )
 
-    claimer_step_1 = invited_cmds.latest.invite_claimer_step.ClaimerStepSendHashedNonce(
+    claimer_step_1 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber1SendHashedNonce(
         hashed_nonce=hashed_nonce
     )
     index, data, convert = process_claimer_step(claimer_step_1)
@@ -111,11 +115,11 @@ def test_step_processing():
     assert data == hashed_nonce.digest == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepGetHashedNonce()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber1GetHashedNonce()
     )
 
     # Step 2
-    greeter_step_2 = authenticated_cmds.latest.invite_greeter_step.GreeterStepSendNonce(
+    greeter_step_2 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber2SendNonce(
         greeter_nonce=greeter_nonce
     )
     index, data, convert = process_greeter_step(greeter_step_2)
@@ -123,29 +127,31 @@ def test_step_processing():
     assert data == greeter_nonce == greeter_snapshot[index]
     assert (
         convert(claimer_snapshot[index])
-        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepGetNonce()
+        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber2GetNonce()
     )
 
-    claimer_step_2 = invited_cmds.latest.invite_claimer_step.ClaimerStepGetNonce()
+    claimer_step_2 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber2GetNonce()
     index, data, convert = process_claimer_step(claimer_step_2)
     assert index == 2
     assert data == b"" == claimer_snapshot[index]
     assert convert(
         greeter_snapshot[index]
-    ) == invited_cmds.latest.invite_claimer_step.GreeterStepSendNonce(greeter_nonce=greeter_nonce)
+    ) == invited_cmds.latest.invite_claimer_step.GreeterStepNumber2SendNonce(
+        greeter_nonce=greeter_nonce
+    )
 
     # Step 3
-    greeter_step_3 = authenticated_cmds.latest.invite_greeter_step.GreeterStepGetNonce()
+    greeter_step_3 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber3GetNonce()
     index, data, convert = process_greeter_step(greeter_step_3)
     assert index == 3
     assert data == b"" == greeter_snapshot[index]
     assert convert(
         claimer_snapshot[index]
-    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepSendNonce(
+    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber3SendNonce(
         claimer_nonce=claimer_nonce
     )
 
-    claimer_step_3 = invited_cmds.latest.invite_claimer_step.ClaimerStepSendNonce(
+    claimer_step_3 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber3SendNonce(
         claimer_nonce=claimer_nonce
     )
     index, data, convert = process_claimer_step(claimer_step_3)
@@ -153,59 +159,59 @@ def test_step_processing():
     assert data == claimer_nonce == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepGetNonce()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber3GetNonce()
     )
 
     # Step 4
-    greeter_step_4 = authenticated_cmds.latest.invite_greeter_step.GreeterStepWaitPeerTrust()
+    greeter_step_4 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber4WaitPeerTrust()
     index, data, convert = process_greeter_step(greeter_step_4)
     assert index == 4
     assert data == b"" == greeter_snapshot[index]
     assert (
         convert(claimer_snapshot[index])
-        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepSignifyTrust()
+        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber4SignifyTrust()
     )
 
-    claimer_step_4 = invited_cmds.latest.invite_claimer_step.ClaimerStepSignifyTrust()
+    claimer_step_4 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber4SignifyTrust()
     index, data, convert = process_claimer_step(claimer_step_4)
     assert index == 4
     assert data == b"" == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepWaitPeerTrust()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber4WaitPeerTrust()
     )
 
     # Step 5
-    greeter_step_5 = authenticated_cmds.latest.invite_greeter_step.GreeterStepSignifyTrust()
+    greeter_step_5 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber5SignifyTrust()
     index, data, convert = process_greeter_step(greeter_step_5)
     assert index == 5
     assert data == b"" == greeter_snapshot[index]
     assert (
         convert(claimer_snapshot[index])
-        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepWaitPeerTrust()
+        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber5WaitPeerTrust()
     )
 
-    claimer_step_5 = invited_cmds.latest.invite_claimer_step.ClaimerStepWaitPeerTrust()
+    claimer_step_5 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber5WaitPeerTrust()
     index, data, convert = process_claimer_step(claimer_step_5)
     assert index == 5
     assert data == b"" == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepSignifyTrust()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber5SignifyTrust()
     )
 
     # Step 6
-    greeter_step_6 = authenticated_cmds.latest.invite_greeter_step.GreeterStepGetPayload()
+    greeter_step_6 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber6GetPayload()
     index, data, convert = process_greeter_step(greeter_step_6)
     assert index == 6
     assert data == b"" == greeter_snapshot[index]
     assert convert(
         claimer_snapshot[index]
-    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepSendPayload(
+    ) == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber6SendPayload(
         claimer_payload=claimer_payload
     )
 
-    claimer_step_6 = invited_cmds.latest.invite_claimer_step.ClaimerStepSendPayload(
+    claimer_step_6 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber6SendPayload(
         claimer_payload=claimer_payload
     )
     index, data, convert = process_claimer_step(claimer_step_6)
@@ -213,11 +219,11 @@ def test_step_processing():
     assert data == claimer_payload == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepGetPayload()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber6GetPayload()
     )
 
     # Step 7
-    greeter_step_7 = authenticated_cmds.latest.invite_greeter_step.GreeterStepSendPayload(
+    greeter_step_7 = authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber7SendPayload(
         greeter_payload=greeter_payload
     )
     index, data, convert = process_greeter_step(greeter_step_7)
@@ -225,38 +231,38 @@ def test_step_processing():
     assert data == greeter_payload == greeter_snapshot[index]
     assert (
         convert(claimer_snapshot[index])
-        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepGetPayload()
+        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber7GetPayload()
     )
 
-    claimer_step_7 = invited_cmds.latest.invite_claimer_step.ClaimerStepGetPayload()
+    claimer_step_7 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber7GetPayload()
     index, data, convert = process_claimer_step(claimer_step_7)
     assert index == 7
     assert data == b"" == claimer_snapshot[index]
     assert convert(
         greeter_snapshot[index]
-    ) == invited_cmds.latest.invite_claimer_step.GreeterStepSendPayload(
+    ) == invited_cmds.latest.invite_claimer_step.GreeterStepNumber7SendPayload(
         greeter_payload=greeter_payload
     )
 
     # Step 8
     greeter_step_8 = (
-        authenticated_cmds.latest.invite_greeter_step.GreeterStepWaitPeerAcknowledgment()
+        authenticated_cmds.latest.invite_greeter_step.GreeterStepNumber8WaitPeerAcknowledgment()
     )
     index, data, convert = process_greeter_step(greeter_step_8)
     assert index == 8
     assert data == b"" == greeter_snapshot[index]
     assert (
         convert(claimer_snapshot[index])
-        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepAcknowledge()
+        == authenticated_cmds.latest.invite_greeter_step.ClaimerStepNumber8Acknowledge()
     )
 
-    claimer_step_8 = invited_cmds.latest.invite_claimer_step.ClaimerStepAcknowledge()
+    claimer_step_8 = invited_cmds.latest.invite_claimer_step.ClaimerStepNumber8Acknowledge()
     index, data, convert = process_claimer_step(claimer_step_8)
     assert index == 8
     assert data == b"" == claimer_snapshot[index]
     assert (
         convert(greeter_snapshot[index])
-        == invited_cmds.latest.invite_claimer_step.GreeterStepWaitPeerAcknowledgment()
+        == invited_cmds.latest.invite_claimer_step.GreeterStepNumber8WaitPeerAcknowledgment()
     )
 
 
@@ -288,7 +294,7 @@ async def test_full_greeting_attempt(
     greeter_key = PrivateKey.generate()
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeer(
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber0WaitPeer(
             public_key=greeter_key.public_key
         ),
     )
@@ -307,12 +313,12 @@ async def test_full_greeting_attempt(
     claimer_key = PrivateKey.generate()
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber0WaitPeer(
             public_key=claimer_key.public_key
         ),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeer(
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber0WaitPeer(
             public_key=greeter_key.public_key
         )
     )
@@ -322,7 +328,7 @@ async def test_full_greeting_attempt(
     hashed_nonce = HashDigest.from_data(claimer_nonce)
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSendHashedNonce(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber1SendHashedNonce(
             hashed_nonce=hashed_nonce
         ),
     )
@@ -331,12 +337,12 @@ async def test_full_greeting_attempt(
     # Greeter performs step 0 once again
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeer(
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber0WaitPeer(
             public_key=greeter_key.public_key
         ),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeer(
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber0WaitPeer(
             public_key=claimer_key.public_key
         )
     )
@@ -344,10 +350,10 @@ async def test_full_greeting_attempt(
     # Greeter performs step 1 second
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetHashedNonce(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber1GetHashedNonce(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendHashedNonce(
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber1SendHashedNonce(
             hashed_nonce=hashed_nonce
         )
     )
@@ -356,7 +362,7 @@ async def test_full_greeting_attempt(
     greeter_nonce = generate_nonce()
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepSendNonce(
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber2SendNonce(
             greeter_nonce=greeter_nonce
         ),
     )
@@ -365,21 +371,21 @@ async def test_full_greeting_attempt(
     # Claimer performs step 1 once again
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSendHashedNonce(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber1SendHashedNonce(
             hashed_nonce=hashed_nonce
         ),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepGetHashedNonce()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber1GetHashedNonce()
     )
 
     # Claimer performs step 2 second
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepSendNonce(
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber2SendNonce(
             greeter_nonce=greeter_nonce
         )
     )
@@ -387,7 +393,7 @@ async def test_full_greeting_attempt(
     # Claimer performs step 3 first
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSendNonce(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber3SendNonce(
             claimer_nonce=claimer_nonce
         ),
     )
@@ -396,21 +402,21 @@ async def test_full_greeting_attempt(
     # Greeter performs step 2 once again
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepSendNonce(
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber2SendNonce(
             greeter_nonce=greeter_nonce
         ),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetNonce()
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber2GetNonce()
     )
 
     # Greeter performs step 3 second
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetNonce(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber3GetNonce(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendNonce(
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber3SendNonce(
             claimer_nonce=claimer_nonce
         )
     )
@@ -418,97 +424,97 @@ async def test_full_greeting_attempt(
     # Greeter performs step 4 first
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerTrust(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber4WaitPeerTrust(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
 
     # Claimer performs step 3 once again
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSendNonce(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber3SendNonce(
             claimer_nonce=claimer_nonce
         ),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepGetNonce()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber3GetNonce()
     )
 
     # Claimer performs step 4 second
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSignifyTrust(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber4SignifyTrust(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeerTrust()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber4WaitPeerTrust()
     )
 
     # Claimer performs step 5 first
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeerTrust(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber5WaitPeerTrust(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepNotReady()
 
     # Greeter performs step 4 once again
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerTrust(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber4WaitPeerTrust(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepSignifyTrust()
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber4SignifyTrust()
     )
 
     # Greeter performs step 5 second
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepSignifyTrust(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber5SignifyTrust(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepWaitPeerTrust()
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber5WaitPeerTrust()
     )
 
     # Greeter performs step 6 first
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetPayload(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber6GetPayload(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
 
     # Claimer performs step 5 once again
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeerTrust(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber5WaitPeerTrust(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepSignifyTrust()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber5SignifyTrust()
     )
 
     # Claimer performs step 6 second
     claimer_payload = b"<claimer_payload>"
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepSendPayload(
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber6SendPayload(
             claimer_payload=claimer_payload
         ),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepGetPayload()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber6GetPayload()
     )
 
     # Claimer performs step 7 first
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetPayload(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber7GetPayload(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepNotReady()
 
     # Greeter performs step 6 once again
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepGetPayload(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber6GetPayload(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendPayload(
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber6SendPayload(
             claimer_payload=claimer_payload
         )
     )
@@ -517,28 +523,28 @@ async def test_full_greeting_attempt(
     greeter_payload = b"<greeter_payload>"
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepSendPayload(
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber7SendPayload(
             greeter_payload=greeter_payload
         ),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepGetPayload()
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber7GetPayload()
     )
 
     # Greeter performs step 8 first
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerAcknowledgment(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber8WaitPeerAcknowledgment(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
 
     # Claimer performs step 7 once again
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetPayload(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber7GetPayload(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepSendPayload(
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber7SendPayload(
             greeter_payload=greeter_payload
         )
     )
@@ -546,19 +552,19 @@ async def test_full_greeting_attempt(
     # Claimer performs step 8 second
     rep = await claimer.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepAcknowledge(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber8Acknowledge(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepOk(
-        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeerAcknowledgment()
+        greeter_step=invited_cmds.v4.invite_claimer_step.GreeterStepNumber8WaitPeerAcknowledgment()
     )
 
     # Greeter performs step 8 once again
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerAcknowledgment(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber8WaitPeerAcknowledgment(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepOk(
-        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepAcknowledge()
+        claimer_step=authenticated_cmds.v4.invite_greeter_step.ClaimerStepNumber8Acknowledge()
     )
 
     # Greeter complete the invitation
@@ -568,7 +574,7 @@ async def test_full_greeting_attempt(
     # Check that invitation is completed for the greeter
     rep = await greeter.invite_greeter_step(
         greeting_attempt=greeting_attempt,
-        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeerAcknowledgment(),
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber8WaitPeerAcknowledgment(),
     )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepInvitationCompleted()
 
@@ -576,7 +582,7 @@ async def test_full_greeting_attempt(
     with pytest.raises(RpcTransportError) as ctx:
         await claimer.invite_claimer_step(
             greeting_attempt=greeting_attempt,
-            claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepAcknowledge(),
+            claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber8Acknowledge(),
         )
     (response,) = ctx.value.args
     assert response.status_code == CustomHttpStatus.InvitationAlreadyUsedOrDeleted.value

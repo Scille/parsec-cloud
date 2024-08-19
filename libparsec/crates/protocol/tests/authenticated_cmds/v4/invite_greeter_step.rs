@@ -132,15 +132,15 @@ pub fn rep_ok() {
     // Generated from Parsec 3.0.0-b.12+dev
     // Content:
     //   status: 'ok'
-    //   claimer_step: { step: '0', public_key: 0x6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57, }
+    //   claimer_step: { step: 'NUMBER_0_WAIT_PEER', public_key: 0x6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57, }
     let raw: &[u8] = hex!(
-    "82a6737461747573a26f6bac636c61696d65725f7374657082a473746570a130aa7075"
-    "626c69635f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea"
-    "46c5f22cd5ac57"
+    "82a6737461747573a26f6bac636c61696d65725f7374657082a473746570b24e554d42"
+    "45525f305f574149545f50454552aa7075626c69635f6b6579c4206507907d33bae6b5"
+    "980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
     )
     .as_ref();
     let expected = authenticated_cmds::invite_greeter_step::InviteGreeterStepRep::Ok {
-        claimer_step: authenticated_cmds::invite_greeter_step::ClaimerStep::WaitPeer {
+        claimer_step: authenticated_cmds::invite_greeter_step::ClaimerStep::Number0WaitPeer {
             public_key: PublicKey::from(hex!(
                 "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
             )),
@@ -155,17 +155,18 @@ pub fn req() {
     // Content:
     //   cmd: 'invite_greeter_step'
     //   greeting_attempt: ext(2, 0xd864b93ded264aae9ae583fd3d40c45a)
-    //   greeter_step: { step: '0', public_key: 0x6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57, }
+    //   greeter_step: { step: 'NUMBER_0_WAIT_PEER', public_key: 0x6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57, }
     let raw: &[u8] = hex!(
     "83a3636d64b3696e766974655f677265657465725f73746570b06772656574696e675f"
     "617474656d7074d802d864b93ded264aae9ae583fd3d40c45aac677265657465725f73"
-    "74657082a473746570a130aa7075626c69635f6b6579c4206507907d33bae6b5980b32"
-    "fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
+    "74657082a473746570b24e554d4245525f305f574149545f50454552aa7075626c6963"
+    "5f6b6579c4206507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22c"
+    "d5ac57"
     )
     .as_ref();
     let req = authenticated_cmds::invite_greeter_step::InviteGreeterStepReq {
         greeting_attempt: GreetingAttemptID::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
-        greeter_step: authenticated_cmds::invite_greeter_step::GreeterStep::WaitPeer {
+        greeter_step: authenticated_cmds::invite_greeter_step::GreeterStep::Number0WaitPeer {
             public_key: PublicKey::from(hex!(
                 "6507907d33bae6b5980b32fa03f3ebac56141b126e44f352ea46c5f22cd5ac57"
             )),
