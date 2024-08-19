@@ -494,7 +494,7 @@ class ActiveUsersLimit:
 """
     protocol_code += (
         '\n\n__all__ =["ActiveUsersLimit", '
-        + ", ".join(f'"{f}"' for f in collected_items.keys())
+        + ", ".join(f'"{f}"' for f in sorted(collected_items.keys()))
         + "]\n"
     )
     (OUTPUT_PROTOCOL_TYPING_DIR / "__init__.pyi").write_text(protocol_code, encoding="utf8")
