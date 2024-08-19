@@ -357,10 +357,12 @@ impl Chunk {
                 Self::STORE,
                 IdbObjectStoreParameters::default().auto_increment(true),
             )?;
+            let index_params = IdbIndexParameters::new();
+            index_params.set_unique(true);
             store.create_index_with_params(
                 Self::INDEX_CHUNK_ID,
                 &IdbKeyPath::str(Self::INDEX_CHUNK_ID),
-                IdbIndexParameters::new().unique(true),
+                &index_params,
             )?;
             store.create_index(Self::INDEX_IS_BLOCK, &IdbKeyPath::str(Self::INDEX_IS_BLOCK))?;
         }
@@ -532,10 +534,12 @@ impl Vlob {
                 Self::STORE,
                 IdbObjectStoreParameters::default().auto_increment(true),
             )?;
+            let index_params = IdbIndexParameters::new();
+            index_params.set_unique(true);
             store.create_index_with_params(
                 Self::INDEX_VLOB_ID,
                 &IdbKeyPath::str(Self::INDEX_VLOB_ID),
-                IdbIndexParameters::new().unique(true),
+                &index_params,
             )?;
             store.create_index(
                 Self::INDEX_NEED_SYNC,
