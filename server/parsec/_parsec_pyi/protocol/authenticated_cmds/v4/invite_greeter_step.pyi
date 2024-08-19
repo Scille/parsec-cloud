@@ -16,47 +16,47 @@ from parsec._parsec import (
 class GreeterStep:
     pass
 
-class GreeterStepWaitPeer(GreeterStep):
+class GreeterStepNumber0WaitPeer(GreeterStep):
     def __init__(self, public_key: PublicKey) -> None: ...
     @property
     def public_key(self) -> PublicKey: ...
 
-class GreeterStepGetHashedNonce(GreeterStep):
+class GreeterStepNumber1GetHashedNonce(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
 
-class GreeterStepSendNonce(GreeterStep):
+class GreeterStepNumber2SendNonce(GreeterStep):
     def __init__(self, greeter_nonce: bytes) -> None: ...
     @property
     def greeter_nonce(self) -> bytes: ...
 
-class GreeterStepGetNonce(GreeterStep):
+class GreeterStepNumber3GetNonce(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
 
-class GreeterStepWaitPeerTrust(GreeterStep):
+class GreeterStepNumber4WaitPeerTrust(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
 
-class GreeterStepSignifyTrust(GreeterStep):
+class GreeterStepNumber5SignifyTrust(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
 
-class GreeterStepGetPayload(GreeterStep):
+class GreeterStepNumber6GetPayload(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
 
-class GreeterStepSendPayload(GreeterStep):
+class GreeterStepNumber7SendPayload(GreeterStep):
     def __init__(self, greeter_payload: bytes) -> None: ...
     @property
     def greeter_payload(self) -> bytes: ...
 
-class GreeterStepWaitPeerAcknowledgment(GreeterStep):
+class GreeterStepNumber8WaitPeerAcknowledgment(GreeterStep):
     def __init__(
         self,
     ) -> None: ...
@@ -64,47 +64,47 @@ class GreeterStepWaitPeerAcknowledgment(GreeterStep):
 class ClaimerStep:
     pass
 
-class ClaimerStepWaitPeer(ClaimerStep):
+class ClaimerStepNumber0WaitPeer(ClaimerStep):
     def __init__(self, public_key: PublicKey) -> None: ...
     @property
     def public_key(self) -> PublicKey: ...
 
-class ClaimerStepSendHashedNonce(ClaimerStep):
+class ClaimerStepNumber1SendHashedNonce(ClaimerStep):
     def __init__(self, hashed_nonce: HashDigest) -> None: ...
     @property
     def hashed_nonce(self) -> HashDigest: ...
 
-class ClaimerStepGetNonce(ClaimerStep):
+class ClaimerStepNumber2GetNonce(ClaimerStep):
     def __init__(
         self,
     ) -> None: ...
 
-class ClaimerStepSendNonce(ClaimerStep):
+class ClaimerStepNumber3SendNonce(ClaimerStep):
     def __init__(self, claimer_nonce: bytes) -> None: ...
     @property
     def claimer_nonce(self) -> bytes: ...
 
-class ClaimerStepSignifyTrust(ClaimerStep):
+class ClaimerStepNumber4SignifyTrust(ClaimerStep):
     def __init__(
         self,
     ) -> None: ...
 
-class ClaimerStepWaitPeerTrust(ClaimerStep):
+class ClaimerStepNumber5WaitPeerTrust(ClaimerStep):
     def __init__(
         self,
     ) -> None: ...
 
-class ClaimerStepSendPayload(ClaimerStep):
+class ClaimerStepNumber6SendPayload(ClaimerStep):
     def __init__(self, claimer_payload: bytes) -> None: ...
     @property
     def claimer_payload(self) -> bytes: ...
 
-class ClaimerStepGetPayload(ClaimerStep):
+class ClaimerStepNumber7GetPayload(ClaimerStep):
     def __init__(
         self,
     ) -> None: ...
 
-class ClaimerStepAcknowledge(ClaimerStep):
+class ClaimerStepNumber8Acknowledge(ClaimerStep):
     def __init__(
         self,
     ) -> None: ...

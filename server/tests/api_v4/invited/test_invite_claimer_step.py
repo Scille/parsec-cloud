@@ -51,7 +51,7 @@ async def greeter_wait_peer_public_key(
 
     # Greeter wait peer
     greeter_key = PrivateKey.generate()
-    greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepWaitPeer(
+    greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber0WaitPeer(
         public_key=greeter_key.public_key
     )
     rep = await coolorg.alice.invite_greeter_step(
@@ -69,10 +69,10 @@ async def test_invited_invite_claimer_step_ok(
     greeter_wait_peer_public_key: PublicKey,
 ) -> None:
     claimer_key = PrivateKey.generate()
-    claimer_step = invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+    claimer_step = invited_cmds.v4.invite_claimer_step.ClaimerStepNumber0WaitPeer(
         public_key=claimer_key.public_key
     )
-    expected_greeter_step = invited_cmds.v4.invite_claimer_step.GreeterStepWaitPeer(
+    expected_greeter_step = invited_cmds.v4.invite_claimer_step.GreeterStepNumber0WaitPeer(
         public_key=greeter_wait_peer_public_key
     )
 
@@ -123,7 +123,7 @@ async def test_invited_invite_claimer_step_greeter_not_allowed(
 
     rep = await coolorg.invited_zack.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
 
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreeterNotAllowed()
@@ -154,7 +154,7 @@ async def test_invited_invite_claimer_step_greeter_revoked(
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
 
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreeterRevoked()
@@ -165,7 +165,7 @@ async def test_invited_invite_claimer_step_greeting_attempt_not_found(
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=GreetingAttemptID.new(),
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
 
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotFound()
@@ -181,7 +181,7 @@ async def test_invited_invite_claimer_step_greeting_attempt_not_joined(
 
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=rep.greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
 
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotJoined()
@@ -200,7 +200,7 @@ async def test_invited_invite_claimer_step_greeting_attempt_cancelled(
     # Try a step
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_step.RepGreetingAttemptCancelled)
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptCancelled(
@@ -215,10 +215,10 @@ async def test_invited_invite_claimer_step_step_mismatch(
 ) -> None:
     greeter_key_1 = PrivateKey.generate()
     greeter_key_2 = PrivateKey.generate()
-    claimer_step_1 = invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+    claimer_step_1 = invited_cmds.v4.invite_claimer_step.ClaimerStepNumber0WaitPeer(
         public_key=greeter_key_1.public_key
     )
-    claimer_step_2 = invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+    claimer_step_2 = invited_cmds.v4.invite_claimer_step.ClaimerStepNumber0WaitPeer(
         public_key=greeter_key_2.public_key
     )
     # Run once with first public key
@@ -238,7 +238,7 @@ async def test_invited_invite_claimer_step_step_too_advanced(
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=greeting_attempt,
-        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepGetNonce(),
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepStepTooAdvanced()
 
@@ -247,7 +247,7 @@ async def test_invited_invite_claimer_step_not_ready(
     coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
     greeter_key = PrivateKey.generate()
-    claimer_step = invited_cmds.v4.invite_claimer_step.ClaimerStepWaitPeer(
+    claimer_step = invited_cmds.v4.invite_claimer_step.ClaimerStepNumber0WaitPeer(
         public_key=greeter_key.public_key
     )
     # Run once

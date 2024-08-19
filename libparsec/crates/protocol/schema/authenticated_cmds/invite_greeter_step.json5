@@ -89,8 +89,8 @@
                 "discriminant_field": "step",
                 "variants": [
                     {
-                        "name": "WaitPeer",
-                        "discriminant_value": "0",
+                        "name": "Number0WaitPeer",
+                        "discriminant_value": "NUMBER_0_WAIT_PEER",
                         "fields": [
                             {
                                 "name": "public_key",
@@ -99,12 +99,12 @@
                         ]
                     },
                     {
-                        "name": "GetHashedNonce",
-                        "discriminant_value": "1"
+                        "name": "Number1GetHashedNonce",
+                        "discriminant_value": "NUMBER_1_GET_HASHED_NONCE"
                     },
                     {
-                        "name": "SendNonce",
-                        "discriminant_value": "2",
+                        "name": "Number2SendNonce",
+                        "discriminant_value": "NUMBER_2_SEND_NONCE",
                         "fields": [
                             {
                                 "name": "greeter_nonce",
@@ -113,24 +113,24 @@
                         ]
                     },
                     {
-                        "name": "GetNonce",
-                        "discriminant_value": "3"
+                        "name": "Number3GetNonce",
+                        "discriminant_value": "NUMBER_3_GET_NONCE"
                     },
                     {
-                        "name": "WaitPeerTrust",
-                        "discriminant_value": "4"
+                        "name": "Number4WaitPeerTrust",
+                        "discriminant_value": "NUMBER_4_WAIT_PEER_TRUST"
                     },
                     {
-                        "name": "SignifyTrust",
+                        "name": "Number5SignifyTrust",
                         "discriminant_value": "5"
                     },
                     {
-                        "name": "GetPayload",
-                        "discriminant_value": "6"
+                        "name": "Number6GetPayload",
+                        "discriminant_value": "NUMBER_6_GET_PAYLOAD"
                     },
                     {
-                        "name": "SendPayload",
-                        "discriminant_value": "7",
+                        "name": "Number7SendPayload",
+                        "discriminant_value": "NUMBER_7_SEND_PAYLOAD",
                         "fields": [
                             {
                                 "name": "greeter_payload",
@@ -139,19 +139,19 @@
                         ]
                     },
                     {
-                        "name": "WaitPeerAcknowledgment",
-                        "discriminant_value": "8"
+                        "name": "Number8WaitPeerAcknowledgment",
+                        "discriminant_value": "NUMBER_8_WAIT_PEER_ACKNOWLEDGMENT"
                     }
                 ]
             },
             {
-                // Claimer should be identical to the one in invite_claimer_step.json5
+                // ClaimerStep should be identical to the one in invite_claimer_step.json5
                 "name": "ClaimerStep",
                 "discriminant_field": "step",
                 "variants": [
                     {
-                        "name": "WaitPeer",
-                        "discriminant_value": "0",
+                        "name": "Number0WaitPeer",
+                        "discriminant_value": "NUMBER_0_WAIT_PEER",
                         "fields": [
                             {
                                 "name": "public_key",
@@ -160,8 +160,8 @@
                         ]
                     },
                     {
-                        "name": "SendHashedNonce",
-                        "discriminant_value": "1",
+                        "name": "Number1SendHashedNonce",
+                        "discriminant_value": "NUMBER_1_SEND_HASHED_NONCE",
                         "fields": [
                             {
                                 "name": "hashed_nonce",
@@ -170,12 +170,12 @@
                         ]
                     },
                     {
-                        "name": "GetNonce",
-                        "discriminant_value": "2"
+                        "name": "Number2GetNonce",
+                        "discriminant_value": "NUMBER_2_GET_NONCE"
                     },
                     {
-                        "name": "SendNonce",
-                        "discriminant_value": "3",
+                        "name": "Number3SendNonce",
+                        "discriminant_value": "NUMBER_3_SEND_NONCE",
                         "fields": [
                             {
                                 "name": "claimer_nonce",
@@ -184,16 +184,16 @@
                         ]
                     },
                     {
-                        "name": "SignifyTrust",
-                        "discriminant_value": "4"
+                        "name": "Number4SignifyTrust",
+                        "discriminant_value": "NUMBER_4_SIGNIFY_TRUST"
                     },
                     {
-                        "name": "WaitPeerTrust",
-                        "discriminant_value": "5"
+                        "name": "Number5WaitPeerTrust",
+                        "discriminant_value": "NUMBER_5_WAIT_PEER_TRUST"
                     },
                     {
-                        "name": "SendPayload",
-                        "discriminant_value": "6",
+                        "name": "Number6SendPayload",
+                        "discriminant_value": "NUMBER_6_SEND_PAYLOAD",
                         "fields": [
                             {
                                 "name": "claimer_payload",
@@ -202,12 +202,12 @@
                         ]
                     },
                     {
-                        "name": "GetPayload",
-                        "discriminant_value": "7"
+                        "name": "Number7GetPayload",
+                        "discriminant_value": "NUMBER_7_GET_PAYLOAD"
                     },
                     {
-                        "name": "Acknowledge",
-                        "discriminant_value": "8"
+                        "name": "Number8Acknowledge",
+                        "discriminant_value": "NUMBER_8_ACKNOWLEDGE"
                     }
                 ]
             }
