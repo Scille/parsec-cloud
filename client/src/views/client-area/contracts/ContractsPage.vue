@@ -2,271 +2,363 @@
 
 <template>
   <div class="client-contract-page">
-    {{ contractDetails }}
-    <div
-      class="contract"
-      v-if="contractDetails"
+    <span
+      class="form-error body"
+      v-show="error"
     >
-      <div class="contract-header">
-        <div class="contract-header-title">
-          <ion-text class="contract-header-title__text title-h3">
-            {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
-          </ion-text>
-          <ion-text class="contract-header-title__badge button-small">
-            {{ $msTranslate('clientArea.invoicesCustomOrder.inProgress') }}
-          </ion-text>
-        </div>
-        <div class="contract-header-invoice">
-          <ms-image
-            class="contract-header-invoice__image"
-            alt="pdf"
-            :image="File.Pdf"
-          />
-          <ion-text class="contract-header-invoice__text title-h4">
-            <span class="body">{{ $msTranslate('clientArea.invoicesCustomOrder.number') }}</span>
-            {{ contractDetails.number }}
-          </ion-text>
-          <div class="contract-header-invoice__button">
-            <a
-              :href="contractDetails.link"
-              class="custom-button custom-button-fill button-medium"
-              download
-            >
-              {{ $msTranslate('clientArea.invoicesCustomOrder.download') }}
-            </a>
-          </div>
-        </div>
-      </div>
+      {{ $msTranslate(error) }}
+    </span>
 
-      <div class="contract-main">
-        <!-- info -->
-        <div class="contract-main-item">
-          <div class="item-header">
-            <ion-icon
-              class="item-header__icon"
-              :icon="informationCircle"
-            />
-            <ion-title class="item-header__title title-h4">
-              {{ $msTranslate('clientArea.invoicesCustomOrder.information') }}
-            </ion-title>
-          </div>
-          <div class="item-content">
-            <div class="item-content-column">
-              <div class="item-content-date">
-                <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.startingDate') }}</ion-text>
-                <ion-text class="item-content-date__date title-h4">12 juillet 2024</ion-text>
-              </div>
-              <div class="item-content-date">
-                <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.endingDate') }}</ion-text>
-                <ion-text class="item-content-date__date title-h4">12 mars 2025</ion-text>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- user -->
-        <div class="contract-main-item">
-          <div class="item-header">
-            <ion-icon
-              class="item-header__icon"
-              :icon="person"
-            />
-            <ion-title class="item-header__title title-h4">{{ $msTranslate('clientArea.invoicesCustomOrder.members.title') }}</ion-title>
-          </div>
-          <div class="item-content">
-            <div class="item-content-row">
-              <div class="data-text">
-                <ion-text class="data-text__title subtitles-normal">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.admin') }}
-                </ion-text>
-                <ion-text class="data-text__description body">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.adminDescription') }}
-                </ion-text>
-              </div>
-              <ion-text class="data-number title-h2">200</ion-text>
-            </div>
-            <div class="item-content-row">
-              <div class="data-text">
-                <ion-text class="data-text__title subtitles-normal">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.standard') }}
-                </ion-text>
-                <ion-text class="data-text__description body">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.standardDescription') }}
-                </ion-text>
-              </div>
-              <ion-text class="data-number title-h2">200</ion-text>
-            </div>
-            <div class="item-content-row">
-              <div class="data-text">
-                <ion-text class="data-text__title subtitles-normal">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.external') }}
-                </ion-text>
-                <ion-text class="data-text__description body">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.members.externalDescription') }}
-                </ion-text>
-              </div>
-              <ion-text class="data-number title-h2">200</ion-text>
-            </div>
-          </div>
-        </div>
-
-        <!-- storage -->
-        <div class="contract-main-item">
-          <div class="item-header">
-            <ion-icon
-              class="item-header__icon"
-              :icon="pieChart"
-            />
-            <ion-title class="item-header__title title-h4">
-              {{ $msTranslate('clientArea.invoicesCustomOrder.storage.title') }}
-            </ion-title>
-          </div>
-          <div class="item-content">
-            <div class="item-content-row">
-              <div class="data-text">
-                <ion-text class="data-text__title subtitles-normal">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.storage.storage') }}
-                </ion-text>
-                <ion-text class="data-text__description body">
-                  {{ $msTranslate('clientArea.invoicesCustomOrder.storage.stack') }}
-                </ion-text>
-              </div>
-              <ion-text class="data-number title-h2">1, 250 To</ion-text>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="organization-content">
-      <ion-title class="organization-content__title title-h3">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
-      <div class="organization-users">
-        <!-- admins-->
-        <div class="organization-users-item">
-          <div class="item-licence">
-            <ion-icon
-              :icon="person"
-              class="item-licence__icon"
-            />
-            <div class="item-licence-text">
-              <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.admin') }}</ion-text>
-              <ion-text class="item-licence-text__subtitle subtitles-sm">
-                {{ $msTranslate('clientArea.contracts.user.fullAccess') }}
-              </ion-text>
-            </div>
-          </div>
-          <div class="item-active">
-            <ion-text class="item-active__number title-h1-xl">
-              10
-              <span class="item-active__label subtitles-normal">/ 15 membres</span>
+    <template v-if="!isDefaultOrganization(organization)">
+      <div
+        class="contract"
+        v-if="contractDetails && organizationStats && !error"
+      >
+        <div class="contract-header">
+          <div class="contract-header-title">
+            <ion-text class="contract-header-title__text title-h3">
+              {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
             </ion-text>
-            <div class="progress">
-              <div class="progress-bar">
-                <div class="progress-bar-used" />
-                <div class="progress-bar-unused" />
-              </div>
-              <ion-text class="progress-text subtitles-sm">5 {{ $msTranslate('clientArea.contracts.user.remaining') }}</ion-text>
+            <ion-text class="contract-header-title__badge button-small">
+              {{ $msTranslate('clientArea.invoicesCustomOrder.inProgress') }}
+            </ion-text>
+          </div>
+          <div class="contract-header-invoice">
+            <ms-image
+              class="contract-header-invoice__image"
+              alt="pdf"
+              :image="File.Pdf"
+            />
+            <ion-text class="contract-header-invoice__text title-h4">
+              <span class="body">{{ $msTranslate('clientArea.invoicesCustomOrder.number') }}</span>
+              {{ contractDetails.number }}
+            </ion-text>
+            <div class="contract-header-invoice__button">
+              <a
+                :href="contractDetails.link"
+                class="custom-button custom-button-fill button-medium"
+                download
+              >
+                {{ $msTranslate('clientArea.invoicesCustomOrder.download') }}
+              </a>
             </div>
           </div>
         </div>
-        <!-- standards-->
-        <div class="organization-users-item">
-          <div class="item-licence">
-            <ion-icon
-              :icon="person"
-              class="item-licence__icon"
-            />
-            <div class="item-licence-text">
-              <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.standard') }}</ion-text>
-              <ion-text class="item-licence-text__subtitle subtitles-sm">
-                {{ $msTranslate('clientArea.contracts.user.allFeaturesAccess') }}
-              </ion-text>
+
+        <div class="contract-main">
+          <!-- info -->
+          <div class="contract-main-item">
+            <div class="item-header">
+              <ion-icon
+                class="item-header__icon"
+                :icon="informationCircle"
+              />
+              <ion-title class="item-header__title title-h4">
+                {{ $msTranslate('clientArea.invoicesCustomOrder.information') }}
+              </ion-title>
             </div>
-          </div>
-          <div class="item-active">
-            <ion-text class="item-active__number title-h1-xl">
-              98
-              <span class="item-active__label subtitles-normal">/ 100 membres</span>
-            </ion-text>
-            <div class="progress">
-              <div class="progress-bar">
-                <div class="progress-bar-used" />
-                <div class="progress-bar-unused" />
+            <div class="item-content">
+              <div class="item-content-column">
+                <div class="item-content-date">
+                  <ion-text class="item-content-date__label body">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.startingDate') }}
+                  </ion-text>
+                  <ion-text
+                    class="item-content-date__date title-h4"
+                    v-if="contractDetails.licenseStart"
+                  >
+                    {{ $msTranslate(I18n.formatDate(contractDetails.licenseStart, 'short')) }}
+                  </ion-text>
+                  <ion-text v-else>
+                    {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
+                  </ion-text>
+                </div>
+                <div class="item-content-date">
+                  <ion-text class="item-content-date__label body">{{ $msTranslate('clientArea.invoicesCustomOrder.endingDate') }}</ion-text>
+                  <ion-text
+                    class="item-content-date__date title-h4"
+                    v-if="contractDetails.licenseEnd"
+                  >
+                    {{ $msTranslate(I18n.formatDate(contractDetails.licenseEnd, 'short')) }}
+                  </ion-text>
+                  <ion-text v-else>
+                    {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
+                  </ion-text>
+                </div>
               </div>
-              <ion-text class="progress-text subtitles-sm">2 {{ $msTranslate('clientArea.contracts.user.remaining') }}</ion-text>
             </div>
           </div>
-        </div>
-        <!-- externals-->
-        <div class="organization-users-item">
-          <div class="item-licence">
-            <ion-icon
-              :icon="person"
-              class="item-licence__icon"
-            />
-            <div class="item-licence-text">
-              <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.external') }}</ion-text>
-              <ion-text class="item-licence-text__subtitle subtitles-sm">
-                {{ $msTranslate('clientArea.contracts.user.rightLimited') }}
-              </ion-text>
+
+          <!-- user -->
+          <div class="contract-main-item">
+            <div class="item-header">
+              <ion-icon
+                class="item-header__icon"
+                :icon="person"
+              />
+              <ion-title class="item-header__title title-h4">{{ $msTranslate('clientArea.invoicesCustomOrder.members.title') }}</ion-title>
             </div>
-          </div>
-          <div class="item-active">
-            <ion-text class="item-active__number title-h1-xl">
-              356
-              <span class="item-active__label subtitles-normal">/ 2000 membres</span>
-            </ion-text>
-            <div class="progress">
-              <div class="progress-bar">
-                <div class="progress-bar-used" />
-                <div class="progress-bar-unused" />
+            <div class="item-content">
+              <div class="item-content-row">
+                <div class="data-text">
+                  <ion-text class="data-text__title subtitles-normal">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.admin') }}
+                  </ion-text>
+                  <ion-text class="data-text__description body">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.adminDescription') }}
+                  </ion-text>
+                </div>
+                <ion-text class="data-number title-h2">{{ contractDetails.administrators.quantityOrdered }}</ion-text>
               </div>
-              <ion-text class="progress-text subtitles-sm">1644 {{ $msTranslate('clientArea.contracts.user.remaining') }}</ion-text>
+              <div class="item-content-row">
+                <div class="data-text">
+                  <ion-text class="data-text__title subtitles-normal">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.standard') }}
+                  </ion-text>
+                  <ion-text class="data-text__description body">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.standardDescription') }}
+                  </ion-text>
+                </div>
+                <ion-text class="data-number title-h2">{{ contractDetails.standards.quantityOrdered }}</ion-text>
+              </div>
+              <div class="item-content-row">
+                <div class="data-text">
+                  <ion-text class="data-text__title subtitles-normal">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.external') }}
+                  </ion-text>
+                  <ion-text class="data-text__description body">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.members.externalDescription') }}
+                  </ion-text>
+                </div>
+                <ion-text class="data-number title-h2">{{ contractDetails.outsiders.quantityOrdered }}</ion-text>
+              </div>
+            </div>
+          </div>
+
+          <!-- storage -->
+          <div class="contract-main-item">
+            <div class="item-header">
+              <ion-icon
+                class="item-header__icon"
+                :icon="pieChart"
+              />
+              <ion-title class="item-header__title title-h4">
+                {{ $msTranslate('clientArea.invoicesCustomOrder.storage.title') }}
+              </ion-title>
+            </div>
+            <div class="item-content">
+              <div class="item-content-row">
+                <div class="data-text">
+                  <ion-text class="data-text__title subtitles-normal">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.storage.storage') }}
+                  </ion-text>
+                  <ion-text class="data-text__description body">
+                    {{ $msTranslate('clientArea.invoicesCustomOrder.storage.stack') }}
+                  </ion-text>
+                </div>
+                <ion-text class="data-number title-h2">{{ $msTranslate(formatFileSize(getStorageSize())) }}</ion-text>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="organization-storage">
-        <!-- storage-->
-        <div class="organization-storage-item">
-          <div class="item-licence">
-            <ion-icon
-              :icon="pieChart"
-              class="item-licence__icon"
-            />
-            <div class="item-licence-text">
-              <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
-              <ion-text class="item-licence-text__subtitle subtitles-sm">
-                {{ $msTranslate('clientArea.contracts.storage.stack') }}
+      <div
+        class="organization-content"
+        v-if="organizationStats && contractDetails"
+      >
+        <ion-title class="organization-content__title title-h3">{{ $msTranslate('clientArea.contracts.previewOrganization') }}</ion-title>
+        <div
+          class="organization-users"
+          v-if="organizationStats.adminUsersDetail || organizationStats.standardUsersDetail || organizationStats.outsiderUsersDetail"
+        >
+          <!-- admins-->
+          <div
+            class="organization-users-item"
+            v-if="organizationStats.adminUsersDetail"
+          >
+            <div class="item-licence">
+              <ion-icon
+                :icon="person"
+                class="item-licence__icon"
+              />
+              <div class="item-licence-text">
+                <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.admin') }}</ion-text>
+                <ion-text class="item-licence-text__subtitle subtitles-sm">
+                  {{ $msTranslate('clientArea.contracts.user.fullAccess') }}
+                </ion-text>
+              </div>
+            </div>
+            <div class="item-active">
+              <ion-text class="item-active__number title-h1-xl">
+                {{ organizationStats.adminUsersDetail.active }}
+                <span class="item-active__label subtitles-normal">
+                  {{
+                    $msTranslate({
+                      key: 'clientArea.contracts.user.onTotal',
+                      data: { count: contractDetails.administrators.quantityOrdered },
+                    })
+                  }}
+                </span>
               </ion-text>
+              <div class="progress">
+                <div class="progress-bar">
+                  <div class="progress-bar-used" />
+                  <div class="progress-bar-unused" />
+                </div>
+                <ion-text class="progress-text subtitles-sm">
+                  {{ contractDetails.administrators.quantityOrdered - organizationStats.adminUsersDetail.active }}
+                  {{ $msTranslate('clientArea.contracts.user.remaining') }}
+                </ion-text>
+              </div>
             </div>
           </div>
-          <div class="item-active">
-            <ion-text class="item-active__number title-h1-xl">
-              927,8 <span class="title-h4">Go</span>
-              <span class="item-active__label subtitles-normal">/ 1 024 Go</span>
-            </ion-text>
-            <div class="progress">
-              <div class="progress-bar">
-                <div class="progress-bar-used" />
-                <div class="progress-bar-unused" />
+          <!-- standards-->
+          <div
+            class="organization-users-item"
+            v-if="organizationStats.standardUsersDetail"
+          >
+            <div class="item-licence">
+              <ion-icon
+                :icon="person"
+                class="item-licence__icon"
+              />
+              <div class="item-licence-text">
+                <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.standard') }}</ion-text>
+                <ion-text class="item-licence-text__subtitle subtitles-sm">
+                  {{ $msTranslate('clientArea.contracts.user.allFeaturesAccess') }}
+                </ion-text>
               </div>
-              <ion-text class="progress-text subtitles-sm">81 % {{ $msTranslate('clientArea.contracts.storage.used') }}</ion-text>
+            </div>
+            <div class="item-active">
+              <ion-text class="item-active__number title-h1-xl">
+                {{ organizationStats.standardUsersDetail.active }}
+                <span class="item-active__label subtitles-normal">
+                  {{
+                    $msTranslate({ key: 'clientArea.contracts.user.onTotal', data: { count: contractDetails.standards.quantityOrdered } })
+                  }}
+                </span>
+              </ion-text>
+              <div class="progress">
+                <div class="progress-bar">
+                  <div class="progress-bar-used" />
+                  <div class="progress-bar-unused" />
+                </div>
+                <ion-text class="progress-text subtitles-sm">
+                  {{ contractDetails.standards.quantityOrdered - organizationStats.standardUsersDetail.active }}
+                  {{ $msTranslate('clientArea.contracts.user.remaining') }}
+                </ion-text>
+              </div>
+            </div>
+          </div>
+          <!-- externals-->
+          <div
+            class="organization-users-item"
+            v-if="organizationStats.outsiderUsersDetail"
+          >
+            <div class="item-licence">
+              <ion-icon
+                :icon="person"
+                class="item-licence__icon"
+              />
+              <div class="item-licence-text">
+                <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.user.external') }}</ion-text>
+                <ion-text class="item-licence-text__subtitle subtitles-sm">
+                  {{ $msTranslate('clientArea.contracts.user.rightLimited') }}
+                </ion-text>
+              </div>
+            </div>
+            <div class="item-active">
+              <ion-text class="item-active__number title-h1-xl">
+                {{ organizationStats.outsiderUsersDetail.active }}
+                <span class="item-active__label subtitles-normal">
+                  {{
+                    $msTranslate({ key: 'clientArea.contracts.user.onTotal', data: { count: contractDetails.outsiders.quantityOrdered } })
+                  }}
+                </span>
+              </ion-text>
+              <div class="progress">
+                <div class="progress-bar">
+                  <div class="progress-bar-used" />
+                  <div class="progress-bar-unused" />
+                </div>
+                <ion-text class="progress-text subtitles-sm">
+                  {{ contractDetails.outsiders.quantityOrdered - organizationStats.outsiderUsersDetail.active }}
+                  {{ $msTranslate('clientArea.contracts.user.remaining') }}
+                </ion-text>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="organization-storage">
+          <!-- storage-->
+          <div class="organization-storage-item">
+            <div class="item-licence">
+              <ion-icon
+                :icon="pieChart"
+                class="item-licence__icon"
+              />
+              <div class="item-licence-text">
+                <ion-text class="item-licence-text__title title-h4">{{ $msTranslate('clientArea.contracts.storage.title') }}</ion-text>
+                <ion-text class="item-licence-text__subtitle subtitles-sm">
+                  {{ $msTranslate('clientArea.contracts.storage.stack') }}
+                </ion-text>
+              </div>
+            </div>
+            <div class="item-active">
+              <ion-text class="item-active__number title-h1-xl">
+                {{ $msTranslate(formatFileSize(organizationStats.metadataSize + organizationStats.dataSize)) }}
+                <span class="item-active__label subtitles-normal">
+                  {{
+                    $msTranslate({
+                      key: 'clientArea.contracts.storage.onTotal',
+                      data: { count: I18n.translate(formatFileSize(getStorageSize())) },
+                    })
+                  }}
+                </span>
+              </ion-text>
+              <div class="progress">
+                <div class="progress-bar">
+                  <div class="progress-bar-used" />
+                  <div class="progress-bar-unused" />
+                </div>
+                <ion-text class="progress-text subtitles-sm">
+                  {{ $msTranslate({ key: 'clientArea.contracts.storage.used', data: { percentage: getStoragePercentage() } }) }}
+                </ion-text>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </template>
+    <template v-else>
+      {{ $msTranslate('clientArea.contracts.selectAnOrganization') }}
+      <span
+        v-for="org in organizations"
+        :key="org.bmsId"
+        @click="$emit('organizationSelected', org)"
+      >
+        {{ org.parsecId }}
+      </span>
+    </template>
   </div>
 </template>
 
 <script setup lang="ts">
 import { IonText, IonIcon, IonTitle } from '@ionic/vue';
+import { formatFileSize } from '@/common/file';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MsImage, File } from 'megashark-lib';
+import { MsImage, File, I18n } from 'megashark-lib';
 import { informationCircle, person, pieChart } from 'ionicons/icons';
-import { BmsAccessInstance, BmsOrganization, CustomOrderStatus, CustomOrderDetailsResultData, DataType } from '@/services/bms';
+import {
+  BmsAccessInstance,
+  BmsOrganization,
+  CustomOrderStatus,
+  CustomOrderDetailsResultData,
+  DataType,
+  OrganizationStatsResultData,
+} from '@/services/bms';
 import { onMounted, ref } from 'vue';
 import { isDefaultOrganization } from '@/views/client-area/types';
 
@@ -274,28 +366,64 @@ const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
+defineEmits<{
+  (e: 'organizationSelected', organization: BmsOrganization): void;
+}>();
+
 const contractStatus = ref(CustomOrderStatus.Unknown);
 const contractDetails = ref<CustomOrderDetailsResultData | undefined>(undefined);
 const querying = ref(true);
+const organizations = ref<Array<BmsOrganization>>([]);
+const error = ref('');
+const organizationStats = ref<OrganizationStatsResultData | undefined>(undefined);
 
 onMounted(async () => {
   querying.value = true;
   if (isDefaultOrganization(props.organization)) {
-    querying.value = false;
-    return;
-  }
-  const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
-  if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
-    contractStatus.value = statusRep.data.status;
-  }
-  const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
-  if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
-    contractDetails.value = detailsRep.data;
+    const orgRep = await BmsAccessInstance.get().listOrganizations();
+    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.ListOrganizations) {
+      organizations.value = orgRep.data.organizations;
+    } else {
+      error.value = 'clientArea.contracts.errors.noOrganizations';
+    }
   } else {
-    // TODO: Handle the error (toast? message?)
+    const orgRep = await BmsAccessInstance.get().getOrganizationStats(props.organization.bmsId);
+    if (!orgRep.isError && orgRep.data && orgRep.data.type === DataType.OrganizationStats) {
+      organizationStats.value = orgRep.data;
+    } else {
+      error.value = 'clientArea.contracts.errors.noInfo';
+    }
+    const statusRep = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+    if (!statusRep.isError && statusRep.data && statusRep.data.type === DataType.CustomOrderStatus) {
+      contractStatus.value = statusRep.data.status;
+    }
+    const detailsRep = await BmsAccessInstance.get().getCustomOrderDetails(props.organization);
+    if (!detailsRep.isError && detailsRep.data && detailsRep.data.type === DataType.CustomOrderDetails) {
+      contractDetails.value = detailsRep.data;
+    } else {
+      error.value = 'clientArea.contracts.errors.noInfo';
+    }
   }
   querying.value = false;
 });
+
+function getStorageSize(): number {
+  if (!contractDetails.value) {
+    return 0;
+  }
+  // Slice of 100Go
+  return contractDetails.value.storage.quantityOrdered * 100 * 1024 * 1024 * 1024;
+}
+
+function getStoragePercentage(): number {
+  if (!organizationStats.value) {
+    return 0;
+  }
+  const ordered = getStorageSize();
+  const current = organizationStats.value.dataSize + organizationStats.value.metadataSize;
+
+  return Math.round((current / ordered) * 100);
+}
 </script>
 
 <style scoped lang="scss">
