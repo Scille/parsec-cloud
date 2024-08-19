@@ -75,6 +75,17 @@ pub enum InvitationStatus {
  * GreeterOrClaimer
  */
 
+#[derive(Debug, Clone)]
+pub struct GreeterOrClaimerParseError;
+
+impl std::error::Error for GreeterOrClaimerParseError {}
+
+impl std::fmt::Display for GreeterOrClaimerParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Invalid GreeterOrClaimer")
+    }
+}
+
 #[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum GreeterOrClaimer {
@@ -83,22 +94,22 @@ pub enum GreeterOrClaimer {
 }
 
 impl FromStr for GreeterOrClaimer {
-    type Err = &'static str;
+    type Err = GreeterOrClaimerParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
             "GREETER" => Ok(Self::Greeter),
             "CLAIMER" => Ok(Self::Claimer),
-            _ => Err("Invalid GreeterOrClaimer"),
+            _ => Err(GreeterOrClaimerParseError),
         }
     }
 }
 
-impl ToString for GreeterOrClaimer {
-    fn to_string(&self) -> String {
+impl Display for GreeterOrClaimer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Greeter => String::from("Greeter"),
-            Self::Claimer => String::from("Claimer"),
+            Self::Greeter => write!(f, "GREETER"),
+            Self::Claimer => write!(f, "CLAIMER"),
         }
     }
 }
@@ -106,6 +117,17 @@ impl ToString for GreeterOrClaimer {
 /*
 * Cancel greeting attempt reason
 */
+
+#[derive(Debug, Clone)]
+pub struct CancelledGreetingAttemptReasonParseError;
+
+impl std::error::Error for CancelledGreetingAttemptReasonParseError {}
+
+impl std::fmt::Display for CancelledGreetingAttemptReasonParseError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Invalid CancelledGreetingAttemptReason")
+    }
+}
 
 #[derive(Debug, Copy, Clone, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
@@ -127,7 +149,7 @@ pub enum CancelledGreetingAttemptReason {
 }
 
 impl FromStr for CancelledGreetingAttemptReason {
-    type Err = &'static str;
+    type Err = CancelledGreetingAttemptReasonParseError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.to_uppercase().as_str() {
@@ -138,21 +160,21 @@ impl FromStr for CancelledGreetingAttemptReason {
             "UNDESERIALIZABLE_PAYLOAD" => Ok(Self::UndeserializablePayload),
             "INCONSISTENT_PAYLOAD" => Ok(Self::InconsistentPayload),
             "AUTOMATICALLY_CANCELLED" => Ok(Self::AutomaticallyCancelled),
-            _ => Err("Invalid CancelledGreetingAttemptReason"),
+            _ => Err(CancelledGreetingAttemptReasonParseError),
         }
     }
 }
 
-impl ToString for CancelledGreetingAttemptReason {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for CancelledGreetingAttemptReason {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::ManuallyCancelled => String::from("MANUALLY_CANCELLED"),
-            Self::InvalidNonceHash => String::from("INVALID_NONCE_HASH"),
-            Self::InvalidSasCode => String::from("INVALID_SAS_CODE"),
-            Self::UndecipherablePayload => String::from("UNDECIPHERABLE_PAYLOAD"),
-            Self::UndeserializablePayload => String::from("UNDESERIALIZABLE_PAYLOAD"),
-            Self::InconsistentPayload => String::from("INCONSISTENT_PAYLOAD"),
-            Self::AutomaticallyCancelled => String::from("AUTOMATICALLY_CANCELLED"),
+            Self::ManuallyCancelled => write!(f, "MANUALLY_CANCELLED"),
+            Self::InvalidNonceHash => write!(f, "INVALID_NONCE_HASH"),
+            Self::InvalidSasCode => write!(f, "INVALID_SAS_CODE"),
+            Self::UndecipherablePayload => write!(f, "UNDECIPHERABLE_PAYLOAD"),
+            Self::UndeserializablePayload => write!(f, "UNDESERIALIZABLE_PAYLOAD"),
+            Self::InconsistentPayload => write!(f, "INCONSISTENT_PAYLOAD"),
+            Self::AutomaticallyCancelled => write!(f, "AUTOMATICALLY_CANCELLED"),
         }
     }
 }
