@@ -103,13 +103,13 @@ base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.7.1", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
-clap = { version = "4.5.15", default-features = false }
+clap = { version = "4.5.16", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
 crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
-ctrlc = { version = "3.4.4", default-features = false }
+ctrlc = { version = "3.4.5", default-features = false }
 # You need base64&co ? This is the crate you need !
 data-encoding = { version = "2.6.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
@@ -134,10 +134,10 @@ indexed_db_futures = { version = "0.5.0", default-features = false }
 instant = { version = "0.1.13", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
-js-sys = { version = "0.3.69", default-features = false }
+js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "2.3.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.155", default-features = false }
+libc = { version = "0.2.157", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.22", default-features = false }
@@ -171,9 +171,9 @@ ruzstd = { version = "0.7.0", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
-serde_json = { version = "1.0.124", default-features = false }
+serde_json = { version = "1.0.125", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
-serde = { version = "1.0.206", default-features = false }
+serde = { version = "1.0.208", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_with = { version = "3.9.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
@@ -181,19 +181,19 @@ sha2 = { version = "0.10.8", default-features = false }
 sharks = "0.5.0"
 sodiumoxide = { version = "0.2.7", default-features = false }
 sqlx = { version = "0.7.2", default-features = false }
-syn = { version = "2.0.74", default-features = false }
+syn = { version = "2.0.75", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 thiserror = { version = "1.0.63", default-features = false }
-tokio = { version = "1.39.2", default-features = false }
+tokio = { version = "1.39.3", default-features = false }
 unicode-normalization = { version = "0.1.23", default-features = false }
 url = { version = "2.5.2", default-features = false }
 uuid = { version = "1.6.1", default-features = false }
-wasm-bindgen-futures = { version = "0.4.42", default-features = false }
-wasm-bindgen-test = { version = "0.3.42", default-features = false }
+wasm-bindgen-futures = { version = "0.4.43", default-features = false }
+wasm-bindgen-test = { version = "0.3.43", default-features = false }
 wasm-bindgen = { version = "0.2.92", default-features = false }
-web-sys = { version = "0.3.69", default-features = false }
+web-sys = { version = "0.3.70", default-features = false }
 widestring = { version = "1.1.0", default-features = false }
-windows-sys = { version = "0.52.0", default-features = false }
+windows-sys = { version = "0.59.0", default-features = false }
 winfsp_wrs_build = { version = "0.3.0", default-features = false }
 winfsp_wrs = { version = "0.3.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
