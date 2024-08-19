@@ -6,7 +6,7 @@ import re
 import sys
 from itertools import chain, dropwhile
 from pathlib import Path
-from typing import Iterable, Iterator, Type
+from typing import Iterable, Iterator, TextIO, Type
 
 PROJECT_DIR = Path(__file__).resolve().parent.parent
 
@@ -14,7 +14,7 @@ DIM = "\x1b[2m"
 RESET_DIM = "\x1b[22m"
 
 
-def extract_shebang_and_header_lines(fd):
+def extract_shebang_and_header_lines(fd: TextIO):
     first_line = fd.readline()
     if first_line.startswith("#!"):
         shebang_line = first_line
@@ -88,7 +88,7 @@ class Licenser:
     @classmethod
     def remove_header(cls, file: Path) -> bool:
         with open(file, "r", encoding="utf-8") as fd:
-            lines = []
+            lines: list[str] = []
             need_rewrite = False
             for line in fd.readlines():
                 if cls.is_possible_license_line(line):
