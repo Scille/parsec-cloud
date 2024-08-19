@@ -15,9 +15,6 @@ workspace = true
 # Zstd & Zstd-sys are the official bindings to the ZSTD C library.
 # They are the one we want to use in production !
 zstd = { workspace = true }
-# TODO: temporary to fix parquet wasm build
-# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
-zstd-sys = { workspace = true }
 
 [target.'cfg(use_pure_rust_but_dirty_zstd)'.dependencies]
 # RuZSTD provides a pure-Rust decoder, over which we add our own custom minimal
@@ -25,6 +22,6 @@ zstd-sys = { workspace = true }
 ruzstd = { workspace = true }
 
 [dev-dependencies]
+# We test the dirty implementation against the original `zstd` impl thus require `ruzstd` and `zstd` as dev-dependencies.
 ruzstd = { workspace = true }
 zstd = { workspace = true }
-zstd-sys = { workspace = true }
