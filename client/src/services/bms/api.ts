@@ -512,6 +512,23 @@ async function getCustomOrderStatus(token: AuthenticationToken, query: CustomOrd
 }
 
 async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOrderQueryData): Promise<BmsResponse> {
+  enum CustomOrderRowName {
+    Administrator = 'Psc_D0_Adm_M',
+    Standard = 'Psc_D0_Std_User_M',
+    Outsider = 'Psc_D0_Ext_User_M',
+    // cspell:disable-next-line
+    Storage = 'Psc_Stck_100_Go_M',
+  }
+
+  enum CustomOrderFieldName {
+    LicenseStart = 'parsec-saas-custom-order-start-date',
+    LicenseEnd = 'parsec-saas-custom-order-end-date',
+    StandardCount = 'parsec-saas-custom-order-standard-license-count',
+    OutsiderCount = 'parsec-saas-custom-order-outsider-license-count',
+    AdministratorCount = 'parsec-saas-custom-order-admin-license-count',
+    StorageCount = 'parsec-saas-custom-order-storage-license-count',
+  }
+
   return wrapQuery(async () => {
     const axiosResponse = await http.getInstance().post(
       `/users/${query.userId}/clients/${query.clientId}/organizations/custom_order_details`,
@@ -532,6 +549,19 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOr
         isError: true,
       };
     }
+    const adminRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Administrator);
+    const standardRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Standard);
+    const outsiderRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Outsider);
+    const storageRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Storage);
+
+    const fields = orgData._embed.custom_fields || [];
+    const adminField = fields.find((field: any) => field.code === CustomOrderFieldName.AdministratorCount);
+    const standardField = fields.find((field: any) => field.code === CustomOrderFieldName.StandardCount);
+    const outsiderField = fields.find((field: any) => field.code === CustomOrderFieldName.OutsiderCount);
+    const storageField = fields.find((field: any) => field.code === CustomOrderFieldName.StorageCount);
+    const licenseStartField = fields.find((field: any) => field.code === CustomOrderFieldName.LicenseStart);
+    const licenseEndField = fields.find((field: any) => field.code === CustomOrderFieldName.LicenseEnd);
+
     return {
       status: axiosResponse.status,
       isError: false,
@@ -540,12 +570,31 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOr
         id: orgData.id,
         link: orgData.pdf_link,
         number: orgData.number,
-        amountWithTaxes: orgData.amounts.total_incl_tax,
-        amountNoTaxes: orgData.amounts.total_excl_tax,
+        amountWithTaxes: parseFloat(orgData.amounts.total_incl_tax),
+        amountWithoutTaxes: parseFloat(orgData.amounts.total_excl_tax),
+        amountDue: parseFloat(orgData.amounts.total_remaining_due_incl_tax),
         currency: orgData.currency,
         created: DateTime.fromISO(orgData.created, { zone: 'utc' }),
         dueDate: DateTime.fromISO(orgData.due_date, { zone: 'utc' }),
+        licenseStart: licenseStartField ? DateTime.fromISO(licenseStartField.value, { zone: 'utc' }) : undefined,
+        licenseEnd: licenseEndField ? DateTime.fromISO(licenseEndField.value, { zone: 'utc' }) : undefined,
         status: orgData.status,
+        administrators: {
+          quantityOrdered: adminField ? parseInt(adminField.value) : 0,
+          amountWithTaxes: adminRow ? parseInt(adminRow.amount_tax_inc) : 0,
+        },
+        standards: {
+          quantityOrdered: standardField ? parseInt(standardField.value) : 0,
+          amountWithTaxes: standardRow ? parseInt(standardRow.amount_tax_inc) : 0,
+        },
+        outsiders: {
+          quantityOrdered: outsiderField ? parseInt(outsiderField.value) : 0,
+          amountWithTaxes: outsiderRow ? parseInt(outsiderRow.amount_tax_inc) : 0,
+        },
+        storage: {
+          quantityOrdered: storageField ? parseInt(storageField.value) : 0,
+          amountWithTaxes: storageRow ? parseInt(storageRow.amount_tax_inc) : 0,
+        },
       },
     };
   });

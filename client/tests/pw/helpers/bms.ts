@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+/* eslint-disable camelcase */
+
 import { Page, Route } from '@playwright/test';
 import {
   DEFAULT_ORGANIZATION_DATA_SLICE,
@@ -76,11 +78,8 @@ interface MockRouteOptions {
 async function mockLogin(page: Page, options?: MockRouteOptions): Promise<void> {
   const TOKEN_RAW = {
     email: DEFAULT_USER_INFORMATION.email,
-    // eslint-disable-next-line camelcase
     is_staff: true,
-    // eslint-disable-next-line camelcase
     token_type: 'access',
-    // eslint-disable-next-line camelcase
     user_id: DEFAULT_USER_INFORMATION.id,
     exp: DateTime.utc().plus({ years: 42 }).toJSDate().valueOf(),
     iat: 0,
@@ -109,7 +108,6 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
         status: 200,
         json: {
           id: DEFAULT_USER_INFORMATION.id,
-          // eslint-disable-next-line camelcase
           created_at: '2024-07-15T13:21:32.141317Z',
           email: UserData.email,
           client: {
@@ -119,7 +117,6 @@ async function mockUserRoute(page: Page, overload: MockUserOverload = {}, option
             job: UserData.job,
             company: UserData.company,
             phone: UserData.phone,
-            // eslint-disable-next-line camelcase
             billing_system: overload.billingSystem ?? 'STRIPE',
           },
         },
@@ -159,7 +156,6 @@ async function mockCreateOrganization(page: Page, bootstrapAddr: string, options
       await route.fulfill({
         status: 201,
         json: {
-          // eslint-disable-next-line camelcase
           bootstrap_link: bootstrapAddr,
         },
       });
@@ -179,32 +175,22 @@ async function mockListOrganizations(page: Page, options?: MockRouteOptions): Pr
           results: [
             {
               pk: DEFAULT_ORGANIZATION_INFORMATION.bmsId,
-              // eslint-disable-next-line camelcase
               created_at: '2024-12-04T00:00:00.000',
-              // eslint-disable-next-line camelcase
               expiration_date: null,
               name: DEFAULT_ORGANIZATION_INFORMATION.name,
-              // eslint-disable-next-line camelcase
               parsec_id: DEFAULT_ORGANIZATION_INFORMATION.name,
               suffix: DEFAULT_ORGANIZATION_INFORMATION.name,
-              // eslint-disable-next-line camelcase
               stripe_subscription_id: 'stripe_id',
-              // eslint-disable-next-line camelcase
               bootstrap_link: '',
             },
             {
               pk: `${DEFAULT_ORGANIZATION_INFORMATION.bmsId}-2`,
-              // eslint-disable-next-line camelcase
               created_at: '2024-12-04T00:00:00.000',
-              // eslint-disable-next-line camelcase
               expiration_date: null,
               name: DEFAULT_ORGANIZATION_INFORMATION.name,
-              // eslint-disable-next-line camelcase
               parsec_id: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
               suffix: `${DEFAULT_ORGANIZATION_INFORMATION.name}-2`,
-              // eslint-disable-next-line camelcase
               stripe_subscription_id: 'stripe_id2',
-              // eslint-disable-next-line camelcase
               bootstrap_link: '',
             },
           ],
@@ -251,18 +237,12 @@ async function mockOrganizationStats(page: Page, overload: MockOrganizationStats
       await route.fulfill({
         status: 200,
         json: {
-          // eslint-disable-next-line camelcase
           users_per_profile_detail: usersPerProfileDetail,
-          // eslint-disable-next-line camelcase
           data_size: overload.dataSize ?? 400000000000,
-          // eslint-disable-next-line camelcase
           metadata_size: overload.metadataSize ?? 400000000,
-          // eslint-disable-next-line camelcase
           free_slice_size: overload.freeSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.free,
-          // eslint-disable-next-line camelcase
           paying_slice_size: overload.payingSliceSize ?? DEFAULT_ORGANIZATION_DATA_SLICE.paying,
           users: overload.users ?? 203,
-          // eslint-disable-next-line camelcase
           active_users: overload.activeUsers ?? 59,
           status: overload.status ?? 'ok',
         },
@@ -292,15 +272,10 @@ async function mockOrganizationStatus(
       await route.fulfill({
         status: 200,
         json: {
-          // eslint-disable-next-line camelcase
           active_users_limit: overload.activeUsersLimit ?? 1000,
-          // eslint-disable-next-line camelcase
           is_bootstrapped: overload.isBootstrapped ?? true,
-          // eslint-disable-next-line camelcase
           is_frozen: overload.isFrozen ?? false,
-          // eslint-disable-next-line camelcase
           is_initialized: overload.isInitialized ?? true,
-          // eslint-disable-next-line camelcase
           user_profile_outsider_allowed: overload.outsiderAllowed ?? true,
         },
       });
@@ -324,9 +299,7 @@ async function mockGetInvoices(page: Page, overload: MockGetInvoicesOverload = {
           invoices.push({
             id: `Id${year}-${month}`,
             pdf: `https://fake/pdfs/${year}-${month}.pdf`,
-            // eslint-disable-next-line camelcase
             period_start: DateTime.fromObject({ year: year, month: month }).toFormat('yyyy-LL-dd'),
-            // eslint-disable-next-line camelcase
             period_end: DateTime.fromObject({ year: year, month: month }).endOf('month').toFormat('yyyy-LL-dd'),
             total: Math.round(Math.random() * 1000),
             status: ['paid', 'draft', 'open'][Math.floor(Math.random() * 3)],
@@ -378,9 +351,7 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
             type: 'card',
             id: `card${i}`,
             brand: 'mastercard',
-            // eslint-disable-next-line camelcase
             exp_date: '12/47',
-            // eslint-disable-next-line camelcase
             last_digits: '4444',
             default: true,
           });
@@ -389,9 +360,7 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
           paymentMethods.push({
             type: 'debit',
             id: `debit${i}`,
-            // eslint-disable-next-line camelcase
             bank_name: 'Bank',
-            // eslint-disable-next-line camelcase
             last_digits: '1234',
             default: overload.cardsCount === undefined || overload.cardsCount === 0 ? true : false,
           });
@@ -405,11 +374,9 @@ async function mockBillingDetails(page: Page, overload: MockBillingDetailsOverlo
               line1: (overload.address && overload.address.line1) ?? UserData.address.line1,
               line2: (overload.address && overload.address.line2) ?? '',
               city: (overload.address && overload.address.city) ?? UserData.address.city,
-              // eslint-disable-next-line camelcase
               postal_code: (overload.address && overload.address.postalCode) ?? UserData.address.postalCode,
               country: (overload.address && overload.address.country) ?? UserData.address.country,
             },
-            // eslint-disable-next-line camelcase
             payment_methods: paymentMethods,
           },
         });
@@ -449,7 +416,6 @@ async function mockAddPaymentMethod(page: Page, options?: MockRouteOptions): Pro
       await route.fulfill({
         status: 200,
         json: {
-          // eslint-disable-next-line camelcase
           payment_method: '123456',
         },
       });
@@ -466,7 +432,6 @@ async function mockSetDefaultPaymentMethod(page: Page, options?: MockRouteOption
       await route.fulfill({
         status: 200,
         json: {
-          // eslint-disable-next-line camelcase
           payment_method: '123456',
         },
       });
@@ -483,7 +448,6 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
       await route.fulfill({
         status: 200,
         json: {
-          // eslint-disable-next-line camelcase
           payment_method: '123456',
         },
       });
@@ -519,6 +483,117 @@ async function mockChangePassword(page: Page, options?: MockRouteOptions): Promi
   });
 }
 
+interface MockCustomOrderDetailsOverload {
+  created?: DateTime;
+  amountWithTaxes?: number;
+  amountWithoutTaxes?: number;
+  amountDue?: number;
+  licenseStart?: DateTime;
+  licenseEnd?: DateTime;
+  adminAmountWithTaxes?: number;
+  outsiderAmountWithTaxes?: number;
+  standardAmountWithTaxes?: number;
+  storageAmountWithTaxes?: number;
+  adminOrdered?: number;
+  standardOrdered?: number;
+  outsiderOrdered?: number;
+  storageOrdered?: number;
+}
+
+async function mockCustomOrderDetails(
+  page: Page,
+  overload: MockCustomOrderDetailsOverload = {},
+  options?: MockRouteOptions,
+): Promise<void> {
+  await mockRoute(
+    page,
+    // eslint-disable-next-line max-len
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_details`,
+    options,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: {
+          id: 'custom_order_id',
+          created: overload.created ? overload.created.toISO() : '1988-04-07T00:00:00+00:00',
+          number: 'FACT001',
+          amounts: {
+            total_excl_tax: overload.amountWithoutTaxes ? overload.amountWithoutTaxes.toString() : '42.00',
+            // x10, damn government
+            total_incl_tax: overload.amountWithTaxes ? overload.amountWithTaxes.toString() : '420.00',
+            total_remaining_due_incl_tax: overload.amountDue ? overload.amountDue.toString() : '420.00',
+          },
+          pdf_link: 'https://parsec.cloud',
+          rows: [
+            {
+              reference: 'Psc_D0_Adm_M',
+              amount_tax_inc: overload.adminAmountWithTaxes ? overload.adminAmountWithTaxes.toString() : '160.00',
+            },
+            {
+              reference: 'Psc_D0_Std_User_M',
+              amount_tax_inc: overload.standardAmountWithTaxes ? overload.standardAmountWithTaxes.toString() : '200.00',
+            },
+            {
+              reference: 'Psc_D0_Ext_User_M',
+              amount_tax_inc: overload.outsiderAmountWithTaxes ? overload.outsiderAmountWithTaxes.toString() : '80.00',
+            },
+            {
+              // cspell:disable-next-line
+              reference: 'Psc_Stck_100_Go_M',
+              amount_tax_inc: overload.storageAmountWithTaxes ? overload.storageAmountWithTaxes.toString() : '120.00',
+            },
+          ],
+          _embed: {
+            custom_fields: [
+              {
+                value: 'parsec-saas-custom-order-start-date',
+                code: overload.licenseStart ? overload.licenseStart.toISO() : '1988-04-07T00:00:00+00:00',
+              },
+              {
+                value: 'parsec-saas-custom-order-end-date',
+                code: overload.licenseStart ? overload.licenseStart.toISO() : DateTime.now().plus({ year: 1 }).toISO(),
+              },
+              {
+                value: 'parsec-saas-custom-order-admin-license-count',
+                code: overload.adminOrdered ? overload.adminOrdered.toString() : '32',
+              },
+              {
+                value: 'parsec-saas-custom-order-outsider-license-count',
+                code: overload.outsiderOrdered ? overload.outsiderOrdered.toString() : '100',
+              },
+              {
+                value: 'parsec-saas-custom-order-standard-license-count',
+                code: overload.standardOrdered ? overload.standardOrdered.toString() : '50',
+              },
+              {
+                value: 'parsec-saas-custom-order-storage-license-count',
+                code: overload.storageOrdered ? overload.storageOrdered.toString() : '10',
+              },
+            ],
+          },
+        },
+      });
+    },
+  );
+}
+
+async function mockCustomOrderStatus(page: Page, options?: MockRouteOptions): Promise<void> {
+  const data: { [key: string]: string } = {};
+  data[DEFAULT_ORGANIZATION_INFORMATION.name] = 'invoice_paid';
+
+  await mockRoute(
+    page,
+    `**/users/${DEFAULT_USER_INFORMATION.id}/clients/${DEFAULT_USER_INFORMATION.clientId}/organizations/custom_order_status`,
+    options,
+    async (route) => {
+      await route.fulfill({
+        status: 200,
+        json: data,
+      });
+    },
+  );
+}
+
 export const MockBms = {
   mockLogin,
   mockUserRoute,
@@ -534,4 +609,6 @@ export const MockBms = {
   mockUpdateEmail,
   mockUpdateAuthentication,
   mockChangePassword,
+  mockCustomOrderStatus,
+  mockCustomOrderDetails,
 };

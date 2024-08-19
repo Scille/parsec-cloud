@@ -129,17 +129,29 @@ interface CustomOrderStatusResultData {
   status: CustomOrderStatus;
 }
 
+interface CustomOrderRow {
+  quantityOrdered: number;
+  amountWithTaxes: number;
+}
+
 interface CustomOrderDetailsResultData {
   type: DataType.CustomOrderDetails;
   id: number;
   link: string;
   number: string;
   amountWithTaxes: number;
-  amountNoTaxes: number;
+  amountWithoutTaxes: number;
+  amountDue: number;
   currency: string;
   created: DateTime;
   dueDate: DateTime;
+  licenseStart?: DateTime;
+  licenseEnd?: DateTime;
   status: InvoiceStatus;
+  administrators: CustomOrderRow;
+  standards: CustomOrderRow;
+  outsiders: CustomOrderRow;
+  storage: CustomOrderRow;
 }
 
 interface InvoicesResultData {
