@@ -1,0 +1,12 @@
+include = [
+    "*.toml",
+    "bindings/**/*.toml",
+    "cli/**/*.toml",
+    "docs/**/*.toml",
+    "libparsec/**/*.toml",
+    "server/**/*.toml",
+]
+
+[formatting]
+column_width = 100
+indent_string = "    "
