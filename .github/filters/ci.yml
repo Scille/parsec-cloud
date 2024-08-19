@@ -9,6 +9,10 @@ rust-dependencies-workspace: &rust-dependencies-workspace
   - "**/Cargo.toml"
   - Cargo.lock
 
+rust-cargo-deny:
+  - deny.toml
+  - *rust-dependencies-workspace
+
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
 rust-python-binding: &rust-python-binding server/src/**
