@@ -80,11 +80,11 @@ yanked = "warn"
 # A list of advisory IDs to ignore. Note that ignored advisories will still
 # output a note when they are encountered.
 # https://embarkstudios.github.io/cargo-deny/checks/advisories/cfg.html#the-ignore-field-optional
-[[ignore]]
+[[advisories.ignore]]
 id = "RUSTSEC-2023-0071"
 reason = "Currently no fix, but it's currently being worked on, see issue: https://github.com/RustCrypto/RSA/issues/19#issuecomment-1822995643"
 
-[[ignore]]
+[[advisories.ignore]]
 id = "RUSTSEC-2024-0363"
 reason = """
 Possible SQL Injection where input manipulate the SQL query by overflowing the buffer len field (4 bytes).
