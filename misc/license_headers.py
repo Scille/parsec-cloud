@@ -303,10 +303,13 @@ def remove_headers(files: Iterable[Path]) -> int:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("cmd", choices=["check", "add", "remove"])
+
+    parser.add_argument("cmd", choices=["check", "add", "remove"], help="Action to perform")
+
     parser.add_argument(
         "files",
         nargs="*",
+        help="Files or directories to work on",
         type=Path,
         default=[
             Path(".github"),
