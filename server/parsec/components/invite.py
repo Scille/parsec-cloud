@@ -413,7 +413,7 @@ def process_greeter_step(
                 1,
                 b"",
                 lambda data: authenticated_cmds.v4.invite_greeter_step.ClaimerStepSendHashedNonce(
-                    HashDigest.from_data(data)
+                    HashDigest(data)
                 ),
             )
         case authenticated_cmds.v4.invite_greeter_step.GreeterStepSendNonce():
