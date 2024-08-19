@@ -2,9 +2,7 @@
 
 use std::io::{Read, Write};
 
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-use flate2::read::ZlibDecoder;
-use flate2::write::ZlibEncoder;
+use flate2::{read::ZlibDecoder, write::ZlibEncoder};
 
 use crate::{self as libparsec_types /*To use parsec_data!*/, InvitationToken};
 use crate::{data_macros::impl_transparent_data_format_conversion, DataError, DataResult};
