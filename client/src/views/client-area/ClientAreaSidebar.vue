@@ -163,8 +163,8 @@
           button
           lines="none"
           class="menu-default menu-client-list-item"
-          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.Statistics }"
-          @click="goToPageClicked(ClientAreaPages.Statistics)"
+          :class="{ 'current-page menu-active': currentPage === ClientAreaPages.CustomOrderStatistics }"
+          @click="goToPageClicked(ClientAreaPages.CustomOrderStatistics)"
         >
           <ion-icon
             class="menu-client-list-item__icon"

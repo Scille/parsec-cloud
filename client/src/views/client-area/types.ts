@@ -13,6 +13,7 @@ export enum ClientAreaPages {
   PaymentMethods = 'payment-methods',
   PersonalData = 'personal-data',
   Statistics = 'statistics',
+  CustomOrderStatistics = 'custom-order-statistics',
 }
 
 export const DefaultBmsOrganization: BmsOrganization = {
