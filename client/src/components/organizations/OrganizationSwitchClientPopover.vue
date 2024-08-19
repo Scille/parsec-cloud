@@ -28,7 +28,7 @@
               {{ org.name }}
             </span>
             <span
-              class="subtitles-normal"
+              class="subtitles-normal all-organization"
               v-else
             >
               {{ $msTranslate('clientArea.sidebar.allOrganization') }}
@@ -129,7 +129,9 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  overflow-y: auto;
   background-color: var(--parsec-color-light-secondary-inversed-contrast);
+  max-height: 19rem;
 
   &-title {
     color: var(--parsec-color-light-secondary-grey);
@@ -174,6 +176,10 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   gap: 0.75rem;
   width: 100%;
   position: relative;
+
+  &:has(.all-organization) {
+    min-height: 3rem;
+  }
 
   &-avatar,
   .organization-icon-container {
