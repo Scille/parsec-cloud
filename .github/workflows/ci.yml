@@ -179,6 +179,10 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
+      - uses: taiki-e/install-action@37129d5de13e9122cce55a7a5e7e49981cef514c # pin v2.42.26
+        with:
+          tool: taplo-cli@0.9.3
+
       # Clippy basically compile the project, hence it's faster to run it in
       # the test-rust-matrix job where compilation cache is reused !
       - uses: ./.github/actions/use-pre-commit
