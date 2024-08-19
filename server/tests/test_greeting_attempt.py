@@ -20,22 +20,27 @@ def test_step_processing():
     migration, so make sure to have a migration plan if you end up changing the snapshot data.
     """
     # Greeter data
+    # spell-checker: disable
     greeter_key = PublicKey(
         b"\xa1\xcfKq\xb2s]\xb1\x03\xa1u/\x9f\xbdi]D4\xf0\x95\x0b6\xdf\xadSC\xa4|D%jh"
     )
     greeter_nonce = b"\xd6\x17\xb7\x04\xaf\xd6\x17\xde0:\x81\x95u\x0f\xcb_\xe8\xf8.t=\x96j?\x8f\xf4\x90'\xc2\xb7\xc2\x8e\xcb\x07\xc3\x0e\x88\xf4K})\xb0\xbf\x08d\xad@\xa5\xe3\xf1\xf9X\xe9\x89\xcb\xf5\xd1\x1b\xb3\x7f\xc9X`+"
     greeter_payload = b"<greeter_payload>"
+    # spell-checker: enable
 
     # Claimer data
+    # spell-checker: disable
     claimer_key = PublicKey(
         b"\x9dTj\x00\xcc$=\n\x9an0@Se\xfd\xa4\x87\xcd\x93\xdd-\xc9\xd0\xa1\xa8wF\x82\x9fE\xef\x15"
     )
     claimer_nonce = b"\xc7\x86U\x7f\xee\x12\xb4\xb8\xbf\x91\xb5tJ5?Dhts\x14ob\xdbg\x11\xdbL\xd9i\x7f\xb5\x10n\x16K\xb0\xf9q\x06\xf2\x88\xd0\xbd\x17\x97\xe6\x08<\xbd\xab\x80\xbd\x91\xf7\xfe-\x92D<\xe4\xf6''\xcc"
     hashed_nonce = HashDigest.from_data(claimer_nonce)
     claimer_payload = b"<claimer_payload>"
+    # spell-checker: disable
 
     # Snapshot data
     # Do not change without a database migration plan
+    # spell-checker: disable
     greeter_snapshot = [
         b"\xa1\xcfKq\xb2s]\xb1\x03\xa1u/\x9f\xbdi]D4\xf0\x95\x0b6\xdf\xadSC\xa4|D%jh",
         b"",
@@ -58,6 +63,7 @@ def test_step_processing():
         b"",
         b"",
     ]
+    # spell-checker: enable
 
     # Step 0
     greeter_step_0 = authenticated_cmds.latest.invite_greeter_step.GreeterStepWaitPeer(
