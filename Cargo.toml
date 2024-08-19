@@ -198,10 +198,7 @@ winfsp_wrs_build = { version = "0.3.0", default-features = false }
 winfsp_wrs = { version = "0.3.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
-zstd = { version = "0.13.0", default-features = false }
-# TODO: temporary to fix parquet wasm build
-# upstream issue: https://github.com/gyscos/zstd-rs/issues/269
-zstd-sys = { version = "=2.0.9", default-features = false }
+zstd = { version = "0.13.2", default-features = false }
 
 # Rust unoptimized code is really slow with crypto algorithm and regex compilation,
 # hence we optimize our 3rd party dependencies.
