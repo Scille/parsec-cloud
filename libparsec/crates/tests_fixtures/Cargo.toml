@@ -31,7 +31,7 @@ test-with-platform-storage-testbed = [
 ]
 
 [dependencies]
-libparsec_types = { workspace = true, features = [ "test-fixtures", "test-mock-time" ] }
+libparsec_types = { workspace = true, features = ["test-fixtures", "test-mock-time"] }
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
 libparsec_testbed = { workspace = true }
 # Enable testbed support in crates here

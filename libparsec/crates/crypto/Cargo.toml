@@ -13,11 +13,7 @@ workspace = true
 
 [features]
 vendored-openssl = ["openssl/vendored"]
-use-sodiumoxide = [
-    "dep:sodiumoxide",
-    "dep:libsodium-sys",
-    "dep:openssl",
-]
+use-sodiumoxide = ["dep:sodiumoxide", "dep:libsodium-sys", "dep:openssl"]
 # In theory we should have this feature enabling optional dependencies,
 # but instead we consider use-rustcrypto as the default (see below)
 # use-rustcrypto = [
@@ -105,24 +101,45 @@ openssl = { workspace = true, optional = true }
 # But what about the perf ??? Well compilation is a bit longer with `use-sodiumoxide`
 # but at link time all the rustcrypto related code is discarded given it is never used.
 
-argon2 = { workspace = true, features = ["alloc", "password-hash", "rand"] }  # Optional rustcrypto dep
-blake2 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
-crypto_box = { workspace = true, features = ["std", "salsa20", "rand_core"] }  # Optional rustcrypto dep
-digest = { workspace = true, features = ["core-api"] }  # Optional rustcrypto dep
-ed25519-dalek = { workspace = true, features = ["std", "zeroize", "fast", "rand_core"] }  # Optional rustcrypto dep
-generic-array = { workspace = true, features = ["serde"] }  # Optional rustcrypto dep
+argon2 = { workspace = true, features = [
+    "alloc",
+    "password-hash",
+    "rand",
+] } # Optional rustcrypto dep
+blake2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
+crypto_box = { workspace = true, features = [
+    "std",
+    "salsa20",
+    "rand_core",
+] } # Optional rustcrypto dep
+digest = { workspace = true, features = ["core-api"] } # Optional rustcrypto dep
+ed25519-dalek = { workspace = true, features = [
+    "std",
+    "zeroize",
+    "fast",
+    "rand_core",
+] } # Optional rustcrypto dep
+generic-array = { workspace = true, features = ["serde"] } # Optional rustcrypto dep
 lazy_static = { workspace = true } # Optional rustcrypto dep
-rsa = { workspace = true, features = ["std", "pem"] }  # Optional rustcrypto dep
-sha2 = { workspace = true, features = ["std"] }  # Optional rustcrypto dep
+rsa = { workspace = true, features = ["std", "pem"] } # Optional rustcrypto dep
+sha2 = { workspace = true, features = ["std"] } # Optional rustcrypto dep
 # This is exceptionally allowed since no significant changes
 # were made from the last stable version to this major pre-release version.
 # TODO: bump to a stable version.
-x25519-dalek = { workspace = true, features = ["alloc", "zeroize", "precomputed-tables"] }  # Optional rustcrypto dep
-crypto_secretbox = { workspace = true, features = ["alloc", "getrandom", "salsa20"] }  # Optional rustcrypto dep
+x25519-dalek = { workspace = true, features = [
+    "alloc",
+    "zeroize",
+    "precomputed-tables",
+] } # Optional rustcrypto dep
+crypto_secretbox = { workspace = true, features = [
+    "alloc",
+    "getrandom",
+    "salsa20",
+] } # Optional rustcrypto dep
 # Cryptographic randomness is required for generating SecretKey, SigningKey and PrivateKey
 # `getrandom` is a dependency of `rand`, we specify it here in order  to configure its `wasm-unknown-unknown` web support (see [target] part).
-getrandom = { workspace = true }  # Optional rustcrypto dep
-rand = { workspace = true, features = ["std", "std_rng"] }  # Optional rustcrypto dep
+getrandom = { workspace = true }                           # Optional rustcrypto dep
+rand = { workspace = true, features = ["std", "std_rng"] } # Optional rustcrypto dep
 
 [dev-dependencies]
 pretty_assertions = { workspace = true, features = ["std", "unstable"] }
@@ -137,7 +154,7 @@ rstest = { workspace = true, features = ["async-timeout"] }
 # RustCrypto stuff
 #
 
-getrandom = { workspace = true, features = ["js"] }  # Optional rustcrypto dep
+getrandom = { workspace = true, features = ["js"] } # Optional rustcrypto dep
 
 [target.'cfg(target_os = "macos")'.dependencies]
 openssl = { workspace = true, optional = true, features = ["vendored"] }

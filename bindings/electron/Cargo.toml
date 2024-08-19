@@ -24,7 +24,16 @@ lazy_static = { workspace = true }
 libparsec = { workspace = true }
 neon = { workspace = true, features = ["napi-8"] }
 once_cell = { workspace = true }
-sentry = { workspace = true, features = ["backtrace", "contexts", "debug-images", "log", "native-tls", "panic", "reqwest", "transport"] }
+sentry = { workspace = true, features = [
+    "backtrace",
+    "contexts",
+    "debug-images",
+    "log",
+    "native-tls",
+    "panic",
+    "reqwest",
+    "transport",
+] }
 sentry-log = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
 

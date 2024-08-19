@@ -4,4 +4,4 @@ channel = "1.75.0"
 # https://rust-lang.github.io/rustup/concepts/profiles.html
 profile = "default"
 # Cross-compilation targets (the host target is implicitly added)
-targets = [ "wasm32-unknown-unknown" ]
+targets = ["wasm32-unknown-unknown"]
