@@ -1490,6 +1490,12 @@
             "from": "Depuis",
             "to": "Jusqu'au",
             "amount": "Montant",
+            "selectAnOrganization": "Veuillez sélectionner une organisation",
+            "errors": {
+                "noOrganizations": "Impossible de lister vos organisations",
+                "noInfo": "Impossible de récupérer les informations",
+                "unavailable": "Non disponible"
+            },
             "user": {
                 "standard": "Standard | Standards",
                 "admin": "Administrateur | Administrateurs",
@@ -1497,12 +1503,14 @@
                 "remaining": "{number} restant | {number} restants",
                 "fullAccess": "Tous les accès",
                 "allFeaturesAccess": "Accès à toutes les fonctionnalités",
-                "rightLimited": "Droits limités"
+                "rightLimited": "Droits limités",
+                "onTotal": "/ {count} membres"
             },
             "storage": {
                 "title": "Stockage",
                 "stack": "par tranche de 100 Go",
-                "used": "utilisé"
+                "used": "{percentage}% utilisés",
+                "onTotal": "/ {count}"
             },
             "invoice": {
                 "title": "Facture",

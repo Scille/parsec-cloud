@@ -927,7 +927,7 @@
             "errors": {
                 "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
                 "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
-                "unexpected": "An unexpected error occured (reason: {reason}).",
+                "unexpected": "An unexpected error occurred (reason: {reason}).",
                 "startFailed": "Failed to start the onboarding process. Please make sure you are online.",
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the onboarding process.",
                 "peerReset": "The invitee cancelled the process.",
@@ -947,7 +947,7 @@
             "inviteFailedAlreadyMember": "The email {email} is already used by a member of this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
             "inviteFailedNotAllowed": "Only an administrator can invite new users into the organization.",
-            "inviteFailedUnknown": "An unexpected error occured, please try again (reason: {reason}).",
+            "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
             "cancelSuccess": "Invitation has been cancelled.",
             "cancelFailed": "Failed to cancel invitation",
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
@@ -1490,6 +1490,12 @@
             "from": "From",
             "to": "To",
             "amount": "Amount",
+            "selectAnOrganization": "Please select an organization.",
+            "errors": {
+                "noOrganizations": "Failed to list organizations",
+                "noInfo": "Failed to retrieve the information",
+                "unavailable": "Unavailable"
+            },
             "user": {
                 "standard": "Standard | Standards",
                 "admin": "Administrator | Administrators",
@@ -1497,12 +1503,14 @@
                 "remaining": "{number} remaining",
                 "fullAccess": "Full access",
                 "allFeaturesAccess": "Access to all features",
-                "rightLimited": "Limited rights"
+                "rightLimited": "Limited rights",
+                "onTotal": "/ {count} members"
             },
             "storage": {
                 "title": "Storage",
                 "stack": "per 100 Go stack",
-                "used": "used"
+                "used": "{percentage}% used",
+                "onTotal": "/ {count}"
             },
             "invoice": {
                 "title": "Invoices {number}",

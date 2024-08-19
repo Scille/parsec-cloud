@@ -47,7 +47,6 @@
                 v-if="currentPage === ClientAreaPages.BillingDetails"
                 :organization="currentOrganization"
               />
-              <!-- Stripe order -->
               <dashboard-page
                 v-if="currentPage === ClientAreaPages.Dashboard"
                 :organization="currentOrganization"
@@ -79,6 +78,7 @@
               <contracts-page
                 v-if="currentPage === ClientAreaPages.Contracts"
                 :organization="currentOrganization"
+                @organization-selected="onOrganizationSelected"
               />
               <custom-order-billing-details-page
                 v-if="currentPage === ClientAreaPages.CustomOrderBillingDetails"
