@@ -12,9 +12,7 @@ repository.workspace = true
 workspace = true
 
 [features]
-test-with-testbed = [
-    "libparsec_testbed",
-]
+test-with-testbed = ["libparsec_testbed"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }

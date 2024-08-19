@@ -22,7 +22,13 @@ itertools = { workspace = true, features = ["use_std"] }
 miniserde = { workspace = true, features = ["std"] }
 proc-macro2 = { workspace = true, features = ["proc-macro"] }
 quote = { workspace = true, features = ["proc-macro"] }
-syn = { workspace = true, features = ["derive", "parsing", "printing", "clone-impls", "proc-macro"] }
+syn = { workspace = true, features = [
+    "derive",
+    "parsing",
+    "printing",
+    "clone-impls",
+    "proc-macro",
+] }
 
 [dev-dependencies]
 rstest = { workspace = true, features = ["async-timeout"] }

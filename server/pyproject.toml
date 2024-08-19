@@ -109,10 +109,7 @@ PATH = "$PATH:$HOME/.cargo/bin"
 LIBPARSEC_FORCE_VENDORED_OPENSSL = "true"
 
 [tool.deptry]
-extend_exclude = [
-    "server/tests/",
-    "server/parsec/cli/testbed.py",
-]
+extend_exclude = ["server/tests/", "server/parsec/cli/testbed.py"]
 
 [tool.ruff]
 line-length = 100
@@ -157,9 +154,7 @@ bindings = "pyo3"
 [tool.pyright]
 pythonVersion = "3.12"
 include = ["parsec", "tests", "build.py", "../docs", "../misc", "../bindings/generator"]
-exclude = [
-    "**/__pycache__",
-]
+exclude = ["**/__pycache__"]
 ignore = [
     "parsec/components/postgresql/sequester.py",
     "parsec/components/postgresql/pki.py",

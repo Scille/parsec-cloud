@@ -19,10 +19,7 @@ crate-type = ["cdylib"]
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
-test-utils = [
-    "dep:libparsec_testbed",
-    "libparsec_types/test-mock-time",
-]
+test-utils = ["dep:libparsec_testbed", "libparsec_types/test-mock-time"]
 
 [dependencies]
 libparsec_crypto = { workspace = true }
