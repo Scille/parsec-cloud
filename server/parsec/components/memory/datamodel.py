@@ -306,20 +306,26 @@ class MemoryGreetingSession:
     def new_attempt_for_greeter(
         self, org: MemoryOrganization, now: DateTime
     ) -> MemoryGreetingAttempt:
-        while True:
-            current_attempt = self.get_active_greeting_attempt(org)
-            current_attempt.greeter_join_or_cancel(now)
-            if current_attempt.is_active():
-                return current_attempt
+        current_attempt = self.get_active_greeting_attempt(org)
+        current_attempt.greeter_join_or_cancel(now)
+        if current_attempt.is_active():
+            return current_attempt
+        current_attempt = self.get_active_greeting_attempt(org)
+        current_attempt.greeter_join_or_cancel(now)
+        assert current_attempt.is_active()
+        return current_attempt
 
     def new_attempt_for_claimer(
         self, org: MemoryOrganization, now: DateTime
     ) -> MemoryGreetingAttempt:
-        while True:
-            current_attempt = self.get_active_greeting_attempt(org)
-            current_attempt.claimer_join_or_cancel(now)
-            if current_attempt.is_active():
-                return current_attempt
+        current_attempt = self.get_active_greeting_attempt(org)
+        current_attempt.claimer_join_or_cancel(now)
+        if current_attempt.is_active():
+            return current_attempt
+        current_attempt = self.get_active_greeting_attempt(org)
+        current_attempt.claimer_join_or_cancel(now)
+        assert current_attempt.is_active()
+        return current_attempt
 
 
 @dataclass(slots=True)
