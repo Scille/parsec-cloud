@@ -54,6 +54,7 @@ Sanctorum
 scalingo
 Scille
 softprops
+taplo
 titeuf
 Upterm
 vxgmichel
