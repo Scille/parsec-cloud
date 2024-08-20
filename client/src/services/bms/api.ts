@@ -543,18 +543,18 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOr
       },
     );
     const orgData = axiosResponse.data[query.organization.parsecId];
-    if (!orgData) {
+    if (!orgData || Object.keys(orgData).length === 0) {
       return {
         status: 404,
         isError: true,
       };
     }
-    const adminRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Administrator);
-    const standardRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Standard);
-    const outsiderRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Outsider);
-    const storageRow = orgData.rows.find((row: any) => row.reference === CustomOrderRowName.Storage);
+    const adminRow = orgData.rows?.find((row: any) => row.reference === CustomOrderRowName.Administrator);
+    const standardRow = orgData.rows?.find((row: any) => row.reference === CustomOrderRowName.Standard);
+    const outsiderRow = orgData.rows?.find((row: any) => row.reference === CustomOrderRowName.Outsider);
+    const storageRow = orgData.rows?.find((row: any) => row.reference === CustomOrderRowName.Storage);
 
-    const fields = orgData._embed.custom_fields || [];
+    const fields = orgData._embed?.custom_fields || [];
     const adminField = fields.find((field: any) => field.code === CustomOrderFieldName.AdministratorCount);
     const standardField = fields.find((field: any) => field.code === CustomOrderFieldName.StandardCount);
     const outsiderField = fields.find((field: any) => field.code === CustomOrderFieldName.OutsiderCount);
@@ -570,9 +570,9 @@ async function getCustomOrderDetails(token: AuthenticationToken, query: CustomOr
         id: orgData.id,
         link: orgData.pdf_link,
         number: orgData.number,
-        amountWithTaxes: parseFloat(orgData.amounts.total_incl_tax),
-        amountWithoutTaxes: parseFloat(orgData.amounts.total_excl_tax),
-        amountDue: parseFloat(orgData.amounts.total_remaining_due_incl_tax),
+        amountWithTaxes: parseFloat(orgData.amounts?.total_incl_tax),
+        amountWithoutTaxes: parseFloat(orgData.amounts?.total_excl_tax),
+        amountDue: parseFloat(orgData.amounts?.total_remaining_due_incl_tax),
         currency: orgData.currency,
         created: DateTime.fromISO(orgData.created, { zone: 'utc' }),
         dueDate: DateTime.fromISO(orgData.due_date, { zone: 'utc' }),
