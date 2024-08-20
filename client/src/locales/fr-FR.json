@@ -1370,10 +1370,10 @@
             "contract": "Contrat n°{number}",
             "contractStatus": {
                 "unknown": "Inconnu",
-                "contractEnded": "Terminé",
+                "contractEnded": "Contrat terminé",
                 "estimateLinked": "Devis lié",
-                "invoicePaid": "Payé",
-                "invoiceToBePaid": "À payer",
+                "invoicePaid": "Actif",
+                "invoiceToBePaid": "Facture à payer",
                 "nothingLinked": "En cours de traitement"
             },
             "number": "Numéro de facture",
@@ -1490,6 +1490,7 @@
             "title": "Adresse de facturation"
         },
         "contracts": {
+            "loading": "Votre contrat arrive...",
             "title": "Contrat n°{number}",
             "previewOrganization": "Aperçu de votre organisation",
             "noContract": "Vous n'avez pas encore de contrat.",

@@ -1370,10 +1370,10 @@
             "contract": "Contract n°{number}",
             "contractStatus": {
                 "unknown": "Unknown",
-                "contractEnded": "Ended",
+                "contractEnded": "Contract ended",
                 "estimateLinked": "Estimate linked",
-                "invoicePaid": "Paid",
-                "invoiceToBePaid": "To be paid",
+                "invoicePaid": "Active",
+                "invoiceToBePaid": "Invoice to be paid",
                 "nothingLinked": "Being processed"
             },
             "number": "Invoice number",
@@ -1381,7 +1381,7 @@
             "startingDate": "Starting date",
             "endingDate": "Ending date",
             "members": {
-                "title": "Licence member | Licences members",
+                "title": "License member | Licenses members",
                 "admin": "Administrator member | Administrator members",
                 "adminDescription": "Full access",
                 "standard": "Standard member | Standard members",
@@ -1390,7 +1390,7 @@
                 "externalDescription": "Limited use"
             },
             "storage": {
-                "title": "Licence storage",
+                "title": "License storage",
                 "storage": "Storage",
                 "stack": "per 100 GB stack"
             },
@@ -1490,6 +1490,7 @@
             "title": "Billing address"
         },
         "contracts": {
+            "loading": "Your contract arrives",
             "title": "Contract n°{number}",
             "previewOrganization": "Preview of your organization",
             "noContract": "You don't have any contract yet",
