@@ -264,7 +264,7 @@ impl From<ConnectionError> for GreetInProgressError {
 
 // Greeter step helper
 
-static STEP_THROTTLE: Duration = Duration::seconds(1);
+static STEP_THROTTLE: Duration = Duration::milliseconds(100);
 
 async fn run_greeter_step_until_ready(
     cmds: &AuthenticatedCmds,
