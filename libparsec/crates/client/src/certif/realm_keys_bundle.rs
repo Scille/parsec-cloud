@@ -949,13 +949,6 @@ pub(super) async fn decrypt_for_realm(
         })?;
 
     let key = key_derivation.derive_secret_key_from_uuid(usage.key_derivation_uuid());
-    println!(
-        "key deriv: {:?} // {:?} // {:?}",
-        key_derivation.as_ref(),
-        usage,
-        usage.key_derivation_uuid()
-    );
-    println!("key: {:?}", key.as_ref());
 
     key.decrypt(encrypted)
         .map_err(|_| CertifDecryptForRealmError::CorruptedData)
