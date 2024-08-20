@@ -2725,6 +2725,35 @@ fn variant_claim_in_progress_error_rs_to_js(
                 &"ClaimInProgressErrorCancelled".into(),
             )?;
         }
+        libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorGreeterNotAllowed".into(),
+            )?;
+        }
+        libparsec::ClaimInProgressError::GreetingAttemptCancelled {
+            origin: _,
+            reason: _,
+            timestamp,
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClaimInProgressErrorGreetingAttemptCancelled".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"timestamp".into(), &js_timestamp)?;
+        }
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
             Reflect::set(
                 &js_obj,
