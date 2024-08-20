@@ -276,9 +276,9 @@ async function getOrganizationStats(token: AuthenticationToken, query: Organizat
         metadataSize: axiosResponse.data.metadata_size ?? 0,
         users: axiosResponse.data.users ?? 0,
         activeUsers: axiosResponse.data.active_users ?? 0,
-        adminUsersDetail: axiosResponse.data.users_per_profile_detail?.ADMIN ?? 0,
-        standardUsersDetail: axiosResponse.data.users_per_profile_detail?.STANDARD ?? 0,
-        outsiderUsersDetail: axiosResponse.data.users_per_profile_detail?.OUTSIDER ?? 0,
+        adminUsersDetail: axiosResponse.data.users_per_profile_detail?.ADMIN ?? { active: 0, revoked: 0 },
+        standardUsersDetail: axiosResponse.data.users_per_profile_detail?.STANDARD ?? { active: 0, revoked: 0 },
+        outsiderUsersDetail: axiosResponse.data.users_per_profile_detail?.OUTSIDER ?? { active: 0, revoked: 0 },
         freeSliceSize: axiosResponse.data.free_slice_size ?? 1024 * 1024 * 1024 * 200, // arbitrary value
         payingSliceSize: axiosResponse.data.paying_slice_size ?? 1024 * 1024 * 1024 * 100, // arbitrary value
         status: axiosResponse.data.status,
