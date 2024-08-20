@@ -88,6 +88,7 @@
                 v-if="currentPage === ClientAreaPages.CustomOrderInvoices"
                 :organization="currentOrganization"
               />
+              <custom-order-processing-page v-if="currentPage === ClientAreaPages.CustomOrderProcessing" />
             </div>
           </div>
         </ion-content>
@@ -100,7 +101,7 @@
 import { IonPage, IonContent, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
-import { BillingSystem, BmsAccessInstance, BmsOrganization, DataType } from '@/services/bms';
+import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
 import { inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { DefaultBmsOrganization, ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import BillingDetailsPage from '@/views/client-area/billing-details/BillingDetailsPage.vue';
@@ -118,6 +119,7 @@ import { Translatable } from 'megashark-lib';
 import { ClientAreaQuery, getCurrentRouteQuery, navigateTo, Routes } from '@/router';
 import { InformationManager } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import CustomOrderProcessingPage from '@/views/client-area/dashboard/CustomOrderProcessingPage.vue';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
@@ -154,11 +156,6 @@ onMounted(async () => {
     loggedIn.value = true;
   }
   const billingSystem = BmsAccessInstance.get().getPersonalInformation().billingSystem;
-  if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
-    currentPage.value = ClientAreaPages.Contracts;
-  } else {
-    currentPage.value = ClientAreaPages.Dashboard;
-  }
   const query = getCurrentRouteQuery<ClientAreaQuery>();
   const response = await BmsAccessInstance.get().listOrganizations();
   if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
@@ -179,6 +176,17 @@ onMounted(async () => {
     }
     if (query.page) {
       currentPage.value = query.page as ClientAreaPages;
+    }
+    if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
+      currentPage.value = ClientAreaPages.Contracts;
+      const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
+      if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
+        if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+          currentPage.value = ClientAreaPages.CustomOrderProcessing;
+        }
+      }
+    } else {
+      currentPage.value = ClientAreaPages.Dashboard;
     }
     querying.value = false;
   }
@@ -258,6 +266,8 @@ function getTitleByPage(): Translatable {
       return 'clientArea.header.titles.customOrderBillingDetails';
     case ClientAreaPages.CustomOrderInvoices:
       return 'clientArea.header.titles.customOrderInvoices';
+    case ClientAreaPages.CustomOrderProcessing:
+      return 'clientArea.header.titles.customOrderProcessing';
     default:
       return '';
   }
