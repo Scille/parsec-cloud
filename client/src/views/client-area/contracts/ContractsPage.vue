@@ -20,7 +20,7 @@
               {{ $msTranslate('clientArea.invoicesCustomOrder.contract') }}{{ contractDetails.id }}
             </ion-text>
             <ion-text class="contract-header-title__badge button-small">
-              {{ $msTranslate('clientArea.invoicesCustomOrder.inProgress') }}
+              {{ $msTranslate(getContractStatus()) }}
             </ion-text>
           </div>
           <div class="contract-header-invoice">
@@ -207,7 +207,7 @@
                   <div class="progress-bar-unused" />
                 </div>
                 <ion-text class="progress-text subtitles-sm">
-                  {{ contractDetails.administrators.quantityOrdered - organizationStats.adminUsersDetail.active }}
+                  {{ Math.max(contractDetails.administrators.quantityOrdered - organizationStats.adminUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
               </div>
@@ -245,7 +245,7 @@
                   <div class="progress-bar-unused" />
                 </div>
                 <ion-text class="progress-text subtitles-sm">
-                  {{ contractDetails.standards.quantityOrdered - organizationStats.standardUsersDetail.active }}
+                  {{ Math.max(contractDetails.standards.quantityOrdered - organizationStats.standardUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
               </div>
@@ -283,7 +283,7 @@
                   <div class="progress-bar-unused" />
                 </div>
                 <ion-text class="progress-text subtitles-sm">
-                  {{ contractDetails.outsiders.quantityOrdered - organizationStats.outsiderUsersDetail.active }}
+                  {{ Math.max(contractDetails.outsiders.quantityOrdered - organizationStats.outsiderUsersDetail.active, 0) }}
                   {{ $msTranslate('clientArea.contracts.user.remaining') }}
                 </ion-text>
               </div>
@@ -349,7 +349,7 @@
 import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MsImage, File, I18n } from 'megashark-lib';
+import { MsImage, File, I18n, Translatable } from 'megashark-lib';
 import { informationCircle, person, pieChart } from 'ionicons/icons';
 import {
   BmsAccessInstance,
@@ -423,6 +423,23 @@ function getStoragePercentage(): number {
   const current = organizationStats.value.dataSize + organizationStats.value.metadataSize;
 
   return Math.round((current / ordered) * 100);
+}
+
+function getContractStatus(): Translatable {
+  switch (contractStatus.value) {
+    case CustomOrderStatus.Unknown:
+      return 'clientArea.invoicesCustomOrder.contractStatus.unknown';
+    case CustomOrderStatus.ContractEnded:
+      return 'clientArea.invoicesCustomOrder.contractStatus.contractEnded';
+    case CustomOrderStatus.EstimateLinked:
+      return 'clientArea.invoicesCustomOrder.contractStatus.estimateLinked';
+    case CustomOrderStatus.InvoicePaid:
+      return 'clientArea.invoicesCustomOrder.contractStatus.invoicePaid';
+    case CustomOrderStatus.InvoiceToBePaid:
+      return 'clientArea.invoicesCustomOrder.contractStatus.invoiceToBePaid';
+    case CustomOrderStatus.NothingLinked:
+      return 'clientArea.invoicesCustomOrder.contractStatus.nothingLinked';
+  }
 }
 </script>
 

@@ -1368,7 +1368,14 @@
         },
         "invoicesCustomOrder": {
             "contract": "Contract n°{number}",
-            "inProgress": "in progress",
+            "contractStatus": {
+                "unknown": "Unknown",
+                "contractEnded": "Ended",
+                "estimateLinked": "Estimate linked",
+                "invoicePaid": "Paid",
+                "invoiceToBePaid": "To be paid",
+                "nothingLinked": "Being processed"
+            },
             "number": "Invoice number",
             "information": "Information",
             "startingDate": "Starting date",
