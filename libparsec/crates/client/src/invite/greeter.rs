@@ -2,6 +2,7 @@
 
 use std::sync::Arc;
 
+use authenticated_cmds::latest::invite_greeter_step;
 use libparsec_client_connection::{
     protocol::authenticated_cmds, AuthenticatedCmds, ConnectionError,
 };
@@ -231,6 +232,14 @@ pub enum GreetInProgressError {
     DeviceAlreadyExists,
     #[error("Not allowed to create a user")]
     UserCreateNotAllowed,
+    #[error("Not allowed to greet this invitation")]
+    GreeterNotAllowed,
+    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
+    GreetingAttemptCancelled {
+        origin: GreeterOrClaimer,
+        reason: CancelledGreetingAttemptReason,
+        timestamp: DateTime,
+    },
     #[error(transparent)]
     CorruptedInviteUserData(DataError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -253,6 +262,77 @@ impl From<ConnectionError> for GreetInProgressError {
     }
 }
 
+// Greeter step helper
+
+static STEP_THROTTLE: Duration = Duration::seconds(1);
+
+async fn run_greeter_step_until_ready(
+    cmds: &AuthenticatedCmds,
+    greeting_attempt: GreetingAttemptID,
+    greeter_step: invite_greeter_step::GreeterStep,
+    time_provider: &TimeProvider,
+) -> Result<invite_greeter_step::ClaimerStep, GreetInProgressError> {
+    let mut last_call = Option::None;
+    let req = invite_greeter_step::Req {
+        greeting_attempt,
+        greeter_step,
+    };
+
+    // Loop over the requests
+    loop {
+        // Throttle the requests
+        if let Some(last_call) = last_call {
+            let duration = last_call + STEP_THROTTLE - time_provider.now();
+            time_provider.sleep(duration).await;
+        }
+        last_call = Some(time_provider.now());
+
+        // Send the request
+        let rep = cmds.send(req.clone()).await?;
+
+        // Handle the response
+        return match rep {
+            invite_greeter_step::Rep::NotReady => continue,
+            invite_greeter_step::Rep::Ok { claimer_step } => Ok(claimer_step),
+            // Expected errors
+            invite_greeter_step::Rep::InvitationCompleted => {
+                Err(GreetInProgressError::AlreadyDeleted)
+            }
+            invite_greeter_step::Rep::InvitationCancelled => {
+                Err(GreetInProgressError::AlreadyDeleted)
+            }
+            invite_greeter_step::Rep::AuthorNotAllowed => {
+                Err(GreetInProgressError::GreeterNotAllowed)
+            }
+            invite_greeter_step::Rep::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            } => Err(GreetInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            }),
+            // Unexpected errors
+            invite_greeter_step::Rep::GreetingAttemptNotFound => {
+                Err(anyhow::anyhow!("Greeting attempt not found").into())
+            }
+            invite_greeter_step::Rep::GreetingAttemptNotJoined => {
+                Err(anyhow::anyhow!("Greeting attempt not joined").into())
+            }
+            invite_greeter_step::Rep::StepMismatch => {
+                Err(anyhow::anyhow!("Greeting attempt failed due to step mismatch").into())
+            }
+            invite_greeter_step::Rep::StepTooAdvanced => {
+                Err(anyhow::anyhow!("Greeting attempt failed due to step too advanced").into())
+            }
+            rep @ invite_greeter_step::Rep::UnknownStatus { .. } => {
+                Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+            }
+        };
+    }
+}
+
 // GreetInitialCtx
 
 #[derive(Debug)]
@@ -265,70 +345,94 @@ struct BaseGreetInitialCtx {
 
 impl BaseGreetInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
-        let greeter_private_key = PrivateKey::generate();
+        let greeting_attempt = {
+            use authenticated_cmds::latest::invite_greeter_start_greeting_attempt::{Rep, Req};
 
-        let claimer_public_key = {
-            use authenticated_cmds::latest::invite_1_greeter_wait_peer::{Rep, Req};
-
-            let rep = self
-                .cmds
-                .send(Req {
-                    greeter_public_key: greeter_private_key.public_key(),
-                    token: self.token,
-                })
-                .await?;
+            let rep = self.cmds.send(Req { token: self.token }).await?;
 
             match rep {
-                Rep::Ok { claimer_public_key } => Ok(claimer_public_key),
-                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::Ok { greeting_attempt } => Ok(greeting_attempt),
+                Rep::InvitationCompleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?
+        };
+
+        let greeter_private_key = PrivateKey::generate();
+
+        let claimer_public_key = {
+            let claimer_step = run_greeter_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_greeter_step::GreeterStep::Number0WaitPeer {
+                    public_key: greeter_private_key.public_key(),
+                },
+                &self.device.time_provider,
+            )
+            .await?;
+            let result: Result<_, GreetInProgressError> = match claimer_step {
+                invite_greeter_step::ClaimerStep::Number0WaitPeer { public_key } => Ok(public_key),
+                _ => Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+            };
+            result?
         };
 
         let shared_secret_key = greeter_private_key.generate_shared_secret_key(&claimer_public_key);
         let greeter_nonce: Bytes = generate_nonce().into();
 
         let claimer_hashed_nonce = {
-            use authenticated_cmds::latest::invite_2a_greeter_get_hashed_nonce::{Rep, Req};
-
-            let rep = self.cmds.send(Req { token: self.token }).await?;
-
-            match rep {
-                Rep::Ok {
-                    claimer_hashed_nonce,
-                } => Ok(claimer_hashed_nonce),
-                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+            let claimer_step = run_greeter_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_greeter_step::GreeterStep::Number1GetHashedNonce,
+                &self.device.time_provider,
+            )
+            .await?;
+            let result: Result<_, GreetInProgressError> = match claimer_step {
+                invite_greeter_step::ClaimerStep::Number1SendHashedNonce { hashed_nonce } => {
+                    Ok(hashed_nonce)
                 }
-            }?
+                _ => Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+            };
+            result?
+        };
+
+        {
+            let claimer_step = run_greeter_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_greeter_step::GreeterStep::Number2SendNonce {
+                    greeter_nonce: greeter_nonce.clone(),
+                },
+                &self.device.time_provider,
+            )
+            .await?;
+            let result: Result<_, GreetInProgressError> = match claimer_step {
+                invite_greeter_step::ClaimerStep::Number2GetNonce => Ok(()),
+                _ => Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+            };
+            result?
         };
 
         let claimer_nonce = {
-            use authenticated_cmds::latest::invite_2b_greeter_send_nonce::{Rep, Req};
-
-            let rep = self
-                .cmds
-                .send(Req {
-                    greeter_nonce: greeter_nonce.clone(),
-                    token: self.token,
-                })
-                .await?;
-
-            match rep {
-                Rep::Ok { claimer_nonce } => Ok(claimer_nonce),
-                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+            let claimer_step = run_greeter_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_greeter_step::GreeterStep::Number3GetNonce,
+                &self.device.time_provider,
+            )
+            .await?;
+            let result: Result<_, GreetInProgressError> = match claimer_step {
+                invite_greeter_step::ClaimerStep::Number3SendNonce { claimer_nonce } => {
+                    Ok(claimer_nonce)
                 }
-            }?
+                _ => Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+            };
+            result?
         };
 
         if HashDigest::from_data(&claimer_nonce) != claimer_hashed_nonce {
@@ -340,6 +444,7 @@ impl BaseGreetInitialCtx {
 
         Ok(BaseGreetInProgress1Ctx {
             token: self.token,
+            greeting_attempt,
             device: self.device,
             greeter_sas,
             claimer_sas,
@@ -401,6 +506,7 @@ impl DeviceGreetInitialCtx {
 #[derive(Debug)]
 struct BaseGreetInProgress1Ctx {
     token: InvitationToken,
+    greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
@@ -411,26 +517,27 @@ struct BaseGreetInProgress1Ctx {
 
 impl BaseGreetInProgress1Ctx {
     async fn do_wait_peer_trust(self) -> Result<BaseGreetInProgress2Ctx, GreetInProgressError> {
-        use authenticated_cmds::latest::invite_3a_greeter_wait_peer_trust::{Rep, Req};
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number4WaitPeerTrust,
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number4SignifyTrust => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
-        let rep = self.cmds.send(Req { token: self.token }).await?;
-
-        match rep {
-            Rep::Ok => Ok(BaseGreetInProgress2Ctx {
-                token: self.token,
-                device: self.device,
-                claimer_sas: self.claimer_sas,
-                shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds,
-                event_bus: self.event_bus,
-            }),
-            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }
+        Ok(BaseGreetInProgress2Ctx {
+            token: self.token,
+            greeting_attempt: self.greeting_attempt,
+            device: self.device,
+            claimer_sas: self.claimer_sas,
+            shared_secret_key: self.shared_secret_key,
+            cmds: self.cmds,
+            event_bus: self.event_bus,
+        })
     }
 }
 
@@ -473,6 +580,7 @@ impl DeviceGreetInProgress1Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress2Ctx {
     token: InvitationToken,
+    greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
@@ -486,25 +594,26 @@ impl BaseGreetInProgress2Ctx {
     }
 
     async fn do_signify_trust(self) -> Result<BaseGreetInProgress3Ctx, GreetInProgressError> {
-        use authenticated_cmds::latest::invite_3b_greeter_signify_trust::{Rep, Req};
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number5SignifyTrust,
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number5WaitPeerTrust => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
-        let rep = self.cmds.send(Req { token: self.token }).await?;
-
-        match rep {
-            Rep::Ok => Ok(BaseGreetInProgress3Ctx {
-                token: self.token,
-                device: self.device,
-                shared_secret_key: self.shared_secret_key,
-                cmds: self.cmds,
-                event_bus: self.event_bus,
-            }),
-            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }
+        Ok(BaseGreetInProgress3Ctx {
+            token: self.token,
+            greeting_attempt: self.greeting_attempt,
+            device: self.device,
+            shared_secret_key: self.shared_secret_key,
+            cmds: self.cmds,
+            event_bus: self.event_bus,
+        })
     }
 }
 
@@ -550,6 +659,7 @@ impl DeviceGreetInProgress2Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress3Ctx {
     token: InvitationToken,
+    greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
@@ -559,6 +669,7 @@ struct BaseGreetInProgress3Ctx {
 #[derive(Debug)]
 struct BaseGreetInProgress3WithPayloadCtx {
     token: InvitationToken,
+    greeting_attempt: GreetingAttemptID,
     device: Arc<LocalDevice>,
     shared_secret_key: SecretKey,
     cmds: Arc<AuthenticatedCmds>,
@@ -570,34 +681,31 @@ impl BaseGreetInProgress3Ctx {
     async fn do_get_claim_requests(
         self,
     ) -> Result<BaseGreetInProgress3WithPayloadCtx, GreetInProgressError> {
-        use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
-
-        let rep = self
-            .cmds
-            .send(Req {
-                token: self.token,
-                payload: Bytes::new(),
-                last: false,
-            })
+        let claimer_payload = {
+            let claimer_step = run_greeter_step_until_ready(
+                &self.cmds,
+                self.greeting_attempt,
+                invite_greeter_step::GreeterStep::Number6GetPayload,
+                &self.device.time_provider,
+            )
             .await?;
-
-        let payload = match rep {
-            Rep::Ok { payload } => Ok(payload),
-            Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-            Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-            Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }?;
+            let result: Result<_, GreetInProgressError> = match claimer_step {
+                invite_greeter_step::ClaimerStep::Number6SendPayload { claimer_payload } => {
+                    Ok(claimer_payload)
+                }
+                _ => Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+            };
+            result?
+        };
 
         Ok(BaseGreetInProgress3WithPayloadCtx {
             token: self.token,
+            greeting_attempt: self.greeting_attempt,
             device: self.device,
             shared_secret_key: self.shared_secret_key,
             cmds: self.cmds,
             event_bus: self.event_bus,
-            payload,
+            payload: claimer_payload,
         })
     }
 }
@@ -616,6 +724,7 @@ impl UserGreetInProgress3Ctx {
 
         Ok(UserGreetInProgress4Ctx {
             token: ctx.token,
+            greeting_attempt: ctx.greeting_attempt,
             device: ctx.device,
             requested_device_label: data.requested_device_label,
             requested_human_handle: data.requested_human_handle,
@@ -642,6 +751,7 @@ impl DeviceGreetInProgress3Ctx {
 
         Ok(DeviceGreetInProgress4Ctx {
             token: ctx.token,
+            greeting_attempt: ctx.greeting_attempt,
             device: ctx.device,
             requested_device_label: data.requested_device_label,
             verify_key: data.verify_key,
@@ -774,6 +884,7 @@ fn create_new_signed_device_certificates(
 #[derive(Debug)]
 pub struct UserGreetInProgress4Ctx {
     pub token: InvitationToken,
+    pub greeting_attempt: GreetingAttemptID,
     pub requested_device_label: DeviceLabel,
     pub requested_human_handle: HumanHandle,
     device: Arc<LocalDevice>,
@@ -876,32 +987,32 @@ impl UserGreetInProgress4Ctx {
         // 2) if this occurs the inviter can revoke the user and retry the
         // enrollment process to fix this
 
-        let payload = invite_user_confirmation
+        let greeter_payload = invite_user_confirmation
             .dump_and_encrypt(&self.shared_secret_key)
             .into();
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number7SendPayload { greeter_payload },
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number7GetPayload => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
-        {
-            use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
-
-            let rep = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    payload,
-                    last: true,
-                })
-                .await?;
-
-            match rep {
-                Rep::Ok { .. } => Ok(()),
-                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-                }
-            }?;
-        }
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number8WaitPeerAcknowledgment,
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
         Ok(())
     }
@@ -910,6 +1021,7 @@ impl UserGreetInProgress4Ctx {
 #[derive(Debug)]
 pub struct DeviceGreetInProgress4Ctx {
     pub token: InvitationToken,
+    pub greeting_attempt: GreetingAttemptID,
     pub requested_device_label: DeviceLabel,
     device: Arc<LocalDevice>,
     verify_key: VerifyKey,
@@ -984,7 +1096,7 @@ impl DeviceGreetInProgress4Ctx {
         // 2) if this occurs the inviter can revoke the device and retry the
         // enrollment process to fix this
 
-        let payload = InviteDeviceConfirmation {
+        let greeter_payload = InviteDeviceConfirmation {
             user_id: self.device.user_id,
             device_id,
             device_label,
@@ -998,28 +1110,29 @@ impl DeviceGreetInProgress4Ctx {
         .dump_and_encrypt(&self.shared_secret_key)
         .into();
 
-        {
-            use authenticated_cmds::latest::invite_4_greeter_communicate::{Rep, Req};
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number7SendPayload { greeter_payload },
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number7GetPayload => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
-            let rep = self
-                .cmds
-                .send(Req {
-                    token: self.token,
-                    payload,
-                    last: true,
-                })
-                .await?;
-
-            match rep {
-                Rep::Ok { .. } => Ok(()),
-                Rep::InvitationDeleted => Err(GreetInProgressError::AlreadyDeleted),
-                Rep::EnrollmentWrongState => Err(GreetInProgressError::PeerReset),
-                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-                }
-            }?;
-        }
+        let claimer_step = run_greeter_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number8WaitPeerAcknowledgment,
+            &self.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
 
         Ok(())
     }

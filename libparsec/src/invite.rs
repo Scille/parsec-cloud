@@ -784,6 +784,14 @@ pub enum GreetInProgressError {
     DeviceAlreadyExists,
     #[error("Not allowed to create a user")]
     UserCreateNotAllowed,
+    #[error("Not allowed to greet this invitation")]
+    GreeterNotAllowed,
+    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
+    GreetingAttemptCancelled {
+        origin: GreeterOrClaimer,
+        reason: CancelledGreetingAttemptReason,
+        timestamp: DateTime,
+    },
     #[error(transparent)]
     CorruptedInviteUserData(DataError),
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -827,6 +835,18 @@ impl From<libparsec_client::GreetInProgressError> for GreetInProgressError {
             libparsec_client::GreetInProgressError::UserCreateNotAllowed => {
                 GreetInProgressError::UserCreateNotAllowed
             }
+            libparsec_client::GreetInProgressError::GreeterNotAllowed => {
+                GreetInProgressError::GreeterNotAllowed
+            }
+            libparsec_client::GreetInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            } => GreetInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            },
             libparsec_client::GreetInProgressError::CorruptedInviteUserData(err) => {
                 GreetInProgressError::CorruptedInviteUserData(err)
             }
