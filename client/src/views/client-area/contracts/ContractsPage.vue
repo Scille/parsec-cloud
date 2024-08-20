@@ -9,7 +9,7 @@
       {{ $msTranslate(error) }}
     </span>
 
-    <template v-if="!isDefaultOrganization(organization)">
+    <template v-if="organizationStats && contractDetails">
       <div
         class="contract"
         v-if="contractDetails && organizationStats && !error"
@@ -69,7 +69,10 @@
                   >
                     {{ $msTranslate(I18n.formatDate(contractDetails.licenseStart, 'short')) }}
                   </ion-text>
-                  <ion-text v-else>
+                  <ion-text
+                    v-else
+                    class="subtitles-normal"
+                  >
                     {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
                   </ion-text>
                 </div>
@@ -81,7 +84,10 @@
                   >
                     {{ $msTranslate(I18n.formatDate(contractDetails.licenseEnd, 'short')) }}
                   </ion-text>
-                  <ion-text v-else>
+                  <ion-text
+                    v-else
+                    class="subtitles-normal"
+                  >
                     {{ $msTranslate('clientArea.contracts.errors.unavailable') }}
                   </ion-text>
                 </div>
@@ -332,15 +338,11 @@
         </div>
       </div>
     </template>
-    <template v-else>
-      {{ $msTranslate('clientArea.contracts.selectAnOrganization') }}
-      <span
-        v-for="org in organizations"
-        :key="org.bmsId"
-        @click="$emit('organizationSelected', org)"
-      >
-        {{ org.parsecId }}
-      </span>
+    <template v-if="querying">
+      <div class="loading-container">
+        <ms-spinner />
+        <ion-text class="body-lg loading-text">{{ $msTranslate('clientArea.contracts.loading') }}</ion-text>
+      </div>
     </template>
   </div>
 </template>
@@ -349,7 +351,7 @@
 import { IonText, IonIcon, IonTitle } from '@ionic/vue';
 import { formatFileSize } from '@/common/file';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { MsImage, File, I18n, Translatable } from 'megashark-lib';
+import { MsImage, File, I18n, Translatable, MsSpinner } from 'megashark-lib';
 import { informationCircle, person, pieChart } from 'ionicons/icons';
 import {
   BmsAccessInstance,
@@ -449,6 +451,24 @@ function getContractStatus(): Translatable {
   flex-direction: column;
   gap: 2.5rem;
   padding-bottom: 3rem;
+
+  &:has(.loading-container) {
+    height: 100%;
+  }
+}
+
+.loading-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  gap: 0.5rem;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  .loading-text {
+    color: var(--parsec-color-light-secondary-soft-text);
+  }
 }
 
 .contract {
