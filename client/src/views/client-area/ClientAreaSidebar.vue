@@ -46,6 +46,7 @@
       <!-- button: go to organization -->
       <div
         class="organization-card-button custom-button custom-button-fill"
+        v-show="showMenu"
         @click="goToHome"
       >
         <ion-text
@@ -143,7 +144,7 @@
       </ion-list>
 
       <ion-list
-        v-if="billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate"
+        v-if="(billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) && showMenu"
         class="menu-client-list"
       >
         <!-- contracts -->
@@ -229,7 +230,14 @@
 <script setup lang="ts">
 import { ChevronExpand, MsImage, MsModalResult } from 'megashark-lib';
 import { card, chatbubbleEllipses, podium, grid, idCard, newspaper } from 'ionicons/icons';
-import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData, BillingSystem, DataType } from '@/services/bms';
+import {
+  BmsAccessInstance,
+  BmsOrganization,
+  OrganizationStatusResultData,
+  BillingSystem,
+  DataType,
+  CustomOrderStatus,
+} from '@/services/bms';
 import {
   IonAvatar,
   IonCard,
@@ -255,6 +263,7 @@ const props = defineProps<{
 const status = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 const organizations = ref<Array<BmsOrganization>>([]);
+const showMenu = ref(false);
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
@@ -277,6 +286,17 @@ onMounted(async () => {
   const response = await BmsAccessInstance.get().listOrganizations();
   if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
     organizations.value = response.data.organizations;
+  }
+  if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {
+    const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
+    showMenu.value = true;
+    if (!statusResp.isError && statusResp.data && statusResp.data.type === DataType.CustomOrderStatus) {
+      if (statusResp.data.status === CustomOrderStatus.NothingLinked) {
+        showMenu.value = false;
+      }
+    }
+  } else {
+    showMenu.value = true;
   }
 });
 

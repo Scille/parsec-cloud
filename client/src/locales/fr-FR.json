@@ -1231,7 +1231,8 @@
                 "statistics": "Statistiques",
                 "customOrderBillingDetails": "Coordonnées de facturation",
                 "customOrderInvoices": "Factures",
-                "customOrderStatistics": "Statistiques"
+                "customOrderStatistics": "Statistiques",
+                "customOrderProcessing": "Suivi de commande"
             },
             "logout": "Se déconnecter",
             "preferences": "Préférences",
@@ -1442,7 +1443,8 @@
                 "title": "Moyens de paiement",
                 "description": "Vous pouvez à tout moment changer votre carte bancaire.",
                 "update": "Modifier"
-            }
+            },
+            "processing": "Votre commande est en cours de traitement."
         },
         "billingDetailsPage": {
             "placeholders": {
