@@ -2,6 +2,7 @@
 
 use std::{path::PathBuf, sync::Arc};
 
+use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
 
@@ -42,6 +43,14 @@ pub enum ClaimInProgressError {
     PeerReset,
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
+    #[error("The provided user is not allowed to greet this invitation")]
+    GreeterNotAllowed,
+    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
+    GreetingAttemptCancelled {
+        origin: GreeterOrClaimer,
+        reason: CancelledGreetingAttemptReason,
+        timestamp: DateTime,
+    },
     #[error(transparent)]
     CorruptedConfirmation(DataError),
     #[error(transparent)]
@@ -57,6 +66,74 @@ impl From<ConnectionError> for ClaimInProgressError {
             ConnectionError::InvitationNotFound => Self::NotFound,
             err => Self::Internal(err.into()),
         }
+    }
+}
+
+// Greeter step helper
+
+static STEP_THROTTLE: Duration = Duration::seconds(1);
+
+async fn run_claimer_step_until_ready(
+    cmds: &InvitedCmds,
+    greeting_attempt: GreetingAttemptID,
+    claimer_step: invite_claimer_step::ClaimerStep,
+) -> Result<invite_claimer_step::GreeterStep, ClaimInProgressError> {
+    let time_provider = TimeProvider::default();
+    let mut last_call = Option::None;
+    let req = invite_claimer_step::Req {
+        greeting_attempt,
+        claimer_step,
+    };
+
+    // Loop over the requests
+    loop {
+        // Throttle the requests
+        if let Some(last_call) = last_call {
+            let duration = last_call + STEP_THROTTLE - time_provider.now();
+            time_provider.sleep(duration).await;
+        }
+        last_call = Some(time_provider.now());
+
+        // Send the request
+        let rep = cmds.send(req.clone()).await?;
+
+        // Handle the response
+        return match rep {
+            invite_claimer_step::Rep::NotReady => continue,
+            invite_claimer_step::Rep::Ok { greeter_step } => Ok(greeter_step),
+            // Expected errors
+            invite_claimer_step::Rep::GreeterNotAllowed => {
+                Err(ClaimInProgressError::GreeterNotAllowed)
+            }
+            invite_claimer_step::Rep::GreeterRevoked => {
+                Err(ClaimInProgressError::GreeterNotAllowed)
+            }
+            invite_claimer_step::Rep::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            } => Err(ClaimInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            }),
+            // Unexpected errors
+            invite_claimer_step::Rep::GreetingAttemptNotFound => {
+                Err(anyhow::anyhow!("Greeting attempt not found").into())
+            }
+            invite_claimer_step::Rep::GreetingAttemptNotJoined => {
+                Err(anyhow::anyhow!("Greeting attempt not joined").into())
+            }
+            invite_claimer_step::Rep::StepMismatch => {
+                Err(anyhow::anyhow!("Greeting attempt failed due to step mismatch").into())
+            }
+            invite_claimer_step::Rep::StepTooAdvanced => {
+                Err(anyhow::anyhow!("Greeting attempt failed due to step too advanced").into())
+            }
+            rep @ invite_claimer_step::Rep::UnknownStatus { .. } => {
+                Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+            }
+        };
     }
 }
 
@@ -115,74 +192,106 @@ struct BaseClaimInitialCtx {
 
 impl BaseClaimInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseClaimInProgress1Ctx, ClaimInProgressError> {
-        let claimer_private_key = PrivateKey::generate();
-
-        let greeter_public_key = {
-            use invited_cmds::latest::invite_1_claimer_wait_peer::{Rep, Req};
-
+        let greeting_attempt = {
+            use invited_cmds::latest::invite_claimer_start_greeting_attempt::{Rep, Req};
             let rep = self
                 .cmds
                 .send(Req {
-                    claimer_public_key: claimer_private_key.public_key(),
+                    greeter: self.greeter_user_id,
                 })
                 .await?;
 
             match rep {
-                Rep::Ok { greeter_public_key } => {
-                    Result::<_, ClaimInProgressError>::Ok(greeter_public_key)
-                }
+                Rep::Ok { greeting_attempt } => Ok(greeting_attempt),
+                Rep::GreeterNotFound => Err(ClaimInProgressError::NotFound),
+                Rep::GreeterNotAllowed => Err(ClaimInProgressError::GreeterNotAllowed),
+                Rep::GreeterRevoked => Err(ClaimInProgressError::GreeterNotAllowed),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
             }?
         };
 
+        let claimer_private_key = PrivateKey::generate();
+
+        let greeter_public_key = {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number0WaitPeer {
+                    public_key: claimer_private_key.public_key(),
+                },
+            )
+            .await?;
+            let result: Result<_, ClaimInProgressError> = match greeter_step {
+                invite_claimer_step::GreeterStep::Number0WaitPeer { public_key } => Ok(public_key),
+                _ => Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+            };
+            result?
+        };
+
         let claimer_nonce = generate_nonce();
+        let hashed_nonce = HashDigest::from_data(&claimer_nonce);
         let shared_secret_key = claimer_private_key.generate_shared_secret_key(&greeter_public_key);
-        let greeter_nonce = {
-            use invited_cmds::latest::invite_2a_claimer_send_hashed_nonce::{Rep, Req};
-
-            let rep = self
-                .cmds
-                .send(Req {
-                    claimer_hashed_nonce: HashDigest::from_data(&claimer_nonce),
-                })
-                .await?;
-
-            match rep {
-                Rep::Ok { greeter_nonce } => Ok(greeter_nonce),
-                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+        {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number1SendHashedNonce { hashed_nonce },
+            )
+            .await?;
+            match greeter_step {
+                invite_claimer_step::GreeterStep::Number1GetHashedNonce => {}
+                _ => {
+                    return Err(
+                        anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
+                    )
                 }
-            }?
+            };
+        };
+
+        let greeter_nonce = {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number2GetNonce,
+            )
+            .await?;
+            let result: Result<_, ClaimInProgressError> = match greeter_step {
+                invite_claimer_step::GreeterStep::Number2SendNonce { greeter_nonce } => {
+                    Ok(greeter_nonce)
+                }
+                _ => Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+            };
+            result?
         };
 
         let (claimer_sas, greeter_sas) =
             SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 
         {
-            use invited_cmds::latest::invite_2b_claimer_send_nonce::{Rep, Req};
-
-            let rep = self
-                .cmds
-                .send(Req {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number3SendNonce {
                     claimer_nonce: claimer_nonce.into(),
-                })
-                .await?;
-
-            match rep {
-                Rep::Ok => Ok(()),
-                Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-                bad_rep @ Rep::UnknownStatus { .. } => {
-                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                },
+            )
+            .await?;
+            match greeter_step {
+                invite_claimer_step::GreeterStep::Number3GetNonce => {}
+                _ => {
+                    return Err(
+                        anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
+                    )
                 }
-            }?;
-        }
+            };
+        };
 
         Ok(BaseClaimInProgress1Ctx {
             config: self.config,
             cmds: self.cmds,
+            greeting_attempt,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
@@ -263,6 +372,7 @@ impl DeviceClaimInitialCtx {
 struct BaseClaimInProgress1Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeting_attempt: GreetingAttemptID,
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
@@ -274,22 +384,24 @@ impl BaseClaimInProgress1Ctx {
     }
 
     async fn do_signify_trust(self) -> Result<BaseClaimInProgress2Ctx, ClaimInProgressError> {
-        use invited_cmds::latest::invite_3a_claimer_signify_trust::{Rep, Req};
+        let greeter_step = run_claimer_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_claimer_step::ClaimerStep::Number4SignifyTrust,
+        )
+        .await?;
+        match greeter_step {
+            invite_claimer_step::GreeterStep::Number4WaitPeerTrust => {}
+            _ => return Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+        };
 
-        let rep = self.cmds.send(Req).await?;
-
-        match rep {
-            Rep::Ok => Ok(BaseClaimInProgress2Ctx {
-                config: self.config,
-                cmds: self.cmds,
-                claimer_sas: self.claimer_sas,
-                shared_secret_key: self.shared_secret_key,
-            }),
-            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }
+        Ok(BaseClaimInProgress2Ctx {
+            config: self.config,
+            cmds: self.cmds,
+            greeting_attempt: self.greeting_attempt,
+            claimer_sas: self.claimer_sas,
+            shared_secret_key: self.shared_secret_key,
+        })
     }
 }
 
@@ -334,27 +446,30 @@ impl DeviceClaimInProgress1Ctx {
 struct BaseClaimInProgress2Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeting_attempt: GreetingAttemptID,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
 }
 
 impl BaseClaimInProgress2Ctx {
     async fn do_wait_peer_trust(self) -> Result<BaseClaimInProgress3Ctx, ClaimInProgressError> {
-        use invited_cmds::latest::invite_3b_claimer_wait_peer_trust::{Rep, Req};
+        let greeter_step = run_claimer_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_claimer_step::ClaimerStep::Number5WaitPeerTrust,
+        )
+        .await?;
+        match greeter_step {
+            invite_claimer_step::GreeterStep::Number5SignifyTrust => {}
+            _ => return Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+        };
 
-        let rep = self.cmds.send(Req).await?;
-
-        match rep {
-            Rep::Ok => Ok(BaseClaimInProgress3Ctx {
-                config: self.config,
-                cmds: self.cmds,
-                shared_secret_key: self.shared_secret_key,
-            }),
-            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }
+        Ok(BaseClaimInProgress3Ctx {
+            config: self.config,
+            cmds: self.cmds,
+            greeting_attempt: self.greeting_attempt,
+            shared_secret_key: self.shared_secret_key,
+        })
     }
 }
 
@@ -396,39 +511,62 @@ impl DeviceClaimInProgress2Ctx {
 struct BaseClaimInProgress3Ctx {
     config: Arc<ClientConfig>,
     cmds: Arc<InvitedCmds>,
+    greeting_attempt: GreetingAttemptID,
     shared_secret_key: SecretKey,
 }
 
 impl BaseClaimInProgress3Ctx {
     async fn do_claim(&self, payload: Bytes) -> Result<Bytes, ClaimInProgressError> {
-        use invited_cmds::latest::invite_4_claimer_communicate::{Rep, Req};
-
-        let rep = self.cmds.send(Req { payload }).await?;
-
-        match rep {
-            Rep::Ok { .. } => Ok(()),
-            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
-        }?;
-
-        // Note the empty payload here, this is because we only want to receive our peer's
-        // data, but for that we must send it something.
-        let rep = self
-            .cmds
-            .send(Req {
-                payload: Bytes::new(),
-            })
+        {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                self.greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number6SendPayload {
+                    claimer_payload: payload,
+                },
+            )
             .await?;
-
-        match rep {
-            Rep::Ok { payload, .. } => Ok(payload),
-            Rep::EnrollmentWrongState => Err(ClaimInProgressError::PeerReset),
-            bad_rep @ Rep::UnknownStatus { .. } => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
-            }
+            match greeter_step {
+                invite_claimer_step::GreeterStep::Number6GetPayload => {}
+                _ => {
+                    return Err(
+                        anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into(),
+                    )
+                }
+            };
         }
+
+        let greeter_payload = {
+            let greeter_step = run_claimer_step_until_ready(
+                &self.cmds,
+                self.greeting_attempt,
+                invite_claimer_step::ClaimerStep::Number7GetPayload,
+            )
+            .await?;
+            let result: Result<_, ClaimInProgressError> = match greeter_step {
+                invite_claimer_step::GreeterStep::Number7SendPayload { greeter_payload } => {
+                    Ok(greeter_payload)
+                }
+                _ => Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+            };
+            result?
+        };
+
+        Ok(greeter_payload)
+    }
+
+    async fn do_acknowledge(&self) -> Result<(), ClaimInProgressError> {
+        let greeter_step = run_claimer_step_until_ready(
+            &self.cmds,
+            self.greeting_attempt,
+            invite_claimer_step::ClaimerStep::Number8Acknowledge,
+        )
+        .await?;
+        match greeter_step {
+            invite_claimer_step::GreeterStep::Number8WaitPeerAcknowledgment => {}
+            _ => return Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
+        }
+        Ok(())
     }
 }
 
@@ -488,6 +626,8 @@ impl UserClaimInProgress3Ctx {
             Some(signing_key),
             Some(private_key),
         ));
+
+        self.0.do_acknowledge().await?;
 
         Ok(UserClaimFinalizeCtx {
             config: self.0.config,
@@ -556,6 +696,8 @@ impl DeviceClaimInProgress3Ctx {
             local_symkey: SecretKey::generate(),
             time_provider: Default::default(),
         });
+
+        self.0.do_acknowledge().await?;
 
         Ok(DeviceClaimFinalizeCtx {
             config: self.0.config,

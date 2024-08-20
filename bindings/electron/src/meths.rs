@@ -2533,6 +2533,30 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClaimInProgressErrorCancelled").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClaimInProgressErrorGreeterNotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClaimInProgressError::GreetingAttemptCancelled {
+            origin: _,
+            reason: _,
+            timestamp,
+        } => {
+            let js_tag = JsString::try_new(cx, "ClaimInProgressErrorGreetingAttemptCancelled")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+        }
         libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClaimInProgressErrorCorruptedConfirmation").or_throw(cx)?;

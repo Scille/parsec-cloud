@@ -158,6 +158,14 @@ pub enum ClaimInProgressError {
     PeerReset,
     #[error("Active users limit reached")]
     ActiveUsersLimitReached,
+    #[error("The provided user is not allowed to greet this invitation")]
+    GreeterNotAllowed,
+    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
+    GreetingAttemptCancelled {
+        origin: GreeterOrClaimer,
+        reason: CancelledGreetingAttemptReason,
+        timestamp: DateTime,
+    },
     #[error(transparent)]
     CorruptedConfirmation(DataError),
     #[error(transparent)]
@@ -182,6 +190,18 @@ impl From<libparsec_client::ClaimInProgressError> for ClaimInProgressError {
             libparsec_client::ClaimInProgressError::ActiveUsersLimitReached => {
                 ClaimInProgressError::ActiveUsersLimitReached
             }
+            libparsec_client::ClaimInProgressError::GreeterNotAllowed => {
+                ClaimInProgressError::GreeterNotAllowed
+            }
+            libparsec_client::ClaimInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            } => ClaimInProgressError::GreetingAttemptCancelled {
+                origin,
+                reason,
+                timestamp,
+            },
             libparsec_client::ClaimInProgressError::CorruptedConfirmation(x) => {
                 ClaimInProgressError::CorruptedConfirmation(x)
             }
