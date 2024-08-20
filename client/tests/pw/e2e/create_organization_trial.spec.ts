@@ -39,7 +39,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(userPrevious).toBeHidden();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
-  await expect(userInfoContainer.locator('.modal-header__title')).toHaveText('Enter your personal information');
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
@@ -83,7 +83,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
   await expect(authPrevious).not.toHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
-  await expect(authContainer.locator('.modal-header__title')).toHaveText('Authentication');
+  await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
@@ -142,7 +142,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ hom
   await expect(userPrevious).toBeHidden();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
-  await expect(userInfoContainer.locator('.modal-header__title')).toHaveText('Enter your personal information');
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
@@ -158,7 +158,7 @@ msTest('Go through trial org creation process from bootstrap link', async ({ hom
   await expect(authPrevious).not.toHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
-  await expect(authContainer.locator('.modal-header__title')).toHaveText('Authentication');
+  await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);

@@ -33,7 +33,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
-  await expect(orgServerContainer.locator('.modal-header__title')).toHaveText('Organization name and server address');
+  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Organization name and server address');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeHidden();
@@ -78,7 +78,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(userPrevious).not.toHaveDisabledAttribute();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
-  await expect(userInfoContainer.locator('.modal-header__title')).toHaveText('Enter your personal information');
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
@@ -162,7 +162,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(summaryContainer).toBeVisible();
-  await expect(summaryContainer.locator('.modal-header__title')).toHaveText('Overview of your organization');
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
@@ -205,7 +205,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   const modal = home.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
-  await expect(orgServerContainer.locator('.modal-header__title')).toHaveText('Organization name and server address');
+  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Organization name and server address');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeHidden();
@@ -228,7 +228,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(userPrevious).not.toHaveDisabledAttribute();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
-  await expect(userInfoContainer.locator('.modal-header__title')).toHaveText('Enter your personal information');
+  await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
   await fillIonInput(userInfoContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.name);
   await expect(userNext).toHaveDisabledAttribute();
   await fillIonInput(userInfoContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.email);
@@ -258,7 +258,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(summaryContainer).toBeVisible();
-  await expect(summaryContainer.locator('.modal-header__title')).toHaveText('Overview of your organization');
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();

@@ -112,6 +112,11 @@
     max-width: var(--parsec-modal-width-sm);
   }
 
+  &:has(.saas-forgot-password)::part(content) {
+    min-width: 35.75rem;
+    max-width: 35.75rem;
+  }
+
   .page-modal-container {
     padding: 2.5rem;
     display: flex;

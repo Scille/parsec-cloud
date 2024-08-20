@@ -12,7 +12,8 @@
   }
 }
 
-.saas-login-content__input .input-content {
+.saas-login-content__input .input-content,
+.saas-forgot-password-content__input .input-content {
   background: var(--parsec-color-light-secondary-inversed-contrast);
 }
 

@@ -15,7 +15,7 @@ msTest('Opens the create organization modal', async ({ home }) => {
   await createButton.click();
   const modal = home.locator('.create-organization-modal');
   await expect(modal).toBeVisible();
-  await expect(modal.locator('.modal-header__title')).toHaveText('Create an organization');
+  await expect(modal.locator('.modal-header-title__text')).toHaveText('Create an organization');
   await expect(modal.locator('.modal-header__text')).toHaveText('What is your need for Parsec?');
   await expect(modal.locator('.server-choice-item').locator('.server-choice-item__label')).toHaveText([
     'Store my data with Parsec Share',

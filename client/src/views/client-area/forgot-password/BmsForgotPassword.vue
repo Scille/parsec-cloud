@@ -23,17 +23,12 @@
       <!-- here we should normally use the hide-close-button given by the component not the custom one above -->
       <!-- will be addressed in https://github.com/Scille/parsec-cloud/issues/8056 -->
       <create-organization-modal-header
-        v-if="!hideHeader"
         @close-clicked="$emit('closeRequested')"
-        title="clientArea.app.titleLinkOrganization"
+        :icon="getCurrentStepDetails().icon"
+        :title="getCurrentStepDetails().title"
+        :subtitle="getCurrentStepDetails().subtitle"
         :hide-close-button="true"
       />
-      <ion-text
-        v-if="hideHeader"
-        class="saas-forgot-password__title title-h2"
-      >
-        {{ $msTranslate(getCurrentStepTitle()) }}
-      </ion-text>
 
       <bms-forgot-password-get-email-step
         v-if="currentStep === Steps.GetEmail"
@@ -51,9 +46,9 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonButtons, IonIcon } from '@ionic/vue';
+import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
-import { close } from 'ionicons/icons';
+import { close, keypad, mailUnread } from 'ionicons/icons';
 import { ref } from 'vue';
 import BmsForgotPasswordGetEmailStep from '@/views/client-area/forgot-password/BmsForgotPasswordGetEmailStep.vue';
 import BmsForgotPasswordEmailSentStep from '@/views/client-area/forgot-password/BmsForgotPasswordEmailSentStep.vue';
@@ -77,12 +72,20 @@ defineEmits<{
 const currentStep = ref<Steps>(Steps.GetEmail);
 const emailRef = ref<string>('');
 
-function getCurrentStepTitle(): Translatable {
+function getCurrentStepDetails(): { icon: string; title: Translatable; subtitle?: Translatable } {
   switch (currentStep.value) {
     case Steps.GetEmail:
-      return 'clientArea.forgotPassword.getEmailStep.title';
+      return {
+        icon: keypad,
+        title: 'clientArea.forgotPassword.getEmailStep.title',
+        subtitle: 'clientArea.forgotPassword.getEmailStep.description',
+      };
     case Steps.EmailSent:
-      return 'clientArea.forgotPassword.emailSentStep.title';
+      return {
+        icon: mailUnread,
+        title: 'clientArea.forgotPassword.emailSentStep.title',
+        subtitle: 'clientArea.forgotPassword.emailSentStep.description',
+      };
   }
 }
 
@@ -100,12 +103,7 @@ function onEmailSent(email: string): void {
   background: var(--parsec-color-light-primary-50);
   position: relative;
   padding: 2.5rem;
-  min-width: 32em;
-
-  &__title {
-    color: var(--parsec-color-light-primary-800);
-    margin-bottom: 2rem;
-  }
+  max-width: 35.75rem;
 
   &-container {
     display: flex;

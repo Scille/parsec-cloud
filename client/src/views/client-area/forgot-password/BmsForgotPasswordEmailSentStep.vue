@@ -2,25 +2,20 @@
 
 <template>
   <div class="saas-forgot-password-content">
-    <!-- description -->
-    <ion-text class="body saas-forgot-password-content__description">
-      {{ $msTranslate('clientArea.forgotPassword.emailSentStep.description') }}
-    </ion-text>
-    <ion-text class="body saas-forgot-password-content__email">
+    <ion-text class="subtitles-normal saas-forgot-password-content__email">
       {{ email }}
     </ion-text>
 
     <!-- button -->
     <div class="saas-forgot-password-button">
-      <ion-button
+      <ion-text
+        class="button-medium custom-button custom-button-ghost saas-forgot-password-button__item"
+        button
         @click="$emit('loginRequested')"
-        class="saas-forgot-password-button__item"
-        size="large"
-        fill="clear"
       >
         {{ $msTranslate('clientArea.forgotPassword.emailSentStep.nextButton') }}
         <ion-icon :icon="arrowForward" />
-      </ion-button>
+      </ion-text>
     </div>
 
     <!-- error -->
@@ -37,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonButton, IonText, IonIcon } from '@ionic/vue';
+import { IonText, IonIcon } from '@ionic/vue';
 import { warning, arrowForward } from 'ionicons/icons';
 import { ref } from 'vue';
 
@@ -59,10 +54,6 @@ const error = ref<string>('');
   flex-direction: column;
   gap: 0.75rem;
 
-  &__description {
-    color: var(--parsec-color-light-secondary-grey);
-  }
-
   &__email {
     font-weight: 500;
     color: var(--parsec-color-light-secondary-100);
@@ -79,9 +70,12 @@ const error = ref<string>('');
     &__item {
       height: 2.5rem;
       border-radius: var(--parsec-radius-6);
+      font-size: 1rem;
+      color: var(--parsec-color-light-secondary-contrast);
+      border: 1px solid transparent;
 
-      &[fill='clear'] {
-        --color: var(--parsec-color-light-secondary-text);
+      &:hover {
+        border: 1px solid var(--parsec-color-light-secondary-contrast);
       }
     }
   }
