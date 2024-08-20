@@ -100,7 +100,6 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=coolorg.invited_alice_dev3.token,
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
