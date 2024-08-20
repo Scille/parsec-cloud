@@ -27,7 +27,10 @@
           </ion-card-title>
         </div>
 
-        <div class="card-header-icon">
+        <div
+          class="card-header-icon"
+          v-show="organizations.length > 0"
+        >
           <ms-image :image="ChevronExpand" />
         </div>
       </ion-card-header>
@@ -226,7 +229,7 @@
 <script setup lang="ts">
 import { ChevronExpand, MsImage, MsModalResult } from 'megashark-lib';
 import { card, chatbubbleEllipses, podium, grid, idCard, newspaper } from 'ionicons/icons';
-import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData, BillingSystem } from '@/services/bms';
+import { BmsAccessInstance, BmsOrganization, OrganizationStatusResultData, BillingSystem, DataType } from '@/services/bms';
 import {
   IonAvatar,
   IonCard,
@@ -251,6 +254,7 @@ const props = defineProps<{
 }>();
 const status = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
+const organizations = ref<Array<BmsOrganization>>([]);
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
@@ -270,9 +274,16 @@ onMounted(async () => {
       status.value = response.data as OrganizationStatusResultData;
     }
   }
+  const response = await BmsAccessInstance.get().listOrganizations();
+  if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
+    organizations.value = response.data.organizations;
+  }
 });
 
 async function openOrganizationChoice(event: Event): Promise<void> {
+  if (organizations.value.length === 0) {
+    return;
+  }
   const popover = await popoverController.create({
     component: OrganizationSwitchClientPopover,
     componentProps: {

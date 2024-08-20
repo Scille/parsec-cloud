@@ -162,6 +162,12 @@ onMounted(async () => {
         if (org) {
           currentOrganization.value = org;
         }
+      } else {
+        if ((organizations.value.length > 0 && billingSystem !== BillingSystem.Stripe) || organizations.value.length === 1) {
+          currentOrganization.value = organizations.value[0];
+        } else {
+          currentOrganization.value = DefaultBmsOrganization;
+        }
       }
     }
     if (query.page) {
