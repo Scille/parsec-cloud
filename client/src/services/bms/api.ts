@@ -505,7 +505,7 @@ async function getCustomOrderStatus(token: AuthenticationToken, query: CustomOrd
       isError: false,
       data: {
         type: DataType.CustomOrderStatus,
-        status: orgData.status,
+        status: orgData,
       },
     };
   });
