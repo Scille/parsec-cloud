@@ -40,7 +40,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link you customer account to your new organization');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
@@ -54,7 +54,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   const orgNameContainer = modal.locator('.organization-name-page');
   await expect(bmsContainer).toBeHidden();
   await expect(orgNameContainer).toBeVisible();
-  await expect(orgNameContainer.locator('.modal-header__title')).toHaveText('Create an organization');
+  await expect(orgNameContainer.locator('.modal-header-title__text')).toHaveText('Create an organization');
   const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button');
   await expect(orgNameNext).toHaveDisabledAttribute();
 
@@ -80,7 +80,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(orgNameContainer).toBeHidden();
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
-  await expect(authContainer.locator('.modal-header__title')).toHaveText('Authentication');
+  await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await expect(authPrevious).toBeVisible();
   await expect(authPrevious).not.toHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
@@ -124,7 +124,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(summaryContainer).toBeVisible();
-  await expect(summaryContainer.locator('.modal-header__title')).toHaveText('Overview of your organization');
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
@@ -174,7 +174,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.modal-header__title')).toHaveText('Link you customer account to your new organization');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link you customer account to your new organization');
   const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
@@ -189,7 +189,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
-  await expect(authContainer.locator('.modal-header__title')).toHaveText('Authentication');
+  await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
   await expect(authPrevious).toBeVisible();
   await expect(authPrevious).not.toHaveDisabledAttribute();
   await expect(authNext).toBeVisible();
@@ -207,7 +207,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(summaryContainer).toBeVisible();
-  await expect(summaryContainer.locator('.modal-header__title')).toHaveText('Overview of your organization');
+  await expect(summaryContainer.locator('.modal-header-title__text')).toHaveText('Overview of your organization');
   await expect(summaryPrevious).toBeVisible();
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();

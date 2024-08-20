@@ -2,11 +2,6 @@
 
 <template>
   <div class="saas-forgot-password-content">
-    <!-- description -->
-    <ion-text class="body saas-forgot-password-content__description">
-      {{ $msTranslate('clientArea.forgotPassword.getEmailStep.description') }}
-    </ion-text>
-
     <!-- email -->
     <ms-input
       class="saas-forgot-password-content__input"
@@ -17,29 +12,6 @@
       label="clientArea.app.emailLabel"
       :validator="emailValidator"
     />
-    <!-- button -->
-    <div class="saas-forgot-password-button">
-      <ion-button
-        :disabled="querying"
-        @click="$emit('cancel')"
-        class="saas-forgot-password-button__item"
-        fill="clear"
-        size="large"
-      >
-        <ion-icon :icon="arrowBack" />
-        {{ $msTranslate('clientArea.forgotPassword.getEmailStep.previousButton') }}
-      </ion-button>
-      <ion-button
-        :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || querying"
-        @click="submit"
-        class="saas-forgot-password-button__item"
-        size="large"
-      >
-        {{ $msTranslate('clientArea.forgotPassword.getEmailStep.nextButton') }}
-      </ion-button>
-      <ms-spinner v-show="querying" />
-    </div>
-
     <!-- error -->
     <ion-text
       class="form-error body forgot-password-button-error"
@@ -50,6 +22,27 @@
         :icon="warning"
       />{{ $msTranslate(error) }}
     </ion-text>
+    <!-- button -->
+    <div class="saas-forgot-password-button">
+      <ion-text
+        :disabled="querying"
+        class="button-medium custom-button custom-button-ghost saas-forgot-password-button__item"
+        button
+        @click="$emit('cancel')"
+      >
+        <ion-icon :icon="arrowBack" />
+        {{ $msTranslate('clientArea.forgotPassword.getEmailStep.previousButton') }}
+      </ion-text>
+      <ion-button
+        :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || querying"
+        @click="submit"
+        class="saas-forgot-password-button__item"
+        size="large"
+      >
+        {{ $msTranslate('clientArea.forgotPassword.getEmailStep.nextButton') }}
+      </ion-button>
+      <ms-spinner v-show="querying" />
+    </div>
   </div>
 </template>
 
@@ -104,28 +97,40 @@ async function submit(): Promise<boolean> {
 .saas-forgot-password-content {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-
-  &__description {
-    color: var(--parsec-color-light-secondary-grey);
-  }
 
   .saas-forgot-password-button {
     display: flex;
     gap: 1rem;
     justify-content: end;
     align-items: center;
-    margin-top: 0.5rem;
+    margin-top: 2.5rem;
     width: 100%;
 
     &__item {
       height: 2.5rem;
       border-radius: var(--parsec-radius-6);
+      font-size: 1rem;
+      border: 1px solid transparent;
+
+      &.custom-button {
+        color: var(--parsec-color-light-secondary-contrast);
+      }
 
       &[fill='clear'] {
         --color: var(--parsec-color-light-secondary-text);
       }
+
+      &:hover {
+        border: 1px solid var(--parsec-color-light-secondary-contrast);
+      }
     }
+  }
+
+  .forgot-password-button-error {
+    margin-top: 0.5rem;
+    display: flex;
+    gap: 0.5rem;
+    align-items: baseline;
   }
 }
 </style>

@@ -15,15 +15,15 @@ msTest('Client area forgot password', async ({ home }) => {
   await home.locator('.saas-login-link__forgotten-password').click();
   const container = home.locator('.saas-forgot-password');
   await expect(container).toBeVisible();
-  await expect(container.locator('.saas-forgot-password__title')).toHaveText('Forgot password');
-  const buttons = container.locator('.saas-forgot-password-button').locator('ion-button');
+  await expect(container.locator('.modal-header-title__text')).toHaveText('Forgot password');
+  const buttons = container.locator('.saas-forgot-password-button').locator('.saas-forgot-password-button__item');
   await expect(buttons.nth(1)).toHaveText('Submit');
   await expect(buttons.nth(1)).toBeTrulyDisabled();
   await fillIonInput(container.locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await expect(buttons.nth(1)).toBeTrulyEnabled();
   await buttons.nth(1).click();
-  await expect(container.locator('.saas-forgot-password__title')).toHaveText('Check Your Inbox');
-  await expect(container.locator('.saas-forgot-password__title')).toBeVisible();
+  await expect(container.locator('.modal-header-title__text')).toHaveText('Check Your Inbox');
+  await expect(container.locator('.modal-header-title__text')).toBeVisible();
   await expect(buttons.nth(0)).toBeTrulyEnabled();
   await expect(buttons.nth(0)).toHaveText('Log in');
   await buttons.nth(0).click();
@@ -37,7 +37,7 @@ msTest('Client area forgot password failed', async ({ home }) => {
   await home.locator('.saas-login-link__forgotten-password').click();
   const container = home.locator('.saas-forgot-password');
   await expect(container).toBeVisible();
-  const buttons = container.locator('.saas-forgot-password-button').locator('ion-button');
+  const buttons = container.locator('.saas-forgot-password-button').locator('.saas-forgot-password-button__item');
   await expect(buttons.nth(1)).toHaveText('Submit');
   await expect(buttons.nth(1)).toBeTrulyDisabled();
   await fillIonInput(container.locator('ion-input'), DEFAULT_USER_INFORMATION.email);
@@ -57,7 +57,7 @@ msTest('Client area forgot password go back', async ({ home }) => {
   await home.locator('.saas-login-link__forgotten-password').click();
   const container = home.locator('.saas-forgot-password');
   await expect(container).toBeVisible();
-  const buttons = container.locator('.saas-forgot-password-button').locator('ion-button');
+  const buttons = container.locator('.saas-forgot-password-button').locator('.saas-forgot-password-button__item');
   await expect(buttons.nth(0)).toHaveText('Back to login');
   await buttons.nth(0).click();
   await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
