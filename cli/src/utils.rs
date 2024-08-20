@@ -176,7 +176,7 @@ pub async fn load_and_unlock_device(
 
     log::debug!("Loading device {:?}", device.ty);
 
-    let device = match device.ty {
+    let access_strategy = match device.ty {
         DeviceFileType::Password => {
             let password = read_password(if password_stdin {
                 ReadPasswordFrom::Stdin
@@ -186,27 +186,25 @@ pub async fn load_and_unlock_device(
                 }
             })?;
 
-            let access = DeviceAccessStrategy::Password {
+            DeviceAccessStrategy::Password {
                 key_file: device.key_file_path.clone(),
                 password,
-            };
-
-            // This will fail if the password is invalid, but also if the binary is compiled with fast crypto (see  libparsec_crypto)
-            libparsec::load_device(config_dir, &access).await?
+            }
         }
-        DeviceFileType::Smartcard => {
-            let access = DeviceAccessStrategy::Smartcard {
-                key_file: device.key_file_path.clone(),
-            };
-
-            libparsec::load_device(config_dir, &access).await?
-        }
-        DeviceFileType::Recovery | DeviceFileType::Keyring => {
+        DeviceFileType::Smartcard => DeviceAccessStrategy::Smartcard {
+            key_file: device.key_file_path.clone(),
+        },
+        DeviceFileType::Keyring => DeviceAccessStrategy::Keyring {
+            key_file: device.key_file_path.clone(),
+        },
+        DeviceFileType::Recovery => {
             return Err(LoadAndUnlockDeviceError::UnsupportedAuthentication(
                 device.ty,
             ));
         }
     };
+
+    let device = libparsec::load_device(config_dir, &access_strategy).await?;
 
     Ok(device)
 }
