@@ -5078,6 +5078,31 @@ fn variant_greet_in_progress_error_rs_to_js(
                 &"GreetInProgressErrorUserCreateNotAllowed".into(),
             )?;
         }
+        libparsec::GreetInProgressError::GreeterNotAllowed { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"GreeterNotAllowed".into())?;
+        }
+        libparsec::GreetInProgressError::GreetingAttemptCancelled {
+            origin: _,
+            reason: _,
+            timestamp,
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"GreetInProgressErrorGreetingAttemptCancelled".into(),
+            )?;
+            let js_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_timestamp)?;
+        }
     }
     Ok(js_obj)
 }
