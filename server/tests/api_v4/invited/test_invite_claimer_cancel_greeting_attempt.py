@@ -25,10 +25,7 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
-    invitation_token = coolorg.invited_alice_dev3.token
-
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=invitation_token,
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
@@ -48,10 +45,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowed(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    invitation_token = coolorg.invited_zack.token
-
     rep = await coolorg.invited_zack.invite_claimer_start_greeting_attempt(
-        token=invitation_token,
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)

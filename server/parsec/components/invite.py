@@ -1526,7 +1526,7 @@ class BaseInviteComponent:
             now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             greeter=req.greeter,
-            token=req.token,
+            token=client_ctx.token,
         )
         match outcome:
             # OK case

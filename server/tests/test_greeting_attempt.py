@@ -302,7 +302,6 @@ async def test_full_greeting_attempt(
 
     # Claimer starts the attempt
     rep = await claimer.invite_claimer_start_greeting_attempt(
-        token=claimer.token,
         greeter=greeter.user_id,
     )
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk(

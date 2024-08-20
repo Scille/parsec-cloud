@@ -37,7 +37,6 @@ async def claimer_wait_peer_public_key(
 ) -> PublicKey:
     # Claimer start greeting attempt
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=coolorg.invited_alice_dev3.token,
         greeter=coolorg.alice.user_id,
     )
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk(
@@ -140,7 +139,6 @@ async def test_authenticated_invite_greeter_step_greeting_attempt_not_joined(
 ) -> None:
     # Claimer start greeting attempt
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=coolorg.invited_alice_dev3.token,
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)

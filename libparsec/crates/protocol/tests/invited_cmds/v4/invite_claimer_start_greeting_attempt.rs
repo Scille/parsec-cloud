@@ -4,7 +4,6 @@
 use super::invited_cmds;
 use libparsec_tests_lite::{hex, p_assert_eq};
 use libparsec_types::GreetingAttemptID;
-use libparsec_types::InvitationToken;
 use libparsec_types::UserID;
 
 pub fn rep_greeter_not_allowed() {
@@ -72,7 +71,6 @@ pub fn req() {
     .as_ref();
     let req =
         invited_cmds::invite_claimer_start_greeting_attempt::InviteClaimerStartGreetingAttemptReq {
-            token: InvitationToken::from_hex("d864b93ded264aae9ae583fd3d40c45a").unwrap(),
             greeter: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
         };
     println!("***expected: {:?}", req.dump().unwrap());

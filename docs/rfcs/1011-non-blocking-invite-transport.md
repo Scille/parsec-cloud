@@ -317,10 +317,6 @@ Schema definition:
             "cmd": "invite_claimer_start_greeting_attempt",
             "fields": [
                 {
-                    "name": "token",
-                    "type": "InvitationToken"
-                },
-                {
                     "name": "greeter",
                     "type": "UserID"
                 }

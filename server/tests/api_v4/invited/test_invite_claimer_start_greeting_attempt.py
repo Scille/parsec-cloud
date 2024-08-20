@@ -24,10 +24,7 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 async def test_invited_invite_claimer_start_greeting_attempt_ok(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
-    invitation_token = coolorg.invited_alice_dev3.token
-
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=invitation_token,
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
@@ -37,10 +34,7 @@ async def test_invited_invite_claimer_start_greeting_attempt_ok(
 async def test_invited_invite_claimer_start_greeting_attempt_greeter_not_found(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    invitation_token = coolorg.invited_alice_dev3.token
-
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=invitation_token,
         greeter=UserID.new(),
     )
 
@@ -51,7 +45,6 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_not_allowed
     coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=coolorg.invited_alice_dev3.token,
         greeter=coolorg.bob.user_id,
     )
 
@@ -83,7 +76,6 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_revoked(
 
     # Try to invite
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
-        token=coolorg.invited_alice_dev3.token,
         greeter=coolorg.alice.user_id,
     )
 
