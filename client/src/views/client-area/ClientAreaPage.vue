@@ -17,14 +17,38 @@
         content-id="main"
         class="sidebar"
       >
-        <client-area-sidebar
-          v-if="loggedIn && currentOrganization && !querying"
-          :current-page="currentPage"
-          :organization="currentOrganization"
-          @page-selected="switchPage"
-          @organization-selected="onOrganizationSelected"
-          :key="refresh"
-        />
+        <template v-if="!querying && loggedIn">
+          <client-area-sidebar
+            v-if="currentOrganization"
+            :current-page="currentPage"
+            :organization="currentOrganization"
+            @page-selected="switchPage"
+            @organization-selected="onOrganizationSelected"
+            :key="refresh"
+          />
+        </template>
+        <template v-else-if="loggedIn">
+          <div class="skeleton">
+            <div class="skeleton-header">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-header-organization"
+              />
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-header-button"
+              />
+            </div>
+            <div class="skeleton-menu">
+              <ion-skeleton-text
+                :animated="true"
+                class="skeleton-menu-item"
+                v-for="index in 3"
+                :key="index"
+              />
+            </div>
+          </div>
+        </template>
       </ion-menu>
 
       <div
@@ -94,7 +118,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
+import { IonPage, IonContent, IonSkeletonText, IonSplitPane, IonMenu, GestureDetail, createGesture } from '@ionic/vue';
 import ClientAreaHeader from '@/views/client-area/ClientAreaHeader.vue';
 import ClientAreaSidebar from '@/views/client-area/ClientAreaSidebar.vue';
 import { BillingSystem, BmsAccessInstance, BmsOrganization, CustomOrderStatus, DataType } from '@/services/bms';
@@ -312,6 +336,39 @@ ion-split-pane {
     display: flex;
     flex-direction: column;
     gap: 2rem;
+  }
+
+  .skeleton {
+    padding: 2rem 1.5rem 0;
+
+    &-header {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 2rem;
+
+      &-organization {
+        width: 100%;
+        height: 3rem;
+        margin-bottom: 3rem;
+      }
+
+      &-button {
+        width: 100%;
+        height: 2rem;
+      }
+    }
+
+    &-menu {
+      display: flex;
+      flex-direction: column;
+
+    gap: 0.625rem;
+
+      &-item {
+        width: 100%;
+        height: 2rem;
+      }
+    }
   }
 }
 
