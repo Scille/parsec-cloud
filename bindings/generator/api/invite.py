@@ -561,6 +561,18 @@ async def greeter_device_in_progress_1_do_wait_peer_trust(
     raise NotImplementedError
 
 
+async def greeter_user_in_progress_2_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, GreetInProgressError]:
+    raise NotImplementedError
+
+
+async def greeter_device_in_progress_2_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, GreetInProgressError]:
+    raise NotImplementedError
+
+
 class UserGreetInProgress3Info(Structure):
     handle: Handle
 

@@ -9237,6 +9237,34 @@ pub fn greeterDeviceInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> P
     })
 }
 
+// greeter_device_in_progress_2_do_deny_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterDeviceInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::greeter_device_in_progress_2_do_deny_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // greeter_device_in_progress_2_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -9364,6 +9392,34 @@ pub fn greeterUserInProgress1DoWaitPeerTrust(canceller: u32, handle: u32) -> Pro
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = struct_user_greet_in_progress2_info_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// greeter_user_in_progress_2_do_deny_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn greeterUserInProgress2DoDenyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::greeter_user_in_progress_2_do_deny_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }

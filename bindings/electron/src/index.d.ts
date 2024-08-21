@@ -2213,6 +2213,10 @@ export function greeterDeviceInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number
 ): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
+export function greeterDeviceInProgress2DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, GreetInProgressError>>
 export function greeterDeviceInProgress2DoSignifyTrust(
     canceller: number,
     handle: number
@@ -2234,6 +2238,10 @@ export function greeterUserInProgress1DoWaitPeerTrust(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>
+export function greeterUserInProgress2DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, GreetInProgressError>>
 export function greeterUserInProgress2DoSignifyTrust(
     canceller: number,
     handle: number

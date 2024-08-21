@@ -2613,6 +2613,10 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<DeviceGreetInProgress2Info, GreetInProgressError>>
+    greeterDeviceInProgress2DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, GreetInProgressError>>
     greeterDeviceInProgress2DoSignifyTrust(
         canceller: Handle,
         handle: Handle
@@ -2634,6 +2638,10 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserGreetInProgress2Info, GreetInProgressError>>
+    greeterUserInProgress2DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, GreetInProgressError>>
     greeterUserInProgress2DoSignifyTrust(
         canceller: Handle,
         handle: Handle

@@ -1021,6 +1021,48 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     )
 }
 
+pub async fn greeter_user_in_progress_2_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), GreetInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+    )
+}
+
+pub async fn greeter_device_in_progress_2_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), GreetInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+    )
+}
+
 pub struct UserGreetInProgress2Info {
     pub handle: Handle,
     pub claimer_sas: SASCode,
