@@ -19,7 +19,7 @@ msTest('Check personal data page', async ({ clientArea }) => {
   await expect(avatar.locator('.person-name')).toHaveText(DEFAULT_USER_INFORMATION.name);
   await avatar.click();
   await expect(title).toHaveText('My profile');
-  const container = clientArea.locator('.personal-data-container');
+  const container = clientArea.locator('.personal-data-page');
   const items = container.locator('.ms-summary-card-item');
   await expect(items.locator('.ms-summary-card-item__label')).toHaveText([
     'Firstname',
@@ -117,8 +117,7 @@ msTest('Update personal information generic fail', async ({ clientArea }) => {
   await fillIonInput(inputs.nth(2), '+1 609-258-3000');
   const okButton = modal.locator('#next-button');
   await okButton.click();
-  // TODO: Update when generic failures are handled
-  // await expect(modal.locator('.error')).toHaveText('ERROR');
+  await expect(modal.locator('.report-error')).toHaveText('An unexpected error occurred. Please try again.');
   await modal.locator('.closeBtn').click();
   await expect(modal).toBeHidden();
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([

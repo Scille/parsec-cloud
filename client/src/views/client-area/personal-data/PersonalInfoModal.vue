@@ -40,6 +40,7 @@
           </div>
         </div>
         <ms-report-text
+          class="report-error"
           :theme="MsReportTheme.Error"
           v-if="errors.length > 0 && !fieldHasError(Fields.Phone)"
         >

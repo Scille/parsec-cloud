@@ -144,9 +144,11 @@ export const msTest = base.extend<{
     const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
     await orgSwitchButton.click();
     const popover = home.locator('.popover-switch');
+    await expect(popover).toBeVisible();
     const orgs = popover.locator('.organization-list').getByRole('listitem');
     await orgs.nth(0).click();
     await expect(orgSwitchButton).toHaveText(DEFAULT_ORGANIZATION_INFORMATION.name);
+    await expect(popover).toBeHidden();
 
     await use(home);
   },
