@@ -310,71 +310,72 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        try:
-            author_user = org.users[author_user_id]
-        except KeyError:
-            return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
-        if author_user.is_revoked:
-            return InviteNewForUserBadOutcome.AUTHOR_REVOKED
+            try:
+                author_user = org.users[author_user_id]
+            except KeyError:
+                return InviteNewForUserBadOutcome.AUTHOR_NOT_FOUND
+            if author_user.is_revoked:
+                return InviteNewForUserBadOutcome.AUTHOR_REVOKED
 
-        if author_user.current_profile != UserProfile.ADMIN:
-            return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return InviteNewForUserBadOutcome.AUTHOR_NOT_ALLOWED
 
-        for user in org.users.values():
-            if not user.is_revoked and user.cooked.human_handle.email == claimer_email:
-                return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
+            for user in org.users.values():
+                if not user.is_revoked and user.cooked.human_handle.email == claimer_email:
+                    return InviteNewForUserBadOutcome.CLAIMER_EMAIL_ALREADY_ENROLLED
 
-        for invitation in org.invitations.values():
-            if (
-                force_token is None
-                and not invitation.is_deleted
-                and invitation.type == InvitationType.USER
-                and invitation.created_by_user_id == author_user_id
-                and invitation.claimer_email == claimer_email
-            ):
-                # An invitation already exists for what the user has asked for
-                token = invitation.token
-                break
+            for invitation in org.invitations.values():
+                if (
+                    force_token is None
+                    and not invitation.is_deleted
+                    and invitation.type == InvitationType.USER
+                    and invitation.created_by_user_id == author_user_id
+                    and invitation.claimer_email == claimer_email
+                ):
+                    # An invitation already exists for what the user has asked for
+                    token = invitation.token
+                    break
 
-        else:
-            # Must create a new invitation
+            else:
+                # Must create a new invitation
 
-            token = force_token or InvitationToken.new()
-            org.invitations[token] = MemoryInvitation(
-                token=token,
-                type=InvitationType.USER,
-                created_by_user_id=author_user_id,
-                created_by_device_id=author,
-                claimer_email=claimer_email,
-                created_on=now,
-            )
-
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
+                token = force_token or InvitationToken.new()
+                org.invitations[token] = MemoryInvitation(
                     token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.IDLE,
+                    type=InvitationType.USER,
+                    created_by_user_id=author_user_id,
+                    created_by_device_id=author,
+                    claimer_email=claimer_email,
+                    created_on=now,
                 )
-            )
 
-        if send_email:
-            send_email_outcome = await self._send_user_invitation_email(
-                organization_id=organization_id,
-                claimer_email=claimer_email,
-                greeter_human_handle=author_user.cooked.human_handle,
-                token=token,
-            )
-        else:
-            send_email_outcome = None
+                await self._event_bus.send(
+                    EventInvitation(
+                        organization_id=organization_id,
+                        token=token,
+                        greeter=author_user_id,
+                        status=InvitationStatus.IDLE,
+                    )
+                )
 
-        return token, send_email_outcome
+            if send_email:
+                send_email_outcome = await self._send_user_invitation_email(
+                    organization_id=organization_id,
+                    claimer_email=claimer_email,
+                    greeter_human_handle=author_user.cooked.human_handle,
+                    token=token,
+                )
+            else:
+                send_email_outcome = None
+
+            return token, send_email_outcome
 
     @override
     async def new_for_device(
@@ -393,62 +394,63 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        try:
-            author_user = org.users[author_user_id]
-        except KeyError:
-            return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
-        if author_user.is_revoked:
-            return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
+            try:
+                author_user = org.users[author_user_id]
+            except KeyError:
+                return InviteNewForDeviceBadOutcome.AUTHOR_NOT_FOUND
+            if author_user.is_revoked:
+                return InviteNewForDeviceBadOutcome.AUTHOR_REVOKED
 
-        for invitation in org.invitations.values():
-            if (
-                force_token is None
-                and not invitation.is_deleted
-                and invitation.type == InvitationType.DEVICE
-                and invitation.created_by_user_id == author_user_id
-            ):
-                # An invitation already exists for what the user has asked for
-                token = invitation.token
-                break
+            for invitation in org.invitations.values():
+                if (
+                    force_token is None
+                    and not invitation.is_deleted
+                    and invitation.type == InvitationType.DEVICE
+                    and invitation.created_by_user_id == author_user_id
+                ):
+                    # An invitation already exists for what the user has asked for
+                    token = invitation.token
+                    break
 
-        else:
-            # Must create a new invitation
+            else:
+                # Must create a new invitation
 
-            token = force_token or InvitationToken.new()
-            org.invitations[token] = MemoryInvitation(
-                token=token,
-                type=InvitationType.DEVICE,
-                created_by_user_id=author_user_id,
-                created_by_device_id=author,
-                claimer_email=None,
-                created_on=now,
-            )
-
-            await self._event_bus.send(
-                EventInvitation(
-                    organization_id=organization_id,
+                token = force_token or InvitationToken.new()
+                org.invitations[token] = MemoryInvitation(
                     token=token,
-                    greeter=author_user_id,
-                    status=InvitationStatus.IDLE,
+                    type=InvitationType.DEVICE,
+                    created_by_user_id=author_user_id,
+                    created_by_device_id=author,
+                    claimer_email=None,
+                    created_on=now,
                 )
-            )
 
-        if send_email:
-            send_email_outcome = await self._send_device_invitation_email(
-                organization_id=organization_id,
-                email=author_user.cooked.human_handle.email,
-                token=token,
-            )
-        else:
-            send_email_outcome = None
+                await self._event_bus.send(
+                    EventInvitation(
+                        organization_id=organization_id,
+                        token=token,
+                        greeter=author_user_id,
+                        status=InvitationStatus.IDLE,
+                    )
+                )
 
-        return token, send_email_outcome
+            if send_email:
+                send_email_outcome = await self._send_device_invitation_email(
+                    organization_id=organization_id,
+                    email=author_user.cooked.human_handle.email,
+                    token=token,
+                )
+            else:
+                send_email_outcome = None
+
+            return token, send_email_outcome
 
     @override
     async def cancel(
@@ -465,37 +467,38 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteCancelBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        try:
-            author_user = org.users[author_user_id]
-        except KeyError:
-            return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
-        if author_user.is_revoked:
-            return InviteCancelBadOutcome.AUTHOR_REVOKED
+            try:
+                author_user = org.users[author_user_id]
+            except KeyError:
+                return InviteCancelBadOutcome.AUTHOR_NOT_FOUND
+            if author_user.is_revoked:
+                return InviteCancelBadOutcome.AUTHOR_REVOKED
 
-        try:
-            invitation = org.invitations[token]
-        except KeyError:
-            return InviteCancelBadOutcome.INVITATION_NOT_FOUND
-        if invitation.is_deleted:
-            return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
+            try:
+                invitation = org.invitations[token]
+            except KeyError:
+                return InviteCancelBadOutcome.INVITATION_NOT_FOUND
+            if invitation.is_deleted:
+                return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
 
-        invitation.deleted_on = now
-        invitation.deleted_reason = MemoryInvitationDeletedReason.CANCELLED
+            invitation.deleted_on = now
+            invitation.deleted_reason = MemoryInvitationDeletedReason.CANCELLED
 
-        await self._event_bus.send(
-            EventInvitation(
-                organization_id=organization_id,
-                token=token,
-                greeter=author_user_id,
-                status=InvitationStatus.CANCELLED,
+            await self._event_bus.send(
+                EventInvitation(
+                    organization_id=organization_id,
+                    token=token,
+                    greeter=author_user_id,
+                    status=InvitationStatus.CANCELLED,
+                )
             )
-        )
 
     @override
     async def list(

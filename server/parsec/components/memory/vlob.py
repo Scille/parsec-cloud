@@ -83,113 +83,116 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobCreateBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common", ("realm", realm_id)]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return VlobCreateBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return VlobCreateBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return VlobCreateBadOutcome.AUTHOR_REVOKED
 
-        try:
-            realm = org.realms[realm_id]
-        except KeyError:
-            return VlobCreateBadOutcome.REALM_NOT_FOUND
+            try:
+                realm = org.realms[realm_id]
+            except KeyError:
+                return VlobCreateBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author_user_id):
-            case RealmRole.READER | None:
-                return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
+            match realm.get_current_role_for(author_user_id):
+                case RealmRole.READER | None:
+                    return VlobCreateBadOutcome.AUTHOR_NOT_ALLOWED
 
-            case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
-                pass
+                case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
+                    pass
 
-            case unknown:
-                # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
-                assert False, unknown
+                case unknown:
+                    # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                    assert False, unknown
 
-        # We only accept the last key
-        if len(realm.key_rotations) != key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
-
-        if vlob_id in org.vlobs:
-            return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
-
-        maybe_error = timestamps_in_the_ballpark(timestamp, now)
-        if maybe_error is not None:
-            return maybe_error
-
-        assert org.last_certificate_timestamp is not None  # Orga bootstrapped
-        if org.last_certificate_timestamp >= timestamp:
-            return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
-
-        if org.is_sequestered:
-            assert org.sequester_services is not None
-            if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-                return SequesterInconsistency(
-                    last_common_certificate_timestamp=org.last_common_certificate_timestamp
+            # We only accept the last key
+            if len(realm.key_rotations) != key_index:
+                return BadKeyIndex(
+                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
                 )
 
-            blob_for_storage_sequester_services = {}
-            for service_id, service in org.sequester_services.items():
-                match service.service_type:
-                    case SequesterServiceType.STORAGE:
-                        blob_for_storage_sequester_services[service_id] = sequester_blob[service_id]
-                    case SequesterServiceType.WEBHOOK:
-                        assert service.webhook_url is not None
-                        match await self._sequester_service_send_webhook(
-                            webhook_url=service.webhook_url,
-                            organization_id=organization_id,
-                            service_id=service_id,
-                            sequester_blob=sequester_blob[service_id],
-                        ):
-                            case None:
-                                pass
-                            case error:
-                                return error
+            if vlob_id in org.vlobs:
+                return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
 
-        else:
-            if sequester_blob is not None:
-                return VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
-            blob_for_storage_sequester_services = None
+            maybe_error = timestamps_in_the_ballpark(timestamp, now)
+            if maybe_error is not None:
+                return maybe_error
 
-        # All checks are good, now we do the actual insertion
+            assert org.last_certificate_timestamp is not None  # Orga bootstrapped
+            if org.last_certificate_timestamp >= timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
 
-        vlob_atom = MemoryVlobAtom(
-            realm_id=realm_id,
-            vlob_id=vlob_id,
-            key_index=key_index,
-            version=1,
-            blob=blob,
-            author=author,
-            created_on=timestamp,
-            blob_for_storage_sequester_services=blob_for_storage_sequester_services,
-        )
-        org.vlobs[vlob_id] = [vlob_atom]
-        realm_change_checkpoint = len(realm.vlob_updates) + 1
-        realm.vlob_updates.append(
-            MemoryRealmVlobUpdate(
-                index=realm_change_checkpoint,
-                vlob_atom=vlob_atom,
-            )
-        )
+            if org.is_sequestered:
+                assert org.sequester_services is not None
+                if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
+                    return SequesterInconsistency(
+                        last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                    )
 
-        await self._event_bus.send(
-            EventVlob(
-                organization_id=organization_id,
-                author=author,
+                blob_for_storage_sequester_services = {}
+                for service_id, service in org.sequester_services.items():
+                    match service.service_type:
+                        case SequesterServiceType.STORAGE:
+                            blob_for_storage_sequester_services[service_id] = sequester_blob[
+                                service_id
+                            ]
+                        case SequesterServiceType.WEBHOOK:
+                            assert service.webhook_url is not None
+                            match await self._sequester_service_send_webhook(
+                                webhook_url=service.webhook_url,
+                                organization_id=organization_id,
+                                service_id=service_id,
+                                sequester_blob=sequester_blob[service_id],
+                            ):
+                                case None:
+                                    pass
+                                case error:
+                                    return error
+
+            else:
+                if sequester_blob is not None:
+                    return VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+                blob_for_storage_sequester_services = None
+
+            # All checks are good, now we do the actual insertion
+
+            vlob_atom = MemoryVlobAtom(
                 realm_id=realm_id,
-                timestamp=timestamp,
                 vlob_id=vlob_id,
+                key_index=key_index,
                 version=1,
-                blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
-                last_common_certificate_timestamp=org.last_common_certificate_timestamp,
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                blob=blob,
+                author=author,
+                created_on=timestamp,
+                blob_for_storage_sequester_services=blob_for_storage_sequester_services,
             )
-        )
+            org.vlobs[vlob_id] = [vlob_atom]
+            realm_change_checkpoint = len(realm.vlob_updates) + 1
+            realm.vlob_updates.append(
+                MemoryRealmVlobUpdate(
+                    index=realm_change_checkpoint,
+                    vlob_atom=vlob_atom,
+                )
+            )
+
+            await self._event_bus.send(
+                EventVlob(
+                    organization_id=organization_id,
+                    author=author,
+                    realm_id=realm_id,
+                    timestamp=timestamp,
+                    vlob_id=vlob_id,
+                    version=1,
+                    blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
+                    last_common_certificate_timestamp=org.last_common_certificate_timestamp,
+                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                )
+            )
 
     async def update(
         self,
@@ -220,115 +223,125 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobUpdateBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return VlobUpdateBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return VlobUpdateBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return VlobUpdateBadOutcome.AUTHOR_REVOKED
 
-        try:
-            vlobs = org.vlobs[vlob_id]
-        except KeyError:
-            return VlobUpdateBadOutcome.VLOB_NOT_FOUND
+            try:
+                vlobs = org.vlobs[vlob_id]
+            except KeyError:
+                return VlobUpdateBadOutcome.VLOB_NOT_FOUND
+            realm_id = vlobs[0].realm_id
 
-        realm = org.realms[vlobs[0].realm_id]
-        match realm.get_current_role_for(author_user_id):
-            case RealmRole.READER | None:
-                return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
+            async with org.topics_lock(read=[("realm", realm_id)]):
+                realm = org.realms[realm_id]
+                match realm.get_current_role_for(author_user_id):
+                    case RealmRole.READER | None:
+                        return VlobUpdateBadOutcome.AUTHOR_NOT_ALLOWED
 
-            case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
-                pass
+                    case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
+                        pass
 
-            case unknown:
-                # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
-                assert False, unknown
+                    case unknown:
+                        # TODO: Implement `Enum` on `RealmRole` so we can use `assert_never` here
+                        assert False, unknown
 
-        # We only accept the last key
-        if len(realm.key_rotations) != key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
+                # We only accept the last key
+                if len(realm.key_rotations) != key_index:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
 
-        maybe_error = timestamps_in_the_ballpark(timestamp, now)
-        if maybe_error is not None:
-            return maybe_error
+                maybe_error = timestamps_in_the_ballpark(timestamp, now)
+                if maybe_error is not None:
+                    return maybe_error
 
-        assert org.last_certificate_timestamp is not None  # Orga bootstrapped
-        if org.last_certificate_timestamp >= timestamp:
-            return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
+                assert org.last_certificate_timestamp is not None  # Orga bootstrapped
+                if org.last_certificate_timestamp >= timestamp:
+                    return RequireGreaterTimestamp(
+                        strictly_greater_than=org.last_certificate_timestamp
+                    )
 
-        if org.is_sequestered:
-            assert org.sequester_services is not None
-            if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-                return SequesterInconsistency(
-                    last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                if org.is_sequestered:
+                    assert org.sequester_services is not None
+                    if (
+                        sequester_blob is None
+                        or sequester_blob.keys() != org.sequester_services.keys()
+                    ):
+                        return SequesterInconsistency(
+                            last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                        )
+
+                    blob_for_storage_sequester_services = {}
+                    for service_id, service in org.sequester_services.items():
+                        match service.service_type:
+                            case SequesterServiceType.STORAGE:
+                                blob_for_storage_sequester_services[service_id] = sequester_blob[
+                                    service_id
+                                ]
+                            case SequesterServiceType.WEBHOOK:
+                                assert service.webhook_url is not None
+                                match await self._sequester_service_send_webhook(
+                                    webhook_url=service.webhook_url,
+                                    organization_id=organization_id,
+                                    service_id=service_id,
+                                    sequester_blob=sequester_blob[service_id],
+                                ):
+                                    case None:
+                                        pass
+                                    case error:
+                                        return error
+
+                else:
+                    if sequester_blob is not None:
+                        return VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+                    blob_for_storage_sequester_services = None
+
+                if version != len(vlobs) + 1:
+                    return VlobUpdateBadOutcome.BAD_VLOB_VERSION
+
+                # All checks are good, now we do the actual insertion
+
+                version = len(vlobs) + 1
+                vlob_atom = MemoryVlobAtom(
+                    realm_id=realm.realm_id,
+                    vlob_id=vlob_id,
+                    key_index=key_index,
+                    version=version,
+                    blob=blob,
+                    author=author,
+                    created_on=timestamp,
+                    blob_for_storage_sequester_services=blob_for_storage_sequester_services,
+                )
+                vlobs.append(vlob_atom)
+                realm_change_checkpoint = len(realm.vlob_updates) + 1
+                realm.vlob_updates.append(
+                    MemoryRealmVlobUpdate(
+                        index=realm_change_checkpoint,
+                        vlob_atom=vlob_atom,
+                    )
                 )
 
-            blob_for_storage_sequester_services = {}
-            for service_id, service in org.sequester_services.items():
-                match service.service_type:
-                    case SequesterServiceType.STORAGE:
-                        blob_for_storage_sequester_services[service_id] = sequester_blob[service_id]
-                    case SequesterServiceType.WEBHOOK:
-                        assert service.webhook_url is not None
-                        match await self._sequester_service_send_webhook(
-                            webhook_url=service.webhook_url,
-                            organization_id=organization_id,
-                            service_id=service_id,
-                            sequester_blob=sequester_blob[service_id],
-                        ):
-                            case None:
-                                pass
-                            case error:
-                                return error
-
-        else:
-            if sequester_blob is not None:
-                return VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
-            blob_for_storage_sequester_services = None
-
-        if version != len(vlobs) + 1:
-            return VlobUpdateBadOutcome.BAD_VLOB_VERSION
-
-        # All checks are good, now we do the actual insertion
-
-        version = len(vlobs) + 1
-        vlob_atom = MemoryVlobAtom(
-            realm_id=realm.realm_id,
-            vlob_id=vlob_id,
-            key_index=key_index,
-            version=version,
-            blob=blob,
-            author=author,
-            created_on=timestamp,
-            blob_for_storage_sequester_services=blob_for_storage_sequester_services,
-        )
-        vlobs.append(vlob_atom)
-        realm_change_checkpoint = len(realm.vlob_updates) + 1
-        realm.vlob_updates.append(
-            MemoryRealmVlobUpdate(
-                index=realm_change_checkpoint,
-                vlob_atom=vlob_atom,
-            )
-        )
-
-        await self._event_bus.send(
-            EventVlob(
-                organization_id=organization_id,
-                author=author,
-                realm_id=realm.realm_id,
-                timestamp=timestamp,
-                vlob_id=vlob_id,
-                version=version,
-                blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
-                last_common_certificate_timestamp=org.last_common_certificate_timestamp,
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
-            )
-        )
+                await self._event_bus.send(
+                    EventVlob(
+                        organization_id=organization_id,
+                        author=author,
+                        realm_id=realm.realm_id,
+                        timestamp=timestamp,
+                        vlob_id=vlob_id,
+                        version=version,
+                        blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
+                        last_common_certificate_timestamp=org.last_common_certificate_timestamp,
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                    )
+                )
 
     @override
     async def read_versions(

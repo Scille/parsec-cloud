@@ -83,71 +83,77 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
 
-        assert author_verify_key == author_device.cooked.verify_key
-        match realm_create_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            realm_role_certificate=realm_role_certificate,
-        ):
-            case RealmRoleCertificate() as certif:
-                pass
-            case error:
-                return error
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_create_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                realm_role_certificate=realm_role_certificate,
+            ):
+                case RealmRoleCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        if certif.realm_id in org.realms:
-            return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=org.realms[certif.realm_id].last_realm_certificate_timestamp
-            )
+            if certif.realm_id in org.realms:
+                return CertificateBasedActionIdempotentOutcome(
+                    certificate_timestamp=org.realms[
+                        certif.realm_id
+                    ].last_realm_certificate_timestamp
+                )
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
-        #
-        # Strictly speaking there is no consistency requirement here (the new empty realm
-        # has no impact on existing data).
-        #
-        # However we still use the same check that is applied everywhere else in order to be
-        # consistent.
+            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+                # Ensure certificate consistency: our certificate must be the newest thing on the server.
+                #
+                # Strictly speaking there is no consistency requirement here (the new empty realm
+                # has no impact on existing data).
+                #
+                # However we still use the same check that is applied everywhere else in order to be
+                # consistent.
 
-        assert (
-            org.last_certificate_or_vlob_timestamp is not None
-        )  # Bootstrap has created the first certif
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
-            )
+                assert (
+                    org.last_certificate_or_vlob_timestamp is not None
+                )  # Bootstrap has created the first certif
+                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(
+                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                    )
 
-        # All checks are good, now we do the actual insertion
+                # All checks are good, now we do the actual insertion
 
-        org.realms[certif.realm_id] = MemoryRealm(
-            realm_id=certif.realm_id,
-            created_on=now,
-            roles=[
-                MemoryRealmUserRole(cooked=certif, realm_role_certificate=realm_role_certificate)
-            ],
-        )
+                org.realms[certif.realm_id] = MemoryRealm(
+                    realm_id=certif.realm_id,
+                    created_on=now,
+                    roles=[
+                        MemoryRealmUserRole(
+                            cooked=certif, realm_role_certificate=realm_role_certificate
+                        )
+                    ],
+                )
 
-        await self._event_bus.send(
-            EventRealmCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-                realm_id=certif.realm_id,
-                user_id=certif.user_id,
-                role_removed=certif.role is None,
-            )
-        )
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=certif.user_id,
+                        role_removed=certif.role is None,
+                    )
+                )
 
-        return certif
+                return certif
 
     @override
     async def share(
@@ -175,117 +181,121 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmShareStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmShareStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmShareStoreBadOutcome.AUTHOR_REVOKED
 
-        assert author_verify_key == author_device.cooked.verify_key
-        match realm_share_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            realm_role_certificate=realm_role_certificate,
-        ):
-            case RealmRoleCertificate() as certif:
-                pass
-            case error:
-                return error
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_share_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                realm_role_certificate=realm_role_certificate,
+            ):
+                case RealmRoleCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        try:
-            user = org.users[certif.user_id]
-        except KeyError:
-            return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
+            try:
+                user = org.users[certif.user_id]
+            except KeyError:
+                return RealmShareStoreBadOutcome.RECIPIENT_NOT_FOUND
 
-        if user.is_revoked:
-            return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
+            if user.is_revoked:
+                return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
 
-        if user.current_profile == UserProfile.OUTSIDER and certif.role in (
-            RealmRole.MANAGER,
-            RealmRole.OWNER,
-        ):
-            return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
+            if user.current_profile == UserProfile.OUTSIDER and certif.role in (
+                RealmRole.MANAGER,
+                RealmRole.OWNER,
+            ):
+                return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
 
-        try:
-            realm = org.realms[certif.realm_id]
-        except KeyError:
-            return RealmShareStoreBadOutcome.REALM_NOT_FOUND
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmShareStoreBadOutcome.REALM_NOT_FOUND
 
-        owner_only = (RealmRole.OWNER,)
-        owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
-        existing_user_role = realm.get_current_role_for(certif.user_id)
-        new_user_role = certif.role
-        needed_roles: tuple[RealmRole, ...]
-        if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
-            needed_roles = owner_only
-        else:
-            needed_roles = owner_or_manager
+            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+                owner_only = (RealmRole.OWNER,)
+                owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+                existing_user_role = realm.get_current_role_for(certif.user_id)
+                new_user_role = certif.role
+                needed_roles: tuple[RealmRole, ...]
+                if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
+                    needed_roles = owner_only
+                else:
+                    needed_roles = owner_or_manager
 
-        author_role = realm.get_current_role_for(author_user_id)
-        if author_role not in needed_roles:
-            return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+                author_role = realm.get_current_role_for(author_user_id)
+                if author_role not in needed_roles:
+                    return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        if existing_user_role == new_user_role:
-            return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
+                if existing_user_role == new_user_role:
+                    return CertificateBasedActionIdempotentOutcome(
+                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
-        #
-        # Strictly speaking consistency only requires the certificate to be more recent than
-        # the the certificates involving the realm and/or the recipient user; and, similarly,
-        # the vlobs created/updated by the recipient.
-        #
-        # However doing such precise checks is complex and error prone, so we take a simpler
-        # approach by considering certificates don't change often so it's no big deal to
-        # have a much more coarse approach.
+                # Ensure certificate consistency: our certificate must be the newest thing on the server.
+                #
+                # Strictly speaking consistency only requires the certificate to be more recent than
+                # the the certificates involving the realm and/or the recipient user; and, similarly,
+                # the vlobs created/updated by the recipient.
+                #
+                # However doing such precise checks is complex and error prone, so we take a simpler
+                # approach by considering certificates don't change often so it's no big deal to
+                # have a much more coarse approach.
 
-        assert (
-            org.last_certificate_or_vlob_timestamp is not None
-        )  # Bootstrap has created the first certif
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
-            )
+                assert (
+                    org.last_certificate_or_vlob_timestamp is not None
+                )  # Bootstrap has created the first certif
+                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(
+                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                    )
 
-        try:
-            last_key_rotation = realm.key_rotations[-1]
-        except IndexError:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
-        if key_index != last_key_rotation.cooked.key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
+                try:
+                    last_key_rotation = realm.key_rotations[-1]
+                except IndexError:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
+                if key_index != last_key_rotation.cooked.key_index:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
 
-        # All checks are good, now we do the actual insertion
+                # All checks are good, now we do the actual insertion
 
-        realm.roles.append(
-            MemoryRealmUserRole(cooked=certif, realm_role_certificate=realm_role_certificate)
-        )
+                realm.roles.append(
+                    MemoryRealmUserRole(
+                        cooked=certif, realm_role_certificate=realm_role_certificate
+                    )
+                )
 
-        last_key_rotation.per_participant_keys_bundle_access[certif.user_id] = (
-            recipient_keys_bundle_access
-        )
+                last_key_rotation.per_participant_keys_bundle_access[certif.user_id] = (
+                    recipient_keys_bundle_access
+                )
 
-        await self._event_bus.send(
-            EventRealmCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-                realm_id=certif.realm_id,
-                user_id=certif.user_id,
-                role_removed=False,
-            )
-        )
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=certif.user_id,
+                        role_removed=False,
+                    )
+                )
 
-        return certif
+                return certif
 
     @override
     async def unshare(
@@ -310,94 +320,98 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmUnshareStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmUnshareStoreBadOutcome.AUTHOR_REVOKED
 
-        assert author_verify_key == author_device.cooked.verify_key
-        match realm_unshare_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            realm_role_certificate=realm_role_certificate,
-        ):
-            case RealmRoleCertificate() as certif:
-                pass
-            case error:
-                return error
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_unshare_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                realm_role_certificate=realm_role_certificate,
+            ):
+                case RealmRoleCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        # Note we don't check if the recipient is revoked here: it is indeed allowed
-        # to unshare with a revoked user. This allows for client to only check for
-        # unshare event to detect when key rotation is needed.
-        if certif.user_id not in org.users:
-            return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
+            # Note we don't check if the recipient is revoked here: it is indeed allowed
+            # to unshare with a revoked user. This allows for client to only check for
+            # unshare event to detect when key rotation is needed.
+            if certif.user_id not in org.users:
+                return RealmUnshareStoreBadOutcome.RECIPIENT_NOT_FOUND
 
-        try:
-            realm = org.realms[certif.realm_id]
-        except KeyError:
-            return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
 
-        owner_only = (RealmRole.OWNER,)
-        owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
-        existing_user_role = realm.get_current_role_for(certif.user_id)
-        new_user_role = certif.role
-        needed_roles: tuple[RealmRole, ...]
-        if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
-            needed_roles = owner_only
-        else:
-            needed_roles = owner_or_manager
+            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+                owner_only = (RealmRole.OWNER,)
+                owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
+                existing_user_role = realm.get_current_role_for(certif.user_id)
+                new_user_role = certif.role
+                needed_roles: tuple[RealmRole, ...]
+                if existing_user_role in owner_or_manager or new_user_role in owner_or_manager:
+                    needed_roles = owner_only
+                else:
+                    needed_roles = owner_or_manager
 
-        author_role = realm.get_current_role_for(author_user_id)
-        if author_role not in needed_roles:
-            return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+                author_role = realm.get_current_role_for(author_user_id)
+                if author_role not in needed_roles:
+                    return RealmUnshareStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        if existing_user_role == new_user_role:
-            return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
+                if existing_user_role == new_user_role:
+                    return CertificateBasedActionIdempotentOutcome(
+                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
-        #
-        # Strictly speaking consistency only requires the certificate to be more recent than
-        # the the certificates involving the realm and/or the recipient user; and, similarly,
-        # the vlobs created/updated by the recipient.
-        #
-        # However doing such precise checks is complex and error prone, so we take a simpler
-        # approach by considering certificates don't change often so it's no big deal to
-        # have a much more coarse approach.
+                # Ensure certificate consistency: our certificate must be the newest thing on the server.
+                #
+                # Strictly speaking consistency only requires the certificate to be more recent than
+                # the the certificates involving the realm and/or the recipient user; and, similarly,
+                # the vlobs created/updated by the recipient.
+                #
+                # However doing such precise checks is complex and error prone, so we take a simpler
+                # approach by considering certificates don't change often so it's no big deal to
+                # have a much more coarse approach.
 
-        assert (
-            org.last_certificate_or_vlob_timestamp is not None
-        )  # Bootstrap has created the first certif
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
-            )
+                assert (
+                    org.last_certificate_or_vlob_timestamp is not None
+                )  # Bootstrap has created the first certif
+                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(
+                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                    )
 
-        # All checks are good, now we do the actual insertion
+                # All checks are good, now we do the actual insertion
 
-        realm.roles.append(
-            MemoryRealmUserRole(cooked=certif, realm_role_certificate=realm_role_certificate)
-        )
+                realm.roles.append(
+                    MemoryRealmUserRole(
+                        cooked=certif, realm_role_certificate=realm_role_certificate
+                    )
+                )
 
-        await self._event_bus.send(
-            EventRealmCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-                realm_id=certif.realm_id,
-                user_id=certif.user_id,
-                role_removed=True,
-            )
-        )
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=certif.user_id,
+                        role_removed=True,
+                    )
+                )
 
-        return certif
+                return certif
 
     @override
     async def rename(
@@ -424,65 +438,67 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmRenameStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmRenameStoreBadOutcome.AUTHOR_REVOKED
 
-        assert author_verify_key == author_device.cooked.verify_key
-        match realm_rename_validate(
-            now=now,
-            expected_author=author,
-            author_verify_key=author_verify_key,
-            realm_name_certificate=realm_name_certificate,
-        ):
-            case RealmNameCertificate() as certif:
-                pass
-            case error:
-                return error
-
-        try:
-            realm = org.realms[certif.realm_id]
-        except KeyError:
-            return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
-
-        if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
-            return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
-
-        # We only accept the last key
-        if len(realm.key_rotations) != certif.key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
-
-        if initial_name_or_fail and realm.renames:
-            return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
-
-        realm.renames.append(
-            MemoryRealmRename(
-                cooked=certif,
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_rename_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
                 realm_name_certificate=realm_name_certificate,
-            )
-        )
+            ):
+                case RealmNameCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        await self._event_bus.send(
-            EventRealmCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-                realm_id=certif.realm_id,
-                user_id=author_user_id,
-                role_removed=False,
-            )
-        )
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
-        return certif
+            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+                if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
+                    return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                # We only accept the last key
+                if len(realm.key_rotations) != certif.key_index:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
+
+                if initial_name_or_fail and realm.renames:
+                    return CertificateBasedActionIdempotentOutcome(
+                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
+
+                realm.renames.append(
+                    MemoryRealmRename(
+                        cooked=certif,
+                        realm_name_certificate=realm_name_certificate,
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=author_user_id,
+                        role_removed=False,
+                    )
+                )
+
+                return certif
 
     @override
     async def rotate_key(
@@ -509,72 +525,74 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
 
-        assert author_verify_key == author_device.cooked.verify_key
-        match realm_rotate_key_validate(
-            now=now,
-            expected_author=author,
-            author_verify_key=author_verify_key,
-            realm_key_rotation_certificate=realm_key_rotation_certificate,
-        ):
-            case RealmKeyRotationCertificate() as certif:
-                pass
-            case error:
-                return error
-
-        try:
-            realm = org.realms[certif.realm_id]
-        except KeyError:
-            return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
-
-        if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
-            return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
-
-        last_index = len(realm.key_rotations)
-        if certif.key_index != last_index + 1:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-            )
-
-        participants = set()
-        for role in realm.roles:
-            if role.cooked.role is None:
-                participants.discard(role.cooked.user_id)
-            else:
-                participants.add(role.cooked.user_id)
-
-        if per_participant_keys_bundle_access.keys() != participants:
-            return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
-
-        realm.key_rotations.append(
-            MemoryRealmKeyRotation(
-                cooked=certif,
+            assert author_verify_key == author_device.cooked.verify_key
+            match realm_rotate_key_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
                 realm_key_rotation_certificate=realm_key_rotation_certificate,
-                per_participant_keys_bundle_access=per_participant_keys_bundle_access,
-                keys_bundle=keys_bundle,
-            )
-        )
+            ):
+                case RealmKeyRotationCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        await self._event_bus.send(
-            EventRealmCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-                realm_id=certif.realm_id,
-                user_id=author_user_id,
-                role_removed=False,
-            )
-        )
+            try:
+                realm = org.realms[certif.realm_id]
+            except KeyError:
+                return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
 
-        return certif
+            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+                if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
+                    return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                last_index = len(realm.key_rotations)
+                if certif.key_index != last_index + 1:
+                    return BadKeyIndex(
+                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                    )
+
+                participants = set()
+                for role in realm.roles:
+                    if role.cooked.role is None:
+                        participants.discard(role.cooked.user_id)
+                    else:
+                        participants.add(role.cooked.user_id)
+
+                if per_participant_keys_bundle_access.keys() != participants:
+                    return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+
+                realm.key_rotations.append(
+                    MemoryRealmKeyRotation(
+                        cooked=certif,
+                        realm_key_rotation_certificate=realm_key_rotation_certificate,
+                        per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+                        keys_bundle=keys_bundle,
+                    )
+                )
+
+                await self._event_bus.send(
+                    EventRealmCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                        realm_id=certif.realm_id,
+                        user_id=author_user_id,
+                        role_removed=False,
+                    )
+                )
+
+                return certif
 
     @override
     async def get_keys_bundle(
