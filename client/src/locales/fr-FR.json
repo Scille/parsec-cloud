@@ -1176,8 +1176,7 @@
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",
             "retrieveInformationFailed": "Impossible de récupérer vos informations personnelles depuis le serveur.",
             "noAccount": "Vous n'avez pas encore d'espace client ?",
-            "createAccount": "Créer un compte",
-            "createAccountUrl": "https://parsec.cloud/tarification/"
+            "createAccount": "Créer un compte"
         },
         "forgotPassword": {
             "getEmailStep": {

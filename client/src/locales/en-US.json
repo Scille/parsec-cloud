@@ -1176,8 +1176,7 @@
             "networkFailed": "Could not reach the server. Make sure that you are online and try again.",
             "retrieveInformationFailed": "Failed to retrieve your personal information from the server.",
             "noAccount": "No customer account yet?",
-            "createAccount": "Create an account",
-            "createAccountUrl": "https://parsec.cloud/en/tarification/"
+            "createAccount": "Create an account"
         },
         "forgotPassword": {
             "getEmailStep": {
