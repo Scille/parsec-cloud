@@ -184,6 +184,7 @@ async function setupApp(): Promise<void> {
     window.electronAPI.log('debug', `BMS Url: ${Env.getBmsUrl()}`);
     window.electronAPI.log('debug', `Parsec Sign Url: ${Env.getSignUrl()}`);
     window.electronAPI.log('debug', `Stripe API Key: ${Env.getStripeApiKey().key}`);
+    window.electronAPI.log('debug', `Bindings Log Config: ${Env.getBindingsLogConfig()}`);
 
     let isQuitDialogOpen = false;
 

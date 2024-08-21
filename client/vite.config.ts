@@ -94,6 +94,7 @@ const config: UserConfigExport = () => ({
     // Defined values are replaced has is in the code, here we need the version to contain quotes in the value
     // to be a string once replaced in the code.
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
+    'import.meta.env.RUST_LOG': JSON.stringify(process.env.RUST_LOG),
   },
   server: {
     port: 8080,
