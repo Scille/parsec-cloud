@@ -785,8 +785,25 @@ impl UserGreetInProgress3Ctx {
     ) -> Result<UserGreetInProgress4Ctx, GreetInProgressError> {
         let ctx = self.0.do_get_claim_requests().await?;
 
-        let data = InviteUserData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key)
-            .map_err(GreetInProgressError::CorruptedInviteUserData)?;
+        let data = match InviteUserData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key) {
+            Ok(data) => data,
+            Err(err) => {
+                let reason = match err {
+                    DataError::Decryption => CancelledGreetingAttemptReason::UndecipherablePayload,
+                    DataError::BadSerialization { .. } => {
+                        CancelledGreetingAttemptReason::UndeserializablePayload
+                    }
+                    _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                };
+                if cancel_greeting_attempt(&ctx.cmds, ctx.greeting_attempt, reason)
+                    .await
+                    .is_err()
+                {
+                    // TODO: Warn about the error before discarding it
+                };
+                return Err(GreetInProgressError::CorruptedInviteUserData(err));
+            }
+        };
 
         Ok(UserGreetInProgress4Ctx {
             token: ctx.token,
