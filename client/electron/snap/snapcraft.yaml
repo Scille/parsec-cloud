@@ -114,6 +114,7 @@ parts:
     build-environment:
       - # Define a placeholder for the token, it will be replaced by the CI/CD pipeline.
         SENTRY_AUTH_TOKEN: __TOKEN__
+      - VITE_MODE: development
     override-build: |
       set -x
 
@@ -127,7 +128,8 @@ parts:
       # Use `--ignore-scripts` to prevent the postinstall script trying to be smarter than us and
       # install electron dependencies (as it would use `npm install` instead of `npm clean-install`).
       npm install --ignore-scripts
-      npm run electron:copy
+      npm run native:build -- --mode $VITE_MODE
+      npm exec cap copy @capacitor-community/electron
 
       cd electron
       npm clean-install

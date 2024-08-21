@@ -232,6 +232,30 @@ class Version:
     def is_dev(self) -> bool:
         return self.dev is not None
 
+    def type(self) -> str:
+        if self.is_dev:
+            return "dev"
+        elif self.is_alpha:
+            return "alpha"
+        elif self.is_beta:
+            return "beta"
+        elif self.is_rc:
+            return "release-candidate"
+        else:
+            return "production"
+
+    @property
+    def is_alpha(self) -> bool:
+        return self.prerelease is not None and self.prerelease.startswith("a.")
+
+    @property
+    def is_beta(self) -> bool:
+        return self.prerelease is not None and self.prerelease.startswith("b.")
+
+    @property
+    def is_rc(self) -> bool:
+        return self.prerelease is not None and self.prerelease.startswith("rc.")
+
     def __eq__(self, other: object) -> bool:
         if isinstance(other, Version):
             string_other = str(other)
@@ -837,6 +861,7 @@ def version_main(args: argparse.Namespace) -> None:
                 f"local={version.local or ''}",
                 f"no_local={version.without_local()}",
                 f"docker={version.docker_tag()}",
+                f"type={version.type()}",
             ]
         )
     )

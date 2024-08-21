@@ -10,22 +10,18 @@ let cmdPrefix = 'npm';
 if (platform === 'win32') {
   cmdPrefix = 'npm.cmd';
 }
-const cmdArgs = ['exec', '--', 'vite', 'build'];
+const cmdArgs = ['exec', '--', 'vite', 'build', ...process.argv.slice(2)];
 
 console.log('>>> ', cmdPrefix, cmdArgs.join(' '));
-const ret = spawnSync(
-  cmdPrefix,
-  cmdArgs,
-  {
-    stdio: ['inherit', 'inherit', 'inherit'],
-    cwd: WORKDIR,
-    env: {
-      ...process.env,
-      // Here is the secret sauce !
-      PLATFORM: 'native',
-    },
+const ret = spawnSync(cmdPrefix, cmdArgs, {
+  stdio: ['inherit', 'inherit', 'inherit'],
+  cwd: WORKDIR,
+  env: {
+    ...process.env,
+    // Here is the secret sauce !
+    PLATFORM: 'native',
   },
-);
+});
 if (ret.status !== 0) {
   exit(ret.status);
 }
