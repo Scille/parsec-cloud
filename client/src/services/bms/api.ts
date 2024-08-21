@@ -22,43 +22,23 @@ import {
   UpdateEmailQueryData,
   UpdatePersonalInformationQueryData,
 } from '@/services/bms/types';
+import { Env } from '@/services/environment';
 import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'axios';
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
 
-const BMS_ENV_VARIABLE = 'VITE_BMS_API_URL';
-const DEFAULT_BMS_URL = 'https://bms.parsec.cloud';
-const DEFAULT_BMS_DEV_URL = 'https://bms-dev.parsec.cloud';
-
-function getBmsUrl(): string {
-  if (import.meta.env[BMS_ENV_VARIABLE]) {
-    return import.meta.env[BMS_ENV_VARIABLE];
-  }
-  if (window.isDev()) {
-    return DEFAULT_BMS_DEV_URL;
-  }
-  return DEFAULT_BMS_URL;
-}
-
-// Used to delay the creation of the AxiosInstance, since it requires
-// variables on the window object that are only set when the app is
-// fully initialized. Instead we initialize the instance only at the
-// first request.
 class HTTPRequest {
-  private _instance: AxiosInstance | null;
+  private _instance: AxiosInstance;
 
   constructor() {
-    this._instance = null;
+    console.log(`Using ${Env.getBmsUrl()} as Parsec BMS`);
+    this._instance = axios.create({
+      baseURL: Env.getBmsUrl(),
+      timeout: 3000,
+    });
   }
 
   getInstance(): AxiosInstance {
-    if (!this._instance) {
-      window.electronAPI.log('info', `Using ${getBmsUrl()} as Parsec BMS`);
-      this._instance = axios.create({
-        baseURL: getBmsUrl(),
-        timeout: 3000,
-      });
-    }
     return this._instance;
   }
 }

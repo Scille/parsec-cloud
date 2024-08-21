@@ -137,8 +137,6 @@
       </div>
 
       <ion-footer class="saas-login-footer">
-        <!-- TODO: UPDATE THE LINK -->
-        <!-- If changing the link, don't forget to check that it is allowed by electron! -->
         <div
           class="create-account"
           v-if="!loading"
@@ -148,7 +146,7 @@
             class="create-account__link button-medium"
             target="_blank"
             @click="$event.stopPropagation()"
-            :href="$msTranslate('clientArea.app.createAccountUrl')"
+            :href="Env.getSignUrl()"
           >
             {{ $msTranslate('clientArea.app.createAccount') }}
             <ion-icon :icon="arrowForward" />
@@ -186,6 +184,7 @@ import { warning, arrowForward, close } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+import { Env } from '@/services/environment';
 
 const props = defineProps<{
   email?: string;
