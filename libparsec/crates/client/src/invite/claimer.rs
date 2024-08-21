@@ -220,6 +220,25 @@ pub async fn claimer_retrieve_info(
     }
 }
 
+// ClaimCancellerCtx
+
+#[derive(Debug)]
+pub struct ClaimCancellerCtx {
+    greeting_attempt: GreetingAttemptID,
+    cmds: Arc<InvitedCmds>,
+}
+
+impl ClaimCancellerCtx {
+    pub async fn cancel(self) -> Result<(), ClaimInProgressError> {
+        cancel_greeting_attempt(
+            &self.cmds,
+            self.greeting_attempt,
+            CancelledGreetingAttemptReason::ManuallyCancelled,
+        )
+        .await
+    }
+}
+
 #[derive(Debug)]
 struct BaseClaimInitialCtx {
     config: Arc<ClientConfig>,
@@ -464,6 +483,13 @@ impl UserClaimInProgress1Ctx {
         self.0.generate_greeter_sas_choices(size)
     }
 
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
     pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
         self.0.do_deny_trust().await
     }
@@ -483,6 +509,13 @@ impl DeviceClaimInProgress1Ctx {
 
     pub fn generate_greeter_sas_choices(&self, size: usize) -> Vec<SASCode> {
         self.0.generate_greeter_sas_choices(size)
+    }
+
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
     }
 
     pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
@@ -536,6 +569,13 @@ impl UserClaimInProgress2Ctx {
         &self.0.claimer_sas
     }
 
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
     pub async fn do_wait_peer_trust(self) -> Result<UserClaimInProgress3Ctx, ClaimInProgressError> {
         self.0
             .do_wait_peer_trust()
@@ -550,6 +590,13 @@ pub struct DeviceClaimInProgress2Ctx(BaseClaimInProgress2Ctx);
 impl DeviceClaimInProgress2Ctx {
     pub fn claimer_sas(&self) -> &SASCode {
         &self.0.claimer_sas
+    }
+
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
     }
 
     pub async fn do_wait_peer_trust(
@@ -629,6 +676,13 @@ impl BaseClaimInProgress3Ctx {
 pub struct UserClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 
 impl UserClaimInProgress3Ctx {
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
     pub async fn do_claim_user(
         self,
         requested_device_label: DeviceLabel,
@@ -712,6 +766,13 @@ impl UserClaimInProgress3Ctx {
 pub struct DeviceClaimInProgress3Ctx(BaseClaimInProgress3Ctx);
 
 impl DeviceClaimInProgress3Ctx {
+    pub fn canceller_ctx(&self) -> ClaimCancellerCtx {
+        ClaimCancellerCtx {
+            greeting_attempt: self.0.greeting_attempt,
+            cmds: self.0.cmds.clone(),
+        }
+    }
+
     pub async fn do_claim_device(
         self,
         requested_device_label: DeviceLabel,
