@@ -10,7 +10,9 @@ function getStripeApiKey(): { key: string; mode: EnvironmentType } {
   if (import.meta.env[STRIPE_ENV_VARIABLE]) {
     return {
       key: import.meta.env[STRIPE_ENV_VARIABLE],
-      mode: (import.meta.env[STRIPE_ENV_VARIABLE] as string).startsWith('pk_live_') ? EnvironmentType.Production : EnvironmentType.Development,
+      mode: (import.meta.env[STRIPE_ENV_VARIABLE] as string).startsWith('pk_live_')
+        ? EnvironmentType.Production
+        : EnvironmentType.Development,
     };
   }
   return { key: DEFAULT_STRIPE_API_KEY, mode: EnvironmentType.Development };
