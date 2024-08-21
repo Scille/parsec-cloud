@@ -426,12 +426,13 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress2Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_signify_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
 
@@ -446,7 +447,12 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -454,12 +460,13 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress2Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_signify_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
 
@@ -474,7 +481,12 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -491,12 +503,13 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserClaimInProgress3Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer_trust().await?;
 
         let new_handle = register_handle(HandleItem::UserClaimInProgress3(ctx));
@@ -507,7 +520,12 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -515,12 +533,13 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceClaimInProgress3Info, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceClaimInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer_trust().await?;
 
         let new_handle = register_handle(HandleItem::DeviceClaimInProgress3(ctx));
@@ -531,7 +550,12 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -548,12 +572,13 @@ pub async fn claimer_user_in_progress_3_do_claim(
     requested_device_label: DeviceLabel,
     requested_human_handle: HumanHandle,
 ) -> Result<UserClaimFinalizeInfo, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserClaimInProgress3(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx
             .do_claim_user(requested_device_label, requested_human_handle)
             .await?;
@@ -566,7 +591,12 @@ pub async fn claimer_user_in_progress_3_do_claim(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -575,12 +605,13 @@ pub async fn claimer_device_in_progress_3_do_claim(
     handle: Handle,
     requested_device_label: DeviceLabel,
 ) -> Result<DeviceClaimFinalizeInfo, ClaimInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceClaimInProgress3(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceClaimInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_claim_device(requested_device_label).await?;
 
         let new_handle = register_handle(HandleItem::DeviceClaimFinalize(ctx));
@@ -591,7 +622,12 @@ pub async fn claimer_device_in_progress_3_do_claim(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(ClaimInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1007,12 +1043,13 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress2Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserGreetInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
         let claimer_sas_choices = ctx.generate_claimer_sas_choices(4);
@@ -1029,7 +1066,12 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1037,12 +1079,13 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress2Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress1(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceGreetInProgress1(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_wait_peer_trust().await?;
         let claimer_sas = ctx.claimer_sas().to_owned();
         let claimer_sas_choices = ctx.generate_claimer_sas_choices(4);
@@ -1059,7 +1102,12 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1121,12 +1169,13 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress3Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserGreetInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_signify_trust().await?;
 
         let new_handle = register_handle(HandleItem::UserGreetInProgress3(ctx));
@@ -1137,7 +1186,12 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1145,12 +1199,13 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress3Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceGreetInProgress2(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_signify_trust().await?;
 
         let new_handle = register_handle(HandleItem::DeviceGreetInProgress3(ctx));
@@ -1161,7 +1216,12 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1177,12 +1237,13 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
     canceller: Handle,
     handle: Handle,
 ) -> Result<UserGreetInProgress4Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress3(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserGreetInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_get_claim_requests().await?;
         let requested_human_handle = ctx.requested_human_handle.clone();
         let requested_device_label = ctx.requested_device_label.clone();
@@ -1199,7 +1260,12 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1207,12 +1273,13 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
     canceller: Handle,
     handle: Handle,
 ) -> Result<DeviceGreetInProgress4Info, GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress3(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceGreetInProgress3(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         let ctx = ctx.do_get_claim_requests().await?;
         let requested_device_label = ctx.requested_device_label.clone();
 
@@ -1227,7 +1294,12 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1249,12 +1321,13 @@ pub async fn greeter_user_in_progress_4_do_create(
     device_label: DeviceLabel,
     profile: UserProfile,
 ) -> Result<(), GreetInProgressError> {
-    let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::UserGreetInProgress4(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserGreetInProgress4(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
 
+    let work = async {
         ctx.do_create_new_user(device_label, human_handle, profile)
             .await?;
 
@@ -1264,7 +1337,12 @@ pub async fn greeter_user_in_progress_4_do_create(
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
 
@@ -1273,20 +1351,25 @@ pub async fn greeter_device_in_progress_4_do_create(
     handle: Handle,
     device_label: DeviceLabel,
 ) -> Result<(), GreetInProgressError> {
+    let ctx = take_and_close_handle(handle, |x| match x {
+        HandleItem::DeviceGreetInProgress4(ctx) => Ok(ctx),
+        invalid => Err(invalid),
+    })?;
+    let canceller_ctx = ctx.canceller_ctx();
+
     let work = async {
-        let ctx = take_and_close_handle(handle, |x| match x {
-            HandleItem::DeviceGreetInProgress4(ctx) => Ok(ctx),
-            invalid => Err(invalid),
-        })?;
-
         ctx.do_create_new_device(device_label).await?;
-
         Ok(())
     };
 
     let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
     libparsec_platform_async::select2_biased!(
         res = work => res,
-        _ = cancel_requested => Err(GreetInProgressError::Cancelled),
+        _ = cancel_requested => {
+            if canceller_ctx.cancel().await.is_err(){
+                // TODO: Warn about the error before discarding it
+            }
+            Err(GreetInProgressError::Cancelled)
+        },
     )
 }
