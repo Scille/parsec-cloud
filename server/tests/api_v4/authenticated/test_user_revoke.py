@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Awaitable, Callable
+
 import pytest
 
 from parsec._parsec import (
@@ -7,13 +9,11 @@ from parsec._parsec import (
     DeviceID,
     RevokedUserCertificate,
     UserID,
+    UserProfile,
+    UserUpdateCertificate,
     authenticated_cmds,
 )
 from parsec.events import EventUserRevokedOrFrozen
-from tests.api_v4.authenticated.test_user_create import (
-    generate_new_mike_device_certificates,
-    generate_new_mike_user_certificates,
-)
 from tests.common import Backend, CoolorgRpcClients, RpcTransportError
 
 
@@ -206,49 +206,51 @@ async def test_authenticated_user_revoke_timestamp_out_of_ballpark(
     assert rep.client_timestamp == t0
 
 
-@pytest.mark.parametrize("kind", ("same_timestamp", "previous_timestamp"))
+@pytest.mark.parametrize("timestamp_kind", ("same_timestamp", "previous_timestamp"))
 async def test_authenticated_user_revoke_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    kind: str,
+    timestamp_kind: str,
+    alice_generated_data: Callable[[DateTime], Awaitable[None]],
 ) -> None:
+    # 0) Bob must become ADMIN to be able to revoke Alice
+
+    certif = UserUpdateCertificate(
+        author=coolorg.alice.device_id,
+        new_profile=UserProfile.ADMIN,
+        user_id=coolorg.bob.user_id,
+        timestamp=DateTime.now(),
+    )
+    await backend.user.update_user(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+    )
+
+    # 1) Alice creates some data (e.g. certificate, vlob) with a given timestamp
+
     now = DateTime.now()
-    match kind:
+    match timestamp_kind:
         case "same_timestamp":
-            revoked_user_timestamp = now
+            user_revoke_timestamp = now
         case "previous_timestamp":
-            revoked_user_timestamp = now.subtract(seconds=1)
+            user_revoke_timestamp = now.subtract(seconds=1)
         case unknown:
             assert False, unknown
 
-    # 1) Create a certificate in the organization
+    await alice_generated_data(now)
 
-    user_certif, redacted_user_certif = generate_new_mike_user_certificates(coolorg.alice, now)
-    device_certif, redacted_device_certif = generate_new_mike_device_certificates(
-        coolorg.alice, now
-    )
-
-    await backend.user.create_user(
-        organization_id=coolorg.organization_id,
-        now=now,
-        author=coolorg.alice.device_id,
-        author_verify_key=coolorg.alice.signing_key.verify_key,
-        user_certificate=user_certif,
-        device_certificate=device_certif,
-        redacted_user_certificate=redacted_user_certif,
-        redacted_device_certificate=redacted_device_certif,
-    )
-
-    # 2) Create revoke user certificate where timestamp is clashing
-    #    with the previous certificate
+    # 2) Bob revokes Alice, but at a timestamp that would make Alice's previous data invalid !
 
     certif = RevokedUserCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=revoked_user_timestamp,
-        user_id=coolorg.bob.user_id,
-    ).dump_and_sign(coolorg.alice.signing_key)
+        author=coolorg.bob.device_id,
+        timestamp=user_revoke_timestamp,
+        user_id=coolorg.alice.user_id,
+    ).dump_and_sign(coolorg.bob.signing_key)
 
-    rep = await coolorg.alice.user_revoke(revoked_user_certificate=certif)
+    rep = await coolorg.bob.user_revoke(revoked_user_certificate=certif)
     assert rep == authenticated_cmds.v4.user_revoke.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
