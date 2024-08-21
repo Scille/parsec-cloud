@@ -54,9 +54,10 @@
     <div class="topbar-right">
       <ion-buttons class="topbar-buttons">
         <!-- contact button -->
+
         <ion-button
           class="topbar-buttons__item"
-          :disabled="true"
+          @click="contactClicked"
         >
           <ion-icon :icon="chatbubbles" />
           {{ $msTranslate('HomePage.topbar.contactUs') }}
@@ -85,7 +86,7 @@
 </template>
 
 <script setup lang="ts">
-import { LogoRowWhite, MsImage } from 'megashark-lib';
+import { I18n, LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle, sparkles } from 'ionicons/icons';
 import { isElectron } from '@/parsec';
@@ -93,6 +94,7 @@ import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistr
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Answer, askQuestion } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
+import { Env } from '@/services/environment';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
@@ -134,6 +136,10 @@ defineEmits<{
   (e: 'backClick'): void;
   (e: 'customerAreaClick'): void;
 }>();
+
+async function contactClicked(): Promise<void> {
+  window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
+}
 </script>
 
 <style lang="scss" scoped>
