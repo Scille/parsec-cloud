@@ -69,6 +69,44 @@ impl From<ConnectionError> for ClaimInProgressError {
     }
 }
 
+// Cancel greeting attempt helper
+
+async fn cancel_greeting_attempt(
+    cmds: &InvitedCmds,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
+) -> Result<(), ClaimInProgressError> {
+    use invited_cmds::latest::invite_claimer_cancel_greeting_attempt::{Rep, Req};
+
+    let req = Req {
+        greeting_attempt,
+        reason,
+    };
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok => Ok(()),
+        // Expected errors
+        Rep::GreeterNotAllowed => Err(ClaimInProgressError::GreeterNotAllowed),
+        Rep::GreeterRevoked => Err(ClaimInProgressError::GreeterNotAllowed),
+        Rep::GreetingAttemptAlreadyCancelled {
+            origin,
+            reason,
+            timestamp,
+        } => Err(ClaimInProgressError::GreetingAttemptCancelled {
+            origin,
+            reason,
+            timestamp,
+        }),
+        // Unexpected errors
+        Rep::GreetingAttemptNotFound => Err(anyhow::anyhow!("Greeting attempt not found").into()),
+        Rep::GreetingAttemptNotJoined => Err(anyhow::anyhow!("Greeting attempt not joined").into()),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
 // Greeter step helper
 
 static STEP_THROTTLE: Duration = Duration::milliseconds(100);
@@ -608,8 +646,25 @@ impl UserClaimInProgress3Ctx {
             human_handle,
             profile,
             root_verify_key,
-        } = InviteUserConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key)
-            .map_err(ClaimInProgressError::CorruptedConfirmation)?;
+        } = match InviteUserConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key) {
+            Ok(data) => data,
+            Err(err) => {
+                let reason = match err {
+                    DataError::Decryption => CancelledGreetingAttemptReason::UndecipherablePayload,
+                    DataError::BadSerialization { .. } => {
+                        CancelledGreetingAttemptReason::UndeserializablePayload
+                    }
+                    _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                };
+                if cancel_greeting_attempt(&self.0.cmds, self.0.greeting_attempt, reason)
+                    .await
+                    .is_err()
+                {
+                    // TODO: Warn about the error before discarding it
+                };
+                return Err(ClaimInProgressError::CorruptedConfirmation(err));
+            }
+        };
 
         let addr = self.0.cmds.addr();
 
@@ -674,8 +729,25 @@ impl DeviceClaimInProgress3Ctx {
             user_realm_key,
             root_verify_key,
             ..
-        } = InviteDeviceConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key)
-            .map_err(ClaimInProgressError::CorruptedConfirmation)?;
+        } = match InviteDeviceConfirmation::decrypt_and_load(&payload, &self.0.shared_secret_key) {
+            Ok(data) => data,
+            Err(err) => {
+                let reason = match err {
+                    DataError::Decryption => CancelledGreetingAttemptReason::UndecipherablePayload,
+                    DataError::BadSerialization { .. } => {
+                        CancelledGreetingAttemptReason::UndeserializablePayload
+                    }
+                    _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                };
+                if cancel_greeting_attempt(&self.0.cmds, self.0.greeting_attempt, reason)
+                    .await
+                    .is_err()
+                {
+                    // TODO: Warn about the error before discarding it
+                };
+                return Err(ClaimInProgressError::CorruptedConfirmation(err));
+            }
+        };
 
         let addr = self.0.cmds.addr();
 
