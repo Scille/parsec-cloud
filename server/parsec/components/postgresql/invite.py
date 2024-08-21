@@ -316,6 +316,32 @@ LIMIT 1
 """
 )
 
+_q_lock = Q(
+    # Use 66 as magic number to represent invitation creation lock
+    # (note this is not strictly needed right now given there is no other
+    # advisory lock in the application, but may avoid weird error if we
+    # introduce a new advisory lock while forgetting about this one)
+    "SELECT pg_advisory_xact_lock(66, _id) FROM organization WHERE organization_id = $organization_id"
+)
+
+
+async def q_take_invitation_create_write_lock(
+    conn: AsyncpgConnection, organization_id: OrganizationID
+) -> None:
+    """
+    Only a single active invitation for a given email is allowed.
+
+    However we cannot enforce this purely in PostgreSQL (e.g. with a unique index)
+    since removing an invitation is not done by deleting its row but by setting
+    its `deleted_on` column.
+
+    So the easy way to solve this is to get rid of the concurrency altogether
+    (considering invitation creation is far from being performance intensive !)
+    by requesting a per-organization PostgreSQL Advisory Lock to be held before
+    the invitation creation procedure starts any checks involving the invitations.
+    """
+    await conn.execute(*_q_lock(organization_id=organization_id.str))
+
 
 async def query_retrieve_active_human_by_email(
     conn: AsyncpgConnection, organization_id: OrganizationID, email: str
@@ -359,6 +385,9 @@ async def _do_new_user_or_device_invitation(
             )
         case _:
             assert False, "No other invitation type for the moment"
+
+    # Take lock to prevent any concurrent invitation creation
+    await q_take_invitation_create_write_lock(conn, organization_id)
 
     # Check if no compatible invitations already exists
     row = await conn.fetchrow(*q)
