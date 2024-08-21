@@ -2,7 +2,7 @@
 
 from typing import override
 
-from parsec._parsec import DeviceID, OrganizationID, UserID, VerifyKey, authenticated_cmds
+from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID, VerifyKey, authenticated_cmds
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -68,6 +68,7 @@ class MemoryShamirComponent(BaseShamirComponent):
     @override
     async def add_recovery_setup(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: UserID,
         device: DeviceID,
@@ -88,7 +89,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             case error:
                 return error
 
-        match shamir_add_recovery_setup_validate(setup, device, author, author_verify_key):
+        match shamir_add_recovery_setup_validate(now, setup, device, author, author_verify_key):
             case (brief, shares):
                 pass
             case error:

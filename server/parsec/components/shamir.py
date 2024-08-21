@@ -37,11 +37,12 @@ class BaseShamirComponent:
             return authenticated_cmds.latest.shamir_recovery_setup.RepOk()
         else:
             match await self.add_recovery_setup(
-                client_ctx.organization_id,
-                client_ctx.user_id,
-                client_ctx.device_id,
-                client_ctx.device_verify_key,
-                req.setup,
+                now=DateTime.now(),
+                organization_id=client_ctx.organization_id,
+                author=client_ctx.user_id,
+                device=client_ctx.device_id,
+                author_verify_key=client_ctx.device_verify_key,
+                setup=req.setup,
             ):
                 case None:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepOk()
@@ -106,6 +107,7 @@ class BaseShamirComponent:
 
     async def add_recovery_setup(
         self,
+        now: DateTime,
         organization_id: OrganizationID,
         author: UserID,
         device: DeviceID,
@@ -152,6 +154,7 @@ class ShamirInvalidRecipientBadOutcome(BadOutcome):
 
 # Check internal consistency of certificate
 def shamir_add_recovery_setup_validate(
+    now: DateTime,
     setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup,
     author: DeviceID,
     user_id: UserID,
@@ -169,7 +172,7 @@ def shamir_add_recovery_setup_validate(
     except ValueError:
         return ShamirAddRecoverySetupValidateBadOutcome.BRIEF_INVALID_DATA
 
-    match timestamps_in_the_ballpark(brief_certificate.timestamp, DateTime.now()):
+    match timestamps_in_the_ballpark(brief_certificate.timestamp, now):
         case TimestampOutOfBallpark() as error:
             return error
         case _:
