@@ -30,18 +30,27 @@ if (Test-Path -Path upload) {
 }
 New-Item "upload" -Type Directory | Out-Null
 
-# Loop over `.exe` and `.exe.blockmap` files
-Get-ChildItem "dist" -Filter "Parsec*.exe*" |
+# Rename `latest.yml` file to include architecture
+Copy-Item dist\latest.yml dist\latest-win-x86_64.yml
+
+# Loop over 3 files:
+# - Parsec_<version>_win_x86_64.exe
+# - Parsec_<version>_win_x86_64.exe.blockmap
+# - latest-win-x86_64.yml
+Get-ChildItem "dist\*" -Include "Parsec*.exe*","latest-win*.yml" |
 Foreach-Object {
+    $Source = $_.FullName
+    $Destination = Join-Path ".\upload" $_.Name
+    $DestinationSha256 = $Destination + ".sha256"
 
     # Copy file to upload directory
-    Copy-Item $_.FullName upload\$_
+    Copy-Item $Source $Destination
 
     # Create the .sha256 file without line feed
-    (Get-FileHash $_.FullName).Hash | Out-File -Encoding "ASCII" -NoNewline upload\$_.sha256
+    (Get-FileHash $Source).Hash | Out-File -Encoding "ASCII" -NoNewline $DestinationSha256
 
     # Add a `\n` to the end of the .sha256 file
-    Add-Content -Value "`n" -NoNewline upload\$_.sha256
+    Add-Content -Value "`n" -NoNewline $DestinationSha256
 }
 
 # Output the items to upload
