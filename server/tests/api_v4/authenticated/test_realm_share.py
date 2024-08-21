@@ -1,5 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Awaitable, Callable
+
 import pytest
 
 from parsec._parsec import (
@@ -460,48 +462,60 @@ async def test_authenticated_realm_share_timestamp_out_of_ballpark(
     assert rep.client_timestamp == timestamp_out_of_ballpark
 
 
-@pytest.mark.parametrize(
-    "timestamp_offset",
-    (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
-)
+@pytest.mark.parametrize("timestamp_kind", ("same_timestamp", "previous_timestamp"))
 async def test_authenticated_realm_share_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_share_mallory_certificate: RealmRoleCertificate,
-    timestamp_offset: int,
+    timestamp_kind: str,
+    alice_generated_realm_wksp1_data: Callable[[DateTime], Awaitable[None]],
 ) -> None:
-    last_certificate_timestamp = DateTime.now()
-    same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
+    # 0) Bob must become OWNER to be able to share with Alice
 
-    # 1) Create a new certificate in the realm
-
-    certif = patch_realm_role_certificate(
-        alice_share_mallory_certificate, timestamp=last_certificate_timestamp
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.bob.user_id,
+        timestamp=DateTime.now(),
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.OWNER,
     )
-    outcome = await backend.realm.share(
-        now=last_certificate_timestamp,
+    await backend.realm.share(
+        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
         key_index=1,
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
-        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+        recipient_keys_bundle_access=b"<bob keys bundle access>",
     )
-    assert isinstance(outcome, RealmRoleCertificate)
 
-    # 2) Try to share the realm with same or previous timestamp
+    # 1) Create some data (e.g. certificate, vlob) with a given timestamp
 
-    certif = patch_realm_role_certificate(
-        alice_share_mallory_certificate,
-        timestamp=same_or_previous_timestamp,
-        role=RealmRole.CONTRIBUTOR,
+    now = DateTime.now()
+    match timestamp_kind:
+        case "same_timestamp":
+            realm_unshare_timestamp = now
+        case "previous_timestamp":
+            realm_unshare_timestamp = now.subtract(seconds=1)
+        case unknown:
+            assert False, unknown
+
+    await alice_generated_realm_wksp1_data(now)
+
+    # 2) Create realm unshare certificate where timestamp is clashing with the previous data
+
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=realm_unshare_timestamp,
+        realm_id=coolorg.wksp1_id,
+        user_id=coolorg.bob.user_id,
+        role=RealmRole.READER,
     )
     rep = await coolorg.alice.realm_share(
         key_index=1,
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         # Keys bundle access is not readable by the server, so we can put anything here
-        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+        recipient_keys_bundle_access=b"<alice keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepRequireGreaterTimestamp(
-        strictly_greater_than=last_certificate_timestamp
+        strictly_greater_than=now
     )
