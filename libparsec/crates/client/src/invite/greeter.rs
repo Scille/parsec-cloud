@@ -262,6 +262,45 @@ impl From<ConnectionError> for GreetInProgressError {
     }
 }
 
+// Cancel greeting attempt helper
+
+async fn cancel_greeting_attempt(
+    cmds: &AuthenticatedCmds,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
+) -> Result<(), GreetInProgressError> {
+    use authenticated_cmds::latest::invite_greeter_cancel_greeting_attempt::{Rep, Req};
+
+    let req = Req {
+        greeting_attempt,
+        reason,
+    };
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok => Ok(()),
+        // Expected errors
+        Rep::InvitationCompleted => Err(GreetInProgressError::AlreadyDeleted),
+        Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
+        Rep::AuthorNotAllowed => Err(GreetInProgressError::GreeterNotAllowed),
+        Rep::GreetingAttemptAlreadyCancelled {
+            origin,
+            reason,
+            timestamp,
+        } => Err(GreetInProgressError::GreetingAttemptCancelled {
+            origin,
+            reason,
+            timestamp,
+        }),
+        // Unexpected errors
+        Rep::GreetingAttemptNotFound => Err(anyhow::anyhow!("Greeting attempt not found").into()),
+        Rep::GreetingAttemptNotJoined => Err(anyhow::anyhow!("Greeting attempt not joined").into()),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
 // Greeter step helper
 
 static STEP_THROTTLE: Duration = Duration::milliseconds(100);
@@ -436,6 +475,16 @@ impl BaseGreetInitialCtx {
         };
 
         if HashDigest::from_data(&claimer_nonce) != claimer_hashed_nonce {
+            if cancel_greeting_attempt(
+                &self.cmds,
+                greeting_attempt,
+                CancelledGreetingAttemptReason::InvalidNonceHash,
+            )
+            .await
+            .is_err()
+            {
+                // TODO: Warn about the error before discarding it
+            };
             return Err(GreetInProgressError::NonceMismatch);
         }
 
@@ -746,8 +795,25 @@ impl DeviceGreetInProgress3Ctx {
     ) -> Result<DeviceGreetInProgress4Ctx, GreetInProgressError> {
         let ctx = self.0.do_get_claim_requests().await?;
 
-        let data = InviteDeviceData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key)
-            .map_err(GreetInProgressError::CorruptedInviteUserData)?;
+        let data = match InviteDeviceData::decrypt_and_load(&ctx.payload, &ctx.shared_secret_key) {
+            Ok(data) => data,
+            Err(err) => {
+                let reason = match err {
+                    DataError::Decryption => CancelledGreetingAttemptReason::UndecipherablePayload,
+                    DataError::BadSerialization { .. } => {
+                        CancelledGreetingAttemptReason::UndeserializablePayload
+                    }
+                    _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                };
+                if cancel_greeting_attempt(&ctx.cmds, ctx.greeting_attempt, reason)
+                    .await
+                    .is_err()
+                {
+                    // TODO: Warn about the error before discarding it
+                };
+                return Err(GreetInProgressError::CorruptedInviteUserData(err));
+            }
+        };
 
         Ok(DeviceGreetInProgress4Ctx {
             token: ctx.token,
