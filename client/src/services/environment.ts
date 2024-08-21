@@ -3,6 +3,7 @@
 import { EnvironmentType } from 'megashark-lib';
 
 const STRIPE_ENV_VARIABLE = 'VITE_STRIPE_API_KEY';
+// cspell:disable-next-line
 const DEFAULT_STRIPE_API_KEY = 'pk_live_5hF9sn4DLUTYWx9uWPDJv51s00Q8ktUVfI';
 
 function getStripeApiKey(): { key: string; mode: EnvironmentType } {
