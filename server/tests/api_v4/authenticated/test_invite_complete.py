@@ -1,15 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import pytest
 
 from parsec._parsec import InvitationToken, authenticated_cmds
 from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
-
-
-# TODO: Remove once PostgreSQL is supported
-@pytest.fixture(autouse=True)
-def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
-    pass
 
 
 async def test_authenticated_invite_complete_ok(coolorg: CoolorgRpcClients) -> None:
