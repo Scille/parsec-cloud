@@ -7,6 +7,70 @@
 #[allow(unused_imports)]
 use neon::{prelude::*, types::buffer::TypedArray};
 
+// CancelledGreetingAttemptReason
+
+#[allow(dead_code)]
+fn enum_cancelled_greeting_attempt_reason_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::CancelledGreetingAttemptReason> {
+    match raw_value {
+        "CancelledGreetingAttemptReasonAutomaticallyCancelled" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::AutomaticallyCancelled)
+        }
+        "CancelledGreetingAttemptReasonInconsistentPayload" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::InconsistentPayload)
+        }
+        "CancelledGreetingAttemptReasonInvalidNonceHash" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::InvalidNonceHash)
+        }
+        "CancelledGreetingAttemptReasonInvalidSasCode" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::InvalidSasCode)
+        }
+        "CancelledGreetingAttemptReasonManuallyCancelled" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::ManuallyCancelled)
+        }
+        "CancelledGreetingAttemptReasonUndecipherablePayload" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::UndecipherablePayload)
+        }
+        "CancelledGreetingAttemptReasonUndeserializablePayload" => {
+            Ok(libparsec::CancelledGreetingAttemptReason::UndeserializablePayload)
+        }
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum CancelledGreetingAttemptReason"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_cancelled_greeting_attempt_reason_rs_to_js(
+    value: libparsec::CancelledGreetingAttemptReason,
+) -> &'static str {
+    match value {
+        libparsec::CancelledGreetingAttemptReason::AutomaticallyCancelled => {
+            "CancelledGreetingAttemptReasonAutomaticallyCancelled"
+        }
+        libparsec::CancelledGreetingAttemptReason::InconsistentPayload => {
+            "CancelledGreetingAttemptReasonInconsistentPayload"
+        }
+        libparsec::CancelledGreetingAttemptReason::InvalidNonceHash => {
+            "CancelledGreetingAttemptReasonInvalidNonceHash"
+        }
+        libparsec::CancelledGreetingAttemptReason::InvalidSasCode => {
+            "CancelledGreetingAttemptReasonInvalidSasCode"
+        }
+        libparsec::CancelledGreetingAttemptReason::ManuallyCancelled => {
+            "CancelledGreetingAttemptReasonManuallyCancelled"
+        }
+        libparsec::CancelledGreetingAttemptReason::UndecipherablePayload => {
+            "CancelledGreetingAttemptReasonUndecipherablePayload"
+        }
+        libparsec::CancelledGreetingAttemptReason::UndeserializablePayload => {
+            "CancelledGreetingAttemptReasonUndeserializablePayload"
+        }
+    }
+}
+
 // DeviceFileType
 
 #[allow(dead_code)]
@@ -32,6 +96,30 @@ fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static 
         libparsec::DeviceFileType::Password => "DeviceFileTypePassword",
         libparsec::DeviceFileType::Recovery => "DeviceFileTypeRecovery",
         libparsec::DeviceFileType::Smartcard => "DeviceFileTypeSmartcard",
+    }
+}
+
+// GreeterOrClaimer
+
+#[allow(dead_code)]
+fn enum_greeter_or_claimer_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::GreeterOrClaimer> {
+    match raw_value {
+        "GreeterOrClaimerClaimer" => Ok(libparsec::GreeterOrClaimer::Claimer),
+        "GreeterOrClaimerGreeter" => Ok(libparsec::GreeterOrClaimer::Greeter),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum GreeterOrClaimer"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_greeter_or_claimer_rs_to_js(value: libparsec::GreeterOrClaimer) -> &'static str {
+    match value {
+        libparsec::GreeterOrClaimer::Claimer => "GreeterOrClaimerClaimer",
+        libparsec::GreeterOrClaimer::Greeter => "GreeterOrClaimerGreeter",
     }
 }
 
@@ -2533,19 +2621,32 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "ClaimInProgressErrorCancelled").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClaimInProgressErrorCorruptedConfirmation").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClaimInProgressError::GreeterNotAllowed { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClaimInProgressErrorGreeterNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::GreetingAttemptCancelled {
-            origin: _,
-            reason: _,
+            origin,
+            reason,
             timestamp,
+            ..
         } => {
             let js_tag = JsString::try_new(cx, "ClaimInProgressErrorGreetingAttemptCancelled")
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
+            let js_origin =
+                JsString::try_new(cx, enum_greeter_or_claimer_rs_to_js(origin)).or_throw(cx)?;
+            js_obj.set(cx, "origin", js_origin)?;
+            let js_reason =
+                JsString::try_new(cx, enum_cancelled_greeting_attempt_reason_rs_to_js(reason))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "reason", js_reason)?;
             let js_timestamp = JsNumber::new(cx, {
                 let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
                     Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
@@ -2556,11 +2657,6 @@ fn variant_claim_in_progress_error_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "timestamp", js_timestamp)?;
-        }
-        libparsec::ClaimInProgressError::CorruptedConfirmation { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ClaimInProgressErrorCorruptedConfirmation").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ClaimInProgressError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ClaimInProgressErrorInternal").or_throw(cx)?;
@@ -4510,6 +4606,38 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
                 JsString::try_new(cx, "GreetInProgressErrorDeviceAlreadyExists").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::GreetInProgressError::GreeterNotAllowed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "GreetInProgressErrorGreeterNotAllowed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::GreetInProgressError::GreetingAttemptCancelled {
+            origin,
+            reason,
+            timestamp,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "GreetInProgressErrorGreetingAttemptCancelled")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_origin =
+                JsString::try_new(cx, enum_greeter_or_claimer_rs_to_js(origin)).or_throw(cx)?;
+            js_obj.set(cx, "origin", js_origin)?;
+            let js_reason =
+                JsString::try_new(cx, enum_cancelled_greeting_attempt_reason_rs_to_js(reason))
+                    .or_throw(cx)?;
+            js_obj.set(cx, "reason", js_reason)?;
+            let js_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "timestamp", js_timestamp)?;
+        }
         libparsec::GreetInProgressError::HumanHandleAlreadyTaken { .. } => {
             let js_tag = JsString::try_new(cx, "GreetInProgressErrorHumanHandleAlreadyTaken")
                 .or_throw(cx)?;
@@ -4587,30 +4715,6 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
             let js_tag =
                 JsString::try_new(cx, "GreetInProgressErrorUserCreateNotAllowed").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::GreetInProgressError::GreeterNotAllowed { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "GreetInProgressErrorGreeterNotAllowed").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-        }
-        libparsec::GreetInProgressError::GreetingAttemptCancelled {
-            origin: _,
-            reason: _,
-            timestamp,
-        } => {
-            let js_tag =
-                JsString::try_new(cx, "GreetInProgressErrorTimestampOutOfBallpark").or_throw(cx)?;
-            js_obj.set(cx, "tag", js_tag)?;
-            let js_timestamp = JsNumber::new(cx, {
-                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
-                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
-                };
-                match custom_to_rs_f64(timestamp) {
-                    Ok(ok) => ok,
-                    Err(err) => return cx.throw_type_error(err),
-                }
-            });
-            js_obj.set(cx, "timestamp", js_timestamp)?;
         }
     }
     Ok(js_obj)

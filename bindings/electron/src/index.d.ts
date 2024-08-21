@@ -9,11 +9,26 @@ export type Result<T, E = Error> =
   | { ok: true; value: T }
   | { ok: false; error: E }
 
+export enum CancelledGreetingAttemptReason {
+    AutomaticallyCancelled = 'CancelledGreetingAttemptReasonAutomaticallyCancelled',
+    InconsistentPayload = 'CancelledGreetingAttemptReasonInconsistentPayload',
+    InvalidNonceHash = 'CancelledGreetingAttemptReasonInvalidNonceHash',
+    InvalidSasCode = 'CancelledGreetingAttemptReasonInvalidSasCode',
+    ManuallyCancelled = 'CancelledGreetingAttemptReasonManuallyCancelled',
+    UndecipherablePayload = 'CancelledGreetingAttemptReasonUndecipherablePayload',
+    UndeserializablePayload = 'CancelledGreetingAttemptReasonUndeserializablePayload',
+}
+
 export enum DeviceFileType {
     Keyring = 'DeviceFileTypeKeyring',
     Password = 'DeviceFileTypePassword',
     Recovery = 'DeviceFileTypeRecovery',
     Smartcard = 'DeviceFileTypeSmartcard',
+}
+
+export enum GreeterOrClaimer {
+    Claimer = 'GreeterOrClaimerClaimer',
+    Greeter = 'GreeterOrClaimerGreeter',
 }
 
 export enum InvitationEmailSentStatus {
@@ -352,6 +367,17 @@ export interface ClaimInProgressErrorCorruptedConfirmation {
     tag: "CorruptedConfirmation"
     error: string
 }
+export interface ClaimInProgressErrorGreeterNotAllowed {
+    tag: "GreeterNotAllowed"
+    error: string
+}
+export interface ClaimInProgressErrorGreetingAttemptCancelled {
+    tag: "GreetingAttemptCancelled"
+    error: string
+    origin: GreeterOrClaimer
+    reason: CancelledGreetingAttemptReason
+    timestamp: number
+}
 export interface ClaimInProgressErrorInternal {
     tag: "Internal"
     error: string
@@ -377,6 +403,8 @@ export type ClaimInProgressError =
   | ClaimInProgressErrorAlreadyUsed
   | ClaimInProgressErrorCancelled
   | ClaimInProgressErrorCorruptedConfirmation
+  | ClaimInProgressErrorGreeterNotAllowed
+  | ClaimInProgressErrorGreetingAttemptCancelled
   | ClaimInProgressErrorInternal
   | ClaimInProgressErrorNotFound
   | ClaimInProgressErrorOffline
@@ -1019,6 +1047,17 @@ export interface GreetInProgressErrorDeviceAlreadyExists {
     tag: "DeviceAlreadyExists"
     error: string
 }
+export interface GreetInProgressErrorGreeterNotAllowed {
+    tag: "GreeterNotAllowed"
+    error: string
+}
+export interface GreetInProgressErrorGreetingAttemptCancelled {
+    tag: "GreetingAttemptCancelled"
+    error: string
+    origin: GreeterOrClaimer
+    reason: CancelledGreetingAttemptReason
+    timestamp: number
+}
 export interface GreetInProgressErrorHumanHandleAlreadyTaken {
     tag: "HumanHandleAlreadyTaken"
     error: string
@@ -1065,6 +1104,8 @@ export type GreetInProgressError =
   | GreetInProgressErrorCancelled
   | GreetInProgressErrorCorruptedInviteUserData
   | GreetInProgressErrorDeviceAlreadyExists
+  | GreetInProgressErrorGreeterNotAllowed
+  | GreetInProgressErrorGreetingAttemptCancelled
   | GreetInProgressErrorHumanHandleAlreadyTaken
   | GreetInProgressErrorInternal
   | GreetInProgressErrorNonceMismatch

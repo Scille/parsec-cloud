@@ -141,6 +141,21 @@ class ClaimerRetrieveInfoError(ErrorVariant):
         pass
 
 
+class GreeterOrClaimer(Enum):
+    Greeter = EnumItemUnit
+    Claimer = EnumItemUnit
+
+
+class CancelledGreetingAttemptReason(Enum):
+    ManuallyCancelled = EnumItemUnit
+    InvalidNonceHash = EnumItemUnit
+    InvalidSasCode = EnumItemUnit
+    UndecipherablePayload = EnumItemUnit
+    UndeserializablePayload = EnumItemUnit
+    InconsistentPayload = EnumItemUnit
+    AutomaticallyCancelled = EnumItemUnit
+
+
 class ClaimInProgressError(ErrorVariant):
     class Offline:
         pass
@@ -159,6 +174,14 @@ class ClaimInProgressError(ErrorVariant):
 
     class ActiveUsersLimitReached:
         pass
+
+    class GreeterNotAllowed:
+        pass
+
+    class GreetingAttemptCancelled:
+        origin: GreeterOrClaimer
+        reason: CancelledGreetingAttemptReason
+        timestamp: DateTime
 
     class CorruptedConfirmation:
         pass
@@ -467,6 +490,14 @@ class GreetInProgressError(ErrorVariant):
 
     class UserCreateNotAllowed:
         pass
+
+    class GreeterNotAllowed:
+        pass
+
+    class GreetingAttemptCancelled:
+        origin: GreeterOrClaimer
+        reason: CancelledGreetingAttemptReason
+        timestamp: DateTime
 
     class CorruptedInviteUserData:
         pass
