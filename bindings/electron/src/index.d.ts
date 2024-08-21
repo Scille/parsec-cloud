@@ -2035,6 +2035,10 @@ export function claimerDeviceFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerDeviceInProgress1DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, ClaimInProgressError>>
 export function claimerDeviceInProgress1DoSignifyTrust(
     canceller: number,
     handle: number
@@ -2064,6 +2068,10 @@ export function claimerUserFinalizeSaveLocalDevice(
     handle: number,
     save_strategy: DeviceSaveStrategy
 ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+export function claimerUserInProgress1DoDenyTrust(
+    canceller: number,
+    handle: number
+): Promise<Result<null, ClaimInProgressError>>
 export function claimerUserInProgress1DoSignifyTrust(
     canceller: number,
     handle: number
