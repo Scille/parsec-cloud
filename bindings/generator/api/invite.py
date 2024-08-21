@@ -240,6 +240,18 @@ async def claimer_device_initial_do_wait_peer(
     raise NotImplementedError
 
 
+async def claimer_user_in_progress_1_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, ClaimInProgressError]:
+    raise NotImplementedError
+
+
+async def claimer_device_in_progress_1_do_deny_trust(
+    canceller: Handle, handle: Handle
+) -> Result[None, ClaimInProgressError]:
+    raise NotImplementedError
+
+
 class UserClaimInProgress2Info(Structure):
     handle: Handle
     claimer_sas: SASCode

@@ -421,6 +421,15 @@ impl BaseClaimInProgress1Ctx {
         SASCode::generate_sas_code_candidates(&self.greeter_sas, size)
     }
 
+    async fn do_deny_trust(&self) -> Result<(), ClaimInProgressError> {
+        cancel_greeting_attempt(
+            &self.cmds,
+            self.greeting_attempt,
+            CancelledGreetingAttemptReason::InvalidSasCode,
+        )
+        .await
+    }
+
     async fn do_signify_trust(self) -> Result<BaseClaimInProgress2Ctx, ClaimInProgressError> {
         let greeter_step = run_claimer_step_until_ready(
             &self.cmds,
@@ -455,6 +464,10 @@ impl UserClaimInProgress1Ctx {
         self.0.generate_greeter_sas_choices(size)
     }
 
+    pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
+        self.0.do_deny_trust().await
+    }
+
     pub async fn do_signify_trust(self) -> Result<UserClaimInProgress2Ctx, ClaimInProgressError> {
         self.0.do_signify_trust().await.map(UserClaimInProgress2Ctx)
     }
@@ -470,6 +483,10 @@ impl DeviceClaimInProgress1Ctx {
 
     pub fn generate_greeter_sas_choices(&self, size: usize) -> Vec<SASCode> {
         self.0.generate_greeter_sas_choices(size)
+    }
+
+    pub async fn do_deny_trust(self) -> Result<(), ClaimInProgressError> {
+        self.0.do_deny_trust().await
     }
 
     pub async fn do_signify_trust(self) -> Result<DeviceClaimInProgress2Ctx, ClaimInProgressError> {

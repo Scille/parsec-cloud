@@ -369,6 +369,48 @@ pub async fn claimer_device_initial_do_wait_peer(
     )
 }
 
+pub async fn claimer_user_in_progress_1_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), ClaimInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::UserClaimInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+    )
+}
+
+pub async fn claimer_device_in_progress_1_do_deny_trust(
+    canceller: Handle,
+    handle: Handle,
+) -> Result<(), ClaimInProgressError> {
+    let work = async {
+        let ctx = take_and_close_handle(handle, |x| match x {
+            HandleItem::DeviceClaimInProgress1(ctx) => Ok(ctx),
+            invalid => Err(invalid),
+        })?;
+
+        ctx.do_deny_trust().await?;
+        Ok(())
+    };
+
+    let (cancel_requested, _canceller_guard) = listen_canceller(canceller)?;
+    libparsec_platform_async::select2_biased!(
+        res = work => res,
+        _ = cancel_requested => Err(ClaimInProgressError::Cancelled),
+    )
+}
+
 pub struct UserClaimInProgress1Info {
     pub handle: Handle,
     pub greeter_sas: SASCode,

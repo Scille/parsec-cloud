@@ -2435,6 +2435,10 @@ export interface LibParsecPlugin {
         handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    claimerDeviceInProgress1DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, ClaimInProgressError>>
     claimerDeviceInProgress1DoSignifyTrust(
         canceller: Handle,
         handle: Handle
@@ -2464,6 +2468,10 @@ export interface LibParsecPlugin {
         handle: Handle,
         save_strategy: DeviceSaveStrategy
     ): Promise<Result<AvailableDevice, ClaimInProgressError>>
+    claimerUserInProgress1DoDenyTrust(
+        canceller: Handle,
+        handle: Handle
+    ): Promise<Result<null, ClaimInProgressError>>
     claimerUserInProgress1DoSignifyTrust(
         canceller: Handle,
         handle: Handle

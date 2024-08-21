@@ -7876,6 +7876,34 @@ pub fn claimerDeviceFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) 
     })
 }
 
+// claimer_device_in_progress_1_do_deny_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerDeviceInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_device_in_progress_1_do_deny_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // claimer_device_in_progress_1_do_signify_trust
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -8077,6 +8105,34 @@ pub fn claimerUserFinalizeSaveLocalDevice(handle: u32, save_strategy: Object) ->
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_claim_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// claimer_user_in_progress_1_do_deny_trust
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn claimerUserInProgress1DoDenyTrust(canceller: u32, handle: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::claimer_user_in_progress_1_do_deny_trust(canceller, handle).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
