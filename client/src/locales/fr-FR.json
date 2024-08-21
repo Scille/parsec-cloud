@@ -1209,7 +1209,7 @@
                 "invoices": "Factures",
                 "billingMethod": "Méthode de paiement",
                 "billingDetails": "Coordonnées de facturation",
-                "contracts": "Contrats"
+                "contract": "Contrat"
             },
             "help": {
                 "title": "Vous avez besoin d'aide ?",
@@ -1223,7 +1223,7 @@
         "header": {
             "titles": {
                 "billingDetails": "Coordonnées de facturation",
-                "contracts": "Contrats",
+                "contract": "Contrat",
                 "dashboard": "Tableau de bord",
                 "invoices": "Factures",
                 "paymentMethods": "Moyens de paiement",

@@ -244,7 +244,7 @@ function getTitleByPage(): Translatable {
     case ClientAreaPages.BillingDetails:
       return 'clientArea.header.titles.billingDetails';
     case ClientAreaPages.Contracts:
-      return 'clientArea.header.titles.contracts';
+      return 'clientArea.header.titles.contract';
     case ClientAreaPages.Dashboard:
       return 'clientArea.header.titles.dashboard';
     case ClientAreaPages.Invoices:
