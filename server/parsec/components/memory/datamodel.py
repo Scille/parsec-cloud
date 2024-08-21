@@ -50,6 +50,9 @@ TopicAndDiscriminant = (
     | Literal["sequester"]
     | tuple[Literal["realm"], VlobID]
     | tuple[Literal["shamir"], UserID]
+    # Not an actual topic, but it is convenient to have the locking on invitation create
+    # here since in practice it works similarly.
+    | Literal["invitation_create"]
 )
 
 
