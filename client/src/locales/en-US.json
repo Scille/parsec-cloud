@@ -1209,7 +1209,7 @@
                 "invoices": "Invoices",
                 "billingMethod": "Billing method",
                 "billingDetails": "Billing details",
-                "contracts": "Contracts"
+                "contracts": "Contract"
             },
             "help": {
                 "title": "Do you need any help?",
@@ -1223,7 +1223,7 @@
         "header": {
             "titles": {
                 "billingDetails": "Billing details",
-                "contracts": "Contracts",
+                "contract": "Contract",
                 "dashboard": "Dashboard",
                 "invoices": "Invoices",
                 "paymentMethods": "Payment methods",

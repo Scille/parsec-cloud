@@ -147,7 +147,7 @@
         v-if="(billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) && showMenu"
         class="menu-client-list"
       >
-        <!-- contracts -->
+        <!-- contract -->
         <ion-item
           button
           lines="none"
@@ -159,7 +159,7 @@
             class="menu-client-list-item__icon"
             :icon="grid"
           />
-          {{ $msTranslate('clientArea.sidebar.menu.contracts') }}
+          {{ $msTranslate('clientArea.sidebar.menu.contract') }}
         </ion-item>
 
         <!-- stats -->
