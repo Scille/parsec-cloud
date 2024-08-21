@@ -36,6 +36,7 @@ sentry = { workspace = true, features = [
 ] }
 sentry-log = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread"] }
+log = { workspace = true }
 
 [target.'cfg(target_os = "windows")'.build-dependencies]
 winfsp_wrs_build = { workspace = true }

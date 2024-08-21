@@ -31,6 +31,28 @@ fn init_sentry() {
 
 #[neon::main]
 pub fn main(mut cx: ModuleContext) -> NeonResult<()> {
-    env_logger::init();
+    let mut builder = env_logger::Builder::from_default_env();
+    // FIXME: This is a workaround to be able to get logs from libparsec
+    // Since electron seems to block stderr writes from libparsec.
+    // But only on unix system, on windows it works fine the logs are display on cmd.
+    #[cfg(target_family = "unix")]
+    let log_file_path = {
+        let now = libparsec::DateTime::now();
+        let log_filename = format!("libparsec-{}.log", now.to_rfc3339());
+        let log_file_path = std::env::temp_dir().join(log_filename);
+        let log_file = std::fs::OpenOptions::new()
+            .create(true)
+            .write(true)
+            .truncate(true)
+            .open(&log_file_path)
+            .expect("Cannot open log file");
+        builder.target(env_logger::Target::Pipe(Box::new(log_file)));
+        log_file_path
+    };
+    builder.init();
+
+    #[cfg(target_family = "unix")]
+    log::info!("Writing log to {}", log_file_path.display());
+
     meths::register_meths(&mut cx)
 }

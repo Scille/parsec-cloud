@@ -24,6 +24,12 @@ pub enum DatetimeFromTimestampMicrosError {
 }
 
 impl DateTime {
+    /// Create a `DateTime` at the current time.
+    pub fn now() -> Self {
+        chrono::Utc::now().into()
+    }
+
+    /// Create a `DateTime` at the Unix epoch.
     pub fn epoch() -> Self {
         Self(chrono::Utc.timestamp_nanos(0))
     }
