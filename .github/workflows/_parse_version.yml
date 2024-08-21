@@ -59,6 +59,9 @@ on:
       commit_sha:
         description: The commit SHA used to checkout the repository
         value: ${{ inputs.commit_sha }}
+      type:
+        description: The type of version
+        value: ${{ jobs.parse.outputs.type }}
 
 jobs:
   parse:
@@ -74,6 +77,7 @@ jobs:
       dev: ${{ steps.version.outputs.dev }}
       local: ${{ steps.version.outputs.local }}
       no_local: ${{ steps.version.outputs.no_local }}
+      type: ${{ steps.version.outputs.type }}
     steps:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         with:

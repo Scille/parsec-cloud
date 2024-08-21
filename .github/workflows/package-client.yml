@@ -174,10 +174,11 @@ jobs:
           vite.config.ts
         working-directory: client
 
-      - name: Patch snapcraft file for sentry auth token
+      - name: Patch snapcraft file for sentry auth token and vite mode
         run: >-
           sed -i
           -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
+          -e s'/VITE_MODE: development/VITE_MODE: ${{ steps.version.outputs.type }}/'
           snap/snapcraft.yaml
         working-directory: client/electron
 
@@ -313,6 +314,16 @@ jobs:
         # MacOS is really slow when build rust
         timeout-minutes: 30
 
+      - name: Build client for electron
+        run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
+        working-directory: client
+        timeout-minutes: 5
+
+      - name: Copy client build result to electron
+        run: npm exec cap copy @capacitor-community/electron
+        working-directory: client
+        timeout-minutes: 1
+
       - name: Build Electron apps
         # What's about the extra `--` in `-- --nightly`?
         # The reason is for npm to pass the flag `--nightly` to the underlying npm script.
@@ -324,7 +335,7 @@ jobs:
           ${{ inputs.nightly_build && '-- --nightly' || '' }}
         env:
           VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-        working-directory: client
+        working-directory: client/electron
         timeout-minutes: 5
 
       - name: Upload client electron sourcemaps
