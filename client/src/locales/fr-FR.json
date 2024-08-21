@@ -263,7 +263,8 @@
     },
     "MenuPage": {
         "about": "À propos",
-        "helpLink": "https://my.parsec.cloud/help"
+        "helpLink": "{signUrl}/contact",
+        "contactLink": "{signUrl}/contact"
     },
     "HeaderPage": {
         "titles": {

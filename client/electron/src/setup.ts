@@ -25,6 +25,8 @@ const ALLOWED_URL_LIST = [
   'https://docs.parsec.cloud/',
   'https://bms-dev.parsec.cloud/',
   'https://bms.parsec.cloud',
+  'https://sign.parsec.cloud',
+  'https://sign-dev.parsec.cloud',
 ];
 
 // Define components for a watcher to detect when the webapp is changed so we can reload in Dev mode.

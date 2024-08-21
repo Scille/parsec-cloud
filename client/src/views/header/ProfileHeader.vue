@@ -48,6 +48,7 @@ import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
+import { Env } from '@/services/environment';
 
 const isOnline = ref(true);
 const isPopoverOpen = ref(false);
@@ -154,7 +155,7 @@ async function openPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.Settings) {
     await openSettingsModal();
   } else if (data.option === ProfilePopoverOption.Help) {
-    window.open(I18n.translate('MenuPage.helpLink'), '_blank');
+    window.open(I18n.translate({ key: 'MenuPage.helpLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
   } else if (data.option === ProfilePopoverOption.App) {
     await navigateTo(Routes.About);
   } else if (data.option === ProfilePopoverOption.MyProfile) {
