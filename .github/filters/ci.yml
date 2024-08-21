@@ -2,11 +2,12 @@
 # RUST #
 ########
 
-rust-libparsec: &rust-libparsec libparsec/**
+rust-libparsec: &rust-libparsec
+  - libparsec/**
 
+# Only list root Cargo files,
 rust-dependencies-workspace: &rust-dependencies-workspace
   - Cargo.toml
-  - "**/Cargo.toml"
   - Cargo.lock
 
 rust-cargo-deny:
@@ -15,7 +16,9 @@ rust-cargo-deny:
 
 rust-toolchain: &rust-toolchain rust-toolchain.toml
 
-rust-python-binding: &rust-python-binding server/src/**
+rust-python-binding: &rust-python-binding
+  - server/src/**
+  - server/Cargo.toml
 
 rust-web-binding: &rust-web-binding bindings/web/**
 
