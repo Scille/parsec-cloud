@@ -47,7 +47,7 @@ from parsec.components.organization import Organization, OrganizationGetBadOutco
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import send_signal
 from parsec.components.postgresql.organization import PGOrganizationComponent
-from parsec.components.postgresql.user import PGUserComponent
+from parsec.components.postgresql.user import PGUserComponent, UserInfo
 from parsec.components.postgresql.utils import (
     Q,
     q_device,
@@ -1097,6 +1097,20 @@ class PGInviteComponent(BaseInviteComponent):
     # New invite transport API
     # TODO: Remove the old API once the new one is fully functional
 
+    def is_greeter_allowed(
+        self,
+        invitation_type: InvitationType,
+        invitation_created_by: UserID,
+        greeter_id: UserID,
+        greeter_profile: UserProfile,
+    ) -> bool:
+        if invitation_type == InvitationType.DEVICE:
+            return invitation_created_by == greeter_id
+        elif invitation_type == InvitationType.USER:
+            return greeter_profile == UserProfile.ADMIN
+        else:
+            raise NotImplementedError
+
     @override
     async def greeter_start_greeting_attempt(
         self,
@@ -1169,11 +1183,95 @@ class PGInviteComponent(BaseInviteComponent):
         raise NotImplementedError
 
     @override
+    @transaction
     async def complete(
         self,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCompleteBadOutcome:
-        raise NotImplementedError
+        match await self.organization._get(conn, organization_id):
+            case Organization() as org:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteCompleteBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteCompleteBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case (author_user_id, current_profile, _):
+                pass
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteCompleteBadOutcome.AUTHOR_REVOKED
+        if current_profile != UserProfile.ADMIN:
+            return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
+        )
+
+        if not row:
+            return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
+        (
+            _id,
+            type,
+            created_by_user_id_str,
+            _created_by_device_id_str,
+            _created_by_email,
+            _created_by_label,
+            claimer_email,
+            _created_on,
+            deleted_on,
+            deleted_reason,
+        ) = row
+        if deleted_on:
+            status = InvitationStatus.from_str(deleted_reason)
+            match status:
+                case InvitationStatus.FINISHED:
+                    return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
+
+                case InvitationStatus.CANCELLED:
+                    return InviteCompleteBadOutcome.INVITATION_CANCELLED
+
+                case InvitationStatus.READY | InvitationStatus.IDLE:
+                    pass
+
+                case _:
+                    raise NotImplementedError
+
+        match await self.user.get_user_info(conn, organization_id, author_user_id):
+            case UserInfo() as author_info:
+                pass
+            case None:
+                return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
+        created_by_user_id = UserID.from_hex(created_by_user_id_str)
+
+        # Only the greeter or the claimer can complete the invitation
+        if not self.is_greeter_allowed(
+            InvitationType.from_str(type), created_by_user_id, author_user_id, current_profile
+        ):
+            if not claimer_email == author_info.human_handle.email:
+                return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
+
+        await conn.execute(
+            *_q_delete_invitation(
+                row_id=row["_id"],
+                on=now,
+                reason="FINISHED",  # TODO: use an enum
+            )
+        )
+
+        await self._event_bus.send(
+            EventInvitation(
+                organization_id=organization_id,
+                token=token,
+                greeter=author_user_id,
+                status=InvitationStatus.FINISHED,
+            )
+        )
