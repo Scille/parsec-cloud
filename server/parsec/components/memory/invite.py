@@ -310,7 +310,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"], write=["invitation_create"]):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -394,7 +394,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"], write=["invitation_create"]):
             try:
                 author_device = org.devices[author]
             except KeyError:
