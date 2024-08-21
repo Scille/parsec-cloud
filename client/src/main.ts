@@ -181,6 +181,10 @@ async function setupApp(): Promise<void> {
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
+    window.electronAPI.log('debug', `BMS Url: ${Env.getBmsUrl()}`);
+    window.electronAPI.log('debug', `Parsec Sign Url: ${Env.getSignUrl()}`);
+    window.electronAPI.log('debug', `Stripe API Key: ${Env.getStripeApiKey().key}`);
+
     let isQuitDialogOpen = false;
 
     window.electronAPI.receive('parsec-close-request', async (force: boolean = false) => {
