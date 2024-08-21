@@ -1,16 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+from typing import Awaitable, Callable
+
 import pytest
 
 from parsec._parsec import (
     DateTime,
-    HashAlgorithm,
-    RealmKeyRotationCertificate,
     RealmRole,
     RealmRoleCertificate,
     RevokedUserCertificate,
-    SecretKey,
-    SecretKeyAlgorithm,
     UserID,
     VlobID,
     authenticated_cmds,
@@ -197,51 +195,58 @@ async def test_authenticated_realm_unshare_timestamp_out_of_ballpark(
     assert rep.client_timestamp == timestamp_out_of_ballpark
 
 
-@pytest.mark.parametrize(
-    "timestamp_offset",
-    (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
-)
+@pytest.mark.parametrize("timestamp_kind", ("same_timestamp", "previous_timestamp"))
 async def test_authenticated_realm_unshare_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_unshare_bob_certificate: RealmRoleCertificate,
-    timestamp_offset: int,
+    timestamp_kind: str,
+    alice_generated_realm_wksp1_data: Callable[[DateTime], Awaitable[None]],
 ) -> None:
-    last_certificate_timestamp = DateTime.now()
-    same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
+    # 0) Bob must become OWNER to be able to unshare with Alice
 
-    # 1) Performa a key rotation to add a new certificate at last_certificate_timestamp
-
-    outcome = await backend.realm.rotate_key(
-        now=last_certificate_timestamp,
+    t0 = DateTime.now().subtract(seconds=100)
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.bob.user_id,
+        timestamp=t0,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.OWNER,
+    )
+    await backend.realm.share(
+        now=t0,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
-        keys_bundle=b"",
-        per_participant_keys_bundle_access={
-            coolorg.alice.user_id: b"<alice keys bundle access>",
-            coolorg.bob.user_id: b"<bob keys bundle access>",
-        },
-        realm_key_rotation_certificate=RealmKeyRotationCertificate(
-            author=coolorg.alice.device_id,
-            timestamp=last_certificate_timestamp,
-            hash_algorithm=HashAlgorithm.SHA256,
-            encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
-            key_index=2,
-            realm_id=coolorg.wksp1_id,
-            key_canary=SecretKey.generate().encrypt(b""),
-        ).dump_and_sign(coolorg.alice.signing_key),
-    )
-    assert isinstance(outcome, RealmKeyRotationCertificate)
-
-    # 2) Try to unshare a realm with same or previous timestamp
-
-    certif = patch_realm_role_certificate(
-        alice_unshare_bob_certificate, timestamp=same_or_previous_timestamp
-    )
-    rep = await coolorg.alice.realm_unshare(
+        key_index=1,
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        recipient_keys_bundle_access=b"<bob keys bundle access>",
+    )
+
+    # 1) Create some data (e.g. certificate, vlob) with a given timestamp
+
+    now = DateTime.now()
+    match timestamp_kind:
+        case "same_timestamp":
+            realm_unshare_timestamp = now
+        case "previous_timestamp":
+            realm_unshare_timestamp = now.subtract(seconds=1)
+        case unknown:
+            assert False, unknown
+
+    await alice_generated_realm_wksp1_data(now)
+
+    # 2) Create realm unshare certificate where timestamp is clashing with the previous data
+
+    certif = RealmRoleCertificate(
+        author=coolorg.bob.device_id,
+        timestamp=realm_unshare_timestamp,
+        realm_id=coolorg.wksp1_id,
+        user_id=coolorg.alice.user_id,
+        role=None,
+    )
+    rep = await coolorg.bob.realm_unshare(
+        realm_role_certificate=certif.dump_and_sign(coolorg.bob.signing_key),
     )
     assert rep == authenticated_cmds.v4.realm_unshare.RepRequireGreaterTimestamp(
-        strictly_greater_than=last_certificate_timestamp
+        strictly_greater_than=now
     )
