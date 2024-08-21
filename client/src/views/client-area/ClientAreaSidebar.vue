@@ -310,6 +310,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
       currentOrganization: props.organization,
     },
     cssClass: 'dropdown-popover',
+    id: 'organization-switch-popover',
     event: event,
     alignment: 'end',
     showBackdrop: false,
