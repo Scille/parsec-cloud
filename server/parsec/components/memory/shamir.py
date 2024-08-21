@@ -27,7 +27,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         self._data = data
         self._event_bus = event_bus
 
-    async def organization_and_user_common_checks(
+    def organization_and_user_common_checks(
         self,
         organization_id: OrganizationID,
         author: UserID,
@@ -47,6 +47,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.AUTHOR_NOT_FOUND
         if author_user.is_revoked:
             return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.AUTHOR_REVOKED
+
         return (org, author_user)
 
     @override
@@ -56,14 +57,15 @@ class MemoryShamirComponent(BaseShamirComponent):
         author: UserID,
     ) -> None | ShamirAddOrDeleteRecoverySetupStoreBadOutcome:
         # TODO update after https://github.com/Scille/parsec-cloud/issues/7364
-        match await self.organization_and_user_common_checks(organization_id, author):
-            case (_, _):
+        match self.organization_and_user_common_checks(organization_id, author):
+            case (org, _):
                 pass
             case error:
                 return error
 
-        self._data.organizations[organization_id].shamir_setup.pop(author)
-        return None
+        async with org.topics_lock(read=["common"], write=[("shamir", author)]):
+            self._data.organizations[organization_id].shamir_setup.pop(author)
+            return None
 
     @override
     async def add_recovery_setup(
@@ -86,44 +88,47 @@ class MemoryShamirComponent(BaseShamirComponent):
         | ShamirInvalidRecipientBadOutcome
         | RequireGreaterTimestamp
     ):
-        match await self.organization_and_user_common_checks(organization_id, author):
+        match self.organization_and_user_common_checks(organization_id, author):
             case (org, _):
                 pass
             case error:
                 return error
 
-        match shamir_add_recovery_setup_validate(
+        async with org.topics_lock(read=["common"], write=[("shamir", author)]):
+            match shamir_add_recovery_setup_validate(
             now, device, author, author_verify_key, setup_brief, setup_shares
-        ):
-            case (brief, shares):
-                pass
-            case error:
-                return error
+                 ):
+                case (brief, shares):
+                    pass
+                case error:
+                    return error
 
-        # all recipients exists and not revoked
-        for share_recipient in shares.keys():
-            try:
-                recipient_user = org.users[share_recipient]
-            except KeyError:
-                return ShamirInvalidRecipientBadOutcome(share_recipient)
-            if recipient_user.is_revoked:
-                return ShamirInvalidRecipientBadOutcome(share_recipient)
+            # all recipients exists and not revoked
+            for share_recipient in shares.keys():
+                try:
+                    recipient_user = org.users[share_recipient]
+                except KeyError:
+                    return ShamirInvalidRecipientBadOutcome(share_recipient)
+                if recipient_user.is_revoked:
+                    return ShamirInvalidRecipientBadOutcome(share_recipient)
 
-        # check that certificate timestamps are strictly increasing in the shamir topic
-        match self._data.organizations[organization_id].last_shamir_certificate_timestamp:
-            case None:
-                # no previous shamir setup
-                pass
-            case last_shamir_timestamp if last_shamir_timestamp < brief.timestamp:
-                # previous shamir happened strictly before
-                pass
-            case last_shamir_timestamp:
-                return RequireGreaterTimestamp(last_shamir_timestamp)
+            # check that certificate timestamps are strictly increasing in the shamir topic
+            match self._data.organizations[organization_id].last_shamir_certificate_timestamp:
+                case None:
+                    # no previous shamir setup
+                    pass
+                case last_shamir_timestamp if last_shamir_timestamp < brief.timestamp:
+                    # previous shamir happened strictly before
+                    pass
+                case last_shamir_timestamp:
+                    return RequireGreaterTimestamp(last_shamir_timestamp)
 
-        match self._data.organizations[organization_id].shamir_setup.get(author):
-            case None:
-                self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
+            match self._data.organizations[organization_id].shamir_setup.get(author):
+                case None:
+                    self._data.organizations[organization_id].shamir_setup[author] = (
+                        MemoryShamirSetup(
                     setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief
-                )
-            case MemoryShamirSetup() as s:
-                return ShamirSetupAlreadyExistsBadOutcome(s.brief.timestamp)
+                        )
+                    )
+                case MemoryShamirSetup() as s:
+                    return ShamirSetupAlreadyExistsBadOutcome(s.brief.timestamp)

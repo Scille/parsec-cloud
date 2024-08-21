@@ -92,70 +92,75 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
+        async with org.topics_lock(write=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return UserCreateUserStoreBadOutcome.AUTHOR_NOT_FOUND
 
-        author_user = org.users[author_device.cooked.user_id]
-        if author_user.is_revoked:
-            return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
-        if author_user.current_profile != UserProfile.ADMIN:
-            return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            author_user = org.users[author_device.cooked.user_id]
+            if author_user.is_revoked:
+                return UserCreateUserStoreBadOutcome.AUTHOR_REVOKED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return UserCreateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        match user_create_user_validate(
-            now=now,
-            expected_author=author,
-            author_verify_key=author_verify_key,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        ):
-            case (u_certif, d_certif):
-                pass
-            case error:
-                return error
+            match user_create_user_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
+                user_certificate=user_certificate,
+                device_certificate=device_certificate,
+                redacted_user_certificate=redacted_user_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+            ):
+                case (u_certif, d_certif):
+                    pass
+                case error:
+                    return error
 
-        if org.active_user_limit_reached():
-            return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+            if org.active_user_limit_reached():
+                return UserCreateUserStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
-        if u_certif.user_id in org.users:
-            return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
+            if u_certif.user_id in org.users:
+                return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
 
-        if any(True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle):
-            return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
+            if any(
+                True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle
+            ):
+                return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            # Ensure certificate consistency: our certificate must be the newest thing on the server.
 
-        # We already ensured user and device certificates' timestamps are consistent,
-        # so only need to check one of them here
-        if org.last_certificate_or_vlob_timestamp >= u_certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
+            # We already ensured user and device certificates' timestamps are consistent,
+            # so only need to check one of them here
+            if org.last_certificate_or_vlob_timestamp >= u_certif.timestamp:
+                return RequireGreaterTimestamp(
+                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                )
+
+            # All checks are good, now we do the actual insertion
+
+            org.users[u_certif.user_id] = MemoryUser(
+                cooked=u_certif,
+                user_certificate=user_certificate,
+                redacted_user_certificate=redacted_user_certificate,
             )
 
-        # All checks are good, now we do the actual insertion
+            # Sanity check, should never occurs given user doesn't exist yet !
+            assert d_certif.device_id not in org.devices
+            org.devices[d_certif.device_id] = MemoryDevice(
+                cooked=d_certif,
+                device_certificate=device_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+            )
 
-        org.users[u_certif.user_id] = MemoryUser(
-            cooked=u_certif,
-            user_certificate=user_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-        )
+            await self._event_bus.send(
+                EventCommonCertificate(
+                    organization_id=organization_id, timestamp=u_certif.timestamp
+                )
+            )
 
-        # Sanity check, should never occurs given user doesn't exist yet !
-        assert d_certif.device_id not in org.devices
-        org.devices[d_certif.device_id] = MemoryDevice(
-            cooked=d_certif,
-            device_certificate=device_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        )
-
-        await self._event_bus.send(
-            EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
-        )
-
-        return u_certif, d_certif
+            return u_certif, d_certif
 
     @override
     async def create_device(
@@ -180,55 +185,56 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
+        async with org.topics_lock(write=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return UserCreateDeviceStoreBadOutcome.AUTHOR_NOT_FOUND
 
-        author_user_id = author_device.cooked.user_id
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
+            author_user_id = author_device.cooked.user_id
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return UserCreateDeviceStoreBadOutcome.AUTHOR_REVOKED
 
-        match user_create_device_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            device_certificate=device_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        ):
-            case DeviceCertificate() as certif:
-                pass
-            case error:
-                return error
+            match user_create_device_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                device_certificate=device_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+            ):
+                case DeviceCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        if certif.device_id in org.devices:
-            return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
+            if certif.device_id in org.devices:
+                return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            # Ensure certificate consistency: our certificate must be the newest thing on the server.
 
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
+            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(
+                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                )
+
+            # All checks are good, now we do the actual insertion
+
+            org.devices[certif.device_id] = MemoryDevice(
+                cooked=certif,
+                device_certificate=device_certificate,
+                redacted_device_certificate=redacted_device_certificate,
             )
 
-        # All checks are good, now we do the actual insertion
-
-        org.devices[certif.device_id] = MemoryDevice(
-            cooked=certif,
-            device_certificate=device_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        )
-
-        await self._event_bus.send(
-            EventCommonCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
+            await self._event_bus.send(
+                EventCommonCertificate(
+                    organization_id=organization_id,
+                    timestamp=certif.timestamp,
+                )
             )
-        )
 
-        return certif
+            return certif
 
     @override
     async def revoke_user(
@@ -253,75 +259,76 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(write=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
-        if author_user.current_profile != UserProfile.ADMIN:
-            return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return UserRevokeUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        match user_revoke_user_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            revoked_user_certificate=revoked_user_certificate,
-        ):
-            case RevokedUserCertificate() as certif:
-                pass
-            case error:
-                return error
+            match user_revoke_user_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
+                revoked_user_certificate=revoked_user_certificate,
+            ):
+                case RevokedUserCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        try:
-            target_user = org.users[certif.user_id]
-        except KeyError:
-            return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
+            try:
+                target_user = org.users[certif.user_id]
+            except KeyError:
+                return UserRevokeUserStoreBadOutcome.USER_NOT_FOUND
 
-        if target_user.is_revoked:
-            assert target_user.cooked_revoked is not None
-            return CertificateBasedActionIdempotentOutcome(
-                certificate_timestamp=target_user.cooked_revoked.timestamp
+            if target_user.is_revoked:
+                assert target_user.cooked_revoked is not None
+                return CertificateBasedActionIdempotentOutcome(
+                    certificate_timestamp=target_user.cooked_revoked.timestamp
+                )
+
+            # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            #
+            # Strictly speaking consistency only requires the certificate to be more recent than
+            # the the certificates involving the realm and/or the recipient user; and, similarly,
+            # the vlobs created/updated by the recipient.
+            #
+            # However doing such precise checks is complex and error prone, so we take a simpler
+            # approach by considering certificates don't change often so it's no big deal to
+            # have a much more coarse approach.
+
+            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(
+                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                )
+
+            # All checks are good, now we do the actual insertion
+
+            target_user.revoked_user_certificate = revoked_user_certificate
+            target_user.cooked_revoked = certif
+
+            await self._event_bus.send(
+                EventCommonCertificate(
+                    organization_id=organization_id,
+                    timestamp=certif.timestamp,
+                )
+            )
+            await self._event_bus.send(
+                EventUserRevokedOrFrozen(
+                    organization_id=organization_id,
+                    user_id=certif.user_id,
+                )
             )
 
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
-        #
-        # Strictly speaking consistency only requires the certificate to be more recent than
-        # the the certificates involving the realm and/or the recipient user; and, similarly,
-        # the vlobs created/updated by the recipient.
-        #
-        # However doing such precise checks is complex and error prone, so we take a simpler
-        # approach by considering certificates don't change often so it's no big deal to
-        # have a much more coarse approach.
-
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
-            )
-
-        # All checks are good, now we do the actual insertion
-
-        target_user.revoked_user_certificate = revoked_user_certificate
-        target_user.cooked_revoked = certif
-
-        await self._event_bus.send(
-            EventCommonCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-            )
-        )
-        await self._event_bus.send(
-            EventUserRevokedOrFrozen(
-                organization_id=organization_id,
-                user_id=certif.user_id,
-            )
-        )
-
-        return certif
+            return certif
 
     @override
     async def update_user(
@@ -345,90 +352,91 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(write=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
-        if author_user.current_profile != UserProfile.ADMIN:
-            return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_REVOKED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return UserUpdateUserStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        match user_update_user_validate(
-            now=now,
-            expected_author_user_id=author_user_id,
-            expected_author_device_id=author,
-            author_verify_key=author_verify_key,
-            user_update_certificate=user_update_certificate,
-        ):
-            case UserUpdateCertificate() as certif:
-                pass
-            case error:
-                return error
-
-        try:
-            target_user = org.users[certif.user_id]
-        except KeyError:
-            return UserUpdateUserStoreBadOutcome.USER_NOT_FOUND
-
-        if target_user.is_revoked:
-            return UserUpdateUserStoreBadOutcome.USER_REVOKED
-
-        if target_user.current_profile == certif.new_profile:
-            return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
-
-        # Ensure certificate consistency: our certificate must be the newest thing on the server.
-        #
-        # Strictly speaking consistency only requires to ensure the profile change didn't
-        # remove rights that have been used to add certificates/vlobs with posterior timestamp
-        # (e.g. switching from OWNER to READER while a vlob has been created).
-        #
-        # However doing such precise checks is complex and error prone, so we take a simpler
-        # approach by considering certificates don't change often so it's no big deal to
-        # have a much more coarse approach.
-
-        if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(
-                strictly_greater_than=org.last_certificate_or_vlob_timestamp
-            )
-
-        # TODO: validate it's okay not to check this
-        # All checks are good, now we do the actual insertion
-
-        # Note an OUTSIDER is not supposed to be OWNER/MANAGER of a shared realm. However this
-        # is possible if the user's profile is updated to OUTSIDER here.
-        # We don't try to prevent this given:
-        # - It is complex and error prone to check.
-        # - It is a very niche case.
-        # - It is puzzling for the end user to understand why he cannot change a profile,
-        #   and that he have to find somebody with access to a seemingly unrelated realm
-        #   to change a role in order to be able to do it !
-
-        target_user.profile_updates.append(
-            MemoryUserProfileUpdate(
-                cooked=certif,
+            match user_update_user_validate(
+                now=now,
+                expected_author_user_id=author_user_id,
+                expected_author_device_id=author,
+                author_verify_key=author_verify_key,
                 user_update_certificate=user_update_certificate,
-            )
-        )
+            ):
+                case UserUpdateCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        await self._event_bus.send(
-            EventCommonCertificate(
-                organization_id=organization_id,
-                timestamp=certif.timestamp,
-            )
-        )
-        await self._event_bus.send(
-            EventUserUpdated(
-                organization_id=organization_id,
-                user_id=certif.user_id,
-                new_profile=certif.new_profile,
-            )
-        )
+            try:
+                target_user = org.users[certif.user_id]
+            except KeyError:
+                return UserUpdateUserStoreBadOutcome.USER_NOT_FOUND
 
-        return certif
+            if target_user.is_revoked:
+                return UserUpdateUserStoreBadOutcome.USER_REVOKED
+
+            if target_user.current_profile == certif.new_profile:
+                return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
+
+            # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            #
+            # Strictly speaking consistency only requires to ensure the profile change didn't
+            # remove rights that have been used to add certificates/vlobs with posterior timestamp
+            # (e.g. switching from OWNER to READER while a vlob has been created).
+            #
+            # However doing such precise checks is complex and error prone, so we take a simpler
+            # approach by considering certificates don't change often so it's no big deal to
+            # have a much more coarse approach.
+
+            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(
+                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
+                )
+
+            # TODO: validate it's okay not to check this
+            # All checks are good, now we do the actual insertion
+
+            # Note an OUTSIDER is not supposed to be OWNER/MANAGER of a shared realm. However this
+            # is possible if the user's profile is updated to OUTSIDER here.
+            # We don't try to prevent this given:
+            # - It is complex and error prone to check.
+            # - It is a very niche case.
+            # - It is puzzling for the end user to understand why he cannot change a profile,
+            #   and that he have to find somebody with access to a seemingly unrelated realm
+            #   to change a role in order to be able to do it !
+
+            target_user.profile_updates.append(
+                MemoryUserProfileUpdate(
+                    cooked=certif,
+                    user_update_certificate=user_update_certificate,
+                )
+            )
+
+            await self._event_bus.send(
+                EventCommonCertificate(
+                    organization_id=organization_id,
+                    timestamp=certif.timestamp,
+                )
+            )
+            await self._event_bus.send(
+                EventUserUpdated(
+                    organization_id=organization_id,
+                    user_id=certif.user_id,
+                    new_profile=certif.new_profile,
+                )
+            )
+
+            return certif
 
     @override
     async def get_certificates(

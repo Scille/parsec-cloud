@@ -81,46 +81,47 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common", ("realm", realm_id)]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return BlockCreateBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        try:
-            realm = org.realms[realm_id]
-        except KeyError:
-            return BlockCreateBadOutcome.REALM_NOT_FOUND
+            try:
+                realm = org.realms[realm_id]
+            except KeyError:
+                return BlockCreateBadOutcome.REALM_NOT_FOUND
 
-        match realm.get_current_role_for(author_user_id):
-            case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
-                pass
-            case None | RealmRole.READER:
-                return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
-            case unknown:
-                assert False, unknown  # TODO: Cannot user assert_never with `RealmRole`
+            match realm.get_current_role_for(author_user_id):
+                case RealmRole.OWNER | RealmRole.MANAGER | RealmRole.CONTRIBUTOR:
+                    pass
+                case None | RealmRole.READER:
+                    return BlockCreateBadOutcome.AUTHOR_NOT_ALLOWED
+                case unknown:
+                    assert False, unknown  # TODO: Cannot user assert_never with `RealmRole`
 
-        # We only accept the last key
-        if len(realm.key_rotations) != key_index:
-            return BadKeyIndex(
-                last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+            # We only accept the last key
+            if len(realm.key_rotations) != key_index:
+                return BadKeyIndex(
+                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
+                )
+
+            if block_id in org.blocks:
+                return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
+
+            outcome = await self._blockstore_component.create(organization_id, block_id, block)
+            if outcome is not None:
+                return BlockCreateBadOutcome.STORE_UNAVAILABLE
+
+            org.blocks[block_id] = MemoryBlock(
+                realm_id=realm_id,
+                block_id=block_id,
+                key_index=key_index,
+                author=author,
+                block_size=len(block),
+                created_on=now,
             )
-
-        if block_id in org.blocks:
-            return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
-
-        outcome = await self._blockstore_component.create(organization_id, block_id, block)
-        if outcome is not None:
-            return BlockCreateBadOutcome.STORE_UNAVAILABLE
-
-        org.blocks[block_id] = MemoryBlock(
-            realm_id=realm_id,
-            block_id=block_id,
-            key_index=key_index,
-            author=author,
-            block_size=len(block),
-            created_on=now,
-        )
 
     @override
     async def test_dump_blocks(

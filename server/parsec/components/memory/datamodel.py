@@ -1,10 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from asyncio import Event
+from collections import defaultdict
+from contextlib import asynccontextmanager
 from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Iterable
+from itertools import chain
+from typing import Iterable, Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -40,6 +44,13 @@ from parsec._parsec import (
 )
 from parsec.components.invite import ConduitState
 from parsec.components.sequester import SequesterServiceType
+
+TopicAndDiscriminant = (
+    Literal["common"]
+    | Literal["sequester"]
+    | tuple[Literal["realm"], VlobID]
+    | tuple[Literal["shamir"], UserID]
+)
 
 
 @dataclass(slots=True)
@@ -78,6 +89,66 @@ class MemoryOrganization:
     # keep previous setups dict[UserID, List[MemoryShamirSetup | MemoryShamirRemoval]]
     # see https://github.com/Scille/parsec-cloud/pull/7324#discussion_r1616803899
     shamir_setup: dict[UserID, MemoryShamirSetup] = field(default_factory=dict)
+
+    # Stores topic name and discriminant (or `None`)
+    _topic_write_locked: set[TopicAndDiscriminant] = field(default_factory=set)
+    # Stores topic name and discriminant (or `None`) as key, and the number
+    # of concurrent read operations currently taking the lock as key
+    _topic_read_locked: dict[TopicAndDiscriminant, int] = field(
+        default_factory=lambda: defaultdict(lambda: 0)
+    )
+    _notify_me_on_topic_lock_release: Event | None = None
+
+    @asynccontextmanager
+    async def topics_lock(
+        self, read: Iterable[TopicAndDiscriminant] = (), write: Iterable[TopicAndDiscriminant] = ()
+    ):
+        while True:
+            # 1) Check the locks we want aren't already taken in write mode
+            if any(
+                topic_and_discriminant in self._topic_write_locked
+                for topic_and_discriminant in chain(read, write)
+            ):
+                if self._notify_me_on_topic_lock_release is None:
+                    self._notify_me_on_topic_lock_release = Event()
+                await self._notify_me_on_topic_lock_release.wait()
+                # The event we waited on doesn't specify which lock has been
+                # released, so we must retry from the beginning.
+                continue
+
+            # 2) Check the write locks we want aren't already taken in read mode
+            if any(
+                self._topic_read_locked.get(topic_and_discriminant, 0) != 0
+                for topic_and_discriminant in write
+            ):
+                if self._notify_me_on_topic_lock_release is None:
+                    self._notify_me_on_topic_lock_release = Event()
+                await self._notify_me_on_topic_lock_release.wait()
+                # The event we waited on doesn't specify which lock has been
+                # released, so we must retry from the beginning.
+                continue
+
+            # 3) All checks are good, we can now take the locks !
+
+            self._topic_write_locked.update(write)
+            for topic_and_discriminant in read:
+                self._topic_read_locked[topic_and_discriminant] += 1
+
+            try:
+                yield
+
+            finally:
+                # 4) Release our locks and leave
+
+                self._topic_write_locked.difference_update(write)
+                for topic_and_discriminant in read:
+                    self._topic_read_locked[topic_and_discriminant] -= 1
+
+                if self._notify_me_on_topic_lock_release is not None:
+                    self._notify_me_on_topic_lock_release.set()
+                    self._notify_me_on_topic_lock_release = Event()
+
+            return
 
     @property
     def last_sequester_certificate_timestamp(self) -> DateTime:
@@ -159,6 +230,10 @@ class MemoryOrganization:
     def clone_as(self, new_organization_id: OrganizationID) -> MemoryOrganization:
         cloned = deepcopy(self)
         cloned.organization_id = new_organization_id
+        cloned._topic_write_locked.clear()
+        cloned._topic_read_locked.clear()
+        cloned._notify_me_on_topic_lock_release = None
+
         return cloned
 
     def active_users(self) -> Iterable[MemoryUser]:

@@ -125,39 +125,42 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if org.sequester_services is None:
             return SequesterCreateServiceStoreBadOutcome.SEQUESTER_DISABLED
 
-        assert org.cooked_sequester_authority is not None
-        match sequester_create_service_validate(
-            now, org.cooked_sequester_authority.verify_key_der, service_certificate
-        ):
-            case SequesterServiceCertificate() as certif:
-                pass
-            case error:
-                return error
+        async with org.topics_lock(write=["sequester"]):
+            assert org.cooked_sequester_authority is not None
+            match sequester_create_service_validate(
+                now, org.cooked_sequester_authority.verify_key_der, service_certificate
+            ):
+                case SequesterServiceCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        if certif.service_id in org.sequester_services:
-            return SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS
+            if certif.service_id in org.sequester_services:
+                return SequesterCreateServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_EXISTS
 
-        # Ensure certificate consistency: our certificate must be the very last among
-        # the existing sequester (authority & service) certificates.
+            # Ensure certificate consistency: our certificate must be the very last among
+            # the existing sequester (authority & service) certificates.
 
-        max_sequester_timestamp = org.last_sequester_certificate_timestamp
-        if max_sequester_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
+            max_sequester_timestamp = org.last_sequester_certificate_timestamp
+            if max_sequester_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
 
-        # All checks are good, now we do the actual insertion
+            # All checks are good, now we do the actual insertion
 
-        org.sequester_services[certif.service_id] = MemorySequesterService(
-            cooked=certif,
-            sequester_service_certificate=service_certificate,
-            service_type=service_type,
-            webhook_url=webhook_url,
-        )
+            org.sequester_services[certif.service_id] = MemorySequesterService(
+                cooked=certif,
+                sequester_service_certificate=service_certificate,
+                service_type=service_type,
+                webhook_url=webhook_url,
+            )
 
-        await self._event_bus.send(
-            EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
-        )
+            await self._event_bus.send(
+                EventSequesterCertificate(
+                    organization_id=organization_id, timestamp=certif.timestamp
+                )
+            )
 
-        return certif
+            return certif
 
     @override
     async def revoke_service(
@@ -179,40 +182,43 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if org.sequester_services is None:
             return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_DISABLED
 
-        assert org.cooked_sequester_authority is not None
-        match sequester_revoke_service_validate(
-            now, org.cooked_sequester_authority.verify_key_der, revoked_service_certificate
-        ):
-            case SequesterRevokedServiceCertificate() as certif:
-                pass
-            case error:
-                return error
+        async with org.topics_lock(write=["sequester"]):
+            assert org.cooked_sequester_authority is not None
+            match sequester_revoke_service_validate(
+                now, org.cooked_sequester_authority.verify_key_der, revoked_service_certificate
+            ):
+                case SequesterRevokedServiceCertificate() as certif:
+                    pass
+                case error:
+                    return error
 
-        try:
-            service = org.sequester_services[certif.service_id]
-        except KeyError:
-            return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
+            try:
+                service = org.sequester_services[certif.service_id]
+            except KeyError:
+                return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
 
-        if service.is_revoked:
-            return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED
+            if service.is_revoked:
+                return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_SERVICE_ALREADY_REVOKED
 
-        # Ensure certificate consistency: our certificate must be the very last among
-        # the existing sequester (authority & service) certificates.
+            # Ensure certificate consistency: our certificate must be the very last among
+            # the existing sequester (authority & service) certificates.
 
-        max_sequester_timestamp = org.last_sequester_certificate_timestamp
-        if max_sequester_timestamp >= certif.timestamp:
-            return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
+            max_sequester_timestamp = org.last_sequester_certificate_timestamp
+            if max_sequester_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
 
-        # All checks are good, now we do the actual insertion
+            # All checks are good, now we do the actual insertion
 
-        service.sequester_service_certificate = revoked_service_certificate
-        service.cooked_revoked = certif
+            service.sequester_service_certificate = revoked_service_certificate
+            service.cooked_revoked = certif
 
-        await self._event_bus.send(
-            EventSequesterCertificate(organization_id=organization_id, timestamp=certif.timestamp)
-        )
+            await self._event_bus.send(
+                EventSequesterCertificate(
+                    organization_id=organization_id, timestamp=certif.timestamp
+                )
+            )
 
-        return certif
+            return certif
 
     @override
     async def get_service(

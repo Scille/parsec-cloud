@@ -72,76 +72,79 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentSubmitBadOutcome.ORGANIZATION_EXPIRED
 
-        if enrollment_id in org.pki_enrollments:
-            return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
+        async with org.topics_lock(read=["common"]):
+            if enrollment_id in org.pki_enrollments:
+                return PkiEnrollmentSubmitBadOutcome.ENROLLMENT_ID_ALREADY_USED
 
-        try:
-            PkiEnrollmentSubmitPayload.load(submit_payload)
-        except ValueError:
-            return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
+            try:
+                PkiEnrollmentSubmitPayload.load(submit_payload)
+            except ValueError:
+                return PkiEnrollmentSubmitBadOutcome.INVALID_SUBMIT_PAYLOAD
 
-        # Try to retrieve the last attempt with this x509 certificate
-        for enrollment in org.pki_enrollments.values():
-            if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
-                match enrollment.enrollment_state:
-                    case MemoryPkiEnrollmentState.SUBMITTED:
-                        # Previous attempt is still pending, overwrite it if force flag is set...
-                        if force:
-                            enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
-                            enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
-                                cancelled_on=now
-                            )
-                            await self._event_bus.send(
-                                EventPkiEnrollment(
-                                    organization_id=organization_id,
-                                    enrollment_id=enrollment_id,
+            # Try to retrieve the last attempt with this x509 certificate
+            for enrollment in org.pki_enrollments.values():
+                if enrollment.submitter_der_x509_certificate == submitter_der_x509_certificate:
+                    match enrollment.enrollment_state:
+                        case MemoryPkiEnrollmentState.SUBMITTED:
+                            # Previous attempt is still pending, overwrite it if force flag is set...
+                            if force:
+                                enrollment.enrollment_state = MemoryPkiEnrollmentState.CANCELLED
+                                enrollment.info_cancelled = MemoryPkiEnrollmentInfoCancelled(
+                                    cancelled_on=now
                                 )
-                            )
-                        else:
-                            # ...otherwise nothing we can do
-                            return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
-                                submitted_on=enrollment.submitted_on,
-                            )
+                                await self._event_bus.send(
+                                    EventPkiEnrollment(
+                                        organization_id=organization_id,
+                                        enrollment_id=enrollment_id,
+                                    )
+                                )
+                            else:
+                                # ...otherwise nothing we can do
+                                return PkiEnrollmentSubmitX509CertificateAlreadySubmitted(
+                                    submitted_on=enrollment.submitted_on,
+                                )
 
-                    case MemoryPkiEnrollmentState.REJECTED | MemoryPkiEnrollmentState.CANCELLED:
-                        # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
-                        pass
+                        case MemoryPkiEnrollmentState.REJECTED | MemoryPkiEnrollmentState.CANCELLED:
+                            # Previous attempt was unsuccessful, so we are clear to submit a new attempt !
+                            pass
 
-                    case MemoryPkiEnrollmentState.ACCEPTED:
-                        # Previous attempt end successfully, we are not allowed to submit
-                        # unless the created user has been revoked
-                        assert enrollment.submitter_accepted_user_id is not None
-                        assert enrollment.submitter_accepted_device_id is not None
-                        user = org.users[enrollment.submitter_accepted_user_id]
-                        if not user.is_revoked:
-                            return PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
+                        case MemoryPkiEnrollmentState.ACCEPTED:
+                            # Previous attempt end successfully, we are not allowed to submit
+                            # unless the created user has been revoked
+                            assert enrollment.submitter_accepted_user_id is not None
+                            assert enrollment.submitter_accepted_device_id is not None
+                            user = org.users[enrollment.submitter_accepted_user_id]
+                            if not user.is_revoked:
+                                return (
+                                    PkiEnrollmentSubmitBadOutcome.X509_CERTIFICATE_ALREADY_ENROLLED
+                                )
 
-                # There is no need looking for older enrollments given the
-                # last one represent the current state of this x509 certificate.
-                break
+                    # There is no need looking for older enrollments given the
+                    # last one represent the current state of this x509 certificate.
+                    break
 
-        for user in org.users.values():
-            if (
-                not user.is_revoked
-                and user.cooked.human_handle.email == submitter_der_x509_certificate_email
-            ):
-                return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
+            for user in org.users.values():
+                if (
+                    not user.is_revoked
+                    and user.cooked.human_handle.email == submitter_der_x509_certificate_email
+                ):
+                    return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
-        submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
-        org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
-            enrollment_id=enrollment_id,
-            submitter_der_x509_certificate=submitter_der_x509_certificate,
-            submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
-            submit_payload_signature=submit_payload_signature,
-            submit_payload=submit_payload,
-            submitted_on=now,
-        )
-        await self._event_bus.send(
-            EventPkiEnrollment(
-                organization_id=organization_id,
+            submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
+            org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,
+                submitter_der_x509_certificate=submitter_der_x509_certificate,
+                submitter_der_x509_certificate_sha1=submitter_der_x509_certificate_sha1,
+                submit_payload_signature=submit_payload_signature,
+                submit_payload=submit_payload,
+                submitted_on=now,
             )
-        )
+            await self._event_bus.send(
+                EventPkiEnrollment(
+                    organization_id=organization_id,
+                    enrollment_id=enrollment_id,
+                )
+            )
 
     @override
     async def info(
@@ -251,39 +254,40 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentRejectBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return PkiEnrollmentRejectBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return PkiEnrollmentRejectBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return PkiEnrollmentRejectBadOutcome.AUTHOR_REVOKED
-        if author_user.current_profile != UserProfile.ADMIN:
-            return PkiEnrollmentRejectBadOutcome.AUTHOR_NOT_ALLOWED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return PkiEnrollmentRejectBadOutcome.AUTHOR_REVOKED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return PkiEnrollmentRejectBadOutcome.AUTHOR_NOT_ALLOWED
 
-        try:
-            enrollment = org.pki_enrollments[enrollment_id]
-        except KeyError:
-            return PkiEnrollmentRejectBadOutcome.ENROLLMENT_NOT_FOUND
+            try:
+                enrollment = org.pki_enrollments[enrollment_id]
+            except KeyError:
+                return PkiEnrollmentRejectBadOutcome.ENROLLMENT_NOT_FOUND
 
-        if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
-            return PkiEnrollmentRejectBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+            if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
+                return PkiEnrollmentRejectBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
 
-        # All checks are good, now we do the actual insertion
+            # All checks are good, now we do the actual insertion
 
-        enrollment.enrollment_state = MemoryPkiEnrollmentState.REJECTED
-        enrollment.info_rejected = MemoryPkiEnrollmentInfoRejected(
-            rejected_on=now,
-        )
-
-        await self._event_bus.send(
-            EventPkiEnrollment(
-                organization_id=organization_id,
-                enrollment_id=enrollment_id,
+            enrollment.enrollment_state = MemoryPkiEnrollmentState.REJECTED
+            enrollment.info_rejected = MemoryPkiEnrollmentInfoRejected(
+                rejected_on=now,
             )
-        )
+
+            await self._event_bus.send(
+                EventPkiEnrollment(
+                    organization_id=organization_id,
+                    enrollment_id=enrollment_id,
+                )
+            )
 
     @override
     async def accept(
@@ -314,92 +318,97 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        try:
-            author_device = org.devices[author]
-        except KeyError:
-            return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND
-        author_user_id = author_device.cooked.user_id
+        async with org.topics_lock(read=["common"]):
+            try:
+                author_device = org.devices[author]
+            except KeyError:
+                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_FOUND
+            author_user_id = author_device.cooked.user_id
 
-        author_user = org.users[author_user_id]
-        if author_user.is_revoked:
-            return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED
+            author_user = org.users[author_user_id]
+            if author_user.is_revoked:
+                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_REVOKED
 
-        if author_user.current_profile != UserProfile.ADMIN:
-            return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
+            if author_user.current_profile != UserProfile.ADMIN:
+                return PkiEnrollmentAcceptStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
-        try:
-            PkiEnrollmentAnswerPayload.load(accept_payload)
-        except ValueError:
-            return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
+            try:
+                PkiEnrollmentAnswerPayload.load(accept_payload)
+            except ValueError:
+                return PkiEnrollmentAcceptStoreBadOutcome.INVALID_ACCEPT_PAYLOAD
 
-        match pki_enrollment_accept_validate(
-            now=now,
-            expected_author=author,
-            author_verify_key=author_verify_key,
-            user_certificate=user_certificate,
-            device_certificate=device_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        ):
-            case (u_certif, d_certif):
-                pass
-            case error:
-                return error
+            match pki_enrollment_accept_validate(
+                now=now,
+                expected_author=author,
+                author_verify_key=author_verify_key,
+                user_certificate=user_certificate,
+                device_certificate=device_certificate,
+                redacted_user_certificate=redacted_user_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+            ):
+                case (u_certif, d_certif):
+                    pass
+                case error:
+                    return error
 
-        try:
-            enrollment = org.pki_enrollments[enrollment_id]
-        except KeyError:
-            return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NOT_FOUND
+            try:
+                enrollment = org.pki_enrollments[enrollment_id]
+            except KeyError:
+                return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NOT_FOUND
 
-        if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
-            return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
+            if enrollment.enrollment_state != MemoryPkiEnrollmentState.SUBMITTED:
+                return PkiEnrollmentAcceptStoreBadOutcome.ENROLLMENT_NO_LONGER_AVAILABLE
 
-        if org.active_user_limit_reached():
-            return PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
+            if org.active_user_limit_reached():
+                return PkiEnrollmentAcceptStoreBadOutcome.ACTIVE_USERS_LIMIT_REACHED
 
-        if u_certif.user_id in org.users:
-            return PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS
-        assert d_certif.device_id not in org.devices
+            if u_certif.user_id in org.users:
+                return PkiEnrollmentAcceptStoreBadOutcome.USER_ALREADY_EXISTS
+            assert d_certif.device_id not in org.devices
 
-        if any(True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle):
-            return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
+            if any(
+                True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle
+            ):
+                return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
-        # All checks are good, now we do the actual insertion
+            # All checks are good, now we do the actual insertion
 
-        org.users[u_certif.user_id] = MemoryUser(
-            cooked=u_certif,
-            user_certificate=user_certificate,
-            redacted_user_certificate=redacted_user_certificate,
-        )
-
-        # Sanity check, should never occurs given user doesn't exist yet !
-        assert d_certif.device_id not in org.devices
-        org.devices[d_certif.device_id] = MemoryDevice(
-            cooked=d_certif,
-            device_certificate=device_certificate,
-            redacted_device_certificate=redacted_device_certificate,
-        )
-
-        enrollment.enrollment_state = MemoryPkiEnrollmentState.ACCEPTED
-        enrollment.accepter = author
-        enrollment.submitter_accepted_user_id = d_certif.user_id
-        enrollment.submitter_accepted_device_id = d_certif.device_id
-        enrollment.info_accepted = MemoryPkiEnrollmentInfoAccepted(
-            accepted_on=now,
-            accept_payload=accept_payload,
-            accept_payload_signature=accept_payload_signature,
-            accepter_der_x509_certificate=accepter_der_x509_certificate,
-        )
-
-        await self._event_bus.send(
-            EventCommonCertificate(organization_id=organization_id, timestamp=u_certif.timestamp)
-        )
-
-        await self._event_bus.send(
-            EventPkiEnrollment(
-                organization_id=organization_id,
-                enrollment_id=enrollment_id,
+            org.users[u_certif.user_id] = MemoryUser(
+                cooked=u_certif,
+                user_certificate=user_certificate,
+                redacted_user_certificate=redacted_user_certificate,
             )
-        )
 
-        return u_certif, d_certif
+            # Sanity check, should never occurs given user doesn't exist yet !
+            assert d_certif.device_id not in org.devices
+            org.devices[d_certif.device_id] = MemoryDevice(
+                cooked=d_certif,
+                device_certificate=device_certificate,
+                redacted_device_certificate=redacted_device_certificate,
+            )
+
+            enrollment.enrollment_state = MemoryPkiEnrollmentState.ACCEPTED
+            enrollment.accepter = author
+            enrollment.submitter_accepted_user_id = d_certif.user_id
+            enrollment.submitter_accepted_device_id = d_certif.device_id
+            enrollment.info_accepted = MemoryPkiEnrollmentInfoAccepted(
+                accepted_on=now,
+                accept_payload=accept_payload,
+                accept_payload_signature=accept_payload_signature,
+                accepter_der_x509_certificate=accepter_der_x509_certificate,
+            )
+
+            await self._event_bus.send(
+                EventCommonCertificate(
+                    organization_id=organization_id, timestamp=u_certif.timestamp
+                )
+            )
+
+            await self._event_bus.send(
+                EventPkiEnrollment(
+                    organization_id=organization_id,
+                    enrollment_id=enrollment_id,
+                )
+            )
+
+            return u_certif, d_certif
