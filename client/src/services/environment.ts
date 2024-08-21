@@ -33,8 +33,13 @@ function getSignUrl(): string {
   return DEFAULT_SIGN_URL;
 }
 
+function getBindingsLogConfig(): string | undefined {
+  return import.meta.env['RUST_LOG'];
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
   getSignUrl,
+  getBindingsLogConfig,
 };
