@@ -2,8 +2,8 @@ name: 🐛 | Bug Report
 description: Submit a bug report
 title: "[🐛 | Bug]: "
 labels:
-  - bug
-  - triage
+  - C-Bug
+  - B-Triage
 body:
   - type: markdown
     attributes:
