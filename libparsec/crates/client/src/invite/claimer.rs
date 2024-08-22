@@ -249,6 +249,34 @@ struct BaseClaimInitialCtx {
 
 impl BaseClaimInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseClaimInProgress1Ctx, ClaimInProgressError> {
+        // Wait for the other peer
+        let mut result = self._do_wait_peer().await;
+        // It the attempt was automatically cancelled by the other peer, try again once.
+        // This way, the peers can more easily synchronize during the wait-peer phase,
+        // without requiring the front-end to deal with it.
+        if let Err(ClaimInProgressError::GreetingAttemptCancelled {
+            origin: GreeterOrClaimer::Greeter,
+            reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
+            ..
+        }) = result
+        {
+            result = self._do_wait_peer().await
+        }
+        // Move self into the next context
+        let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = result?;
+        Ok(BaseClaimInProgress1Ctx {
+            config: self.config,
+            cmds: self.cmds,
+            greeting_attempt,
+            greeter_sas,
+            claimer_sas,
+            shared_secret_key,
+        })
+    }
+
+    async fn _do_wait_peer(
+        &self,
+    ) -> Result<(GreetingAttemptID, SASCode, SASCode, SecretKey), ClaimInProgressError> {
         let greeting_attempt = {
             use invited_cmds::latest::invite_claimer_start_greeting_attempt::{Rep, Req};
             let rep = self
@@ -345,14 +373,12 @@ impl BaseClaimInitialCtx {
             };
         };
 
-        Ok(BaseClaimInProgress1Ctx {
-            config: self.config,
-            cmds: self.cmds,
+        Ok((
             greeting_attempt,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
-        })
+        ))
     }
 }
 
