@@ -2,7 +2,7 @@
 
 from typing import override
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, UserID, VerifyKey, authenticated_cmds
+from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID, UserID, VerifyKey
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
@@ -73,7 +73,10 @@ class MemoryShamirComponent(BaseShamirComponent):
         author: UserID,
         device: DeviceID,
         author_verify_key: VerifyKey,
-        setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup,
+        setup_ciphered_data: bytes,
+        setup_reveal_token: InvitationToken,
+        setup_brief: bytes,
+        setup_shares: list[bytes],
     ) -> (
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
@@ -89,7 +92,9 @@ class MemoryShamirComponent(BaseShamirComponent):
             case error:
                 return error
 
-        match shamir_add_recovery_setup_validate(now, setup, device, author, author_verify_key):
+        match shamir_add_recovery_setup_validate(
+            now, device, author, author_verify_key, setup_brief, setup_shares
+        ):
             case (brief, shares):
                 pass
             case error:
@@ -118,7 +123,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         match self._data.organizations[organization_id].shamir_setup.get(author):
             case None:
                 self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
-                    setup.ciphered_data, setup.reveal_token, brief, shares, setup.brief
+                    setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief
                 )
             case MemoryShamirSetup() as s:
                 return ShamirSetupAlreadyExistsBadOutcome(s.brief.timestamp)

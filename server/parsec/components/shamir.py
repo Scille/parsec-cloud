@@ -8,6 +8,7 @@ from enum import auto
 from parsec._parsec import (
     DateTime,
     DeviceID,
+    InvitationToken,
     OrganizationID,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryShareCertificate,
@@ -42,7 +43,10 @@ class BaseShamirComponent:
                 author=client_ctx.user_id,
                 device=client_ctx.device_id,
                 author_verify_key=client_ctx.device_verify_key,
-                setup=req.setup,
+                setup_ciphered_data=req.setup.ciphered_data,
+                setup_reveal_token=req.setup.reveal_token,
+                setup_brief=req.setup.brief,
+                setup_shares=req.setup.shares,
             ):
                 case None:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepOk()
@@ -112,7 +116,10 @@ class BaseShamirComponent:
         author: UserID,
         device: DeviceID,
         author_verify_key: VerifyKey,
-        setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup,
+        setup_ciphered_data: bytes,
+        setup_reveal_token: InvitationToken,
+        setup_brief: bytes,
+        setup_shares: list[bytes],
     ) -> (
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
@@ -155,10 +162,11 @@ class ShamirInvalidRecipientBadOutcome(BadOutcome):
 # Check internal consistency of certificate
 def shamir_add_recovery_setup_validate(
     now: DateTime,
-    setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup,
     author: DeviceID,
     user_id: UserID,
     author_verify_key: VerifyKey,
+    setup_brief: bytes,
+    setup_shares: list[bytes],
 ) -> (
     tuple[ShamirRecoveryBriefCertificate, dict[UserID, bytes]]
     | ShamirAddRecoverySetupValidateBadOutcome
@@ -167,7 +175,7 @@ def shamir_add_recovery_setup_validate(
     share_certificates: dict[UserID, bytes] = {}
     try:
         brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-            setup.brief, author_verify_key, expected_author=author
+            setup_brief, author_verify_key, expected_author=author
         )
     except ValueError:
         return ShamirAddRecoverySetupValidateBadOutcome.BRIEF_INVALID_DATA
@@ -177,7 +185,7 @@ def shamir_add_recovery_setup_validate(
             return error
         case _:
             pass
-    for raw_share in setup.shares:
+    for raw_share in setup_shares:
         try:
             share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
                 raw_share, author_verify_key, expected_author=author, expected_recipient=None
