@@ -44,7 +44,7 @@ export class UserGreet {
       libparsec.cancel(this.canceller);
     }
     if (this.handle !== null && !needsMocks()) {
-      libparsec.claimerGreeterAbortOperation(this.handle);
+      await libparsec.claimerGreeterAbortOperation(this.handle);
     }
     this.canceller = null;
     this.handle = null;

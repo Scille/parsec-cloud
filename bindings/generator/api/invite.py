@@ -38,7 +38,7 @@ class ClaimerGreeterAbortOperationError(ErrorVariant):
         pass
 
 
-def claimer_greeter_abort_operation(
+async def claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result[None, ClaimerGreeterAbortOperationError]:
     raise NotImplementedError
