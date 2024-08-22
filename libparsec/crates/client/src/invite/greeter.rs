@@ -403,6 +403,36 @@ struct BaseGreetInitialCtx {
 
 impl BaseGreetInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
+        // Wait for the other peer
+        let mut result = self._do_wait_peer().await;
+        // It the attempt was automatically cancelled by the other peer, try again once.
+        // This way, the peers can more easily synchronize during the wait-peer phase,
+        // without requiring the front-end to deal with it.
+        if let Err(GreetInProgressError::GreetingAttemptCancelled {
+            origin: GreeterOrClaimer::Claimer,
+            reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
+            ..
+        }) = result
+        {
+            result = self._do_wait_peer().await
+        }
+        // Move self into the next context
+        let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = result?;
+        Ok(BaseGreetInProgress1Ctx {
+            token: self.token,
+            greeting_attempt,
+            device: self.device.clone(),
+            greeter_sas,
+            claimer_sas,
+            shared_secret_key,
+            cmds: self.cmds.clone(),
+            event_bus: self.event_bus.clone(),
+        })
+    }
+
+    async fn _do_wait_peer(
+        &self,
+    ) -> Result<(GreetingAttemptID, SASCode, SASCode, SecretKey), GreetInProgressError> {
         let greeting_attempt = {
             use authenticated_cmds::latest::invite_greeter_start_greeting_attempt::{Rep, Req};
 
@@ -510,16 +540,12 @@ impl BaseGreetInitialCtx {
         let (claimer_sas, greeter_sas) =
             SASCode::generate_sas_codes(&claimer_nonce, greeter_nonce.as_ref(), &shared_secret_key);
 
-        Ok(BaseGreetInProgress1Ctx {
-            token: self.token,
+        Ok((
             greeting_attempt,
-            device: self.device,
             greeter_sas,
             claimer_sas,
             shared_secret_key,
-            cmds: self.cmds,
-            event_bus: self.event_bus,
-        })
+        ))
     }
 }
 
