@@ -57,7 +57,14 @@ def bootstrap_postgresql_testbed() -> str:
         _pg_db_url = _patch_url_if_xdist(provided_db)
 
     print("PostgreSQL url: ", _pg_db_url)
-    asyncio.run(_execute_pg_query(_pg_db_url, run_migrations))
+
+    async def init_db():
+        assert _pg_db_url is not None
+        await _execute_pg_query(_pg_db_url, run_migrations)
+        if provided_db:
+            await reset_postgresql_testbed()
+
+    asyncio.run(init_db())
 
     return _pg_db_url
 
