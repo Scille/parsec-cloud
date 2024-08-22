@@ -1,6 +1,5 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import httpx
 import pytest
 
 from parsec._parsec import (
@@ -52,8 +51,6 @@ async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend:
 
 
 async def test_disconnect_sse(
-    client: httpx.AsyncClient,
-    backend: Backend,
     coolorg: CoolorgRpcClients,
 ) -> None:
     now = DateTime.now()
@@ -109,9 +106,7 @@ async def test_authenticated_user_revoke_author_not_allowed(
     assert dump == expected_dump
 
 
-async def test_authenticated_user_revoke_user_not_found(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
+async def test_authenticated_user_revoke_user_not_found(coolorg: CoolorgRpcClients) -> None:
     now = DateTime.now()
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
@@ -168,7 +163,6 @@ async def test_authenticated_user_revoke_user_already_revoked(
 )
 async def test_authenticated_user_revoke_invalid_certificate(
     coolorg: CoolorgRpcClients,
-    backend: Backend,
     kind: str,
 ) -> None:
     now = DateTime.now()
@@ -197,7 +191,6 @@ async def test_authenticated_user_revoke_invalid_certificate(
 
 async def test_authenticated_user_revoke_timestamp_out_of_ballpark(
     coolorg: CoolorgRpcClients,
-    backend: Backend,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
     certif = RevokedUserCertificate(

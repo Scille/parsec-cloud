@@ -68,9 +68,7 @@ async def test_authenticated_user_update_author_not_allowed(
     assert dump == expected_dump
 
 
-async def test_authenticated_user_update_user_not_found(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
+async def test_authenticated_user_update_user_not_found(coolorg: CoolorgRpcClients) -> None:
     now = DateTime.now()
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
@@ -123,9 +121,7 @@ async def test_authenticated_user_update_user_revoked(
     assert rep == authenticated_cmds.v4.user_update.RepUserRevoked()
 
 
-async def test_authenticated_user_update_user_no_changes(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
+async def test_authenticated_user_update_user_no_changes(coolorg: CoolorgRpcClients) -> None:
     now = DateTime.now()
     certif = UserUpdateCertificate(
         author=coolorg.alice.device_id,
@@ -150,7 +146,7 @@ async def test_authenticated_user_update_user_no_changes(
     ),
 )
 async def test_authenticated_user_update_invalid_certificate(
-    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+    coolorg: CoolorgRpcClients, kind: str
 ) -> None:
     now = DateTime.now()
 
@@ -186,7 +182,7 @@ async def test_authenticated_user_update_invalid_certificate(
 
 
 async def test_authenticated_user_update_timestamp_out_of_ballpark(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients,
 ) -> None:
     t0 = DateTime.now().subtract(seconds=3600)
     certif = UserUpdateCertificate(
