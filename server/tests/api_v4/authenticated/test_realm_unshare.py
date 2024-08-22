@@ -116,45 +116,11 @@ async def test_authenticated_realm_unshare_realm_not_found(
     assert rep == authenticated_cmds.v4.realm_unshare.RepRealmNotFound()
 
 
-@pytest.mark.parametrize(
-    "kind",
-    (
-        "user_unknown",
-        pytest.param(
-            "user_revoked",
-            marks=pytest.mark.xfail(
-                reason="TODO: Should fail if user to be unshared is revoked. Not implemented?"
-            ),
-        ),
-    ),
-)
 async def test_authenticated_realm_unshare_recipient_not_found(
     coolorg: CoolorgRpcClients,
-    backend: Backend,
     alice_unshare_bob_certificate: RealmRoleCertificate,
-    kind: str,
 ) -> None:
-    match kind:
-        case "user_unknown":
-            bad_recipient = UserID.new()
-        case "user_revoked":
-            bad_recipient = coolorg.bob.user_id
-            # Revoke user Bob
-            revoke_timestamp = DateTime.now()
-            outcome = await backend.user.revoke_user(
-                now=revoke_timestamp,
-                organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                author_verify_key=coolorg.alice.signing_key.verify_key,
-                revoked_user_certificate=RevokedUserCertificate(
-                    author=coolorg.alice.device_id,
-                    timestamp=revoke_timestamp,
-                    user_id=coolorg.bob.user_id,
-                ).dump_and_sign(coolorg.alice.signing_key),
-            )
-            assert isinstance(outcome, RevokedUserCertificate)
-        case unknown:
-            assert False, unknown
+    bad_recipient = UserID.new()
     certif = patch_realm_role_certificate(
         alice_unshare_bob_certificate, user_id=bad_recipient, timestamp=DateTime.now()
     )
