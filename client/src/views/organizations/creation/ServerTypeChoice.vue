@@ -12,7 +12,6 @@
       <div
         class="server-choice-item"
         @click="serverChoice = ServerType.Saas"
-        :disabled="isElectron()"
         :class="{
           selected: serverChoice === ServerType.Saas,
           disabled: isElectron(),
