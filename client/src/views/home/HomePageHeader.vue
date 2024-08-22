@@ -88,7 +88,6 @@
 import { I18n, LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle, sparkles } from 'ionicons/icons';
-import { isElectron } from '@/parsec';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Answer, askQuestion } from 'megashark-lib';
