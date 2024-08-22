@@ -4,10 +4,7 @@ use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError, ClientNewUserInvitationError,
-    DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
-    DeviceGreetInProgress4Ctx, InvitationEmailSentStatus, ListInvitationsError,
-    UserGreetInProgress1Ctx, UserGreetInProgress2Ctx, UserGreetInProgress3Ctx,
-    UserGreetInProgress4Ctx,
+    InvitationEmailSentStatus, ListInvitationsError,
 };
 pub use libparsec_types::prelude::*;
 
@@ -269,34 +266,76 @@ pub enum ClaimerGreeterAbortOperationError {
     Internal(#[from] anyhow::Error),
 }
 
+enum EitherCancellerCtx {
+    GreetCancellerCtx(libparsec_client::GreetCancellerCtx),
+    ClaimCancellerCtx(libparsec_client::ClaimCancellerCtx),
+}
+
 pub async fn claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result<(), ClaimerGreeterAbortOperationError> {
     // TODO: add call to canceller
-    take_and_close_handle(handle, |x| match x {
-        HandleItem::UserClaimInitial(_)
-        | HandleItem::DeviceClaimInitial(_)
-        | HandleItem::UserClaimInProgress1(_)
-        | HandleItem::DeviceClaimInProgress1(_)
-        | HandleItem::UserClaimInProgress2(_)
-        | HandleItem::DeviceClaimInProgress2(_)
-        | HandleItem::UserClaimInProgress3(_)
-        | HandleItem::DeviceClaimInProgress3(_)
-        | HandleItem::UserClaimFinalize(_)
-        | HandleItem::DeviceClaimFinalize(_)
-        | HandleItem::UserGreetInitial(_)
-        | HandleItem::DeviceGreetInitial(_)
-        | HandleItem::UserGreetInProgress1(_)
-        | HandleItem::DeviceGreetInProgress1(_)
-        | HandleItem::UserGreetInProgress2(_)
-        | HandleItem::DeviceGreetInProgress2(_)
-        | HandleItem::UserGreetInProgress3(_)
-        | HandleItem::DeviceGreetInProgress3(_)
-        | HandleItem::UserGreetInProgress4(_)
-        | HandleItem::DeviceGreetInProgress4(_) => Ok(()),
+    let result = take_and_close_handle(handle, |x| match x {
+        HandleItem::UserClaimInitial(_) => Ok(None),
+        HandleItem::DeviceClaimInitial(_) => Ok(None),
+        HandleItem::UserClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceClaimInProgress1(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserClaimInProgress2(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceClaimInProgress2(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserClaimInProgress3(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceClaimInProgress3(x) => Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserClaimFinalize(_) => Ok(None),
+        HandleItem::DeviceClaimFinalize(_) => Ok(None),
+        HandleItem::UserGreetInitial(_) => Ok(None),
+        HandleItem::DeviceGreetInitial(_) => Ok(None),
+        HandleItem::UserGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceGreetInProgress1(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserGreetInProgress2(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceGreetInProgress2(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserGreetInProgress3(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceGreetInProgress3(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::UserGreetInProgress4(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
+        HandleItem::DeviceGreetInProgress4(x) => Ok(Some(EitherCancellerCtx::GreetCancellerCtx(
+            x.canceller_ctx(),
+        ))),
         invalid => Err(invalid),
-    })
-    .map_err(|err| err.into())
+    });
+    match result {
+        Ok(None) => Ok(()),
+        Ok(Some(EitherCancellerCtx::GreetCancellerCtx(ctx))) => ctx.cancel().await.map_err(|x| {
+            anyhow::anyhow!("Error while cancelling the greeting attempt: {:?}", x).into()
+        }),
+        Ok(Some(EitherCancellerCtx::ClaimCancellerCtx(ctx))) => ctx.cancel().await.map_err(|x| {
+            anyhow::anyhow!("Error while cancelling the greeting attempt: {:?}", x).into()
+        }),
+        Err(invalid) => Err(invalid).map_err(|x| x.into()),
+    }
 }
 
 pub enum UserOrDeviceClaimInitialInfo {
