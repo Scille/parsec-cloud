@@ -8025,7 +8025,7 @@ pub fn claimerDeviceInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[wasm_bindgen]
 pub fn claimerGreeterAbortOperation(handle: u32) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::claimer_greeter_abort_operation(handle);
+        let ret = libparsec::claimer_greeter_abort_operation(handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

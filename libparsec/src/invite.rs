@@ -4,7 +4,10 @@ use std::{path::PathBuf, sync::Arc};
 
 pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError, ClientNewUserInvitationError,
-    InvitationEmailSentStatus, ListInvitationsError,
+    DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
+    DeviceGreetInProgress4Ctx, InvitationEmailSentStatus, ListInvitationsError,
+    UserGreetInProgress1Ctx, UserGreetInProgress2Ctx, UserGreetInProgress3Ctx,
+    UserGreetInProgress4Ctx,
 };
 pub use libparsec_types::prelude::*;
 
@@ -266,9 +269,10 @@ pub enum ClaimerGreeterAbortOperationError {
     Internal(#[from] anyhow::Error),
 }
 
-pub fn claimer_greeter_abort_operation(
+pub async fn claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result<(), ClaimerGreeterAbortOperationError> {
+    // TODO: add call to canceller
     take_and_close_handle(handle, |x| match x {
         HandleItem::UserClaimInitial(_)
         | HandleItem::DeviceClaimInitial(_)

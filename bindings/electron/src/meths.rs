@@ -7374,31 +7374,44 @@ fn claimer_greeter_abort_operation(mut cx: FunctionContext) -> JsResult<JsPromis
             v
         }
     };
-    let ret = libparsec::claimer_greeter_abort_operation(handle);
-    let js_ret = match ret {
-        Ok(ok) => {
-            let js_obj = JsObject::new(&mut cx);
-            let js_tag = JsBoolean::new(&mut cx, true);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_value = {
-                #[allow(clippy::let_unit_value)]
-                let _ = ok;
-                JsNull::new(&mut cx)
-            };
-            js_obj.set(&mut cx, "value", js_value)?;
-            js_obj
-        }
-        Err(err) => {
-            let js_obj = cx.empty_object();
-            let js_tag = JsBoolean::new(&mut cx, false);
-            js_obj.set(&mut cx, "ok", js_tag)?;
-            let js_err = variant_claimer_greeter_abort_operation_error_rs_to_js(&mut cx, err)?;
-            js_obj.set(&mut cx, "error", js_err)?;
-            js_obj
-        }
-    };
+    let channel = cx.channel();
     let (deferred, promise) = cx.promise();
-    deferred.resolve(&mut cx, js_ret);
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::claimer_greeter_abort_operation(handle).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_claimer_greeter_abort_operation_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
     Ok(promise)
 }
 
