@@ -75,7 +75,6 @@
         <ion-button
           class="topbar-buttons__item"
           id="trigger-customer-area-button"
-          v-show="!isElectron()"
           @click="$emit('customerAreaClick')"
         >
           {{ $msTranslate('HomePage.topbar.customerArea') }}
