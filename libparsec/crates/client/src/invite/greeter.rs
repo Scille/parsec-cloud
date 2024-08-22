@@ -1207,6 +1207,23 @@ impl UserGreetInProgress4Ctx {
             _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
         };
 
+        {
+            use authenticated_cmds::latest::invite_complete::{Rep, Req};
+
+            let rep = self.cmds.send(Req { token: self.token }).await?;
+
+            match rep {
+                Rep::Ok => Ok(()),
+                Rep::InvitationAlreadyCompleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
+                bad_rep @ Rep::UnknownStatus { .. } => {
+                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                }
+            }?
+        };
+
         Ok(())
     }
 }
@@ -1332,6 +1349,23 @@ impl DeviceGreetInProgress4Ctx {
         match claimer_step {
             invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
             _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
+
+        {
+            use authenticated_cmds::latest::invite_complete::{Rep, Req};
+
+            let rep = self.cmds.send(Req { token: self.token }).await?;
+
+            match rep {
+                Rep::Ok => Ok(()),
+                Rep::InvitationAlreadyCompleted => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
+                Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
+                bad_rep @ Rep::UnknownStatus { .. } => {
+                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                }
+            }?
         };
 
         Ok(())
