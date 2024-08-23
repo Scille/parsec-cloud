@@ -28,7 +28,7 @@ async function checkModal(modal: Locator): Promise<void> {
   const telemetry = options.nth(2);
   await expect(telemetry.locator('.settings-option__content').locator('.title')).toHaveText("Envoyer les rapports d'erreur");
   await expect(telemetry.locator('.settings-option__content').locator('.description')).toHaveText(
-    "Les rapports d'erreur aident à améliorer l'application",
+    "Les rapports d'erreur aident à améliorer Parsec",
   );
 }
 

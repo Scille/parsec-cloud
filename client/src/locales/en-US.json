@@ -110,7 +110,7 @@
             "logoutImportsConfirmQuestion": "All imports will be cancelled. Are you sure you want to log out?",
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
-            "logoutFailed": "An error occured while logging out.",
+            "logoutFailed": "An error occurred while logging out.",
             "updateConfirmTitle": "Update Parsec",
             "updateConfirmQuestion": "You will be logged out and the application will close. Make sure to save your work before. Do you want to continue?",
             "updateYes": "Update Parsec",
@@ -305,7 +305,7 @@
         "advanced": "Advanced",
         "enableTelemetry": {
             "label": "Send error reports",
-            "description": "Error reports help us improve the application"
+            "description": "Error reports help us improve Parsec"
         },
         "minimizeToSystemTray": {
             "label": "Minimize to system tray",
@@ -680,7 +680,7 @@
             },
             "errors": {
                 "retrieveDeviceInfoFailed": "Failed to retrieve device information.",
-                "unexpected": "An unexpected error occured",
+                "unexpected": "An unexpected error occurred",
                 "createDeviceFailed": "Failed to create device.",
                 "startFailed": "Failed to start the onboarding process. Please make sure you are online.",
                 "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
@@ -840,7 +840,7 @@
             "offline": "Failed to contact the server. Make sure that you are online.",
             "sendUserInfoFailed": "Failed to send information to the host, please restart the onboarding process.",
             "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
-            "unexpected": "An unexpected error occured (reason: {reason}).",
+            "unexpected": "An unexpected error occurred (reason: {reason}).",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
             "usersLimitReached": "The user limit for this organization has been reached.",
             "peerReset": "The host has cancelled the process.",
@@ -1016,7 +1016,7 @@
             "title": "Copy workspace roles",
             "select": "Select",
             "okButton": "Copy roles",
-            "assignSuccess": "All roles from {sourceUser} have been transfered to {targetUser}.",
+            "assignSuccess": "All roles from {sourceUser} have been transferred to {targetUser}.",
             "assignSomeFailed": "Some roles could not be transferred.",
             "assignAllFailed": "Could not transfer the roles.",
             "processing": "Processing the changes to be made...",
@@ -1071,7 +1071,7 @@
         "cancelNo": "Resume",
         "successMessage": "You can now access your organization from your new device.",
         "errors": {
-            "unexpected": "An unexpected error occured (reason: {reason}).",
+            "unexpected": "An unexpected error occurred (reason: {reason}).",
             "saveDeviceFailed": "Failed to save the information, please try again",
             "sendDeviceInfoFailed": "Failed to send information to the host, please restart the onboarding process.",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
