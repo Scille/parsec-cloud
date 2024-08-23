@@ -130,6 +130,8 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 ):
                     return PkiEnrollmentSubmitBadOutcome.USER_EMAIL_ALREADY_ENROLLED
 
+            # All checks are good, now we do the actual insertion
+
             submitter_der_x509_certificate_sha1 = sha1(submitter_der_x509_certificate).digest()
             org.pki_enrollments[enrollment_id] = MemoryPkiEnrollment(
                 enrollment_id=enrollment_id,
@@ -139,6 +141,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
                 submit_payload=submit_payload,
                 submitted_on=now,
             )
+
             await self._event_bus.send(
                 EventPkiEnrollment(
                     organization_id=organization_id,
@@ -318,7 +321,7 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
         if org.is_expired:
             return PkiEnrollmentAcceptStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -371,7 +374,16 @@ class MemoryPkiEnrollmentComponent(BasePkiEnrollmentComponent):
             ):
                 return PkiEnrollmentAcceptStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
+            # Ensure we are not breaking causality by adding a newer timestamp.
+
+            # We already ensured user and device certificates' timestamps are consistent,
+            # so only need to check one of them here
+            if common_topic_last_timestamp >= u_certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
+
             # All checks are good, now we do the actual insertion
+
+            org.per_topic_last_timestamp["common"] = u_certif.timestamp
 
             org.users[u_certif.user_id] = MemoryUser(
                 cooked=u_certif,

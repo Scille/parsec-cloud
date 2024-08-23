@@ -83,7 +83,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -109,29 +109,21 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             if certif.realm_id in org.realms:
                 return CertificateBasedActionIdempotentOutcome(
-                    certificate_timestamp=org.realms[
-                        certif.realm_id
-                    ].last_realm_certificate_timestamp
+                    certificate_timestamp=org.per_topic_last_timestamp[("realm", certif.realm_id)]
                 )
 
-            async with org.topics_lock(write=[("realm", certif.realm_id)]):
-                # Ensure certificate consistency: our certificate must be the newest thing on the server.
-                #
-                # Strictly speaking there is no consistency requirement here (the new empty realm
-                # has no impact on existing data).
-                #
-                # However we still use the same check that is applied everywhere else in order to be
-                # consistent.
+            realm_topic = ("realm", certif.realm_id)
 
-                assert (
-                    org.last_certificate_or_vlob_timestamp is not None
-                )  # Bootstrap has created the first certif
-                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                    return RequireGreaterTimestamp(
-                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                    )
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
                 # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 org.realms[certif.realm_id] = MemoryRealm(
                     realm_id=certif.realm_id,
@@ -181,7 +173,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmShareStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -224,7 +216,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmShareStoreBadOutcome.REALM_NOT_FOUND
 
-            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 owner_only = (RealmRole.OWNER,)
                 owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
                 existing_user_role = realm.get_current_role_for(certif.user_id)
@@ -241,39 +235,28 @@ class MemoryRealmComponent(BaseRealmComponent):
 
                 if existing_user_role == new_user_role:
                     return CertificateBasedActionIdempotentOutcome(
-                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                        certificate_timestamp=realm_topic_last_timestamp
                     )
 
-                # Ensure certificate consistency: our certificate must be the newest thing on the server.
-                #
-                # Strictly speaking consistency only requires the certificate to be more recent than
-                # the the certificates involving the realm and/or the recipient user; and, similarly,
-                # the vlobs created/updated by the recipient.
-                #
-                # However doing such precise checks is complex and error prone, so we take a simpler
-                # approach by considering certificates don't change often so it's no big deal to
-                # have a much more coarse approach.
+                # Ensure we are not breaking causality by adding a newer timestamp.
 
-                assert (
-                    org.last_certificate_or_vlob_timestamp is not None
-                )  # Bootstrap has created the first certif
-                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                    return RequireGreaterTimestamp(
-                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                    )
+                if realm.last_vlob_timestamp is not None:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp, realm.last_vlob_timestamp)
+                else:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
 
                 try:
                     last_key_rotation = realm.key_rotations[-1]
                 except IndexError:
-                    return BadKeyIndex(
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                    )
+                    return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
                 if key_index != last_key_rotation.cooked.key_index:
-                    return BadKeyIndex(
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                    )
+                    return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
                 # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 realm.roles.append(
                     MemoryRealmUserRole(
@@ -320,7 +303,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmUnshareStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -355,7 +338,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmUnshareStoreBadOutcome.REALM_NOT_FOUND
 
-            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 owner_only = (RealmRole.OWNER,)
                 owner_or_manager = (RealmRole.OWNER, RealmRole.MANAGER)
                 existing_user_role = realm.get_current_role_for(certif.user_id)
@@ -372,28 +357,21 @@ class MemoryRealmComponent(BaseRealmComponent):
 
                 if existing_user_role == new_user_role:
                     return CertificateBasedActionIdempotentOutcome(
-                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                        certificate_timestamp=realm_topic_last_timestamp
                     )
 
-                # Ensure certificate consistency: our certificate must be the newest thing on the server.
-                #
-                # Strictly speaking consistency only requires the certificate to be more recent than
-                # the the certificates involving the realm and/or the recipient user; and, similarly,
-                # the vlobs created/updated by the recipient.
-                #
-                # However doing such precise checks is complex and error prone, so we take a simpler
-                # approach by considering certificates don't change often so it's no big deal to
-                # have a much more coarse approach.
+                # Ensure we are not breaking causality by adding a newer timestamp.
 
-                assert (
-                    org.last_certificate_or_vlob_timestamp is not None
-                )  # Bootstrap has created the first certif
-                if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                    return RequireGreaterTimestamp(
-                        strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                    )
+                if realm.last_vlob_timestamp is not None:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp, realm.last_vlob_timestamp)
+                else:
+                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
 
                 # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 realm.roles.append(
                     MemoryRealmUserRole(
@@ -438,7 +416,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmRenameStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -466,20 +444,30 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmRenameStoreBadOutcome.REALM_NOT_FOUND
 
-            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmRenameStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
                 # We only accept the last key
                 if len(realm.key_rotations) != certif.key_index:
-                    return BadKeyIndex(
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                    )
+                    return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
                 if initial_name_or_fail and realm.renames:
                     return CertificateBasedActionIdempotentOutcome(
-                        certificate_timestamp=realm.last_realm_certificate_timestamp
+                        certificate_timestamp=realm_topic_last_timestamp
                     )
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 realm.renames.append(
                     MemoryRealmRename(
@@ -525,7 +513,7 @@ class MemoryRealmComponent(BaseRealmComponent):
         if org.is_expired:
             return RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -553,15 +541,15 @@ class MemoryRealmComponent(BaseRealmComponent):
             except KeyError:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
 
-            async with org.topics_lock(write=[("realm", certif.realm_id)]):
+            realm_topic = ("realm", certif.realm_id)
+
+            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
                 last_index = len(realm.key_rotations)
                 if certif.key_index != last_index + 1:
-                    return BadKeyIndex(
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                    )
+                    return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
                 participants = set()
                 for role in realm.roles:
@@ -572,6 +560,16 @@ class MemoryRealmComponent(BaseRealmComponent):
 
                 if per_participant_keys_bundle_access.keys() != participants:
                     return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+                # All checks are good, now we do the actual insertion
+
+                org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 realm.key_rotations.append(
                     MemoryRealmKeyRotation(

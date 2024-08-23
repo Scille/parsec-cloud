@@ -57,7 +57,9 @@ class MemoryBlockComponent(BaseBlockComponent):
                 return BlockReadResult(
                     block=block,
                     key_index=block_info.key_index,
-                    needed_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                    needed_realm_certificate_timestamp=org.per_topic_last_timestamp[
+                        ("realm", realm.realm_id)
+                    ],
                 )
             case (
                 BlockStoreReadBadOutcome.BLOCK_NOT_FOUND
@@ -81,7 +83,10 @@ class MemoryBlockComponent(BaseBlockComponent):
         except KeyError:
             return BlockCreateBadOutcome.ORGANIZATION_NOT_FOUND
 
-        async with org.topics_lock(read=["common", ("realm", realm_id)]):
+        async with org.topics_lock(read=["common", ("realm", realm_id)]) as (
+            _,
+            realm_topic_last_timestamp,
+        ):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -103,9 +108,7 @@ class MemoryBlockComponent(BaseBlockComponent):
 
             # We only accept the last key
             if len(realm.key_rotations) != key_index:
-                return BadKeyIndex(
-                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                )
+                return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
             if block_id in org.blocks:
                 return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS

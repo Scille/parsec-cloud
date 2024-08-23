@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Any, override
+from typing import Any, Literal, override
 
 from parsec._parsec import (
     DateTime,
@@ -92,7 +92,7 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(write=["common"]):
+        async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -129,16 +129,16 @@ class MemoryUserComponent(BaseUserComponent):
             ):
                 return UserCreateUserStoreBadOutcome.HUMAN_HANDLE_ALREADY_TAKEN
 
-            # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            # Ensure we are not breaking causality by adding a newer timestamp.
 
             # We already ensured user and device certificates' timestamps are consistent,
             # so only need to check one of them here
-            if org.last_certificate_or_vlob_timestamp >= u_certif.timestamp:
-                return RequireGreaterTimestamp(
-                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                )
+            if common_topic_last_timestamp >= u_certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
 
             # All checks are good, now we do the actual insertion
+
+            org.per_topic_last_timestamp["common"] = u_certif.timestamp
 
             org.users[u_certif.user_id] = MemoryUser(
                 cooked=u_certif,
@@ -185,7 +185,7 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserCreateDeviceStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(write=["common"]):
+        async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -212,14 +212,14 @@ class MemoryUserComponent(BaseUserComponent):
             if certif.device_id in org.devices:
                 return UserCreateDeviceStoreBadOutcome.DEVICE_ALREADY_EXISTS
 
-            # Ensure certificate consistency: our certificate must be the newest thing on the server.
+            # Ensure we are not breaking causality by adding a newer timestamp.
 
-            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                return RequireGreaterTimestamp(
-                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                )
+            if common_topic_last_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
 
             # All checks are good, now we do the actual insertion
+
+            org.per_topic_last_timestamp["common"] = certif.timestamp
 
             org.devices[certif.device_id] = MemoryDevice(
                 cooked=certif,
@@ -259,7 +259,7 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserRevokeUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(write=["common"]):
+        async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -295,40 +295,60 @@ class MemoryUserComponent(BaseUserComponent):
                     certificate_timestamp=target_user.cooked_revoked.timestamp
                 )
 
-            # Ensure certificate consistency: our certificate must be the newest thing on the server.
-            #
-            # Strictly speaking consistency only requires the certificate to be more recent than
-            # the the certificates involving the realm and/or the recipient user; and, similarly,
-            # the vlobs created/updated by the recipient.
-            #
-            # However doing such precise checks is complex and error prone, so we take a simpler
-            # approach by considering certificates don't change often so it's no big deal to
-            # have a much more coarse approach.
+            # Ensure we are not breaking causality by adding a newer timestamp.
+            # Given a revoked user is not allowed to modify a realm, we must check timestamp on:
+            # - The common topic
+            # - For each realm the user is part of: the realm topic
+            # - For each realm the user is part of: the last vlob
 
-            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                return RequireGreaterTimestamp(
-                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
+            realms_user_is_part_of = [
+                realm for realm in org.realms.values() if realm.get_current_role_for(certif.user_id)
+            ]
+
+            realm_topics_user_is_part_of: list[tuple[Literal["realm"], VlobID]] = [
+                ("realm", realm.realm_id) for realm in realms_user_is_part_of
+            ]
+            async with org.topics_lock(
+                read=realm_topics_user_is_part_of
+            ) as realm_topics_last_timestamp:
+                last_timestamp = max(
+                    (
+                        common_topic_last_timestamp,
+                        *realm_topics_last_timestamp,
+                        *(
+                            ts
+                            for realm in realms_user_is_part_of
+                            if (ts := realm.last_vlob_timestamp) is not None
+                        ),
+                    )
                 )
 
-            # All checks are good, now we do the actual insertion
+                if last_timestamp >= certif.timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_timestamp)
 
-            target_user.revoked_user_certificate = revoked_user_certificate
-            target_user.cooked_revoked = certif
+                # All checks are good, now we do the actual insertion
 
-            await self._event_bus.send(
-                EventCommonCertificate(
-                    organization_id=organization_id,
-                    timestamp=certif.timestamp,
+                org.per_topic_last_timestamp["common"] = certif.timestamp
+                for realm_topic in realm_topics_user_is_part_of:
+                    org.per_topic_last_timestamp[realm_topic] = certif.timestamp
+
+                target_user.revoked_user_certificate = revoked_user_certificate
+                target_user.cooked_revoked = certif
+
+                await self._event_bus.send(
+                    EventCommonCertificate(
+                        organization_id=organization_id,
+                        timestamp=certif.timestamp,
+                    )
                 )
-            )
-            await self._event_bus.send(
-                EventUserRevokedOrFrozen(
-                    organization_id=organization_id,
-                    user_id=certif.user_id,
+                await self._event_bus.send(
+                    EventUserRevokedOrFrozen(
+                        organization_id=organization_id,
+                        user_id=certif.user_id,
+                    )
                 )
-            )
 
-            return certif
+                return certif
 
     @override
     async def update_user(
@@ -352,7 +372,7 @@ class MemoryUserComponent(BaseUserComponent):
         if org.is_expired:
             return UserUpdateUserStoreBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(write=["common"]):
+        async with org.topics_lock(write=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -388,24 +408,14 @@ class MemoryUserComponent(BaseUserComponent):
             if target_user.current_profile == certif.new_profile:
                 return UserUpdateUserStoreBadOutcome.USER_NO_CHANGES
 
-            # Ensure certificate consistency: our certificate must be the newest thing on the server.
-            #
-            # Strictly speaking consistency only requires to ensure the profile change didn't
-            # remove rights that have been used to add certificates/vlobs with posterior timestamp
-            # (e.g. switching from OWNER to READER while a vlob has been created).
-            #
-            # However doing such precise checks is complex and error prone, so we take a simpler
-            # approach by considering certificates don't change often so it's no big deal to
-            # have a much more coarse approach.
+            # Ensure we are not breaking causality by adding a newer timestamp.
 
-            if org.last_certificate_or_vlob_timestamp >= certif.timestamp:
-                return RequireGreaterTimestamp(
-                    strictly_greater_than=org.last_certificate_or_vlob_timestamp
-                )
+            if common_topic_last_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=common_topic_last_timestamp)
 
-            # TODO: validate it's okay not to check this
             # All checks are good, now we do the actual insertion
 
+            # TODO: validate it's okay not to check this
             # Note an OUTSIDER is not supposed to be OWNER/MANAGER of a shared realm. However this
             # is possible if the user's profile is updated to OUTSIDER here.
             # We don't try to prevent this given:
@@ -414,6 +424,8 @@ class MemoryUserComponent(BaseUserComponent):
             # - It is puzzling for the end user to understand why he cannot change a profile,
             #   and that he have to find somebody with access to a seemingly unrelated realm
             #   to change a role in order to be able to do it !
+
+            org.per_topic_last_timestamp["common"] = certif.timestamp
 
             target_user.profile_updates.append(
                 MemoryUserProfileUpdate(

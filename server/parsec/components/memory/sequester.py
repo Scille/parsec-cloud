@@ -125,7 +125,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if org.sequester_services is None:
             return SequesterCreateServiceStoreBadOutcome.SEQUESTER_DISABLED
 
-        async with org.topics_lock(write=["sequester"]):
+        async with org.topics_lock(write=["sequester"]) as (sequester_topic_last_timestamp,):
             assert org.cooked_sequester_authority is not None
             match sequester_create_service_validate(
                 now, org.cooked_sequester_authority.verify_key_der, service_certificate
@@ -141,9 +141,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
             # Ensure certificate consistency: our certificate must be the very last among
             # the existing sequester (authority & service) certificates.
 
-            max_sequester_timestamp = org.last_sequester_certificate_timestamp
-            if max_sequester_timestamp >= certif.timestamp:
-                return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
+            if sequester_topic_last_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=sequester_topic_last_timestamp)
 
             # All checks are good, now we do the actual insertion
 
@@ -182,7 +181,7 @@ class MemorySequesterComponent(BaseSequesterComponent):
         if org.sequester_services is None:
             return SequesterRevokeServiceStoreBadOutcome.SEQUESTER_DISABLED
 
-        async with org.topics_lock(write=["sequester"]):
+        async with org.topics_lock(write=["sequester"]) as (sequester_topic_last_timestamp,):
             assert org.cooked_sequester_authority is not None
             match sequester_revoke_service_validate(
                 now, org.cooked_sequester_authority.verify_key_der, revoked_service_certificate
@@ -203,9 +202,8 @@ class MemorySequesterComponent(BaseSequesterComponent):
             # Ensure certificate consistency: our certificate must be the very last among
             # the existing sequester (authority & service) certificates.
 
-            max_sequester_timestamp = org.last_sequester_certificate_timestamp
-            if max_sequester_timestamp >= certif.timestamp:
-                return RequireGreaterTimestamp(strictly_greater_than=max_sequester_timestamp)
+            if sequester_topic_last_timestamp >= certif.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=sequester_topic_last_timestamp)
 
             # All checks are good, now we do the actual insertion
 
