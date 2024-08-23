@@ -94,10 +94,15 @@ class MemoryShamirComponent(BaseShamirComponent):
             case error:
                 return error
 
-        async with org.topics_lock(read=["common"], write=[("shamir", author)]):
+        shamir_topic = ("shamir", author)
+
+        async with org.topics_lock(read=["common"], write=[shamir_topic]) as (
+            common_topic_last_timestamp,
+            shamir_topic_last_timestamp,
+        ):
             match shamir_add_recovery_setup_validate(
-            now, device, author, author_verify_key, setup_brief, setup_shares
-                 ):
+                now, device, author, author_verify_key, setup_brief, setup_shares
+            ):
                 case (brief, shares):
                     pass
                 case error:
@@ -112,23 +117,21 @@ class MemoryShamirComponent(BaseShamirComponent):
                 if recipient_user.is_revoked:
                     return ShamirInvalidRecipientBadOutcome(share_recipient)
 
-            # check that certificate timestamps are strictly increasing in the shamir topic
-            match self._data.organizations[organization_id].last_shamir_certificate_timestamp:
-                case None:
-                    # no previous shamir setup
-                    pass
-                case last_shamir_timestamp if last_shamir_timestamp < brief.timestamp:
-                    # previous shamir happened strictly before
-                    pass
-                case last_shamir_timestamp:
-                    return RequireGreaterTimestamp(last_shamir_timestamp)
+            if author in self._data.organizations[organization_id].shamir_setup:
+                return ShamirSetupAlreadyExistsBadOutcome(
+                    last_shamir_certificate_timestamp=shamir_topic_last_timestamp
+                )
 
-            match self._data.organizations[organization_id].shamir_setup.get(author):
-                case None:
-                    self._data.organizations[organization_id].shamir_setup[author] = (
-                        MemoryShamirSetup(
-                    setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief
-                        )
-                    )
-                case MemoryShamirSetup() as s:
-                    return ShamirSetupAlreadyExistsBadOutcome(s.brief.timestamp)
+            # Ensure we are not breaking causality by adding a newer timestamp.
+
+            last_certificate = max(common_topic_last_timestamp, shamir_topic_last_timestamp)
+            if last_certificate >= brief.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+            # All checks are good, now we do the actual insertion
+
+            org.per_topic_last_timestamp[shamir_topic] = brief.timestamp
+
+            self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
+                setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief
+            )

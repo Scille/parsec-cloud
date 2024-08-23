@@ -1,10 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import Any, Literal, override
-
-import anyio
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -56,9 +53,6 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         super().__init__(*args, **kwargs)
         self._data = data
         self._event_bus = event_bus
-        self._organization_bootstrap_lock: dict[OrganizationID, anyio.Lock] = defaultdict(
-            anyio.Lock
-        )
 
     @override
     async def create(
@@ -149,15 +143,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         | OrganizationBootstrapStoreBadOutcome
         | TimestampOutOfBallpark
     ):
-        # Organization bootstrap involves multiple modifications (in user,
-        # device and organization) and is not atomic (given await is used),
-        # so we protect it from concurrency with a big old lock
-        async with self._organization_bootstrap_lock[id]:
-            try:
-                org = self._data.organizations[id]
-            except KeyError:
-                return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        try:
+            org = self._data.organizations[id]
+        except KeyError:
+            return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_NOT_FOUND
 
+        async with org.topics_lock(write=["common"]):
             if org.is_expired:
                 return OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED
 
@@ -183,6 +174,8 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
 
             # All checks are good, now we do the actual insertion
 
+            org.per_topic_last_timestamp["common"] = u_certif.timestamp
+
             org.bootstrapped_on = now
             assert org.root_verify_key is None
             org.root_verify_key = root_verify_key
@@ -207,6 +200,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             assert org.cooked_sequester_authority is None
             assert org.sequester_services is None
             if s_certif:
+                org.per_topic_last_timestamp["sequester"] = s_certif.timestamp
                 org.sequester_authority_certificate = sequester_authority_certificate
                 org.cooked_sequester_authority = s_certif
                 org.sequester_services = {}

@@ -8,7 +8,7 @@ from copy import deepcopy
 from dataclasses import dataclass, field
 from enum import Enum, auto
 from itertools import chain
-from typing import Iterable, Literal
+from typing import AsyncIterator, Iterable, Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -92,6 +92,7 @@ class MemoryOrganization:
     # keep previous setups dict[UserID, List[MemoryShamirSetup | MemoryShamirRemoval]]
     # see https://github.com/Scille/parsec-cloud/pull/7324#discussion_r1616803899
     shamir_setup: dict[UserID, MemoryShamirSetup] = field(default_factory=dict)
+    per_topic_last_timestamp: dict[TopicAndDiscriminant, DateTime] = field(default_factory=dict)
 
     # Stores topic name and discriminant (or `None`)
     _topic_write_locked: set[TopicAndDiscriminant] = field(default_factory=set)
@@ -105,7 +106,7 @@ class MemoryOrganization:
     @asynccontextmanager
     async def topics_lock(
         self, read: Iterable[TopicAndDiscriminant] = (), write: Iterable[TopicAndDiscriminant] = ()
-    ):
+    ) -> AsyncIterator[tuple[DateTime, ...]]:
         while True:
             # 1) Check the locks we want aren't already taken in write mode
             if any(
@@ -137,8 +138,15 @@ class MemoryOrganization:
             for topic_and_discriminant in read:
                 self._topic_read_locked[topic_and_discriminant] += 1
 
+            # Default to epoch (1970-01-01) to spare the caller from having to deal
+            # with corner-cases (e.g. when creating realm or bootstrapping org)
+            default_last_timestamp = DateTime.from_timestamp_seconds(0)
+            per_topic_last_timestamps = tuple(
+                self.per_topic_last_timestamp.get(topic_and_discriminant, default_last_timestamp)
+                for topic_and_discriminant in chain(read, write)
+            )
             try:
-                yield
+                yield per_topic_last_timestamps
 
             finally:
                 # 4) Release our locks and leave
@@ -152,83 +160,6 @@ class MemoryOrganization:
                     self._notify_me_on_topic_lock_release = Event()
 
             return
-
-    @property
-    def last_sequester_certificate_timestamp(self) -> DateTime:
-        """
-        Raises ValueError if the organization is not sequestered !
-        """
-        if self.cooked_sequester_authority is None:
-            raise ValueError("Not a sequestered organization !")
-        assert self.sequester_services is not None
-        last_timestamp = self.cooked_sequester_authority.timestamp
-        for service in self.sequester_services.values():
-            last_timestamp = max(last_timestamp, service.cooked.timestamp)
-            if service.cooked_revoked is not None:
-                last_timestamp = max(last_timestamp, service.cooked_revoked.timestamp)
-        return last_timestamp
-
-    @property
-    def last_common_certificate_timestamp(self) -> DateTime:
-        """
-        Raises ValueError if the organization is not bootstrapped !
-        """
-        return max(
-            (
-                # User certificates
-                *(u.cooked.timestamp for u in self.users.values()),
-                # Revoked user certificates
-                *(
-                    u.cooked_revoked.timestamp
-                    for u in self.users.values()
-                    if u.cooked_revoked is not None
-                ),
-                # User update certificates
-                *(p.cooked.timestamp for u in self.users.values() for p in u.profile_updates),
-                # Device certificates
-                *(d.cooked.timestamp for d in self.devices.values()),
-            )
-        )
-
-    @property
-    def last_certificate_timestamp(self) -> DateTime:
-        """
-        Raises ValueError if the organization is not bootstrapped !
-        """
-        if self.is_sequestered:
-            return max(
-                self.last_common_certificate_timestamp,
-                self.last_sequester_certificate_timestamp,
-                *(r.last_realm_certificate_timestamp for r in self.realms.values()),
-            )
-        else:
-            # Must pass an iterator to max in case there is no realms (see `max` signature)
-            return max(
-                (
-                    self.last_common_certificate_timestamp,
-                    *(r.last_realm_certificate_timestamp for r in self.realms.values()),
-                )
-            )
-
-    @property
-    def last_certificate_or_vlob_timestamp(self) -> DateTime:
-        """
-        Raises ValueError if the organization is not bootstrapped !
-        """
-        # Must pass an iterator to max in case there is no realms (see `max` signature)
-        return max(
-            (
-                self.last_certificate_timestamp,
-                *(ts for r in self.realms.values() if (ts := r.last_vlob_timestamp) is not None),
-            )
-        )
-
-    @property
-    def last_shamir_certificate_timestamp(self) -> DateTime | None:
-        if len(self.shamir_setup) == 0:
-            return None
-        else:
-            return max(setup.brief.timestamp for setup in self.shamir_setup.values())
 
     def clone_as(self, new_organization_id: OrganizationID) -> MemoryOrganization:
         cloned = deepcopy(self)
@@ -535,6 +466,7 @@ class MemoryRealm:
     key_rotations: list[MemoryRealmKeyRotation] = field(default_factory=list)
     renames: list[MemoryRealmRename] = field(default_factory=list)
     archivings: list[MemoryRealmArchiving] = field(default_factory=list)
+    last_vlob_timestamp: DateTime | None = None
 
     def get_current_role_for(self, user_id: UserID) -> RealmRole | None:
         for role in reversed(self.roles):
@@ -550,25 +482,6 @@ class MemoryRealm:
         # And given it is not possible to change his own role, then there must
         # only be a single certificate !
         return len(self.roles) == 1
-
-    @property
-    def last_realm_certificate_timestamp(self) -> DateTime:
-        # TODO: don't forget to update this once realm archiving is implemented !
-        last_timestamp = self.roles[-1].cooked.timestamp
-        if self.renames:
-            last_timestamp = max(last_timestamp, self.renames[-1].cooked.timestamp)
-        if self.key_rotations:
-            last_timestamp = max(last_timestamp, self.key_rotations[-1].cooked.timestamp)
-        if self.archivings:
-            last_timestamp = max(last_timestamp, self.archivings[-1].cooked.timestamp)
-        return last_timestamp
-
-    @property
-    def last_vlob_timestamp(self) -> DateTime | None:
-        if not self.vlob_updates:
-            return None
-        else:
-            return self.vlob_updates[-1].vlob_atom.created_on
 
 
 @dataclass(slots=True)

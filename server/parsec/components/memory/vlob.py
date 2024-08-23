@@ -83,7 +83,10 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobCreateBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common", ("realm", realm_id)]):
+        async with org.topics_lock(read=["common", ("realm", realm_id)]) as (
+            common_topic_last_timestamp,
+            realm_topic_last_timestamp,
+        ):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -112,9 +115,7 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             # We only accept the last key
             if len(realm.key_rotations) != key_index:
-                return BadKeyIndex(
-                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                )
+                return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
             if vlob_id in org.vlobs:
                 return VlobCreateBadOutcome.VLOB_ALREADY_EXISTS
@@ -123,15 +124,17 @@ class MemoryVlobComponent(BaseVlobComponent):
             if maybe_error is not None:
                 return maybe_error
 
-            assert org.last_certificate_timestamp is not None  # Orga bootstrapped
-            if org.last_certificate_timestamp >= timestamp:
-                return RequireGreaterTimestamp(strictly_greater_than=org.last_certificate_timestamp)
+            # Ensure we are not breaking causality by adding a newer timestamp.
+
+            last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+            if last_certificate >= timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
             if org.is_sequestered:
                 assert org.sequester_services is not None
                 if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
                     return SequesterInconsistency(
-                        last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                        last_common_certificate_timestamp=common_topic_last_timestamp
                     )
 
                 blob_for_storage_sequester_services = {}
@@ -161,6 +164,12 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             # All checks are good, now we do the actual insertion
 
+            match realm.last_vlob_timestamp:
+                case None:
+                    realm.last_vlob_timestamp = timestamp
+                case previous_last_vlob_timestamp:
+                    realm.last_vlob_timestamp = max(previous_last_vlob_timestamp, timestamp)
+
             vlob_atom = MemoryVlobAtom(
                 realm_id=realm_id,
                 vlob_id=vlob_id,
@@ -189,8 +198,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                     vlob_id=vlob_id,
                     version=1,
                     blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
-                    last_common_certificate_timestamp=org.last_common_certificate_timestamp,
-                    last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                    last_common_certificate_timestamp=common_topic_last_timestamp,
+                    last_realm_certificate_timestamp=realm_topic_last_timestamp,
                 )
             )
 
@@ -223,7 +232,7 @@ class MemoryVlobComponent(BaseVlobComponent):
         if org.is_expired:
             return VlobUpdateBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"]):
+        async with org.topics_lock(read=["common"]) as (common_topic_last_timestamp,):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -240,7 +249,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                 return VlobUpdateBadOutcome.VLOB_NOT_FOUND
             realm_id = vlobs[0].realm_id
 
-            async with org.topics_lock(read=[("realm", realm_id)]):
+            async with org.topics_lock(read=[("realm", realm_id)]) as (realm_topic_last_timestamp,):
                 realm = org.realms[realm_id]
                 match realm.get_current_role_for(author_user_id):
                     case RealmRole.READER | None:
@@ -255,19 +264,17 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                 # We only accept the last key
                 if len(realm.key_rotations) != key_index:
-                    return BadKeyIndex(
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp
-                    )
+                    return BadKeyIndex(last_realm_certificate_timestamp=realm_topic_last_timestamp)
 
                 maybe_error = timestamps_in_the_ballpark(timestamp, now)
                 if maybe_error is not None:
                     return maybe_error
 
-                assert org.last_certificate_timestamp is not None  # Orga bootstrapped
-                if org.last_certificate_timestamp >= timestamp:
-                    return RequireGreaterTimestamp(
-                        strictly_greater_than=org.last_certificate_timestamp
-                    )
+                # Ensure we are not breaking causality by adding a newer timestamp.
+
+                last_certificate = max(common_topic_last_timestamp, realm_topic_last_timestamp)
+                if last_certificate >= timestamp:
+                    return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
                 if org.is_sequestered:
                     assert org.sequester_services is not None
@@ -276,7 +283,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                         or sequester_blob.keys() != org.sequester_services.keys()
                     ):
                         return SequesterInconsistency(
-                            last_common_certificate_timestamp=org.last_common_certificate_timestamp
+                            last_common_certificate_timestamp=common_topic_last_timestamp
                         )
 
                     blob_for_storage_sequester_services = {}
@@ -309,6 +316,12 @@ class MemoryVlobComponent(BaseVlobComponent):
 
                 # All checks are good, now we do the actual insertion
 
+                match realm.last_vlob_timestamp:
+                    case None:
+                        realm.last_vlob_timestamp = timestamp
+                    case previous_last_vlob_timestamp:
+                        realm.last_vlob_timestamp = max(previous_last_vlob_timestamp, timestamp)
+
                 version = len(vlobs) + 1
                 vlob_atom = MemoryVlobAtom(
                     realm_id=realm.realm_id,
@@ -338,8 +351,8 @@ class MemoryVlobComponent(BaseVlobComponent):
                         vlob_id=vlob_id,
                         version=version,
                         blob=blob if len(blob) < EVENT_VLOB_MAX_BLOB_SIZE else None,
-                        last_common_certificate_timestamp=org.last_common_certificate_timestamp,
-                        last_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+                        last_common_certificate_timestamp=common_topic_last_timestamp,
+                        last_realm_certificate_timestamp=realm_topic_last_timestamp,
                     )
                 )
 
@@ -416,8 +429,8 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return VlobReadResult(
             items=output,
-            needed_common_certificate_timestamp=org.last_common_certificate_timestamp,
-            needed_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+            needed_common_certificate_timestamp=org.per_topic_last_timestamp["common"],
+            needed_realm_certificate_timestamp=org.per_topic_last_timestamp[("realm", realm_id)],
         )
 
     @override
@@ -496,8 +509,8 @@ class MemoryVlobComponent(BaseVlobComponent):
 
         return VlobReadResult(
             items=output,
-            needed_common_certificate_timestamp=org.last_common_certificate_timestamp,
-            needed_realm_certificate_timestamp=realm.last_realm_certificate_timestamp,
+            needed_common_certificate_timestamp=org.per_topic_last_timestamp["common"],
+            needed_realm_certificate_timestamp=org.per_topic_last_timestamp[("realm", realm_id)],
         )
 
     @override
