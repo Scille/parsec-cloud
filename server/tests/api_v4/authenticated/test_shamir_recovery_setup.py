@@ -284,13 +284,62 @@ async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(
 
 
 async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
+    coolorg: CoolorgRpcClients, backend: Backend, with_postgresql: bool
+) -> None:
+    if with_postgresql:
+        pytest.skip("TODO: postgre not implemented yet")
+    older_timestamp = DateTime.now()
+
+    # Set shamir recovery for Alice...
+
+    await setup_shamir_for_coolorg(coolorg)
+
+    # ...then remove it (so that we can set it again at next step)...
+
+    outcome = await backend.shamir.remove_recovery_setup(
+        organization_id=coolorg.organization_id, author=coolorg.alice.user_id
+    )
+    assert outcome is None
+
+    # ...and finally set the shamir again with a clashing timestamp
+
+    share = ShamirRecoveryShareCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.alice.user_id,
+        timestamp=older_timestamp,
+        recipient=coolorg.mallory.user_id,
+        ciphered_share=b"abc",
+    )
+    brief = ShamirRecoveryBriefCertificate(
+        author=coolorg.alice.device_id,
+        user_id=coolorg.alice.user_id,
+        timestamp=older_timestamp,
+        threshold=1,
+        per_recipient_shares={coolorg.mallory.user_id: 2},
+    )
+
+    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
+        b"abc",
+        InvitationToken.new(),
+        brief.dump_and_sign(coolorg.alice.signing_key),
+        [share.dump_and_sign(coolorg.alice.signing_key)],
+    )
+    rep = await coolorg.alice.shamir_recovery_setup(setup)
+    assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp)
+
+
+async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     coolorg: CoolorgRpcClients, with_postgresql: bool
 ) -> None:
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
     older_timestamp = DateTime.now()
-    # initial setup to have a previous shamir
+
+    # Set shamir recovery for Alice...
+
     await setup_shamir_for_coolorg(coolorg)
+
+    # ...then for Bob, the clashing timestamp is not an issue since each of them is isolated
 
     share = ShamirRecoveryShareCertificate(
         author=coolorg.bob.device_id,
@@ -314,7 +363,7 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
         [share.dump_and_sign(coolorg.bob.signing_key)],
     )
     rep = await coolorg.bob.shamir_recovery_setup(setup)
-    assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp)
+    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
 
 
 async def test_authenticated_shamir_recovery_setup_share_invalid_data(
