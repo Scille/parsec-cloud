@@ -56,9 +56,10 @@ import { Answer, askQuestion, MsModalResult } from 'megashark-lib';
 const props = defineProps<{
   informationManager: InformationManager;
   bootstrapLink?: string;
+  defaultChoice?: ServerType;
 }>();
 
-const serverType = ref<ServerType | undefined>(undefined);
+const serverType = ref<ServerType | undefined>(props.defaultChoice);
 
 onMounted(async () => {
   if (props.bootstrapLink) {

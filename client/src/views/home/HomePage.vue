@@ -193,10 +193,12 @@ async function handleQuery(): Promise<void> {
         PresentationMode.Toast,
       );
     }
+  } else if (query.createOrg) {
+    openCreateOrganizationModal(undefined, query.createOrg);
   }
 }
 
-async function openCreateOrganizationModal(bootstrapLink?: string): Promise<void> {
+async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
   const modal = await modalController.create({
     component: CreateOrganizationModal,
     canDismiss: true,
@@ -205,6 +207,7 @@ async function openCreateOrganizationModal(bootstrapLink?: string): Promise<void
     componentProps: {
       informationManager: informationManager,
       bootstrapLink: bootstrapLink,
+      defaultChoice: defaultServerChoice,
     },
   });
   await modal.present();

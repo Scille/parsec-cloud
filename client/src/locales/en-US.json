@@ -1197,6 +1197,8 @@
         "sidebar": {
             "goToOrganization": "Go to organization",
             "goToHome": "Go to home",
+            "createNewOrganization": "Create a new organization",
+            "createFirstOrganization": "Create your first organization",
             "allOrganization": "All organizations",
             "state": {
                 "title": "State: ",
