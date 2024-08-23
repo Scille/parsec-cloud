@@ -381,23 +381,24 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
 
 async def setup_shamir_for_coolorg(
     coolorg: CoolorgRpcClients,
+    now: DateTime | None = None,
 ) -> tuple[bytes, bytes]:
     """
     setup a shamir for alice, with mallory as a share recipient
     returns the associated brief and share as bytes
     """
-    dt = DateTime.now()
+    now = now or DateTime.now()
     share = ShamirRecoveryShareCertificate(
         author=coolorg.alice.device_id,
         user_id=coolorg.alice.user_id,
-        timestamp=dt,
+        timestamp=now,
         recipient=coolorg.mallory.user_id,
         ciphered_share=b"abc",
     )
     brief = ShamirRecoveryBriefCertificate(
         author=coolorg.alice.device_id,
         user_id=coolorg.alice.user_id,
-        timestamp=dt,
+        timestamp=now,
         threshold=1,
         per_recipient_shares={coolorg.mallory.user_id: 2},
     )

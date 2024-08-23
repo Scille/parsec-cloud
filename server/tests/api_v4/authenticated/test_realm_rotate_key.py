@@ -88,6 +88,7 @@ async def test_authenticated_realm_rotate_key_ok(
 
     certif = patch_realm_key_rotation_certificate(
         wksp1_key_rotation_certificate,
+        timestamp=DateTime.now(),
         realm_id=wksp_id,
         key_index=initial_key_index + 1,
     )

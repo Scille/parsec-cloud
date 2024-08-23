@@ -115,24 +115,18 @@ async def test_authenticated_realm_create_timestamp_out_of_ballpark(
     assert rep.client_timestamp == timestamp_out_of_ballpark
 
 
-@pytest.mark.parametrize(
-    "timestamp_offset",
-    (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
-)
-async def test_authenticated_realm_create_require_greater_timestamp_due_to_other_realm_activity(
+async def test_authenticated_realm_create_isolated_from_other_realms(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     alice_owner_role_certificate: RealmRoleCertificate,
-    timestamp_offset: int,
-    with_postgresql: bool,
 ) -> None:
-    last_certificate_timestamp = DateTime.now()
-    same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
+    t0 = DateTime.now()
+    t1 = t0.add(seconds=1)
 
-    # 1) Perform a a key rotation to add a new certificate at last_certificate_timestamp
+    # 1) Perform certificate & vlob changes in another realm...
 
     outcome = await backend.realm.rotate_key(
-        now=last_certificate_timestamp,
+        now=t0,
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         author_verify_key=coolorg.alice.signing_key.verify_key,
@@ -143,7 +137,7 @@ async def test_authenticated_realm_create_require_greater_timestamp_due_to_other
         },
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
-            timestamp=last_certificate_timestamp,
+            timestamp=t0,
             hash_algorithm=HashAlgorithm.SHA256,
             encryption_algorithm=SecretKeyAlgorithm.BLAKE2B_XSALSA20_POLY1305,
             key_index=2,
@@ -153,30 +147,33 @@ async def test_authenticated_realm_create_require_greater_timestamp_due_to_other
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
 
-    # 2) Try to create a realm with same or previous timestamp
-
-    certif = patch_realm_role_certificate(
-        alice_owner_role_certificate, timestamp=same_or_previous_timestamp
+    outcome = await backend.vlob.create(
+        now=t1,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
+        vlob_id=VlobID.new(),
+        key_index=2,
+        timestamp=t1,
+        blob=b"<dummy>",
     )
+    assert outcome is None
+
+    # 2) ...this shouldn't impact our operation realms are isolated from each others
+
+    certif = patch_realm_role_certificate(alice_owner_role_certificate, timestamp=t0)
     rep = await coolorg.alice.realm_create(
         realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
     )
 
-    # The rotation of a realm has nothing to do with the creation of a new realm
-    # The postgre implementation does not perform this check
-    if with_postgresql:
-        assert rep == authenticated_cmds.v4.realm_create.RepOk()
-    else:
-        assert rep == authenticated_cmds.v4.realm_create.RepRequireGreaterTimestamp(
-            strictly_greater_than=last_certificate_timestamp
-        )
+    assert rep == authenticated_cmds.v4.realm_create.RepOk()
 
 
 @pytest.mark.parametrize(
     "timestamp_offset",
     (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
 )
-async def test_authenticated_realm_create_require_greater_timestamp_due_to_common_activity(
+async def test_authenticated_realm_create_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     alice_owner_role_certificate: RealmRoleCertificate,
