@@ -2,6 +2,7 @@
 
 import { ConnectionHandle, EntryName, FsPath, ParsecWorkspacePathAddr, WorkspaceHandle, WorkspaceName } from '@/parsec';
 import { DeviceID, OrganizationID } from '@/plugins/libparsec';
+import { ServerType } from '@/services/parsecServers';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
 import { Ref } from 'vue';
 import { RouteLocationNormalizedLoaded, RouteRecordRaw, Router } from 'vue-router';
@@ -163,6 +164,7 @@ export interface Query {
   loginInfo?: string;
   workspaceHandle?: WorkspaceHandle;
   bmsOrganizationId?: OrganizationID;
+  createOrg?: ServerType;
 }
 
 export interface ClientAreaQuery {

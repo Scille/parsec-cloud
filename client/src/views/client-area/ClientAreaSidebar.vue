@@ -6,6 +6,7 @@
       <ion-card-header
         class="organization-card-header"
         @click="openOrganizationChoice($event)"
+        v-show="organizations.length > 0"
       >
         <div
           class="card-header"
@@ -27,10 +28,7 @@
           </ion-card-title>
         </div>
 
-        <div
-          class="card-header-icon"
-          v-show="organizations.length > 0"
-        >
+        <div class="card-header-icon">
           <ms-image :image="ChevronExpand" />
         </div>
       </ion-card-header>
@@ -54,6 +52,22 @@
           button
         >
           {{ $msTranslate(isDefaultOrganization(organization) ? 'clientArea.sidebar.goToHome' : 'clientArea.sidebar.goToOrganization') }}
+        </ion-text>
+      </div>
+      <div
+        class="organization-card-button custom-button custom-button-fill"
+        v-show="showMenu"
+        @click="createOrganization"
+      >
+        <ion-text
+          class="button-medium"
+          button
+        >
+          {{
+            $msTranslate(
+              organizations.length === 0 ? 'clientArea.sidebar.createFirstOrganization' : 'clientArea.sidebar.createNewOrganization',
+            )
+          }}
         </ion-text>
       </div>
     </ion-card>
@@ -240,6 +254,7 @@ import OrganizationSwitchClientPopover from '@/components/organizations/Organiza
 import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
 import { navigateTo, Routes } from '@/router';
 import { onMounted, ref } from 'vue';
+import { ServerType } from '@/services/parsecServers';
 
 const props = defineProps<{
   organization: BmsOrganization;
@@ -314,6 +329,10 @@ async function goToHome(): Promise<void> {
   } else {
     await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.organization.parsecId } });
   }
+}
+
+async function createOrganization(): Promise<void> {
+  await navigateTo(Routes.Home, { skipHandle: true, query: { createOrg: ServerType.Saas } });
 }
 </script>
 
