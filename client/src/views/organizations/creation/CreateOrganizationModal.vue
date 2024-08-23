@@ -65,7 +65,7 @@ onMounted(async () => {
   if (props.bootstrapLink) {
     const result = await parseParsecAddr(props.bootstrapLink);
     if (result.ok && result.value.tag === ParsedParsecAddrTag.OrganizationBootstrap) {
-      serverType.value = getServerTypeFromHost(result.value.hostname, result.value.port);
+      serverType.value = getServerTypeFromHost(result.value.hostname, result.value.port, result.value.useSsl);
     }
   }
 });

@@ -51,7 +51,7 @@ describe('Trial organization', () => {
       'HomePage.organizationList.expiration.expired',
     ],
   ])(
-    'Get duration before expiration',
+    'Get duration before expiration %s',
     (creationDate: DateTime, expectedDuration: Duration, shouldBeExpired: boolean, formatted: Translatable) => {
       vi.setSystemTime(DateTime.utc(2024, 4, 7, 12, 0, 0).toJSDate());
       const duration = getDurationBeforeExpiration(creationDate);

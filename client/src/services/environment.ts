@@ -38,8 +38,30 @@ function getSignUrl(): string {
   return DEFAULT_SIGN_URL;
 }
 
+const SAAS_SERVERS_ENV_VARIABLE = 'VITE_SAAS_SERVERS';
+const TRIAL_SERVERS_ENV_VARIABLE = 'VITE_TRIAL_SERVERS';
+
+const DEFAULT_SAAS_SERVERS = ['saas-v3.parsec.cloud'];
+const DEFAULT_TRIAL_SERVERS = ['trial.parsec.cloud'];
+
+function getSaasServers(): Array<string> {
+  if (import.meta.env[SAAS_SERVERS_ENV_VARIABLE]) {
+    return import.meta.env[SAAS_SERVERS_ENV_VARIABLE].split(';');
+  }
+  return DEFAULT_SAAS_SERVERS;
+}
+
+function getTrialServers(): Array<string> {
+  if (import.meta.env[TRIAL_SERVERS_ENV_VARIABLE]) {
+    return import.meta.env[TRIAL_SERVERS_ENV_VARIABLE].split(';');
+  }
+  return DEFAULT_TRIAL_SERVERS;
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
   getSignUrl,
+  getSaasServers,
+  getTrialServers,
 };

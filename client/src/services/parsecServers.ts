@@ -1,8 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-const SAAS_SERVER_HOST = 'saas-v3.parsec.cloud';
-const TRIAL_SERVER_HOST = 'trial.parsec.cloud';
-const TEST_SERVER_HOST = 'saas-demo-v3-mightyfairy.parsec.cloud';
+import { Env } from '@/services/environment';
 
 export const TRIAL_EXPIRATION_DAYS = 15;
 
@@ -12,17 +10,14 @@ export enum ServerType {
   Custom = 'custom',
 }
 
-const DEFAULT_PORT = 80;
+const DEFAULT_PORT = 443;
+const NO_SSL_PORT = 80;
 
-function getSaasHost(): string {
-  if (window.isDev()) {
-    return TEST_SERVER_HOST;
-  }
-  return SAAS_SERVER_HOST;
+function matchesHost(hostList: Array<string>, host: string): boolean {
+  return hostList.find((h) => h.trim().toLocaleLowerCase() === host.trim().toLocaleLowerCase()) !== undefined;
 }
 
 export function getServerTypeFromAddress(addr: string): ServerType {
-  addr = addr.toLocaleLowerCase();
   let url;
   try {
     url = new URL(addr);
@@ -30,29 +25,32 @@ export function getServerTypeFromAddress(addr: string): ServerType {
     return ServerType.Custom;
   }
 
-  if (url.hostname === getSaasHost() && (!url.port || url.port === DEFAULT_PORT.toString())) {
+  if (url.protocol !== 'parsec3:') {
+    return ServerType.Custom;
+  }
+
+  const host = !url.port || url.port === DEFAULT_PORT.toString() ? url.hostname : url.host;
+
+  if (matchesHost(Env.getSaasServers(), host)) {
     return ServerType.Saas;
-  } else if (url.hostname === TRIAL_SERVER_HOST && (!url.port || url.port === DEFAULT_PORT.toString())) {
+  } else if (matchesHost(Env.getTrialServers(), host)) {
     return ServerType.Trial;
   }
   return ServerType.Custom;
 }
 
-export function getServerTypeFromHost(host: string, port?: number): ServerType {
-  const addr = port === undefined || port === DEFAULT_PORT ? host.toLocaleLowerCase() : `${host.toLocaleLowerCase()}:${port}`;
+export function getServerTypeFromHost(host: string, port?: number, useSsl?: boolean): ServerType {
+  const defaultPort = useSsl === false ? NO_SSL_PORT : DEFAULT_PORT;
+  const addr = port === undefined || port === defaultPort ? host : `${host}:${port}`;
 
-  if (addr === getSaasHost()) {
+  if (matchesHost(Env.getSaasServers(), addr)) {
     return ServerType.Saas;
-  } else if (addr === TRIAL_SERVER_HOST) {
+  } else if (matchesHost(Env.getTrialServers(), addr)) {
     return ServerType.Trial;
   }
   return ServerType.Custom;
 }
 
-export function getServerAddress(type: ServerType): string | undefined {
-  if (type === ServerType.Saas) {
-    return `parsec3://${getSaasHost()}`;
-  } else if (type === ServerType.Trial) {
-    return `parsec3://${TRIAL_SERVER_HOST}`;
-  }
+export function getTrialServerAddress(): string {
+  return `parsec3://${Env.getTrialServers()[0]}`;
 }

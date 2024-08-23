@@ -5,7 +5,7 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import vue from '@vitejs/plugin-vue';
 import path from 'path';
-import { defineConfig, PluginOption, UserConfigExport } from 'vite';
+import { defineConfig, loadEnv, PluginOption, UserConfigExport } from 'vite';
 import topLevelAwait from 'vite-plugin-top-level-await';
 // eslint-disable-next-line no-relative-import-paths/no-relative-import-paths
 import wasmPack from './scripts/vite_plugin_wasm_pack';
@@ -73,6 +73,7 @@ const config: UserConfigExport = () => ({
         inline: ['megashark-lib'],
       },
     },
+    env: loadEnv('development', process.cwd(), ''),
     globals: true,
     alias: {
       '@libparsec_trampoline': path.resolve(__dirname, `./src/plugins/libparsec/trampoline-${platform}.ts`),
