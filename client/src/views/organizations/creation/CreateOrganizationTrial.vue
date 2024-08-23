@@ -50,7 +50,7 @@ import {
   parseParsecAddr,
   ParsedParsecAddrTag,
 } from '@/parsec';
-import { getServerAddress, ServerType } from '@/services/parsecServers';
+import { getTrialServerAddress } from '@/services/parsecServers';
 import { getDefaultDeviceName } from '@/common/device';
 import { generateTrialOrganizationName } from '@/common/organization';
 import { Translatable, I18n, MsModalResult } from 'megashark-lib';
@@ -108,7 +108,7 @@ async function createOrganization(): Promise<Result<AvailableDevice, BootstrapOr
   while (retry < 2) {
     const orgName = generateTrialOrganizationName(email.value);
     const result = await parsecCreateOrganization(
-      getServerAddress(ServerType.Trial) as string,
+      getTrialServerAddress(),
       orgName,
       name.value,
       email.value,
