@@ -305,7 +305,7 @@
         "advanced": "Avancé",
         "enableTelemetry": {
             "label": "Envoyer les rapports d'erreur",
-            "description": "Les rapports d'erreur aident à améliorer l'application"
+            "description": "Les rapports d'erreur aident à améliorer Parsec"
         },
         "minimizeToSystemTray": {
             "label": "Réduire dans la barre d'état",
