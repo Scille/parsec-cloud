@@ -321,9 +321,6 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
     assert rep.client_timestamp == timestamp_out_of_ballpark
 
 
-@pytest.mark.xfail(
-    reason="TODO: realm_rotate_key never returns RepRequireGreaterTimestamp. Not implemented?"
-)
 @pytest.mark.parametrize(
     "timestamp_offset",
     (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
@@ -374,6 +371,6 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
         },
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_create.RepRequireGreaterTimestamp(
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )

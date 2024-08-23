@@ -306,9 +306,6 @@ async def test_authenticated_realm_rename_invalid_certificate(
     assert rep == authenticated_cmds.v4.realm_rename.RepInvalidCertificate()
 
 
-@pytest.mark.xfail(
-    reason="TODO: realm_rename never returns RepRequireGreaterTimestamp. Not implemented?"
-)
 @pytest.mark.parametrize(
     "timestamp_offset",
     (pytest.param(0, id="same_timestamp"), pytest.param(1, id="previous_timestamp")),
@@ -322,7 +319,7 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 
-    # 1) Performa a key rotation to add a new certificate at last_certificate_timestamp
+    # 1) Perform a key rotation to add a new certificate at last_certificate_timestamp
 
     outcome = await backend.realm.rotate_key(
         now=last_certificate_timestamp,
