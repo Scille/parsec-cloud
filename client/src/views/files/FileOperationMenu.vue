@@ -347,6 +347,7 @@ async function onFileOperationEvent(
     display: flex;
     padding: 0;
     overflow: hidden;
+    background: var(--parsec-color-light-secondary-white);
 
     &__item {
       color: var(--parsec-color-light-secondary-grey);
@@ -402,6 +403,7 @@ async function onFileOperationEvent(
     height: 40vh;
     max-height: 25rem;
     transition: all 250ms ease-in-out;
+    background: var(--parsec-color-light-secondary-white);
 
     &__empty {
       overflow: hidden;
