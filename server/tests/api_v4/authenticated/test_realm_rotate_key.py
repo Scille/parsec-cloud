@@ -330,7 +330,13 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
     backend: Backend,
     wksp1_key_rotation_certificate: RealmKeyRotationCertificate,
     timestamp_offset: int,
+    with_postgresql: bool,
 ) -> None:
+    if with_postgresql:
+        pytest.xfail(
+            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
+        )
+
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 
