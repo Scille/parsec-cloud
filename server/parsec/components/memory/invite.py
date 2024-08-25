@@ -42,6 +42,7 @@ from parsec.components.invite import (
     UserInvitation,
 )
 from parsec.components.memory.datamodel import (
+    AdvisoryLock,
     MemoryDatamodel,
     MemoryInvitation,
     MemoryInvitationDeletedReason,
@@ -310,7 +311,10 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForUserBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"], write=["invitation_create"]):
+        async with (
+            org.topics_lock(read=["common"]),
+            org.advisory_lock_exclusive(AdvisoryLock.InvitationCreation),
+        ):
             try:
                 author_device = org.devices[author]
             except KeyError:
@@ -394,7 +398,10 @@ class MemoryInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteNewForDeviceBadOutcome.ORGANIZATION_EXPIRED
 
-        async with org.topics_lock(read=["common"], write=["invitation_create"]):
+        async with (
+            org.topics_lock(read=["common"]),
+            org.advisory_lock_exclusive(AdvisoryLock.InvitationCreation),
+        ):
             try:
                 author_device = org.devices[author]
             except KeyError:

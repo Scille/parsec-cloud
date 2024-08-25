@@ -241,7 +241,11 @@ class MemoryRealmComponent(BaseRealmComponent):
                 # Ensure we are not breaking causality by adding a newer timestamp.
 
                 if realm.last_vlob_timestamp is not None:
-                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp, realm.last_vlob_timestamp)
+                    last_timestamp = max(
+                        common_topic_last_timestamp,
+                        realm_topic_last_timestamp,
+                        realm.last_vlob_timestamp,
+                    )
                 else:
                     last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
                 if last_timestamp >= certif.timestamp:
@@ -363,7 +367,11 @@ class MemoryRealmComponent(BaseRealmComponent):
                 # Ensure we are not breaking causality by adding a newer timestamp.
 
                 if realm.last_vlob_timestamp is not None:
-                    last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp, realm.last_vlob_timestamp)
+                    last_timestamp = max(
+                        common_topic_last_timestamp,
+                        realm_topic_last_timestamp,
+                        realm.last_vlob_timestamp,
+                    )
                 else:
                     last_timestamp = max(common_topic_last_timestamp, realm_topic_last_timestamp)
                 if last_timestamp >= certif.timestamp:

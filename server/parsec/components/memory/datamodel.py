@@ -45,14 +45,27 @@ from parsec._parsec import (
 from parsec.components.invite import ConduitState
 from parsec.components.sequester import SequesterServiceType
 
+
+class AdvisoryLock(Enum):
+    """
+    Advisory lock must be taken for certain operations to avoid concurrency issue.
+
+    - Invitation creation: Only one active invitation is allowed per email, this is something
+      that cannot be enforced purely in PostgreSQL with unique constraint (given previous
+      invitations merely got a deleted flag set).
+    """
+
+    InvitationCreation = auto()
+
+
 TopicAndDiscriminant = (
     Literal["common"]
     | Literal["sequester"]
     | tuple[Literal["realm"], VlobID]
     | tuple[Literal["shamir"], UserID]
-    # Not an actual topic, but it is convenient to have the locking on invitation create
-    # here since in practice it works similarly.
-    | Literal["invitation_create"]
+    # Not an actual topic, but it is convenient to implement advisory lock this
+    # way since in practice it works similarly.
+    | tuple[Literal["__advisory_lock"], AdvisoryLock]
 )
 
 
@@ -104,9 +117,30 @@ class MemoryOrganization:
     _notify_me_on_topic_lock_release: Event | None = None
 
     @asynccontextmanager
+    async def advisory_lock_exclusive(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+        """
+        Equivalent to `SELECT pg_advisory_xact_lock(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
+        """
+        async with self.topics_lock(write=[("__advisory_lock", lock)]):
+            yield
+
+    @asynccontextmanager
+    async def advisory_lock_shared(self, lock: AdvisoryLock) -> AsyncIterator[None]:
+        """
+        Equivalent to `SELECT pg_advisory_xact_lock_shared(<lock ID>, _id) FROM organization WHERE organization_id = <org>`
+        """
+        async with self.topics_lock(write=[("__advisory_lock", lock)]):
+            yield
+
+    @asynccontextmanager
     async def topics_lock(
         self, read: Iterable[TopicAndDiscriminant] = (), write: Iterable[TopicAndDiscriminant] = ()
     ) -> AsyncIterator[tuple[DateTime, ...]]:
+        """
+        Read is equivalent to `SELECT last_timestamp FROM <topic table> WHERE organization_id = <org> FOR SHARE`
+
+        Write is equivalent to `SELECT last_timestamp FROM <topic table> WHERE organization_id = <org> FOR UPDATE`
+        """
         while True:
             # 1) Check the locks we want aren't already taken in write mode
             if any(
