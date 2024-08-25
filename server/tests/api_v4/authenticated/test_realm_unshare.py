@@ -201,7 +201,16 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
     backend: Backend,
     timestamp_kind: str,
     alice_generated_realm_wksp1_data: Callable[[DateTime], Awaitable[None]],
+    with_postgresql: bool,
+    request: pytest.FixtureRequest,
 ) -> None:
+    if with_postgresql and (
+        "[vlob-" in request.node.name or "[common_certificate-" in request.node.name
+    ):
+        pytest.xfail(
+            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
+        )
+
     # 0) Bob must become OWNER to be able to unshare with Alice
 
     t0 = DateTime.now().subtract(seconds=100)

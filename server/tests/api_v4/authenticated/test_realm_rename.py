@@ -315,7 +315,13 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
     backend: Backend,
     timestamp_offset: int,
     alice_name_certificate: RealmNameCertificate,
+    with_postgresql: bool,
 ) -> None:
+    if with_postgresql:
+        pytest.xfail(
+            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
+        )
+
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 

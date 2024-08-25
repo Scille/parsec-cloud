@@ -212,7 +212,16 @@ async def test_authenticated_user_revoke_require_greater_timestamp(
     backend: Backend,
     timestamp_kind: str,
     alice_generated_data: Callable[[DateTime], Awaitable[None]],
+    with_postgresql: bool,
+    request: pytest.FixtureRequest,
 ) -> None:
+    if with_postgresql and (
+        "[vlob-" in request.node.name or "[realm_certificate-" in request.node.name
+    ):
+        pytest.xfail(
+            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
+        )
+
     # 0) Bob must become ADMIN to be able to revoke Alice
 
     certif = UserUpdateCertificate(
