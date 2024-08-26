@@ -27,26 +27,26 @@ describe('Trial organization', () => {
 
   it.each([
     [
-      DateTime.fromISO('2024-04-07T12:00:00.000-00:00', { zone: 'utc' }),
-      Duration.fromObject({ days: 14, hours: 0 }),
+      DateTime.fromISO('2024-04-07T11:00:00.000-00:00', { zone: 'utc' }),
+      Duration.fromObject({ days: 14, hours: 23 }),
       false,
-      { key: 'HomePage.organizationList.expiration.days', count: 14, data: { days: 14 } },
+      { key: 'HomePage.organizationList.expiration.days', count: 14, data: { days: 15 } },
     ],
     [
-      DateTime.fromISO('2024-04-01T12:00:00.000-00:00', { zone: 'utc' }),
+      DateTime.fromISO('2024-03-31T12:00:00.000-00:00', { zone: 'utc' }),
       Duration.fromObject({ days: 8, hours: 0 }),
       false,
-      { key: 'HomePage.organizationList.expiration.days', count: 8, data: { days: 8 } },
+      { key: 'HomePage.organizationList.expiration.days', count: 8, data: { days: 9 } },
     ],
     [
-      DateTime.fromISO('2024-03-24T14:00:00.000-00:00', { zone: 'utc' }),
+      DateTime.fromISO('2024-03-23T14:00:00.000-00:00', { zone: 'utc' }),
       Duration.fromObject({ days: 0, hours: 2 }),
       false,
       { key: 'HomePage.organizationList.expiration.hours', count: 2, data: { hours: 2 } },
     ],
     [
       DateTime.fromISO('2024-03-01T12:00:00.000-00:00', { zone: 'utc' }),
-      Duration.fromObject({ days: -23, hours: 0 }),
+      Duration.fromObject({ days: -22, hours: 0 }),
       true,
       'HomePage.organizationList.expiration.expired',
     ],

@@ -27,7 +27,7 @@ export function formatExpirationTime(duration: Duration): Translatable {
     return {
       key: 'HomePage.organizationList.expiration.days',
       count: duration.days,
-      data: { days: duration.days },
+      data: { days: duration.days + 1 },
     };
   } else if (duration.hours > 0) {
     return {
