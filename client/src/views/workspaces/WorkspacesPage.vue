@@ -435,7 +435,8 @@ const filteredWorkspaces = computed(() => {
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'WorkspacesPage.sort.sortByName', key: SortWorkspaceBy.Name },
-  { label: 'WorkspacesPage.sort.sortBySize', key: SortWorkspaceBy.Size },
+  // for now we don't have the data from the BMS
+  // { label: 'WorkspacesPage.sort.sortBySize', key: SortWorkspaceBy.Size },
   { label: 'WorkspacesPage.sort.sortByLastUpdated', key: SortWorkspaceBy.LastUpdate },
 ]);
 
