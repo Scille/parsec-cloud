@@ -67,16 +67,16 @@ import sys
 import textwrap
 
 try:
-    import msgpack  # type: ignore
+    import msgpack
 except ImportError:
     raise SystemExit("msgpack not installed. Run `pip install msgpack`")
 try:
-    import zstandard  # type: ignore
+    import zstandard
 except ImportError:
     raise SystemExit("zstandard not installed. Run `pip install zstandard`")
 try:
-    import nacl.exceptions  # type: ignore
-    import nacl.secret  # type: ignore
+    import nacl.exceptions
+    import nacl.secret
 except ImportError:
     raise SystemExit("pynacl not installed. Run `pip install pynacl`")
 
