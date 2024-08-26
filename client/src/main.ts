@@ -14,7 +14,7 @@ import {
   switchOrganization,
 } from '@/router';
 import { Config, StorageManagerKey, ThemeManagerKey, storageManagerInstance } from '@/services/storageManager';
-import { IonicVue, isPlatform, modalController } from '@ionic/vue';
+import { IonicVue, isPlatform, modalController, popoverController } from '@ionic/vue';
 
 /* Theme variables */
 import '@/theme/global.scss';
@@ -217,6 +217,9 @@ async function setupApp(): Promise<void> {
           PresentationMode.Toast,
         );
         return;
+      }
+      if (await popoverController.getTop()) {
+        await popoverController.dismiss();
       }
       if ((await claimLinkValidator(link)).validity === Validity.Valid) {
         await handleJoinLink(link);
