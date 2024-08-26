@@ -69,7 +69,7 @@ export const msTest = base.extend<{
   },
 
   usersPage: async ({ connected }, use) => {
-    await connected.locator('.sidebar').locator('.organization-card-manageBtn').click();
+    await connected.locator('.sidebar').locator('#manageOrganization').click();
     await expect(connected).toHavePageTitle('Users');
     await expect(connected).toBeUserPage();
     use(connected);

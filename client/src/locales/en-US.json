@@ -626,6 +626,7 @@
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
+        "goToHome": "Go to home",
         "back": "Back",
         "trial": {
             "tag": "Trial version",

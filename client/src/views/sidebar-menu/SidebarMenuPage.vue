@@ -20,48 +20,69 @@
                 :class="{ 'organization-card-header-desktop': isDesktop() }"
                 @click="openOrganizationChoice($event)"
               >
-                <div class="header-container">
-                  <ion-avatar class="organization-avatar body-lg">
-                    <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
-                    <ms-image
-                      v-else
-                      :image="LogoIconGradient"
-                      class="organization-avatar-logo"
-                    />
-                  </ion-avatar>
-                  <div class="organization-text">
-                    <ion-card-title class="title-h3">
-                      {{ userInfo?.organizationId }}
-                    </ion-card-title>
-                  </div>
+                <ion-avatar class="organization-avatar body-lg">
+                  <span v-if="!isTrialOrg">{{ userInfo ? userInfo.organizationId.substring(0, 2) : '' }}</span>
+                  <ms-image
+                    v-else
+                    :image="LogoIconGradient"
+                    class="organization-avatar-logo"
+                  />
+                </ion-avatar>
+                <div class="organization-text">
+                  <ion-card-title class="title-h3">
+                    {{ userInfo?.organizationId }}
+                  </ion-card-title>
                 </div>
-                <div
+                <ms-image
+                  :image="ChevronExpand"
                   class="header-icon"
                   v-show="isDesktop()"
-                >
-                  <ms-image :image="ChevronExpand" />
-                </div>
+                />
               </ion-card-header>
 
               <div
-                class="organization-card-manageBtn"
-                v-show="userInfo && userInfo.currentProfile != UserProfile.Outsider"
-                @click="navigateTo(Routes.Users)"
+                class="organization-card-buttons"
+                v-if="userInfo"
               >
                 <ion-text
-                  class="button-medium"
+                  @click="navigateTo(Routes.Users)"
+                  class="organization-card-buttons__item button-medium"
+                  id="manageOrganization"
+                  v-show="userInfo.currentProfile != UserProfile.Outsider"
                   button
                 >
-                  {{
-                    userInfo && userInfo.currentProfile === UserProfile.Admin
-                      ? $msTranslate('SideMenu.manageOrganization')
-                      : $msTranslate('SideMenu.organizationInfo')
-                  }}
+                  <ion-icon
+                    class="button-icon"
+                    :icon="userInfo && userInfo.currentProfile === UserProfile.Admin ? cog : informationCircle"
+                  />
+                  <span>
+                    {{
+                      userInfo && userInfo.currentProfile === UserProfile.Admin
+                        ? $msTranslate('SideMenu.manageOrganization')
+                        : $msTranslate('SideMenu.organizationInfo')
+                    }}
+                  </span>
+                </ion-text>
+                <ion-text
+                  class="organization-card-buttons__item button-medium"
+                  id="goHome"
+                  button
+                  @click="goToHome"
+                  v-if="isDesktop()"
+                >
+                  <ion-icon
+                    class="button-icon"
+                    :icon="home"
+                  />
+                  <span>
+                    {{ $msTranslate('SideMenu.goToHome') }}
+                  </span>
                 </ion-text>
               </div>
             </ion-card>
             <!-- end of active organization -->
           </div>
+
           <div v-show="currentRouteIsOrganizationManagementRoute()">
             <div
               class="back-organization"
@@ -328,7 +349,7 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { add, business, chevronBack, ellipsisHorizontal, informationCircle, people, pieChart, star } from 'ionicons/icons';
+import { add, home, business, chevronBack, ellipsisHorizontal, cog, informationCircle, people, pieChart, star } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
 
@@ -489,9 +510,17 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     switchOrganization(data.handle);
   }
 }
+
+async function goToHome(): Promise<void> {
+  await switchOrganization(null);
+}
 </script>
 
 <style lang="scss" scoped>
+* {
+  transition: all 100ms ease-in-out;
+}
+
 .resize-divider {
   width: 0.25rem;
   height: 100%;
@@ -527,7 +556,7 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 .sidebar {
   border: none;
   user-select: none;
-  border-radius: 0 0.5rem 0.5rem 0;
+  border-radius: 0 var(--parsec-radius-12) var(--parsec-radius-12) 0;
 
   &::part(container) {
     padding: 0.5rem;
@@ -563,30 +592,29 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 }
 
 .organization-card {
-  --background: var(--parsec-color-light-primary-30-opacity15);
+  background: transparent;
   box-shadow: none;
+  display: flex;
+  flex-direction: column;
   margin: 0;
+  border-radius: 0;
 
   &-header {
     display: flex;
-    justify-content: space-between;
     flex-direction: row;
-  }
-
-  &-header-desktop:hover {
-    cursor: pointer;
-    background: var(--parsec-color-light-primary-30-opacity15);
-  }
-
-  .header-container {
+    border-radius: var(--parsec-radius-8);
     box-shadow: none;
-    display: flex;
     align-items: center;
-    justify-content: left;
-    gap: 0.75em;
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    gap: 0.5em;
     position: relative;
     z-index: 2;
-    min-width: 0;
+
+    &-desktop:hover {
+      cursor: pointer;
+      background: var(--parsec-color-light-primary-30-opacity15);
+    }
 
     .organization-avatar {
       background-color: var(--parsec-color-light-secondary-premiere);
@@ -622,30 +650,41 @@ async function openOrganizationChoice(event: Event): Promise<void> {
         text-overflow: ellipsis;
       }
     }
-  }
 
-  .header-icon {
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    background-color: transparent;
-  }
-
-  &-manageBtn {
-    padding: 0.625em 1em;
-    cursor: pointer;
-    align-items: center;
-    color: var(--parsec-color-light-secondary-light);
-    border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
-
-    &:hover {
-      background: var(--parsec-color-light-primary-30-opacity15);
-    }
-
-    ion-text {
-      overflow: hidden;
+    .header-icon {
       white-space: nowrap;
-      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      --fill-color: var(--parsec-color-light-secondary-inversed-contrast);
+      margin-left: auto;
+    }
+  }
+
+  &-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem 0 1.5rem;
+    border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
+
+    &__item {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.5rem 0.75rem;
+      cursor: pointer;
+      align-items: center;
+      color: var(--parsec-color-light-secondary-medium);
+      border-radius: var(--parsec-radius-8);
+
+      &:hover {
+        background: var(--parsec-color-light-primary-30-opacity15);
+      }
+
+      ion-text {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
     }
   }
 }
