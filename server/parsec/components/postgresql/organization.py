@@ -473,7 +473,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 bootstrap_token=None if bootstrap_token is None else bootstrap_token.hex,
                 bootstrapped_on=now,
                 root_verify_key=root_verify_key.encode(),
-                sequester_authority_certificate=s_certif,
+                sequester_authority_certificate=sequester_authority_certificate,
                 sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             )
         )
