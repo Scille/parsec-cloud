@@ -51,13 +51,12 @@ impl ParsecUrlAsHTTPScheme {
     fn from_http_redirection(url: &str) -> Result<Self, AddrError> {
         // 1) Validate the http/https url
 
-        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+        let mut parsed = Url::parse(url).map_err(AddrError::InvalidUrl)?;
 
         match parsed.scheme() {
             "http" | "https" => (),
-            scheme => {
+            _ => {
                 return Err(AddrError::InvalidUrlScheme {
-                    got: scheme.to_string(),
                     expected: HTTP_OR_HTTPS_SCHEME,
                 });
             }
@@ -75,12 +74,12 @@ impl ParsecUrlAsHTTPScheme {
             match parsed.path_segments() {
                 Some(mut path_segments) => {
                     if path_segments.next() != Some("redirect") {
-                        return Err(AddrError::NotARedirection(parsed));
+                        return Err(AddrError::NotARedirection);
                     }
 
                     path_segments.collect::<Vec<&str>>().join("/")
                 }
-                None => return Err(AddrError::NotARedirection(parsed)),
+                None => return Err(AddrError::NotARedirection),
             }
         };
         parsed.set_path(&path);
@@ -91,13 +90,12 @@ impl ParsecUrlAsHTTPScheme {
 
     // Parse a `http(s)://` url just like if it had the `parsec3://` scheme
     fn from_http_url(url: &str) -> Result<Self, AddrError> {
-        let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+        let mut parsed = Url::parse(url).map_err(AddrError::InvalidUrl)?;
 
         match parsed.scheme() {
             "http" | "https" => (),
-            scheme => {
+            _ => {
                 return Err(AddrError::InvalidUrlScheme {
-                    got: scheme.to_string(),
                     expected: HTTP_OR_HTTPS_SCHEME,
                 });
             }
@@ -119,7 +117,7 @@ impl FromStr for ParsecUrlAsHTTPScheme {
     fn from_str(url: &str) -> Result<Self, Self::Err> {
         // 1) Validate the url with it parsec3:// scheme
 
-        let parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+        let parsed = Url::parse(url).map_err(AddrError::InvalidUrl)?;
 
         let mut no_ssl_queries = parsed.query_pairs().filter(|(k, _)| k == "no_ssl");
 
@@ -132,7 +130,6 @@ impl FromStr for ParsecUrlAsHTTPScheme {
                 _ => {
                     return Err(AddrError::InvalidParamValue {
                         param: "no_ssl",
-                        value: value.to_string(),
                         help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
                     });
                 }
@@ -149,9 +146,8 @@ impl FromStr for ParsecUrlAsHTTPScheme {
         let http_scheme = if use_ssl { "https" } else { "http" };
         let url_as_http = match parsed.scheme() {
             PARSEC_SCHEME => url.replacen(PARSEC_SCHEME, http_scheme, 1),
-            scheme => {
+            _ => {
                 return Err(AddrError::InvalidUrlScheme {
-                    got: scheme.to_string(),
                     expected: PARSEC_SCHEME,
                 });
             }
@@ -160,7 +156,7 @@ impl FromStr for ParsecUrlAsHTTPScheme {
         // 3) Continue parsing with the http/https url
 
         Url::parse(&url_as_http)
-            .map_err(|e| AddrError::InvalidUrl(url.to_string(), e))
+            .map_err(AddrError::InvalidUrl)
             .map(Self)
     }
 }
@@ -243,25 +239,21 @@ macro_rules! impl_common_stuff {
 #[derive(Debug, thiserror::Error, PartialEq, Eq)]
 pub enum AddrError {
     /// We failed to parse the url
-    #[error("Cannot parse raw url `{0}`: {1}")]
-    InvalidUrl(String, url::ParseError),
-    #[error("Not a redirection URL (url: `{0}`)")]
-    NotARedirection(url::Url),
-    #[error("Invalid url scheme, got `{got}` but expected `{expected}`")]
-    InvalidUrlScheme { got: String, expected: &'static str },
-    #[error("Invalid value `{value}` for {param} ({help})")]
-    InvalidParamValue {
-        param: &'static str,
-        value: String,
-        help: String,
-    },
+    #[error("Cannot parse URL: {0}")]
+    InvalidUrl(url::ParseError),
+    #[error("Not a redirection URL")]
+    NotARedirection,
+    #[error("Invalid URL scheme, expected `{expected}`")]
+    InvalidUrlScheme { expected: &'static str },
+    #[error("Invalid value for param `{param}` ({help})")]
+    InvalidParamValue { param: &'static str, help: String },
     #[error("Multiple values for param `{0}` only one should be provided")]
     DuplicateParam(&'static str),
     #[error("Missing mandatory `{0}` param")]
     MissingParam(&'static str),
-    #[error("The provided url (`{0}`) should not have a path")]
-    ShouldNotHaveAPath(url::Url),
-    #[error("Path does not form a valid organization id")]
+    #[error("The URL has a path, which is not expected")]
+    ShouldNotHaveAPath,
+    #[error("Path does not form a valid organization ID")]
     InvalidOrganizationID,
 }
 
@@ -381,7 +373,6 @@ fn extract_param_and_expect_value<'a>(
     if value != expected_value {
         return Err(AddrError::InvalidParamValue {
             param,
-            value: value.to_string(),
             help: format!("Expected `{}={}`", param, expected_value),
         });
     }
@@ -403,7 +394,6 @@ macro_rules! extract_param_and_b64_msgpack_deserialize {
             .and_then(|x| rmp_serde::from_slice::<$output>(&x).ok())
             .ok_or_else(|| AddrError::InvalidParamValue {
                 param: $param,
-                value: x.to_string(),
                 help: format!("Invalid `{}` parameter", $param),
             })
     }};
@@ -461,7 +451,7 @@ impl ParsecAddr {
         let base = BaseParsecAddr::from_url(parsed)?;
 
         if parsed.0.path() != "" && parsed.0.path() != "/" {
-            return Err(AddrError::ShouldNotHaveAPath(parsed.0.clone()));
+            return Err(AddrError::ShouldNotHaveAPath);
         }
 
         Ok(Self { base })
@@ -830,10 +820,9 @@ impl ParsecInvitationAddr {
         let invitation_type = match extract_param(&pairs, PARSEC_PARAM_ACTION)? {
             x if x == PARSEC_ACTION_CLAIM_USER => InvitationType::User,
             x if x == PARSEC_ACTION_CLAIM_DEVICE => InvitationType::Device,
-            value => {
+            _ => {
                 return Err(AddrError::InvalidParamValue {
                     param: PARSEC_PARAM_ACTION,
-                    value: value.to_string(),
                     help: format!(
                         "Expected `{}={}` or `{}={}`",
                         PARSEC_PARAM_ACTION,
