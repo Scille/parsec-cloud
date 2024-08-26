@@ -76,9 +76,8 @@ function getCurrentSectionClass(): string {
 .saas-login,
 .saas-forgot-password {
   overflow: hidden;
-
   border-radius: var(--parsec-radius-12);
-  overflow: hidden;
+  height: fit-content;
 
   &::before {
     z-index: 0;
