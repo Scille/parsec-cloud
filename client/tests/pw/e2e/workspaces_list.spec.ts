@@ -82,8 +82,8 @@ for (const gridMode of [false, true]) {
     const popover = connected.locator('.popover-viewport');
     const sortItems = popover.getByRole('listitem');
     await expect(sortItems).toHaveCount(4);
-    await expect(sortItems).toHaveText(['Ascending', 'Name', 'Size', 'Last updated']);
-    for (const [index, checked] of [false, true, false, false].entries()) {
+    await expect(sortItems).toHaveText(['Ascending', 'Name', 'Last updated']);
+    for (const [index, checked] of [false, true, false].entries()) {
       if (checked) {
         await expect(sortItems.nth(index)).toHaveTheClass('selected');
       } else {
