@@ -53,7 +53,7 @@ async def components_factory(
                 blockstore = blockstore_factory(
                     config=config.blockstore_config, postgresql_pool=pool
                 )
-                block = PGBlockComponent(pool=pool)
+                block = PGBlockComponent(pool=pool, blockstore=blockstore)
                 shamir = PGShamirComponent()
 
                 pki = None

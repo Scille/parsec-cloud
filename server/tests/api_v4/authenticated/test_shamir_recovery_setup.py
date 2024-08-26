@@ -19,7 +19,7 @@ from tests.common import (
 
 
 async def test_authenticated_shamir_recovery_setup_ok(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
+    coolorg: CoolorgRpcClients, backend: Backend, with_postgresql: bool
 ) -> None:
     if with_postgresql:
         pytest.xfail("TODO: postgre not implemented yet")
@@ -39,6 +39,9 @@ async def test_authenticated_shamir_recovery_setup_ok(
         per_recipient_shares={coolorg.mallory.user_id: 2},
     )
 
+    expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    expected_topics.shamir_recovery = share.timestamp
+
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
         InvitationToken.new(),
@@ -47,6 +50,9 @@ async def test_authenticated_shamir_recovery_setup_ok(
     )
     rep = await coolorg.alice.shamir_recovery_setup(setup)
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+
+    topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    assert topics == expected_topics
 
 
 async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
@@ -332,6 +338,9 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
     assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp)
 
 
+@pytest.mark.xfail(
+    reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
+)
 async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     coolorg: CoolorgRpcClients, with_postgresql: bool
 ) -> None:

@@ -16,12 +16,18 @@
 CREATE TABLE organization (
     _id SERIAL PRIMARY KEY,
     organization_id VARCHAR(32) UNIQUE NOT NULL,
+    -- NULL if the organization was spontaneously created (i.e. as part
+    -- of organization bootstrap)
     bootstrap_token VARCHAR(32),
+    -- NULL if not bootstrapped
     root_verify_key BYTEA,
+    -- NULL if not expired
     _expired_on TIMESTAMPTZ,
     user_profile_outsider_allowed BOOLEAN NOT NULL,
+    -- NULL if no limit
     active_users_limit INTEGER,
     is_expired BOOLEAN NOT NULL,
+    -- NULL if not bootstrapped
     _bootstrapped_on TIMESTAMPTZ,
     _created_on TIMESTAMPTZ NOT NULL,
     -- NULL for non-sequestered organization
@@ -94,6 +100,7 @@ CREATE TABLE user_ (
     -- in order to avoid cross-reference issues
     shamir_recovery INTEGER,
     frozen BOOLEAN NOT NULL DEFAULT FALSE,
+    current_profile USER_PROFILE NOT NULL,
 
     UNIQUE (organization, user_id)
 );

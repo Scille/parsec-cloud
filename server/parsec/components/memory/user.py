@@ -126,6 +126,9 @@ class MemoryUserComponent(BaseUserComponent):
             if u_certif.user_id in org.users:
                 return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
 
+            if d_certif.device_id in org.devices:
+                return UserCreateUserStoreBadOutcome.USER_ALREADY_EXISTS
+
             if any(
                 True for u in org.active_users() if u.cooked.human_handle == u_certif.human_handle
             ):
@@ -148,8 +151,6 @@ class MemoryUserComponent(BaseUserComponent):
                 redacted_user_certificate=redacted_user_certificate,
             )
 
-            # Sanity check, should never occurs given user doesn't exist yet !
-            assert d_certif.device_id not in org.devices
             org.devices[d_certif.device_id] = MemoryDevice(
                 cooked=d_certif,
                 device_certificate=device_certificate,
@@ -304,7 +305,9 @@ class MemoryUserComponent(BaseUserComponent):
             # - For each realm the user is part of: the last vlob
 
             realms_user_is_part_of = [
-                realm for realm in org.realms.values() if realm.get_current_role_for(certif.user_id)
+                realm
+                for realm in org.realms.values()
+                if realm.get_current_role_for(certif.user_id) is not None
             ]
 
             realm_topics_user_is_part_of: list[tuple[Literal["realm"], VlobID]] = [
@@ -331,8 +334,6 @@ class MemoryUserComponent(BaseUserComponent):
                 # All checks are good, now we do the actual insertion
 
                 org.per_topic_last_timestamp["common"] = certif.timestamp
-                for realm_topic in realm_topics_user_is_part_of:
-                    org.per_topic_last_timestamp[realm_topic] = certif.timestamp
 
                 target_user.revoked_user_certificate = revoked_user_certificate
                 target_user.cooked_revoked = certif

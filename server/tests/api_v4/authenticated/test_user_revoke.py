@@ -7,10 +7,13 @@ import pytest
 from parsec._parsec import (
     DateTime,
     DeviceID,
+    RealmRole,
+    RealmRoleCertificate,
     RevokedUserCertificate,
     UserID,
     UserProfile,
     UserUpdateCertificate,
+    VlobID,
     authenticated_cmds,
 )
 from parsec.events import EventUserRevokedOrFrozen
@@ -20,19 +23,175 @@ from tests.common import (
     HttpCommonErrorsTester,
     RpcTransportError,
     bob_becomes_admin_and_changes_alice,
+    generate_realm_role_certificate,
 )
+from tests.common.data import wksp1_alice_gives_role
 
 
-async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
-    now = DateTime.now()
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "revoked_is_not_part_of_any_realm",
+        "revoked_is_part_of_one_realm_with_vlobs",
+        "revoked_is_part_of_one_realm_without_vlobs",
+        "revoked_is_part_of_multiple_realms_with_vlobs",
+        "revoked_is_part_of_multiple_realms_without_vlobs",
+        "revoked_used_to_be_part_of_realm_with_clashing_topic",
+        "revoked_used_to_be_part_of_realm_with_clashing_vlob",
+    ),
+)
+async def test_authenticated_user_revoke_ok(
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+) -> None:
+    revoked_timestamp = None
+    to_revoke = coolorg.mallory
+
+    match kind:
+        case "revoked_is_not_part_of_any_realm":
+            pass
+
+        case "revoked_is_part_of_one_realm_with_vlobs":
+            realm_id = VlobID.new()
+            certif = generate_realm_role_certificate(
+                coolorg,
+                author=coolorg.mallory.device_id,
+                user_id=coolorg.mallory.user_id,
+                role=RealmRole.OWNER,
+                realm_id=realm_id,
+            )
+            outcome = await backend.realm.create(
+                now=DateTime.now(),
+                organization_id=coolorg.organization_id,
+                author=coolorg.mallory.device_id,
+                author_verify_key=coolorg.mallory.signing_key.verify_key,
+                realm_role_certificate=certif.dump_and_sign(coolorg.mallory.signing_key),
+            )
+            assert isinstance(outcome, RealmRoleCertificate)
+
+            now = DateTime.now()
+            outcome = await backend.vlob.create(
+                now=now,
+                organization_id=coolorg.organization_id,
+                author=coolorg.mallory.device_id,
+                realm_id=realm_id,
+                vlob_id=VlobID.new(),
+                key_index=0,
+                timestamp=now,
+                blob=b"<dummy>",
+            )
+            assert outcome is None
+
+        case "revoked_is_part_of_one_realm_without_vlobs":
+            realm_id = VlobID.new()
+            certif = generate_realm_role_certificate(
+                coolorg,
+                author=coolorg.mallory.device_id,
+                user_id=coolorg.mallory.user_id,
+                role=RealmRole.OWNER,
+                realm_id=realm_id,
+            )
+            outcome = await backend.realm.create(
+                now=DateTime.now(),
+                organization_id=coolorg.organization_id,
+                author=coolorg.mallory.device_id,
+                author_verify_key=coolorg.mallory.signing_key.verify_key,
+                realm_role_certificate=certif.dump_and_sign(coolorg.mallory.signing_key),
+            )
+            assert isinstance(outcome, RealmRoleCertificate)
+
+        case "revoked_is_part_of_multiple_realms_with_vlobs":
+            for _ in range(3):
+                realm_id = VlobID.new()
+                certif = generate_realm_role_certificate(
+                    coolorg,
+                    author=coolorg.mallory.device_id,
+                    user_id=coolorg.mallory.user_id,
+                    role=RealmRole.OWNER,
+                    realm_id=realm_id,
+                )
+                outcome = await backend.realm.create(
+                    now=DateTime.now(),
+                    organization_id=coolorg.organization_id,
+                    author=coolorg.mallory.device_id,
+                    author_verify_key=coolorg.mallory.signing_key.verify_key,
+                    realm_role_certificate=certif.dump_and_sign(coolorg.mallory.signing_key),
+                )
+                assert isinstance(outcome, RealmRoleCertificate)
+
+                now = DateTime.now()
+                outcome = await backend.vlob.create(
+                    now=now,
+                    organization_id=coolorg.organization_id,
+                    author=coolorg.mallory.device_id,
+                    realm_id=realm_id,
+                    vlob_id=VlobID.new(),
+                    key_index=0,
+                    timestamp=now,
+                    blob=b"<dummy>",
+                )
+                assert outcome is None
+
+        case "revoked_is_part_of_multiple_realms_without_vlobs":
+            for _ in range(3):
+                realm_id = VlobID.new()
+                certif = generate_realm_role_certificate(
+                    coolorg,
+                    author=coolorg.mallory.device_id,
+                    user_id=coolorg.mallory.user_id,
+                    role=RealmRole.OWNER,
+                    realm_id=realm_id,
+                )
+                outcome = await backend.realm.create(
+                    now=DateTime.now(),
+                    organization_id=coolorg.organization_id,
+                    author=coolorg.mallory.device_id,
+                    author_verify_key=coolorg.mallory.signing_key.verify_key,
+                    realm_role_certificate=certif.dump_and_sign(coolorg.mallory.signing_key),
+                )
+                assert isinstance(outcome, RealmRoleCertificate)
+
+        case "revoked_used_to_be_part_of_realm_with_clashing_topic":
+            to_revoke = coolorg.bob
+            await wksp1_alice_gives_role(
+                coolorg, backend, recipient=coolorg.bob.user_id, new_role=None
+            )
+            revoked_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg, backend, recipient=coolorg.mallory.user_id, new_role=RealmRole.READER
+            )
+
+        case "revoked_used_to_be_part_of_realm_with_clashing_vlob":
+            to_revoke = coolorg.bob
+            await wksp1_alice_gives_role(
+                coolorg, backend, recipient=coolorg.bob.user_id, new_role=None
+            )
+            revoked_timestamp = DateTime.now()
+            now = revoked_timestamp.add(seconds=1)
+            outcome = await backend.vlob.create(
+                now=now,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                realm_id=coolorg.wksp1_id,
+                vlob_id=VlobID.new(),
+                key_index=1,
+                timestamp=now,
+                blob=b"<dummy>",
+            )
+            assert outcome is None
+
+        case unknown:
+            assert False, unknown
+
     certif = RevokedUserCertificate(
         author=coolorg.alice.device_id,
-        timestamp=now,
-        user_id=coolorg.bob.user_id,
+        timestamp=revoked_timestamp or DateTime.now(),
+        user_id=to_revoke.user_id,
     )
 
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.user_id].revoked_on = now
+    expected_dump[to_revoke.user_id].revoked_on = certif.timestamp
+    expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    expected_topics.common = certif.timestamp
 
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.user_revoke(
@@ -43,16 +202,18 @@ async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend:
         await spy.wait_event_occurred(
             EventUserRevokedOrFrozen(
                 organization_id=coolorg.organization_id,
-                user_id=coolorg.bob.user_id,
+                user_id=to_revoke.user_id,
             )
         )
 
     dump = await backend.user.test_dump_current_users(coolorg.organization_id)
     assert dump == expected_dump
+    topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    assert topics == expected_topics
 
-    # Now Bob can no longer connect
+    # Now check the revoked user can no longer connect
     with pytest.raises(RpcTransportError) as raised:
-        await coolorg.bob.ping(ping="hello")
+        await to_revoke.ping(ping="hello")
     assert raised.value.rep.status_code == 461
 
 
@@ -90,7 +251,14 @@ async def test_disconnect_sse(
         assert rep.status_code == 461
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_outsider",
+        "as_standard",
+        "no_longer_allowed",
+    ),
+)
 async def test_authenticated_user_revoke_author_not_allowed(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -98,7 +266,15 @@ async def test_authenticated_user_revoke_author_not_allowed(
 ) -> None:
     now = DateTime.now()
     match kind:
-        case "never_allowed":
+        case "as_outsider":
+            certif = RevokedUserCertificate(
+                author=coolorg.mallory.device_id,
+                timestamp=now,
+                user_id=coolorg.alice.user_id,
+            )
+            author = coolorg.mallory
+
+        case "as_standard":
             certif = RevokedUserCertificate(
                 author=coolorg.bob.device_id,
                 timestamp=now,
@@ -232,16 +408,7 @@ async def test_authenticated_user_revoke_require_greater_timestamp(
     backend: Backend,
     timestamp_kind: str,
     alice_generated_data: Callable[[DateTime], Awaitable[None]],
-    with_postgresql: bool,
-    request: pytest.FixtureRequest,
 ) -> None:
-    if with_postgresql and (
-        "[vlob-" in request.node.name or "[realm_certificate-" in request.node.name
-    ):
-        pytest.xfail(
-            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
-        )
-
     # 0) Bob must become ADMIN to be able to revoke Alice
 
     certif = UserUpdateCertificate(

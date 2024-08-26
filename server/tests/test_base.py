@@ -32,8 +32,7 @@ async def test_static_404(client: httpx.AsyncClient) -> None:
 
 
 # Currently only format version v0 is supported in production, however
-# we also have a vFF format to circumvent issues with Zstd WASM compilation
-# issues on macOS/Windows.
+# we used to have a vFF format for dev purpose that disabled zstd compression.
 # Hence this test that ensures v0 format is still the main format used when
 # doing serialization !
 def test_serialization_uses_v0_format(minimalorg: MinimalorgRpcClients):

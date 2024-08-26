@@ -32,6 +32,9 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
     expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
     expected_dump[coolorg.bob.user_id].current_profile = UserProfile.ADMIN
 
+    expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    expected_topics.common = certif.timestamp
+
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.user_update(
             user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
@@ -48,9 +51,11 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
 
     dump = await backend.user.test_dump_current_users(coolorg.organization_id)
     assert dump == expected_dump
+    topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    assert topics == expected_topics
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize("kind", ("as_outsider", "as_standard", "no_longer_allowed"))
 async def test_authenticated_user_update_author_not_allowed(
     coolorg: CoolorgRpcClients,
     backend: Backend,
@@ -58,7 +63,16 @@ async def test_authenticated_user_update_author_not_allowed(
 ) -> None:
     now = DateTime.now()
     match kind:
-        case "never_allowed":
+        case "as_outsider":
+            certif = UserUpdateCertificate(
+                author=coolorg.mallory.device_id,
+                timestamp=now,
+                user_id=coolorg.mallory.user_id,
+                new_profile=UserProfile.STANDARD,
+            )
+            author = coolorg.bob
+
+        case "as_standard":
             certif = UserUpdateCertificate(
                 author=coolorg.bob.device_id,
                 timestamp=now,

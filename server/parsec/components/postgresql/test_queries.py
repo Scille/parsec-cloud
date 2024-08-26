@@ -179,6 +179,7 @@ new_users AS (
         revoked_user_certifier,
         human,
         redacted_user_certificate,
+        current_profile,
         initial_profile
     )
     SELECT
@@ -195,6 +196,7 @@ new_users AS (
             WHERE email = { q_human(_id="user_.human", select="human.email") }
         ),
         redacted_user_certificate,
+        current_profile,
         initial_profile
     FROM user_
     WHERE organization = { q_organization_internal_id("$source_id") }

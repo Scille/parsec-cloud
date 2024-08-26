@@ -6,6 +6,7 @@ from parsec._parsec import (
     DateTime,
     HashAlgorithm,
     RealmKeyRotationCertificate,
+    RealmRole,
     SecretKeyAlgorithm,
     VlobID,
     authenticated_cmds,
@@ -15,13 +16,49 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "as_contributor",
+        "as_manager",
+        "as_owner",
+    ),
+)
 async def test_authenticated_vlob_read_versions_ok(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    match kind:
+        case "as_reader":
+            author = coolorg.bob
+
+        case "as_contributor":
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=DateTime(2019, 1, 1),
+            )
+            author = coolorg.bob
+
+        case "as_manager":
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER, now=DateTime(2019, 1, 1)
+            )
+            author = coolorg.bob
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     dt1 = DateTime(2020, 1, 1)
     dt2 = DateTime(2020, 1, 2)
     dt3 = DateTime(2020, 1, 3)
@@ -106,7 +143,7 @@ async def test_authenticated_vlob_read_versions_ok(
 
     # Actual test
 
-    rep = await coolorg.alice.vlob_read_versions(
+    rep = await author.vlob_read_versions(
         realm_id=coolorg.wksp1_id,
         # Omit vlob 1 v2, ask for vlob 2 v2 which doesn't exist and a dummy vlob ID
         items=[(vlob1_id, 1), (vlob2_id, 1), (vlob2_id, 2), (vlob1_id, 3), (VlobID.new(), 1)],

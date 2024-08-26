@@ -64,13 +64,15 @@ async def test_authenticated_device_create_ok(
     testbed: TestbedBackend,
     backend: Backend,
 ) -> None:
-    expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
-    expected_dump[minimalorg.alice.user_id].devices.append(NEW_ALICE_DEVICE_ID)
-
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_alice_device_certificates(
         minimalorg.alice, t1
     )
+
+    expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
+    expected_dump[minimalorg.alice.user_id].devices.append(NEW_ALICE_DEVICE_ID)
+    expected_topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
+    expected_topics.common = t1
 
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.device_create(
@@ -88,6 +90,8 @@ async def test_authenticated_device_create_ok(
 
     dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
     assert dump == expected_dump
+    topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
+    assert topics == expected_topics
 
     # Now alice dev2 can connect
     alice2_rpc = AuthenticatedRpcClient(
@@ -173,12 +177,22 @@ async def test_authenticated_device_create_invalid_certificate(
     assert rep == authenticated_cmds.v4.device_create.RepInvalidCertificate()
 
 
+@pytest.mark.parametrize("kind", ("same_user", "different_user"))
 async def test_authenticated_device_create_device_already_exists(
     coolorg: CoolorgRpcClients,
+    kind: str,
 ) -> None:
+    match kind:
+        case "same_user":
+            device_id = DeviceID.test_from_nickname("alice@dev2")
+        case "different_user":
+            device_id = coolorg.bob.device_id
+        case unknown:
+            assert False, unknown
+
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_alice_device_certificates(
-        coolorg.alice, t1, device_id=DeviceID.test_from_nickname("alice@dev2")
+        coolorg.alice, t1, device_id=device_id
     )
 
     rep = await coolorg.alice.device_create(

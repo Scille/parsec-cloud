@@ -8,7 +8,6 @@ from .client import *  # noqa
 from .data import *  # noqa
 from .invite import *  # noqa
 from .postgresql import *  # noqa
-from .realm import *  # noqa
 
 
 # customized in `tests/conftest.py`

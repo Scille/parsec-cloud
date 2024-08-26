@@ -2,11 +2,12 @@
 
 import pytest
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
+from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmRole, VlobID, authenticated_cmds
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
@@ -51,9 +52,44 @@ async def create_vlob(
     return vlob_id
 
 
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "as_contributor",
+        "as_manager",
+        "as_owner",
+    ),
+)
 async def test_authenticated_vlob_poll_changes_ok(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    match kind:
+        case "as_reader":
+            author = coolorg.bob
+
+        case "as_contributor":
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=DateTime(2019, 1, 1),
+            )
+            author = coolorg.bob
+
+        case "as_manager":
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER, now=DateTime(2019, 1, 1)
+            )
+            author = coolorg.bob
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     # Coolorg's wksp1 comes with already a vlob present (i.e. v1 of the workspace manifest)
     rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
     assert isinstance(rep, authenticated_cmds.v4.vlob_poll_changes.RepOk)
@@ -84,7 +120,7 @@ async def test_authenticated_vlob_poll_changes_ok(
         dt=dt,
     )
 
-    rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
+    rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(
         current_checkpoint=6,
         changes=[
@@ -95,7 +131,7 @@ async def test_authenticated_vlob_poll_changes_ok(
         ],
     )
 
-    rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=3)
+    rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=3)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(
         current_checkpoint=6,
         changes=[
@@ -104,7 +140,7 @@ async def test_authenticated_vlob_poll_changes_ok(
         ],
     )
 
-    rep = await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=6)
+    rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=6)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(current_checkpoint=6, changes=[])
 
 

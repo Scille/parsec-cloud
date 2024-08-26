@@ -18,18 +18,58 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
-async def test_authenticated_block_create_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_owner",
+        "as_manager",
+        "as_contributor",
+    ),
+)
+async def test_authenticated_block_create_ok(
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+) -> None:
+    match kind:
+        case "as_owner":
+            author = coolorg.alice
+
+        case "as_manager":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.MANAGER,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_contributor":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case unknown:
+            assert False, unknown
+
     block_id = BlockID.new()
     block = b"<block content>"
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
-    expected_dump[block_id] = (ANY, coolorg.alice.device_id, coolorg.wksp1_id, 1, len(block))
+    expected_dump[block_id] = (ANY, author.device_id, coolorg.wksp1_id, 1, len(block))
 
-    rep = await coolorg.alice.block_create(
+    rep = await author.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
     assert rep == authenticated_cmds.v4.block_create.RepOk()
@@ -123,11 +163,14 @@ async def test_authenticated_block_create_block_already_exists(
     assert dump == expected_dump  # No changes!
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize("kind", ("as_reader", "never_allowed", "no_longer_allowed"))
 async def test_authenticated_block_create_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     match kind:
+        case "as_reader":
+            author = coolorg.bob
+
         case "never_allowed":
             author = coolorg.mallory
 

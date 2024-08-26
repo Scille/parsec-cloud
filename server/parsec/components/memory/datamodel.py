@@ -62,7 +62,7 @@ TopicAndDiscriminant = (
     Literal["common"]
     | Literal["sequester"]
     | tuple[Literal["realm"], VlobID]
-    | tuple[Literal["shamir"], UserID]
+    | Literal["shamir_recovery"]
     # Not an actual topic, but it is convenient to implement advisory lock this
     # way since in practice it works similarly.
     | tuple[Literal["__advisory_lock"], AdvisoryLock]
