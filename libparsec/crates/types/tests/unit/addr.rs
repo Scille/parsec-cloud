@@ -60,6 +60,10 @@ macro_rules! impl_testbed_common {
 
             // Also compare the objects
             p_assert_eq!(addr, expected_addr);
+
+            // Finally also test from_any
+            let addr2 = <$addr_type>::from_any(url).unwrap();
+            p_assert_eq!(addr2, expected_addr);
         }
         fn assert_addr_err(&self, url: &str, err_msg: AddrError) {
             let ret = url.parse::<$addr_type>();
@@ -165,6 +169,48 @@ fn good_addr_base(testbed: &dyn Testbed) {
     testbed.assert_addr_ok(&testbed.url());
 }
 
+#[rstest(value, assert_outcome)]
+#[case::ok(
+    "https://example.com",
+    |outcome| { p_assert_eq!(outcome, Ok("parsec3://example.com".parse().unwrap())); },
+)]
+#[case::ok_http(
+    "http://example.com",
+    |outcome| { p_assert_eq!(outcome, Ok("parsec3://example.com?no_ssl=true".parse().unwrap())); },
+)]
+#[case::ok_trailing_slash(
+    "https://example.com/",
+    |outcome| { p_assert_eq!(outcome, Ok("parsec3://example.com".parse().unwrap())); },
+)]
+#[case::ok_unused_param(
+    "https://example.com?foo=bar",
+    |outcome| { p_assert_eq!(outcome, Ok("parsec3://example.com".parse().unwrap())); },
+)]
+#[case::invalid_url(
+    "<dummy>",
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_, _))); },
+)]
+#[case::no_scheme(
+    "example.com/foo/",
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_, _))); },
+)]
+#[case::should_not_have_path(
+    "https://example.com/foo/",
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::ShouldNotHaveAPath(_))); },
+)]
+#[case::bad_scheme(
+    "xxx://example.com/foo/",
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrlScheme{..})); },
+)]
+#[case::bad_scheme_parsec(
+    "parsec3://example.com/foo/",
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrlScheme{..})); },
+)]
+fn parsec_addr_from_http_url(value: &str, assert_outcome: fn(Result<ParsecAddr, AddrError>)) {
+    let outcome = ParsecAddr::from_http_url(value);
+    assert_outcome(outcome);
+}
+
 #[rstest(value, path, expected)]
 #[case::absolute_path(
     "parsec3://example.com",
@@ -228,6 +274,18 @@ fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port
     testbed.assert_addr_err(
         &url,
         AddrError::InvalidUrl(url.clone(), url::ParseError::InvalidPort),
+    );
+}
+
+#[apply(all_addr)]
+fn addr_with_bad_scheme(testbed: &dyn Testbed, #[values("xxx", "http", "https")] bad_scheme: &str) {
+    let url = testbed.url().replacen(PARSEC_SCHEME, bad_scheme, 1);
+    testbed.assert_addr_err(
+        &url,
+        AddrError::InvalidUrlScheme {
+            expected: PARSEC_SCHEME,
+            got: bad_scheme.to_string(),
+        },
     );
 }
 
@@ -642,12 +700,18 @@ fn parsec_addr_redirection() {
 #[rstest]
 #[case("https://foo.bar")]
 #[case("https://foo.bar/redirection")]
+#[case("parsec3://foo.bar/redirection/my_org")]
+#[case("xxx://foo.bar/redirection/my_org")]
 #[case("https://foo.bar/not_valid")]
 #[case("http://1270.0.1/redirect")]
 #[case("http://foo:99999/redirect")]
 fn faulty_addr_redirection(#[case] raw_url: &str) {
     let res = ParsecAddr::from_http_redirection(raw_url);
+    assert!(res.is_err());
 
+    // Also test from_any
+
+    let res = ParsecAddr::from_any(raw_url);
     assert!(res.is_err());
 }
 
@@ -830,6 +894,7 @@ fn organization_bootstrap_addr_good(
 #[rstest]
 #[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
 #[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
+#[case::bad_scheme("xxx://foo:42/org?a=bootstrap_organization&p=wA", AddrError::InvalidUrlScheme{ expected: "parsec3", got: "xxx".to_string()})]
 // cspell:disable-next-line
 #[case::missing_action("parsec3://foo:42/org?p=wA", AddrError::MissingParam("a"))]
 #[case::missing_payload(
@@ -911,4 +976,52 @@ fn organization_bootstrap_addr_bad_value(#[case] url: &str, #[case] msg: AddrErr
         ParsecOrganizationBootstrapAddr::from_str(url).unwrap_err(),
         msg
     );
+}
+
+#[rstest]
+#[case::bootstrap_organization(
+    // cspell:disable-next-line
+    "parsec3://parsec.example.com/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB",
+    // cspell:disable-next-line
+    "https://parsec.example.com/redirect/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB",
+)]
+#[case::path(
+    // cspell:disable-next-line
+    "parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",
+    // cspell:disable-next-line
+    "https://parsec.example.com/redirect/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A",
+)]
+#[case::claim_user(
+    // cspell:disable-next-line
+    "parsec3://parsec.example.com/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB",
+    // cspell:disable-next-line
+    "https://parsec.example.com/redirect/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB"
+)]
+#[case::pki_enrollment(
+    "parsec3://parsec.example.com/my_org?a=pki_enrollment",
+    "https://parsec.example.com/redirect/my_org?a=pki_enrollment"
+)]
+fn action_addr_good(#[case] url: &str, #[case] redirect_url: &str) {
+    let addr: ParsecActionAddr = url.parse().unwrap();
+
+    let addr2 = ParsecActionAddr::from_http_redirection(redirect_url).unwrap();
+    p_assert_eq!(addr2, addr);
+
+    let addr3 = ParsecActionAddr::from_any(url).unwrap();
+    p_assert_eq!(addr3, addr);
+
+    let addr4 = ParsecActionAddr::from_any(redirect_url).unwrap();
+    p_assert_eq!(addr4, addr);
+}
+
+#[rstest]
+#[case::empty("")]
+#[case::dummy("dummy")]
+// cspell:disable-next-line
+#[case::bad_scheme("xxx://parsec.example.com/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB")]
+#[case::bad_redirect("https://parsec.example.com/redir/my_org?a=pki_enrollment")]
+#[case::missing_param("parsec3://parsec.example.com/my_org?a=claim_user")]
+fn action_addr_from_any_bad(#[case] url: &str) {
+    let err = ParsecActionAddr::from_any(url);
+    assert!(err.is_err());
 }
