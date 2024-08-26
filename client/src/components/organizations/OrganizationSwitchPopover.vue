@@ -39,26 +39,6 @@
           </ion-text>
         </div>
       </ion-item>
-
-      <ion-item
-        class="organization-list__item body"
-        button
-        lines="none"
-        @click="onAllOrganizationClick"
-      >
-        <div class="organization">
-          <ion-avatar class="organization-avatar ellipsis">
-            <ion-icon :icon="ellipsisHorizontal" />
-          </ion-avatar>
-          <div class="organization-text-content">
-            <ion-label class="organization-text-content__name">
-              <span class="body">
-                {{ $msTranslate('OrganizationSwitch.myOrgs') }}
-              </span>
-            </ion-label>
-          </div>
-        </div>
-      </ion-item>
     </ion-list>
   </div>
 </template>
@@ -66,8 +46,7 @@
 <script setup lang="ts">
 import { ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
-import { IonAvatar, IonIcon, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
-import { ellipsisHorizontal } from 'ionicons/icons';
+import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 
 interface ConnectedOrganization {
@@ -97,10 +76,6 @@ async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
       handle: org.handle,
     });
   }
-}
-
-async function onAllOrganizationClick(): Promise<void> {
-  await popoverController.dismiss({ handle: null });
 }
 </script>
 
