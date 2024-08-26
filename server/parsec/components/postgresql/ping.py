@@ -7,7 +7,7 @@ from parsec._parsec import OrganizationID
 from parsec.components.ping import BasePingComponent
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.handler import send_signal
-from parsec.components.postgresql.utils import transaction
+from parsec.components.postgresql.utils import no_transaction
 from parsec.events import EventPinged
 
 
@@ -16,7 +16,7 @@ class PGPingComponent(BasePingComponent):
         self.pool = pool
 
     @override
-    @transaction
+    @no_transaction
     async def ping(
         self, conn: AsyncpgConnection, organization_id: OrganizationID, ping: str
     ) -> None:

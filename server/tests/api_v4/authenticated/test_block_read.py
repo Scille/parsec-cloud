@@ -2,24 +2,69 @@
 
 import pytest
 
-from parsec._parsec import BlockID, DateTime, authenticated_cmds
+from parsec._parsec import BlockID, DateTime, RealmRole, authenticated_cmds
 from parsec.components.blockstore import BlockStoreReadBadOutcome
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
-async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
-    block_id = BlockID.new()
-    block = b"<block content>"
-    wksp1_last_certificate_timestamp = get_last_realm_certificate_timestamp(
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "as_contributor",
+        "as_manager",
+        "as_owner",
+    ),
+)
+async def test_authenticated_block_read_ok(
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+) -> None:
+    last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
         testbed_template=coolorg.testbed_template,
         realm_id=coolorg.wksp1_id,
     )
+
+    match kind:
+        case "as_reader":
+            author = coolorg.bob
+
+        case "as_contributor":
+            last_realm_certificate_timestamp = DateTime(2019, 1, 1)
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_manager":
+            last_realm_certificate_timestamp = DateTime(2019, 1, 1)
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.MANAGER,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    block_id = BlockID.new()
+    block = b"<block content>"
 
     await backend.block.create(
         now=DateTime.now(),
@@ -31,11 +76,11 @@ async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: 
         block=block,
     )
 
-    rep = await coolorg.alice.block_read(block_id)
+    rep = await author.block_read(block_id)
     assert rep == authenticated_cmds.v4.block_read.RepOk(
         block=block,
         key_index=1,
-        needed_realm_certificate_timestamp=wksp1_last_certificate_timestamp,
+        needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
     )
 
 

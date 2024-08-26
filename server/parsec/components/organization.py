@@ -17,6 +17,7 @@ from parsec._parsec import (
     UserCertificate,
     UserProfile,
     VerifyKey,
+    VlobID,
     anonymous_cmds,
 )
 from parsec.api import api
@@ -207,6 +208,14 @@ class OrganizationUpdateBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+@dataclass(slots=True)
+class OrganizationDumpTopics:
+    common: DateTime
+    realms: dict[VlobID, DateTime]
+    sequester: DateTime | None
+    shamir_recovery: DateTime | None
+
+
 class BaseOrganizationComponent:
     def __init__(self, webhooks: WebhooksComponent, config: BackendConfig):
         self.webhooks = webhooks
@@ -288,6 +297,9 @@ class BaseOrganizationComponent:
     async def test_dump_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
+        raise NotImplementedError
+
+    async def test_dump_topics(self, id: OrganizationID) -> OrganizationDumpTopics:
         raise NotImplementedError
 
     async def test_drop_organization(self, id: OrganizationID) -> None:

@@ -36,6 +36,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     setup_shamir_for_coolorg,
 )
+from tests.common.data import wksp1_alice_gives_role
 
 
 @pytest.mark.parametrize("redacted", (False, True))
@@ -323,7 +324,6 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.common_certificates == expected_common_certificates
 
     # 2) Get all certificates (with a after timestamp too far in the past)
@@ -332,7 +332,6 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         common_after=t0, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.common_certificates == expected_common_certificates
 
     # 3) Get a subset of the certificates
@@ -341,7 +340,6 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         common_after=t1, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.common_certificates == expected_common_certificates[2:]
 
     # 4) Get a subset of the certificates (no new certificates at all)
@@ -350,7 +348,6 @@ async def test_authenticated_certificate_get_ok_common_certificates(
         common_after=t6, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.common_certificates == []
 
 
@@ -508,7 +505,6 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates],
@@ -524,7 +520,6 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         realm_after={wksp2_id: t0},
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates],
@@ -540,7 +535,6 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         realm_after={wksp2_id: t3},
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         wksp2_id: [c for _, c in wksp2_certificates][2:],  # Skip two certificate
@@ -556,12 +550,91 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         realm_after={wksp2_id: t6},
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-
     assert rep.realm_certificates == {
         **initial_realm_certificates,
         # Wksp2 is omitted as there is no certificates to return
         wksp3_id: [c for _, c in wksp3_certificates],
     }
+
+    # 5) Getting wksp2's certificates as Bob should provide the same things as for Alice,
+    # event if Bob has just been added and hence all certificates are older than him.
+
+    rep = await coolorg.bob.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates[wksp2_id] == [c for _, c in wksp2_certificates]
+
+
+async def test_authenticated_certificate_get_ok_realm_after_unshare(
+    backend: Backend, coolorg: CoolorgRpcClients
+) -> None:
+    rep = await coolorg.bob.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    expected_realm_certifs = rep.realm_certificates
+
+    # Now remove Bob's access, he should still be able to get all the certificates
+    # he used to have access to (plus his unshare certificate)...
+
+    (_, raw_certif0) = await wksp1_alice_gives_role(
+        coolorg, backend, recipient=coolorg.bob.user_id, new_role=None
+    )
+    expected_realm_certifs[coolorg.wksp1_id].append(raw_certif0)
+
+    # ...but has no access on new certificates...
+
+    (_, raw_certif1) = await wksp1_alice_gives_role(
+        coolorg, backend, recipient=coolorg.mallory.user_id, new_role=RealmRole.READER
+    )
+
+    rep = await coolorg.bob.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates == expected_realm_certifs
+
+    # ...until the realm is re-shared with him !
+
+    (_, raw_certif2) = await wksp1_alice_gives_role(
+        coolorg, backend, recipient=coolorg.bob.user_id, new_role=RealmRole.CONTRIBUTOR
+    )
+    expected_realm_certifs[coolorg.wksp1_id].append(raw_certif1)
+    expected_realm_certifs[coolorg.wksp1_id].append(raw_certif2)
+
+    rep = await coolorg.bob.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.realm_certificates == expected_realm_certifs
+
+
+async def test_authenticated_certificate_get_ok_not_part_of_realm(
+    backend: Backend, coolorg: CoolorgRpcClients
+) -> None:
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={coolorg.wksp1_id: DateTime.from_timestamp_seconds(0)},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+
+    assert rep.realm_certificates == {}
 
 
 # TODO: test when user is no longer part of the realm

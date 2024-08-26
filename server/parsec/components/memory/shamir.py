@@ -63,7 +63,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             case error:
                 return error
 
-        async with org.topics_lock(read=["common"], write=[("shamir", author)]):
+        async with org.topics_lock(read=["common"], write=["shamir_recovery"]):
             self._data.organizations[organization_id].shamir_setup.pop(author)
             return None
 
@@ -94,9 +94,7 @@ class MemoryShamirComponent(BaseShamirComponent):
             case error:
                 return error
 
-        shamir_topic = ("shamir", author)
-
-        async with org.topics_lock(read=["common"], write=[shamir_topic]) as (
+        async with org.topics_lock(read=["common"], write=["shamir_recovery"]) as (
             common_topic_last_timestamp,
             shamir_topic_last_timestamp,
         ):
@@ -130,7 +128,7 @@ class MemoryShamirComponent(BaseShamirComponent):
 
             # All checks are good, now we do the actual insertion
 
-            org.per_topic_last_timestamp[shamir_topic] = brief.timestamp
+            org.per_topic_last_timestamp["shamir_recovery"] = brief.timestamp
 
             self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
                 setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief

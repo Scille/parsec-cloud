@@ -30,6 +30,7 @@ from parsec.components.organization import (
     OrganizationBootstrapValidateBadOutcome,
     OrganizationCreateBadOutcome,
     OrganizationDump,
+    OrganizationDumpTopics,
     OrganizationGetBadOutcome,
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
@@ -351,6 +352,23 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 minimum_archiving_period=org.minimum_archiving_period,
             )
         return items
+
+    async def test_dump_topics(self, id: OrganizationID) -> OrganizationDumpTopics:
+        try:
+            org = self._data.organizations[id]
+        except KeyError:
+            raise RuntimeError("Organization not found")
+
+        return OrganizationDumpTopics(
+            common=org.per_topic_last_timestamp["common"],
+            sequester=org.per_topic_last_timestamp.get("sequester"),
+            realms={
+                k[1]: v
+                for k, v in org.per_topic_last_timestamp.items()
+                if isinstance(k, tuple) and k[0] == "realm"
+            },
+            shamir_recovery=org.per_topic_last_timestamp.get("shamir_recovery"),
+        )
 
     async def test_drop_organization(self, id: OrganizationID) -> None:
         self._data.organizations.pop(id, None)

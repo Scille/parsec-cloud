@@ -21,30 +21,75 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
-@pytest.mark.parametrize("key_index", (0, 1))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "key_index_0",
+        "as_owner",
+        "as_manager",
+        "as_contributor",
+    ),
+)
 async def test_authenticated_vlob_create_ok(
-    key_index: int, coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    realm_id = coolorg.wksp1_id
+    key_index = 1
+    last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
+        testbed_template=coolorg.testbed_template,
+        realm_id=realm_id,
+    )
+
+    match kind:
+        case "key_index_0":
+            assert isinstance(coolorg.alice.event, testbed.TestbedEventBootstrapOrganization)
+            realm_id = coolorg.alice.event.first_user_user_realm_id
+            key_index = 0
+            last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
+                testbed_template=coolorg.testbed_template,
+                realm_id=realm_id,
+            )
+            author = coolorg.alice
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case "as_manager":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.MANAGER,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_contributor":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case unknown:
+            assert False, unknown
+
     vlob_id = VlobID.new()
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-
-    if key_index == 0:
-        assert isinstance(coolorg.alice.event, testbed.TestbedEventBootstrapOrganization)
-        realm_id = coolorg.alice.event.first_user_user_realm_id
-        last_realm_certificate_timestamp = DateTime(2000, 1, 14)
-    else:
-        # Coolorg's wksp1 comes with already a vlob present (i.e. v1 of the workspace manifest)
-        realm_id = coolorg.wksp1_id
-        last_realm_certificate_timestamp = DateTime(2000, 1, 12)
-
     blob = b"<block content>"
     timestamp = DateTime.now()
     with backend.event_bus.spy() as spy:
-        rep = await coolorg.alice.vlob_create(
+        rep = await author.vlob_create(
             realm_id=realm_id,
             vlob_id=vlob_id,
             key_index=key_index,
@@ -57,7 +102,7 @@ async def test_authenticated_vlob_create_ok(
         await spy.wait_event_occurred(
             EventVlob(
                 organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
+                author=author.device_id,
                 realm_id=realm_id,
                 timestamp=timestamp,
                 vlob_id=vlob_id,
@@ -71,18 +116,33 @@ async def test_authenticated_vlob_create_ok(
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
     assert dump == {
         **initial_dump,
-        vlob_id: [(coolorg.alice.device_id, ANY, realm_id, blob)],
+        vlob_id: [(author.device_id, ANY, realm_id, blob)],
     }
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "not_member",
+        "no_longer_allowed",
+        "bad_key_index_and_not_allowed",
+        "vlob_already_exists_and_not_allowed",
+        "require_greater_timestamp_and_not_allowed",
+    ),
+)
 async def test_authenticated_vlob_create_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     vlob_id = VlobID.new()
+    key_index = 1
+    now = DateTime.now()
 
     match kind:
-        case "never_allowed":
+        case "as_reader":
+            author = coolorg.bob
+
+        case "not_member":
             author = coolorg.mallory
 
         case "no_longer_allowed":
@@ -90,6 +150,33 @@ async def test_authenticated_vlob_create_author_not_allowed(
                 coolorg=coolorg, backend=backend, new_alice_role=RealmRole.READER
             )
             author = coolorg.alice
+
+        case "bad_key_index_and_not_allowed":
+            key_index = 42
+            author = coolorg.mallory
+
+        case "vlob_already_exists_and_not_allowed":
+            outcome = await backend.vlob.create(
+                now=now,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                realm_id=coolorg.wksp1_id,
+                vlob_id=vlob_id,
+                key_index=1,
+                timestamp=now,
+                blob=b"<dummy>",
+            )
+            assert outcome is None
+            now = DateTime.now()
+            author = coolorg.mallory
+
+        case "require_greater_timestamp_and_not_allowed":
+            # Just create any certificate in the realm
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.mallory.user_id, RealmRole.READER
+            )
+            # Bob is only `READER` in realm `wksp1`
+            author = coolorg.bob
 
         case unknown:
             assert False, unknown
@@ -99,8 +186,8 @@ async def test_authenticated_vlob_create_author_not_allowed(
     rep = await author.vlob_create(
         realm_id=coolorg.wksp1_id,
         vlob_id=vlob_id,
-        key_index=1,
-        timestamp=DateTime.now(),
+        key_index=key_index,
+        timestamp=now,
         blob=b"<block content>",
         sequester_blob=None,
     )

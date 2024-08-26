@@ -13,6 +13,7 @@ from parsec._parsec import (
     SequesterServiceID,
     VlobID,
     authenticated_cmds,
+    testbed,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import (
@@ -20,11 +21,69 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
-async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "key_index_0",
+        "as_owner",
+        "as_manager",
+        "as_contributor",
+    ),
+)
+async def test_authenticated_vlob_update_ok(
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+) -> None:
+    realm_id = coolorg.wksp1_id
+    key_index = 1
+    last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
+        testbed_template=coolorg.testbed_template,
+        realm_id=realm_id,
+    )
+
+    match kind:
+        case "key_index_0":
+            assert isinstance(coolorg.alice.event, testbed.TestbedEventBootstrapOrganization)
+            realm_id = coolorg.alice.event.first_user_user_realm_id
+            key_index = 0
+            last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
+                testbed_template=coolorg.testbed_template,
+                realm_id=realm_id,
+            )
+            author = coolorg.alice
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case "as_manager":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.MANAGER,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_contributor":
+            last_realm_certificate_timestamp = DateTime.now()
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case unknown:
+            assert False, unknown
+
     vlob_id = VlobID.new()
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
 
@@ -34,9 +93,9 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
         now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
-        realm_id=coolorg.wksp1_id,
+        realm_id=realm_id,
         vlob_id=vlob_id,
-        key_index=1,
+        key_index=key_index,
         blob=v1_blob,
         timestamp=v1_timestamp,
         sequester_blob=None,
@@ -46,9 +105,9 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
     with backend.event_bus.spy() as spy:
         v2_blob = b"<block content 2>"
         v2_timestamp = DateTime.now()
-        rep = await coolorg.alice.vlob_update(
+        rep = await author.vlob_update(
             vlob_id=vlob_id,
-            key_index=1,
+            key_index=key_index,
             version=2,
             blob=v2_blob,
             timestamp=v2_timestamp,
@@ -59,14 +118,14 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
         await spy.wait_event_occurred(
             EventVlob(
                 organization_id=coolorg.organization_id,
-                author=coolorg.alice.device_id,
-                realm_id=coolorg.wksp1_id,
+                author=author.device_id,
+                realm_id=realm_id,
                 timestamp=v2_timestamp,
                 vlob_id=vlob_id,
                 version=2,
                 blob=v2_blob,
                 last_common_certificate_timestamp=DateTime(2000, 1, 6),
-                last_realm_certificate_timestamp=DateTime(2000, 1, 12),
+                last_realm_certificate_timestamp=last_realm_certificate_timestamp,
             )
         )
 
@@ -74,13 +133,23 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
     assert dump == {
         **initial_dump,
         vlob_id: [
-            (coolorg.alice.device_id, ANY, coolorg.wksp1_id, v1_blob),
-            (coolorg.alice.device_id, ANY, coolorg.wksp1_id, v2_blob),
+            (coolorg.alice.device_id, ANY, realm_id, v1_blob),
+            (author.device_id, ANY, realm_id, v2_blob),
         ],
     }
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "not_member",
+        "no_longer_allowed",
+        "bad_key_index_and_not_allowed",
+        "vlob_version_already_exists_and_not_allowed",
+        "require_greater_timestamp_and_not_allowed",
+    ),
+)
 async def test_authenticated_vlob_update_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
@@ -99,8 +168,14 @@ async def test_authenticated_vlob_update_author_not_allowed(
     )
     assert outcome is None, outcome
 
+    key_index = 1
+    now = DateTime.now()
+
     match kind:
-        case "never_allowed":
+        case "as_reader":
+            author = coolorg.bob
+
+        case "not_member":
             author = coolorg.mallory
 
         case "no_longer_allowed":
@@ -109,6 +184,60 @@ async def test_authenticated_vlob_update_author_not_allowed(
             )
             author = coolorg.alice
 
+        case "bad_key_index_and_not_allowed":
+            key_index = 42
+            author = coolorg.mallory
+
+        case "vlob_already_exists_and_not_allowed":
+            outcome = await backend.vlob.create(
+                now=now,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                realm_id=coolorg.wksp1_id,
+                vlob_id=vlob_id,
+                key_index=1,
+                timestamp=now,
+                blob=b"<dummy>",
+            )
+            assert outcome is None
+            now = DateTime.now()
+            author = coolorg.mallory
+
+        case "require_greater_timestamp_and_not_allowed":
+            # Just create any certificate in the realm
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.mallory.user_id, RealmRole.READER
+            )
+            # Bob is only `READER` in realm `wksp1`
+            author = coolorg.bob
+
+        case "bad_key_index_and_not_allowed":
+            key_index = 42
+            author = coolorg.mallory
+
+        case "vlob_version_already_exists_and_not_allowed":
+            outcome = await backend.vlob.update(
+                now=now,
+                organization_id=coolorg.organization_id,
+                author=coolorg.alice.device_id,
+                vlob_id=vlob_id,
+                key_index=1,
+                timestamp=now,
+                version=2,
+                blob=b"<dummy>",
+            )
+            assert outcome is None
+            now = DateTime.now()
+            author = coolorg.mallory
+
+        case "require_greater_timestamp_and_not_allowed":
+            # Just create any certificate in the realm
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.mallory.user_id, RealmRole.READER
+            )
+            # Bob is only `READER` in realm `wksp1`
+            author = coolorg.bob
+
         case unknown:
             assert False, unknown
 
@@ -116,8 +245,8 @@ async def test_authenticated_vlob_update_author_not_allowed(
 
     rep = await author.vlob_update(
         vlob_id=vlob_id,
-        key_index=1,
-        timestamp=DateTime.now(),
+        key_index=key_index,
+        timestamp=now,
         version=2,
         blob=b"<block content>",
         sequester_blob=None,

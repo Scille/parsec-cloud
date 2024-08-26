@@ -205,12 +205,6 @@ class MemoryRealmComponent(BaseRealmComponent):
             if user.is_revoked:
                 return RealmShareStoreBadOutcome.RECIPIENT_REVOKED
 
-            if user.current_profile == UserProfile.OUTSIDER and certif.role in (
-                RealmRole.MANAGER,
-                RealmRole.OWNER,
-            ):
-                return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
-
             try:
                 realm = org.realms[certif.realm_id]
             except KeyError:
@@ -232,6 +226,12 @@ class MemoryRealmComponent(BaseRealmComponent):
                 author_role = realm.get_current_role_for(author_user_id)
                 if author_role not in needed_roles:
                     return RealmShareStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
+                if user.current_profile == UserProfile.OUTSIDER and certif.role in (
+                    RealmRole.MANAGER,
+                    RealmRole.OWNER,
+                ):
+                    return RealmShareStoreBadOutcome.ROLE_INCOMPATIBLE_WITH_OUTSIDER
 
                 if existing_user_role == new_user_role:
                     return CertificateBasedActionIdempotentOutcome(

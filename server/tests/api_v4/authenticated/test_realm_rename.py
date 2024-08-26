@@ -4,6 +4,7 @@ import pytest
 
 from parsec._parsec import (
     DateTime,
+    DeviceID,
     HashAlgorithm,
     RealmKeyRotationCertificate,
     RealmNameCertificate,
@@ -21,19 +22,25 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
-    patch_realm_name_certificate,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
-@pytest.fixture
-def alice_name_certificate(coolorg: CoolorgRpcClients) -> RealmNameCertificate:
+def alice_name_certificate(
+    coolorg: CoolorgRpcClients,
+    author: DeviceID | None = None,
+    timestamp: DateTime | None = None,
+    realm_id: VlobID | None = None,
+    key_index: int | None = None,
+    encrypted_name: bytes | None = None,
+) -> RealmNameCertificate:
     return RealmNameCertificate(
-        author=coolorg.alice.device_id,
-        timestamp=DateTime.now(),
-        realm_id=coolorg.wksp1_id,
-        key_index=1,
-        encrypted_name=b"<encrypted name>",
+        author=author if author is not None else coolorg.alice.device_id,
+        timestamp=timestamp if timestamp is not None else DateTime.now(),
+        realm_id=realm_id if realm_id is not None else coolorg.wksp1_id,
+        key_index=key_index if key_index is not None else 1,
+        encrypted_name=encrypted_name if encrypted_name is not None else b"<encrypted name>",
     )
 
 
@@ -74,29 +81,34 @@ def realm_key_rotation_certificate(
 async def test_authenticated_realm_rename_ok_subsequent_rename(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
+    certif = alice_name_certificate(coolorg)
+    expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    expected_topics.realms[certif.realm_id] = certif.timestamp
+
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.realm_rename(
-            realm_name_certificate=alice_name_certificate.dump_and_sign(coolorg.alice.signing_key),
+            realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             initial_name_or_fail=False,
         )
         assert rep == authenticated_cmds.v4.realm_rename.RepOk()
         await spy.wait_event_occurred(
             EventRealmCertificate(
                 organization_id=coolorg.organization_id,
-                timestamp=alice_name_certificate.timestamp,
-                realm_id=alice_name_certificate.realm_id,
+                timestamp=certif.timestamp,
+                realm_id=certif.realm_id,
                 user_id=coolorg.alice.user_id,
                 role_removed=False,
             )
         )
 
+    topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    assert topics == expected_topics
+
 
 async def test_authenticated_realm_rename_ok_initial_rename(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
     # 1) Create a new realm (so it has not been renamed yet)
 
@@ -131,7 +143,10 @@ async def test_authenticated_realm_rename_ok_initial_rename(
 
     # 3) Now do the actual (initial) rename
 
-    certif = patch_realm_name_certificate(alice_name_certificate, realm_id=new_realm_id)
+    certif = alice_name_certificate(coolorg, realm_id=new_realm_id)
+    expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    expected_topics.realms[certif.realm_id] = certif.timestamp
+
     with backend.event_bus.spy() as spy:
         rep = await coolorg.alice.realm_rename(
             realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
@@ -148,13 +163,16 @@ async def test_authenticated_realm_rename_ok_initial_rename(
             )
         )
 
+    topics = await backend.organization.test_dump_topics(coolorg.organization_id)
+    assert topics == expected_topics
+
 
 async def test_authenticated_realm_rename_initial_name_already_exists(
     coolorg: CoolorgRpcClients,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
+    certif = alice_name_certificate(coolorg)
     rep = await coolorg.alice.realm_rename(
-        realm_name_certificate=alice_name_certificate.dump_and_sign(coolorg.alice.signing_key),
+        realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=True,
     )
     assert rep == authenticated_cmds.v4.realm_rename.RepInitialNameAlreadyExists(
@@ -164,29 +182,64 @@ async def test_authenticated_realm_rename_initial_name_already_exists(
     )
 
 
-@pytest.mark.parametrize("kind", ("not_owner", "never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "as_reader",
+        "as_contributor",
+        "as_manager",
+        "no_access",
+        "no_longer_allowed",
+        "bad_key_index_and_never_allowed",
+        "require_greater_timestamp_and_never_allowed",
+    ),
+)
 async def test_authenticated_realm_rename_author_not_allowed(
     coolorg: CoolorgRpcClients,
     backend: Backend,
-    alice_name_certificate: RealmNameCertificate,
     kind: str,
 ) -> None:
+    certif_kwargs = {}
+
     match kind:
-        case "not_owner":
-            # Bob has access to the realm, but he is not OWNER
+        case "as_reader":
+            # Bob has access to the realm as READER
             author = coolorg.bob
-        case "never_allowed":
+
+        case "as_contributor":
+            await wksp1_alice_gives_role(
+                coolorg, backend, coolorg.bob.user_id, RealmRole.CONTRIBUTOR
+            )
+            author = coolorg.bob
+
+        case "as_manager":
+            await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, RealmRole.MANAGER)
+            author = coolorg.bob
+
+        case "no_access":
             # Mallory has no access to the realm !
             author = coolorg.mallory
+
         case "no_longer_allowed":
             await wksp1_bob_becomes_owner_and_changes_alice(
                 coolorg=coolorg, backend=backend, new_alice_role=RealmRole.MANAGER
             )
             author = coolorg.alice
-        case _:
-            assert False
 
-    certif = patch_realm_name_certificate(alice_name_certificate, author=author.device_id)
+        case "bad_key_index_and_never_allowed":
+            certif_kwargs["key_index"] = 42
+            author = coolorg.bob
+
+        case "require_greater_timestamp_and_never_allowed":
+            certif_kwargs["timestamp"] = DateTime.now()
+            # Just create any certificate in the realm
+            await wksp1_alice_gives_role(coolorg, backend, coolorg.bob.user_id, None)
+            author = coolorg.mallory
+
+        case unknown:
+            assert False, unknown
+
+    certif = alice_name_certificate(coolorg, author=author.device_id, **certif_kwargs)
     rep = await author.realm_rename(
         realm_name_certificate=certif.dump_and_sign(author.signing_key),
         initial_name_or_fail=False,
@@ -196,10 +249,9 @@ async def test_authenticated_realm_rename_author_not_allowed(
 
 async def test_authenticated_realm_rename_realm_not_found(
     coolorg: CoolorgRpcClients,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
     bad_realm_id = VlobID.new()
-    certif = patch_realm_name_certificate(alice_name_certificate, realm_id=bad_realm_id)
+    certif = alice_name_certificate(coolorg, realm_id=bad_realm_id)
     rep = await coolorg.alice.realm_rename(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
@@ -220,7 +272,6 @@ async def test_authenticated_realm_rename_bad_key_index(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     kind: str,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
     match kind:
         case "key_index_too_old":
@@ -276,9 +327,7 @@ async def test_authenticated_realm_rename_bad_key_index(
         case _:
             assert False
 
-    certif = patch_realm_name_certificate(
-        alice_name_certificate, realm_id=wksp_id, key_index=bad_key_index
-    )
+    certif = alice_name_certificate(coolorg, realm_id=wksp_id, key_index=bad_key_index)
     rep = await coolorg.alice.realm_rename(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
@@ -295,15 +344,14 @@ async def test_authenticated_realm_rename_bad_key_index(
 async def test_authenticated_realm_rename_invalid_certificate(
     coolorg: CoolorgRpcClients,
     kind: str,
-    alice_name_certificate: RealmNameCertificate,
 ) -> None:
     match kind:
         case "dummy_data":
             certif = b"<dummy data>"
         case "bad_author":
-            certif = patch_realm_name_certificate(
-                alice_name_certificate, author=coolorg.bob.device_id
-            ).dump_and_sign(coolorg.bob.signing_key)
+            certif = alice_name_certificate(coolorg, author=coolorg.bob.device_id).dump_and_sign(
+                coolorg.bob.signing_key
+            )
         case unknown:
             assert False, unknown
 
@@ -322,14 +370,7 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     timestamp_offset: int,
-    alice_name_certificate: RealmNameCertificate,
-    with_postgresql: bool,
 ) -> None:
-    if with_postgresql:
-        pytest.xfail(
-            reason="TODO: fixme asap ! (see https://github.com/Scille/parsec-cloud/issues/8093)"
-        )
-
     last_certificate_timestamp = DateTime.now()
     same_or_previous_timestamp = last_certificate_timestamp.subtract(seconds=timestamp_offset)
 
@@ -359,9 +400,7 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
 
     # 2) Try to create a realm with same or previous timestamp
 
-    certif = patch_realm_name_certificate(
-        alice_name_certificate, timestamp=same_or_previous_timestamp, key_index=2
-    )
+    certif = alice_name_certificate(coolorg, timestamp=same_or_previous_timestamp, key_index=2)
     rep = await coolorg.alice.realm_rename(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=False,
@@ -373,12 +412,9 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
 
 async def test_authenticated_realm_rename_timestamp_out_of_ballpark(
     coolorg: CoolorgRpcClients,
-    alice_name_certificate: RealmNameCertificate,
     timestamp_out_of_ballpark: DateTime,
 ) -> None:
-    certif = patch_realm_name_certificate(
-        alice_name_certificate, timestamp=timestamp_out_of_ballpark
-    )
+    certif = alice_name_certificate(coolorg, timestamp=timestamp_out_of_ballpark)
     rep = await coolorg.alice.realm_rename(
         realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         initial_name_or_fail=True,
@@ -391,12 +427,12 @@ async def test_authenticated_realm_rename_timestamp_out_of_ballpark(
 
 async def test_authenticated_realm_rename_http_common_errors(
     coolorg: CoolorgRpcClients,
-    alice_name_certificate: RealmNameCertificate,
     authenticated_http_common_errors_tester: HttpCommonErrorsTester,
 ) -> None:
     async def do():
+        certif = alice_name_certificate(coolorg)
         await coolorg.alice.realm_rename(
-            realm_name_certificate=alice_name_certificate.dump_and_sign(coolorg.alice.signing_key),
+            realm_name_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
             initial_name_or_fail=False,
         )
 

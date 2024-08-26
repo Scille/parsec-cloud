@@ -2,12 +2,14 @@
 
 import pytest
 
-from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
+from parsec._parsec import DateTime, DeviceID, OrganizationID, RealmRole, VlobID, authenticated_cmds
 from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    get_last_realm_certificate_timestamp,
+    wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
 
@@ -52,10 +54,60 @@ async def create_vlob(
     return vlob_id
 
 
-@pytest.mark.parametrize("use_at", (False, True))
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "with_use_at_param",
+        "as_reader",
+        "as_contributor",
+        "as_manager",
+        "as_owner",
+    ),
+)
 async def test_authenticated_vlob_read_batch_ok(
-    use_at: bool, coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    use_at = False
+    last_realm_certificate_timestamp = get_last_realm_certificate_timestamp(
+        testbed_template=coolorg.testbed_template,
+        realm_id=coolorg.wksp1_id,
+    )
+    match kind:
+        case "with_use_at_param":
+            use_at = True
+            author = coolorg.bob
+
+        case "as_reader":
+            author = coolorg.bob
+
+        case "as_contributor":
+            last_realm_certificate_timestamp = DateTime(2019, 1, 1)
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.CONTRIBUTOR,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_manager":
+            last_realm_certificate_timestamp = DateTime(2019, 1, 1)
+            await wksp1_alice_gives_role(
+                coolorg,
+                backend,
+                coolorg.bob.user_id,
+                RealmRole.MANAGER,
+                now=last_realm_certificate_timestamp,
+            )
+            author = coolorg.bob
+
+        case "as_owner":
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     dt1 = DateTime(2020, 1, 1)
     dt2 = DateTime(2020, 1, 2)
     vlob1_id = await create_vlob(
@@ -82,7 +134,7 @@ async def test_authenticated_vlob_read_batch_ok(
     )
 
     if use_at:
-        rep = await coolorg.alice.vlob_read_batch(
+        rep = await author.vlob_read_batch(
             realm_id=coolorg.wksp1_id, vlobs=[vlob1_id, vlob2_id], at=dt1
         )
         assert rep == authenticated_cmds.v4.vlob_read_batch.RepOk(
@@ -97,11 +149,11 @@ async def test_authenticated_vlob_read_batch_ok(
                 ),
             ],
             needed_common_certificate_timestamp=DateTime(2000, 1, 6),
-            needed_realm_certificate_timestamp=DateTime(2000, 1, 12),
+            needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
         )
 
     else:
-        rep = await coolorg.alice.vlob_read_batch(
+        rep = await author.vlob_read_batch(
             realm_id=coolorg.wksp1_id, vlobs=[vlob1_id, vlob2_id], at=None
         )
         assert rep == authenticated_cmds.v4.vlob_read_batch.RepOk(
@@ -124,7 +176,7 @@ async def test_authenticated_vlob_read_batch_ok(
                 ),
             ],
             needed_common_certificate_timestamp=DateTime(2000, 1, 6),
-            needed_realm_certificate_timestamp=DateTime(2000, 1, 12),
+            needed_realm_certificate_timestamp=last_realm_certificate_timestamp,
         )
 
 

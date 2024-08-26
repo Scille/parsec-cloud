@@ -3,16 +3,35 @@ from __future__ import annotations
 
 import importlib
 import re
-from typing import Any, Awaitable, Callable, Protocol, TypeVar, cast
+import traceback
+from functools import wraps
+from typing import Any, Callable, Coroutine, Iterable, Protocol, TypeVar, cast
 
 from typing_extensions import Concatenate, ParamSpec
 
+from parsec._parsec import ActiveUsersLimit, BlockID, DateTime, DeviceID, UserID, VlobID
 from parsec.types import BadOutcome
 
 from . import AsyncpgConnection, AsyncpgPool
 
 T = TypeVar("T")
 P = ParamSpec("P")
+SqlQueryParam = (
+    None
+    | str
+    | bytes
+    | int
+    | bool
+    | float
+    | DateTime
+    | UserID
+    | DeviceID
+    | VlobID
+    | BlockID
+    | ActiveUsersLimit
+    | Iterable["SqlQueryParam"]
+)
+
 
 # Yes, we can lint the SQL queries declared with `Q(<sql>)` !!!
 #
@@ -85,16 +104,57 @@ class Q:
     def sql(self) -> str:
         return self._sql
 
-    def __call__(self, **kwargs: Any) -> list[Any]:
-        return [self._stripped_sql, *self.arg_only(**kwargs)]
+    async def test_explain_and_exit(
+        self, conn: AsyncpgConnection, **kwargs: SqlQueryParam
+    ) -> tuple[Any, ...]:
+        """
+        Quit'n dirty way to debug a query, example:
 
-    def arg_only(self, **kwargs: Any) -> list[Any]:
+        ```python
+            _q_get_foo = Q("SELECT * FROM foo WHERE id = $id")
+            row = await conn.fetch(*_q_get_foo(id=42))  # <-- Modify this...
+            row = await conn.fetch(*await _q_get_foo.test_explain_and_exit(id=42)) # <-- ...into this !
+        ```
+
+        This will print the explain query on stdout and exit the program.
+        """
+        args = self.arg_only(**kwargs)
+        sql = "EXPLAIN " + self._stripped_sql
+        rows = await conn.fetch(sql, *args)
+
+        caller_frame = traceback.extract_stack()[-2]
+
+        BOLD_RED = "\x1b[1;31m"
+        GREY = "\x1b[37m"
+        NO_COLOR = "\x1b[0;0m"
+
+        msg = "\n".join(
+            (
+                f"{BOLD_RED}In {caller_frame.filename}:{caller_frame.lineno}{NO_COLOR}",
+                f"----------------------- EXPLAIN Q in {caller_frame.name} --------------------",
+                GREY,
+                *(row[0] for row in rows),
+                NO_COLOR,
+                f"--------------------- END EXPLAIN Q in {caller_frame.name} -------------------",
+            )
+        )
+
+        # Existing the program here has two purposes:
+        # - It makes easy to display the query (e.g. no need to pass `-s` when running pytest)
+        # - PostgreSQL's EXPLAIN actually execute the query, hence if the query
+        #   is an INSERT/UPDATE our program is broken anyway if we try to continue.
+        raise SystemExit(msg)
+
+    def __call__(self, **kwargs: SqlQueryParam) -> tuple[Any, ...]:
+        return (self._stripped_sql, *self.arg_only(**kwargs))
+
+    def arg_only(self, **kwargs: SqlQueryParam) -> tuple[Any, ...]:
         if kwargs.keys() != self._variables.keys():
             missing = self._variables.keys() - kwargs.keys()
             unknown = kwargs.keys() - self._variables.keys()
             raise ValueError(f"Invalid parameters, missing: {missing}, unknown: {unknown}")
 
-        return [kwargs[variable] for variable in self._variables]
+        return tuple(kwargs[variable] for variable in self._variables)
 
 
 def q_organization(
@@ -208,14 +268,15 @@ class WithPool(Protocol):
 
 
 def transaction[**P, T, S: WithPool](
-    func: Callable[Concatenate[S, AsyncpgConnection, P], Awaitable[T]],
-):
+    func: Callable[Concatenate[S, AsyncpgConnection, P], Coroutine[Any, Any, T]],
+) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
     """
     This is used to decorate an API method that needs to be executed in a transaction.
 
     It makes sure that the transaction is rolled back if the function returns a BadOutcome.
     """
 
+    @wraps(func)
     async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
         async with self.pool.acquire() as conn:
             conn = cast(AsyncpgConnection, conn)
@@ -232,5 +293,40 @@ def transaction[**P, T, S: WithPool](
                 case _:
                     await transaction.commit()
             return result
+
+    return wrapper
+
+
+def no_transaction[**P, T, S: WithPool](
+    func: Callable[Concatenate[S, AsyncpgConnection, P], Coroutine[Any, Any, T]],
+) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
+    """
+    This is used to decorate an API method that needs to request the database
+    without transaction (i.e. for query that doesn't do write operations).
+    """
+
+    @wraps(func)
+    async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
+        async with self.pool.acquire() as conn:
+            conn = cast(AsyncpgConnection, conn)
+            return await func(self, conn, *args, **kwargs)
+
+    return wrapper
+
+
+class RetryNeeded(BaseException):
+    pass
+
+
+def retryable[S, **P, T](
+    func: Callable[Concatenate[S, P], Coroutine[Any, Any, T]],
+) -> Callable[Concatenate[S, P], Coroutine[Any, Any, T]]:
+    @wraps(func)
+    async def wrapper(self: S, *args: P.args, **kwargs: P.kwargs) -> T:
+        while True:
+            try:
+                return await func(self, *args, **kwargs)
+            except RetryNeeded:
+                pass
 
     return wrapper

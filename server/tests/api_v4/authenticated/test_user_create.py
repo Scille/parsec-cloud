@@ -112,6 +112,13 @@ async def test_authenticated_user_create_ok(
     testbed: TestbedBackend,
 ) -> None:
     t1 = DateTime.now()
+    device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
+        minimalorg.alice, t1
+    )
+    user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
+        minimalorg.alice, t1
+    )
+
     expected_dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
     expected_dump[NEW_MIKE_USER_ID] = UserDump(
         user_id=NEW_MIKE_USER_ID,
@@ -121,13 +128,8 @@ async def test_authenticated_user_create_ok(
         human_handle=NEW_MIKE_HUMAN_HANDLE,
         revoked_on=None,
     )
-
-    device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-        minimalorg.alice, t1
-    )
-    user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
-        minimalorg.alice, t1
-    )
+    expected_topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
+    expected_topics.common = t1
 
     with backend.event_bus.spy() as spy:
         rep = await minimalorg.alice.user_create(
@@ -147,6 +149,8 @@ async def test_authenticated_user_create_ok(
 
     dump = await testbed.backend.user.test_dump_current_users(minimalorg.organization_id)
     assert dump == expected_dump
+    topics = await backend.organization.test_dump_topics(minimalorg.organization_id)
+    assert topics == expected_topics
 
     # Now alice dev2 can connect
     alice2_rpc = AuthenticatedRpcClient(
@@ -160,14 +164,17 @@ async def test_authenticated_user_create_ok(
     assert rep == authenticated_cmds.v4.ping.RepOk(pong="hello")
 
 
-@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+@pytest.mark.parametrize("kind", ("as_outsider", "as_standard", "no_longer_allowed"))
 async def test_authenticated_user_create_author_not_allowed(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     kind: str,
 ) -> None:
     match kind:
-        case "never_allowed":
+        case "as_outsider":
+            author = coolorg.bob
+
+        case "as_standard":
             author = coolorg.bob
 
         case "no_longer_allowed":
@@ -339,16 +346,33 @@ async def test_authenticated_user_create_invalid_certificate(
     assert rep == authenticated_cmds.v4.user_create.RepInvalidCertificate()
 
 
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "conflicting_user_id",
+        "conflicting_device_id",
+    ),
+)
 async def test_authenticated_user_create_user_already_exists(
     coolorg: CoolorgRpcClients,
+    kind: str,
 ) -> None:
+    user_id = NEW_MIKE_USER_ID
+    device_id = NEW_MIKE_DEVICE_ID
+    match kind:
+        case "conflicting_user_id":
+            user_id = coolorg.alice.user_id
+        case "conflicting_device_id":
+            device_id = coolorg.alice.device_id
+        case unknown:
+            assert False, unknown
+
     t1 = DateTime.now()
-    alice_user_id = UserID.test_from_nickname("alice")
     device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-        coolorg.alice, t1, user_id=alice_user_id
+        coolorg.alice, t1, user_id=user_id, device_id=device_id
     )
     user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
-        coolorg.alice, t1, user_id=alice_user_id
+        coolorg.alice, t1, user_id=user_id
     )
     rep = await coolorg.alice.user_create(
         user_certificate=user_certificate,
