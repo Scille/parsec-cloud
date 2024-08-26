@@ -648,6 +648,7 @@ async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
       {
         yesText: { key: 'FoldersPage.importModal.replaceText', count: 1 },
         noText: { key: 'FoldersPage.importModal.skipText', count: 1 },
+        backdropDismiss: false,
       },
     );
     if (answer === Answer.No) {
@@ -1018,6 +1019,7 @@ async function moveEntriesTo(entries: EntryModel[]): Promise<void> {
         yesText: { key: 'FoldersPage.moveAlreadyExistReplace', count: existingEntries.length },
         noText: { key: 'FoldersPage.moveAlreadyExistSkip', count: existingEntries.length },
         yesIsDangerous: true,
+        backdropDismiss: false,
       },
     );
     // User chooses to skip, we remove the existing entries from the entries to move, and we clear existingEntries
