@@ -81,7 +81,7 @@ for (const gridMode of [false, true]) {
     await sortSelector.click();
     const popover = connected.locator('.popover-viewport');
     const sortItems = popover.getByRole('listitem');
-    await expect(sortItems).toHaveCount(4);
+    await expect(sortItems).toHaveCount(3);
     await expect(sortItems).toHaveText(['Ascending', 'Name', 'Last updated']);
     for (const [index, checked] of [false, true, false].entries()) {
       if (checked) {
