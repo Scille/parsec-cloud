@@ -54,6 +54,46 @@ from parsec.logging import get_logger
 logger = get_logger()
 
 
+def block_repr(block: bytes, MAX_LOGGED_BLOCK_SIZE=64) -> str:
+    if len(block) <= MAX_LOGGED_BLOCK_SIZE:
+        return repr(block)
+    return f"{block[:MAX_LOGGED_BLOCK_SIZE]}... ({len(block)} bytes)"
+
+
+@dataclass
+class LoggedReq:
+    req: object
+
+    def __repr__(self) -> str:
+        # The `block_create` requests have by far the largest payloads (up to 512K).
+        # In debug mode, each call to those commands will add up to 1.5MB of content to the logs (due to ASCII representation).
+        # Truncating those payloads allows to reduce the logs to a reasonable size.
+        if isinstance(self.req, authenticated_cmds.latest.block_create.Req):
+            return f"BlockCreateReq {{ block: {block_repr(self.req.block)} }}"
+        else:
+            return repr(self.req)
+
+
+@dataclass
+class LoggedRep:
+    rep: object
+
+    def __repr__(self) -> str:
+        # The `block_read` replies have by far the largest payloads (up to 512K).
+        # In debug mode, each call to those commands will add up to 1.5MB of content to the logs (due to ASCII representation).
+        # Truncating those payloads allows to reduce the logs to a reasonable size.
+        if isinstance(self.rep, authenticated_cmds.latest.block_read.RepOk):
+            return (
+                "Ok { "
+                f"block: {block_repr(self.rep.block)}, "
+                f"key_index: {self.rep.key_index!r}, "
+                f"needed_realm_certificate_timestamp: {self.rep.needed_realm_certificate_timestamp!r}"
+                " }"
+            )
+        else:
+            return repr(self.rep)
+
+
 CONTENT_TYPE_MSGPACK = "application/msgpack"
 ACCEPT_TYPE_SSE = "text/event-stream"
 SUPPORTED_API_VERSIONS = (ApiVersion.API_V4_VERSION,)
@@ -600,7 +640,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
 
     client_ctx.logger.debug(
         "RPC start",
-        req=req,
+        req=LoggedReq(req),
     )
 
     cmd_func = backend.apis[type(req)]
@@ -610,7 +650,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
         "RPC",
         cmd=cmd_func._api_info["cmd"],  # type: ignore
         status=type(rep).__name__,
-        debug_extra={"rep": rep},
+        debug_extra={"rep": LoggedRep(rep)},
     )
 
     return _rpc_rep(rep, parsed.settled_api_version)
