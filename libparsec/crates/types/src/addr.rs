@@ -26,6 +26,7 @@ use libparsec_crypto::VerifyKey;
 use crate::{BootstrapToken, IndexInt, InvitationToken, InvitationType, OrganizationID, VlobID};
 
 pub const PARSEC_SCHEME: &str = "parsec3";
+const HTTP_OR_HTTPS_SCHEME: &str = "http(s)";
 const PARSEC_SSL_DEFAULT_PORT: u16 = 443;
 const PARSEC_NO_SSL_DEFAULT_PORT: u16 = 80;
 const PARSEC_PARAM_ACTION: &str = "a";
@@ -51,6 +52,16 @@ impl ParsecUrlAsHTTPScheme {
         // 1) Validate the http/https url
 
         let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+
+        match parsed.scheme() {
+            "http" | "https" => (),
+            scheme => {
+                return Err(AddrError::InvalidUrlScheme {
+                    got: scheme.to_string(),
+                    expected: HTTP_OR_HTTPS_SCHEME,
+                });
+            }
+        };
 
         // `no_ssl` is defined by http/https scheme and shouldn't be
         // overwritten by the query part of the url
@@ -81,6 +92,16 @@ impl ParsecUrlAsHTTPScheme {
     // Parse a `http(s)://` url just like if it had the `parsec3://` scheme
     fn from_http_url(url: &str) -> Result<Self, AddrError> {
         let mut parsed = Url::parse(url).map_err(|e| AddrError::InvalidUrl(url.to_string(), e))?;
+
+        match parsed.scheme() {
+            "http" | "https" => (),
+            scheme => {
+                return Err(AddrError::InvalidUrlScheme {
+                    got: scheme.to_string(),
+                    expected: HTTP_OR_HTTPS_SCHEME,
+                });
+            }
+        };
 
         // `no_ssl` is defined by http/https scheme and shouldn't be
         // overwritten by the query part of the url
@@ -535,6 +556,7 @@ impl ParsecOrganizationAddr {
  * ParsecActionAddr
  */
 
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ParsecActionAddr {
     OrganizationBootstrap(ParsecOrganizationBootstrapAddr),
     WorkspacePath(ParsecWorkspacePathAddr),
