@@ -354,6 +354,17 @@ async function onLoginClicked(): Promise<void> {
         height: 2.75rem;
       }
     }
+
+    .login-button-error {
+      display: flex;
+      gap: 0.5rem;
+
+      .form-error-icon {
+        margin-top: 0.25rem;
+        font-size: 1rem;
+        align-self: baseline;
+      }
+    }
   }
 
   // include buttons
@@ -428,10 +439,11 @@ async function onLoginClicked(): Promise<void> {
 
   &-mockup {
     position: absolute;
-    right: -0.5rem;
-    bottom: -1rem;
+    right: 0;
+    top: 7rem;
     display: flex;
     align-items: flex-end;
+    scale: 1.2;
   }
 }
 </style>
