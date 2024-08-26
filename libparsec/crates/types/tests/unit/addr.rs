@@ -188,15 +188,15 @@ fn good_addr_base(testbed: &dyn Testbed) {
 )]
 #[case::invalid_url(
     "<dummy>",
-    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_, _))); },
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_))); },
 )]
 #[case::no_scheme(
     "example.com/foo/",
-    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_, _))); },
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::InvalidUrl(_))); },
 )]
 #[case::should_not_have_path(
     "https://example.com/foo/",
-    |outcome| { p_assert_matches!(outcome, Err(AddrError::ShouldNotHaveAPath(_))); },
+    |outcome| { p_assert_matches!(outcome, Err(AddrError::ShouldNotHaveAPath)); },
 )]
 #[case::bad_scheme(
     "xxx://example.com/foo/",
@@ -271,10 +271,7 @@ fn addr_with_bad_port(testbed: &dyn Testbed, #[values("NaN", "999999")] bad_port
     let url = testbed
         .url()
         .replace(DOMAIN, &format!("{}:{}", DOMAIN, bad_port));
-    testbed.assert_addr_err(
-        &url,
-        AddrError::InvalidUrl(url.clone(), url::ParseError::InvalidPort),
-    );
+    testbed.assert_addr_err(&url, AddrError::InvalidUrl(url::ParseError::InvalidPort));
 }
 
 #[apply(all_addr)]
@@ -284,7 +281,6 @@ fn addr_with_bad_scheme(testbed: &dyn Testbed, #[values("xxx", "http", "https")]
         &url,
         AddrError::InvalidUrlScheme {
             expected: PARSEC_SCHEME,
-            got: bad_scheme.to_string(),
         },
     );
 }
@@ -297,11 +293,11 @@ fn addr_with_no_hostname(testbed: &dyn Testbed, #[values("", ":4242")] bad_domai
             Some(extra) => format!("parsec3://?{}", extra),
             None => "parsec3://".to_string(),
         };
-        let expected_error = AddrError::InvalidUrl(url.to_string(), url::ParseError::EmptyHost);
+        let expected_error = AddrError::InvalidUrl(url::ParseError::EmptyHost);
         (url, expected_error)
     } else {
         let url = testbed.url().replace(DOMAIN, bad_domain);
-        let expected_error = AddrError::InvalidUrl(url.clone(), url::ParseError::EmptyHost);
+        let expected_error = AddrError::InvalidUrl(url::ParseError::EmptyHost);
         (url, expected_error)
     };
     testbed.assert_addr_err(&url, expected_error);
@@ -316,7 +312,7 @@ fn addr_with_bad_hostname(
     let url = testbed.url().replace(DOMAIN, bad_domain);
     testbed.assert_addr_err(
         &url,
-        AddrError::InvalidUrl(url.to_string(), url::ParseError::InvalidIpv4Address),
+        AddrError::InvalidUrl(url::ParseError::InvalidIpv4Address),
     );
 }
 
@@ -366,7 +362,6 @@ fn bootstrap_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_type: Op
                 &url,
                 AddrError::InvalidParamValue {
                     param: "a",
-                    value: bad_type.to_string(),
                     help: "Expected `a=bootstrap_organization`".to_string(),
                 },
             );
@@ -417,7 +412,6 @@ fn bootstrap_addr_bad_payload(#[case] bad_payload: &str) {
         &url,
         AddrError::InvalidParamValue {
             param: "p",
-            value: bad_payload.into(),
             help: "Invalid `p` parameter".into(),
         },
     );
@@ -435,7 +429,6 @@ fn workspace_path_addr_bad_type(#[values(Some("dummy"), Some(""), None)] bad_typ
                 &url,
                 AddrError::InvalidParamValue {
                     param: "a",
-                    value: bad_type.to_string(),
                     help: "Expected `a=path`".to_string(),
                 },
             );
@@ -477,7 +470,6 @@ fn workspace_path_addr_bad_payload(#[case] bad_payload: &str) {
         &url,
         AddrError::InvalidParamValue {
             param: "p",
-            value: bad_payload.into(),
             help: "Invalid `p` parameter".into(),
         },
     );
@@ -497,7 +489,6 @@ fn invitation_addr_bad_type(
                 &url,
                 AddrError::InvalidParamValue {
                     param: "a",
-                    value: bad_type.to_string(),
                     help: "Expected `a=claim_user` or `a=claim_device`".to_string(),
                 },
             );
@@ -538,7 +529,6 @@ fn invitation_addr_bad_payload(#[case] bad_payload: &str) {
         &url,
         AddrError::InvalidParamValue {
             param: "p",
-            value: bad_payload.into(),
             help: "Invalid `p` parameter".into(),
         },
     );
@@ -731,15 +721,14 @@ fn parsec_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool)
 }
 
 #[rstest]
-#[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { got: "xx".to_string(), expected: PARSEC_SCHEME })]
-#[case::path_not_allowed("parsec3://foo:42/dummy", AddrError::ShouldNotHaveAPath("https://foo:42/dummy".parse().unwrap()))]
+#[case::empty("", AddrError::InvalidUrl(url::ParseError::RelativeUrlWithoutBase))]
+#[case::invalid_url("foo", AddrError::InvalidUrl(url::ParseError::RelativeUrlWithoutBase))]
+#[case::bad_scheme("xx://foo:42", AddrError::InvalidUrlScheme { expected: PARSEC_SCHEME })]
+#[case::path_not_allowed("parsec3://foo:42/dummy", AddrError::ShouldNotHaveAPath)]
 #[case::bad_parsing_in_valid_param(
     "parsec3://foo:42?no_ssl",
     AddrError::InvalidParamValue {
          param: "no_ssl",
-         value: "".to_string(),
          help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
@@ -747,7 +736,6 @@ fn parsec_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool)
     "parsec3://foo:42?no_ssl=",
     AddrError::InvalidParamValue {
          param: "no_ssl",
-         value: "".to_string(),
          help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
@@ -755,7 +743,6 @@ fn parsec_addr_good(#[case] url: &str, #[case] port: u16, #[case] use_ssl: bool)
     "parsec3://foo:42?no_ssl=nop",
     AddrError::InvalidParamValue {
          param: "no_ssl",
-         value: "nop".to_string(),
          help: "Expected `no_ssl=true` or `no_ssl=false`".to_string(),
     }
 )]
@@ -813,7 +800,6 @@ fn organization_addr_good(#[case] base_url: &str, #[case] port: u16, #[case] use
     "parsec3://foo:42/org?p=dummy",
     AddrError::InvalidParamValue {
         param: "p",
-        value: "dummy".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -823,8 +809,6 @@ fn organization_addr_good(#[case] base_url: &str, #[case] port: u16, #[case] use
     "parsec3://foo:42/org?p=ZHVtbXk",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "ZHVtbXk".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -834,8 +818,6 @@ fn organization_addr_good(#[case] base_url: &str, #[case] port: u16, #[case] use
     "parsec3://foo:42/org?p=xAA",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "xAA".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -845,8 +827,6 @@ fn organization_addr_good(#[case] base_url: &str, #[case] port: u16, #[case] use
     "parsec3://foo:42/org?p=xAEA",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "xAEA".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -892,9 +872,9 @@ fn organization_bootstrap_addr_good(
 }
 
 #[rstest]
-#[case::empty("", AddrError::InvalidUrl("".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::invalid_url("foo", AddrError::InvalidUrl("foo".to_string(), url::ParseError::RelativeUrlWithoutBase))]
-#[case::bad_scheme("xxx://foo:42/org?a=bootstrap_organization&p=wA", AddrError::InvalidUrlScheme{ expected: "parsec3", got: "xxx".to_string()})]
+#[case::empty("", AddrError::InvalidUrl(url::ParseError::RelativeUrlWithoutBase))]
+#[case::invalid_url("foo", AddrError::InvalidUrl(url::ParseError::RelativeUrlWithoutBase))]
+#[case::bad_scheme("xxx://foo:42/org?a=bootstrap_organization&p=wA", AddrError::InvalidUrlScheme{ expected: "parsec3" })]
 // cspell:disable-next-line
 #[case::missing_action("parsec3://foo:42/org?p=wA", AddrError::MissingParam("a"))]
 #[case::missing_payload(
@@ -906,7 +886,6 @@ fn organization_bootstrap_addr_good(
     "parsec3://foo:42/org?a=dummy&p=wA",
     AddrError::InvalidParamValue {
         param: "a",
-        value: "dummy".to_string(),
         help: "Expected `a=bootstrap_organization`".to_string()
     }
 )]
@@ -914,7 +893,6 @@ fn organization_bootstrap_addr_good(
     "parsec3://foo:42/org?a=bootstrap_organization&p=dummy",
     AddrError::InvalidParamValue {
         param: "p",
-        value: "dummy".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -924,8 +902,6 @@ fn organization_bootstrap_addr_good(
     "parsec3://foo:42/org?a=bootstrap_organization&p=ZHVtbXk",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "ZHVtbXk".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -935,8 +911,6 @@ fn organization_bootstrap_addr_good(
     "parsec3://foo:42/org?a=bootstrap_organization&p=xAA",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "xAA".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
@@ -946,8 +920,6 @@ fn organization_bootstrap_addr_good(
     "parsec3://foo:42/org?a=bootstrap_organization&p=xAEA",
     AddrError::InvalidParamValue {
         param: "p",
-        // cspell:disable-next-line
-        value: "xAEA".to_string(),
         help: "Invalid `p` parameter".to_string()
     }
 )]
