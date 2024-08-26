@@ -417,6 +417,7 @@ async function cancelModal(): Promise<boolean> {
     yesIsDangerous: true,
     yesText: 'DevicesPage.greet.actions.cancelGreet.yes',
     noText: 'DevicesPage.greet.actions.cancelGreet.no',
+    backdropDismiss: false,
   });
 
   if (answer === Answer.Yes) {

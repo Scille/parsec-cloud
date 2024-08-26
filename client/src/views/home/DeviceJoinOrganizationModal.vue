@@ -284,6 +284,7 @@ async function cancelModal(): Promise<boolean> {
     keepMainModalHiddenOnYes: true,
     yesText: 'ClaimDeviceModal.cancelYes',
     noText: 'ClaimDeviceModal.cancelNo',
+    backdropDismiss: false,
   });
 
   if (answer === Answer.Yes) {

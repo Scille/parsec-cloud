@@ -337,6 +337,7 @@ async function cancelModal(): Promise<void> {
     yesText: 'JoinOrganization.cancelYes',
     noText: 'JoinOrganization.cancelNo',
     yesIsDangerous: true,
+    backdropDismiss: false,
   });
 
   if (answer === Answer.Yes) {

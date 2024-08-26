@@ -344,6 +344,7 @@ async function cancelModal(): Promise<void> {
       keepMainModalHiddenOnYes: true,
       yesText: 'UsersPage.greet.cancelYes',
       noText: 'UsersPage.greet.cancelNo',
+      backdropDismiss: false,
     });
   }
 

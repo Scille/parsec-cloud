@@ -83,6 +83,7 @@ async function onCloseRequested(force = false): Promise<void> {
       yesText: 'CreateOrganization.cancelYes',
       noText: 'CreateOrganization.cancelNo',
       yesIsDangerous: true,
+      backdropDismiss: false,
     });
   }
 
