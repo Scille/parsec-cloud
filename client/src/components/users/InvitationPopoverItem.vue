@@ -89,7 +89,10 @@ async function copyLink(invitation: UserInvitation): Promise<void> {
 <style scoped lang="scss">
 .invitation-list-item-container {
   --inner-padding-end: 0;
+  display: flex;
+  flex-shrink: 0;
 }
+
 .invitation-list-item {
   padding: 1rem 1rem 1rem 1.75rem;
   display: flex;
