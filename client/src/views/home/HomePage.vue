@@ -118,6 +118,7 @@ const loginPageRef = ref();
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const loginInProgress = ref(false);
+const queryInProgress = ref(false);
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -160,6 +161,10 @@ onUnmounted(() => {
 });
 
 async function handleQuery(): Promise<void> {
+  if (queryInProgress.value === true) {
+    return;
+  }
+  queryInProgress.value = true;
   const query = getCurrentRouteQuery();
   if (query.claimLink) {
     await openJoinByLinkModal(query.claimLink);
@@ -196,6 +201,7 @@ async function handleQuery(): Promise<void> {
   } else if (query.createOrg) {
     openCreateOrganizationModal(undefined, query.createOrg);
   }
+  queryInProgress.value = false;
 }
 
 async function openCreateOrganizationModal(bootstrapLink?: string, defaultServerChoice?: ServerType): Promise<void> {
