@@ -12,7 +12,7 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 # TODO: Remove once PostgreSQL is supported
@@ -80,3 +80,14 @@ async def test_invited_invite_claimer_start_greeting_attempt_greeter_revoked(
     )
 
     assert rep == invited_cmds.v4.invite_claimer_start_greeting_attempt.RepGreeterRevoked()
+
+
+async def test_invited_invite_claimer_start_greeting_attempt_http_common_errors(
+    coolorg: CoolorgRpcClients, invited_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+            greeter=coolorg.alice.user_id,
+        )
+
+    await invited_http_common_errors_tester(do)

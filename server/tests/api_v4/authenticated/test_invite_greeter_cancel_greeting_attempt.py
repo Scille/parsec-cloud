@@ -5,12 +5,13 @@ import pytest
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
+    DateTime,
     GreeterOrClaimer,
     GreetingAttemptID,
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 Response = authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.Rep | None
 
@@ -23,17 +24,19 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
-    invitation_token = coolorg.invited_alice_dev3.token
-
-    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
-        token=invitation_token,
+    outcome = await backend.invite.greeter_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        greeter=coolorg.alice.user_id,
+        token=coolorg.invited_alice_dev3.token,
     )
-    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
-    return rep.greeting_attempt
+    assert isinstance(outcome, GreetingAttemptID)
+    return outcome
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
@@ -83,7 +86,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_invitation_c
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_attempt_not_found(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
 ) -> None:
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=GreetingAttemptID.new(),
@@ -143,3 +146,17 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
             origin=GreeterOrClaimer.GREETER,
         )
     )
+
+
+async def test_authenticated_invite_greeter_cancel_greeting_attempt_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.alice.invite_greeter_cancel_greeting_attempt(
+            greeting_attempt=greeting_attempt,
+            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        )
+
+    await authenticated_http_common_errors_tester(do)

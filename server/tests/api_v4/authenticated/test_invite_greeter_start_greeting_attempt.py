@@ -3,7 +3,7 @@
 import pytest
 
 from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
 
@@ -15,7 +15,7 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 
 
 async def test_authenticated_invite_greeter_start_greeting_attempt_ok(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients,
 ) -> None:
     invitation_token = coolorg.invited_alice_dev3.token
 
@@ -74,3 +74,14 @@ async def test_authenticated_invite_greeter_start_greeting_attempt_author_not_al
     )
 
     assert rep == authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepAuthorNotAllowed()
+
+
+async def test_authenticated_invite_greeter_start_greeting_attempt_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.invite_greeter_start_greeting_attempt(
+            token=coolorg.invited_alice_dev3.token,
+        )
+
+    await authenticated_http_common_errors_tester(do)

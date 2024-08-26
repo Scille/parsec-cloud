@@ -4,7 +4,7 @@ import pytest
 
 from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
 from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 async def create_vlob(
@@ -148,3 +148,32 @@ async def test_authenticated_vlob_read_batch_too_many_elements(
         realm_id=coolorg.wksp1_id, vlobs=too_many_vlobs, at=None
     )
     assert rep == authenticated_cmds.v4.vlob_read_batch.RepTooManyElements()
+
+
+async def test_authenticated_vlob_read_batch_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    vlob_id = VlobID.new()
+    v1_blob = b"<block content 1>"
+    v1_timestamp = DateTime.now()
+    outcome = await backend.vlob.create(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
+        vlob_id=vlob_id,
+        key_index=1,
+        blob=v1_blob,
+        timestamp=v1_timestamp,
+        sequester_blob=None,
+    )
+    assert outcome is None, outcome
+
+    async def do():
+        await coolorg.alice.vlob_read_batch(
+            realm_id=coolorg.wksp1_id, vlobs=[vlob_id], at=v1_timestamp
+        )
+
+    await authenticated_http_common_errors_tester(do)

@@ -7,7 +7,7 @@ import pytest
 from parsec._parsec import DateTime, InvitationStatus, authenticated_cmds
 from parsec.components.invite import DeviceInvitation, SendEmailBadOutcome
 from parsec.events import EventInvitation
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, MinimalorgRpcClients
 
 
 @pytest.mark.parametrize("send_email", (False, True))
@@ -154,3 +154,14 @@ async def test_authenticated_invite_new_device_send_email_bad_outcome(
         await backend.invite.test_dump_all_invitations(minimalorg.organization_id)
         == expected_invitations
     )
+
+
+async def test_authenticated_invite_new_device_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.invite_new_device(
+            send_email=False,
+        )
+
+    await authenticated_http_common_errors_tester(do)

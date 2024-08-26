@@ -28,8 +28,14 @@ from parsec._parsec import (
     VlobID,
     authenticated_cmds,
 )
-from tests.common import AsyncClient, AuthenticatedRpcClient, Backend, CoolorgRpcClients
-from tests.common.client import setup_shamir_for_coolorg
+from tests.common import (
+    AsyncClient,
+    AuthenticatedRpcClient,
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    setup_shamir_for_coolorg,
+)
 
 
 @pytest.mark.parametrize("redacted", (False, True))
@@ -819,3 +825,14 @@ async def test_authenticated_certificate_get_ok_shamir(
     assert rep.shamir_recovery_certificates == []
 
     # TODO check coherence after deletion
+
+
+async def test_authenticated_certificate_get_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.certificate_get(
+            common_after=None, sequester_after=None, shamir_recovery_after=None, realm_after={}
+        )
+
+    await authenticated_http_common_errors_tester(do)

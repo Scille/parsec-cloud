@@ -10,7 +10,7 @@ from parsec._parsec import (
     SecretKeyAlgorithm,
     authenticated_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 async def test_authenticated_realm_get_keys_bundle_ok(coolorg: CoolorgRpcClients) -> None:
@@ -107,3 +107,15 @@ async def test_authenticated_realm_get_keys_bundle_bad_key_index(
         key_index=10,
     )
     assert rep == authenticated_cmds.v4.realm_get_keys_bundle.RepBadKeyIndex()
+
+
+async def test_authenticated_realm_get_keys_bundle_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.realm_get_keys_bundle(
+            realm_id=coolorg.wksp1_id,
+            key_index=1,
+        )
+
+    await authenticated_http_common_errors_tester(do)

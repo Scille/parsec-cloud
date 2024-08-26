@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 async def create_vlob(
@@ -114,3 +114,12 @@ async def test_authenticated_vlob_poll_changes_realm_not_found(
     bad_realm_id = VlobID.new()
     rep = await coolorg.alice.vlob_poll_changes(realm_id=bad_realm_id, last_checkpoint=0)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepRealmNotFound()
+
+
+async def test_authenticated_vlob_poll_changes_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
+
+    await authenticated_http_common_errors_tester(do)

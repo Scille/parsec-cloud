@@ -14,7 +14,7 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 # TODO: Remove once PostgreSQL is supported
@@ -25,11 +25,14 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
-    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+    outcome = await backend.invite.claimer_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
         greeter=coolorg.alice.user_id,
+        token=coolorg.invited_alice_dev3.token,
     )
-    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
-    return rep.greeting_attempt
+    assert isinstance(outcome, GreetingAttemptID)
+    return outcome
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
@@ -168,3 +171,17 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
             origin=GreeterOrClaimer.CLAIMER,
         )
     )
+
+
+async def test_invited_invite_claimer_cancel_greeting_attempt_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    invited_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
+            greeting_attempt=greeting_attempt,
+            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        )
+
+    await invited_http_common_errors_tester(do)

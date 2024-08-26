@@ -2,7 +2,7 @@
 
 from parsec._parsec import authenticated_cmds
 from parsec.events import EventPinged
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, MinimalorgRpcClients
 
 
 async def test_authenticated_ping_ok(minimalorg: MinimalorgRpcClients, backend: Backend) -> None:
@@ -15,3 +15,12 @@ async def test_authenticated_ping_ok(minimalorg: MinimalorgRpcClients, backend: 
                 ping="hello",
             )
         )
+
+
+async def test_authenticated_ping_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.ping(ping="hello")
+
+    await authenticated_http_common_errors_tester(do)

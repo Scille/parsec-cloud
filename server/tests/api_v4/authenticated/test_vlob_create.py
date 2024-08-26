@@ -15,7 +15,12 @@ from parsec._parsec import (
     testbed,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
-from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    get_last_realm_certificate_timestamp,
+)
 
 
 @pytest.mark.parametrize("key_index", (0, 1))
@@ -382,3 +387,19 @@ async def test_authenticated_vlob_create_max_blob_size(
         **initial_dump,
         vlob_id: [(author, ANY, realm_id, a_big_blob)],
     }
+
+
+async def test_authenticated_vlob_create_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.vlob_create(
+            realm_id=coolorg.wksp1_id,
+            vlob_id=VlobID.new(),
+            key_index=1,
+            timestamp=DateTime.now(),
+            blob=b"<dummy>",
+            sequester_blob=None,
+        )
+
+    await authenticated_http_common_errors_tester(do)

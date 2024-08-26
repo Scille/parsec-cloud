@@ -23,7 +23,7 @@ from parsec._parsec import (
     UserProfile,
     anonymous_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @dataclass
@@ -314,3 +314,21 @@ async def test_anonymous_pki_enrollment_submit_invalid_payload_data(
         submit_payload=b"<dummy data>",
     )
     assert isinstance(rep, anonymous_cmds.v4.pki_enrollment_submit.RepInvalidPayloadData)
+
+
+async def test_anonymous_pki_enrollment_submit_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    submit_payload: bytes,
+    anonymous_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.anonymous.pki_enrollment_submit(
+            enrollment_id=EnrollmentID.new(),
+            force=False,
+            submitter_der_x509_certificate=b"<philip der x509 certificate>",
+            submitter_der_x509_certificate_email="philip@example.invalid",
+            submit_payload_signature=b"<philip submit payload signature>",
+            submit_payload=submit_payload,
+        )
+
+    await anonymous_http_common_errors_tester(do)

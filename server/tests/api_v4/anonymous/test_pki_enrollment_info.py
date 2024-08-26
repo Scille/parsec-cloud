@@ -22,7 +22,7 @@ from tests.api_v4.authenticated.test_user_create import (
     generate_new_mike_device_certificates,
     generate_new_mike_user_certificates,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.mark.parametrize("kind", ("submitted", "accepted", "cancelled", "rejected"))
@@ -156,3 +156,33 @@ async def test_anonymous_pki_enrollment_info_enrollment_not_found(
 ) -> None:
     rep = await coolorg.anonymous.pki_enrollment_info(enrollment_id=EnrollmentID.new())
     assert rep == anonymous_cmds.v4.pki_enrollment_info.RepEnrollmentNotFound()
+
+
+async def test_anonymous_pki_enrollment_info_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    anonymous_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    enrollment_id = EnrollmentID.new()
+    submitted_on = DateTime.now()
+    submit_payload = PkiEnrollmentSubmitPayload(
+        verify_key=SigningKey.generate().verify_key,
+        public_key=PrivateKey.generate().public_key,
+        requested_device_label=DeviceLabel("Dev1"),
+    ).dump()
+    outcome = await backend.pki.submit(
+        now=submitted_on,
+        organization_id=coolorg.organization_id,
+        enrollment_id=enrollment_id,
+        force=False,
+        submitter_der_x509_certificate=b"<mike der x509 certificate>",
+        submitter_der_x509_certificate_email="mike@example.invalid",
+        submit_payload_signature=b"<mike submit payload signature>",
+        submit_payload=submit_payload,
+    )
+    assert outcome is None
+
+    async def do():
+        await coolorg.anonymous.pki_enrollment_info(enrollment_id=enrollment_id)
+
+    await anonymous_http_common_errors_tester(do)

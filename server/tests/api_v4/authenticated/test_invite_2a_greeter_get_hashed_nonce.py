@@ -5,8 +5,7 @@ import pytest
 
 from parsec._parsec import HashDigest, InvitationToken, authenticated_cmds
 from parsec.components.invite import ConduitState
-from tests.common import Backend, CoolorgRpcClients
-from tests.common.invite import pass_state_1_wait_peer
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, pass_state_1_wait_peer
 
 Response = authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.Rep | None
 
@@ -83,3 +82,12 @@ async def test_authenticated_invite_2a_greeter_get_hashed_nonce_enrollment_wrong
     )
 
     assert rep == authenticated_cmds.v4.invite_2a_greeter_get_hashed_nonce.RepEnrollmentWrongState()
+
+
+@pytest.mark.skip(
+    reason="TODO: test complex to implemented and this API is soon-to-be-removed anyway..."
+)
+async def test_authenticated_invite_2a_greeter_get_hashed_nonce_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    pass

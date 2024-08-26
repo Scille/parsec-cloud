@@ -385,3 +385,9 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     assert rep.ballpark_client_late_offset == BALLPARK_CLIENT_LATE_OFFSET
     assert rep.client_timestamp == late
     # We don't compare the server timestamp as it's not deterministic, should we freeze time ?
+
+
+def test_anonymous_organization_bootstrap_http_common_errors() -> None:
+    # Nothing to do here: the organization doesn't exist yet so nothing can be missing or expired !
+    # (this test is only present to please `test_each_cmd_req_rep_has_dedicated_test`)
+    pass

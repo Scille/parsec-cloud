@@ -6,7 +6,7 @@ import pytest
 from parsec._parsec import PrivateKey, invited_cmds
 from parsec.components.invite import ConduitState
 from parsec.events import EventEnrollmentConduit
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.mark.parametrize("first_to_run", ("greeter_first", "claimer_first"))
@@ -54,3 +54,12 @@ async def test_invited_invite_1_claimer_wait_peer_ok(
     assert rep == invited_cmds.v4.invite_1_claimer_wait_peer.RepOk(
         greeter_public_key=greeter_private_key.public_key
     )
+
+
+@pytest.mark.skip(
+    reason="TODO: test complex to implemented and this API is soon-to-be-removed anyway..."
+)
+async def test_invited_invite_1_claimer_wait_peer_http_common_errors(
+    coolorg: CoolorgRpcClients, invited_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    pass
