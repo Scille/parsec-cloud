@@ -6,7 +6,7 @@ import pytest
 from parsec._parsec import InvitationToken, PrivateKey, authenticated_cmds
 from parsec.components.invite import ConduitState
 from parsec.events import EventEnrollmentConduit
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 Response = authenticated_cmds.v4.invite_1_greeter_wait_peer.Rep | None
 
@@ -80,3 +80,12 @@ async def test_authenticated_invite_1_greeter_wait_peer_invitation_deleted(
     )
 
     assert rep == authenticated_cmds.v4.invite_1_greeter_wait_peer.RepInvitationDeleted()
+
+
+@pytest.mark.skip(
+    reason="TODO: test complex to implemented and this API is soon-to-be-removed anyway..."
+)
+async def test_authenticated_invite_1_greeter_wait_peer_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    pass

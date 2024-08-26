@@ -10,8 +10,12 @@ from parsec._parsec import (
     ShamirRecoveryShareCertificate,
     authenticated_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
-from tests.common.client import setup_shamir_for_coolorg
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    setup_shamir_for_coolorg,
+)
 
 
 async def test_authenticated_shamir_recovery_setup_ok(
@@ -459,3 +463,34 @@ async def test_authenticated_shamir_recovery_setup_timestamp_out_of_ballpark(
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
+
+
+async def test_authenticated_shamir_recovery_setup_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        dt = DateTime.now()
+        share = ShamirRecoveryShareCertificate(
+            author=coolorg.alice.device_id,
+            user_id=coolorg.alice.user_id,
+            timestamp=dt,
+            recipient=coolorg.mallory.user_id,
+            ciphered_share=b"abc",
+        )
+        brief = ShamirRecoveryBriefCertificate(
+            author=coolorg.alice.device_id,
+            user_id=coolorg.alice.user_id,
+            timestamp=dt,
+            threshold=1,
+            per_recipient_shares={coolorg.mallory.user_id: 2},
+        )
+
+        setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
+            b"abc",
+            InvitationToken.new(),
+            brief.dump_and_sign(coolorg.alice.signing_key),
+            [share.dump_and_sign(coolorg.alice.signing_key)],
+        )
+        await coolorg.alice.shamir_recovery_setup(setup)
+
+    await authenticated_http_common_errors_tester(do)

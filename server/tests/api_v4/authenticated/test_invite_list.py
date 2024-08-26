@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from parsec._parsec import DateTime, InvitationStatus, authenticated_cmds
-from tests.common import Backend, MinimalorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, MinimalorgRpcClients
 
 
 async def test_authenticated_invite_list_ok(
@@ -94,3 +94,12 @@ async def test_authenticated_invite_list_ok(
     rep = await minimalorg.alice.invite_list()
     assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)
     assert rep.invitations == expected_invitations
+
+
+async def test_authenticated_invite_list_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.invite_list()
+
+    await authenticated_http_common_errors_tester(do)

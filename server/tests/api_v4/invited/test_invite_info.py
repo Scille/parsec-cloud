@@ -3,7 +3,7 @@
 import pytest
 
 from parsec._parsec import invited_cmds
-from tests.common import CoolorgRpcClients
+from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.mark.parametrize("user_or_device", ("user", "device"))
@@ -30,3 +30,12 @@ async def test_invited_invite_info_ok(user_or_device: str, coolorg: CoolorgRpcCl
 
         case unknown:
             assert False, unknown
+
+
+async def test_invited_invite_info_http_common_errors(
+    coolorg: CoolorgRpcClients, invited_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.invited_alice_dev3.invite_info()
+
+    await invited_http_common_errors_tester(do)

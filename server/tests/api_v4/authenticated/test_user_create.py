@@ -25,6 +25,7 @@ from tests.common import (
     AuthenticatedRpcClient,
     Backend,
     CoolorgRpcClients,
+    HttpCommonErrorsTester,
     MinimalorgRpcClients,
     TestbedBackend,
 )
@@ -432,3 +433,26 @@ async def test_authenticated_user_create_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.user_create.RepRequireGreaterTimestamp(
         strictly_greater_than=t1
     )
+
+
+async def test_authenticated_user_create_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        now = DateTime.now()
+
+        device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
+            coolorg.alice, now
+        )
+        user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
+            coolorg.alice, now
+        )
+
+        await coolorg.alice.user_create(
+            user_certificate=user_certificate,
+            redacted_user_certificate=redacted_user_certificate,
+            device_certificate=device_certificate,
+            redacted_device_certificate=redacted_device_certificate,
+        )
+
+    await authenticated_http_common_errors_tester(do)

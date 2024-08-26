@@ -11,7 +11,7 @@ from parsec._parsec import (
     SigningKey,
     authenticated_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.fixture
@@ -79,3 +79,14 @@ async def test_authenticated_pki_enrollment_reject_enrollment_not_found(
 ) -> None:
     rep = await coolorg.alice.pki_enrollment_reject(enrollment_id=EnrollmentID.new())
     assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepEnrollmentNotFound()
+
+
+async def test_authenticated_pki_enrollment_reject_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    enrollment_id: EnrollmentID,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.alice.pki_enrollment_reject(enrollment_id=enrollment_id)
+
+    await authenticated_http_common_errors_tester(do)

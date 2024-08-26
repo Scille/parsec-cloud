@@ -11,7 +11,7 @@ from parsec._parsec import (
     SigningKey,
     authenticated_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.mark.parametrize("kind", ("empty", "items"))
@@ -66,3 +66,12 @@ async def test_authenticated_pki_enrollment_list_author_not_allowed(
 ) -> None:
     rep = await coolorg.bob.pki_enrollment_list()
     assert rep == authenticated_cmds.v4.pki_enrollment_list.RepAuthorNotAllowed()
+
+
+async def test_authenticated_pki_enrollment_list_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.pki_enrollment_list()
+
+    await authenticated_http_common_errors_tester(do)

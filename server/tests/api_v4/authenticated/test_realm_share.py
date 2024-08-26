@@ -21,6 +21,7 @@ from parsec.events import EventRealmCertificate
 from tests.common import (
     Backend,
     CoolorgRpcClients,
+    HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
     patch_realm_role_certificate,
 )
@@ -529,3 +530,26 @@ async def test_authenticated_realm_share_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.realm_share.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_realm_share_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        alice_unshare_bob_certificate = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=DateTime.now(),
+            realm_id=coolorg.wksp1_id,
+            user_id=coolorg.bob.user_id,
+            role=RealmRole.CONTRIBUTOR,
+        )
+
+        await coolorg.alice.realm_share(
+            realm_role_certificate=alice_unshare_bob_certificate.dump_and_sign(
+                coolorg.alice.signing_key
+            ),
+            key_index=1,
+            recipient_keys_bundle_access=b"<bob keys bundle access>",
+        )
+
+    await authenticated_http_common_errors_tester(do)

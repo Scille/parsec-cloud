@@ -19,6 +19,7 @@ from tests.common import (
     AuthenticatedRpcClient,
     Backend,
     CoolorgRpcClients,
+    HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
     patch_realm_name_certificate,
 )
@@ -379,3 +380,17 @@ async def test_authenticated_realm_rename_timestamp_out_of_ballpark(
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == timestamp_out_of_ballpark
+
+
+async def test_authenticated_realm_rename_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    alice_name_certificate: RealmNameCertificate,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.alice.realm_rename(
+            realm_name_certificate=alice_name_certificate.dump_and_sign(coolorg.alice.signing_key),
+            initial_name_or_fail=False,
+        )
+
+    await authenticated_http_common_errors_tester(do)

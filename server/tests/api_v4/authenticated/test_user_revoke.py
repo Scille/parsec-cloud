@@ -14,7 +14,7 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventUserRevokedOrFrozen
-from tests.common import Backend, CoolorgRpcClients, RpcTransportError
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, RpcTransportError
 
 
 async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -263,3 +263,20 @@ async def test_authenticated_user_revoke_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.user_revoke.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_user_revoke_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        now = DateTime.now()
+        certif = RevokedUserCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            user_id=coolorg.bob.user_id,
+        )
+        await coolorg.alice.user_revoke(
+            revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
+        )
+
+    await authenticated_http_common_errors_tester(do)

@@ -14,7 +14,12 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventRealmCertificate
-from tests.common import Backend, CoolorgRpcClients, patch_realm_role_certificate
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    patch_realm_role_certificate,
+)
 
 
 @pytest.fixture
@@ -259,3 +264,24 @@ async def test_authenticated_realm_unshare_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.realm_unshare.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_realm_unshare_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        alice_unshare_bob_certificate = RealmRoleCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=DateTime.now(),
+            realm_id=coolorg.wksp1_id,
+            user_id=coolorg.bob.user_id,
+            role=None,
+        )
+
+        await coolorg.alice.realm_unshare(
+            realm_role_certificate=alice_unshare_bob_certificate.dump_and_sign(
+                coolorg.alice.signing_key
+            ),
+        )
+
+    await authenticated_http_common_errors_tester(do)

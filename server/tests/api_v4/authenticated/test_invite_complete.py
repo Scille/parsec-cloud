@@ -3,7 +3,7 @@
 import pytest
 
 from parsec._parsec import InvitationToken, authenticated_cmds
-from tests.common import CoolorgRpcClients
+from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 
 
 # TODO: Remove once PostgreSQL is supported
@@ -50,3 +50,12 @@ async def test_authenticated_invite_complete_author_not_allowed(
 ) -> None:
     rep = await coolorg.bob.invite_complete(coolorg.invited_alice_dev3.token)
     assert rep == authenticated_cmds.v4.invite_complete.RepAuthorNotAllowed()
+
+
+async def test_authenticated_invite_complete_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        await coolorg.alice.invite_complete(coolorg.invited_alice_dev3.token)
+
+    await authenticated_http_common_errors_tester(do)

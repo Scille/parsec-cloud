@@ -16,7 +16,8 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from parsec.components.invite import NotReady
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 # TODO: Remove once PostgreSQL is supported
@@ -27,34 +28,42 @@ def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
 
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
-    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+    outcome = await backend.invite.claimer_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
         greeter=coolorg.alice.user_id,
+        token=coolorg.invited_alice_dev3.token,
     )
-    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
-    return rep.greeting_attempt
+    assert isinstance(outcome, GreetingAttemptID)
+    return outcome
 
 
 @pytest.fixture
 async def greeter_wait_peer_public_key(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
 ) -> PublicKey:
     # Greeter start greeting attempt
-    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+    outcome = await backend.invite.greeter_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
         token=coolorg.invited_alice_dev3.token,
+        greeter=coolorg.alice.user_id,
     )
-    assert rep == authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk(
-        greeting_attempt=greeting_attempt
-    )
+    assert outcome == greeting_attempt
 
     # Greeter wait peer
     greeter_key = PrivateKey.generate()
-    greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber0WaitPeer(
-        public_key=greeter_key.public_key
+    outcome = await backend.invite.greeter_step(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        greeter=coolorg.alice.user_id,
+        greeting_attempt=greeting_attempt,
+        step_index=0,
+        greeter_data=greeter_key.public_key.encode(),
     )
-    rep = await coolorg.alice.invite_greeter_step(
-        greeting_attempt=greeting_attempt, greeter_step=greeter_step
-    )
-    assert rep == authenticated_cmds.v4.invite_greeter_step.RepNotReady()
+    assert isinstance(outcome, NotReady)
 
     return greeter_key.public_key
 
@@ -255,3 +264,14 @@ async def test_invited_invite_claimer_step_not_ready(
         claimer_step=claimer_step,
     )
     assert rep == invited_cmds.v4.invite_claimer_step.RepNotReady()
+
+
+async def test_invited_invite_claimer_step_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    invited_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.invited_alice_dev3.invite_info()
+
+    await invited_http_common_errors_tester(do)

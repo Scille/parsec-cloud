@@ -4,7 +4,12 @@ import pytest
 
 from parsec._parsec import BlockID, DateTime, authenticated_cmds
 from parsec.components.blockstore import BlockStoreReadBadOutcome
-from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    get_last_realm_certificate_timestamp,
+)
 
 
 async def test_authenticated_block_read_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -97,3 +102,27 @@ async def test_authenticated_block_read_store_unavailable(
 
     rep = await coolorg.alice.block_read(block_id)
     assert rep == authenticated_cmds.v4.block_read.RepStoreUnavailable()
+
+
+async def test_authenticated_block_read_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    block_id = BlockID.new()
+    block = b"<block content>"
+
+    await backend.block.create(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        block_id=block_id,
+        realm_id=coolorg.wksp1_id,
+        key_index=1,
+        block=block,
+    )
+
+    async def do():
+        await coolorg.alice.block_read(block_id)
+
+    await authenticated_http_common_errors_tester(do)

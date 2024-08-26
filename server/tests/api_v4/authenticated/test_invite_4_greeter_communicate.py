@@ -3,8 +3,11 @@ import anyio
 import pytest
 
 from parsec._parsec import InvitationToken, authenticated_cmds, invited_cmds
-from tests.common import CoolorgRpcClients
-from tests.common.invite import pass_state_3b_greeter_signify_trust
+from tests.common import (
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    pass_state_3b_greeter_signify_trust,
+)
 
 Response = authenticated_cmds.v4.invite_4_greeter_communicate.Rep | None
 
@@ -75,3 +78,12 @@ async def test_authenticated_invite_4_greeter_communicate_enrollment_wrong_state
         coolorg.invited_alice_dev3.token, b"payload", True
     )
     assert rep == authenticated_cmds.v4.invite_4_greeter_communicate.RepEnrollmentWrongState()
+
+
+@pytest.mark.skip(
+    reason="TODO: test complex to implemented and this API is soon-to-be-removed anyway..."
+)
+async def test_authenticated_invite_4_greeter_communicate_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    pass

@@ -8,8 +8,12 @@ from parsec.components.invite import (
     InviteConduitExchangeBadOutcome,
 )
 from parsec.events import EventEnrollmentConduit
-from tests.common import Backend, CoolorgRpcClients
-from tests.common.invite import pass_state_2_2_greeter_nonce
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    pass_state_2_2_greeter_nonce,
+)
 
 Response = invited_cmds.v4.invite_2b_claimer_send_nonce.Rep | None
 
@@ -65,3 +69,12 @@ async def test_invited_invite_2b_claimer_send_nonce_enrollment_wrong_state(
         claimer_nonce=b"claimer-hello-world",
     )
     assert rep == invited_cmds.v4.invite_2b_claimer_send_nonce.RepEnrollmentWrongState()
+
+
+@pytest.mark.skip(
+    reason="TODO: test complex to implemented and this API is soon-to-be-removed anyway..."
+)
+async def test_invited_invite_2b_claimer_send_nonce_http_common_errors(
+    coolorg: CoolorgRpcClients, invited_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    pass

@@ -28,7 +28,7 @@ from tests.api_v4.authenticated.test_user_create import (
     generate_new_mike_device_certificates,
     generate_new_mike_user_certificates,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 @pytest.fixture
@@ -273,3 +273,14 @@ async def test_authenticated_pki_enrollment_accept_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_pki_enrollment_accept_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    enrollment_id: EnrollmentID,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        await coolorg.alice.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
+
+    await authenticated_http_common_errors_tester(do)

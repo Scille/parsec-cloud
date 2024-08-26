@@ -27,6 +27,10 @@ def test_each_cmd_req_rep_has_dedicated_test() -> None:
             for cmd_spec in cmd_specs:
                 cmd_name = cmd_spec["req"]["cmd"]
                 cmd_statuses = [rep_spec["status"] for rep_spec in cmd_spec["reps"]]
+                # Add fake status corresponding to common Parsec HTTP errors such as 404/460/461/462
+                # The corresponding test function should test that all common errors are returned
+                # by the RPC API command
+                cmd_statuses.append("http_common_errors")
 
                 for version in cmd_spec["major_versions"]:
                     api_mod = import_module(f"tests.api_v{version}")

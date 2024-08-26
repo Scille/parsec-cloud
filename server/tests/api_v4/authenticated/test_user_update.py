@@ -12,7 +12,7 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventUserUpdated
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 
 
 async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -245,3 +245,21 @@ async def test_authenticated_user_update_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.user_update.RepRequireGreaterTimestamp(
         strictly_greater_than=now
     )
+
+
+async def test_authenticated_user_update_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        now = DateTime.now()
+        certif = UserUpdateCertificate(
+            author=coolorg.alice.device_id,
+            timestamp=now,
+            user_id=coolorg.bob.user_id,
+            new_profile=UserProfile.ADMIN,
+        )
+        await coolorg.alice.user_update(
+            user_update_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
+        )
+
+    await authenticated_http_common_errors_tester(do)

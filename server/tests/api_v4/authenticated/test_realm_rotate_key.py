@@ -18,8 +18,12 @@ from parsec._parsec import (
 )
 from parsec.components.realm import KeysBundle
 from parsec.events import EventRealmCertificate
-from tests.common import Backend, CoolorgRpcClients
-from tests.common.client import get_last_realm_certificate_timestamp
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    get_last_realm_certificate_timestamp,
+)
 
 
 @pytest.fixture
@@ -380,3 +384,27 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
+
+
+async def test_authenticated_realm_rotate_key_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    wksp1_key_rotation_certificate: RealmKeyRotationCertificate,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    async def do():
+        certif = patch_realm_key_rotation_certificate(
+            wksp1_key_rotation_certificate,
+            timestamp=DateTime.now(),
+            realm_id=coolorg.wksp1_id,
+            key_index=2,
+        )
+        await coolorg.alice.realm_rotate_key(
+            realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+            per_participant_keys_bundle_access={
+                user_id: f"<{user_id} keys bundle access>".encode()
+                for user_id in [coolorg.alice.user_id, coolorg.bob.user_id]
+            },
+            keys_bundle=b"<keys bundle>",
+        )
+
+    await authenticated_http_common_errors_tester(do)

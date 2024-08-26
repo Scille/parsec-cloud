@@ -14,7 +14,12 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
-from tests.common import Backend, CoolorgRpcClients, get_last_realm_certificate_timestamp
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    get_last_realm_certificate_timestamp,
+)
 
 
 async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -452,3 +457,39 @@ async def test_authenticated_vlob_update_max_blob_size(
             (author, ANY, realm_id, v2_blob),
         ],
     }
+
+
+async def test_authenticated_vlob_update_http_common_errors(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    authenticated_http_common_errors_tester: HttpCommonErrorsTester,
+) -> None:
+    vlob_id = VlobID.new()
+    v1_blob = b"<block content 1>"
+    v1_timestamp = DateTime.now()
+    outcome = await backend.vlob.create(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        realm_id=coolorg.wksp1_id,
+        vlob_id=vlob_id,
+        key_index=1,
+        blob=v1_blob,
+        timestamp=v1_timestamp,
+        sequester_blob=None,
+    )
+    assert outcome is None, outcome
+
+    async def do():
+        v2_blob = b"<block content 2>"
+        v2_timestamp = DateTime.now()
+        await coolorg.alice.vlob_update(
+            vlob_id=vlob_id,
+            key_index=1,
+            version=2,
+            blob=v2_blob,
+            timestamp=v2_timestamp,
+            sequester_blob=None,
+        )
+
+    await authenticated_http_common_errors_tester(do)

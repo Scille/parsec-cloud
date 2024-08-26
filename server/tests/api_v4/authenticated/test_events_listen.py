@@ -19,8 +19,14 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import Event, EventPinged
-from tests.common import Backend, CoolorgRpcClients, MinimalorgRpcClients
-from tests.common.client import AuthenticatedRpcClient
+from tests.common import (
+    AuthenticatedRpcClient,
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    MinimalorgRpcClients,
+    RpcTransportError,
+)
 
 
 class GenerateEvent(Protocol):
@@ -455,3 +461,14 @@ async def test_last_event_id(minimalorg: MinimalorgRpcClients, backend: Backend)
             assert event == authenticated_cmds.v4.events_listen.RepOk(
                 authenticated_cmds.v4.events_listen.APIEventPinged(ping=ping)
             )
+
+
+async def test_authenticated_events_listen_http_common_errors(
+    coolorg: CoolorgRpcClients, authenticated_http_common_errors_tester: HttpCommonErrorsTester
+) -> None:
+    async def do():
+        async with coolorg.alice.raw_sse_connection() as rep:
+            # The caller will check `rep.status_code`
+            raise RpcTransportError(rep)
+
+    await authenticated_http_common_errors_tester(do)
