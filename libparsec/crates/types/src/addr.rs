@@ -240,8 +240,6 @@ pub enum AddrError {
     MissingParam(&'static str),
     #[error("The provided url (`{0}`) should not have a path")]
     ShouldNotHaveAPath(url::Url),
-    #[error("Invalid base32 data: {0}")]
-    InvalidBase32Data(data_encoding::DecodeError),
     #[error("Path does not form a valid organization id")]
     InvalidOrganizationID,
 }
