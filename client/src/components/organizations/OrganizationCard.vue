@@ -125,10 +125,9 @@ function getLastLoginText(): string {
   &-header {
     display: flex;
     align-items: center;
-    flex-direction: row;
     gap: 0.5rem;
-    position: relative;
     z-index: 1;
+    overflow: hidden;
 
     &__avatar {
       background-color: var(--parsec-color-light-secondary-white);
@@ -150,10 +149,13 @@ function getLastLoginText(): string {
     }
 
     &__title {
-      display: flex;
+      display: block;
       flex-direction: column;
       gap: 0.375rem;
       color: var(--parsec-color-light-primary-700);
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
     }
   }
 
