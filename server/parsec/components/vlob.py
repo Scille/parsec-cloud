@@ -180,11 +180,6 @@ class BaseVlobComponent:
     ) -> tuple[int, list[tuple[VlobID, int]]] | VlobPollChangesAsUserBadOutcome:
         raise NotImplementedError
 
-    async def list_versions(
-        self, organization_id: OrganizationID, author: DeviceID, vlob_id: VlobID
-    ) -> dict[int, tuple[DateTime, DeviceID]] | VlobListVersionsBadOutcome:
-        raise NotImplementedError
-
     async def test_dump_vlobs(
         self, organization_id: OrganizationID
     ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
