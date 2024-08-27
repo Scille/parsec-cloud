@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import csv
 from enum import Enum
+from functools import wraps
 from io import StringIO
 from typing import (
     TYPE_CHECKING,
     Annotated,
     Any,
+    Awaitable,
+    Callable,
     Literal,
+    cast,
 )
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
@@ -35,11 +39,13 @@ from parsec.components.organization import (
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
 from parsec.events import OrganizationIDField
+from parsec.logging import get_logger
 from parsec.types import Unset, UnsetType
 
 if TYPE_CHECKING:
     from parsec.backend import Backend
 
+logger = get_logger()
 
 administration_router = APIRouter()
 security = HTTPBearer()
@@ -94,7 +100,46 @@ class CreateOrganizationOut(BaseModel):
     bootstrap_url: str
 
 
+def log_request[**P, T: BaseModel | Response](
+    func: Callable[P, Awaitable[T]],
+) -> Callable[P, Awaitable[T]]:
+    @wraps(func)
+    async def wrapped(*args: P.args, **kwargs: P.kwargs) -> T:
+        request = cast(Request, kwargs["request"])
+        body = cast(BaseModel | None, kwargs.get("body"))
+        body_dict = {} if body is None else body.model_dump()
+        logger.debug(f"{request.method} {request.url.path} request", **body_dict)
+        try:
+            result = await func(*args, **kwargs)
+        except HTTPException as e:
+            logger.info(
+                f"{request.method} {request.url.path} HTTP error",
+                status_code=e.status_code,
+                detail=e.detail,
+            )
+            raise
+        except Exception as e:
+            logger.error(f"{request.method} {request.url.path} exception", exc_info=e)
+            raise
+        if isinstance(result, Response):
+            debug_extra = {
+                "status_code": result.status_code,
+                "body": result.body.decode("utf-8"),
+            }
+            logger.info_with_debug_extra(
+                f"{request.method} {request.url.path} response", debug_extra=debug_extra
+            )
+        if isinstance(result, BaseModel):
+            logger.info_with_debug_extra(
+                f"{request.method} {request.url.path} reply", debug_extra=result.model_dump()
+            )
+        return result
+
+    return wrapped
+
+
 @administration_router.post("/administration/organizations")
+@log_request
 async def administration_create_organizations(
     request: Request,
     body: CreateOrganizationIn,
@@ -138,6 +183,7 @@ class GetOrganizationOut(BaseModel):
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
+@log_request
 async def administration_get_organization(
     raw_organization_id: str,
     request: Request,
@@ -194,6 +240,7 @@ class PatchOrganizationIn(BaseModel):
 
 
 @administration_router.patch("/administration/organizations/{raw_organization_id}")
+@log_request
 async def administration_patch_organization(
     raw_organization_id: str,
     body: PatchOrganizationIn,
@@ -220,6 +267,7 @@ async def administration_patch_organization(
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}/stats")
+@log_request
 async def administration_organization_stat(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
@@ -302,6 +350,7 @@ class StatsFormat(str, Enum):
 
 
 @administration_router.get("/administration/stats")
+@log_request
 async def administration_server_stats(
     request: Request,
     response: Response,
@@ -357,6 +406,7 @@ async def administration_server_stats(
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}/users")
+@log_request
 async def administration_organization_users(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
@@ -408,6 +458,7 @@ class UserFreezeIn(BaseModel):
 
 
 @administration_router.post("/administration/organizations/{raw_organization_id}/users/freeze")
+@log_request
 async def administration_organization_users_freeze(
     raw_organization_id: str,
     auth: Annotated[None, Depends(check_administration_auth)],
