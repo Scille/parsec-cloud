@@ -6,7 +6,10 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{ls, workspace_ops_factory};
-use crate::{workspace::MoveEntryMode, EventWorkspaceOpsOutboundSyncNeeded};
+use crate::{
+    workspace::{EntryStat, MoveEntryMode},
+    EventWorkspaceOpsOutboundSyncNeeded,
+};
 
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
@@ -133,4 +136,100 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 
     p_assert_eq!(ls!(ops, &base_path_str).await, ["dir2"]);
     p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir3"]);
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn add_temporary_entry(
+    #[values(true, false)] root_level: bool,
+    #[values("file", "folder")] entry_type: &'static str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    // Remove any sub file/folder from the place we are going to test from
+    env.customize(|builder| {
+        if root_level {
+            builder
+                .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.manifest);
+                    manifest.children.clear();
+                });
+            builder.workspace_data_storage_fetch_workspace_vlob(
+                "alice@dev1",
+                wksp1_id,
+                Regex::from_regex_str("\\.tmp").unwrap(),
+            );
+        } else {
+            builder
+                .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None)
+                .customize(|e| {
+                    let manifest = Arc::make_mut(&mut e.manifest);
+                    manifest.children.clear();
+                });
+            builder.workspace_data_storage_fetch_folder_vlob(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                Regex::from_regex_str("\\.tmp").unwrap(),
+            );
+        }
+    })
+    .await;
+
+    // Choose parent depending on the root level
+    let base_path: FsPath = if root_level {
+        "/".parse().unwrap()
+    } else {
+        "/foo".parse().unwrap()
+    };
+    let parent_id = if root_level { wksp1_id } else { wksp1_foo_id };
+
+    // Create a workspace ops instance
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let mut spy = ops.event_bus.spy.start_expecting();
+
+    // Check that parent is up to date
+    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
+    match parent_stat {
+        EntryStat::Folder { need_sync, .. } => {
+            p_assert_eq!(need_sync, false);
+        }
+        _ => panic!("Expected a folder"),
+    }
+
+    // Create a temporary directory
+    let target = base_path.join("test.tmp".parse().unwrap());
+    let child_id = match entry_type {
+        "file" => ops.create_file(target).await.unwrap(),
+        "folder" => ops.create_folder(target).await.unwrap(),
+        _ => panic!("Invalid entry type"),
+    };
+
+    // Check that the child is marked as needing sync
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, wksp1_id);
+        p_assert_eq!(e.entry_id, child_id);
+    });
+    let child_stat = ops.stat_entry_by_id(child_id).await.unwrap();
+    match (entry_type, child_stat) {
+        ("file", EntryStat::File { need_sync, .. }) => {
+            p_assert_eq!(need_sync, true);
+        }
+        ("folder", EntryStat::Folder { need_sync, .. }) => {
+            p_assert_eq!(need_sync, true);
+        }
+        _ => panic!("Expected a {}", entry_type),
+    }
+
+    // Check that parent is not marked as needing sync
+    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
+    match parent_stat {
+        EntryStat::Folder { need_sync, .. } => {
+            p_assert_eq!(need_sync, false);
+        }
+        _ => panic!("Expected a folder"),
+    }
 }

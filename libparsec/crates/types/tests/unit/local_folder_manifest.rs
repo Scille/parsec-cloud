@@ -705,7 +705,7 @@ fn evolve_children_and_mark_updated(
         children: HashMap::new(),
     };
 
-    let lfm = LocalFolderManifest {
+    let mut lfm = LocalFolderManifest {
         base: fm.clone(),
         parent: fm.parent,
         need_sync: false,
@@ -720,9 +720,9 @@ fn evolve_children_and_mark_updated(
         children,
         remote_confinement_points: HashSet::new(),
         speculative: false,
-    }
+    };
     // Actual method tested
-    .evolve_children_and_mark_updated(data, &prevent_sync_pattern, t2);
+    lfm.evolve_children_and_mark_updated(data, &prevent_sync_pattern, t2);
 
     p_assert_eq!(lfm.base, fm);
     p_assert_eq!(lfm.need_sync, expected_need_sync);

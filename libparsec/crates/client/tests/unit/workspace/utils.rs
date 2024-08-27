@@ -23,7 +23,7 @@ pub(crate) async fn workspace_ops_factory(
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: Regex::empty(),
+        prevent_sync_pattern: Regex::from_regex_str("\\.tmp").unwrap(),
     });
     let event_bus = EventBus::default();
     let cmds = Arc::new(
