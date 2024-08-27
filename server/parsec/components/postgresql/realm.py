@@ -1073,7 +1073,7 @@ class PGRealmComponent(BaseRealmComponent):
 
         match await self._lock_realm_topic(conn, organization_id, certif.realm_id, author_user_id):
             case (role, realm_key_index, last_realm_certificate_timestamp):
-                if role not in (RealmRole.OWNER, RealmRole.MANAGER, RealmRole.CONTRIBUTOR):
+                if role != RealmRole.OWNER:
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
             case RealmCheckBadOutcome.REALM_NOT_FOUND:
                 return RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND
