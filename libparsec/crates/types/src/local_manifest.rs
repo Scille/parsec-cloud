@@ -761,11 +761,11 @@ impl LocalFolderManifest {
     /// and `updated` field set to `timestamp`) only if the changes concern non
     /// confined entries.
     pub fn evolve_children_and_mark_updated(
-        mut self,
+        &mut self,
         data: HashMap<EntryName, Option<VlobID>>,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
-    ) -> Self {
+    ) {
         let mut actually_updated = false;
         // Deal with removal first
         for (name, entry_id) in data.iter() {
@@ -806,12 +806,11 @@ impl LocalFolderManifest {
         }
 
         if !actually_updated {
-            return self;
+            return;
         }
 
         self.need_sync = true;
         self.updated = timestamp;
-        self
     }
 
     /// Clear the local confinement points, and remove from the local children any
@@ -874,7 +873,7 @@ impl LocalFolderManifest {
     /// to do with confinement. Hence the output of this method is not to be considered
     /// as a merge with `other` (for that see `libparsec_client`'s `merge_local_folder_manifest`).
     fn restore_local_confinement_points(
-        self,
+        mut self,
         other: &Self,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
@@ -906,7 +905,8 @@ impl LocalFolderManifest {
             previously_local_confinement_points,
             prevent_sync_pattern,
             timestamp,
-        )
+        );
+        self
     }
 
     /// Apply the prevent sync pattern *on the local children* (i.e. not on

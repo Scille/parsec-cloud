@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -138,12 +138,14 @@ pub(crate) async fn create_file(
     let new_child = Arc::new(LocalFileManifest::new(ops.device.device_id, parent_id, now));
     let child_id = new_child.base.id;
     let mut_parent_manifest = Arc::make_mut(&mut parent_manifest);
-    mut_parent_manifest
-        .children
-        .insert(child_name.to_owned(), child_id);
-    // TODO: sync pattern
-    mut_parent_manifest.updated = now;
-    mut_parent_manifest.need_sync = true;
+    let mut data = HashMap::new();
+    data.insert(child_name, Some(child_id));
+    mut_parent_manifest.evolve_children_and_mark_updated(
+        data,
+        &ops.config.prevent_sync_pattern,
+        now,
+    );
+    let parent_need_sync = mut_parent_manifest.need_sync;
 
     parent_updater
         .update_folder_manifest(
@@ -163,11 +165,14 @@ pub(crate) async fn create_file(
         entry_id: child_id,
     };
     ops.event_bus.send(&event);
-    let event = EventWorkspaceOpsOutboundSyncNeeded {
-        realm_id: ops.realm_id,
-        entry_id: parent_id,
-    };
-    ops.event_bus.send(&event);
+
+    if parent_need_sync {
+        let event = EventWorkspaceOpsOutboundSyncNeeded {
+            realm_id: ops.realm_id,
+            entry_id: parent_id,
+        };
+        ops.event_bus.send(&event);
+    }
 
     Ok(child_id)
 }
