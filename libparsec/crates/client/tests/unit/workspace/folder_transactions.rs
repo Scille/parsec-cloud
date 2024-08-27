@@ -159,7 +159,7 @@ async fn add_temporary_entry(
             builder.workspace_data_storage_fetch_workspace_vlob(
                 "alice@dev1",
                 wksp1_id,
-                Regex::from_regex_str("\\.tmp").unwrap(),
+                Regex::from_regex_str(r"\.tmp$").unwrap(),
             );
         } else {
             builder
@@ -172,7 +172,7 @@ async fn add_temporary_entry(
                 "alice@dev1",
                 wksp1_id,
                 wksp1_foo_id,
-                Regex::from_regex_str("\\.tmp").unwrap(),
+                Regex::from_regex_str(r"\.tmp$").unwrap(),
             );
         }
     })
