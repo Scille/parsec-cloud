@@ -41,6 +41,7 @@
           ref="emailInputRef"
           v-model="email"
           label="clientArea.app.emailLabel"
+          @on-enter-keyup="onLoginClicked()"
           :validator="emailValidator"
         />
         <div
@@ -66,6 +67,7 @@
             ref="passwordInputRef"
             v-model="password"
             label="clientArea.app.password"
+            @on-enter-keyup="onLoginClicked()"
           />
         </div>
         <div
