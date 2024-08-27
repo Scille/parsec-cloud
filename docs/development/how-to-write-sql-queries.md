@@ -78,6 +78,6 @@ In Parsec, you'll sometimes see code like this:
 AND COALESCE(revoked_on > some_parameter, TRUE)
 ```
 
-This takes advantage of the fact that [ordinary comparison operators](postgresql.org/docs/current/functions-comparison.html)
+This takes advantage of the fact that [ordinary comparison operators](https://www.postgresql.org/docs/current/functions-comparison.html)
 yield null, not true or false, when either input is null. So the previous example
 will return `TRUE` if either `revoked_on` or `some_parameter` is null.
