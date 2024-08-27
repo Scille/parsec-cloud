@@ -34,7 +34,7 @@ msTest('Check personal data page', async ({ clientArea }) => {
   await expect(items.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
     'Yes',
     DEFAULT_USER_INFORMATION.company,
     DEFAULT_USER_INFORMATION.job,
@@ -50,7 +50,7 @@ msTest('Update personal information', async ({ clientArea }) => {
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
   ]);
   const modal = clientArea.locator('.personal-info-modal');
   await expect(modal).toBeHidden();
@@ -67,7 +67,7 @@ msTest('Update personal information', async ({ clientArea }) => {
   await expect(okButton).toBeTrulyEnabled();
   await okButton.click();
   await expect(modal).toBeHidden();
-  await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(['Gregory', 'House', '']);
+  await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(['Gregory', 'House', 'Not defined']);
 
   // Reopen to add a phone number now
   await dataContainer.locator('.update-button').click();
@@ -102,7 +102,7 @@ msTest('Update personal information generic fail', async ({ clientArea }) => {
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
   ]);
   const modal = clientArea.locator('.personal-info-modal');
   await expect(modal).toBeHidden();
@@ -123,7 +123,7 @@ msTest('Update personal information generic fail', async ({ clientArea }) => {
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
   ]);
 });
 
@@ -134,7 +134,7 @@ msTest('Update personal information timeout', async ({ clientArea }) => {
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
   ]);
   const modal = clientArea.locator('.personal-info-modal');
   await expect(modal).toBeHidden();
@@ -156,7 +156,7 @@ msTest('Update personal information timeout', async ({ clientArea }) => {
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
-    '',
+    'Not defined',
   ]);
 });
 
