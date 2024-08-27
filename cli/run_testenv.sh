@@ -27,6 +27,7 @@ fi
 # In Python we trust (aka shell's tempfile&mktemp doesn't work on all platforms)
 SOURCE_FILE=$(python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
+echo ">>> cargo run --package parsec_cli --features testenv run-testenv --main-process-id $$ --source-file \"$SOURCE_FILE\" $*"
 cargo run --package parsec_cli --features testenv run-testenv --main-process-id $$ --source-file "$SOURCE_FILE" "$@" || return $?
 source "$SOURCE_FILE"
 
