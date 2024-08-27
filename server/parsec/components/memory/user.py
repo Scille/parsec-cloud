@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from typing import Any, Literal, override
 
+from typing_extensions import assert_never
+
 from parsec._parsec import (
     DateTime,
     DeviceCertificate,
@@ -707,10 +709,8 @@ class MemoryUserComponent(BaseUserComponent):
                     return UserFreezeUserBadOutcome.USER_NOT_FOUND
             case (UserID(), str()):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
-            case _:
-                assert (
-                    False
-                )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
+            case never:  # pyright: ignore [reportUnnecessaryComparison]
+                assert_never(never)
 
         user.is_frozen = frozen
         if user.is_frozen:
