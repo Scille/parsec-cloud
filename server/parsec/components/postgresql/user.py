@@ -5,6 +5,7 @@ import itertools
 from typing import TYPE_CHECKING, override
 
 from asyncpg import UniqueViolationError
+from typing_extensions import assert_never
 
 from parsec._parsec import (
     DateTime,
@@ -1239,10 +1240,8 @@ class PGUserComponent(BaseUserComponent):
                         return UserFreezeUserBadOutcome.USER_NOT_FOUND
             case (UserID(), str()):
                 return UserFreezeUserBadOutcome.BOTH_USER_ID_AND_EMAIL
-            case _:
-                assert (
-                    False
-                )  # Can't use assert_never here due to https://github.com/python/mypy/issues/16650
+            case never:  # pyright: ignore [reportUnnecessaryComparison]
+                assert_never(never)
 
         await conn.execute(
             *_q_freeze_user(
