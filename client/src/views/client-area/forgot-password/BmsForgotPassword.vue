@@ -103,6 +103,7 @@ function onEmailSent(email: string): void {
   background: var(--parsec-color-light-primary-50);
   position: relative;
   padding: 2.5rem;
+  min-width: 35.75rem;
   max-width: 35.75rem;
 
   &-container {

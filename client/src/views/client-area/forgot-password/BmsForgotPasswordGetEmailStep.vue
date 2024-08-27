@@ -78,7 +78,7 @@ async function submit(): Promise<boolean> {
   }
   querying.value = true;
   const response = await BmsApi.changePassword({
-    email: email.value,
+    email: email.value.toLowerCase(),
     lang: longLocaleCodeToShort(I18n.getLocale()),
   });
 
