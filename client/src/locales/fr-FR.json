@@ -1249,7 +1249,8 @@
                 "title": "Informations personnelles",
                 "firstname": "Prénom",
                 "lastname": "Nom",
-                "phone": "Téléphone"
+                "phone": "Téléphone",
+                "notDefined": "Non défini"
             },
             "professionalInfo": {
                 "title": "Informations professionnelles",

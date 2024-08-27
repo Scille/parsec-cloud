@@ -106,7 +106,10 @@ function getPersonalInfoRows(): MsSummaryCardRowData[] {
       secondItem: createItem('personalInfo.lastname', personalData.value?.lastName),
     },
     {
-      item: createItem('personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData,
+      item:
+        personalData.value?.phone === undefined
+          ? (createItemWithTranslatable('personalInfo.phone', 'personalInfo.notDefined') as MsSummaryCardItemData)
+          : (createItem('personalInfo.phone', personalData.value?.phone) as MsSummaryCardItemData),
     },
   ];
 }
