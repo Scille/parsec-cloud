@@ -79,7 +79,7 @@
     },
     "invitationList": {
         "title": "Invitations",
-        "invite": "Invite a new user",
+        "invite": "Invite a new member",
         "noInvitations": "No invitations"
     },
     "notification": {
@@ -637,6 +637,13 @@
             "tag": "Trial version",
             "description": "You are currently on the free trial version.",
             "subscribe": "Subscribe now"
+        },
+        "frozen": {
+            "title": "Your organization is frozen",
+            "description": "You can still access your data, but you cannot create new workspaces or share existing ones.",
+            "contact": "Contact technical support",
+            "contactAdmin": "Contact an administrator",
+            "email": "contact{'@'}parsec.cloud"
         }
     },
     "DevicesPage": {
@@ -1184,7 +1191,8 @@
     "OrganizationSwitch": {
         "loggedInOrgs": "Connected organizations",
         "myOrgs": "My organizations",
-        "active": "Active"
+        "invite": "Invite a member",
+        "manage": "Manage"
     },
     "lib": {
         "components": {

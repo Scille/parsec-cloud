@@ -79,7 +79,7 @@
     },
     "invitationList": {
         "title": "Invitations",
-        "invite": "Inviter un nouvel utilisateur",
+        "invite": "Inviter un nouveau membre",
         "noInvitations": "Aucune invitation"
     },
     "notification": {
@@ -637,6 +637,13 @@
             "tag": "Version d'essai",
             "description": "Vous êtes actuellement sur la version d'essai gratuite.",
             "subscribe": "S'abonner maintenant"
+        },
+        "frozen": {
+            "title": "Votre organisation est gelée",
+            "description": "Vous avez toujours accès à vos données, mais vous ne pouvez pas créer de nouveaux espaces de travail ni partager les espaces existants.",
+            "contact": "Contacter le service technique",
+            "contactAdmin": "Contacter un administrateur",
+            "email": "contact{'@'}parsec.cloud"
         }
     },
     "DevicesPage": {
@@ -1184,7 +1191,8 @@
     "OrganizationSwitch": {
         "loggedInOrgs": "Organisations connectées",
         "myOrgs": "Mes organisations",
-        "active": "Active"
+        "invite": "Inviter un membre",
+        "manage": "Gérer"
     },
     "lib": {
         "components": {

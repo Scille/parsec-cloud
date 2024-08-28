@@ -190,6 +190,8 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
       hasUserLimit: clientInfoResult.value.serverConfig.activeUsersLimit.tag !== ActiveUsersLimitTag.NoLimit,
       organizationAddr: clientInfoResult.value.organizationAddr,
       organizationId: clientInfoResult.value.organizationId,
+      // should be fetched from the bindings
+      frozen: false,
     },
   };
 }
