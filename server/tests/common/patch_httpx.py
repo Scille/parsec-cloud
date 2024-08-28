@@ -78,7 +78,7 @@ async def patch_handle_async_request(
             return {"type": "http.request", "body": b"", "more_body": False}
         return {"type": "http.request", "body": body, "more_body": True}
 
-    async def send(message: typing.Dict[str, typing.Any]) -> None:
+    async def send(message: typing.MutableMapping[str, typing.Any]) -> None:
         nonlocal status_code, response_headers, response_started
 
         if message["type"] == "http.response.start":
