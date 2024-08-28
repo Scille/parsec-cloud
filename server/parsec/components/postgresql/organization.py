@@ -72,6 +72,8 @@ WITH new_organization AS (
         NULL,
         $minimum_archiving_period
     )
+    -- If the organization exists but hasn't been bootstrapped yet, we can
+    -- simply overwrite it.
     ON CONFLICT (organization_id) DO
         UPDATE SET
             bootstrap_token = EXCLUDED.bootstrap_token,
@@ -84,8 +86,18 @@ WITH new_organization AS (
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
 )
+-- New organization's `common` topic must be added in the database since it is locked
+-- during organization bootstrap to handle concurrency.
 INSERT INTO common_topic (organization, last_timestamp)
-SELECT _id, $created_on FROM new_organization
+-- Note the EPOCH (i.e. 1970-01-01T00:00:00Z) here !
+-- This is because the `common` topic currently has no certificates
+-- Notes:
+-- - We don't use `NULL` here given this situation is very temporary (i.e. until the
+--   organization is bootstrapped), and in the meantime the field is never read.
+-- - We don't use `$created_on` here since a created-but-not-bootstrapped organization
+--   can be overwritten, and in this case the `common` topic would also have to be
+--   updated (which is not the case when using EPOCH).
+SELECT _id, 'epoch' FROM new_organization
 ON CONFLICT (organization) DO NOTHING
 """
 )
