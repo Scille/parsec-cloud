@@ -6,6 +6,7 @@ use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
 
+use crate::invite::common::Throttle;
 use crate::ClientConfig;
 
 #[derive(Debug, thiserror::Error)]
@@ -109,17 +110,6 @@ async fn cancel_greeting_attempt(
 
 // Greeter step helper
 
-// The step throttle is defined to 100 ms.
-// A similar value for the greeter is defined in `greeter.rs`
-// This value limits the amount of polling done by the claimer
-// to 10 requests per second. This is deliberately fast in order
-// improve user experience and to accelerate the tests. However,
-// this might be too much for the server and this value might need
-// to be adjusted for production. In this case, a decoupling between
-// testing and production might be necessary. This could be achieved
-// by mocking the time provider provided by the claimer.
-static STEP_THROTTLE: Duration = Duration::milliseconds(100);
-
 async fn run_claimer_step_until_ready(
     cmds: &InvitedCmds,
     greeting_attempt: GreetingAttemptID,
@@ -132,7 +122,7 @@ async fn run_claimer_step_until_ready(
     // the throttling. It should also be used when creating the local device in the
     // `do_claim_user` and `do_claim_device` methods.
     let time_provider = TimeProvider::default();
-    let mut last_call = Option::None;
+    let mut throttle = Throttle::new(&time_provider);
     let req = invite_claimer_step::Req {
         greeting_attempt,
         claimer_step,
@@ -141,11 +131,7 @@ async fn run_claimer_step_until_ready(
     // Loop over the requests
     loop {
         // Throttle the requests
-        if let Some(last_call) = last_call {
-            let duration = last_call + STEP_THROTTLE - time_provider.now();
-            time_provider.sleep(duration).await;
-        }
-        last_call = Some(time_provider.now());
+        throttle.throttle().await;
 
         // Send the request
         let rep = cmds.send(req.clone()).await?;
