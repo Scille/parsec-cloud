@@ -303,6 +303,15 @@ async fn cancel_greeting_attempt(
 
 // Greeter step helper
 
+// The step throttle is defined to 100 ms.
+// A similar value for the claimer is defined in `claimer.rs`
+// This value limits the amount of polling done by the greeter
+// to 10 requests per second. This is deliberately fast in order
+// improve user experience and to accelerate the tests. However,
+// this might be too much for the server and this value might need
+// to be adjusted for production. In this case, a decoupling between
+// testing and production might be necessary. This could be achieved
+// by mocking the time provider of the greeter device.
 static STEP_THROTTLE: Duration = Duration::milliseconds(100);
 
 async fn run_greeter_step_until_ready(
@@ -405,8 +414,9 @@ impl BaseGreetInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
         // Wait for the other peer
         let mut result = self._do_wait_peer().await;
-        // It the attempt was automatically cancelled by the other peer, try again once.
-        // This way, the peers can more easily synchronize during the wait-peer phase,
+        // If the attempt was automatically cancelled by the other peer, try again once.
+        // Previous attempts are automatically cancelled when a new start greeting attempt is made.
+        // This way, the peers can synchronize themselves more easily during the wait-peer phase,
         // without requiring the front-end to deal with it.
         if let Err(GreetInProgressError::GreetingAttemptCancelled {
             origin: GreeterOrClaimer::Claimer,

@@ -109,6 +109,15 @@ async fn cancel_greeting_attempt(
 
 // Greeter step helper
 
+// The step throttle is defined to 100 ms.
+// A similar value for the greeter is defined in `greeter.rs`
+// This value limits the amount of polling done by the claimer
+// to 10 requests per second. This is deliberately fast in order
+// improve user experience and to accelerate the tests. However,
+// this might be too much for the server and this value might need
+// to be adjusted for production. In this case, a decoupling between
+// testing and production might be necessary. This could be achieved
+// by mocking the time provider provided by the claimer.
 static STEP_THROTTLE: Duration = Duration::milliseconds(100);
 
 async fn run_claimer_step_until_ready(
@@ -116,6 +125,12 @@ async fn run_claimer_step_until_ready(
     greeting_attempt: GreetingAttemptID,
     claimer_step: invite_claimer_step::ClaimerStep,
 ) -> Result<invite_claimer_step::GreeterStep, ClaimInProgressError> {
+    // TODO: For better testability, we should pass the time provider as an argument
+    // instead of using the default one. This time provider should ideally come from
+    // the `claimer_retrieve_info` function, or the `do_wait_peer` method.
+    // This way, it can be injected from the tests and mocked in order to accelerate
+    // the throttling. It should also be used when creating the local device in the
+    // `do_claim_user` and `do_claim_device` methods.
     let time_provider = TimeProvider::default();
     let mut last_call = Option::None;
     let req = invite_claimer_step::Req {
@@ -251,8 +266,9 @@ impl BaseClaimInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseClaimInProgress1Ctx, ClaimInProgressError> {
         // Wait for the other peer
         let mut result = self._do_wait_peer().await;
-        // It the attempt was automatically cancelled by the other peer, try again once.
-        // This way, the peers can more easily synchronize during the wait-peer phase,
+        // If the attempt was automatically cancelled by the other peer, try again once.
+        // Previous attempts are automatically cancelled when a new start greeting attempt is made.
+        // This way, the peers can synchronize themselves more easily during the wait-peer phase,
         // without requiring the front-end to deal with it.
         if let Err(ClaimInProgressError::GreetingAttemptCancelled {
             origin: GreeterOrClaimer::Greeter,

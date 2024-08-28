@@ -274,7 +274,6 @@ enum EitherCancellerCtx {
 pub async fn claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result<(), ClaimerGreeterAbortOperationError> {
-    // TODO: add call to canceller
     let result = take_and_close_handle(handle, |x| match x {
         HandleItem::UserClaimInitial(_) => Ok(None),
         HandleItem::DeviceClaimInitial(_) => Ok(None),
