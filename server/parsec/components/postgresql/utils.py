@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+import importlib
 import re
 from typing import Any, Awaitable, Callable, Protocol, TypeVar, cast
 
@@ -12,6 +13,26 @@ from . import AsyncpgConnection, AsyncpgPool
 
 T = TypeVar("T")
 P = ParamSpec("P")
+
+# Yes, we can lint the SQL queries declared with `Q(<sql>)` !!!
+#
+# This is done when calling `misc/lint_sql.py`.
+#
+# Basically this script registers a module called `__parsec_lint_sql` that
+# contains a hook to call for each sql query to check.
+_LINT_Q_SQL: Callable[[str, dict[str, str]], None] | None
+try:
+    import importlib
+
+    # Deptry (which is run as part of pre-commit) detects that `__parsec_lint_sql`
+    # doesn't exist and complain about it !
+    # Unfortunately Deptry doesn't support `# ignore` inline disable comment, so
+    # we have instead to obfuscate the import so that Deptry no longer detects it...
+    mod_name = "__parsec_lint_sql"
+    __parsec_lint_sql = importlib.import_module(mod_name)
+    _LINT_Q_SQL = __parsec_lint_sql.lint_sql
+except ImportError:
+    _LINT_Q_SQL = None
 
 
 class Q:
@@ -56,6 +77,9 @@ class Q:
         lines = [line.split("--")[0] for line in src.splitlines()]
         # Remove unecessary indentation and newlines
         self._stripped_sql = " ".join([x.strip() for line in lines for x in line.split()])
+
+        if _LINT_Q_SQL:
+            _LINT_Q_SQL(self._sql, variables)
 
     @property
     def sql(self) -> str:
