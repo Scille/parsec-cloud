@@ -150,7 +150,7 @@ SET
     deleted_on = $on,
     deleted_reason = $reason
 WHERE
-    _id = $row_id
+    _id = $invitation_internal_id
 """
 )
 
@@ -203,7 +203,7 @@ ORDER BY created_on
 _q_info_invitation = Q(
     f"""
 SELECT
-    invitation._id,
+    invitation._id AS invitation_internal_id,
     invitation.type,
     { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
     { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
@@ -237,7 +237,8 @@ WHERE
 _q_conduit_greeter_info = Q(
     f"""
 SELECT
-    invitation_conduit._id,
+    invitation._id AS invitation_internal_id,
+    invitation_conduit._id AS conduit_internal_id,
     conduit_state,
     conduit_greeter_payload,
     conduit_claimer_payload,
@@ -258,7 +259,8 @@ FOR UPDATE
 _q_conduit_claimer_info = Q(
     f"""
 SELECT
-    invitation_conduit._id,
+    invitation._id AS invitation_internal_id,
+    invitation_conduit._id AS conduit_internal_id,
     conduit_state,
     conduit_greeter_payload,
     conduit_claimer_payload,
@@ -284,7 +286,7 @@ SET
     conduit_greeter_payload = $conduit_greeter_payload,
     conduit_claimer_payload = $conduit_claimer_payload
 WHERE
-    _id = $row_id
+    _id = $conduit_internal_id
 """
 )
 
@@ -297,7 +299,7 @@ SET
     conduit_claimer_payload = $conduit_claimer_payload,
     last_exchange = $last
 WHERE
-    _id = $row_id
+    _id = $conduit_internal_id
 """
 )
 
@@ -576,7 +578,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         await conn.execute(
             *_q_delete_invitation(
-                row_id=row["_id"],
+                invitation_internal_id=row["invitation_internal_id"],
                 on=now,
                 reason="CANCELLED",  # TODO: use an enum
             )
@@ -773,7 +775,7 @@ class PGInviteComponent(BaseInviteComponent):
         if not row:
             return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
 
-        row_id = row["_id"]
+        conduit_internal_id = row["conduit_internal_id"]
         curr_conduit_state = ConduitState(row["conduit_state"])
         curr_greeter_payload = row["conduit_greeter_payload"]
         curr_claimer_payload = row["conduit_claimer_payload"]
@@ -811,7 +813,7 @@ class PGInviteComponent(BaseInviteComponent):
         if is_greeter:
             await conn.execute(
                 *_q_conduit_update_with_last_exchange(
-                    row_id=row_id,
+                    conduit_internal_id=conduit_internal_id,
                     conduit_state=curr_conduit_state.value,
                     conduit_greeter_payload=payload,
                     conduit_claimer_payload=curr_claimer_payload,
@@ -822,7 +824,7 @@ class PGInviteComponent(BaseInviteComponent):
         else:
             await conn.execute(
                 *_q_conduit_update(
-                    row_id=row_id,
+                    conduit_internal_id=conduit_internal_id,
                     conduit_state=curr_conduit_state.value,
                     conduit_greeter_payload=curr_greeter_payload,
                     conduit_claimer_payload=payload,
@@ -877,7 +879,8 @@ class PGInviteComponent(BaseInviteComponent):
         if not row:
             return InviteConduitExchangeBadOutcome.INVITATION_NOT_FOUND
 
-        row_id = row["_id"]
+        invitation_internal_id = row["invitation_internal_id"]
+        conduit_internal_id = row["conduit_internal_id"]
         curr_conduit_state = ConduitState(row["conduit_state"])
         is_last_exchange = row["last_exchange"]
 
@@ -904,24 +907,26 @@ class PGInviteComponent(BaseInviteComponent):
                 # Our peer has provided it payload (hence it knows
                 # about our payload too), we can update the conduit
                 # to the next state
-                await conn.execute(
+                outcome = await conn.execute(
                     *_q_conduit_update(
-                        row_id=row_id,
+                        conduit_internal_id=conduit_internal_id,
                         conduit_state=NEXT_CONDUIT_STATE[ctx.state].value,
                         conduit_greeter_payload=None,
                         conduit_claimer_payload=None,
                     )
                 )
+                assert outcome == "UPDATE 1", outcome
 
                 # If this was the last exchange, the invitation can be marked as finished
                 if ctx.state == ConduitState.STATE_4_COMMUNICATE and is_last_exchange:
-                    await conn.execute(
+                    outcome = await conn.execute(
                         *_q_delete_invitation(
-                            row_id=row_id,
+                            invitation_internal_id=invitation_internal_id,
                             on=now,
                             reason="FINISHED",  # TODO: use an enum
                         )
                     )
+                    assert outcome == "UPDATE 1", outcome
 
                     await self._event_bus.send(
                         EventInvitation(
