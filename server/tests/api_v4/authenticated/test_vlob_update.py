@@ -8,6 +8,7 @@ from parsec._parsec import (
     DateTime,
     HashAlgorithm,
     RealmKeyRotationCertificate,
+    RealmRole,
     SecretKeyAlgorithm,
     SequesterServiceID,
     VlobID,
@@ -19,6 +20,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -78,8 +80,9 @@ async def test_authenticated_vlob_update_ok(coolorg: CoolorgRpcClients, backend:
     }
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_update_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     t0 = DateTime(2009, 12, 31)
     vlob_id = VlobID.new()
@@ -96,9 +99,22 @@ async def test_authenticated_vlob_update_author_not_allowed(
     )
     assert outcome is None, outcome
 
+    match kind:
+        case "never_allowed":
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.READER
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
 
-    rep = await coolorg.mallory.vlob_update(
+    rep = await author.vlob_update(
         vlob_id=vlob_id,
         key_index=1,
         timestamp=DateTime.now(),

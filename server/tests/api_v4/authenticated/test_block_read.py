@@ -9,6 +9,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -47,8 +48,9 @@ async def test_authenticated_block_read_block_not_found(
     assert rep == authenticated_cmds.v4.block_read.RepBlockNotFound()
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_block_read_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
     block_id = BlockID.new()
     block = b"<block content>"
@@ -63,7 +65,20 @@ async def test_authenticated_block_read_author_not_allowed(
         block=block,
     )
 
-    rep = await coolorg.mallory.block_read(block_id)
+    match kind:
+        case "never_allowed":
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=None
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.block_read(block_id)
     assert rep == authenticated_cmds.v4.block_read.RepAuthorNotAllowed()
 
 

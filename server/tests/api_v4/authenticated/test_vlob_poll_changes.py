@@ -1,7 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import pytest
+
 from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    wksp1_bob_becomes_owner_and_changes_alice,
+)
 
 
 async def create_vlob(
@@ -101,10 +108,24 @@ async def test_authenticated_vlob_poll_changes_ok(
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepOk(current_checkpoint=6, changes=[])
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_poll_changes_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
-    rep = await coolorg.mallory.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
+    match kind:
+        case "never_allowed":
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=None
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.vlob_poll_changes(realm_id=coolorg.wksp1_id, last_checkpoint=0)
     assert rep == authenticated_cmds.v4.vlob_poll_changes.RepAuthorNotAllowed()
 
 

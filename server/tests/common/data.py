@@ -217,6 +217,132 @@ def alice_generated_realm_wksp1_data(
     return _alice_generated_realm_data
 
 
+async def bob_becomes_admin_and_changes_alice(
+    coolorg: CoolorgRpcClients, backend: Backend, new_alice_profile: UserProfile | None
+) -> None:
+    # Bob becomes ADMIN...
+
+    t0 = DateTime.now()
+    certif = UserUpdateCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        user_id=coolorg.bob.user_id,
+        new_profile=UserProfile.ADMIN,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.user.update_user(
+        now=t0,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        user_update_certificate=certif,
+    )
+    assert isinstance(outcome, UserUpdateCertificate)
+
+    # ...then change Alice's profile (or revoke her) !
+
+    t1 = DateTime.now()
+    if new_alice_profile is None:
+        certif = RevokedUserCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            user_id=coolorg.alice.user_id,
+        ).dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.user.revoke_user(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            revoked_user_certificate=certif,
+        )
+        assert isinstance(outcome, RevokedUserCertificate)
+
+    else:
+        certif = UserUpdateCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            user_id=coolorg.alice.user_id,
+            new_profile=new_alice_profile,
+        ).dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.user.update_user(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
+            user_update_certificate=certif,
+        )
+        assert isinstance(outcome, UserUpdateCertificate)
+
+
+async def wksp1_bob_becomes_owner_and_changes_alice(
+    coolorg: CoolorgRpcClients, backend: Backend, new_alice_role: RealmRole | None
+) -> None:
+    # Bob becomes OWNER...
+
+    t0 = DateTime.now()
+    certif = RealmRoleCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=t0,
+        realm_id=coolorg.wksp1_id,
+        role=RealmRole.OWNER,
+        user_id=coolorg.bob.user_id,
+    ).dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.realm.share(
+        now=t0,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        realm_role_certificate=certif,
+        key_index=1,
+        recipient_keys_bundle_access=b"<dummy key bundle access>",
+    )
+    assert isinstance(outcome, RealmRoleCertificate)
+
+    # ...then change Alice's access !
+
+    t1 = DateTime.now()
+    if new_alice_role is None:
+        certif = RealmRoleCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            realm_id=coolorg.wksp1_id,
+            role=None,
+            user_id=coolorg.alice.user_id,
+        ).dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.realm.unshare(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            realm_role_certificate=certif,
+        )
+        assert isinstance(outcome, RealmRoleCertificate)
+
+    else:
+        certif = RealmRoleCertificate(
+            author=coolorg.bob.device_id,
+            timestamp=t1,
+            realm_id=coolorg.wksp1_id,
+            role=new_alice_role,
+            user_id=coolorg.alice.user_id,
+        ).dump_and_sign(coolorg.alice.signing_key)
+
+        outcome = await backend.realm.share(
+            now=t1,
+            organization_id=coolorg.organization_id,
+            author=coolorg.bob.device_id,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
+            realm_role_certificate=certif,
+            key_index=1,
+            recipient_keys_bundle_access=b"<dummy key bundle access>",
+        )
+        assert isinstance(outcome, RealmRoleCertificate)
+
+
 HttpCommonErrorsTesterDoCallback = Callable[[], Coroutine[None, None, None]]
 HttpCommonErrorsTester = Callable[[HttpCommonErrorsTesterDoCallback], Coroutine[None, None, None]]
 

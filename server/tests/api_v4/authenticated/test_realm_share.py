@@ -24,6 +24,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
     patch_realm_role_certificate,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -381,18 +382,44 @@ async def test_authenticated_realm_share_bad_key_index(
     )
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_realm_share_author_not_allowed(
     coolorg: CoolorgRpcClients,
-    alice_share_mallory_certificate: RealmRoleCertificate,
+    backend: Backend,
+    kind: str,
 ) -> None:
-    certif = patch_realm_role_certificate(
-        alice_share_mallory_certificate, author=coolorg.bob.device_id
-    )
-    rep = await coolorg.bob.realm_share(
+    match kind:
+        case "never_allowed":
+            certif = RealmRoleCertificate(
+                author=coolorg.mallory.device_id,
+                timestamp=DateTime.now(),
+                realm_id=coolorg.wksp1_id,
+                user_id=coolorg.alice.user_id,
+                role=RealmRole.READER,
+            )
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.CONTRIBUTOR
+            )
+            certif = RealmRoleCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=DateTime.now(),
+                realm_id=coolorg.wksp1_id,
+                user_id=coolorg.mallory.user_id,
+                role=RealmRole.READER,
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.realm_share(
         key_index=1,
-        realm_role_certificate=certif.dump_and_sign(coolorg.bob.signing_key),
+        realm_role_certificate=certif.dump_and_sign(author.signing_key),
         # Keys bundle access is not readable by the server, so we can put anything here
-        recipient_keys_bundle_access=b"<mallory keys bundle access>",
+        recipient_keys_bundle_access=b"<recipient keys bundle access>",
     )
     assert rep == authenticated_cmds.v4.realm_share.RepAuthorNotAllowed()
 

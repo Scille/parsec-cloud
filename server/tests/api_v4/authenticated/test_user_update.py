@@ -12,7 +12,12 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventUserUpdated
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -45,27 +50,40 @@ async def test_authenticated_user_update_ok(coolorg: CoolorgRpcClients, backend:
     assert dump == expected_dump
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_user_update_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
 ) -> None:
     now = DateTime.now()
-    certif = UserUpdateCertificate(
-        author=coolorg.bob.device_id,
-        timestamp=now,
-        user_id=coolorg.bob.user_id,
-        new_profile=UserProfile.ADMIN,
-    )
+    match kind:
+        case "never_allowed":
+            certif = UserUpdateCertificate(
+                author=coolorg.bob.device_id,
+                timestamp=now,
+                user_id=coolorg.mallory.user_id,
+                new_profile=UserProfile.STANDARD,
+            )
+            author = coolorg.bob
 
-    expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.bob.user_id].current_profile = UserProfile.STANDARD
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            certif = UserUpdateCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=now,
+                user_id=coolorg.mallory.user_id,
+                new_profile=UserProfile.STANDARD,
+            )
+            author = coolorg.alice
 
-    rep = await coolorg.bob.user_update(
-        user_update_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
-    )
+        case unknown:
+            assert False, unknown
+
+    rep = await author.user_update(user_update_certificate=certif.dump_and_sign(author.signing_key))
     assert rep == authenticated_cmds.v4.user_update.RepAuthorNotAllowed()
-
-    dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    assert dump == expected_dump
 
 
 async def test_authenticated_user_update_user_not_found(coolorg: CoolorgRpcClients) -> None:

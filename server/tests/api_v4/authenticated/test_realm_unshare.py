@@ -19,6 +19,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     patch_realm_role_certificate,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -84,23 +85,49 @@ async def test_authenticated_realm_unshare_ok(
     assert coolorg.wksp1_id not in bob_realms
 
 
-@pytest.mark.parametrize("kind", ("author_is_reader", "author_is_not_shared"))
+@pytest.mark.parametrize("kind", ("not_owner", "never_allowed", "no_longer_allowed"))
 async def test_authenticated_realm_unshare_author_not_allowed(
     coolorg: CoolorgRpcClients,
-    alice_unshare_bob_certificate: RealmRoleCertificate,
+    backend: Backend,
     kind: str,
 ) -> None:
     match kind:
-        case "author_is_reader":
+        case "not_owner":
+            certif = RealmRoleCertificate(
+                author=coolorg.bob.device_id,
+                timestamp=DateTime.now(),
+                realm_id=coolorg.wksp1_id,
+                user_id=coolorg.alice.user_id,
+                role=None,
+            )
             author = coolorg.bob
-        case "author_is_not_shared":
+
+        case "never_allowed":
+            certif = RealmRoleCertificate(
+                author=coolorg.mallory.device_id,
+                timestamp=DateTime.now(),
+                realm_id=coolorg.wksp1_id,
+                user_id=coolorg.bob.user_id,
+                role=None,
+            )
             author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.CONTRIBUTOR
+            )
+            certif = RealmRoleCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=DateTime.now(),
+                realm_id=coolorg.wksp1_id,
+                user_id=coolorg.bob.user_id,
+                role=None,
+            )
+            author = coolorg.alice
+
         case unknown:
             assert False, unknown
 
-    certif = patch_realm_role_certificate(
-        alice_unshare_bob_certificate, author=author.device_id, user_id=coolorg.alice.user_id
-    )
     rep = await author.realm_unshare(
         realm_role_certificate=certif.dump_and_sign(author.signing_key),
     )

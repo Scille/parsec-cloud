@@ -4,10 +4,16 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import DateTime, InvitationStatus, authenticated_cmds
+from parsec._parsec import DateTime, InvitationStatus, UserProfile, authenticated_cmds
 from parsec.components.invite import SendEmailBadOutcome, UserInvitation
 from parsec.events import EventInvitation
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, MinimalorgRpcClients
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    MinimalorgRpcClients,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 @pytest.mark.parametrize("send_email", (False, True))
@@ -96,8 +102,24 @@ async def test_authenticated_invite_new_user_ok_already_exist(
     )
 
 
-async def test_authenticated_invite_new_user_author_not_allowed(coolorg: CoolorgRpcClients):
-    rep = await coolorg.bob.invite_new_user(
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
+async def test_authenticated_invite_new_user_author_not_allowed(
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
+):
+    match kind:
+        case "never_allowed":
+            author = coolorg.bob
+
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.invite_new_user(
         claimer_email="new@example.invalid",
         send_email=False,
     )

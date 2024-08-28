@@ -4,7 +4,12 @@ import pytest
 
 from parsec._parsec import DateTime, DeviceID, OrganizationID, VlobID, authenticated_cmds
 from parsec.components.vlob import VLOB_READ_REQUEST_ITEMS_LIMIT
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    wksp1_bob_becomes_owner_and_changes_alice,
+)
 
 
 async def create_vlob(
@@ -123,12 +128,24 @@ async def test_authenticated_vlob_read_batch_ok(
         )
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_vlob_read_batch_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
-    rep = await coolorg.mallory.vlob_read_batch(
-        realm_id=coolorg.wksp1_id, vlobs=[VlobID.new()], at=None
-    )
+    match kind:
+        case "never_allowed":
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=None
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.vlob_read_batch(realm_id=coolorg.wksp1_id, vlobs=[VlobID.new()], at=None)
     assert rep == authenticated_cmds.v4.vlob_read_batch.RepAuthorNotAllowed()
 
 

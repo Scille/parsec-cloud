@@ -46,7 +46,8 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_ok(
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_author_not_allowed(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
 ) -> None:
     rep = await coolorg.bob.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
