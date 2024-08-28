@@ -2,61 +2,86 @@
 
 <template>
   <div class="popover-switch">
-    <ion-title class="popover-switch-title body">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
-    <ion-list class="organization-list">
-      <ion-item
-        class="organization-list__item body"
-        button
-        lines="none"
-        v-for="org in connectedOrgs"
-        :key="org.handle"
-        :disabled="org.active"
-        @click="onOrganizationClick(org)"
-      >
-        <div class="organization">
-          <ion-avatar class="organization-avatar">
-            <span>{{ org.id.substring(0, 2) }}</span>
-          </ion-avatar>
-          <div class="organization-text-content">
-            <ion-label class="organization-text-content__name">
-              <span class="body">
-                {{ org.id }}
-              </span>
-            </ion-label>
-            <ion-label class="organization-text-content__email">
-              <span class="body-sm">
-                {{ org.userLabel }}
-              </span>
-            </ion-label>
+    <div class="current-organization">
+      <div class="current-organization-content">
+        <ion-avatar class="organization-avatar">
+          <span v-if="currentOrg && !currentOrg.trial">{{ currentOrg.id.substring(0, 2) }}</span>
+          <ms-image
+            v-else
+            :image="LogoIconGradient"
+            class="organization-avatar-logo"
+          />
+        </ion-avatar>
+        <ion-text class="organization-name title-h4">
+          {{ currentOrg?.id }}
+        </ion-text>
+      </div>
+    </div>
+    <div
+      class="connected-organization"
+      v-if="filteredOrgs.length > 0"
+    >
+      <ion-title class="connected-organization-title body">{{ $msTranslate('OrganizationSwitch.loggedInOrgs') }}</ion-title>
+      <ion-list class="organization-list">
+        <ion-item
+          class="organization-list__item body"
+          button
+          lines="none"
+          v-for="org in filteredOrgs"
+          :key="org.handle"
+          @click="onOrganizationClick(org)"
+        >
+          <div class="organization">
+            <ion-avatar class="organization-avatar">
+              <ms-image
+                v-if="org.trial"
+                :image="LogoIconGradient"
+                class="organization-avatar-logo"
+              />
+              <span v-else>{{ org.id.substring(0, 2) }}</span>
+            </ion-avatar>
+            <div class="organization-text-content">
+              <ion-label class="organization-text-content__name">
+                <span class="body">
+                  {{ org.id }}
+                </span>
+              </ion-label>
+              <ion-label class="organization-text-content__email body-sm">
+                <span v-if="org.trial && org.device">
+                  {{ $msTranslate(formatExpirationTime(getDurationBeforeExpiration(org.device.createdOn))) }}
+                </span>
+                <span v-else>
+                  {{ org.userLabel }}
+                </span>
+              </ion-label>
+            </div>
           </div>
-
-          <ion-text
-            class="badge subtitles-sm"
-            v-show="org.active"
-            :outline="true"
-          >
-            {{ $msTranslate('OrganizationSwitch.active') }}
-          </ion-text>
-        </div>
-      </ion-item>
-    </ion-list>
+        </ion-item>
+      </ion-list>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
+import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
+import { isTrialOrganizationDevice, getDurationBeforeExpiration, formatExpirationTime } from '@/common/organization';
+import { MsImage, LogoIconGradient } from 'megashark-lib';
 
 interface ConnectedOrganization {
   id: OrganizationID;
   userLabel: string;
   active: boolean;
   handle: ConnectionHandle;
+  device: AvailableDevice;
+  trial: boolean;
 }
 
 const connectedOrgs: Ref<Array<ConnectedOrganization>> = ref([]);
+const currentOrg: Ref<ConnectedOrganization | undefined> = ref(undefined);
+const filteredOrgs: Ref<Array<ConnectedOrganization>> = ref([]);
 
 onMounted(async () => {
   const result = await getLoggedInDevices();
@@ -66,8 +91,12 @@ onMounted(async () => {
       active: getConnectionHandle() === info.handle,
       handle: info.handle,
       userLabel: info.device.humanHandle.label,
+      device: info.device,
+      trial: isTrialOrganizationDevice(info.device),
     };
   });
+  currentOrg.value = connectedOrgs.value.find((org) => org.active);
+  filteredOrgs.value = connectedOrgs.value.filter((org) => org.id !== currentOrg.value?.id);
 });
 
 async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
@@ -81,100 +110,141 @@ async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
 
 <style lang="scss" scoped>
 .popover-switch {
-  padding: 1rem;
   display: flex;
   flex-direction: column;
+}
+
+.current-organization,
+.connected-organization {
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+  border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
   gap: 0.75rem;
+
+  .organization-avatar {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: var(--parsec-radius-12);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--parsec-color-light-primary-600);
+    text-align: center;
+    flex-shrink: 0;
+
+    &-logo {
+      width: 2.5rem;
+      padding: 0.375rem;
+    }
+  }
+}
+
+.current-organization {
+  background: var(--parsec-color-light-secondary-background);
+
+  &-content {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .organization-avatar {
+    background-color: var(--parsec-color-light-secondary-medium);
+  }
+
+  .organization-name {
+    color: var(--parsec-color-light-secondary-text);
+  }
+}
+
+.connected-organization {
+  gap: 0.5rem;
 
   &-title {
     color: var(--parsec-color-light-secondary-grey);
     padding: 0;
   }
-}
 
-.organization-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  padding: 0;
-
-  &__item {
-    --background: none;
-    --background-hover: var(--parsec-color-light-primary-50);
-    --background-hover-opacity: 1;
-    border-radius: var(--parsec-radius-6);
-    --inner-padding-end: 0;
-    --padding-start: 0;
-    position: relative;
-    z-index: 2;
-    pointer-events: auto;
-
-    &::part(native) {
-      padding: 0;
-    }
-
-    &:hover {
-      .organization-avatar {
-        background-color: var(--parsec-color-light-secondary-white);
-      }
-    }
-  }
-}
-
-.organization {
-  padding: 0.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-
-  &-avatar {
-    background-color: var(--parsec-color-light-secondary-premiere);
-    color: var(--parsec-color-light-primary-600);
-    width: 2.5rem;
-    height: 2.5rem;
-    margin: 0;
-    border-radius: var(--parsec-radius-circle);
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-    z-index: 1;
-
-    &:not(.ellipsis)::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      right: -4px;
-      height: 0.625rem;
-      width: 0.625rem;
-      border-radius: 50%;
-      border: var(--parsec-color-light-secondary-white) solid 0.25rem;
-      background-color: var(--parsec-color-light-success-500);
-    }
-  }
-
-  &-text-content {
-    margin: 0;
+  .organization-list {
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
+    padding: 0;
 
-    &::part(native) {
-      padding: 0;
+    &__item {
+      --background: none;
+      --background-hover: var(--parsec-color-light-primary-50);
+      --background-hover-opacity: 1;
+      border-radius: var(--parsec-radius-6);
+      --inner-padding-end: 0;
+      --padding-start: 0;
+      position: relative;
+      z-index: 2;
+      pointer-events: auto;
+
+      &::part(native) {
+        padding: 0;
+      }
+
+      &:hover {
+        .organization-avatar {
+          background-color: var(--parsec-color-light-secondary-white);
+        }
+      }
     }
+  }
 
-    &__name {
-      color: var(--parsec-color-light-secondary-text);
+  .organization {
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
 
-      .body {
-        font-size: 0.875rem;
+    &-avatar {
+      background-color: var(--parsec-color-light-secondary-premiere);
+      position: relative;
+      z-index: 1;
+
+      &:not(.ellipsis)::after {
+        content: '';
+        position: absolute;
+        bottom: -3px;
+        right: -5px;
+        height: 0.625rem;
+        width: 0.625rem;
+        border-radius: var(--parsec-radius-circle);
+        border: 3px solid var(--parsec-color-light-secondary-white);
+        background-color: var(--parsec-color-light-success-500);
       }
     }
 
-    &__email {
-      color: var(--parsec-color-light-secondary-grey);
+    &-text-content {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      &::part(native) {
+        padding: 0;
+      }
+
+      &__name {
+        color: var(--parsec-color-light-secondary-text);
+
+        .body {
+          font-size: 0.875rem;
+          display: block;
+          text-wrap: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      &__email {
+        color: var(--parsec-color-light-secondary-grey);
+      }
     }
   }
 }
@@ -183,13 +253,5 @@ async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
 .item-disabled {
   opacity: 1;
   pointer-events: none;
-
-  .badge {
-    color: var(--parsec-color-light-success-500);
-    background: var(--parsec-color-light-success-100);
-    margin-left: auto;
-    border-radius: var(--parsec-radius-12);
-    padding: 0.25rem 0.5rem;
-  }
 }
 </style>

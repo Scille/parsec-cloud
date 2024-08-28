@@ -97,6 +97,40 @@
               </ion-button>
             </div>
           </div>
+
+          <!-- frozen organization -->
+          <!-- a isFrozen condition should be added -->
+          <div
+            class="freeze-card"
+            v-if="orgInfo?.frozen"
+          >
+            <ion-icon
+              class="freeze-card__icon"
+              :icon="snow"
+            />
+            <div class="freeze-card-header">
+              <ion-icon
+                class="freeze-card-header__icon"
+                :icon="warning"
+              />
+              <ion-text class="freeze-card-header__title title-h4">
+                {{ $msTranslate('SideMenu.frozen.title') }}
+              </ion-text>
+            </div>
+            <div class="freeze-card-main">
+              <ion-text class="body">
+                {{ $msTranslate('SideMenu.frozen.description') }}
+              </ion-text>
+            </div>
+            <div class="freeze-card-footer">
+              <ion-text class="freeze-card-footer__title title-h5">
+                {{ $msTranslate('SideMenu.frozen.contact') }}
+              </ion-text>
+              <ion-text class="freeze-card-footer__email subtitles-sm">
+                {{ $msTranslate('SideMenu.frozen.email') }}
+              </ion-text>
+            </div>
+          </div>
         </ion-header>
 
         <ion-content class="ion-padding sidebar-content">
@@ -311,6 +345,8 @@ import {
   isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
+  OrganizationInfo,
+  getOrganizationInfo,
 } from '@/parsec';
 import {
   Routes,
@@ -350,7 +386,20 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { add, home, business, chevronBack, ellipsisHorizontal, cog, informationCircle, people, pieChart, star } from 'ionicons/icons';
+import {
+  add,
+  home,
+  business,
+  chevronBack,
+  ellipsisHorizontal,
+  cog,
+  informationCircle,
+  people,
+  pieChart,
+  star,
+  snow,
+  warning,
+} from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
 
@@ -367,6 +416,7 @@ const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
+const orgInfo: Ref<OrganizationInfo | null> = ref(null);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -447,6 +497,12 @@ onMounted(async () => {
     if (isTrialOrg.value) {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
+  }
+
+  const result = await getOrganizationInfo();
+
+  if (result.ok) {
+    orgInfo.value = result.value;
   }
 });
 
@@ -560,8 +616,8 @@ async function openPricingLink(): Promise<void> {
 
 .sidebar {
   border: none;
-  user-select: none;
   border-radius: 0 var(--parsec-radius-12) var(--parsec-radius-12) 0;
+  user-select: initial;
 
   &::part(container) {
     padding: 0.5rem;
@@ -668,6 +724,7 @@ async function openPricingLink(): Promise<void> {
   &-buttons {
     display: flex;
     flex-direction: column;
+    user-select: none;
     gap: 0.75rem;
     padding: 1rem 0 1.5rem;
     border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
@@ -697,6 +754,7 @@ async function openPricingLink(): Promise<void> {
 .back-organization {
   display: flex;
   align-items: center;
+  user-select: none;
   align-self: stretch;
   padding: 1rem;
   color: var(--parsec-color-light-secondary-inversed-contrast);
@@ -773,6 +831,7 @@ ion-menu {
     }
 
     &__button {
+      user-select: none;
       padding: 0.25rem;
       margin-right: 0.25rem;
       font-size: 1.25rem;
@@ -865,13 +924,70 @@ ion-menu {
   }
 }
 
+.freeze-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  margin-bottom: 1.5rem;
+  border-radius: var(--parsec-radius-8);
+  background: var(--parsec-color-light-secondary-inversed-contrast);
+  position: relative;
+
+  &-header {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-grey);
+      font-size: 1.5rem;
+    }
+
+    &__title {
+      color: var(--parsec-color-light-primary-600);
+    }
+  }
+
+  &-main {
+    color: var(--parsec-color-light-secondary-soft-text);
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  &-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    color: var(--parsec-color-light-secondary-text);
+
+    &__email {
+      color: var(--parsec-color-light-secondary-soft-text);
+      background: var(--parsec-color-light-secondary-premiere);
+      width: fit-content;
+      border-radius: var(--parsec-radius-6);
+      padding: 0.25rem 0.5rem;
+    }
+  }
+
+  &__icon {
+    color: var(--parsec-color-light-secondary-soft-grey);
+    font-size: 11.5rem;
+    position: absolute;
+    bottom: 0;
+    right: -5rem;
+    z-index: 0;
+    opacity: 0.1;
+  }
+}
+
 .trial-card {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 0 1rem 1.5rem 1rem;
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--parsec-color-light-secondary-white);
+  border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
   &__tag {
     color: var(--parsec-color-light-secondary-white);

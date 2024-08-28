@@ -272,6 +272,7 @@ interface OrganizationInfo {
   hasUserLimit: boolean;
   organizationAddr: ParsecOrganizationAddr;
   organizationId: OrganizationID;
+  frozen: boolean;
 }
 
 export {

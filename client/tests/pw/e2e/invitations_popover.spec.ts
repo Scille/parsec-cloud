@@ -13,7 +13,7 @@ msTest('Profile popover default state', async ({ connected }) => {
   await expect(popover).toBeVisible();
   await expect(popover.locator('.invitations-list-header__title')).toHaveText('Invitations');
   await expect(popover.locator('.invitations-list-header__counter')).toHaveText('2');
-  await expect(popover.locator('.invitations-list-header__button')).toHaveText('Invite a new user');
+  await expect(popover.locator('.invitations-list-header__button')).toHaveText('Invite a new member');
   const invitations = popover.locator('.invitation-list-item');
   await expect(invitations).toHaveCount(2);
   await expect(invitations.locator('.invitation-email')).toHaveText(['shadowheart@swordcoast.faerun', 'gale@waterdeep.faerun']);
