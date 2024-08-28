@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from typing import Any, NotRequired, TypedDict
+from unittest.mock import ANY
 
 import httpx
 import pytest
@@ -85,7 +86,13 @@ class PatchOrganizationParams(TypedDict):
         {"is_expired": True},
         {"active_user_limit": 1},
         {"user_profile_outsider_allowed": False},
-        {"is_expired": False, "active_user_limit": None, "user_profile_outsider_allowed": True},
+        {"minimum_archiving_period": 1},
+        {
+            "is_expired": False,
+            "active_user_limit": None,
+            "user_profile_outsider_allowed": True,
+            "minimum_archiving_period": 0,
+        },
     ),
 )
 async def test_ok(
@@ -107,12 +114,14 @@ async def test_ok(
     assert dump == {
         coolorg.organization_id: OrganizationDump(
             organization_id=coolorg.organization_id,
+            bootstrap_token=ANY,
             is_bootstrapped=True,
             is_expired=params.get("is_expired", False),
             active_users_limit=ActiveUsersLimit.from_maybe_int(
                 params.get("active_users_limit", None)
             ),
             user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
+            minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
         )
     }
 

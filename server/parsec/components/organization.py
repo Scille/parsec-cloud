@@ -281,6 +281,7 @@ class BaseOrganizationComponent:
         # `None` stands for "no limit"
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError
 
