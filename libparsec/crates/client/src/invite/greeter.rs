@@ -8,6 +8,7 @@ use libparsec_client_connection::{
 };
 use libparsec_types::prelude::*;
 
+use crate::invite::common::Throttle;
 use crate::{EventBus, EventTooMuchDriftWithServerClock};
 
 /*
@@ -303,24 +304,13 @@ async fn cancel_greeting_attempt(
 
 // Greeter step helper
 
-// The step throttle is defined to 100 ms.
-// A similar value for the claimer is defined in `claimer.rs`
-// This value limits the amount of polling done by the greeter
-// to 10 requests per second. This is deliberately fast in order
-// improve user experience and to accelerate the tests. However,
-// this might be too much for the server and this value might need
-// to be adjusted for production. In this case, a decoupling between
-// testing and production might be necessary. This could be achieved
-// by mocking the time provider of the greeter device.
-static STEP_THROTTLE: Duration = Duration::milliseconds(100);
-
 async fn run_greeter_step_until_ready(
     cmds: &AuthenticatedCmds,
     greeting_attempt: GreetingAttemptID,
     greeter_step: invite_greeter_step::GreeterStep,
     time_provider: &TimeProvider,
 ) -> Result<invite_greeter_step::ClaimerStep, GreetInProgressError> {
-    let mut last_call = Option::None;
+    let mut throttle = Throttle::new(time_provider);
     let req = invite_greeter_step::Req {
         greeting_attempt,
         greeter_step,
@@ -329,11 +319,7 @@ async fn run_greeter_step_until_ready(
     // Loop over the requests
     loop {
         // Throttle the requests
-        if let Some(last_call) = last_call {
-            let duration = last_call + STEP_THROTTLE - time_provider.now();
-            time_provider.sleep(duration).await;
-        }
-        last_call = Some(time_provider.now());
+        throttle.throttle().await;
 
         // Send the request
         let rep = cmds.send(req.clone()).await?;
