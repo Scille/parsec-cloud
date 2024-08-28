@@ -22,6 +22,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
     patch_realm_name_certificate,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -163,25 +164,31 @@ async def test_authenticated_realm_rename_initial_name_already_exists(
     )
 
 
-@pytest.mark.parametrize("kind", ("author_not_realm_owner", "author_no_realm_access"))
+@pytest.mark.parametrize("kind", ("not_owner", "never_allowed", "no_longer_allowed"))
 async def test_authenticated_realm_rename_author_not_allowed(
     coolorg: CoolorgRpcClients,
-    kind: str,
+    backend: Backend,
     alice_name_certificate: RealmNameCertificate,
+    kind: str,
 ) -> None:
     match kind:
-        case "author_not_realm_owner":
+        case "not_owner":
             # Bob has access to the realm, but he is not OWNER
-            bad_author = coolorg.bob
-        case "author_no_realm_access":
+            author = coolorg.bob
+        case "never_allowed":
             # Mallory has no access to the realm !
-            bad_author = coolorg.mallory
+            author = coolorg.mallory
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.MANAGER
+            )
+            author = coolorg.alice
         case _:
             assert False
 
-    certif = patch_realm_name_certificate(alice_name_certificate, author=bad_author.device_id)
-    rep = await bad_author.realm_rename(
-        realm_name_certificate=certif.dump_and_sign(bad_author.signing_key),
+    certif = patch_realm_name_certificate(alice_name_certificate, author=author.device_id)
+    rep = await author.realm_rename(
+        realm_name_certificate=certif.dump_and_sign(author.signing_key),
         initial_name_or_fail=False,
     )
     assert rep == authenticated_cmds.v4.realm_rename.RepAuthorNotAllowed()

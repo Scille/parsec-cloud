@@ -23,6 +23,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -130,19 +131,25 @@ async def test_authenticated_realm_rotate_key_ok(
     assert keys_bundle.keys_bundle == b"<keys bundle>"
 
 
-@pytest.mark.parametrize("kind", ("author_not_realm_owner", "author_no_realm_access"))
+@pytest.mark.parametrize("kind", ("not_owner", "never_allowed", "no_longer_allowed"))
 async def test_authenticated_realm_rotate_key_author_not_allowed(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     wksp1_key_rotation_certificate: RealmKeyRotationCertificate,
     kind: str,
 ) -> None:
     match kind:
-        case "author_not_realm_owner":
+        case "not_owner":
             # Bob has access to the realm, but he is not OWNER
             author = coolorg.bob
-        case "author_no_realm_access":
+        case "never_allowed":
             # Mallory has no access to the realm !
             author = coolorg.mallory
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.MANAGER
+            )
+            author = coolorg.alice
         case _:
             assert False
 

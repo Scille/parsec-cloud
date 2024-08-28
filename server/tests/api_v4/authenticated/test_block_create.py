@@ -4,7 +4,13 @@ from unittest.mock import ANY
 
 import pytest
 
-from parsec._parsec import BlockID, DateTime, VlobID, authenticated_cmds
+from parsec._parsec import (
+    BlockID,
+    DateTime,
+    RealmRole,
+    VlobID,
+    authenticated_cmds,
+)
 from parsec.components.block import BlockReadBadOutcome, BlockReadResult
 from parsec.components.blockstore import BlockStoreCreateBadOutcome
 from tests.common import (
@@ -12,6 +18,7 @@ from tests.common import (
     CoolorgRpcClients,
     HttpCommonErrorsTester,
     get_last_realm_certificate_timestamp,
+    wksp1_bob_becomes_owner_and_changes_alice,
 )
 
 
@@ -116,15 +123,29 @@ async def test_authenticated_block_create_block_already_exists(
     assert dump == expected_dump  # No changes!
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_block_create_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    match kind:
+        case "never_allowed":
+            author = coolorg.mallory
+
+        case "no_longer_allowed":
+            await wksp1_bob_becomes_owner_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_role=RealmRole.READER
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     block_id = BlockID.new()
     block = b"<block content>"
 
     expected_dump = await backend.block.test_dump_blocks(coolorg.organization_id)
 
-    rep = await coolorg.mallory.block_create(
+    rep = await author.block_create(
         block_id=block_id, realm_id=coolorg.wksp1_id, key_index=1, block=block
     )
     assert rep == authenticated_cmds.v4.block_create.RepAuthorNotAllowed()

@@ -28,7 +28,12 @@ from tests.api_v4.authenticated.test_user_create import (
     generate_new_mike_device_certificates,
     generate_new_mike_user_certificates,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 @pytest.fixture
@@ -142,11 +147,27 @@ async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
     assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepActiveUsersLimitReached()
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_pki_enrollment_accept_author_not_allowed(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
     enrollment_id: EnrollmentID,
+    kind: str,
 ) -> None:
-    rep = await coolorg.bob.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
+    match kind:
+        case "never_allowed":
+            author = coolorg.bob
+
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.pki_enrollment_accept(**generate_accept_params(coolorg, enrollment_id))
     assert rep == authenticated_cmds.v4.pki_enrollment_accept.RepAuthorNotAllowed()
 
 

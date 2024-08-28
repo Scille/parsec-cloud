@@ -14,7 +14,12 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 # TODO: Remove once PostgreSQL is supported
@@ -46,7 +51,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowed(
-    coolorg: CoolorgRpcClients,
+    coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     rep = await coolorg.invited_zack.invite_claimer_start_greeting_attempt(
         greeter=coolorg.alice.user_id,
@@ -54,25 +59,9 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_not_allowe
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
     greeting_attempt = rep.greeting_attempt
 
-    # Make Bob an admin
-    certif = UserUpdateCertificate(
-        author=coolorg.alice.device_id,
-        new_profile=UserProfile.ADMIN,
-        user_id=coolorg.bob.user_id,
-        timestamp=DateTime.now(),
-    ).dump_and_sign(coolorg.alice.signing_key)
-    rep = await coolorg.alice.user_update(certif)
-    assert rep == authenticated_cmds.v4.user_update.RepOk()
-
-    # Alice is no longer an admin
-    certif = UserUpdateCertificate(
-        author=coolorg.bob.device_id,
-        new_profile=UserProfile.STANDARD,
-        user_id=coolorg.alice.user_id,
-        timestamp=DateTime.now(),
-    ).dump_and_sign(coolorg.bob.signing_key)
-    rep = await coolorg.bob.user_update(certif)
-    assert rep == authenticated_cmds.v4.user_update.RepOk()
+    await bob_becomes_admin_and_changes_alice(
+        coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+    )
 
     # Cancel the greeting attempt
     rep = await coolorg.invited_zack.invite_claimer_cancel_greeting_attempt(

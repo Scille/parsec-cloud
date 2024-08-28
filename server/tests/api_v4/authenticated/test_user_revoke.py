@@ -14,7 +14,13 @@ from parsec._parsec import (
     authenticated_cmds,
 )
 from parsec.events import EventUserRevokedOrFrozen
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, RpcTransportError
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    RpcTransportError,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 async def test_authenticated_user_revoke_ok(coolorg: CoolorgRpcClients, backend: Backend) -> None:
@@ -84,26 +90,40 @@ async def test_disconnect_sse(
         assert rep.status_code == 461
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_user_revoke_author_not_allowed(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
 ) -> None:
     now = DateTime.now()
-    certif = RevokedUserCertificate(
-        author=coolorg.bob.device_id,
-        timestamp=now,
-        user_id=coolorg.alice.user_id,
-    )
+    match kind:
+        case "never_allowed":
+            certif = RevokedUserCertificate(
+                author=coolorg.bob.device_id,
+                timestamp=now,
+                user_id=coolorg.alice.user_id,
+            )
+            author = coolorg.bob
 
-    expected_dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    expected_dump[coolorg.alice.user_id].revoked_on = None
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            certif = RevokedUserCertificate(
+                author=coolorg.alice.device_id,
+                timestamp=now,
+                user_id=coolorg.bob.user_id,
+            )
+            author = coolorg.alice
 
-    rep = await coolorg.bob.user_revoke(
+        case unknown:
+            assert False, unknown
+
+    rep = await author.user_revoke(
         revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key)
     )
     assert rep == authenticated_cmds.v4.user_revoke.RepAuthorNotAllowed()
-
-    dump = await backend.user.test_dump_current_users(coolorg.organization_id)
-    assert dump == expected_dump
 
 
 async def test_authenticated_user_revoke_user_not_found(coolorg: CoolorgRpcClients) -> None:

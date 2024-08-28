@@ -28,6 +28,7 @@ from tests.common import (
     HttpCommonErrorsTester,
     MinimalorgRpcClients,
     TestbedBackend,
+    bob_becomes_admin_and_changes_alice,
 )
 
 NEW_MIKE_USER_ID = UserID.new()
@@ -159,18 +160,32 @@ async def test_authenticated_user_create_ok(
     assert rep == authenticated_cmds.v4.ping.RepOk(pong="hello")
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_user_create_author_not_allowed(
     coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
 ) -> None:
+    match kind:
+        case "never_allowed":
+            author = coolorg.bob
+
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(
-        coolorg.bob, t1
+        author, t1
     )
-    user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(
-        coolorg.bob, t1
-    )
+    user_certificate, redacted_user_certificate = generate_new_mike_user_certificates(author, t1)
 
-    rep = await coolorg.bob.user_create(
+    rep = await author.user_create(
         user_certificate=user_certificate,
         redacted_user_certificate=redacted_user_certificate,
         device_certificate=device_certificate,

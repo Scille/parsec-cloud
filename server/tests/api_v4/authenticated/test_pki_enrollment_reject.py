@@ -9,9 +9,15 @@ from parsec._parsec import (
     PkiEnrollmentSubmitPayload,
     PrivateKey,
     SigningKey,
+    UserProfile,
     authenticated_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 @pytest.fixture
@@ -49,11 +55,24 @@ async def test_authenticated_pki_enrollment_reject_ok(
     assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepOk()
 
 
+@pytest.mark.parametrize("kind", ("never_allowed", "no_longer_allowed"))
 async def test_authenticated_pki_enrollment_reject_author_not_allowed(
-    coolorg: CoolorgRpcClients,
-    enrollment_id: EnrollmentID,
+    coolorg: CoolorgRpcClients, backend: Backend, enrollment_id: EnrollmentID, kind: str
 ) -> None:
-    rep = await coolorg.bob.pki_enrollment_reject(enrollment_id=enrollment_id)
+    match kind:
+        case "never_allowed":
+            author = coolorg.bob
+
+        case "no_longer_allowed":
+            await bob_becomes_admin_and_changes_alice(
+                coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+            )
+            author = coolorg.alice
+
+        case unknown:
+            assert False, unknown
+
+    rep = await author.pki_enrollment_reject(enrollment_id=enrollment_id)
     assert rep == authenticated_cmds.v4.pki_enrollment_reject.RepAuthorNotAllowed()
 
 
