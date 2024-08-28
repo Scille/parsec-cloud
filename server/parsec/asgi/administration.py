@@ -222,6 +222,7 @@ class PatchOrganizationIn(BaseModel):
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
+    minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -256,6 +257,7 @@ async def administration_patch_organization(
         is_expired=body.is_expired,
         active_users_limit=body.active_users_limit,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
+        minimum_archiving_period=body.minimum_archiving_period,
     )
     match outcome:
         case None:
