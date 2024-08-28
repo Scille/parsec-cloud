@@ -51,7 +51,11 @@ class Q:
             src = src.replace(f"${variable}", positional_parameter)
 
         self._sql = src
-        self._stripped_sql = " ".join([x.strip() for x in src.split()])
+
+        # Remove comment (e.g. `-- foo`)
+        lines = [line.split("--")[0] for line in src.splitlines()]
+        # Remove unecessary indentation and newlines
+        self._stripped_sql = " ".join([x.strip() for line in lines for x in line.split()])
 
     @property
     def sql(self) -> str:
