@@ -27,6 +27,7 @@ async fn same_key_file(tmp_path: TmpPath) {
         None,
         None,
         None,
+        None,
     );
 
     // Sanity check
@@ -89,6 +90,7 @@ async fn different_key_file(tmp_path: TmpPath) {
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
+        None,
         None,
         None,
         None,

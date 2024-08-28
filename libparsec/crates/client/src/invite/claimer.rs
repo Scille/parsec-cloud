@@ -114,15 +114,9 @@ async fn run_claimer_step_until_ready(
     cmds: &InvitedCmds,
     greeting_attempt: GreetingAttemptID,
     claimer_step: invite_claimer_step::ClaimerStep,
+    time_provider: &TimeProvider,
 ) -> Result<invite_claimer_step::GreeterStep, ClaimInProgressError> {
-    // TODO: For better testability, we should pass the time provider as an argument
-    // instead of using the default one. This time provider should ideally come from
-    // the `claimer_retrieve_info` function, or the `do_wait_peer` method.
-    // This way, it can be injected from the tests and mocked in order to accelerate
-    // the throttling. It should also be used when creating the local device in the
-    // `do_claim_user` and `do_claim_device` methods.
-    let time_provider = TimeProvider::default();
-    let mut throttle = Throttle::new(&time_provider);
+    let mut throttle = Throttle::new(time_provider);
     let req = invite_claimer_step::Req {
         greeting_attempt,
         claimer_step,
@@ -182,11 +176,18 @@ pub enum UserOrDeviceClaimInitialCtx {
     Device(DeviceClaimInitialCtx),
 }
 
+/// Retrieve information for the corresponding Parsec invitation address.
+///
+/// The optional time provider is used to throttle the requests, and will
+/// become the time provider for the freshly created local device at the
+/// end of the invitation process.
 pub async fn claimer_retrieve_info(
     config: Arc<ClientConfig>,
     addr: ParsecInvitationAddr,
+    time_provider: Option<TimeProvider>,
 ) -> Result<UserOrDeviceClaimInitialCtx, ClaimerRetrieveInfoError> {
     use invited_cmds::latest::invite_info::{Rep, Req, UserOrDevice};
+    let time_provider = time_provider.unwrap_or_default();
 
     let cmds = Arc::new(
         InvitedCmds::new(&config.config_dir, addr, config.proxy.clone())
@@ -207,12 +208,19 @@ pub async fn claimer_retrieve_info(
                 claimer_email,
                 greeter_user_id,
                 greeter_human_handle,
+                time_provider,
             ))),
             UserOrDevice::Device {
                 greeter_user_id,
                 greeter_human_handle,
             } => Ok(UserOrDeviceClaimInitialCtx::Device(
-                DeviceClaimInitialCtx::new(config, cmds, greeter_user_id, greeter_human_handle),
+                DeviceClaimInitialCtx::new(
+                    config,
+                    cmds,
+                    greeter_user_id,
+                    greeter_human_handle,
+                    time_provider,
+                ),
             )),
         },
         bad_rep @ Rep::UnknownStatus { .. } => {
@@ -246,6 +254,7 @@ struct BaseClaimInitialCtx {
     cmds: Arc<InvitedCmds>,
     greeter_user_id: UserID,
     greeter_human_handle: HumanHandle,
+    time_provider: TimeProvider,
 }
 
 impl BaseClaimInitialCtx {
@@ -273,6 +282,7 @@ impl BaseClaimInitialCtx {
             greeter_sas,
             claimer_sas,
             shared_secret_key,
+            time_provider: self.time_provider,
         })
     }
 
@@ -308,6 +318,7 @@ impl BaseClaimInitialCtx {
                 invite_claimer_step::ClaimerStep::Number0WaitPeer {
                     public_key: claimer_private_key.public_key(),
                 },
+                &self.time_provider,
             )
             .await?;
             let result: Result<_, ClaimInProgressError> = match greeter_step {
@@ -325,6 +336,7 @@ impl BaseClaimInitialCtx {
                 &self.cmds,
                 greeting_attempt,
                 invite_claimer_step::ClaimerStep::Number1SendHashedNonce { hashed_nonce },
+                &self.time_provider,
             )
             .await?;
             match greeter_step {
@@ -342,6 +354,7 @@ impl BaseClaimInitialCtx {
                 &self.cmds,
                 greeting_attempt,
                 invite_claimer_step::ClaimerStep::Number2GetNonce,
+                &self.time_provider,
             )
             .await?;
             let result: Result<_, ClaimInProgressError> = match greeter_step {
@@ -363,6 +376,7 @@ impl BaseClaimInitialCtx {
                 invite_claimer_step::ClaimerStep::Number3SendNonce {
                     claimer_nonce: claimer_nonce.into(),
                 },
+                &self.time_provider,
             )
             .await?;
             match greeter_step {
@@ -397,6 +411,7 @@ impl UserClaimInitialCtx {
         claimer_email: String,
         greeter_user_id: UserID,
         greeter_human_handle: HumanHandle,
+        time_provider: TimeProvider,
     ) -> Self {
         Self {
             base: BaseClaimInitialCtx {
@@ -404,6 +419,7 @@ impl UserClaimInitialCtx {
                 cmds,
                 greeter_user_id,
                 greeter_human_handle,
+                time_provider,
             },
             claimer_email,
         }
@@ -431,12 +447,14 @@ impl DeviceClaimInitialCtx {
         cmds: Arc<InvitedCmds>,
         greeter_user_id: UserID,
         greeter_human_handle: HumanHandle,
+        time_provider: TimeProvider,
     ) -> Self {
         Self(BaseClaimInitialCtx {
             config,
             cmds,
             greeter_user_id,
             greeter_human_handle,
+            time_provider,
         })
     }
 
@@ -461,6 +479,7 @@ struct BaseClaimInProgress1Ctx {
     greeter_sas: SASCode,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
+    time_provider: TimeProvider,
 }
 
 impl BaseClaimInProgress1Ctx {
@@ -482,6 +501,7 @@ impl BaseClaimInProgress1Ctx {
             &self.cmds,
             self.greeting_attempt,
             invite_claimer_step::ClaimerStep::Number4SignifyTrust,
+            &self.time_provider,
         )
         .await?;
         match greeter_step {
@@ -495,6 +515,7 @@ impl BaseClaimInProgress1Ctx {
             greeting_attempt: self.greeting_attempt,
             claimer_sas: self.claimer_sas,
             shared_secret_key: self.shared_secret_key,
+            time_provider: self.time_provider,
         })
     }
 }
@@ -565,6 +586,7 @@ struct BaseClaimInProgress2Ctx {
     greeting_attempt: GreetingAttemptID,
     claimer_sas: SASCode,
     shared_secret_key: SecretKey,
+    time_provider: TimeProvider,
 }
 
 impl BaseClaimInProgress2Ctx {
@@ -573,6 +595,7 @@ impl BaseClaimInProgress2Ctx {
             &self.cmds,
             self.greeting_attempt,
             invite_claimer_step::ClaimerStep::Number5WaitPeerTrust,
+            &self.time_provider,
         )
         .await?;
         match greeter_step {
@@ -585,6 +608,7 @@ impl BaseClaimInProgress2Ctx {
             cmds: self.cmds,
             greeting_attempt: self.greeting_attempt,
             shared_secret_key: self.shared_secret_key,
+            time_provider: self.time_provider,
         })
     }
 }
@@ -643,6 +667,7 @@ struct BaseClaimInProgress3Ctx {
     cmds: Arc<InvitedCmds>,
     greeting_attempt: GreetingAttemptID,
     shared_secret_key: SecretKey,
+    time_provider: TimeProvider,
 }
 
 impl BaseClaimInProgress3Ctx {
@@ -654,6 +679,7 @@ impl BaseClaimInProgress3Ctx {
                 invite_claimer_step::ClaimerStep::Number6SendPayload {
                     claimer_payload: payload,
                 },
+                &self.time_provider,
             )
             .await?;
             match greeter_step {
@@ -671,6 +697,7 @@ impl BaseClaimInProgress3Ctx {
                 &self.cmds,
                 self.greeting_attempt,
                 invite_claimer_step::ClaimerStep::Number7GetPayload,
+                &self.time_provider,
             )
             .await?;
             let result: Result<_, ClaimInProgressError> = match greeter_step {
@@ -690,6 +717,7 @@ impl BaseClaimInProgress3Ctx {
             &self.cmds,
             self.greeting_attempt,
             invite_claimer_step::ClaimerStep::Number8Acknowledge,
+            &self.time_provider,
         )
         .await?;
         match greeter_step {
@@ -779,6 +807,7 @@ impl UserClaimInProgress3Ctx {
             Some(device_id),
             Some(signing_key),
             Some(private_key),
+            Some(self.0.time_provider.clone()),
         ));
 
         self.0.do_acknowledge().await?;
@@ -872,7 +901,7 @@ impl DeviceClaimInProgress3Ctx {
             user_realm_id,
             user_realm_key,
             local_symkey: SecretKey::generate(),
-            time_provider: Default::default(),
+            time_provider: self.0.time_provider.clone(),
         });
 
         self.0.do_acknowledge().await?;

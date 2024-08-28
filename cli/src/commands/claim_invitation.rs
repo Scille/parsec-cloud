@@ -54,7 +54,7 @@ pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Resu
 async fn step0(addr: ParsecInvitationAddr) -> anyhow::Result<UserOrDeviceClaimInitialCtx> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
-    let ctx = claimer_retrieve_info(Arc::new(ClientConfig::default().into()), addr).await?;
+    let ctx = claimer_retrieve_info(Arc::new(ClientConfig::default().into()), addr, None).await?;
 
     handle.stop_with_newline();
 

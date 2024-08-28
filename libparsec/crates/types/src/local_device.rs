@@ -49,6 +49,7 @@ impl LocalDevice {
         device_id: Option<DeviceID>,
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
+        time_provider: Option<TimeProvider>,
     ) -> Self {
         Self {
             organization_addr,
@@ -62,7 +63,7 @@ impl LocalDevice {
             user_realm_id: VlobID::default(),
             user_realm_key: SecretKey::generate(),
             local_symkey: SecretKey::generate(),
-            time_provider: TimeProvider::default(),
+            time_provider: time_provider.unwrap_or_default(),
         }
     }
 
