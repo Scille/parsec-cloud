@@ -169,7 +169,7 @@ SELECT
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
-LEFT JOIN human ON device.user_ = human._id
+LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND user_ = { q_user_internal_id(organization_id="$organization_id", user_id="$user_id") }
@@ -192,7 +192,7 @@ SELECT
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
-LEFT JOIN human ON device.user_ = human._id
+LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
 ORDER BY created_on
@@ -215,7 +215,7 @@ SELECT
     invitation.deleted_reason
 FROM invitation
 LEFT JOIN device ON invitation.created_by = device._id
-LEFT JOIN human ON device.user_ = human._id
+LEFT JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
 WHERE
     invitation.organization = { q_organization_internal_id("$organization_id") }
     AND token = $token
@@ -307,7 +307,7 @@ _q_retrieve_active_human_by_email = Q(
     f"""
 SELECT
     user_.user_id
-FROM user_ LEFT JOIN human ON user_.human=human._id
+FROM user_ LEFT JOIN human ON user_.human = human._id
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
     AND human.email = $email
