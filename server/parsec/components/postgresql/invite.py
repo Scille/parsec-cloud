@@ -341,6 +341,37 @@ async def q_take_invitation_create_write_lock(
     the invitation creation procedure starts any checks involving the invitations.
     """
     await conn.execute(*_q_lock(organization_id=organization_id.str))
+_q_get_greeting_session_by_greeter = Q(
+    """
+SELECT
+    greeting_sessions._id,
+    greeting_sessions.invitation
+    greeting_sessions.greeter
+FROM greeting_sessions
+WHERE
+    greeting_sessions.greeter = $greeter_id
+    """
+)
+
+
+_q_get_greeting_attempt_for_session = Q(
+    """
+SELECT
+    _id,
+    invitation,
+    greeter,
+    greeting_session,
+    claimer_joined,
+    greeter_joined,
+    cancelled_reason,
+    cancelled_on,
+    cancelled_by,
+    greeter_steps,
+    claimer_steps
+FROM greeting_attempts
+WHERE greeting_session = $session_id
+    """
+)
 
 
 async def query_retrieve_active_human_by_email(
@@ -1112,15 +1143,80 @@ class PGInviteComponent(BaseInviteComponent):
             raise NotImplementedError
 
     @override
+    @transaction
     async def greeter_start_greeting_attempt(
         self,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         greeter: UserID,
         token: InvitationToken,
     ) -> GreetingAttemptID | InviteGreeterStartGreetingAttemptBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case Organization() as org:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteGreeterStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case (greeter_user_id, greeter_profile, _):
+                assert greeter == greeter_user_id
+                pass
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
+
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
+        )
+
+        if not row:
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
+        (
+            _id,
+            type,
+            created_by_user_id_str,
+            _created_by_device_id_str,
+            _created_by_email,
+            _created_by_label,
+            _claimer_email,
+            _created_on,
+            deleted_on,
+            deleted_reason,
+        ) = row
+
+        if deleted_on:
+            status = InvitationStatus.from_str(deleted_reason)
+            match status:
+                case InvitationStatus.FINISHED:
+                    return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+
+                case InvitationStatus.CANCELLED:
+                    return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+                case InvitationStatus.READY | InvitationStatus.IDLE:
+                    pass
+
+                case _:
+                    raise NotImplementedError
+
+        created_by_user_id = UserID.from_hex(created_by_user_id_str)
+        if not self.is_greeter_allowed(
+            InvitationType.from_str(type), created_by_user_id, greeter, greeter_profile
+        ):
+            return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
+
         raise NotImplementedError
+
+        # greeting_session = invitation.get_greeting_session(greeter)
+        # greeting_attempt = greeting_session.new_attempt_for_greeter(org, now)
+        # return greeting_attempt.greeting_attempt
 
     @override
     async def claimer_start_greeting_attempt(
