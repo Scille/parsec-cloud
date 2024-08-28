@@ -8,10 +8,13 @@ import pytest
 
 from parsec._parsec import (
     ActiveUsersLimit,
+    BootstrapToken,
+    DateTime,
     OrganizationID,
+    ParsecOrganizationBootstrapAddr,
 )
 from parsec.components.organization import OrganizationDump
-from tests.common import Backend
+from tests.common import Backend, MinimalorgRpcClients
 
 
 async def test_create_organization_auth(client: httpx.AsyncClient) -> None:
@@ -81,7 +84,11 @@ class CreateOrganizationParams(TypedDict):
     "args",
     (
         {},
-        {"active_user_limit": 2, "user_profile_outsider_allowed": True},
+        {
+            "active_user_limit": 2,
+            "user_profile_outsider_allowed": True,
+            "minimum_archiving_period": 1,
+        },
         {"active_user_limit": None, "user_profile_outsider_allowed": False},
     ),
 )
@@ -102,19 +109,102 @@ async def test_ok(
         },
     )
     assert response.status_code == 200, response.content
-    assert response.json() == {"bootstrap_url": ANY}
+    body = response.json()
+    assert body == {"bootstrap_url": ANY}
+    bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
 
     expected_active_users_limit = ActiveUsersLimit.from_maybe_int(
         args.get("active_users_limit", None)
     )
     expected_user_profile_outsider_allowed = args.get("user_profile_outsider_allowed", True)
+    expected_minimum_archiving_period = args.get("minimum_archiving_period", 2592000)
     dump = await backend.organization.test_dump_organizations()
     assert dump == {
         org_id: OrganizationDump(
             organization_id=org_id,
+            bootstrap_token=bootstrap_token,
             is_bootstrapped=False,
             is_expired=False,
             active_users_limit=expected_active_users_limit,
             user_profile_outsider_allowed=expected_user_profile_outsider_allowed,
+            minimum_archiving_period=expected_minimum_archiving_period,
         )
     }
+
+
+async def test_overwrite_existing(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    cleanup_organizations: None,
+) -> None:
+    org_id = OrganizationID("MyNewOrg")
+    bootstrap_token = BootstrapToken.new()
+
+    outcome = await backend.organization.create(
+        now=DateTime.now(),
+        id=org_id,
+        active_users_limit=ActiveUsersLimit.limited_to(1),
+        user_profile_outsider_allowed=False,
+        minimum_archiving_period=2,
+        force_bootstrap_token=bootstrap_token,
+    )
+    assert isinstance(outcome, BootstrapToken)
+
+    # Sanity check
+    dump = await backend.organization.test_dump_organizations()
+    assert dump == {
+        org_id: OrganizationDump(
+            organization_id=org_id,
+            bootstrap_token=bootstrap_token,
+            is_bootstrapped=False,
+            is_expired=False,
+            active_users_limit=ActiveUsersLimit.limited_to(1),
+            user_profile_outsider_allowed=False,
+            minimum_archiving_period=2,
+        )
+    }
+
+    url = "http://parsec.invalid/administration/organizations"
+    response = await client.post(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+        json={
+            "organization_id": org_id.str,
+            "active_user_limit": None,
+            "user_profile_outsider_allowed": True,
+            "minimum_archiving_period": 1000,
+        },
+    )
+    assert response.status_code == 200, response.content
+    body = response.json()
+    assert body == {"bootstrap_url": ANY}
+    new_bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
+    assert new_bootstrap_token != bootstrap_token.hex
+
+    dump = await backend.organization.test_dump_organizations()
+    assert dump == {
+        org_id: OrganizationDump(
+            organization_id=org_id,
+            bootstrap_token=new_bootstrap_token,
+            is_bootstrapped=False,
+            is_expired=False,
+            active_users_limit=ActiveUsersLimit.NO_LIMIT,
+            user_profile_outsider_allowed=True,
+            minimum_archiving_period=1000,
+        )
+    }
+
+
+async def test_organization_already_bootstrapped(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    minimalorg: MinimalorgRpcClients,
+) -> None:
+    url = "http://parsec.invalid/administration/organizations"
+    response = await client.post(
+        url,
+        headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+        json={"organization_id": minimalorg.organization_id.str},
+    )
+    assert response.status_code == 400, response.content
+    assert response.json() == {"detail": "Organization already exists"}

@@ -47,10 +47,12 @@ class OrganizationStats:
 @dataclass(slots=True)
 class OrganizationDump:
     organization_id: OrganizationID
+    bootstrap_token: BootstrapToken | None
     is_bootstrapped: bool
     is_expired: bool
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
+    minimum_archiving_period: int
 
 
 class OrganizationBootstrapValidateBadOutcome(BadOutcomeEnum):

@@ -343,10 +343,12 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org.active_users_limit
             items[org.organization_id] = OrganizationDump(
                 organization_id=org.organization_id,
+                bootstrap_token=org.bootstrap_token,
                 is_bootstrapped=org.is_bootstrapped,
                 is_expired=org.is_expired,
                 active_users_limit=org.active_users_limit,
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
+                minimum_archiving_period=org.minimum_archiving_period,
             )
         return items
 
