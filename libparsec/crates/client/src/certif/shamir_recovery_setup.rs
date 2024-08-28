@@ -251,6 +251,7 @@ async fn shamir_internals(
         None,
         None,
         None,
+        None,
     );
 
     let data_key = SecretKey::generate();

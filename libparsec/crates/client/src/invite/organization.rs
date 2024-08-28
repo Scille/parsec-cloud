@@ -65,6 +65,7 @@ pub async fn bootstrap_organization(
         None,
         None,
         None,
+        None,
     ));
 
     let timestamp = device.now();

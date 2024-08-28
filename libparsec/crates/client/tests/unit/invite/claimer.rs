@@ -47,7 +47,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         }
     });
 
-    let ctx = claimer_retrieve_info(config, addr).await.unwrap();
+    let ctx = claimer_retrieve_info(config, addr, None).await.unwrap();
 
     p_assert_matches!(&ctx, UserOrDeviceClaimInitialCtx::User(_));
     let ctx = match ctx {

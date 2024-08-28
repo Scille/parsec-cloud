@@ -26,6 +26,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
         None,
         None,
         None,
+        None,
     );
 
     let (access, expected_available_device) = match kind {

@@ -231,8 +231,7 @@ pub async fn claimer_retrieve_info(
     let config: Arc<libparsec_client::ClientConfig> = config.into();
     // TODO
     // let events_plugged = Arc::new(OnEventCallbackPlugged::new(on_event_callback));
-
-    let ctx = libparsec_client::claimer_retrieve_info(config, addr).await?;
+    let ctx = libparsec_client::claimer_retrieve_info(config, addr, None).await?;
 
     match ctx {
         libparsec_client::UserOrDeviceClaimInitialCtx::User(ctx) => {

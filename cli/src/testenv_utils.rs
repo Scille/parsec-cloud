@@ -177,6 +177,7 @@ async fn register_new_user(
         None,
         None,
         None,
+        None,
     ));
     log::trace!(
         "New user: user_id={}, human_handle={}, device_id={}",
