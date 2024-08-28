@@ -85,20 +85,23 @@ WITH new_organization AS (
             minimum_archiving_period = EXCLUDED.minimum_archiving_period
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
+),
+new_common_topic AS (
+    -- New organization's `common` topic must be added in the database since it is locked
+    -- during organization bootstrap to handle concurrency.
+    INSERT INTO common_topic (organization, last_timestamp)
+    -- Note the EPOCH (i.e. 1970-01-01T00:00:00Z) here !
+    -- This is because the `common` topic currently has no certificates
+    -- Notes:
+    -- - We don't use `NULL` here given this situation is very temporary (i.e. until the
+    --   organization is bootstrapped), and in the meantime the field is never read.
+    -- - We don't use `$created_on` here since a created-but-not-bootstrapped organization
+    --   can be overwritten, and in this case the `common` topic would also have to be
+    --   updated (which is not the case when using EPOCH).
+    SELECT _id, 'epoch' FROM new_organization
+    ON CONFLICT (organization) DO NOTHING
 )
--- New organization's `common` topic must be added in the database since it is locked
--- during organization bootstrap to handle concurrency.
-INSERT INTO common_topic (organization, last_timestamp)
--- Note the EPOCH (i.e. 1970-01-01T00:00:00Z) here !
--- This is because the `common` topic currently has no certificates
--- Notes:
--- - We don't use `NULL` here given this situation is very temporary (i.e. until the
---   organization is bootstrapped), and in the meantime the field is never read.
--- - We don't use `$created_on` here since a created-but-not-bootstrapped organization
---   can be overwritten, and in this case the `common` topic would also have to be
---   updated (which is not the case when using EPOCH).
-SELECT _id, 'epoch' FROM new_organization
-ON CONFLICT (organization) DO NOTHING
+SELECT _id FROM new_organization
 """
 )
 
@@ -281,7 +284,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if minimum_archiving_period is Unset:
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
 
-        result = await conn.execute(
+        organization_internal_id = await conn.fetchval(
             *_q_insert_organization(
                 organization_id=id.str,
                 bootstrap_token=bootstrap_token.hex,
@@ -293,10 +296,14 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 minimum_archiving_period=minimum_archiving_period,
             )
         )
-        if result == "INSERT 0 0":
-            return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
-        if result != "INSERT 0 1":
-            assert False, f"Insertion error: {result}"
+        match organization_internal_id:
+            case int():
+                pass
+            case None:
+                return OrganizationCreateBadOutcome.ORGANIZATION_ALREADY_EXISTS
+            case unknown:
+                assert False, repr(unknown)
+
         return bootstrap_token
 
     async def spontaneous_create(
@@ -310,7 +317,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             self._config.organization_initial_user_profile_outsider_allowed
         )
         minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
-        result = await conn.execute(
+        organization_internal_id = await conn.fetchval(
             *_q_insert_organization(
                 organization_id=organization_id.str,
                 bootstrap_token=None,
@@ -322,8 +329,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
                 minimum_archiving_period=minimum_archiving_period,
             )
         )
-        if result != "INSERT 0 1":
-            assert False, f"Insertion error: {result}"
+        match organization_internal_id:
+            case int():
+                pass
+            case unknown:
+                assert False, repr(unknown)
 
     @override
     @transaction
