@@ -268,8 +268,14 @@ LIMIT 1
 )
 
 
-_q_greeting_attempt_info = Q(
+_q_greeting_attempt_info_for_update = Q(
     f"""
+WITH locked_id AS (
+    SELECT _id FROM greeting_attempt
+    WHERE organization = { q_organization_internal_id("$organization_id") }
+    AND greeting_attempt_id = $greeting_attempt_id
+    FOR UPDATE
+)
 SELECT
     greeting_attempt._id,
     greeting_attempt.greeting_attempt_id,
@@ -289,15 +295,12 @@ SELECT
     greeting_attempt.cancelled_by,
     greeting_attempt.cancelled_reason,
     greeting_attempt.cancelled_on
-FROM greeting_attempt
+FROM locked_id
+INNER JOIN greeting_attempt ON locked_id._id = greeting_attempt._id
 INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
 INNER JOIN invitation ON greeting_session.invitation = invitation._id
 INNER JOIN device ON invitation.created_by = device._id
 INNER JOIN human ON device.user_ = human._id
-WHERE
-    greeting_attempt.organization = { q_organization_internal_id("$organization_id") }
-    AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
-LIMIT 1
 """
 )
 
@@ -1471,14 +1474,14 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_reason=deleted_reason,
         )
 
-    async def get_greeting_attempt_info(
+    async def get_greeting_attempt_info_for_update(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         greeting_attempt: GreetingAttemptID,
     ) -> GreetingAttemptInfo | None:
         row = await conn.fetchrow(
-            *_q_greeting_attempt_info(
+            *_q_greeting_attempt_info_for_update(
                 organization_id=organization_id.str, greeting_attempt_id=greeting_attempt
             )
         )
@@ -1691,7 +1694,7 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info(
+        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
             conn, organization_id, greeting_attempt
         )
         if greeting_attempt_info is None:
@@ -1734,7 +1737,7 @@ class PGInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info(
+        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
             conn, organization_id, greeting_attempt
         )
         if greeting_attempt_info is None:
@@ -1798,7 +1801,7 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStepBadOutcome.AUTHOR_REVOKED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info(
+        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
             conn, organization_id, greeting_attempt
         )
         if greeting_attempt_info is None:
@@ -1840,7 +1843,7 @@ class PGInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info(
+        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
             conn, organization_id, greeting_attempt
         )
         if greeting_attempt_info is None:
