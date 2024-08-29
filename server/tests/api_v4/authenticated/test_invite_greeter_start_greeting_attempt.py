@@ -4,6 +4,14 @@
 from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds
 from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds, invited_cmds
+from parsec._parsec import (
+    CancelledGreetingAttemptReason,
+    GreeterOrClaimer,
+    GreetingAttemptID,
+    InvitationToken,
+    authenticated_cmds,
+    invited_cmds,
+)
 from tests.common import Backend, CoolorgRpcClients
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
@@ -40,6 +48,24 @@ async def test_authenticated_invite_greeter_start_greeting_attempt_ok(
     second_greeting_attempt = rep.greeting_attempt
     assert second_greeting_attempt != first_greeting_attempt
 
+    # First attempt has been properly cancelled
+    rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
+        first_greeting_attempt,
+        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+    )
+    assert isinstance(
+        rep,
+        invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
+    )
+    assert (
+        rep
+        == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+            origin=GreeterOrClaimer.GREETER,
+            reason=CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
+            timestamp=rep.timestamp,
+        )
+    )
+
     # Claimer follows, getting the second greeting attempt
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
         greeter=coolorg.alice.user_id,
@@ -56,6 +82,24 @@ async def test_authenticated_invite_greeter_start_greeting_attempt_ok(
     third_greeting_attempt = rep.greeting_attempt
     assert third_greeting_attempt != first_greeting_attempt
     assert third_greeting_attempt != second_greeting_attempt
+
+    # Second attempt has been properly cancelled
+    rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
+        second_greeting_attempt,
+        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+    )
+    assert isinstance(
+        rep,
+        authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled,
+    )
+    assert (
+        rep
+        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
+            origin=GreeterOrClaimer.CLAIMER,
+            reason=CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
+            timestamp=rep.timestamp,
+        )
+    )
 
     # Greeter follows, getting the third greeting attempt
     rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
