@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import override
+from uuid import uuid4
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
@@ -57,7 +58,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.components.user import CheckDeviceBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -341,36 +342,113 @@ async def q_take_invitation_create_write_lock(
     the invitation creation procedure starts any checks involving the invitations.
     """
     await conn.execute(*_q_lock(organization_id=organization_id.str))
-_q_get_greeting_session_by_greeter = Q(
-    """
-SELECT
-    greeting_sessions._id,
-    greeting_sessions.invitation
-    greeting_sessions.greeter
-FROM greeting_sessions
-WHERE
-    greeting_sessions.greeter = $greeter_id
-    """
+
+
+_q_get_greeting_session = Q(
+    f"""
+WITH result AS (
+    INSERT INTO greeting_session(invitation, greeter)
+    VALUES (
+        $invitation_internal_id,
+        { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+    )
+    ON CONFLICT DO NOTHING
+    RETURNING greeting_session._id
+)
+SELECT _id FROM result
+UNION SELECT _id
+FROM greeting_session
+WHERE invitation = $invitation_internal_id
+AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
+LIMIT 1
+"""
 )
 
+_q_get_active_attempt = Q(
+    f"""
+WITH result AS (
+    INSERT INTO greeting_attempt(
+        organization,
+        greeting_attempt_id,
+        greeting_session,
+        cancelled_id
+    )
+    VALUES (
+        { q_organization_internal_id("$organization_id") },
+        $new_greeting_attempt_id,
+        $greeting_session_id,
+        NULL
+    )
+    ON CONFLICT DO NOTHING
+    RETURNING greeting_attempt._id, greeting_attempt_id
+)
+SELECT _id, greeting_attempt_id FROM result
+UNION SELECT _id, greeting_attempt_id
+FROM greeting_attempt
+WHERE greeting_session = $greeting_session_id
+AND cancelled_id IS NULL
+LIMIT 1
+"""
+)
 
-_q_get_greeting_attempt_for_session = Q(
+_q_greeter_join_or_cancel = Q(
     """
-SELECT
-    _id,
-    invitation,
-    greeter,
-    greeting_session,
-    claimer_joined,
-    greeter_joined,
-    cancelled_reason,
-    cancelled_on,
-    cancelled_by,
-    greeter_steps,
-    claimer_steps
-FROM greeting_attempts
-WHERE greeting_session = $session_id
+UPDATE greeting_attempt
+SET
+    greeter_joined = CASE WHEN greeter_joined IS NULL
+        THEN $now
+        ELSE greeter_joined
+        END,
+    cancelled_id = CASE WHEN greeter_joined IS NULL
+        THEN cancelled_id
+        ELSE $new_cancelled_id
+        END,
+    cancelled_reason = CASE WHEN greeter_joined IS NULL
+        THEN cancelled_reason
+        ELSE 'AUTOMATICALLY_CANCELLED'
+        END,
+    cancelled_on = CASE WHEN greeter_joined IS NULL
+        THEN cancelled_on
+        ELSE $now
+        END,
+    cancelled_by = CASE WHEN greeter_joined IS NULL
+        THEN cancelled_by
+        ELSE 'GREETER'
+        END
+WHERE
+    _id = $greeting_attempt_internal_id
+RETURNING cancelled_id
+"""
+)
+
+_q_claimer_join_or_cancel = Q(
     """
+UPDATE greeting_attempt
+SET
+    claimer_joined = CASE WHEN claimer_joined IS NULL
+        THEN $now
+        ELSE claimer_joined
+        END,
+    cancelled_id = CASE WHEN claimer_joined IS NULL
+        THEN cancelled_id
+        ELSE $new_cancelled_id
+        END,
+    cancelled_reason = CASE WHEN claimer_joined IS NULL
+        THEN cancelled_reason
+        ELSE 'AUTOMATICALLY_CANCELLED'
+        END,
+    cancelled_on = CASE WHEN claimer_joined IS NULL
+        THEN cancelled_on
+        ELSE $now
+        END,
+    cancelled_by = CASE WHEN claimer_joined IS NULL
+        THEN cancelled_by
+        ELSE 'CLAIMER'
+        END
+WHERE
+    _id = $greeting_attempt_internal_id
+RETURNING cancelled_id
+"""
 )
 
 
@@ -1128,6 +1206,129 @@ class PGInviteComponent(BaseInviteComponent):
     # New invite transport API
     # TODO: Remove the old API once the new one is fully functional
 
+    # Helpers
+
+    async def get_active_attempt(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        invitation_internal_id: int,
+    ) -> tuple[int, GreetingAttemptID]:
+        greeting_session_id = await conn.fetchval(
+            *_q_get_greeting_session(
+                invitation_internal_id=invitation_internal_id,
+                organization_id=organization_id.str,
+                greeter_user_id=greeter,
+            )
+        )
+        assert greeting_session_id is not None
+
+        new_greeting_attempt_id = GreetingAttemptID.new()
+        row = await conn.fetchrow(
+            *_q_get_active_attempt(
+                organization_id=organization_id.str,
+                greeting_session_id=greeting_session_id,
+                new_greeting_attempt_id=new_greeting_attempt_id,
+            )
+        )
+        assert row is not None
+        greeting_attempt_internal_id, greeting_attempt_id = row
+        greeting_attempt_id = GreetingAttemptID.from_hex(greeting_attempt_id)
+        return greeting_attempt_internal_id, greeting_attempt_id
+
+    async def greeter_join_or_cancel(
+        self,
+        conn: AsyncpgConnection,
+        greeting_attempt_internal_id: int,
+        now: DateTime,
+    ) -> bool:
+        cancelled_id = await conn.fetchval(
+            *_q_greeter_join_or_cancel(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                now=DateTime.now(),
+                new_cancelled_id=uuid4(),
+            )
+        )
+        return cancelled_id is None
+
+    async def claimer_join_or_cancel(
+        self,
+        conn: AsyncpgConnection,
+        greeting_attempt_internal_id: int,
+        now: DateTime,
+    ) -> bool:
+        cancelled_id = await conn.fetchval(
+            *_q_claimer_join_or_cancel(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                now=DateTime.now(),
+                new_cancelled_id=uuid4(),
+            )
+        )
+        return cancelled_id is None
+
+    async def new_attempt_for_greeter(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        invitation_internal_id: int,
+        now: DateTime,
+    ) -> GreetingAttemptID:
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_attempt(
+            conn,
+            organization_id=organization_id,
+            greeter=greeter,
+            invitation_internal_id=invitation_internal_id,
+        )
+        is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        while not is_active:
+            (
+                greeting_attempt_internal_id,
+                greeting_attempt_id,
+            ) = await self.get_active_attempt(
+                conn,
+                organization_id=organization_id,
+                greeter=greeter,
+                invitation_internal_id=invitation_internal_id,
+            )
+            is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        return greeting_attempt_id
+
+    async def new_attempt_for_claimer(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        invitation_internal_id: int,
+        now: DateTime,
+    ) -> GreetingAttemptID:
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_attempt(
+            conn,
+            organization_id=organization_id,
+            greeter=greeter,
+            invitation_internal_id=invitation_internal_id,
+        )
+        is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        while not is_active:
+            (
+                greeting_attempt_internal_id,
+                greeting_attempt_id,
+            ) = await self.get_active_attempt(
+                conn,
+                organization_id=organization_id,
+                greeter=greeter,
+                invitation_internal_id=invitation_internal_id,
+            )
+            is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        return greeting_attempt_id
+
     def is_greeter_allowed(
         self,
         invitation_type: InvitationType,
@@ -1141,6 +1342,8 @@ class PGInviteComponent(BaseInviteComponent):
             return greeter_profile == UserProfile.ADMIN
         else:
             raise NotImplementedError
+
+    # Transactions
 
     @override
     @transaction
@@ -1179,7 +1382,7 @@ class PGInviteComponent(BaseInviteComponent):
         if not row:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         (
-            _id,
+            invitation_internal_id,
             type,
             created_by_user_id_str,
             _created_by_device_id_str,
@@ -1196,15 +1399,12 @@ class PGInviteComponent(BaseInviteComponent):
             match status:
                 case InvitationStatus.FINISHED:
                     return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-
                 case InvitationStatus.CANCELLED:
                     return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
-
                 case InvitationStatus.READY | InvitationStatus.IDLE:
                     pass
-
                 case _:
-                    raise NotImplementedError
+                    assert False
 
         created_by_user_id = UserID.from_hex(created_by_user_id_str)
         if not self.is_greeter_allowed(
@@ -1212,21 +1412,88 @@ class PGInviteComponent(BaseInviteComponent):
         ):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
-        raise NotImplementedError
-
-        # greeting_session = invitation.get_greeting_session(greeter)
-        # greeting_attempt = greeting_session.new_attempt_for_greeter(org, now)
-        # return greeting_attempt.greeting_attempt
+        greeter_attempt_id = await self.new_attempt_for_greeter(
+            conn,
+            organization_id=organization_id,
+            greeter=greeter,
+            invitation_internal_id=invitation_internal_id,
+            now=now,
+        )
+        return greeter_attempt_id
 
     @override
+    @transaction
     async def claimer_start_greeting_attempt(
         self,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         token: InvitationToken,
         greeter: UserID,
     ) -> GreetingAttemptID | InviteClaimerStartGreetingAttemptBadOutcome:
-        raise NotImplementedError
+        match await self.organization._get(conn, organization_id):
+            case Organization() as org:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_user(conn, organization_id, greeter):
+            case (greeter_profile, _):
+                pass
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_FOUND
+            case CheckUserBadOutcome.USER_REVOKED:
+                return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
+
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
+        )
+
+        if not row:
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
+        (
+            invitation_internal_id,
+            type,
+            created_by_user_id_str,
+            _created_by_device_id_str,
+            _created_by_email,
+            _created_by_label,
+            _claimer_email,
+            _created_on,
+            deleted_on,
+            deleted_reason,
+        ) = row
+
+        if deleted_on:
+            status = InvitationStatus.from_str(deleted_reason)
+            match status:
+                case InvitationStatus.FINISHED:
+                    return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+
+                case InvitationStatus.CANCELLED:
+                    return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+                case InvitationStatus.READY | InvitationStatus.IDLE:
+                    pass
+                case _:
+                    assert False
+
+        created_by_user_id = UserID.from_hex(created_by_user_id_str)
+        if not self.is_greeter_allowed(
+            InvitationType.from_str(type), created_by_user_id, greeter, greeter_profile
+        ):
+            return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
+
+        greeter_attempt_id = await self.new_attempt_for_claimer(
+            conn,
+            organization_id=organization_id,
+            greeter=greeter,
+            invitation_internal_id=invitation_internal_id,
+            now=now,
+        )
+        return greeter_attempt_id
 
     @override
     async def greeter_cancel_greeting_attempt(
@@ -1331,15 +1598,12 @@ class PGInviteComponent(BaseInviteComponent):
             match status:
                 case InvitationStatus.FINISHED:
                     return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
-
                 case InvitationStatus.CANCELLED:
                     return InviteCompleteBadOutcome.INVITATION_CANCELLED
-
                 case InvitationStatus.READY | InvitationStatus.IDLE:
                     pass
-
                 case _:
-                    raise NotImplementedError
+                    assert False
 
         match await self.user.get_user_info(conn, organization_id, author_user_id):
             case UserInfo() as author_info:
