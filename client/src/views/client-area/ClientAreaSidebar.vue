@@ -3,35 +3,70 @@
 <template>
   <ion-header class="sidebar-header">
     <ion-card class="organization-card">
-      <ion-card-header
-        class="organization-card-header"
-        @click="openOrganizationChoice($event)"
-        v-show="organizations.length > 0"
-      >
-        <div
-          class="card-header"
-          v-if="!isDefaultOrganization(organization)"
+      <template v-if="organizations.length > 0">
+        <ion-card-header
+          class="organization-card-header"
+          @click="openOrganizationChoice($event)"
         >
-          <ion-avatar class="card-header-avatar">
-            <span>{{ organization.parsecId.substring(0, 2) }}</span>
-          </ion-avatar>
-          <ion-card-title class="card-header-title title-h3">
-            {{ organization.parsecId }}
-          </ion-card-title>
-        </div>
-        <div
-          class="card-header"
-          v-else
-        >
-          <ion-card-title class="card-header-title title-h3">
-            {{ $msTranslate('clientArea.sidebar.allOrganization') }}
-          </ion-card-title>
-        </div>
+          <div
+            class="card-header"
+            v-if="!isDefaultOrganization(organization)"
+          >
+            <ion-avatar class="card-header-avatar">
+              <span>{{ organization.parsecId.substring(0, 2) }}</span>
+            </ion-avatar>
+            <ion-card-title class="card-header-title title-h3">
+              {{ organization.parsecId }}
+            </ion-card-title>
+          </div>
+          <div
+            class="card-header"
+            v-else
+          >
+            <ion-card-title class="card-header-title title-h3">
+              {{ $msTranslate('clientArea.sidebar.allOrganization') }}
+            </ion-card-title>
+          </div>
 
-        <div class="card-header-icon">
-          <ms-image :image="ChevronExpand" />
+          <div class="card-header-icon">
+            <ms-image :image="ChevronExpand" />
+          </div>
+        </ion-card-header>
+      </template>
+      <template v-else-if="!querying && organizations.length === 0">
+        <ion-card-header
+          class="organization-card-header no-organization"
+          @click="openOrganizationChoice($event)"
+        >
+          <div class="no-organization-title">
+            <ion-text class="no-organization-title__text subtitles-normal">
+              {{ $msTranslate('clientArea.sidebar.noOrganization') }}
+            </ion-text>
+            <ms-information-tooltip
+              :text="$msTranslate('clientArea.sidebar.noOrganizationDescription')"
+              slot="end"
+              class="no-organization-title__icon"
+            />
+          </div>
+          <ion-text
+            button
+            class="organization-card-button custom-button custom-button-fill button-medium"
+            v-show="showMenu"
+            @click="createOrganization"
+          >
+            <ion-icon :icon="add" />
+            {{ $msTranslate('clientArea.sidebar.createFirstOrganization') }}
+          </ion-text>
+        </ion-card-header>
+      </template>
+      <template v-else-if="querying">
+        <div class="skeleton-header">
+          <ion-skeleton-text
+            :animated="true"
+            class="skeleton-header-organization"
+          />
         </div>
-      </ion-card-header>
+      </template>
 
       <!-- show it only when there is one organization selected -->
       <template v-if="!isDefaultOrganization(organization) && status">
@@ -52,22 +87,6 @@
           button
         >
           {{ $msTranslate(isDefaultOrganization(organization) ? 'clientArea.sidebar.goToHome' : 'clientArea.sidebar.goToOrganization') }}
-        </ion-text>
-      </div>
-      <div
-        class="organization-card-button custom-button custom-button-fill"
-        v-show="showMenu"
-        @click="createOrganization"
-      >
-        <ion-text
-          class="button-medium"
-          button
-        >
-          {{
-            $msTranslate(
-              organizations.length === 0 ? 'clientArea.sidebar.createFirstOrganization' : 'clientArea.sidebar.createNewOrganization',
-            )
-          }}
         </ion-text>
       </div>
     </ion-card>
@@ -227,8 +246,8 @@
 </template>
 
 <script setup lang="ts">
-import { ChevronExpand, MsImage, MsModalResult } from 'megashark-lib';
-import { card, chatbubbleEllipses, podium, grid, idCard, newspaper } from 'ionicons/icons';
+import { ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
+import { card, chatbubbleEllipses, podium, grid, idCard, newspaper, add } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
@@ -264,6 +283,7 @@ const status = ref<OrganizationStatusResultData | null>(null);
 const billingSystem = ref(BmsAccessInstance.get().getPersonalInformation().billingSystem);
 const organizations = ref<Array<BmsOrganization>>([]);
 const showMenu = ref(false);
+const querying = ref(false);
 
 const emits = defineEmits<{
   (e: 'pageSelected', page: ClientAreaPages): void;
@@ -275,6 +295,7 @@ async function goToPageClicked(page: ClientAreaPages): Promise<void> {
 }
 
 onMounted(async () => {
+  querying.value = true;
   if (isDefaultOrganization(props.organization)) {
     status.value = null;
   } else {
@@ -287,6 +308,7 @@ onMounted(async () => {
   if (!response.isError && response.data && response.data.type === DataType.ListOrganizations) {
     organizations.value = response.data.organizations;
   }
+  querying.value = false;
   if (billingSystem.value === BillingSystem.CustomOrder || billingSystem.value === BillingSystem.ExperimentalCandidate) {
     const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(props.organization);
     showMenu.value = true;
@@ -339,6 +361,12 @@ async function createOrganization(): Promise<void> {
 <style scoped lang="scss">
 .sidebar-header {
   padding: 2rem 1.5rem 0;
+}
+
+.skeleton-header-organization {
+  width: 100%;
+  height: 3rem;
+  margin-bottom: 3rem;
 }
 
 .sidebar-content {
@@ -421,13 +449,48 @@ async function createOrganization(): Promise<void> {
     }
   }
 
-  &-state {
-    margin-inline: 0.5rem;
-    color: var(--parsec-color-light-secondary-grey);
+  .no-organization {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-radius: var(--parsec-radius-12);
+    background: var(--parsec-color-light-secondary-premiere);
+    border: 1px solid var(--parsec-color-light-secondary-medium);
+    padding: 1.5rem 1rem;
+    margin-bottom: 1rem;
+    cursor: default;
 
-    span {
-      color: var(--parsec-color-light-primary-500);
-      font-weight: bold;
+    &-title {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+
+      &__text {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__icon {
+        color: var(--parsec-color-light-secondary-grey);
+        font-size: 1.125rem;
+        cursor: pointer;
+
+        &:hover {
+          color: var(--parsec-color-light-secondary-text);
+        }
+      }
+    }
+
+    .organization-card-button {
+      background: var(--parsec-color-light-secondary-text);
+      color: var(--parsec-color-light-secondary-white);
+      align-items: center;
+
+      &:hover {
+        cursor: pointer;
+        background: var(--parsec-color-light-secondary-contrast);
+      }
     }
   }
 }
