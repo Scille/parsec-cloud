@@ -97,14 +97,6 @@ repos:
       - id: shellcheck
         args: [--exclude=SC1090, --severity=warning]
 
-  # SQLFluff, The SQL Linter for Humans
-  #
-  # See https://docs.sqlfluff.com/en/stable/index.html
-  - repo: https://github.com/sqlfluff/sqlfluff
-    rev: 3.1.0
-    hooks:
-      - id: sqlfluff-lint
-
   ########
   # Python
 
@@ -168,11 +160,20 @@ repos:
         args: [--project=server/]
 
       - id: deptry
-        name: deptry
+        name: deptry (using `poetry run deptry server`)
         entry: poetry --directory ./server run deptry server --config=server/pyproject.toml
         files: ^server/
         types_or: [python, pyproj]
         pass_filenames: false  # no need to pass filenames, deptry expects only the root directory to scan
+        require_serial: true
+        language: system
+
+      - id: sqlfluff
+        name: SQLFluff (using `poetry run ./misc/lint_sql.py`)
+        entry: poetry --directory ./server run ./misc/lint_sql.py --fix
+        types_or: [python, sql]
+        # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
+        files: ^(server/parsec/components/postgresql/migrations/)|(libparsec/crates/platform_storage/src/native/)
         require_serial: true
         language: system
 
