@@ -33,7 +33,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
-  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Organization name and server address');
+  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeHidden();
@@ -205,7 +205,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   const modal = home.locator('.create-organization-modal');
 
   const orgServerContainer = modal.locator('.organization-name-and-server-page');
-  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Organization name and server address');
+  await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
   await expect(orgPrevious).toBeHidden();

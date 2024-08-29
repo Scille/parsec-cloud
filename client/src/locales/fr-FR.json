@@ -177,22 +177,23 @@
         "organizationName": "Nom de l'organisation",
         "organizationNameCriteria": "Lettres, chiffres, tirets et tirets bas seulement. Aucun espace. Limité à 32 symboles.",
         "organizationNamePlaceholder": "MonOrganisation",
-        "serverDescription": "Serveur de l'organisation",
-        "useParsecServer": "Utiliser le serveur PARSEC principal",
-        "useMyOwnServer": "Je dispose de mon propre serveur PARSEC",
+        "serverAddress": "Adresse du serveur Parsec",
+        "serverAddressPlaceholder": "parsec3://",
+        "useParsecServer": "Utiliser le serveur Parsec principal",
+        "useMyOwnServer": "Je dispose de mon propre serveur Parsec",
         "saas": "Parsec SaaS",
         "customServer": "Serveur personnel",
         "keyringChoice": "Authentification du système",
         "passwordChoice": "Mot de passe",
         "acceptTOS": {
-            "label": "En utilisant le serveur PARSEC, j'accepte les",
+            "label": "En utilisant le serveur Parsec, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
             "tosLink": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
             "and": "et la ",
             "privacyPolicy": "Politique de Confidentialité",
             "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/"
         },
-        "parsecServerUrl": "URL de votre serveur PARSEC",
+        "parsecServerUrl": "URL de votre serveur Parsec",
         "loading": "Un instant, nous mettons en place votre organisation",
         "organizationCreated": "Vous pouvez accéder à votre nouvelle organisation",
         "title": {
@@ -202,13 +203,13 @@
             "authentication": "Authentification",
             "overview": "Récapitulatif de votre organisation",
             "done": "Votre organisation a bien été créée !",
-            "nameAndServer": "Nom d'organisation et adresse du serveur"
+            "nameAndServer": "Créer une organisation sur mon serveur Parsec"
         },
         "subtitle": {
             "nameYourOrg": "Choisissez le nom de votre organisation.",
             "personalDetails": "Renseignez votre nom et votre email.",
             "server": "Choisissez le type de serveur dont vous avez besoin.",
-            "needs": "Quel est votre besoin sur Parsec ?",
+            "needs": "Choisissez l'option qui correspond le mieux à vos besoins :",
             "authentication": "Choisissez votre méthode d'authentification.",
             "overview": "Vérifiez que les informations sont correctes."
         },
@@ -228,13 +229,13 @@
             "continue": "Continuer"
         },
         "server": {
-            "saas": "Stocker mes données avec Parsec Share",
+            "saas": "Créer mon organisation sur Parsec Share",
             "soon": "Bientôt disponible",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
-                "description": "(Données non conservées après la période d'essai)"
+                "description": "(Votre organisation et les données associées seront supprimées à la fin de la période d'essai)"
             },
-            "ownServer": "J'ai configuré mon propre serveur"
+            "ownServer": "Utiliser un autre serveur Parsec"
         },
         "errors": {
             "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
@@ -249,8 +250,8 @@
         "cancelNo": "Reprendre"
     },
     "JoinByLinkModal": {
-        "pageTitle": "Rejoindre par lien",
-        "pleaseEnterUrl": "Veuillez entrer l'URL de l'organisation",
+        "pageTitle": "Rejoindre une organisation",
+        "pleaseEnterUrl": "Si vous avez reçu un lien d'invitation, veuillez le coller ci-dessous.",
         "join": "Rejoindre"
     },
     "QuestionModal": {
@@ -1362,7 +1363,7 @@
                 "organization": "Organisation",
                 "date": "Date de facturation",
                 "price": {
-                    "title": "Prix",
+                    "title": "Montant",
                     "amount": "{count} €"
                 },
                 "status": "Status",
@@ -1466,7 +1467,7 @@
                 "date": "Date",
                 "organization": "Organisation",
                 "price": {
-                    "title": "Quantité",
+                    "title": "Montant",
                     "amount": "{count} €"
                 },
                 "status": "Statut",

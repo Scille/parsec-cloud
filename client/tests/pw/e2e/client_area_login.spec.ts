@@ -56,7 +56,7 @@ msTest('Switch pages', async ({ clientArea }) => {
     { button: 'Dashboard', title: 'Dashboard', url: 'dashboard' },
     { button: 'Statistics', title: 'Statistics', url: 'statistics' },
     { button: 'Invoices', title: 'Invoices', url: 'invoices' },
-    { button: 'Billing method', title: 'Payment methods', url: 'payment-methods' },
+    { button: 'Payment method', title: 'Payment methods', url: 'payment-methods' },
     { button: 'Billing details', title: 'Billing details', url: 'billing-details' },
   ];
 

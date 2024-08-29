@@ -24,7 +24,8 @@
       </div>
 
       <ms-input
-        :label="'CreateOrganization.serverDescription'"
+        :label="'CreateOrganization.serverAddress'"
+        :placeholder="'CreateOrganization.serverAddressPlaceholder'"
         id="server-addr-input"
         v-model="serverAddr"
         :disabled="disableServerAddrField"

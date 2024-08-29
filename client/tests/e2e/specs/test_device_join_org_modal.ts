@@ -21,7 +21,7 @@ describe('Claim new device', () => {
     cy.get('.popover-viewport').find('ion-item').last().click();
 
     cy.get('.text-input-modal').should('exist');
-    cy.get('.text-input-modal').find('ion-title').contains('Join by link');
+    cy.get('.text-input-modal').find('ion-title').contains('Join an organization');
     cy.get('.text-input-modal').find('#next-button').as('joinButton').contains('Join');
     cy.get('@joinButton').should('have.attr', 'disabled');
 
