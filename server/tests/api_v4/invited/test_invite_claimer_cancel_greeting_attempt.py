@@ -22,12 +22,6 @@ from tests.common import (
 )
 
 
-# TODO: Remove once PostgreSQL is supported
-@pytest.fixture(autouse=True)
-def _skip_if_postgresql(skip_if_postgresql: None) -> None:  # type: ignore
-    pass
-
-
 @pytest.fixture
 async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
     outcome = await backend.invite.claimer_start_greeting_attempt(
