@@ -17,11 +17,57 @@ from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
 async def test_invited_invite_claimer_start_greeting_attempt_ok(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
+    # This is a scenario where the claimer starts first.
+    # See `test_authenticated_invite_greeter_start_greeting_attempt_ok` for the opposite scenario.
+    invitation_token = coolorg.invited_alice_dev3.token
+
+    # Claimer goes first
     rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
         greeter=coolorg.alice.user_id,
     )
     assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
     assert isinstance(rep.greeting_attempt, GreetingAttemptID)
+    first_greeting_attempt = rep.greeting_attempt
+
+    # Greeter goes second, getting the same greeting attempt
+    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+        token=invitation_token,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    assert rep.greeting_attempt == first_greeting_attempt
+
+    # Claimer starts again, getting a second greeting attempt
+    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+        greeter=coolorg.alice.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    assert isinstance(rep.greeting_attempt, GreetingAttemptID)
+    second_greeting_attempt = rep.greeting_attempt
+    assert second_greeting_attempt != first_greeting_attempt
+
+    # Greeter follows, getting the second greeting attempt
+    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+        token=invitation_token,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    assert rep.greeting_attempt == second_greeting_attempt
+
+    # Greeter starts again, getting a third greeting attempt
+    rep = await coolorg.alice.invite_greeter_start_greeting_attempt(
+        token=invitation_token,
+    )
+    assert isinstance(rep, authenticated_cmds.v4.invite_greeter_start_greeting_attempt.RepOk)
+    assert isinstance(rep.greeting_attempt, GreetingAttemptID)
+    third_greeting_attempt = rep.greeting_attempt
+    assert third_greeting_attempt != first_greeting_attempt
+    assert third_greeting_attempt != second_greeting_attempt
+
+    # Claimer follows, getting the third greeting attempt
+    rep = await coolorg.invited_alice_dev3.invite_claimer_start_greeting_attempt(
+        greeter=coolorg.alice.user_id,
+    )
+    assert isinstance(rep, invited_cmds.v4.invite_claimer_start_greeting_attempt.RepOk)
+    assert rep.greeting_attempt == third_greeting_attempt
 
 
 async def test_invited_invite_claimer_start_greeting_attempt_greeter_not_found(
