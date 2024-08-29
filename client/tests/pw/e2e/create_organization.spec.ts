@@ -16,12 +16,12 @@ msTest('Opens the create organization modal', async ({ home }) => {
   const modal = home.locator('.create-organization-modal');
   await expect(modal).toBeVisible();
   await expect(modal.locator('.modal-header-title__text')).toHaveText('Create an organization');
-  await expect(modal.locator('.modal-header__text')).toHaveText('What is your need for Parsec?');
+  await expect(modal.locator('.modal-header__text')).toHaveText('Choose the option that best suits your needs:');
   await expect(modal.locator('.server-choice-item').locator('.server-choice-item__label')).toHaveText([
-    'Store my data with Parsec Share',
-    'Try Parsec for 15 days (Data are erased after the trial period)',
+    'Create my organization on Parsec Share',
+    'Try Parsec for 15 days (Your organization and associated data will be deleted at the end of the trial period)',
   ]);
-  await expect(modal.locator('.server-modal-footer').locator('ion-button').nth(0)).toHaveText('I have set up my own server');
+  await expect(modal.locator('.server-modal-footer').locator('ion-button').nth(0)).toHaveText('Use a different Parsec server');
 
   // Select one option
   const nextButton = modal.locator('.server-modal-footer').locator('ion-button').nth(1);

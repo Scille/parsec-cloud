@@ -177,22 +177,23 @@
         "organizationName": "Organization name",
         "organizationNameCriteria": "Letters, digits, underscores and hyphens only. No spaces. Limited to 32 characters.",
         "organizationNamePlaceholder": "MyOrganization",
-        "serverDescription": "Organization server",
-        "useParsecServer": "Use the main PARSEC server",
-        "useMyOwnServer": "I have my own PARSEC server",
+        "serverAddress": "Parsec server address",
+        "serverAddressPlaceholder": "parsec3://",
+        "useParsecServer": "Use the main Parsec server",
+        "useMyOwnServer": "I have my own Parsec server",
         "saas": "Parsec SaaS",
         "customServer": "Custom Server",
         "keyringChoice": "System authentication",
         "passwordChoice": "Password",
         "acceptTOS": {
-            "label": "I accept PARSEC's ",
+            "label": "I accept Parsec Share's ",
             "tos": "Terms and Conditions ",
             "tosLink": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-en.pdf",
             "and": "and ",
             "privacyPolicy": "Privacy Policy",
             "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/"
         },
-        "parsecServerUrl": "URL of your PARSEC server",
+        "parsecServerUrl": "URL of your Parsec server",
         "loading": "Just a moment, we are setting up your organization",
         "organizationCreated": "You can access your new organization",
         "title": {
@@ -202,12 +203,12 @@
             "authentication": "Authentication",
             "overview": "Overview of your organization",
             "done": "Your organization has been created!",
-            "nameAndServer": "Organization name and server address"
+            "nameAndServer": "Create organization on my Parsec server"
         },
         "subtitle": {
             "nameYourOrg": "Choose your organization name.",
             "personalDetails": "Fill in your name and email.",
-            "needs": "What is your need for Parsec?",
+            "needs": "Choose the option that best suits your needs:",
             "server": "Choose your desired server type.",
             "authentication": "Choose an authentication method.",
             "overview": "Verify that the information is correct."
@@ -228,13 +229,13 @@
             "continue": "Continue"
         },
         "server": {
-            "saas": "Store my data with Parsec Share",
+            "saas": "Create my organization on Parsec Share",
             "soon": "Available soon",
             "trial": {
                 "title": "Try Parsec for 15 days",
-                "description": "(Data are erased after the trial period)"
+                "description": "(Your organization and associated data will be deleted at the end of the trial period)"
             },
-            "ownServer": "I have set up my own server"
+            "ownServer": "Use a different Parsec server"
         },
         "errors": {
             "timestampOutOfBallpark": "Your device time differs from the server time. Please check your device clock and make sure it is up-to-date (your device time is {clientTime}, server time is {serverTime}).",
@@ -249,8 +250,8 @@
         "cancelNo": "Resume"
     },
     "JoinByLinkModal": {
-        "pageTitle": "Join by link",
-        "pleaseEnterUrl": "Please enter the organization URL",
+        "pageTitle": "Join an organization",
+        "pleaseEnterUrl": "If you have received an invitation link, please paste it below.",
         "join": "Join"
     },
     "QuestionModal": {
@@ -1210,7 +1211,7 @@
                 "summary": "Dashboard",
                 "stats": "Statistics",
                 "invoices": "Invoices",
-                "billingMethod": "Billing method",
+                "billingMethod": "Payment method",
                 "billingDetails": "Billing details",
                 "contracts": "Contract"
             },
@@ -1362,7 +1363,7 @@
                 "organization": "Organization",
                 "date": "Billing date",
                 "price": {
-                    "title": "Price",
+                    "title": "Amount",
                     "amount": " €{count}"
                 },
                 "status": "Status",
@@ -1407,7 +1408,7 @@
             "activeMethodLabel": "active",
             "activeDefault": "Default card used",
             "retrieveFailed": "Failed to retrieve payment methods.",
-            "savedCard": "Saved card",
+            "savedCard": "Saved cards",
             "setDefault": "Set as default",
             "delete": "Delete",
             "noPaymentMethods": "You don't have a payment method set.",
