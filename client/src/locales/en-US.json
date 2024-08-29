@@ -1200,8 +1200,10 @@
             "goToOrganization": "Go to organization",
             "goToHome": "Go to home",
             "createNewOrganization": "Create a new organization",
-            "createFirstOrganization": "Create your first organization",
+            "createFirstOrganization": "Create my organization",
             "allOrganization": "All organizations",
+            "noOrganization": "No organization",
+            "noOrganizationDescription": "Create your first organization to start using Parsec.",
             "state": {
                 "title": "State: ",
                 "active": "Active",
