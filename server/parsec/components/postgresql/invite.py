@@ -1767,8 +1767,10 @@ class PGInviteComponent(BaseInviteComponent):
         )
 
     @override
+    @transaction
     async def greeter_step(
         self,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -1777,11 +1779,52 @@ class PGInviteComponent(BaseInviteComponent):
         step_index: int,
         greeter_data: bytes,
     ) -> bytes | NotReady | InviteGreeterStepBadOutcome | GreetingAttemptCancelledBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case Organization() as org:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteGreeterStepBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteGreeterStepBadOutcome.ORGANIZATION_EXPIRED
+
+        match await self.user._check_device(conn, organization_id, author):
+            case (greeter_user_id, greeter_profile, _):
+                assert greeter == greeter_user_id
+                pass
+            case CheckDeviceBadOutcome.DEVICE_NOT_FOUND:
+                return InviteGreeterStepBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_NOT_FOUND:
+                return InviteGreeterStepBadOutcome.AUTHOR_NOT_FOUND
+            case CheckDeviceBadOutcome.USER_REVOKED:
+                return InviteGreeterStepBadOutcome.AUTHOR_REVOKED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt
+        )
+        if greeting_attempt_info is None:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if greeting_attempt_info.invitation_info.is_finished():
+            return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
+        if greeting_attempt_info.invitation_info.is_cancelled():
+            return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
+
+        if not self.is_greeter_allowed(
+            greeting_attempt_info.invitation_info, greeter, greeter_profile
+        ):
+            return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
+
+        if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
+            return GreetingAttemptCancelledBadOutcome(*cancelled_info)
+        if greeting_attempt_info.greeter_joined is None:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
         raise NotImplementedError
 
     @override
+    @transaction
     async def claimer_step(
         self,
+        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         token: InvitationToken,
@@ -1789,6 +1832,42 @@ class PGInviteComponent(BaseInviteComponent):
         step_index: int,
         claimer_data: bytes,
     ) -> bytes | NotReady | InviteClaimerStepBadOutcome | GreetingAttemptCancelledBadOutcome:
+        match await self.organization._get(conn, organization_id):
+            case Organization() as org:
+                pass
+            case OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND:
+                return InviteClaimerStepBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt
+        )
+        if greeting_attempt_info is None:
+            return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if greeting_attempt_info.invitation_info.is_finished():
+            return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
+        if greeting_attempt_info.invitation_info.is_cancelled():
+            return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
+
+        match await self.user._check_user(conn, organization_id, greeting_attempt_info.greeter):
+            case (greeter_profile, _):
+                pass
+            case CheckUserBadOutcome.USER_NOT_FOUND:
+                assert False
+            case CheckUserBadOutcome.USER_REVOKED:
+                return InviteClaimerStepBadOutcome.GREETER_REVOKED
+
+        if not self.is_greeter_allowed(
+            greeting_attempt_info.invitation_info, greeting_attempt_info.greeter, greeter_profile
+        ):
+            return InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED
+
+        if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
+            return GreetingAttemptCancelledBadOutcome(*cancelled_info)
+        if greeting_attempt_info.claimer_joined is None:
+            return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
+
         raise NotImplementedError
 
     @override
