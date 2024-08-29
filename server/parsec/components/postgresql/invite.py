@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import override
 from uuid import uuid4
 
@@ -61,6 +62,27 @@ from parsec.components.postgresql.utils import (
 from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
+
+
+@dataclass(frozen=True)
+class InvitationInfo:
+    internal_id: int
+    type: InvitationType
+    created_by_user_id: UserID
+    created_by_device_id: DeviceID
+    created_by_email: str
+    created_by_label: str
+    claimer_email: str
+    created_on: DateTime
+    deleted_on: DateTime | None
+    deleted_reason: InvitationStatus | None
+
+    def is_finished(self) -> bool:
+        return self.deleted_reason == InvitationStatus.FINISHED
+
+    def is_cancelled(self) -> bool:
+        return self.deleted_reason == InvitationStatus.CANCELLED
+
 
 _q_retrieve_compatible_user_invitation = Q(
     f"""
@@ -1331,17 +1353,55 @@ class PGInviteComponent(BaseInviteComponent):
 
     def is_greeter_allowed(
         self,
-        invitation_type: InvitationType,
-        invitation_created_by: UserID,
+        invitation_info: InvitationInfo,
         greeter_id: UserID,
         greeter_profile: UserProfile,
     ) -> bool:
-        if invitation_type == InvitationType.DEVICE:
-            return invitation_created_by == greeter_id
-        elif invitation_type == InvitationType.USER:
+        if invitation_info.type == InvitationType.DEVICE:
+            return invitation_info.created_by_user_id == greeter_id
+        elif invitation_info.type == InvitationType.USER:
             return greeter_profile == UserProfile.ADMIN
         else:
             raise NotImplementedError
+
+    async def get_invitation_info(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+    ) -> InvitationInfo | None:
+        row = await conn.fetchrow(
+            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
+        )
+        if not row:
+            return None
+        (
+            invitation_internal_id,
+            type,
+            created_by_user_id_str,
+            created_by_device_id_str,
+            created_by_email,
+            created_by_label,
+            claimer_email,
+            created_on,
+            deleted_on,
+            deleted_reason,
+        ) = row
+        deleted_reason = (
+            InvitationStatus.from_str(deleted_reason) if deleted_reason is not None else None
+        )
+        return InvitationInfo(
+            internal_id=invitation_internal_id,
+            type=InvitationType.from_str(type),
+            created_by_user_id=UserID.from_hex(created_by_user_id_str),
+            created_by_device_id=DeviceID.from_hex(created_by_device_id_str),
+            created_by_email=created_by_email,
+            created_by_label=created_by_label,
+            claimer_email=claimer_email,
+            created_on=created_on,
+            deleted_on=deleted_on,
+            deleted_reason=deleted_reason,
+        )
 
     # Transactions
 
@@ -1375,48 +1435,22 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
-
-        if not row:
+        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        if invitation_info is None:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
-        (
-            invitation_internal_id,
-            type,
-            created_by_user_id_str,
-            _created_by_device_id_str,
-            _created_by_email,
-            _created_by_label,
-            _claimer_email,
-            _created_on,
-            deleted_on,
-            deleted_reason,
-        ) = row
+        if invitation_info.is_finished():
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if deleted_on:
-            status = InvitationStatus.from_str(deleted_reason)
-            match status:
-                case InvitationStatus.FINISHED:
-                    return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-                case InvitationStatus.CANCELLED:
-                    return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
-                case InvitationStatus.READY | InvitationStatus.IDLE:
-                    pass
-                case _:
-                    assert False
-
-        created_by_user_id = UserID.from_hex(created_by_user_id_str)
-        if not self.is_greeter_allowed(
-            InvitationType.from_str(type), created_by_user_id, greeter, greeter_profile
-        ):
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeter_attempt_id = await self.new_attempt_for_greeter(
             conn,
             organization_id=organization_id,
             greeter=greeter,
-            invitation_internal_id=invitation_internal_id,
+            invitation_internal_id=invitation_info.internal_id,
             now=now,
         )
         return greeter_attempt_id
@@ -1447,50 +1481,22 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
 
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
-
-        if not row:
+        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        if invitation_info is None:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
-        (
-            invitation_internal_id,
-            type,
-            created_by_user_id_str,
-            _created_by_device_id_str,
-            _created_by_email,
-            _created_by_label,
-            _claimer_email,
-            _created_on,
-            deleted_on,
-            deleted_reason,
-        ) = row
+        if invitation_info.is_finished():
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        if deleted_on:
-            status = InvitationStatus.from_str(deleted_reason)
-            match status:
-                case InvitationStatus.FINISHED:
-                    return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_COMPLETED
-
-                case InvitationStatus.CANCELLED:
-                    return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_CANCELLED
-
-                case InvitationStatus.READY | InvitationStatus.IDLE:
-                    pass
-                case _:
-                    assert False
-
-        created_by_user_id = UserID.from_hex(created_by_user_id_str)
-        if not self.is_greeter_allowed(
-            InvitationType.from_str(type), created_by_user_id, greeter, greeter_profile
-        ):
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
         greeter_attempt_id = await self.new_attempt_for_claimer(
             conn,
             organization_id=organization_id,
             greeter=greeter,
-            invitation_internal_id=invitation_internal_id,
+            invitation_internal_id=invitation_info.internal_id,
             now=now,
         )
         return greeter_attempt_id
@@ -1575,53 +1581,28 @@ class PGInviteComponent(BaseInviteComponent):
         if current_profile != UserProfile.ADMIN:
             return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
-
-        if not row:
+        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        if invitation_info is None:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
-        (
-            _id,
-            type,
-            created_by_user_id_str,
-            _created_by_device_id_str,
-            _created_by_email,
-            _created_by_label,
-            claimer_email,
-            _created_on,
-            deleted_on,
-            deleted_reason,
-        ) = row
-        if deleted_on:
-            status = InvitationStatus.from_str(deleted_reason)
-            match status:
-                case InvitationStatus.FINISHED:
-                    return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
-                case InvitationStatus.CANCELLED:
-                    return InviteCompleteBadOutcome.INVITATION_CANCELLED
-                case InvitationStatus.READY | InvitationStatus.IDLE:
-                    pass
-                case _:
-                    assert False
+        if invitation_info.is_finished():
+            return InviteCompleteBadOutcome.INVITATION_ALREADY_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteCompleteBadOutcome.INVITATION_CANCELLED
 
         match await self.user.get_user_info(conn, organization_id, author_user_id):
             case UserInfo() as author_info:
                 pass
             case None:
                 return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
-        created_by_user_id = UserID.from_hex(created_by_user_id_str)
 
         # Only the greeter or the claimer can complete the invitation
-        if not self.is_greeter_allowed(
-            InvitationType.from_str(type), created_by_user_id, author_user_id, current_profile
-        ):
-            if not claimer_email == author_info.human_handle.email:
+        if not self.is_greeter_allowed(invitation_info, author_user_id, current_profile):
+            if not invitation_info.claimer_email == author_info.human_handle.email:
                 return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
         await conn.execute(
             *_q_delete_invitation(
-                row_id=row["_id"],
+                row_id=invitation_info.internal_id,
                 on=now,
                 reason="FINISHED",  # TODO: use an enum
             )
