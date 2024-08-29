@@ -114,10 +114,25 @@ deleted_topics_realm AS (
     WHERE organization in (select * from deleted_organizations)
     OR realm in (select * from deleted_realms)
     RETURNING _id
+),
+deleted_greeting_sessions AS (
+    DELETE FROM greeting_session
+    WHERE invitation in (select * from deleted_invitations)
+    RETURNING _id
+),
+deleted_greeting_attempts AS (
+    DELETE FROM greeting_attempt
+    WHERE organization in (select * from deleted_organizations)
+    RETURNING _id
 )
 SELECT 1
 """
 )
+
+
+# TODO: Also duplicate the following tables
+# - greeting_session
+# - greeting_attempt
 
 q_test_duplicate_organization = Q(
     f"""
