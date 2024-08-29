@@ -171,15 +171,23 @@ jobs:
         run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy")) | first | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
+      - name: Check rust code format
+        run: cargo fmt --check
+        timeout-minutes: 2
+
+      - name: SQL lint
+        # Cannot use `./misc/lint_sql.py` here since it would require us to install the
+        # whole Python server project.
+        run: |
+          set -eux
+          pipx install sqlfluff
+          sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
+
       # Clippy basically compile the project, hence it's faster to run it in
       # the job where compilation cache is reused !
       - name: Check cargo-clippy
         run: cargo clippy ${{ env.CARGO_CI_FLAGS }} --verbose ${{ steps.clippy-args.outputs.args }}
         timeout-minutes: 10
-
-      - name: Check rust code format
-        run: cargo fmt --check
-        timeout-minutes: 2
 
       - name: Check restricted usage with cargo-deny
         if: inputs.check-cargo-deny

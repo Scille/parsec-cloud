@@ -183,13 +183,24 @@ jobs:
         with:
           tool: taplo-cli@0.9.3
 
-      # Clippy basically compile the project, hence it's faster to run it in
-      # the test-rust-matrix job where compilation cache is reused !
+      # Why some checks are skipped:
+      # - `clippy`: Clippy basically compile the project, hence it's faster to run
+      #   it in the `test-rust-matrix` job where compilation cache is reused !
+      # - `fmt`: Requires Rust toolchain, so run instead in `test-rust-matrix`.
+      # - `cspell`: Run in `spelling`.
+      # - `ruff`/`black`/`pyright`/`deptry`: Requires to have the Python server
+      #   project installed, so run instead in `test-python-server`.
+      # - `sqlfluff`: Same as above, but on top of that it checks SQL code in both
+      #   server (PostgreSQL) and libparsec (Sqlite).
+      #   So we run the server checks in `test-python-server`, and install a standalone
+      #   sqlfluff in `test-rust-linux` to do the libparsec checks.
+      # - `eslint`: Requires to have the Javascript GUI project installed, so run
+      #   instead in `test-web-app`.
       - uses: ./.github/actions/use-pre-commit
         with:
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint,deptry
+          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint,deptry,sqlfluff
         timeout-minutes: 5
 
   python:
