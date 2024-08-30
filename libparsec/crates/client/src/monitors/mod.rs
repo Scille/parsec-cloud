@@ -21,8 +21,3 @@ pub(crate) use workspace_outbound_sync::*;
 pub(crate) use workspaces_bootstrap::*;
 pub(crate) use workspaces_process_needs::*;
 pub(crate) use workspaces_refresh_list::*;
-
-#[cfg(test)]
-#[path = "../../tests/unit/monitors/mod.rs"]
-#[allow(clippy::unwrap_used)]
-mod tests;

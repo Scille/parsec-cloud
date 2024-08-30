@@ -1,15 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{future::Future, sync::Arc};
+use std::sync::Arc;
 
 use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
-    workspace::{InboundSyncOutcome, WorkspaceOps, WorkspaceSyncError},
-    EventMonitorCrashed,
+    event_bus::{Broadcastable, EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
+    workspace::{
+        InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceOps,
+        WorkspaceSyncError,
+    },
+    EventBusConnectionLifetime, EventMonitorCrashed,
 };
 
 const WORKSPACE_INBOUND_SYNC_MONITOR_NAME: &str = "workspace_inbound_sync";
@@ -20,7 +23,8 @@ pub(crate) async fn start_workspace_inbound_sync_monitor(
 ) -> Monitor {
     let realm_id = workspace_ops.realm_id();
     let task_future = {
-        let task_future = task_future_factory(workspace_ops, event_bus.clone());
+        let io = RealInboundSyncManagerIO::new(workspace_ops, event_bus.clone());
+        let task_future = inbound_sync_monitor_loop(realm_id, io);
         pretend_future_is_send_on_web(task_future)
     };
     Monitor::start(
@@ -33,104 +37,177 @@ pub(crate) async fn start_workspace_inbound_sync_monitor(
     .await
 }
 
-fn task_future_factory(
+#[derive(Debug)]
+enum IncomingEvent {
+    RemoteChange { entry_id: VlobID },
+    MissedServerEvents,
+}
+
+#[derive(Debug)]
+enum WaitForNextIncomingEventOutcome {
+    NewEvent(IncomingEvent),
+    Disconnected,
+}
+
+/// This internal trait is used to abstract all side effets `inbound_sync_monitor_loop` relies on.
+/// This way tests can be done with a mocked version of `WorkspaceOps`&co.
+///
+/// Also note all the methods here are asynchronous (even if some are implemented by wrapping
+/// synchronous call, e.g. `event_bus.send(...)`).
+/// This is needed in the tests given aborting a task is a fire-and-forget call, and hence
+/// a lot (or very few depending on the run) can occur if we don't have a way to detect the
+/// abort has been called and then sleep forever waiting for our task to be actually aborted.
+trait InboundSyncManagerIO: Send + Sync + 'static {
+    async fn wait_for_next_incoming_event(&self) -> WaitForNextIncomingEventOutcome;
+    async fn retry_later_busy_entry(&mut self, entry_id: VlobID);
+    async fn event_bus_wait_server_online(&self);
+    async fn event_bus_send(&self, event: &impl Broadcastable);
+    fn workspace_ops_refresh_realm_checkpoint(
+        &self,
+    ) -> impl std::future::Future<Output = Result<(), WorkspaceSyncError>> + Send;
+    fn workspace_ops_get_need_inbound_sync(
+        &self,
+        limit: u32,
+    ) -> impl std::future::Future<
+        Output = Result<Vec<VlobID>, WorkspaceGetNeedInboundSyncEntriesError>,
+    > + Send;
+    fn workspace_ops_inbound_sync(
+        &self,
+        entry_id: VlobID,
+    ) -> impl std::future::Future<Output = Result<InboundSyncOutcome, WorkspaceSyncError>> + Send;
+}
+
+/// This is the only implementation of `InboundSyncManagerIO` you should care about !
+struct RealInboundSyncManagerIO {
     workspace_ops: Arc<WorkspaceOps>,
     event_bus: EventBus,
-) -> impl Future<Output = ()> {
-    enum Action {
-        RemoteChange { entry_id: VlobID },
-        MissedServerEvents,
-    }
-    // Channel starts empty, hence the monitor will stay idle until the connection
-    // monitor triggers its initial `EventMissedServerEvents` event
-    let (tx, rx) = channel::unbounded::<Action>();
+    incoming_events_tx: channel::Sender<IncomingEvent>,
+    incoming_events_rx: channel::Receiver<IncomingEvent>,
+    /// Lifetimes are never accessed, but must be kept around for the whole time we
+    /// need to listen to the events.
+    _incoming_events_connection_lifetimes: (
+        EventBusConnectionLifetime<EventMissedServerEvents>,
+        EventBusConnectionLifetime<EventRealmVlobUpdated>,
+    ),
+}
 
-    let events_connection_lifetime = (
-        {
+impl RealInboundSyncManagerIO {
+    fn new(workspace_ops: Arc<WorkspaceOps>, event_bus: EventBus) -> Self {
+        let (tx, rx) = channel::unbounded::<IncomingEvent>();
+
+        let event_missed_server_events_lifetime = {
             let tx = tx.clone();
             event_bus.connect(move |_: &EventMissedServerEvents| {
-                let _ = tx.send(Action::MissedServerEvents);
+                let _ = tx.send(IncomingEvent::MissedServerEvents);
             })
-        },
-        {
+        };
+
+        let event_realm_vlob_updated_lifetime = {
             let tx = tx.clone();
             let realm_id = workspace_ops.realm_id();
             event_bus.connect(move |e: &EventRealmVlobUpdated| {
                 if e.realm_id == realm_id {
-                    let _ = tx.send(Action::RemoteChange {
+                    let _ = tx.send(IncomingEvent::RemoteChange {
                         entry_id: e.vlob_id,
                     });
                 }
             })
-        },
-    );
+        };
 
-    async move {
-        let _events_connection_lifetime = events_connection_lifetime;
+        Self {
+            workspace_ops,
+            event_bus,
+            incoming_events_tx: tx,
+            incoming_events_rx: rx,
+            _incoming_events_connection_lifetimes: (
+                event_missed_server_events_lifetime,
+                event_realm_vlob_updated_lifetime,
+            ),
+        }
+    }
+}
 
-        // TODO:
-        // - Get the realm checkpoint
-        // - For each inbound sync event, ensure it is for the next realm checkpoint
-        // - If ok, do a inbound sync and provide the new realm checkpoint to be updated in storage
-        // - If not ok, consider it is a missed server event
+impl InboundSyncManagerIO for RealInboundSyncManagerIO {
+    async fn wait_for_next_incoming_event(&self) -> WaitForNextIncomingEventOutcome {
+        let fut = self.incoming_events_rx.recv_async();
+        match pretend_future_is_send_on_web(fut).await {
+            Ok(event) => WaitForNextIncomingEventOutcome::NewEvent(event),
+            Err(channel::RecvError::Disconnected) => WaitForNextIncomingEventOutcome::Disconnected,
+        }
+    }
 
-        loop {
-            let action = match rx.recv_async().await {
-                Ok(action) => action,
-                // Sender has left, time to shutdown !
-                // In theory this should never happen given `WorkspaceInboundSyncMonitor`
-                // abort our coroutine on teardown instead.
-                Err(_) => return,
-            };
+    async fn retry_later_busy_entry(&mut self, entry_id: VlobID) {
+        let _ = self
+            .incoming_events_tx
+            .send(IncomingEvent::RemoteChange { entry_id });
+    }
 
-            let to_sync = match action {
-                Action::MissedServerEvents => {
-                    // TODO: error handling (typically offline is not handled here !)
-                    workspace_ops
-                        .refresh_realm_checkpoint()
-                        .await
-                        .expect("TODO: not expected at all !");
-                    workspace_ops
-                        .get_need_inbound_sync(u32::MAX)
-                        .await
-                        .expect("TODO: not expected at all !")
-                }
-                Action::RemoteChange { entry_id } => {
-                    // TODO: update realm checkpoint
-                    // TODO: optionally provide the vlob in the event, so that the
-                    // sync can be done with no other server request
-                    vec![entry_id]
-                }
-            };
+    async fn event_bus_wait_server_online(&self) {
+        let fut = self.event_bus.wait_server_online();
+        pretend_future_is_send_on_web(fut).await
+    }
 
-            // TODO: pretty poor implementation:
-            // - the events keep piling up during the sync
-            // - no detection of an already synced entry
-            // - no parallelism in sync
-            // - no exponential backoff when retrying sync on busy entry
-            for entry_id in to_sync {
+    async fn event_bus_send(&self, event: &impl Broadcastable) {
+        self.event_bus.send(event)
+    }
+
+    async fn workspace_ops_refresh_realm_checkpoint(&self) -> Result<(), WorkspaceSyncError> {
+        let fut = self.workspace_ops.refresh_realm_checkpoint();
+        pretend_future_is_send_on_web(fut).await
+    }
+
+    async fn workspace_ops_get_need_inbound_sync(
+        &self,
+        limit: u32,
+    ) -> Result<Vec<VlobID>, WorkspaceGetNeedInboundSyncEntriesError> {
+        let fut = self.workspace_ops.get_need_inbound_sync(limit);
+        pretend_future_is_send_on_web(fut).await
+    }
+
+    async fn workspace_ops_inbound_sync(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<InboundSyncOutcome, WorkspaceSyncError> {
+        let fut = self.workspace_ops.inbound_sync(entry_id);
+        pretend_future_is_send_on_web(fut).await
+    }
+}
+
+async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncManagerIO) {
+    // TODO:
+    // - Get the realm checkpoint
+    // - For each inbound sync event, ensure it is for the next realm checkpoint
+    // - If ok, do a inbound sync and provide the new realm checkpoint to be updated in storage
+    // - If not ok, consider it is a missed server event
+
+    loop {
+        let incoming_event = match io.wait_for_next_incoming_event().await {
+            WaitForNextIncomingEventOutcome::NewEvent(incoming_event) => incoming_event,
+            // Sender has left, time to shutdown !
+            // In theory this should never happen given `WorkspaceInboundSyncMonitor`
+            // abort our coroutine on teardown instead.
+            WaitForNextIncomingEventOutcome::Disconnected => return,
+        };
+
+        let to_sync = match incoming_event {
+            IncomingEvent::MissedServerEvents => {
                 // Need a loop here to retry the operation in case the server is not available
                 loop {
-                    let outcome = workspace_ops.inbound_sync(entry_id).await;
+                    let outcome = io.workspace_ops_refresh_realm_checkpoint().await;
                     match outcome {
-                        Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
-                        Ok(InboundSyncOutcome::EntryIsBusy) => {
-                            // Re-enqueue to retry later
-                            let _ = tx.send(Action::RemoteChange { entry_id });
-                            break;
-                        }
+                        Ok(()) => break,
                         Err(err) => match err {
+                            WorkspaceSyncError::Offline => {
+                                io.event_bus_wait_server_online().await;
+                                continue;
+                            },
                             WorkspaceSyncError::Stopped => {
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
+                                log::warn!("Workspace {}: WorkspaceOps has stopped, stopping inbound sync monitor", realm_id);
                                 return;
-                            }
-                            WorkspaceSyncError::Offline => {
-                                event_bus.wait_server_online().await;
-                                continue;
-                            }
-
+                            },
                             err @ (
                                 // We have lost read access to the workspace, the certificates
                                 // ops should soon be notified and work accordingly (typically
@@ -143,28 +220,107 @@ fn task_future_factory(
                                 | WorkspaceSyncError::InvalidBlockAccess(_)
                                 | WorkspaceSyncError::InvalidKeysBundle(_)
                                 | WorkspaceSyncError::InvalidCertificate(_)
+                                | WorkspaceSyncError::Internal(_)
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
-                            )
-                            => {
-                                log::warn!("Stopping inbound sync monitor due to unexpected outcome: {}", err);
+                            ) => {
+                                log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
                                 return;
-                            }
-
-                            WorkspaceSyncError::Internal(err) => {
-                                // Unexpected error occured, better stop the monitor
-                                log::warn!("Certificate monitor has crashed: {}", err);
-                                let event = EventMonitorCrashed {
-                                    monitor: WORKSPACE_INBOUND_SYNC_MONITOR_NAME,
-                                    workspace_id: Some(workspace_ops.realm_id()),
-                                    error: Arc::new(err),
-                                };
-                                event_bus.send(&event);
-                                return;
-                            }
+                            },
                         },
                     }
+                }
+
+                let outcome = io.workspace_ops_get_need_inbound_sync(u32::MAX).await;
+                match outcome {
+                    Ok(to_sync) => to_sync,
+                    Err(err) => match err {
+                        WorkspaceGetNeedInboundSyncEntriesError::Stopped => {
+                            // Shouldn't occur in practice given the monitors are expected
+                            // to be stopped before the opses. In any case we have no
+                            // choice but to also stop.
+                            log::warn!("Workspace {}: WorkspaceOps has stopped, stopping inbound sync monitor", realm_id);
+                            return;
+                        }
+                        WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
+                            log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
+                            return;
+                        }
+                    },
+                }
+            }
+            IncomingEvent::RemoteChange { entry_id } => {
+                // TODO: update realm checkpoint
+                // TODO: optionally provide the vlob in the event, so that the
+                // sync can be done with no other server request
+                vec![entry_id]
+            }
+        };
+
+        // TODO: pretty poor implementation:
+        // - the events keep piling up during the sync
+        // - no detection of an already synced entry
+        // - no parallelism in sync
+        // - no exponential backoff when retrying sync on busy entry
+        for entry_id in to_sync {
+            // Need a loop here to retry the operation in case the server is not available
+            loop {
+                let outcome = io.workspace_ops_inbound_sync(entry_id).await;
+                match outcome {
+                    Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
+                    Ok(InboundSyncOutcome::EntryIsBusy) => {
+                        // Re-enqueue to retry later
+                        io.retry_later_busy_entry(entry_id);
+                        break;
+                    }
+                    Err(err) => match err {
+                        WorkspaceSyncError::Stopped => {
+                            // Shouldn't occur in practice given the monitors are expected
+                            // to be stopped before the opses. In any case we have no
+                            // choice but to also stop.
+                            log::warn!("Workspace {}: WorkspaceOps has stopped, stopping workspace inbound sync monitor", realm_id);
+                            return;
+                        }
+                        WorkspaceSyncError::Offline => {
+                            io.event_bus_wait_server_online().await;
+                            continue;
+                        }
+                        err @ (
+                            // We have lost read access to the workspace, the certificates
+                            // ops should soon be notified and work accordingly (typically
+                            // by stopping the workspace and its monitors).
+                            WorkspaceSyncError::NotAllowed
+                            // Other errors are unexpected ones
+                            | WorkspaceSyncError::NoKey
+                            | WorkspaceSyncError::NoRealm
+                            | WorkspaceSyncError::InvalidManifest(_)
+                            | WorkspaceSyncError::InvalidBlockAccess(_)
+                            | WorkspaceSyncError::InvalidKeysBundle(_)
+                            | WorkspaceSyncError::InvalidCertificate(_)
+                            | WorkspaceSyncError::TimestampOutOfBallpark { .. }
+                        )
+                        => {
+                            log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
+                            return;
+                        }
+
+                        WorkspaceSyncError::Internal(err) => {
+                            // Unexpected error occured, better stop the monitor
+                            log::warn!("Certificate monitor has crashed: {}", err);
+                            let event = EventMonitorCrashed {
+                                monitor: WORKSPACE_INBOUND_SYNC_MONITOR_NAME,
+                                workspace_id: Some(realm_id),
+                                error: Arc::new(err),
+                            };
+                            io.event_bus_send(&event);
+                            return;
+                        }
+                    },
                 }
             }
         }
     }
 }
+
+#[cfg(test)]
+#[path = "../../tests/unit/workspace_inbound_sync_monitor.rs"]
+mod tests;
