@@ -135,11 +135,6 @@ SELECT 1
 )
 
 
-# TODO: Also duplicate the following tables
-# - greeting_session
-# - greeting_attempt
-# - greeting_step
-
 q_test_duplicate_organization = Q(
     f"""
 WITH new_organization_ids AS (
@@ -636,6 +631,79 @@ new_topics_realm AS (
         ),
         last_timestamp
     FROM realm_topic
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id
+),
+new_greeting_sessions AS (
+    INSERT INTO greeting_session (
+        invitation,
+        greeter
+    )
+    SELECT
+        (
+            SELECT _id FROM new_invitations
+            WHERE token = { q_invitation(_id="greeting_session.invitation", select="token") }
+        ),
+        (
+            SELECT _id FROM new_users
+            WHERE user_id = { q_user(_id="greeting_session.greeter", select="user_id") }
+        )
+    FROM greeting_session
+    INNER JOIN invitation ON invitation._id = greeting_session.invitation
+    WHERE invitation.organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id, invitation, greeter
+),
+new_greeting_attempts AS (
+    INSERT INTO greeting_attempt (
+        organization,
+        greeting_attempt_id,
+        greeting_session,
+        claimer_joined,
+        greeter_joined,
+        cancelled_reason,
+        cancelled_on,
+        cancelled_by
+    )
+    SELECT
+        (select * from new_organization_ids),
+        greeting_attempt_id,
+        (
+            SELECT new_greeting_sessions._id FROM new_greeting_sessions
+            INNER JOIN new_invitations ON new_invitations._id = new_greeting_sessions.invitation
+            INNER JOIN new_users ON new_users._id = new_greeting_sessions.greeter
+            WHERE new_invitations.token = { q_invitation(_id="greeting_session.invitation", select="token") }
+            AND new_users.user_id = { q_user(_id="greeting_session.greeter", select="user_id") }
+        ),
+        claimer_joined,
+        greeter_joined,
+        cancelled_reason,
+        cancelled_on,
+        cancelled_by
+    FROM greeting_attempt
+    INNER JOIN greeting_session ON greeting_session._id = greeting_attempt.greeting_session
+    WHERE organization = { q_organization_internal_id("$source_id") }
+    RETURNING _id, greeting_attempt_id
+),
+new_greeting_steps AS (
+    INSERT INTO greeting_step (
+        greeting_attempt,
+        step,
+        greeter_data,
+        claimer_data
+    )
+    SELECT
+        (
+            SELECT _id FROM new_greeting_attempts
+            WHERE greeting_attempt_id = (
+                SELECT greeting_attempt_id FROM greeting_attempt
+                WHERE greeting_attempt._id = greeting_step.greeting_attempt
+            )
+        ),
+        step,
+        greeter_data,
+        claimer_data
+    FROM greeting_step
+    INNER JOIN greeting_attempt ON greeting_attempt._id = greeting_step.greeting_attempt
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 )
