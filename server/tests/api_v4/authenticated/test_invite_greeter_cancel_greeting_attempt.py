@@ -29,12 +29,19 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
     return outcome
 
 
+@pytest.mark.parametrize(
+    "reason",
+    CancelledGreetingAttemptReason.VALUES,
+    ids=map(str, CancelledGreetingAttemptReason.VALUES),
+)
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_ok(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) -> None:
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=reason,
     )
     assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepOk()
 
@@ -113,20 +120,27 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
     )
 
 
+@pytest.mark.parametrize(
+    "reason",
+    CancelledGreetingAttemptReason.VALUES,
+    ids=map(str, CancelledGreetingAttemptReason.VALUES),
+)
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_attempt_already_cancelled(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) -> None:
     # Cancel once
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=reason,
     )
     assert rep == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepOk()
 
     # Cancel again
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
     )
 
     assert isinstance(
@@ -137,7 +151,7 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_att
         rep
         == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
             timestamp=rep.timestamp,
-            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+            reason=reason,
             origin=GreeterOrClaimer.GREETER,
         )
     )
