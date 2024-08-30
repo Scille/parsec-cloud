@@ -32,6 +32,24 @@ impl<T> JoinHandle<T> {
         self.0.abort()
     }
     #[inline(always)]
+    pub fn abort_handle(&self) -> AbortHandle {
+        AbortHandle(self.0.abort_handle())
+    }
+    #[inline(always)]
+    pub fn is_finished(&self) -> bool {
+        self.0.is_finished()
+    }
+}
+
+#[derive(Debug)]
+pub struct AbortHandle(tokio::task::AbortHandle);
+
+impl AbortHandle {
+    #[inline(always)]
+    pub fn abort(&self) {
+        self.0.abort()
+    }
+    #[inline(always)]
     pub fn is_finished(&self) -> bool {
         self.0.is_finished()
     }
