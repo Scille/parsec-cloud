@@ -199,7 +199,7 @@ async def test_invited_invite_claimer_step_greeting_attempt_cancelled(
 
 
 async def test_invited_invite_claimer_step_step_mismatch(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID, skip_if_postgresql: None
+    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
     greeter_key_1 = PrivateKey.generate()
     greeter_key_2 = PrivateKey.generate()
@@ -222,7 +222,7 @@ async def test_invited_invite_claimer_step_step_mismatch(
 
 
 async def test_invited_invite_claimer_step_step_too_advanced(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID, skip_if_postgresql: None
+    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_step(
         greeting_attempt=greeting_attempt,
