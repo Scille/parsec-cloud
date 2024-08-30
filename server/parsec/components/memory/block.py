@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Buffer
 from typing import override
 
 from parsec._parsec import BlockID, DateTime, DeviceID, OrganizationID, RealmRole, VlobID
@@ -53,7 +54,7 @@ class MemoryBlockComponent(BaseBlockComponent):
 
         outcome = await self._blockstore_component.read(organization_id, block_id)
         match outcome:
-            case bytes() | bytearray() | memoryview() as block:
+            case Buffer() as block:
                 return BlockReadResult(
                     block=block,
                     key_index=block_info.key_index,
