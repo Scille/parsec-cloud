@@ -33,15 +33,16 @@ CREATE TABLE greeting_attempt (
     claimer_joined TIMESTAMPTZ DEFAULT NULL,
     greeter_joined TIMESTAMPTZ DEFAULT NULL,
 
-    cancelled_id UUID DEFAULT NULL,
     cancelled_reason CANCELLED_GREETING_ATTEMPT_REASON DEFAULT NULL,
     cancelled_on TIMESTAMPTZ DEFAULT NULL,
     cancelled_by GREETER_OR_CLAIMER DEFAULT NULL,
 
-    UNIQUE (organization, greeting_attempt_id),
-    -- Makes sure that there is only one active greeting attempt per session
-    UNIQUE (greeting_session, cancelled_id)
+    UNIQUE (organization, greeting_attempt_id)
 );
+
+-- Makes sure that there is only one active greeting attempt per session
+CREATE UNIQUE INDEX unique_active_attempt ON greeting_attempt (greeting_session)
+WHERE cancelled_on IS NULL;
 
 CREATE TABLE greeting_step (
     _id SERIAL PRIMARY KEY,

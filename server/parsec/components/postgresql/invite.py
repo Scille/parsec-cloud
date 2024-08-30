@@ -5,7 +5,6 @@ from collections.abc import Buffer
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import override
-from uuid import uuid4
 
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
@@ -438,7 +437,7 @@ WITH result AS (
     RETURNING greeting_session._id
 )
 SELECT _id FROM result
-UNION SELECT _id
+UNION ALL SELECT _id
 FROM greeting_session
 WHERE invitation = $invitation_internal_id
 AND greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
@@ -452,23 +451,21 @@ WITH result AS (
     INSERT INTO greeting_attempt(
         organization,
         greeting_attempt_id,
-        greeting_session,
-        cancelled_id
+        greeting_session
     )
     VALUES (
         { q_organization_internal_id("$organization_id") },
         $new_greeting_attempt_id,
-        $greeting_session_id,
-        NULL
+        $greeting_session_id
     )
     ON CONFLICT DO NOTHING
     RETURNING greeting_attempt._id, greeting_attempt_id
 )
 SELECT _id, greeting_attempt_id FROM result
-UNION SELECT _id, greeting_attempt_id
+UNION ALL SELECT _id, greeting_attempt_id
 FROM greeting_attempt
 WHERE greeting_session = $greeting_session_id
-AND cancelled_id IS NULL
+AND cancelled_on IS NULL
 LIMIT 1
 """
 )
@@ -480,10 +477,6 @@ SET
     greeter_joined = CASE WHEN greeter_joined IS NULL
         THEN $now
         ELSE greeter_joined
-        END,
-    cancelled_id = CASE WHEN greeter_joined IS NULL
-        THEN cancelled_id
-        ELSE $new_cancelled_id
         END,
     cancelled_reason = CASE WHEN greeter_joined IS NULL
         THEN cancelled_reason
@@ -499,7 +492,7 @@ SET
         END
 WHERE
     _id = $greeting_attempt_internal_id
-RETURNING cancelled_id
+RETURNING cancelled_on
 """
 )
 
@@ -510,10 +503,6 @@ SET
     claimer_joined = CASE WHEN claimer_joined IS NULL
         THEN $now
         ELSE claimer_joined
-        END,
-    cancelled_id = CASE WHEN claimer_joined IS NULL
-        THEN cancelled_id
-        ELSE $new_cancelled_id
         END,
     cancelled_reason = CASE WHEN claimer_joined IS NULL
         THEN cancelled_reason
@@ -529,7 +518,7 @@ SET
         END
 WHERE
     _id = $greeting_attempt_internal_id
-RETURNING cancelled_id
+RETURNING cancelled_on
 """
 )
 
@@ -537,7 +526,6 @@ _q_cancel_greeting_attempt = Q(
     """
 UPDATE greeting_attempt
 SET
-    cancelled_id = $cancelled_id,
     cancelled_reason = $cancelled_reason,
     cancelled_on = $cancelled_on,
     cancelled_by = $cancelled_by
@@ -1429,14 +1417,13 @@ class PGInviteComponent(BaseInviteComponent):
         greeting_attempt_internal_id: int,
         now: DateTime,
     ) -> bool:
-        cancelled_id = await conn.fetchval(
+        cancelled_on = await conn.fetchval(
             *_q_greeter_join_or_cancel(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
                 now=DateTime.now(),
-                new_cancelled_id=uuid4(),
             )
         )
-        return cancelled_id is None
+        return cancelled_on is None
 
     async def claimer_join_or_cancel(
         self,
@@ -1444,14 +1431,13 @@ class PGInviteComponent(BaseInviteComponent):
         greeting_attempt_internal_id: int,
         now: DateTime,
     ) -> bool:
-        cancelled_id = await conn.fetchval(
+        cancelled_on = await conn.fetchval(
             *_q_claimer_join_or_cancel(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
                 now=DateTime.now(),
-                new_cancelled_id=uuid4(),
             )
         )
-        return cancelled_id is None
+        return cancelled_on is None
 
     async def new_attempt_for_greeter(
         self,
@@ -1647,11 +1633,9 @@ class PGInviteComponent(BaseInviteComponent):
         reason: CancelledGreetingAttemptReason,
         now: DateTime,
     ) -> None:
-        cancelled_id = uuid4()
         await conn.execute(
             *_q_cancel_greeting_attempt(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
-                cancelled_id=cancelled_id,
                 cancelled_by=origin.str,
                 cancelled_reason=reason.str,
                 cancelled_on=now,
