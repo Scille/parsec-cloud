@@ -136,7 +136,7 @@ impl<F: std::future::Future> std::future::Future for FutureForceSendWrapper<F> {
 /// to mark `Future` vs `Future + Send + 'static`.
 ///
 /// To add insult to injury, compiler is complaining about our stuff not being `Send`
-/// web, where it is impossible to share data accros multiple threads... which makes
+/// no web, where it is impossible to share data accros multiple threads... which makes
 /// `Send` useless in practice (yes WebAssembly is planning to support thread in the
 /// future, but for now this is just "pain but no gain").
 ///
@@ -145,8 +145,8 @@ impl<F: std::future::Future> std::future::Future for FutureForceSendWrapper<F> {
 /// is added to WebAssembly (at this point, we will have to be careful not to
 /// use this feature).
 #[inline(always)]
-pub fn pretend_future_is_send_on_web<O>(
-    not_send_future: impl std::future::Future<Output = O> + 'static,
-) -> impl std::future::Future<Output = O> + Send + 'static {
+pub fn pretend_future_is_send_on_web<'a, O>(
+    not_send_future: impl std::future::Future<Output = O> + 'a,
+) -> impl std::future::Future<Output = O> + Send + 'a {
     FutureForceSendWrapper { not_send_future }
 }
