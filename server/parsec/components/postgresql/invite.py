@@ -546,6 +546,41 @@ WHERE
 """
 )
 
+_q_step_check_too_advanced = Q(
+    """
+SELECT
+    claimer_data IS NULL or greeter_data IS NULL
+FROM greeting_step
+WHERE
+    greeting_attempt = $greeting_attempt_internal_id
+    AND step + 1 = $step
+UNION SELECT true
+LIMIT 1
+"""
+)
+
+_q_greeter_step_check_mismatch = Q(
+    """
+SELECT
+    greeter_data IS NOT NULL AND greeter_data != $greeter_data
+FROM greeting_step
+WHERE
+    greeting_attempt = $greeting_attempt_internal_id
+    AND step = $step
+"""
+)
+
+_q_claimer_step_check_mismatch = Q(
+    """
+SELECT
+    claimer_data IS NOT NULL AND claimer_data != $claimer_data
+FROM greeting_step
+WHERE
+    greeting_attempt = $greeting_attempt_internal_id
+    AND step = $step
+"""
+)
+
 
 _q_greeter_step = Q(
     """
@@ -1618,6 +1653,26 @@ class PGInviteComponent(BaseInviteComponent):
         step: int,
         greeter_data: bytes,
     ) -> bytes | StepOutcome:
+        if step > 0:
+            row = await conn.fetchrow(
+                *_q_step_check_too_advanced(
+                    greeting_attempt_internal_id=greeting_attempt_internal_id,
+                    step=step,
+                )
+            )
+            assert row is not None
+            (too_advanced,) = row
+            if too_advanced:
+                return StepOutcome.TOO_ADVANCED
+        row = await conn.fetchrow(
+            *_q_greeter_step_check_mismatch(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                step=step,
+                greeter_data=greeter_data,
+            )
+        )
+        if row is not None and row[0]:
+            return StepOutcome.MISMATCH
         row = await conn.fetchrow(
             *_q_greeter_step(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
@@ -1638,6 +1693,26 @@ class PGInviteComponent(BaseInviteComponent):
         step: int,
         claimer_data: bytes,
     ) -> bytes | StepOutcome:
+        if step > 0:
+            row = await conn.fetchrow(
+                *_q_step_check_too_advanced(
+                    greeting_attempt_internal_id=greeting_attempt_internal_id,
+                    step=step,
+                )
+            )
+            assert row is not None
+            (too_advanced,) = row
+            if too_advanced:
+                return StepOutcome.TOO_ADVANCED
+        row = await conn.fetchrow(
+            *_q_claimer_step_check_mismatch(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                step=step,
+                claimer_data=claimer_data,
+            )
+        )
+        if row is not None and row[0]:
+            return StepOutcome.MISMATCH
         row = await conn.fetchrow(
             *_q_claimer_step(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
