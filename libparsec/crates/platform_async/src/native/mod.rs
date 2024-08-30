@@ -90,7 +90,7 @@ where
 /// to mark `Future` vs `Future + Send + 'static`.
 ///
 /// To add insult to injury, compiler is complaining about our stuff not being `Send`
-/// web, where it is impossible to share data accros multiple threads... which makes
+/// on web, where it is impossible to share data accros multiple threads... which makes
 /// `Send` useless in practice (yes WebAssembly is planning to support thread in the
 /// future, but for now this is just "pain but no gain").
 ///
@@ -99,8 +99,8 @@ where
 /// is added to WebAssembly (at this point, we will have to be careful not to
 /// use this feature).
 #[inline(always)]
-pub fn pretend_future_is_send_on_web<O>(
-    not_send_future: impl std::future::Future<Output = O> + Send + 'static,
-) -> impl std::future::Future<Output = O> + Send + 'static {
+pub fn pretend_future_is_send_on_web<'a, O>(
+    not_send_future: impl std::future::Future<Output = O> + Send + 'a,
+) -> impl std::future::Future<Output = O> + Send + 'a {
     not_send_future
 }
