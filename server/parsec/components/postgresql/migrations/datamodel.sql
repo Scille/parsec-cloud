@@ -264,6 +264,7 @@ CREATE TABLE greeting_attempt (
     cancelled_by GREETER_OR_CLAIMER DEFAULT NULL,
 
     UNIQUE (organization, greeting_attempt_id),
+    -- Makes sure that there is only one active greeting attempt per session
     UNIQUE (greeting_session, cancelled_id)
 );
 
