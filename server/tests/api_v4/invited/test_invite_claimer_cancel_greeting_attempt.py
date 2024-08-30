@@ -34,12 +34,20 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
     return outcome
 
 
+@pytest.mark.parametrize(
+    "reason",
+    CancelledGreetingAttemptReason.VALUES,
+    ids=map(str, CancelledGreetingAttemptReason.VALUES),
+)
 async def test_invited_invite_claimer_cancel_greeting_attempt_ok(
-    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=reason,
     )
     assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepOk()
 
@@ -127,20 +135,27 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_n
     )
 
 
+@pytest.mark.parametrize(
+    "reason",
+    CancelledGreetingAttemptReason.VALUES,
+    ids=map(str, CancelledGreetingAttemptReason.VALUES),
+)
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_already_cancelled(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
 ) -> None:
     # Cancel once
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=reason,
     )
     assert rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepOk()
 
     # Cancel again
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=greeting_attempt,
-        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+        reason=CancelledGreetingAttemptReason.AUTOMATICALLY_CANCELLED,
     )
     assert isinstance(
         rep,
@@ -150,7 +165,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_a
         rep
         == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptAlreadyCancelled(
             timestamp=rep.timestamp,
-            reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+            reason=reason,
             origin=GreeterOrClaimer.CLAIMER,
         )
     )
