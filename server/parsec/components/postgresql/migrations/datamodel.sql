@@ -268,6 +268,18 @@ CREATE TABLE greeting_attempt (
     UNIQUE (greeting_session, cancelled_id)
 );
 
+
+CREATE TABLE greeting_step (
+    _id SERIAL PRIMARY KEY,
+    greeting_attempt INTEGER REFERENCES greeting_attempt (_id) NOT NULL,
+    step INTEGER NOT NULL,
+    greeter_data BYTEA,
+    claimer_data BYTEA,
+
+    UNIQUE (greeting_attempt, step)
+);
+
+
 CREATE TABLE invitation_conduit (
     _id SERIAL PRIMARY KEY,
     invitation INTEGER REFERENCES invitation (_id) NOT NULL,

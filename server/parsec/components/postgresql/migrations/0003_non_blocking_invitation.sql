@@ -42,3 +42,13 @@ CREATE TABLE greeting_attempt (
     -- Makes sure that there is only one active greeting attempt per session
     UNIQUE (greeting_session, cancelled_id)
 );
+
+CREATE TABLE greeting_step (
+    _id SERIAL PRIMARY KEY,
+    greeting_attempt INTEGER REFERENCES greeting_attempt (_id) NOT NULL,
+    step INTEGER NOT NULL,
+    greeter_data BYTEA,
+    claimer_data BYTEA,
+
+    UNIQUE (greeting_attempt, step)
+);

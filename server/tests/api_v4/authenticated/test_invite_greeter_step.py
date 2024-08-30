@@ -34,7 +34,6 @@ async def claimer_wait_peer_public_key(
     coolorg: CoolorgRpcClients,
     backend: Backend,
     greeting_attempt: GreetingAttemptID,
-    skip_if_postgresql: None,
 ) -> PublicKey:
     # Claimer start greeting attempt
     outcome = await backend.invite.claimer_start_greeting_attempt(
@@ -213,7 +212,7 @@ async def test_authenticated_invite_greeter_step_step_too_advanced(
 
 
 async def test_authenticated_invite_greeter_step_not_ready(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID, skip_if_postgresql: None
+    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
 ) -> None:
     greeter_key = PrivateKey.generate()
     greeter_step = authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber0WaitPeer(

@@ -124,6 +124,11 @@ deleted_greeting_attempts AS (
     DELETE FROM greeting_attempt
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
+),
+deleted_greeting_steps AS (
+    DELETE FROM greeting_step
+    WHERE greeting_attempt in (select * from deleted_greeting_attempts)
+    RETURNING _id
 )
 SELECT 1
 """
@@ -133,6 +138,7 @@ SELECT 1
 # TODO: Also duplicate the following tables
 # - greeting_session
 # - greeting_attempt
+# - greeting_step
 
 q_test_duplicate_organization = Q(
     f"""

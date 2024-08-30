@@ -266,10 +266,9 @@ def test_step_processing():
     )
 
 
-# TODO: Remove `skip_if_postgresql` when PostgreSQL is supported
 @pytest.mark.parametrize("invitation_type", ["user", "device"])
 async def test_full_greeting_attempt(
-    coolorg: CoolorgRpcClients, backend: Backend, invitation_type: str, skip_if_postgresql: None
+    coolorg: CoolorgRpcClients, backend: Backend, invitation_type: str
 ) -> None:
     match invitation_type:
         case "user":
