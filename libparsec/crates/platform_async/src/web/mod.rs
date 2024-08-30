@@ -22,6 +22,24 @@ impl<T> JoinHandle<T> {
         todo!()
     }
     #[inline(always)]
+    pub fn abort_handle(&self) -> AbortHandle {
+        AbortHandle
+    }
+    #[inline(always)]
+    pub fn is_finished(&self) -> bool {
+        todo!()
+    }
+}
+
+#[derive(Debug)]
+pub struct AbortHandle;
+
+impl AbortHandle {
+    #[inline(always)]
+    pub fn abort(&self) {
+        todo!()
+    }
+    #[inline(always)]
     pub fn is_finished(&self) -> bool {
         todo!()
     }

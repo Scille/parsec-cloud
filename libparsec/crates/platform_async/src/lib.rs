@@ -106,7 +106,9 @@ macro_rules! select3_biased {
 
 // Platform specific stuff
 
-pub use platform::{oneshot, pretend_future_is_send_on_web, sleep, spawn, watch, JoinHandle};
+pub use platform::{
+    oneshot, pretend_future_is_send_on_web, sleep, spawn, watch, AbortHandle, JoinHandle,
+};
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`
 
 #[cfg(target_arch = "wasm32")]
