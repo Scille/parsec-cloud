@@ -1,7 +1,9 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Buffer
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import override
 from uuid import uuid4
 
@@ -543,6 +545,50 @@ WHERE
     _id = $greeting_attempt_internal_id
 """
 )
+
+
+_q_greeter_step = Q(
+    """
+INSERT INTO greeting_step(
+    greeting_attempt,
+    step,
+    greeter_data
+)
+VALUES (
+    $greeting_attempt_internal_id,
+    $step,
+    $greeter_data
+)
+ON CONFLICT (greeting_attempt, step) DO UPDATE
+SET greeter_data = $greeter_data
+RETURNING claimer_data
+"""
+)
+
+
+_q_claimer_step = Q(
+    """
+INSERT INTO greeting_step(
+    greeting_attempt,
+    step,
+    claimer_data
+)
+VALUES (
+    $greeting_attempt_internal_id,
+    $step,
+    $claimer_data
+)
+ON CONFLICT (greeting_attempt, step) DO UPDATE
+SET claimer_data = $claimer_data
+RETURNING greeter_data
+"""
+)
+
+
+class StepOutcome(Enum):
+    MISMATCH = auto()
+    NOT_READY = auto()
+    TOO_ADVANCED = auto()
 
 
 async def query_retrieve_active_human_by_email(
@@ -1565,6 +1611,46 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
 
+    async def _greeter_step(
+        self,
+        conn: AsyncpgConnection,
+        greeting_attempt_internal_id: int,
+        step: int,
+        greeter_data: bytes,
+    ) -> bytes | StepOutcome:
+        row = await conn.fetchrow(
+            *_q_greeter_step(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                step=step,
+                greeter_data=greeter_data,
+            )
+        )
+        assert row is not None
+        (claimer_data,) = row
+        if claimer_data is None:
+            return StepOutcome.NOT_READY
+        return claimer_data
+
+    async def _claimer_step(
+        self,
+        conn: AsyncpgConnection,
+        greeting_attempt_internal_id: int,
+        step: int,
+        claimer_data: bytes,
+    ) -> bytes | StepOutcome:
+        row = await conn.fetchrow(
+            *_q_claimer_step(
+                greeting_attempt_internal_id=greeting_attempt_internal_id,
+                step=step,
+                claimer_data=claimer_data,
+            )
+        )
+        assert row is not None
+        (greeter_data,) = row
+        if greeter_data is None:
+            return StepOutcome.NOT_READY
+        return greeter_data
+
     # Transactions
 
     @override
@@ -1821,7 +1907,17 @@ class PGInviteComponent(BaseInviteComponent):
         if greeting_attempt_info.greeter_joined is None:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
-        raise NotImplementedError
+        match await self._greeter_step(
+            conn, greeting_attempt_info.internal_id, step_index, greeter_data
+        ):
+            case StepOutcome.MISMATCH:
+                return InviteGreeterStepBadOutcome.STEP_MISMATCH
+            case StepOutcome.TOO_ADVANCED:
+                return InviteGreeterStepBadOutcome.STEP_TOO_ADVANCED
+            case StepOutcome.NOT_READY:
+                return NotReady()
+            case Buffer() as data:
+                return data
 
     @override
     @transaction
@@ -1871,7 +1967,17 @@ class PGInviteComponent(BaseInviteComponent):
         if greeting_attempt_info.claimer_joined is None:
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_JOINED
 
-        raise NotImplementedError
+        match await self._claimer_step(
+            conn, greeting_attempt_info.internal_id, step_index, claimer_data
+        ):
+            case StepOutcome.MISMATCH:
+                return InviteClaimerStepBadOutcome.STEP_MISMATCH
+            case StepOutcome.TOO_ADVANCED:
+                return InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED
+            case StepOutcome.NOT_READY:
+                return NotReady()
+            case Buffer() as data:
+                return data
 
     @override
     @transaction
