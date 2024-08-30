@@ -620,12 +620,6 @@ RETURNING greeter_data
 )
 
 
-class StepOutcome(Enum):
-    MISMATCH = auto()
-    NOT_READY = auto()
-    TOO_ADVANCED = auto()
-
-
 async def query_retrieve_active_human_by_email(
     conn: AsyncpgConnection, organization_id: OrganizationID, email: str
 ) -> UserID | None:
@@ -1642,6 +1636,11 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
 
+    class StepOutcome(Enum):
+        MISMATCH = auto()
+        NOT_READY = auto()
+        TOO_ADVANCED = auto()
+
     async def _greeter_step(
         self,
         conn: AsyncpgConnection,
@@ -1659,7 +1658,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
             assert too_advanced is not None
             if too_advanced:
-                return StepOutcome.TOO_ADVANCED
+                return self.StepOutcome.TOO_ADVANCED
         # Check if the greeter data is a mismatch
         mismatch = await conn.fetchval(
             *_q_greeter_step_check_mismatch(
@@ -1669,7 +1668,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
         if mismatch:
-            return StepOutcome.MISMATCH
+            return self.StepOutcome.MISMATCH
         # Update the step
         claimer_data = await conn.fetchval(
             *_q_greeter_step(
@@ -1679,7 +1678,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
         if claimer_data is None:
-            return StepOutcome.NOT_READY
+            return self.StepOutcome.NOT_READY
         return claimer_data
 
     async def _claimer_step(
@@ -1699,7 +1698,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
             assert too_advanced is not None
             if too_advanced:
-                return StepOutcome.TOO_ADVANCED
+                return self.StepOutcome.TOO_ADVANCED
         # Check if the claimer data is a mismatch
         mismatch = await conn.fetchval(
             *_q_claimer_step_check_mismatch(
@@ -1710,7 +1709,7 @@ class PGInviteComponent(BaseInviteComponent):
         )
         assert mismatch is not None
         if mismatch:
-            return StepOutcome.MISMATCH
+            return self.StepOutcome.MISMATCH
         # Update the step
         greeter_data = await conn.fetchval(
             *_q_claimer_step(
@@ -1720,7 +1719,7 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
         if greeter_data is None:
-            return StepOutcome.NOT_READY
+            return self.StepOutcome.NOT_READY
         return greeter_data
 
     # Transactions
@@ -1982,11 +1981,11 @@ class PGInviteComponent(BaseInviteComponent):
         match await self._greeter_step(
             conn, greeting_attempt_info.internal_id, step_index, greeter_data
         ):
-            case StepOutcome.MISMATCH:
+            case self.StepOutcome.MISMATCH:
                 return InviteGreeterStepBadOutcome.STEP_MISMATCH
-            case StepOutcome.TOO_ADVANCED:
+            case self.StepOutcome.TOO_ADVANCED:
                 return InviteGreeterStepBadOutcome.STEP_TOO_ADVANCED
-            case StepOutcome.NOT_READY:
+            case self.StepOutcome.NOT_READY:
                 return NotReady()
             case Buffer() as data:
                 return data
@@ -2042,11 +2041,11 @@ class PGInviteComponent(BaseInviteComponent):
         match await self._claimer_step(
             conn, greeting_attempt_info.internal_id, step_index, claimer_data
         ):
-            case StepOutcome.MISMATCH:
+            case self.StepOutcome.MISMATCH:
                 return InviteClaimerStepBadOutcome.STEP_MISMATCH
-            case StepOutcome.TOO_ADVANCED:
+            case self.StepOutcome.TOO_ADVANCED:
                 return InviteClaimerStepBadOutcome.STEP_TOO_ADVANCED
-            case StepOutcome.NOT_READY:
+            case self.StepOutcome.NOT_READY:
                 return NotReady()
             case Buffer() as data:
                 return data
