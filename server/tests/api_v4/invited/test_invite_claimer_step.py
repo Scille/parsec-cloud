@@ -39,7 +39,10 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
 
 @pytest.fixture
 async def greeter_wait_peer_public_key(
-    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID, skip_if_postgresql: None
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    greeting_attempt: GreetingAttemptID,
+    skip_if_postgresql: None,
 ) -> PublicKey:
     # Greeter start greeting attempt
     outcome = await backend.invite.greeter_start_greeting_attempt(

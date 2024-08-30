@@ -1,9 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds
-from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
-from parsec._parsec import GreetingAttemptID, InvitationToken, authenticated_cmds, invited_cmds
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
     GreeterOrClaimer,
@@ -12,7 +9,7 @@ from parsec._parsec import (
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients
+from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
 
 Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | None
 

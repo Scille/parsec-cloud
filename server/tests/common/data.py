@@ -452,8 +452,10 @@ async def wksp1_bob_becomes_owner_and_changes_alice(
     return (certif0, raw_certif0), (certif1, raw_certif1)
 
 
-HttpCommonErrorsTesterDoCallback = Callable[[], Coroutine[None, None, None]]
-HttpCommonErrorsTester = Callable[[HttpCommonErrorsTesterDoCallback], Coroutine[None, None, None]]
+type HttpCommonErrorsTesterDoCallback = Callable[[], Coroutine[None, None, None]]
+type HttpCommonErrorsTester = Callable[
+    [HttpCommonErrorsTesterDoCallback], Coroutine[None, None, None]
+]
 
 
 # TODO: not sure how to test "organization_not_found"

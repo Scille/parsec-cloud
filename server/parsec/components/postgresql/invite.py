@@ -1924,7 +1924,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         await conn.execute(
             *_q_delete_invitation(
-                row_id=invitation_info.internal_id,
+                invitation_internal_id=invitation_info.internal_id,
                 on=now,
                 reason="FINISHED",  # TODO: use an enum
             )
