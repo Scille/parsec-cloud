@@ -62,7 +62,7 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/streetsidesoftware/cspell-cli
-    rev: v8.10.1
+    rev: v8.13.3
     hooks:
       - id: cspell
         stages:
@@ -292,7 +292,7 @@ repos:
   # JSON
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.28.6
+    rev: 0.29.2
     hooks:
       - id: check-jsonschema
         name: Validate protocol files with jsonschema
