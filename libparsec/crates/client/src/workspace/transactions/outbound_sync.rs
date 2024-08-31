@@ -525,7 +525,6 @@ async fn upload_manifest<M: RemoteManifest>(
             match rep {
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_upload)),
                 Rep::BadVlobVersion => Ok(UploadManifestOutcome::VersionConflict),
-                // Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
                     let timestamp =
                         std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
