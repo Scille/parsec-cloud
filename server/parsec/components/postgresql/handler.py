@@ -27,6 +27,8 @@ P = ParamSpec("P")
 logger = get_logger()
 
 MIGRATION_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<name>\w*).sql$"
+# Expose migration table here to simply modify it during tests
+MIGRATION_TABLE = "migration"
 
 # The duration between 1970 and 2000 in microseconds.
 #
@@ -38,7 +40,7 @@ MICRO_SECONDS_BETWEEN_1970_AND_2000: int = 946684800 * 1000000
 
 @dataclass(slots=True)
 class MigrationItem:
-    idx: int
+    index: int
     name: str
     file_name: str
     sql: str
@@ -46,26 +48,41 @@ class MigrationItem:
 
 def retrieve_migrations() -> list[MigrationItem]:
     migrations = []
-    ids = []
+    indexes = []
     for file in importlib.resources.files(migrations_module).iterdir():
         file_name = file.name
         match = re.search(MIGRATION_FILE_PATTERN, file_name)
         if match:
-            idx = int(match.group("id"))
-            # Sanity check
-            if idx in ids:
+            index = int(match.group("id"))
+            # Sanity checks
+            if index == 0:
                 raise AssertionError(
-                    f"Inconsistent package (multiples migrations with {idx} as id)"
+                    f"Inconsistent package: migration with index {index} is not allowed"
                 )
-            ids.append(idx)
+            if index in indexes:
+                raise AssertionError(
+                    f"Inconsistent package: multiples migrations with index {index}"
+                )
+            indexes.append(index)
             sql = importlib.resources.files(migrations_module).joinpath(file_name).read_text()
-            if not sql:
+            contains_only_comments = all(line.strip().startswith("--") for line in sql.splitlines())
+            if contains_only_comments:
                 raise AssertionError(f"Empty migration file {file_name}")
             migrations.append(
-                MigrationItem(idx=idx, name=match.group("name"), file_name=file_name, sql=sql)
+                MigrationItem(index=index, name=match.group("name"), file_name=file_name, sql=sql)
             )
 
-    return sorted(migrations, key=lambda item: item.idx)
+    migrations = sorted(migrations, key=lambda item: item.index)
+
+    previous_migration = None
+    for migration in migrations:
+        if previous_migration and migration.index != previous_migration.index + 1:
+            raise AssertionError(
+                f"Inconsistent package: there is hole in indexes between `{previous_migration.file_name}` and `{migration.file_name}`"
+            )
+        previous_migration = migration
+
+    return migrations
 
 
 @dataclass(slots=True)
@@ -95,9 +112,9 @@ async def _apply_migrations(
     already_applied = []
     new_apply = []
 
-    idx_limit = await _idx_limit(conn)
+    last_migration_index = await _get_last_migration_index(conn)
     for migration in migrations:
-        if migration.idx <= idx_limit:
+        if last_migration_index is not None and migration.index <= last_migration_index:
             already_applied.append(migration)
         else:
             if not dry_run:
@@ -114,35 +131,19 @@ async def _apply_migrations(
 async def _apply_migration(conn: AsyncpgConnection, migration: MigrationItem) -> None:
     async with conn.transaction():
         await conn.execute(migration.sql)
-        sql = "INSERT INTO migration (_id, name, applied) VALUES ($1, $2, $3)"
-        await conn.execute(sql, migration.idx, migration.name, datetime.now())
+        sql = f"INSERT INTO {MIGRATION_TABLE} (_id, name, applied) VALUES ($1, $2, $3)"
+        result = await conn.execute(sql, migration.index, migration.name, datetime.now())
+        assert result == "INSERT 0 1", result
 
 
-async def _last_migration_row(conn: AsyncpgConnection) -> int:
-    query = "SELECT _id FROM migration ORDER BY applied desc LIMIT 1"
-    return await conn.fetchval(query)
-
-
-async def _is_initial_migration_applied(conn: AsyncpgConnection) -> bool:
-    query = "SELECT _id FROM organization LIMIT 1"
+async def _get_last_migration_index(conn: AsyncpgConnection) -> int | None:
+    query = f"SELECT _id FROM {MIGRATION_TABLE} ORDER BY applied desc LIMIT 1"
     try:
-        await conn.fetchval(query)
+        return await conn.fetchval(query)
     except UndefinedTableError:
-        return False
-    else:
-        return True
-
-
-async def _idx_limit(conn: AsyncpgConnection) -> int:
-    idx_limit = 0
-    try:
-        idx_limit = await _last_migration_row(conn)
-    except UndefinedTableError:
-        # The migration table is created in the second migration
-        if await _is_initial_migration_applied(conn):
-            # The initial table may be created before the migrate command with the old way
-            idx_limit = 1
-    return idx_limit
+        # The database is empty (it is the first migration that creates, among other
+        # things, the `migration` table).
+        return None
 
 
 def retry_on_unique_violation(

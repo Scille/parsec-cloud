@@ -34,14 +34,15 @@ async def run_migrations(conn: AsyncpgConnection) -> None:
         raise RuntimeError(f"Error while applying migration {migration.file_name}: {msg}")
 
 
-async def _execute_pg_query(
-    url: str, query: str | Callable[[AsyncpgConnection], Awaitable[None]]
+async def execute_pg_queries(
+    url: str, *queries: str | Callable[[AsyncpgConnection], Awaitable[None]]
 ) -> None:
     conn = await asyncpg.connect(url)
-    if callable(query):
-        await query(conn)
-    else:
-        await conn.execute(query)
+    for query in queries:
+        if callable(query):
+            await query(conn)
+        else:
+            await conn.execute(query)
     await conn.close()
 
 
@@ -60,20 +61,17 @@ def bootstrap_postgresql_testbed() -> str:
 
     async def init_db():
         assert _pg_db_url is not None
-        await _execute_pg_query(_pg_db_url, run_migrations)
         if provided_db:
-            await reset_postgresql_testbed()
+            await execute_pg_queries(_pg_db_url, run_migrations, _Q_RESET_POSTGRESQL_TESTBED)
+        else:
+            await execute_pg_queries(_pg_db_url, run_migrations)
 
     asyncio.run(init_db())
 
     return _pg_db_url
 
 
-async def reset_postgresql_testbed() -> None:
-    assert _pg_db_url is not None
-    await _execute_pg_query(
-        _pg_db_url,
-        """
+_Q_RESET_POSTGRESQL_TESTBED = """
 TRUNCATE TABLE organization
 RESTART IDENTITY CASCADE;
 
@@ -113,8 +111,12 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_topic', '_id'), 25000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_topic', '_id'), 26000)
 ;
-""",
-    )
+"""
+
+
+async def reset_postgresql_testbed() -> None:
+    assert _pg_db_url is not None
+    await execute_pg_queries(_pg_db_url, _Q_RESET_POSTGRESQL_TESTBED)
 
 
 def get_postgresql_url() -> str | None:
