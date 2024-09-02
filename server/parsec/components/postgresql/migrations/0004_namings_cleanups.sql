@@ -46,7 +46,22 @@ RENAME CONSTRAINT profile_user__fkey TO user_update_user__fkey;
 ALTER SEQUENCE profile__id_seq
 RENAME TO user_update__id_seq;
 
--- All tables refering to a certificate have an `organization` reference
+-- All tables refering to a certificate have a `organization`/`certified_by`/`certified_on`
 
 ALTER TABLE user_update
 ADD organization INTEGER REFERENCES organization (_id) NOT NULL;
+
+ALTER TABLE user_update
+ADD organization INTEGER REFERENCES organization (_id) NOT NULL;
+
+ALTER TABLE shamir_recovery_setup
+ADD certified_by INTEGER NOT NULL;
+
+ALTER TABLE shamir_recovery_setup
+ADD certified_on TIMESTAMPTZ NOT NULL;
+
+ALTER TABLE shamir_recovery_share
+ADD certified_by INTEGER NOT NULL;
+
+ALTER TABLE shamir_recovery_share
+ADD certified_on TIMESTAMPTZ NOT NULL;

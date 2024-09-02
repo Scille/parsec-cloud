@@ -156,12 +156,13 @@ CREATE TABLE shamir_recovery_setup (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
-
     brief_certificate BYTEA NOT NULL,
     reveal_token UUID NOT NULL,
     threshold INTEGER NOT NULL,
     shares INTEGER NOT NULL,
     ciphered_data BYTEA,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE (organization, reveal_token)
 );
@@ -170,12 +171,12 @@ CREATE TABLE shamir_recovery_setup (
 CREATE TABLE shamir_recovery_share (
     _id SERIAL PRIMARY KEY,
     organization INTEGER REFERENCES organization (_id) NOT NULL,
-
     shamir_recovery INTEGER REFERENCES shamir_recovery_setup (_id) NOT NULL,
     recipient INTEGER REFERENCES user_ (_id) NOT NULL,
-
     share_certificate BYTEA NOT NULL,
     shares INTEGER NOT NULL,
+    certified_by INTEGER REFERENCES device (_id) NOT NULL,
+    certified_on TIMESTAMPTZ NOT NULL,
 
     UNIQUE (organization, shamir_recovery, recipient)
 );
