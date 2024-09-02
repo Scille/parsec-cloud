@@ -6,12 +6,12 @@ import vitePreprocessor from 'cypress-vite';
 // Cypress only expose in `Cypress.env()` the environ variables with a `CYPRESS_` prefix,
 // however testbed server url must also be configured in Vite (you guessed it: where
 // only `VITE_` prefixed variables are exposed).
-// So we want the user to only have to set `TESTBED_SERVER_URL` for both Vite and Cypress.
-process.env.CYPRESS_TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL || process.env.TESTBED_SERVER_URL;
+// So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
+process.env.CYPRESS_TESTBED_SERVER = process.env.CYPRESS_TESTBED_SERVER || process.env.TESTBED_SERVER;
 
 // To properly run, cypress needs two informations:
 // - CYPRESS_BASE_URL: the address of the web server serving our application
-// - TESTBED_SERVER_URL: the address of the testbed server for mocking Parsec server
+// - TESTBED_SERVER: the address of the testbed server for mocking Parsec server
 
 const DEFAULT_BASE_URL = 'http://localhost:8080/'; // Vite's dev server
 if (!process.env.CYPRESS_BASE_URL) {
@@ -21,13 +21,13 @@ if (!process.env.CYPRESS_BASE_URL) {
 const BASE_URL = process.env.CYPRESS_BASE_URL;
 process.env.CYPRESS_BASE_URL = undefined; // Clear variable to prevent Cypress from doing voodoo on it
 
-const DEFAULT_TESTBED_SERVER_URL = 'http://localhost:6770/'; // Default port in testbed server
-if (!process.env.CYPRESS_TESTBED_SERVER_URL) {
-  console.log(`\`TESTBED_SERVER_URL\` not set, defaulting to \`${DEFAULT_TESTBED_SERVER_URL}\``);
-  process.env.CYPRESS_TESTBED_SERVER_URL = DEFAULT_TESTBED_SERVER_URL;
+const DEFAULT_TESTBED_SERVER = 'http://localhost:6770/'; // Default port in testbed server
+if (!process.env.CYPRESS_TESTBED_SERVER) {
+  console.log(`\`TESTBED_SERVER\` not set, defaulting to \`${DEFAULT_TESTBED_SERVER}\``);
+  process.env.CYPRESS_TESTBED_SERVER = DEFAULT_TESTBED_SERVER;
 }
-const TESTBED_SERVER_URL = process.env.CYPRESS_TESTBED_SERVER_URL;
-process.env.CYPRESS_TESTBED_SERVER_URL = undefined; // Clear variable to prevent Cypress from doing voodoo on it
+const TESTBED_SERVER = process.env.CYPRESS_TESTBED_SERVER;
+process.env.CYPRESS_TESTBED_SERVER = undefined; // Clear variable to prevent Cypress from doing voodoo on it
 
 export default defineConfig({
   e2e: {
@@ -38,10 +38,10 @@ export default defineConfig({
     // so here we are just making things explicit to help the reader.
     baseUrl: BASE_URL,
     // Similarly, any env variable with `CYPRESS_` prefix got dumped in `env`, so we could
-    // use `CYPRESS_TESTBED_SERVER_URL` instead of `TESTBED_SERVER_URL`. But, again, Js
+    // use `CYPRESS_TESTBED_SERVER` instead of `TESTBED_SERVER`. But, again, Js
     // ecosystem already contains more magic than Hogwarts.
     env: {
-      TESTBED_SERVER_URL: TESTBED_SERVER_URL,
+      TESTBED_SERVER: TESTBED_SERVER,
     },
     screenshotsFolder: 'tests/e2e/screenshots',
     videosFolder: 'tests/e2e/videos',

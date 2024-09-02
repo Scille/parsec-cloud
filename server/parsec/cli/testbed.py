@@ -303,9 +303,9 @@ def testbed_cmd(
 
             async with testbed_backend_factory(server_addr=server_addr) as testbed:
                 click.secho("All set !", fg="yellow")
-                click.echo("Don't forget to export `TESTBED_SERVER_URL` environ variable:")
+                click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
                 click.secho(
-                    f"export TESTBED_SERVER_URL='parsec3://127.0.0.1:{port}?no_ssl=true'",
+                    f"export TESTBED_SERVER='parsec3://127.0.0.1:{port}?no_ssl=true'",
                     fg="magenta",
                 )
 

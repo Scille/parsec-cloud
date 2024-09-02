@@ -33,7 +33,7 @@ use libparsec::{
 
 use crate::testenv_utils::{
     initialize_test_organization, new_environment, parsec_addr_from_http_url, TestOrganization,
-    TestenvConfig, TESTBED_SERVER_URL,
+    TestenvConfig, TESTBED_SERVER,
 };
 
 fn get_testenv_config() -> TestenvConfig {
@@ -47,7 +47,7 @@ fn get_testenv_config() -> TestenvConfig {
 }
 
 fn set_env(tmp_dir: &str, url: &ParsecAddr) {
-    std::env::set_var(TESTBED_SERVER_URL, url.to_url().to_string());
+    std::env::set_var(TESTBED_SERVER, url.to_url().to_string());
     std::env::set_var(PARSEC_BASE_HOME_DIR, format!("{tmp_dir}/cache"));
     std::env::set_var(PARSEC_BASE_DATA_DIR, format!("{tmp_dir}/share"));
     std::env::set_var(PARSEC_BASE_CONFIG_DIR, format!("{tmp_dir}/config"));

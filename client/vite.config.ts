@@ -16,12 +16,12 @@ let platform: string;
 // Vite only expose in `import.meta.env` the environ variables with a `VITE_` prefix,
 // however testbed server url must also be configured in Cypress (you guessed it: where
 // only `CYPRESS_` prefixed variables are exposed).
-// So we want the user to only have to set `TESTBED_SERVER_URL` for both Vite and Cypress.
-if (process.env.VITE_TESTBED_SERVER_URL || process.env.TESTBED_SERVER_URL) {
+// So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
+if (process.env.VITE_TESTBED_SERVER || process.env.TESTBED_SERVER) {
   // Why this if guard ? Guess what kiddo !
-  // Setting `process.env.VITE_TESTBED_SERVER_URL = undefined` got chewed up
+  // Setting `process.env.VITE_TESTBED_SERVER = undefined` got chewed up
   // in the web page into "undefined" string...
-  process.env.VITE_TESTBED_SERVER_URL = process.env.VITE_TESTBED_SERVER_URL || process.env.TESTBED_SERVER_URL;
+  process.env.VITE_TESTBED_SERVER = process.env.VITE_TESTBED_SERVER || process.env.TESTBED_SERVER;
 }
 if (process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE) {
   process.env.VITE_APP_TEST_MODE = process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE;

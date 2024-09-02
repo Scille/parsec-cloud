@@ -81,7 +81,7 @@ onMounted(async () => {
 
 async function testBootstrapOrganization(): Promise<void> {
   const configResult = await testCase('Init empty testbed', async () => {
-    return await libparsec.testNewTestbed('empty', import.meta.env.VITE_TESTBED_SERVER_URL);
+    return await libparsec.testNewTestbed('empty', import.meta.env.VITE_TESTBED_SERVER);
   });
 
   if (!configResult.ok) {

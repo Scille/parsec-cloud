@@ -33,7 +33,7 @@ npm run test:unit
 To run these tests, you first need to [start the testbed server locally](../docs/development/README.md#starting-the-testbed-server).
 
 ```bash
-export TESTBED_SERVER_URL="parsec3://localhost:6777?no_ssl=true"
+export TESTBED_SERVER="parsec3://localhost:6777?no_ssl=true"
 ```
 
 #### Playwright

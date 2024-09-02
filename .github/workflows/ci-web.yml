@@ -161,7 +161,7 @@ jobs:
       - name: E2E tests
         run: npm run test:e2e:headless
         env:
-          TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
+          TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
 
@@ -173,7 +173,7 @@ jobs:
       - name: Playwright E2E tests
         run: npm run pw:e2e:headless
         env:
-          TESTBED_SERVER_URL: parsec3://localhost:6777?no_ssl=true
+          TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
         working-directory: client
         timeout-minutes: 20
 
