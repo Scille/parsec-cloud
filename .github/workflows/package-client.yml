@@ -331,8 +331,9 @@ jobs:
         # we need to escape the flag another time by adding another `--`.
         run: >-
           npm run electron:release
-          ${{ matrix.platform == 'linux' && '-- appimage' || '' }}
-          ${{ inputs.nightly_build && '-- --nightly' || '' }}
+          ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' }}
+          ${{ matrix.platform == 'linux' && 'appimage' || '' }}
+          ${{ inputs.nightly_build && '--nightly' || '' }}
         env:
           VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
