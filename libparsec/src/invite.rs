@@ -489,9 +489,7 @@ pub async fn claimer_user_in_progress_1_do_signify_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -523,9 +521,7 @@ pub async fn claimer_device_in_progress_1_do_signify_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -562,9 +558,7 @@ pub async fn claimer_user_in_progress_2_do_wait_peer_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -592,9 +586,7 @@ pub async fn claimer_device_in_progress_2_do_wait_peer_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -633,9 +625,7 @@ pub async fn claimer_user_in_progress_3_do_claim(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -664,9 +654,7 @@ pub async fn claimer_device_in_progress_3_do_claim(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(ClaimInProgressError::Cancelled)
         },
     )
@@ -1108,9 +1096,7 @@ pub async fn greeter_user_in_progress_1_do_wait_peer_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1144,9 +1130,7 @@ pub async fn greeter_device_in_progress_1_do_wait_peer_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1228,9 +1212,7 @@ pub async fn greeter_user_in_progress_2_do_signify_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1258,9 +1240,7 @@ pub async fn greeter_device_in_progress_2_do_signify_trust(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1302,9 +1282,7 @@ pub async fn greeter_user_in_progress_3_do_get_claim_requests(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1336,9 +1314,7 @@ pub async fn greeter_device_in_progress_3_do_get_claim_requests(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1379,9 +1355,7 @@ pub async fn greeter_user_in_progress_4_do_create(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
@@ -1407,9 +1381,7 @@ pub async fn greeter_device_in_progress_4_do_create(
     libparsec_platform_async::select2_biased!(
         res = work => res,
         _ = cancel_requested => {
-            if canceller_ctx.cancel().await.is_err(){
-                // TODO: Warn about the error before discarding it
-            }
+            canceller_ctx.cancel_and_warn_on_error().await;
             Err(GreetInProgressError::Cancelled)
         },
     )
