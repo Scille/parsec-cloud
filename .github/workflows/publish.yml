@@ -137,7 +137,7 @@ jobs:
 
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
-        uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # pin v1.9.0
+        uses: pypa/gh-action-pypi-publish@8a08d616893759ef8e1aa1f2785787c0b97e20d6 # pin v1.10.0
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
