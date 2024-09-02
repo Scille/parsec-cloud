@@ -144,15 +144,15 @@ async function setupApp(): Promise<void> {
     window.nextStageHook = (): any => {
       return [libparsec, nextStage];
     };
-  } else if (import.meta.env.VITE_TESTBED_SERVER_URL) {
+  } else if (import.meta.env.VITE_TESTBED_SERVER) {
     // Dev mode, provide a default testbed
-    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER_URL);
+    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER);
     if (configResult.ok) {
       nextStage(configResult.value); // Fire-and-forget call
     } else {
       // eslint-disable-next-line no-alert
       alert(
-        `Failed to initialize using the testbed.\nTESTBED_SERVER_URL is set to '${import.meta.env.VITE_TESTBED_SERVER_URL}'\n${
+        `Failed to initialize using the testbed.\nTESTBED_SERVER is set to '${import.meta.env.VITE_TESTBED_SERVER}'\n${
           configResult.error.tag
         }: ${configResult.error.error}`,
       );

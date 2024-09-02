@@ -292,12 +292,12 @@ that will provide some mocked data.
    $ python ./make.py run-testbed-server
    [..]
    2023-04-18T12:16:38.649668Z [info     ] Running on http://127.0.0.1:6770 (CTRL + C to quit)
-   All set ! Don't forget to export `TESTBED_SERVER_URL` environ variable:
-   export TESTBED_SERVER_URL='parsec3://127.0.0.1:6770?no_ssl=true'
+   All set ! Don't forget to export `TESTBED_SERVER` environ variable:
+   export TESTBED_SERVER='parsec3://127.0.0.1:6770?no_ssl=true'
    ```
 
    > Note the last 2 line `All set ...` and `export ...`
-   > You need to have the env variable `TESTBED_SERVER_URL` set to the value after `export TESTBED_SERVER_URL=` (depending on how you set it, you could remove the `'` around the value) on you primary terminal (the one that would run the dev server)
+   > You need to have the env variable `TESTBED_SERVER` set to the value after `export TESTBED_SERVER=` (depending on how you set it, you could remove the `'` around the value) on you primary terminal (the one that would run the dev server)
 
    You need to keep that terminal open with the script running otherwise, the mock server would stop working.
 

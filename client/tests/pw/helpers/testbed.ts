@@ -5,9 +5,9 @@ import { Page } from '@playwright/test';
 type TestbedTemplate = 'coolorg' | 'empty';
 
 export async function newTestbed(page: Page, template: TestbedTemplate = 'coolorg'): Promise<void> {
-  const TESTBED_SERVER_URL = process.env.TESTBED_SERVER_URL;
-  if (TESTBED_SERVER_URL === undefined) {
-    throw new Error('Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
+  const TESTBED_SERVER = process.env.TESTBED_SERVER;
+  if (TESTBED_SERVER === undefined) {
+    throw new Error('Environ variable `TESTBED_SERVER` must be defined to use testbed');
   }
 
   // `page.evaluate` runs inside the web page, hence why we pass a function with
@@ -24,7 +24,7 @@ export async function newTestbed(page: Page, template: TestbedTemplate = 'coolor
       await nextStage(configPath, 'en-US');
       return configPath;
     },
-    [template, TESTBED_SERVER_URL],
+    [template, TESTBED_SERVER],
   );
 }
 

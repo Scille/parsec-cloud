@@ -25,7 +25,7 @@ pub(crate) const DEFAULT_DEVICE_PASSWORD: &str = "test";
 const RESERVED_PORT_OFFSET: u16 = 1024;
 const AVAILABLE_PORT_COUNT: u16 = u16::MAX - RESERVED_PORT_OFFSET;
 const LAST_SERVER_PID: &str = "LAST_SERVER_ID";
-pub const TESTBED_SERVER_URL: &str = "TESTBED_SERVER_URL";
+pub const TESTBED_SERVER: &str = "TESTBED_SERVER";
 
 pub struct TestOrganization {
     pub alice: Arc<LocalDevice>,
@@ -291,7 +291,7 @@ pub async fn new_environment(
     let url = match config {
         TestenvConfig::ConnectToServer(url) => {
             println!("Using testbed server: {YELLOW}{url}{RESET}");
-            env.push((TESTBED_SERVER_URL, url.to_string()));
+            env.push((TESTBED_SERVER, url.to_string()));
             Some(url)
         }
         TestenvConfig::StartNewServer { stop_after_process } if !empty => {
@@ -312,7 +312,7 @@ pub async fn new_environment(
             );
 
             let server_addr = ParsecAddr::new("127.0.0.1".into(), Some(port_from_pid), false);
-            env.push((TESTBED_SERVER_URL, server_addr.to_url().to_string()));
+            env.push((TESTBED_SERVER, server_addr.to_url().to_string()));
             env.push((LAST_SERVER_PID, id.to_string()));
             Some(server_addr)
         }

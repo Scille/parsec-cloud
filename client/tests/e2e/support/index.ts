@@ -45,10 +45,10 @@ declare global {
 }
 
 Cypress.Commands.add('visitApp', (template = 'coolorg') => {
-  const TESTBED_SERVER_URL = Cypress.env('TESTBED_SERVER_URL');
-  assert.isDefined(TESTBED_SERVER_URL, 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
+  const TESTBED_SERVER = Cypress.env('TESTBED_SERVER');
+  assert.isDefined(TESTBED_SERVER, 'Environ variable `TESTBED_SERVER` must be defined to use testbed');
   // If the variable is not defined, Cypress gets it as the string "undefined" instead of the value. So we check that also.
-  assert.notStrictEqual(TESTBED_SERVER_URL, 'undefined', 'Environ variable `TESTBED_SERVER_URL` must be defined to use testbed');
+  assert.notStrictEqual(TESTBED_SERVER, 'undefined', 'Environ variable `TESTBED_SERVER` must be defined to use testbed');
 
   cy
     .visit('/', {
@@ -70,7 +70,7 @@ Cypress.Commands.add('visitApp', (template = 'coolorg') => {
       window.indexedDB.deleteDatabase('_ionicstorage');
 
       const [libparsec, nextStage] = window.nextStageHook();
-      const configResult = await libparsec.testNewTestbed(template, TESTBED_SERVER_URL);
+      const configResult = await libparsec.testNewTestbed(template, TESTBED_SERVER);
       if (!configResult.ok) {
         throw new Error('Failed to init testbed');
       }
