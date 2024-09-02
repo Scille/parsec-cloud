@@ -324,7 +324,6 @@ class Backend:
                 raise NotImplementedError
             elif isinstance(event, testbed.TestbedEventCreateBlock):
                 outcome = await self.block.create(
-                    now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
                     realm_id=event.realm,
@@ -335,7 +334,6 @@ class Backend:
                 assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventCreateOpaqueBlock):
                 outcome = await self.block.create(
-                    now=event.timestamp,
                     organization_id=org_id,
                     author=event.author,
                     realm_id=event.realm,

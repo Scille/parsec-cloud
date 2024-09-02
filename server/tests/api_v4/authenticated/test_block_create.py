@@ -143,7 +143,6 @@ async def test_authenticated_block_create_block_already_exists(
     block = b"<block content>"
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,

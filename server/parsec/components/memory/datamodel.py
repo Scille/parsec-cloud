@@ -581,7 +581,7 @@ class MemoryBlock:
     key_index: int
     author: DeviceID
     block_size: int
-    created_on: DateTime
+    inserted_on: DateTime
     # None if not deleted
     deleted_on: DateTime | None = None
 

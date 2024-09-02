@@ -59,7 +59,6 @@ class BaseBlockComponent:
 
     async def create(
         self,
-        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -67,6 +66,11 @@ class BaseBlockComponent:
         key_index: int,
         block: bytes,
     ) -> None | BadKeyIndex | BlockCreateBadOutcome:
+        """
+        Note Blocks doesn't need timestamp (hence no `now` param here) simply
+        because they only have meaning as part of a file manifest (i.e. a
+        vlob from the server point of view), which is the one having timestamp.
+        """
         raise NotImplementedError
 
     async def test_dump_blocks(
@@ -116,7 +120,6 @@ class BaseBlockComponent:
         req: authenticated_cmds.latest.block_create.Req,
     ) -> authenticated_cmds.latest.block_create.Rep:
         outcome = await self.create(
-            now=DateTime.now(),
             organization_id=client_ctx.organization_id,
             author=client_ctx.device_id,
             key_index=req.key_index,

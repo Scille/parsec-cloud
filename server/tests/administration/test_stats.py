@@ -186,7 +186,6 @@ async def test_ok(
     expected_coolorg_server_stats["metadata_size"] += 30
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=BlockID.new(),
@@ -195,7 +194,6 @@ async def test_ok(
         block=b"0" * 10,
     )
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=BlockID.new(),

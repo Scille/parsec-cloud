@@ -70,7 +70,6 @@ class MemoryBlockComponent(BaseBlockComponent):
     @override
     async def create(
         self,
-        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -123,7 +122,10 @@ class MemoryBlockComponent(BaseBlockComponent):
                 key_index=key_index,
                 author=author,
                 block_size=len(block),
-                created_on=now,
+                # Simulate what we do in PostgreSQL, i.e. the time taken here
+                # is controled by the database since it is only an information
+                # for database admins.
+                inserted_on=DateTime.now(),
             )
 
     @override
@@ -135,7 +137,7 @@ class MemoryBlockComponent(BaseBlockComponent):
         items = {}
         for block in org.blocks.values():
             items[block.block_id] = (
-                block.created_on,
+                block.inserted_on,
                 block.author,
                 block.realm_id,
                 block.key_index,

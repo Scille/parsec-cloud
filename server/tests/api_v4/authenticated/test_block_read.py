@@ -67,7 +67,6 @@ async def test_authenticated_block_read_ok(
     block = b"<block content>"
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
@@ -101,7 +100,6 @@ async def test_authenticated_block_read_author_not_allowed(
     block = b"<block content>"
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
@@ -135,7 +133,6 @@ async def test_authenticated_block_read_store_unavailable(
     block = b"<block content>"
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,
@@ -173,7 +170,6 @@ async def test_authenticated_block_read_http_common_errors(
     block = b"<block content>"
 
     await backend.block.create(
-        now=DateTime.now(),
         organization_id=coolorg.organization_id,
         author=coolorg.alice.device_id,
         block_id=block_id,

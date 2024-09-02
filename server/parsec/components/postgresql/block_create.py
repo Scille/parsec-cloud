@@ -32,7 +32,7 @@ VALUES (
     $realm_internal_id,
     $device_internal_id,
     $size,
-    $created_on,
+    NOW(),
     $key_index
 )
 """
@@ -138,7 +138,6 @@ SELECT
 async def block_create(
     blockstore: BaseBlockStoreComponent,
     conn: AsyncpgConnection,
-    now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
     realm_id: VlobID,
@@ -286,7 +285,6 @@ async def block_create(
                 realm_internal_id=realm_internal_id,
                 device_internal_id=device_internal_id,
                 size=len(block),
-                created_on=now,
                 key_index=key_index,
             )
         )

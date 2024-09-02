@@ -56,7 +56,6 @@ class PGBlockComponent(BaseBlockComponent):
     async def create(
         self,
         conn: AsyncpgConnection,
-        now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         realm_id: VlobID,
@@ -67,7 +66,6 @@ class PGBlockComponent(BaseBlockComponent):
         return await block_create(
             self.blockstore,
             conn,
-            now,
             organization_id,
             author,
             realm_id,

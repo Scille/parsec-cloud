@@ -268,7 +268,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         for vlob in org.vlobs.values():
             metadata_size += sum(len(atom.blob) for atom in vlob if atom.created_on <= at)
         for block in org.blocks.values():
-            if block.created_on <= at:
+            if block.inserted_on <= at:
                 data_size += block.block_size
 
         users_per_profile_detail = tuple(
