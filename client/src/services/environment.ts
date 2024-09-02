@@ -41,7 +41,7 @@ function getSignUrl(): string {
 const SAAS_SERVERS_ENV_VARIABLE = 'VITE_SAAS_SERVERS';
 const TRIAL_SERVERS_ENV_VARIABLE = 'VITE_TRIAL_SERVERS';
 
-const DEFAULT_SAAS_SERVERS = ['saas-v3.parsec.cloud'];
+const DEFAULT_SAAS_SERVERS = ['saas-v3.parsec.cloud', 'saas-demo-v3-mightyfairy.parsec.cloud'];
 const DEFAULT_TRIAL_SERVERS = ['trial.parsec.cloud'];
 
 function getSaasServers(): Array<string> {

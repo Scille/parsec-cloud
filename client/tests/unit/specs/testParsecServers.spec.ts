@@ -41,7 +41,7 @@ describe('Parsec Server detection', () => {
     ['parsec3://saas-demo-v3-mightyfairy.parsec.cloud:443', ServerType.Saas],
     ['parsec3://saas-demo-v3-mightyfairy.parsec.cloud:443/org', ServerType.Saas],
     ['parsec3://saas-demo-v3-mightyfairy.parsec.cloud:443/org', ServerType.Saas],
-    ['parsec://saas-demo-v3-mightyfairy.parsec.cloud:443/org', ServerType.Custom],
+    ['parsec://saas-demo-v3-mightyfairy.parsec.cloud:443/org', ServerType.Saas],
   ])('Test getServerTypeFromAddress %s => %s', (addr, expected: ServerType) => {
     expect(getServerTypeFromAddress(addr)).to.equal(expected);
   });

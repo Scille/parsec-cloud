@@ -25,10 +25,6 @@ export function getServerTypeFromAddress(addr: string): ServerType {
     return ServerType.Custom;
   }
 
-  if (url.protocol !== 'parsec3:') {
-    return ServerType.Custom;
-  }
-
   const host = !url.port || url.port === DEFAULT_PORT.toString() ? url.hostname : url.host;
 
   if (matchesHost(Env.getSaasServers(), host)) {
