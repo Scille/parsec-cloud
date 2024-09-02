@@ -69,7 +69,7 @@ async def backend(
             finally:
                 # Check that all non-template organizations have been dropped
                 try:
-                    organisations = await backend.organization.test_dump_organizations(
+                    organizations = await backend.organization.test_dump_organizations(
                         skip_templates=True
                     )
                 # The check cannot be performed, fully reset the testbed to avoid side effects
@@ -80,9 +80,9 @@ async def backend(
                     # A test that creates new organization should specifically use the `cleanup_organizations` fixture.
                     # If organizations still exists at this point, it means the test did not properly performed its cleanup.
                     # So we fully reset the testbed to avoid side effects.
-                    if organisations:
+                    if organizations:
                         await reset_testbed()
-                    assert organisations == {}, set(organisations)
+                    assert organizations == {}, set(organizations)
 
     async with asyncio.TaskGroup() as tg:
         tg.create_task(_run_backend())

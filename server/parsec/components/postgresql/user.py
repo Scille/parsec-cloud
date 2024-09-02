@@ -74,14 +74,14 @@ WHERE
 _q_get_profile_for_user = Q(
     f"""
 SELECT
-    COALESCE(profile.profile, user_.initial_profile) AS profile,
+    COALESCE(user_update.profile, user_.initial_profile) AS profile,
     user_.revoked_on
 FROM user_
-LEFT JOIN profile ON user_._id = profile.user_
+LEFT JOIN user_update ON user_._id = user_update.user_
 WHERE
-    organization = { q_organization_internal_id("$organization_id") }
+    user_.organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
-ORDER BY profile.certified_on DESC LIMIT 1
+ORDER BY user_update.certified_on DESC LIMIT 1
 """
 )
 

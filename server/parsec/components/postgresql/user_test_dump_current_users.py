@@ -24,15 +24,15 @@ SELECT DISTINCT ON(user_._id)
     user_.frozen,
     user_.created_on,
     user_.revoked_on,
-    COALESCE(profile.profile, user_.initial_profile) AS current_profile,
+    COALESCE(user_update.profile, user_.initial_profile) AS current_profile,
     human.email AS human_email,
     human.label AS human_label
 FROM user_
-LEFT JOIN profile ON user_._id = profile.user_
+LEFT JOIN user_update ON user_._id = user_update.user_
 INNER JOIN human ON human._id = user_.human
 WHERE
     user_.organization = { q_organization_internal_id("$organization_id") }
-ORDER BY user_._id, profile.certified_on DESC
+ORDER BY user_._id, user_update.certified_on DESC
 """
 )
 

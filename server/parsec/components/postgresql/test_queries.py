@@ -33,8 +33,8 @@ deleted_devices AS (
     WHERE user_ in (select * from deleted_users)
     RETURNING _id
 ),
-deleted_profiles AS (
-    DELETE FROM profile
+deleted_user_updates AS (
+    DELETE FROM user_update
     WHERE user_ in (select * from deleted_users)
     RETURNING _id
 ),
@@ -126,12 +126,12 @@ WITH new_organization_ids AS (
         organization_id,
         bootstrap_token,
         root_verify_key,
-        _expired_on,
+        expired_on,
         user_profile_outsider_allowed,
         active_users_limit,
         is_expired,
-        _bootstrapped_on,
-        _created_on,
+        bootstrapped_on,
+        created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
         minimum_archiving_period
@@ -140,12 +140,12 @@ WITH new_organization_ids AS (
         $target_id,
         bootstrap_token,
         root_verify_key,
-        _expired_on,
+        expired_on,
         user_profile_outsider_allowed,
         active_users_limit,
         is_expired,
-        _bootstrapped_on,
-        _created_on,
+        bootstrapped_on,
+        created_on,
         sequester_authority_certificate,
         sequester_authority_verify_key_der,
         minimum_archiving_period
@@ -256,28 +256,28 @@ patched_device_certifiers AS (
     )
     RETURNING _id
 ),
-new_profiles AS (
-    INSERT INTO profile (
+new_user_updates AS (
+    INSERT INTO user_update (
         user_,
         profile,
-        profile_certificate,
+        user_update_certificate,
         certified_by,
         certified_on
     )
     SELECT
         (
             SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="profile.user_", select="user_id") }
+            WHERE user_id = { q_user(_id="user_update.user_", select="user_id") }
         ),
         profile,
-        profile_certificate,
+        user_update_certificate,
         (
             SELECT _id FROM new_devices
-            WHERE device_id = { q_device(_id="profile.certified_by", select="device_id") }
+            WHERE device_id = { q_device(_id="user_update.certified_by", select="device_id") }
         ),
         certified_on
-    FROM profile
-    INNER JOIN user_ ON profile.user_ = user_._id
+    FROM user_update
+    INNER JOIN user_ ON user_update.user_ = user_._id
     WHERE user_.organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
 ),
@@ -417,7 +417,7 @@ new_blocks AS (
         realm,
         author,
         size,
-        created_on,
+        inserted_on,
         deleted_on
     )
     SELECT
@@ -432,7 +432,7 @@ new_blocks AS (
             WHERE device_id = { q_device(_id="block.author", select="device_id") }
         ),
         size,
-        created_on,
+        inserted_on,
         deleted_on
     FROM block
     WHERE organization = { q_organization_internal_id("$source_id") }

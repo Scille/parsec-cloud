@@ -62,18 +62,17 @@ WITH all_common_certificates AS (
     (
         SELECT
             1 AS priority,
-            profile.certified_on AS timestamp,
-            profile.profile_certificate AS certificate
-        FROM profile
-        INNER JOIN user_ ON profile.user_ = user_._id
-        WHERE user_.organization = $organization_internal_id
+            certified_on AS timestamp,
+            user_update_certificate AS certificate
+        FROM user_update
+        WHERE organization = $organization_internal_id
     )
 ),
 
 all_sequester_certificates AS (
     (
         SELECT
-            _bootstrapped_on AS timestamp,
+            bootstrapped_on AS timestamp,
             sequester_authority_certificate AS certificate
         FROM organization
         WHERE

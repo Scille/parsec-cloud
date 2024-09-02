@@ -31,7 +31,7 @@ def _q_update_factory(
     fields = []
     if with_is_expired:
         fields.append("is_expired = $is_expired")
-        fields.append("_expired_on = (CASE WHEN $is_expired THEN NOW() ELSE NULL END)")
+        fields.append("expired_on = (CASE WHEN $is_expired THEN NOW() ELSE NULL END)")
     if with_active_users_limit:
         fields.append("active_users_limit = $active_users_limit")
     if with_user_profile_outsider_allowed:

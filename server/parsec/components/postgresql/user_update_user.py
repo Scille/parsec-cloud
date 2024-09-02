@@ -45,18 +45,20 @@ LIMIT 1
 
 _q_update_user = Q(
     """
-WITH new_profile AS (
-    INSERT INTO profile (
+WITH new_user_update AS (
+    INSERT INTO user_update (
+        organization,
         user_,
         profile,
-        profile_certificate,
+        user_update_certificate,
         certified_by,
         certified_on
     )
     VALUES (
+        $organization_internal_id,
         $user_internal_id,
         $profile,
-        $profile_certificate,
+        $user_update_certificate,
         $certified_by_internal_id,
         $certified_on
     )
@@ -200,7 +202,7 @@ async def user_update_user(
             organization_internal_id=db_common.organization_internal_id,
             user_internal_id=recipient_internal_id,
             profile=certif.new_profile.str,
-            profile_certificate=user_update_certificate,
+            user_update_certificate=user_update_certificate,
             certified_by_internal_id=db_common.device_internal_id,
             certified_on=certif.timestamp,
         )

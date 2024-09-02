@@ -23,7 +23,7 @@ SELECT
     { q_realm(_id="realm", select="realm.realm_id") } AS realm_id,
     { q_device(_id="author", select="device_id") } AS author,
     size,
-    created_on,
+    inserted_on,
     key_index
 FROM block
 WHERE
@@ -41,7 +41,7 @@ async def block_test_dump_blocks(
     for row in rows:
         block_id = BlockID.from_hex(row["block_id"])
         items[block_id] = (
-            row["created_on"],
+            row["inserted_on"],
             DeviceID.from_hex(row["author"]),
             VlobID.from_hex(row["realm_id"]),
             int(row["key_index"]),

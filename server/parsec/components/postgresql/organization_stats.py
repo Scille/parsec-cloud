@@ -23,7 +23,7 @@ _q_get_stats = Q(
     f"""
 SELECT
     (
-        SELECT COALESCE(_created_on <= $at, false)
+        SELECT COALESCE(created_on <= $at, false)
         FROM organization
         WHERE organization_id = $organization_id
     ) AS found,
@@ -33,10 +33,10 @@ SELECT
                 revoked_on,
                 COALESCE (
                     (
-                        SELECT profile.profile::text
-                        FROM profile
-                        WHERE profile.user_ = user_._id
-                        ORDER BY profile.certified_on DESC LIMIT 1
+                        SELECT user_update.profile::text
+                        FROM user_update
+                        WHERE user_update.user_ = user_._id
+                        ORDER BY user_update.certified_on DESC LIMIT 1
                     ),
                     user_.initial_profile::text
                 )
@@ -69,7 +69,7 @@ SELECT
         FROM block
         WHERE
             organization = { q_organization_internal_id("$organization_id") }
-            AND created_on <= $at
+            AND inserted_on <= $at
             AND (deleted_on IS NULL OR deleted_on > $at)
     ) AS data_size
 """

@@ -22,14 +22,14 @@ CREATE TABLE organization (
     -- NULL if not bootstrapped
     root_verify_key BYTEA,
     -- NULL if not expired
-    _expired_on TIMESTAMPTZ,
+    expired_on TIMESTAMPTZ,
     user_profile_outsider_allowed BOOLEAN NOT NULL,
     -- NULL if no limit
     active_users_limit INTEGER,
     is_expired BOOLEAN NOT NULL,
     -- NULL if not bootstrapped
-    _bootstrapped_on TIMESTAMPTZ,
-    _created_on TIMESTAMPTZ NOT NULL,
+    bootstrapped_on TIMESTAMPTZ,
+    created_on TIMESTAMPTZ NOT NULL,
     -- NULL for non-sequestered organization
     sequester_authority_certificate BYTEA,
     -- NULL for non-sequestered organization
@@ -105,13 +105,14 @@ CREATE TABLE user_ (
     UNIQUE (organization, user_id)
 );
 
-CREATE TABLE profile (
+CREATE TABLE user_update (
     _id SERIAL PRIMARY KEY,
     user_ INTEGER REFERENCES user_ (_id) NOT NULL,
     profile USER_PROFILE NOT NULL,
-    profile_certificate BYTEA NOT NULL,
+    user_update_certificate BYTEA NOT NULL,
     certified_by INTEGER NOT NULL,
-    certified_on TIMESTAMPTZ NOT NULL
+    certified_on TIMESTAMPTZ NOT NULL,
+    organization INTEGER REFERENCES organization (_id) NOT NULL
 );
 
 
@@ -144,7 +145,7 @@ ALTER TABLE sequester_service ADD FOREIGN KEY (
     revoked_sequester_certifier
 ) REFERENCES device (_id);
 
-ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
+ALTER TABLE user_update ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
 
 -------------------------------------------------------
 --  Shamir recovery
@@ -443,7 +444,17 @@ CREATE TABLE block (
     realm INTEGER REFERENCES realm (_id) NOT NULL,
     author INTEGER REFERENCES device (_id) NOT NULL,
     size INTEGER NOT NULL,
-    created_on TIMESTAMPTZ NOT NULL,
+    -- Note Blocks doesn't need timestamp simply because they only have meaning
+    -- as part of a file manifest (i.e. a vlob from the server point of view),
+    -- which is the one having timestamp.
+    -- A key point here is it is perfectly possible to end up with a block created
+    -- by a user *after* he has been revoked (given user revocation checks doesn't
+    -- bother with checking the creation date of the blocks... since they shouldn't
+    -- have one in the first place !).
+    --
+    -- Hence `inserted_on` should only be seen as a useful information for
+    -- database admin.
+    inserted_on TIMESTAMPTZ NOT NULL,
     -- NULL if not deleted
     deleted_on TIMESTAMPTZ,
     key_index INTEGER NOT NULL,

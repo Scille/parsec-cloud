@@ -87,7 +87,7 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('sequester_service', '_id'), 2000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('human', '_id'), 3000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('user_', '_id'), 4000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('profile', '_id'), 5000),
+    SETVAL(PG_GET_SERIAL_SEQUENCE('user_update', '_id'), 5000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('device', '_id'), 6000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_setup', '_id'), 7000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_share', '_id'), 8000),

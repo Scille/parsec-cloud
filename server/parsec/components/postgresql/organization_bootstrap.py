@@ -122,7 +122,7 @@ updated_organization AS (
         root_verify_key = $root_verify_key,
         sequester_authority_certificate=$sequester_authority_certificate,
         sequester_authority_verify_key_der=$sequester_authority_verify_key_der,
-        _bootstrapped_on = $bootstrapped_on
+        bootstrapped_on = $bootstrapped_on
     WHERE
         _id = $organization_internal_id
     RETURNING TRUE

@@ -25,7 +25,7 @@ from parsec.components.realm import BadKeyIndex
 
 _q_insert_block = Q(
     """
-INSERT INTO block (organization, block_id, realm, author, size, created_on, key_index)
+INSERT INTO block (organization, block_id, realm, author, size, inserted_on, key_index)
 VALUES (
     $organization_internal_id,
     $block_id,

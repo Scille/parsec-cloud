@@ -23,10 +23,10 @@ WITH new_organization AS (
         bootstrap_token,
         active_users_limit,
         user_profile_outsider_allowed,
-        _created_on,
-        _bootstrapped_on,
+        created_on,
+        bootstrapped_on,
         is_expired,
-        _expired_on,
+        expired_on,
         minimum_archiving_period
     )
     VALUES (
@@ -47,9 +47,9 @@ WITH new_organization AS (
             bootstrap_token = EXCLUDED.bootstrap_token,
             active_users_limit = EXCLUDED.active_users_limit,
             user_profile_outsider_allowed = EXCLUDED.user_profile_outsider_allowed,
-            _created_on = EXCLUDED._created_on,
+            created_on = EXCLUDED.created_on,
             is_expired = EXCLUDED.is_expired,
-            _expired_on = EXCLUDED._expired_on,
+            expired_on = EXCLUDED.expired_on,
             minimum_archiving_period = EXCLUDED.minimum_archiving_period
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
