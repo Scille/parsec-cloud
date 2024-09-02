@@ -100,11 +100,34 @@ async fn cancel_greeting_attempt(
             timestamp,
         }),
         // Unexpected errors
-        Rep::GreetingAttemptNotFound => Err(anyhow::anyhow!("Greeting attempt not found").into()),
-        Rep::GreetingAttemptNotJoined => Err(anyhow::anyhow!("Greeting attempt not joined").into()),
-        rep @ Rep::UnknownStatus { .. } => {
+        Rep::UnknownStatus { .. }
+        | Rep::GreetingAttemptNotFound
+        | Rep::GreetingAttemptNotJoined => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
+    }
+}
+
+// Cancel the greeting attempt and log a warning if an error occurs.
+// This is used when the peer has already detected an issue and tries to communicate
+// the reason of this issue to the other peer. If this request fails, there is
+// no reason to try again or deal with the error in a specific way. Instead, the caller
+// simply propagates the error that originally caused the greeting attempt to be cancelled.
+// The greeting attempt will then be automatically cancelled when a new one is started.
+// Only the reason of the cancellation is lost, which is not a big deal as it was only
+// meant to be informative and to improve the user experience.
+async fn cancel_greeting_attempt_and_warn_on_error(
+    cmds: &InvitedCmds,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
+) {
+    if let Err(err) = cancel_greeting_attempt(cmds, greeting_attempt, reason).await {
+        log::warn!(
+            "Claimer failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
+            greeting_attempt,
+            reason,
+            err
+        );
     }
 }
 
@@ -151,19 +174,11 @@ async fn run_claimer_step_until_ready(
                 timestamp,
             }),
             // Unexpected errors
-            invite_claimer_step::Rep::GreetingAttemptNotFound => {
-                Err(anyhow::anyhow!("Greeting attempt not found").into())
-            }
-            invite_claimer_step::Rep::GreetingAttemptNotJoined => {
-                Err(anyhow::anyhow!("Greeting attempt not joined").into())
-            }
-            invite_claimer_step::Rep::StepMismatch => {
-                Err(anyhow::anyhow!("Greeting attempt failed due to step mismatch").into())
-            }
-            invite_claimer_step::Rep::StepTooAdvanced => {
-                Err(anyhow::anyhow!("Greeting attempt failed due to step too advanced").into())
-            }
-            rep @ invite_claimer_step::Rep::UnknownStatus { .. } => {
+            invite_claimer_step::Rep::UnknownStatus { .. }
+            | invite_claimer_step::Rep::GreetingAttemptNotFound
+            | invite_claimer_step::Rep::GreetingAttemptNotJoined
+            | invite_claimer_step::Rep::StepMismatch
+            | invite_claimer_step::Rep::StepTooAdvanced => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
             }
         };
@@ -245,6 +260,15 @@ impl ClaimCancellerCtx {
             CancelledGreetingAttemptReason::ManuallyCancelled,
         )
         .await
+    }
+
+    pub async fn cancel_and_warn_on_error(self) {
+        cancel_greeting_attempt_and_warn_on_error(
+            &self.cmds,
+            self.greeting_attempt,
+            CancelledGreetingAttemptReason::ManuallyCancelled,
+        )
+        .await;
     }
 }
 
@@ -783,12 +807,12 @@ impl UserClaimInProgress3Ctx {
                     }
                     _ => CancelledGreetingAttemptReason::InconsistentPayload,
                 };
-                if cancel_greeting_attempt(&self.0.cmds, self.0.greeting_attempt, reason)
-                    .await
-                    .is_err()
-                {
-                    // TODO: Warn about the error before discarding it
-                };
+                cancel_greeting_attempt_and_warn_on_error(
+                    &self.0.cmds,
+                    self.0.greeting_attempt,
+                    reason,
+                )
+                .await;
                 return Err(ClaimInProgressError::CorruptedConfirmation(err));
             }
         };
@@ -874,12 +898,12 @@ impl DeviceClaimInProgress3Ctx {
                     }
                     _ => CancelledGreetingAttemptReason::InconsistentPayload,
                 };
-                if cancel_greeting_attempt(&self.0.cmds, self.0.greeting_attempt, reason)
-                    .await
-                    .is_err()
-                {
-                    // TODO: Warn about the error before discarding it
-                };
+                cancel_greeting_attempt_and_warn_on_error(
+                    &self.0.cmds,
+                    self.0.greeting_attempt,
+                    reason,
+                )
+                .await;
                 return Err(ClaimInProgressError::CorruptedConfirmation(err));
             }
         };

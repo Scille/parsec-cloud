@@ -294,11 +294,34 @@ async fn cancel_greeting_attempt(
             timestamp,
         }),
         // Unexpected errors
-        Rep::GreetingAttemptNotFound => Err(anyhow::anyhow!("Greeting attempt not found").into()),
-        Rep::GreetingAttemptNotJoined => Err(anyhow::anyhow!("Greeting attempt not joined").into()),
-        rep @ Rep::UnknownStatus { .. } => {
+        Rep::UnknownStatus { .. }
+        | Rep::GreetingAttemptNotFound
+        | Rep::GreetingAttemptNotJoined => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
         }
+    }
+}
+
+// Cancel the greeting attempt and log a warning if an error occurs.
+// This is used when the peer has already detected an issue and tries to communicate
+// the reason of this issue to the other peer. If this request fails, there is
+// no reason to try again or deal with the error in a specific way. Instead, the caller
+// simply propagates the error that originally caused the greeting attempt to be cancelled.
+// The greeting attempt will then be automatically cancelled when a new one is started.
+// Only the reason of the cancellation is lost, which is not a big deal as it was only
+// meant to be informative and to improve the user experience.
+async fn cancel_greeting_attempt_and_warn_on_error(
+    cmds: &AuthenticatedCmds,
+    greeting_attempt: GreetingAttemptID,
+    reason: CancelledGreetingAttemptReason,
+) {
+    if let Err(err) = cancel_greeting_attempt(cmds, greeting_attempt, reason).await {
+        log::warn!(
+            "Greeter failed to cancel greeting attempt {:?} with reason {:?}: {:?}",
+            greeting_attempt,
+            reason,
+            err
+        );
     }
 }
 
@@ -348,19 +371,11 @@ async fn run_greeter_step_until_ready(
                 timestamp,
             }),
             // Unexpected errors
-            invite_greeter_step::Rep::GreetingAttemptNotFound => {
-                Err(anyhow::anyhow!("Greeting attempt not found").into())
-            }
-            invite_greeter_step::Rep::GreetingAttemptNotJoined => {
-                Err(anyhow::anyhow!("Greeting attempt not joined").into())
-            }
-            invite_greeter_step::Rep::StepMismatch => {
-                Err(anyhow::anyhow!("Greeting attempt failed due to step mismatch").into())
-            }
-            invite_greeter_step::Rep::StepTooAdvanced => {
-                Err(anyhow::anyhow!("Greeting attempt failed due to step too advanced").into())
-            }
-            rep @ invite_greeter_step::Rep::UnknownStatus { .. } => {
+            invite_greeter_step::Rep::UnknownStatus { .. }
+            | invite_greeter_step::Rep::GreetingAttemptNotFound
+            | invite_greeter_step::Rep::GreetingAttemptNotJoined
+            | invite_greeter_step::Rep::StepMismatch
+            | invite_greeter_step::Rep::StepTooAdvanced => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
             }
         };
@@ -383,6 +398,15 @@ impl GreetCancellerCtx {
             CancelledGreetingAttemptReason::ManuallyCancelled,
         )
         .await
+    }
+
+    pub async fn cancel_and_warn_on_error(self) {
+        cancel_greeting_attempt_and_warn_on_error(
+            &self.cmds,
+            self.greeting_attempt,
+            CancelledGreetingAttemptReason::ManuallyCancelled,
+        )
+        .await;
     }
 }
 
@@ -520,16 +544,12 @@ impl BaseGreetInitialCtx {
         };
 
         if HashDigest::from_data(&claimer_nonce) != claimer_hashed_nonce {
-            if cancel_greeting_attempt(
+            cancel_greeting_attempt_and_warn_on_error(
                 &self.cmds,
                 greeting_attempt,
                 CancelledGreetingAttemptReason::InvalidNonceHash,
             )
-            .await
-            .is_err()
-            {
-                // TODO: Warn about the error before discarding it
-            };
+            .await;
             return Err(GreetInProgressError::NonceMismatch);
         }
 
@@ -870,12 +890,8 @@ impl UserGreetInProgress3Ctx {
                     }
                     _ => CancelledGreetingAttemptReason::InconsistentPayload,
                 };
-                if cancel_greeting_attempt(&ctx.cmds, ctx.greeting_attempt, reason)
-                    .await
-                    .is_err()
-                {
-                    // TODO: Warn about the error before discarding it
-                };
+                cancel_greeting_attempt_and_warn_on_error(&ctx.cmds, ctx.greeting_attempt, reason)
+                    .await;
                 return Err(GreetInProgressError::CorruptedInviteUserData(err));
             }
         };
@@ -921,12 +937,8 @@ impl DeviceGreetInProgress3Ctx {
                     }
                     _ => CancelledGreetingAttemptReason::InconsistentPayload,
                 };
-                if cancel_greeting_attempt(&ctx.cmds, ctx.greeting_attempt, reason)
-                    .await
-                    .is_err()
-                {
-                    // TODO: Warn about the error before discarding it
-                };
+                cancel_greeting_attempt_and_warn_on_error(&ctx.cmds, ctx.greeting_attempt, reason)
+                    .await;
                 return Err(GreetInProgressError::CorruptedInviteUserData(err));
             }
         };
