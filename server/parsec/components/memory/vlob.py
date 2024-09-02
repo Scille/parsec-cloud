@@ -27,7 +27,6 @@ from parsec.components.sequester import SequesterServiceType
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
-    SequesterInconsistency,
     SequesterServiceNotAvailable,
     VlobCreateBadOutcome,
     VlobPollChangesAsUserBadOutcome,
@@ -65,7 +64,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         key_index: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -74,7 +72,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
-        | SequesterInconsistency
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -132,35 +129,26 @@ class MemoryVlobComponent(BaseVlobComponent):
 
             if org.is_sequestered:
                 assert org.sequester_services is not None
-                if sequester_blob is None or sequester_blob.keys() != org.sequester_services.keys():
-                    return SequesterInconsistency(
-                        last_common_certificate_timestamp=common_topic_last_timestamp
-                    )
 
-                blob_for_storage_sequester_services = {}
                 for service_id, service in org.sequester_services.items():
-                    match service.service_type:
-                        case SequesterServiceType.STORAGE:
-                            blob_for_storage_sequester_services[service_id] = sequester_blob[
-                                service_id
-                            ]
-                        case SequesterServiceType.WEBHOOK:
-                            assert service.webhook_url is not None
-                            match await self._sequester_service_send_webhook(
-                                webhook_url=service.webhook_url,
-                                organization_id=organization_id,
-                                service_id=service_id,
-                                sequester_blob=sequester_blob[service_id],
-                            ):
-                                case None:
-                                    pass
-                                case error:
-                                    return error
-
-            else:
-                if sequester_blob is not None:
-                    return VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
-                blob_for_storage_sequester_services = None
+                    if service.service_type == SequesterServiceType.WEBHOOK:
+                        assert service.webhook_url is not None
+                        match await self._sequester_service_send_webhook(
+                            webhook_url=service.webhook_url,
+                            organization_id=organization_id,
+                            service_id=service_id,
+                            realm_id=realm_id,
+                            vlob_id=vlob_id,
+                            key_index=key_index,
+                            author=author,
+                            version=1,
+                            timestamp=timestamp,
+                            blob=blob,
+                        ):
+                            case None:
+                                pass
+                            case error:
+                                return error
 
             # All checks are good, now we do the actual insertion
 
@@ -178,7 +166,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                 blob=blob,
                 author=author,
                 created_on=timestamp,
-                blob_for_storage_sequester_services=blob_for_storage_sequester_services,
             )
             org.vlobs[vlob_id] = [vlob_atom]
             realm_change_checkpoint = len(realm.vlob_updates) + 1
@@ -214,7 +201,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         timestamp: DateTime,
         blob: bytes,
         # Sequester is a special case, so gives it a default version to simplify tests
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -223,7 +209,6 @@ class MemoryVlobComponent(BaseVlobComponent):
         | RequireGreaterTimestamp
         | RejectedBySequesterService
         | SequesterServiceNotAvailable
-        | SequesterInconsistency
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -276,43 +261,31 @@ class MemoryVlobComponent(BaseVlobComponent):
                 if last_certificate >= timestamp:
                     return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
-                if org.is_sequestered:
-                    assert org.sequester_services is not None
-                    if (
-                        sequester_blob is None
-                        or sequester_blob.keys() != org.sequester_services.keys()
-                    ):
-                        return SequesterInconsistency(
-                            last_common_certificate_timestamp=common_topic_last_timestamp
-                        )
-
-                    blob_for_storage_sequester_services = {}
-                    for service_id, service in org.sequester_services.items():
-                        match service.service_type:
-                            case SequesterServiceType.STORAGE:
-                                blob_for_storage_sequester_services[service_id] = sequester_blob[
-                                    service_id
-                                ]
-                            case SequesterServiceType.WEBHOOK:
-                                assert service.webhook_url is not None
-                                match await self._sequester_service_send_webhook(
-                                    webhook_url=service.webhook_url,
-                                    organization_id=organization_id,
-                                    service_id=service_id,
-                                    sequester_blob=sequester_blob[service_id],
-                                ):
-                                    case None:
-                                        pass
-                                    case error:
-                                        return error
-
-                else:
-                    if sequester_blob is not None:
-                        return VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
-                    blob_for_storage_sequester_services = None
-
                 if version != len(vlobs) + 1:
                     return VlobUpdateBadOutcome.BAD_VLOB_VERSION
+
+                if org.is_sequestered:
+                    assert org.sequester_services is not None
+
+                    for service_id, service in org.sequester_services.items():
+                        if service.service_type == SequesterServiceType.WEBHOOK:
+                            assert service.webhook_url is not None
+                            match await self._sequester_service_send_webhook(
+                                webhook_url=service.webhook_url,
+                                organization_id=organization_id,
+                                service_id=service_id,
+                                realm_id=realm_id,
+                                vlob_id=vlob_id,
+                                key_index=key_index,
+                                author=author,
+                                version=version,
+                                timestamp=timestamp,
+                                blob=blob,
+                            ):
+                                case None:
+                                    pass
+                                case error:
+                                    return error
 
                 # All checks are good, now we do the actual insertion
 
@@ -331,7 +304,6 @@ class MemoryVlobComponent(BaseVlobComponent):
                     blob=blob,
                     author=author,
                     created_on=timestamp,
-                    blob_for_storage_sequester_services=blob_for_storage_sequester_services,
                 )
                 vlobs.append(vlob_atom)
                 realm_change_checkpoint = len(realm.vlob_updates) + 1

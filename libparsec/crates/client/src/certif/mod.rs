@@ -361,6 +361,7 @@ impl CertificateOps {
             })?
     }
 
+    #[cfg(test)]
     pub async fn encrypt_for_sequester_services(
         &self,
         data: &[u8],

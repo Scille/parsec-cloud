@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
+use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps, UpTo};
 use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
@@ -12,10 +12,12 @@ use super::{
 };
 use crate::{
     certif::{
+        encrypt::encrypt_for_sequester_services,
         realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
         CertifPollServerError,
     },
-    EventTooMuchDriftWithServerClock, InvalidKeysBundleError,
+    CertifEncryptForSequesterServicesError, EventTooMuchDriftWithServerClock,
+    InvalidKeysBundleError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -107,9 +109,28 @@ pub(super) async fn rotate_realm_key_idempotent(
             }),
             Rep::RealmNotFound => Err(CertifRotateRealmKeyError::UnknownRealm),
             Rep::AuthorNotAllowed => Err(CertifRotateRealmKeyError::AuthorNotAllowed),
-            Rep::ParticipantMismatch => {
+            Rep::ParticipantMismatch { last_common_certificate_timestamp } => {
+                let last_timestamps = PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp);
                 // List of participants got updated in our back, refresh and retry
-                ops.poll_server_for_new_certificates(None)
+                ops.poll_server_for_new_certificates(Some(&last_timestamps))
+                    .await
+                    .map_err(|e| match e {
+                        CertifPollServerError::Offline => CertifRotateRealmKeyError::Offline,
+                        CertifPollServerError::Stopped => CertifRotateRealmKeyError::Stopped,
+                        CertifPollServerError::InvalidCertificate(err) => {
+                            CertifRotateRealmKeyError::InvalidCertificate(err)
+                        }
+                        CertifPollServerError::Internal(err) => err
+                            .context("Cannot poll server for new certificates")
+                            .into(),
+                    })?;
+                timestamp = ops.device.now();
+                continue;
+            }
+            Rep::SequesterServiceMismatch { last_sequester_certificate_timestamp } => {
+                let last_timestamps = PerTopicLastTimestamps::new_for_sequester(last_sequester_certificate_timestamp);
+                // List of participants got updated in our back, refresh and retry
+                ops.poll_server_for_new_certificates(Some(&last_timestamps))
                     .await
                     .map_err(|e| match e {
                         CertifPollServerError::Offline => CertifRotateRealmKeyError::Offline,
@@ -152,7 +173,16 @@ pub(super) async fn rotate_realm_key_idempotent(
                     ballpark_client_late_offset,
                 })
             }
-            bad_rep @ (Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }) => {
+            // TODO: provide a dedicated error for this exotic behavior ?
+            Rep::SequesterServiceUnavailable { .. } => Err(CertifRotateRealmKeyError::Offline),
+            // TODO: we should send a dedicated event for this, and return an according error
+            Rep::RejectedBySequesterService { .. } => todo!(),
+
+            bad_rep @ (
+                // We only encrypt for sequester services when the realm is sequestered
+                Rep::OrganizationNotSequestered
+                | Rep::InvalidCertificate { .. } | Rep::UnknownStatus { .. }
+            ) => {
                 Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
             }
         };
@@ -274,7 +304,23 @@ async fn generate_realm_rotate_key_req(
                 per_participant_keys_bundle_access
             };
 
-            // 4) Now we have everything we need to build the request object !
+            // 4) Encrypte keys bundle access for each sequester service
+
+            let sequester_blob =
+                encrypt_for_sequester_services(store, &keys_bundle_access_cleartext)
+                    .await
+                    .map_err(|e| match e {
+                        CertifEncryptForSequesterServicesError::Stopped => {
+                            CertifRotateRealmKeyError::Stopped
+                        }
+                        CertifEncryptForSequesterServicesError::Internal(err) => err
+                            .context("Cannot encrypt manifest for sequester services")
+                            .into(),
+                    })?;
+            let per_sequester_service_keys_bundle_access =
+                sequester_blob.map(|sequester_blob| HashMap::from_iter(sequester_blob.into_iter()));
+
+            // 5) Now we have everything we need to build the request object !
 
             use authenticated_cmds::latest::realm_rotate_key::Req;
 
@@ -282,6 +328,7 @@ async fn generate_realm_rotate_key_req(
                 realm_key_rotation_certificate: certif.into(),
                 keys_bundle: keys_bundle_encrypted,
                 per_participant_keys_bundle_access,
+                per_sequester_service_keys_bundle_access,
             };
 
             Ok((req, key_index))

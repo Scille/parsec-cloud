@@ -7,6 +7,7 @@ from parsec._parsec import (
     OrganizationID,
     RealmKeyRotationCertificate,
     RealmRole,
+    SequesterServiceID,
     UserID,
     VerifyKey,
 )
@@ -28,8 +29,10 @@ from parsec.components.postgresql.utils import (
 )
 from parsec.components.realm import (
     BadKeyIndex,
+    ParticipantMismatch,
     RealmRotateKeyStoreBadOutcome,
     RealmRotateKeyValidateBadOutcome,
+    SequesterServiceMismatch,
     realm_rotate_key_validate,
 )
 from parsec.events import EventRealmCertificate
@@ -122,6 +125,7 @@ async def realm_rotate_key(
     author_verify_key: VerifyKey,
     realm_key_rotation_certificate: bytes,
     per_participant_keys_bundle_access: dict[UserID, bytes],
+    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
     keys_bundle: bytes,
 ) -> (
     RealmKeyRotationCertificate
@@ -130,6 +134,8 @@ async def realm_rotate_key(
     | TimestampOutOfBallpark
     | RealmRotateKeyStoreBadOutcome
     | RequireGreaterTimestamp
+    | ParticipantMismatch
+    | SequesterServiceMismatch
 ):
     match await auth_and_lock_common_read(conn, organization_id, author):
         case AuthAndLockCommonOnlyData() as db_common:
@@ -142,6 +148,10 @@ async def realm_rotate_key(
             return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_FOUND
         case AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED:
             return RealmRotateKeyStoreBadOutcome.AUTHOR_REVOKED
+
+    # TODO: sequester support not finished
+    if per_sequester_service_keys_bundle_access is not None:
+        return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED
 
     match realm_rotate_key_validate(
         now=now,
@@ -190,7 +200,9 @@ async def realm_rotate_key(
     )
     participants = {UserID.from_hex(row["user_id"]) for row in rows}
     if per_participant_keys_bundle_access.keys() != participants:
-        return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+        return ParticipantMismatch(
+            last_common_certificate_timestamp=db_common.last_common_certificate_timestamp
+        )
 
     # All checks are good, now we do the actual insertion
 

@@ -76,7 +76,6 @@ async def test_authenticated_vlob_read_versions_ok(
         key_index=1,
         blob="<block 1 content v1>".encode(),
         timestamp=dt1,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -89,7 +88,6 @@ async def test_authenticated_vlob_read_versions_ok(
         key_index=1,
         blob="<block 2 content v1>".encode(),
         timestamp=dt1,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -103,6 +101,7 @@ async def test_authenticated_vlob_read_versions_ok(
             coolorg.alice.user_id: b"",
             coolorg.bob.user_id: b"",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
             timestamp=dt2,
@@ -124,7 +123,6 @@ async def test_authenticated_vlob_read_versions_ok(
         version=2,
         blob="<block 1 content v2>".encode(),
         timestamp=dt3,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -137,7 +135,6 @@ async def test_authenticated_vlob_read_versions_ok(
         version=3,
         blob="<block 1 content v3>".encode(),
         timestamp=dt3,
-        sequester_blob=None,
     )
     assert outcome is None
 
@@ -239,7 +236,6 @@ async def test_authenticated_vlob_read_versions_http_common_errors(
         key_index=1,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 

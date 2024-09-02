@@ -62,6 +62,7 @@ async def test_authenticated_realm_get_keys_bundle_access_not_available_for_auth
             coolorg.alice.user_id: b"<alice keys bundle 2 access>",
             coolorg.bob.user_id: b"<bob keys bundle 2 access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle 2>",
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)

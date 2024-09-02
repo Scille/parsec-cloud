@@ -140,6 +140,7 @@ async def test_authenticated_realm_create_isolated_from_other_realms(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
             timestamp=t0,

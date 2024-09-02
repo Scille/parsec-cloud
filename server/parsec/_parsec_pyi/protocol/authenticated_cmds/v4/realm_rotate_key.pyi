@@ -4,13 +4,14 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, UserID
+from parsec._parsec import DateTime, SequesterServiceID, UserID
 
 class Req:
     def __init__(
         self,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
         keys_bundle: bytes,
     ) -> None: ...
     def dump(self) -> bytes: ...
@@ -18,6 +19,10 @@ class Req:
     def keys_bundle(self) -> bytes: ...
     @property
     def per_participant_keys_bundle_access(self) -> dict[UserID, bytes]: ...
+    @property
+    def per_sequester_service_keys_bundle_access(
+        self,
+    ) -> dict[SequesterServiceID, bytes] | None: ...
     @property
     def realm_key_rotation_certificate(self) -> bytes: ...
 
@@ -54,14 +59,29 @@ class RepBadKeyIndex(Rep):
     def last_realm_certificate_timestamp(self) -> DateTime: ...
 
 class RepParticipantMismatch(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
+    def __init__(self, last_common_certificate_timestamp: DateTime) -> None: ...
+    @property
+    def last_common_certificate_timestamp(self) -> DateTime: ...
+
+class RepSequesterServiceMismatch(Rep):
+    def __init__(self, last_sequester_certificate_timestamp: DateTime) -> None: ...
+    @property
+    def last_sequester_certificate_timestamp(self) -> DateTime: ...
 
 class RepInvalidCertificate(Rep):
     def __init__(
         self,
     ) -> None: ...
+
+class RepOrganizationNotSequestered(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
+class RepSequesterServiceUnavailable(Rep):
+    def __init__(self, service_id: SequesterServiceID) -> None: ...
+    @property
+    def service_id(self) -> SequesterServiceID: ...
 
 class RepTimestampOutOfBallpark(Rep):
     def __init__(

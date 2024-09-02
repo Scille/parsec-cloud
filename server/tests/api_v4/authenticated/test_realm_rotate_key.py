@@ -11,6 +11,7 @@ from parsec._parsec import (
     RealmRoleCertificate,
     SecretKey,
     SecretKeyAlgorithm,
+    SequesterServiceID,
     VlobID,
     authenticated_cmds,
 )
@@ -94,6 +95,7 @@ async def test_authenticated_realm_rotate_key_ok(
             per_participant_keys_bundle_access={
                 user_id: f"<{user_id} keys bundle access>".encode() for user_id in participants
             },
+            per_sequester_service_keys_bundle_access=None,
             keys_bundle=b"<keys bundle>",
         )
         assert rep == authenticated_cmds.v4.realm_rotate_key.RepOk()
@@ -200,6 +202,7 @@ async def test_authenticated_realm_rotate_key_author_not_allowed(
     rep = await author.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(author.signing_key),
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepAuthorNotAllowed()
@@ -219,6 +222,7 @@ async def test_authenticated_realm_rotate_key_realm_not_found(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRealmNotFound()
@@ -280,6 +284,7 @@ async def test_authenticated_realm_rotate_key_bad_key_index(
         per_participant_keys_bundle_access={
             user_id: b"<keys bundle access>" for user_id in participants
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepBadKeyIndex(
@@ -309,9 +314,42 @@ async def test_authenticated_realm_rotate_key_participant_mismatch(
     rep = await coolorg.alice.realm_rotate_key(
         realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
-    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch()
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepParticipantMismatch(
+        last_common_certificate_timestamp=DateTime(2000, 1, 6)
+    )
+
+
+@pytest.mark.xfail(reason="TODO: would require a sequestered template org")
+async def test_authenticated_realm_rotate_key_sequester_service_mismatch(
+    coolorg: CoolorgRpcClients,
+) -> None:
+    certif = wksp1_key_rotation_certificate(coolorg)
+    per_participant_keys_bundle_access = {
+        coolorg.alice.user_id: b"<alice keys bundle access>",
+        coolorg.bob.user_id: b"<bob keys bundle access>",
+    }
+    rep = await coolorg.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+        per_sequester_service_keys_bundle_access={SequesterServiceID.new(): b"dummy"},
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepSequesterServiceMismatch(
+        last_sequester_certificate_timestamp=DateTime(2000, 1, 6)
+    )
+
+
+@pytest.mark.xfail(reason="TODO: would require a sequestered template org")
+async def test_authenticated_realm_rotate_key_sequester_service_unavailable() -> None:
+    raise NotImplementedError
+
+
+@pytest.mark.xfail(reason="TODO: would require a sequestered template org")
+async def test_authenticated_realm_rotate_key_rejected_by_sequester_service() -> None:
+    raise NotImplementedError
 
 
 @pytest.mark.parametrize("kind", ("dummy_data", "bad_author"))
@@ -335,6 +373,7 @@ async def test_authenticated_realm_rotate_key_invalid_certificate(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepInvalidCertificate()
@@ -352,6 +391,7 @@ async def test_authenticated_realm_rotate_key_timestamp_out_of_ballpark(
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: "<alice keys bundle access>".encode()
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert isinstance(rep, authenticated_cmds.v4.realm_rotate_key.RepTimestampOutOfBallpark)
@@ -384,6 +424,7 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,
@@ -407,11 +448,32 @@ async def test_authenticated_realm_rotate_key_require_greater_timestamp(
             coolorg.alice.user_id: "<alice keys bundle access>".encode(),
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         keys_bundle=b"<keys bundle>",
     )
     assert rep == authenticated_cmds.v4.realm_rotate_key.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
+
+
+async def test_authenticated_realm_rotate_key_organization_not_sequestered(
+    coolorg: CoolorgRpcClients,
+):
+    certif = wksp1_key_rotation_certificate(
+        coolorg,
+        realm_id=coolorg.wksp1_id,
+        key_index=2,
+    )
+    participants = (coolorg.alice.user_id, coolorg.bob.user_id)
+    rep = await coolorg.alice.realm_rotate_key(
+        realm_key_rotation_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+        per_participant_keys_bundle_access={
+            user_id: f"<{user_id} keys bundle access>".encode() for user_id in participants
+        },
+        per_sequester_service_keys_bundle_access={SequesterServiceID.new(): b"<dummy"},
+        keys_bundle=b"<keys bundle>",
+    )
+    assert rep == authenticated_cmds.v4.realm_rotate_key.RepOrganizationNotSequestered()
 
 
 async def test_authenticated_realm_rotate_key_http_common_errors(
@@ -426,6 +488,7 @@ async def test_authenticated_realm_rotate_key_http_common_errors(
                 user_id: f"<{user_id} keys bundle access>".encode()
                 for user_id in [coolorg.alice.user_id, coolorg.bob.user_id]
             },
+            per_sequester_service_keys_bundle_access=None,
             keys_bundle=b"<keys bundle>",
         )
 

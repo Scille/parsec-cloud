@@ -315,30 +315,6 @@ pub fn rep_sequester_inconsistency() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_sequester_service_unavailable() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   status: "sequester_service_unavailable"
-    //
-    let raw = hex!(
-        "81a6737461747573bd7365717565737465725f736572766963655f756e617661696c61626c"
-        "65"
-    );
-
-    let expected = authenticated_cmds::vlob_create::Rep::SequesterServiceUnavailable;
-
-    let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
 pub fn rep_rejected_by_sequester_service() {
     // Generated from Rust implementation (Parsec v3.0.0+dev)
     // Content:

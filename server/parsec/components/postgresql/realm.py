@@ -11,6 +11,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     VerifyKey,
     VlobID,
@@ -36,6 +37,7 @@ from parsec.components.realm import (
     BaseRealmComponent,
     CertificateBasedActionIdempotentOutcome,
     KeysBundle,
+    ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmGetCurrentRealmsForUserBadOutcome,
@@ -48,6 +50,7 @@ from parsec.components.realm import (
     RealmShareValidateBadOutcome,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    SequesterServiceMismatch,
 )
 
 
@@ -188,6 +191,7 @@ class PGRealmComponent(BaseRealmComponent):
         author_verify_key: VerifyKey,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
         keys_bundle: bytes,
     ) -> (
         RealmKeyRotationCertificate
@@ -196,6 +200,8 @@ class PGRealmComponent(BaseRealmComponent):
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
     ):
         return await realm_rotate_key(
             self.event_bus,
@@ -206,6 +212,7 @@ class PGRealmComponent(BaseRealmComponent):
             author_verify_key,
             realm_key_rotation_certificate,
             per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access,
             keys_bundle,
         )
 

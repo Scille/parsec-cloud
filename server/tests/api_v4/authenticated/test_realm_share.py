@@ -281,6 +281,7 @@ async def test_authenticated_realm_share_key_bad_key_index(
                     coolorg.alice.user_id: b"<alice keys bundle access>",
                     coolorg.bob.user_id: b"<bob keys bundle access>",
                 },
+                per_sequester_service_keys_bundle_access=None,
                 realm_key_rotation_certificate=realm_key_rotation_certificate,
             )
             assert isinstance(outcome, RealmKeyRotationCertificate)

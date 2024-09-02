@@ -137,6 +137,7 @@ async def test_authenticated_realm_rename_ok_initial_rename(
         per_participant_keys_bundle_access={
             coolorg.alice.user_id: b"<alice keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=key_rotation_certif.dump_and_sign(coolorg.alice.signing_key),
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
@@ -290,6 +291,7 @@ async def test_authenticated_realm_rename_bad_key_index(
                     coolorg.alice.user_id: b"<alice keys bundle access>",
                     coolorg.bob.user_id: b"<bob keys bundle access>",
                 },
+                per_sequester_service_keys_bundle_access=None,
                 realm_key_rotation_certificate=key_rotation_certif.dump_and_sign(
                     coolorg.alice.signing_key
                 ),
@@ -386,6 +388,7 @@ async def test_authenticated_realm_rename_require_greater_timestamp(
             coolorg.alice.user_id: b"<alice keys bundle access>",
             coolorg.bob.user_id: b"<bob keys bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=RealmKeyRotationCertificate(
             author=coolorg.alice.device_id,
             timestamp=last_certificate_timestamp,

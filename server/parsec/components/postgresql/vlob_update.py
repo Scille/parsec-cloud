@@ -5,7 +5,6 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    SequesterServiceID,
     VlobID,
 )
 from parsec.ballpark import (
@@ -23,7 +22,6 @@ from parsec.components.postgresql.vlob_create import _q_insert_vlob
 from parsec.components.realm import BadKeyIndex
 from parsec.components.vlob import (
     RejectedBySequesterService,
-    SequesterInconsistency,
     SequesterServiceNotAvailable,
     VlobUpdateBadOutcome,
 )
@@ -149,8 +147,6 @@ async def vlob_update(
     version: int,
     timestamp: DateTime,
     blob: bytes,
-    # Sequester is a special case, so gives it a default version to simplify tests
-    sequester_blob: dict[SequesterServiceID, bytes] | None = None,
 ) -> (
     None
     | BadKeyIndex
@@ -159,7 +155,6 @@ async def vlob_update(
     | RequireGreaterTimestamp
     | RejectedBySequesterService
     | SequesterServiceNotAvailable
-    | SequesterInconsistency
 ):
     # 1) Query the database to get all info about org/device/user/realm/vlob
     #    and lock the common & realm topics
@@ -293,15 +288,7 @@ async def vlob_update(
     if timestamp <= last_realm_certificate_timestamp:
         return RequireGreaterTimestamp(strictly_greater_than=last_realm_certificate_timestamp)
 
-    # 3) Sequester checks
-
-    # TODO: Sequester behavior has changed since Parsec v2, this `sequester_blob`
-    #       field is in fact no longer needed (so we will most likely drop in
-    #       when implementing the support of sequester...)
-    if sequester_blob is not None:
-        return VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
-
-    # 4) All checks are good, now we do the actual insertion
+    # 3) All checks are good, now we do the actual insertion
 
     # Note no unique violation exception can be raised here since all the insertion
     # in this query uses `ON CONFLICT DO NOTHING` (we then know if a conflict occured

@@ -444,6 +444,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates(
         author_verify_key=coolorg.alice.signing_key.verify_key,
         keys_bundle=b"<dummy key bundle>",
         per_participant_keys_bundle_access={coolorg.alice.user_id: b"<dummy key bundle access>"},
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=certif,
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
@@ -704,6 +705,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
             coolorg.bob.user_id: b"<dummy key bundle access>",
             coolorg.mallory.user_id: b"<dummy key bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=certif,
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)
@@ -755,6 +757,7 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
             coolorg.alice.user_id: b"<dummy key bundle access>",
             coolorg.bob.user_id: b"<dummy key bundle access>",
         },
+        per_sequester_service_keys_bundle_access=None,
         realm_key_rotation_certificate=certif,
     )
     assert isinstance(outcome, RealmKeyRotationCertificate)

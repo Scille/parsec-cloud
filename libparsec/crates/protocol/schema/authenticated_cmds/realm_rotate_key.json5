@@ -17,6 +17,11 @@
                     "name": "per_participant_keys_bundle_access",
                     "type": "Map<UserID, Bytes>"
                 },
+                // Field set to `None` if sequester is disabled for the organization.
+                {
+                    "name": "per_sequester_service_keys_bundle_access",
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
+                },
                 {
                     // Signed&encrypted `RealmKeysBundle` document, contains all the
                     // keys ever in use for this realm
@@ -47,10 +52,50 @@
                 ]
             },
             {
-                "status": "participant_mismatch"
+                "status": "participant_mismatch",
+                "fields": [
+                    {
+                        "name": "last_common_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "sequester_service_mismatch",
+                "fields": [
+                    {
+                        "name": "last_sequester_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
             },
             {
                 "status": "invalid_certificate"
+            },
+            {
+                "status": "organization_not_sequestered"
+            },
+            {
+                "status": "rejected_by_sequester_service",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    },
+                    {
+                        "name": "reason",
+                        "type": "String"
+                    }
+                ]
+            },
+            {
+                "status": "sequester_service_unavailable",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    }
+                ]
             },
             {
                 // Returned if the timestamp in the certificate is too far away compared

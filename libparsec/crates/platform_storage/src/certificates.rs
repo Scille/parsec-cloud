@@ -41,6 +41,16 @@ impl PerTopicLastTimestamps {
             && self.realm.is_empty()
             && self.shamir_recovery.is_none()
     }
+
+    pub fn new_for_sequester(sequester_timestamp: DateTime) -> Self {
+        Self {
+            common: None,
+            sequester: Some(sequester_timestamp),
+            realm: HashMap::default(),
+            shamir_recovery: None,
+        }
+    }
+
     pub fn new_for_common(common_timestamp: DateTime) -> Self {
         Self {
             common: Some(common_timestamp),

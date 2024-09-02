@@ -12,7 +12,6 @@ from parsec._parsec import (
     SequesterServiceCertificate,
     SequesterServiceID,
     SequesterVerifyKeyDer,
-    VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp
 from parsec.types import BadOutcomeEnum
@@ -188,16 +187,4 @@ class BaseSequesterComponent:
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> list[BaseSequesterService] | SequesterGetOrganizationServicesBadOutcome:
-        raise NotImplementedError
-
-    async def dump_realm(
-        self,
-        organization_id: OrganizationID,
-        service_id: SequesterServiceID,
-        realm_id: VlobID,
-    ) -> list[tuple[VlobID, int, bytes]] | SequesterDumpRealmBadOutcome:
-        """
-        Dump all vlobs in a given realm.
-        This should only be used in tests given it doesn't scale at all !
-        """
         raise NotImplementedError

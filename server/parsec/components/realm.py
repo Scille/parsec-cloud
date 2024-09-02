@@ -13,6 +13,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     VerifyKey,
     VlobID,
@@ -38,6 +39,16 @@ class BadKeyIndex(BadOutcome):
 @dataclass(slots=True)
 class CertificateBasedActionIdempotentOutcome(BadOutcome):
     certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class ParticipantMismatch(BadOutcome):
+    last_common_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class SequesterServiceMismatch(BadOutcome):
+    last_sequester_certificate_timestamp: DateTime
 
 
 @dataclass(slots=True)
@@ -289,11 +300,11 @@ class RealmRenameStoreBadOutcome(BadOutcomeEnum):
 class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     ORGANIZATION_EXPIRED = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
     REALM_NOT_FOUND = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
-    PARTICIPANT_MISMATCH = auto()
 
 
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
@@ -416,6 +427,7 @@ class BaseRealmComponent:
         author_verify_key: VerifyKey,
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None,
         keys_bundle: bytes,
     ) -> (
         RealmKeyRotationCertificate
@@ -424,6 +436,8 @@ class BaseRealmComponent:
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
     ):
         raise NotImplementedError
 
@@ -667,6 +681,7 @@ class BaseRealmComponent:
             author_verify_key=client_ctx.device_verify_key,
             realm_key_rotation_certificate=req.realm_key_rotation_certificate,
             per_participant_keys_bundle_access=req.per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=req.per_sequester_service_keys_bundle_access,
             keys_bundle=req.keys_bundle,
         )
         match outcome:
@@ -689,10 +704,18 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex(
                     last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH:
-                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch()
+            case ParticipantMismatch() as mismatch:
+                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch(
+                    last_common_certificate_timestamp=mismatch.last_common_certificate_timestamp
+                )
+            case SequesterServiceMismatch() as mismatch:
+                return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceMismatch(
+                    last_sequester_certificate_timestamp=mismatch.last_sequester_certificate_timestamp
+                )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
+            case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
+                return authenticated_cmds.latest.realm_rotate_key.RepOrganizationNotSequestered()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND:
