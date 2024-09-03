@@ -9,7 +9,15 @@ from typing import Any, Callable, Coroutine, Iterable, Protocol, TypeVar, cast
 
 from typing_extensions import Concatenate, ParamSpec
 
-from parsec._parsec import ActiveUsersLimit, BlockID, DateTime, DeviceID, UserID, VlobID
+from parsec._parsec import (
+    ActiveUsersLimit,
+    BlockID,
+    DateTime,
+    DeviceID,
+    GreetingAttemptID,
+    UserID,
+    VlobID,
+)
 from parsec.types import BadOutcome
 
 from . import AsyncpgConnection, AsyncpgPool
@@ -28,6 +36,7 @@ SqlQueryParam = (
     | DeviceID
     | VlobID
     | BlockID
+    | GreetingAttemptID
     | ActiveUsersLimit
     | Iterable["SqlQueryParam"]
 )

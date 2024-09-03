@@ -1,6 +1,8 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
+from collections.abc import Buffer
+
 from parsec._parsec import (
     BlockID,
     DateTime,
@@ -190,7 +192,7 @@ async def block_read(
 
     outcome = await blockstore.read(organization_id, block_id)
     match outcome:
-        case bytes() | bytearray() | memoryview() as block:
+        case Buffer() as block:
             return BlockReadResult(
                 block=block,
                 key_index=block_key_index,

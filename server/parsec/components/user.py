@@ -307,7 +307,7 @@ class CheckDeviceBadOutcome(BadOutcomeEnum):
     DEVICE_NOT_FOUND = auto()
 
 
-class CheckUserBadOutcome(BadOutcomeEnum):
+class GetProfileForUserUserBadOutcome(BadOutcomeEnum):
     USER_REVOKED = auto()
     USER_NOT_FOUND = auto()
 

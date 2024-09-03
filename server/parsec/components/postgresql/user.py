@@ -42,6 +42,7 @@ from parsec.components.user import (
     BaseUserComponent,
     CertificatesBundle,
     CheckDeviceBadOutcome,
+    GetProfileForUserUserBadOutcome,
     UserCreateDeviceStoreBadOutcome,
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
@@ -136,6 +137,21 @@ class PGUserComponent(BaseUserComponent):
             UserProfile.from_str(u_row["profile"]),
             common_timestamp,
         )
+
+    async def _get_profile_for_user(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        user_id: UserID,
+    ) -> UserProfile | GetProfileForUserUserBadOutcome:
+        u_row = await conn.fetchrow(
+            *_q_get_profile_for_user(organization_id=organization_id.str, user_id=user_id)
+        )
+        if not u_row:
+            return GetProfileForUserUserBadOutcome.USER_NOT_FOUND
+        if u_row["revoked_on"] is not None:
+            return GetProfileForUserUserBadOutcome.USER_REVOKED
+        return UserProfile.from_str(u_row["profile"])
 
     @override
     @transaction
