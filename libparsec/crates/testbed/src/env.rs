@@ -849,11 +849,17 @@ impl TestbedEnv {
     }
 }
 
+pub enum TestbedTimeToLive {
+    Unlimited,
+    Limited { seconds: u32 },
+}
+
 /// `test_new_testbed` should be called when a test starts (and be followed
 /// by a `test_drop_testbed` call at it end)
 pub async fn test_new_testbed(
     template: &str,
     server_addr: Option<&ParsecAddr>,
+    ttl: TestbedTimeToLive,
 ) -> anyhow::Result<Arc<TestbedEnv>> {
     // 1) Retrieve the template
     let template =
@@ -862,8 +868,14 @@ pub async fn test_new_testbed(
     let (kind, server_addr, organization_id) = if let Some(server_addr) = server_addr {
         // 2) Call the test server to setup the env on it side
         let url = server_addr.to_http_url(Some(&format!("/testbed/new/{}", template.id)));
-        let response = HTTP_CLIENT
-            .post(url)
+        let request_builder = HTTP_CLIENT.post(url);
+        let request_builder = match ttl {
+            TestbedTimeToLive::Unlimited => request_builder,
+            TestbedTimeToLive::Limited { seconds } => {
+                request_builder.query(&[("ttl", &seconds.to_string())])
+            }
+        };
+        let response = request_builder
             .send()
             .await
             .map_err(|e| anyhow::anyhow!("Cannot communicate with testbed server: {}", e))?;
