@@ -1884,7 +1884,7 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         match await self.user._get_profile_for_user(
-            conn, organization_id, greeting_attempt_info.greeter, lock_common_topic=False
+            conn, organization_id, greeting_attempt_info.greeter, check_common_topic=False
         ):
             case UserProfile() as greeter_profile:
                 pass
@@ -2011,7 +2011,7 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         match await self.user._get_profile_for_user(
-            conn, organization_id, greeting_attempt_info.greeter, lock_common_topic=False
+            conn, organization_id, greeting_attempt_info.greeter, check_common_topic=False
         ):
             case UserProfile() as greeter_profile:
                 pass
