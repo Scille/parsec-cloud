@@ -68,6 +68,7 @@ from parsec.events import EventEnrollmentConduit, EventInvitation
 @dataclass(frozen=True)
 class InvitationInfo:
     internal_id: int
+    token: InvitationToken
     type: InvitationType
     created_by_user_id: UserID
     created_by_device_id: DeviceID
@@ -89,7 +90,6 @@ class InvitationInfo:
 class GreetingAttemptInfo:
     internal_id: int
     greeting_attempt_id: GreetingAttemptID
-    invitation_info: InvitationInfo
     greeter: UserID
     claimer_joined: DateTime | None
     greeter_joined: DateTime | None
@@ -245,63 +245,74 @@ ORDER BY created_on
 )
 
 
-_q_info_invitation = Q(
-    f"""
-SELECT
-    invitation._id AS invitation_internal_id,
-    invitation.type,
-    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
-    { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
-    human.email,
-    human.label,
-    invitation.claimer_email,
-    invitation.created_on,
-    invitation.deleted_on,
-    invitation.deleted_reason
-FROM invitation
-INNER JOIN device ON invitation.created_by = device._id
-INNER JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
-WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND token = $token
-LIMIT 1
-"""
+def make_q_info_invitation_for_update(from_greeting_attempt_id: bool = False) -> Q:
+    if from_greeting_attempt_id:
+        select_invitation = """
+            SELECT invitation._id AS invitation_internal_id
+            FROM greeting_attempt
+            INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
+            INNER JOIN invitation ON greeting_session.invitation = invitation._id
+            INNER JOIN organization ON invitation.organization = organization._id
+            WHERE organization.organization_id = $organization_id
+            AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
+            FOR UPDATE OF invitation
+            """
+    else:
+        select_invitation = """
+            SELECT invitation._id AS invitation_internal_id
+            FROM invitation
+            INNER JOIN organization ON invitation.organization = organization._id
+            WHERE organization.organization_id = $organization_id
+            AND token = $token
+            FOR UPDATE OF invitation
+            """
+    return Q(f"""
+        WITH selected_invitation AS ({select_invitation})
+        SELECT
+            invitation._id AS invitation_internal_id,
+            invitation.token,
+            invitation.type,
+            { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
+            { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
+            human.email,
+            human.label,
+            invitation.claimer_email,
+            invitation.created_on,
+            invitation.deleted_on,
+            invitation.deleted_reason
+        FROM invitation
+        INNER JOIN selected_invitation ON invitation._id = selected_invitation.invitation_internal_id
+        INNER JOIN device ON invitation.created_by = device._id
+        INNER JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+        """)
+
+
+_q_info_invitation_for_update = make_q_info_invitation_for_update()
+_q_info_invitation_for_update_from_attempt_id = make_q_info_invitation_for_update(
+    from_greeting_attempt_id=True
 )
 
 
-_q_greeting_attempt_info_for_update = Q(
+_q_greeting_attempt_info = Q(
     f"""
-WITH locked_id AS (
-    SELECT _id FROM greeting_attempt
-    WHERE organization = { q_organization_internal_id("$organization_id") }
-    AND greeting_attempt_id = $greeting_attempt_id
-    FOR UPDATE
-)
 SELECT
     greeting_attempt._id,
     greeting_attempt.greeting_attempt_id,
-    invitation._id,
-    invitation.type,
-    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by_user_id,
-    { q_device(_id="invitation.created_by", select="device_id") } as created_by_device_id,
-    human.email,
-    human.label,
-    invitation.claimer_email,
-    invitation.created_on,
-    invitation.deleted_on,
-    invitation.deleted_reason,
     { q_user(_id="greeting_session.greeter", select="user_id") } as greeter,
     greeting_attempt.claimer_joined,
     greeting_attempt.greeter_joined,
     greeting_attempt.cancelled_by,
     greeting_attempt.cancelled_reason,
     greeting_attempt.cancelled_on
-FROM locked_id
-INNER JOIN greeting_attempt ON locked_id._id = greeting_attempt._id
+FROM greeting_attempt
 INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
 INNER JOIN invitation ON greeting_session.invitation = invitation._id
 INNER JOIN device ON invitation.created_by = device._id
 INNER JOIN human ON human._id = (SELECT user_.human FROM user_ WHERE user_._id = device.user_)
+INNER JOIN organization ON invitation.organization = organization._id
+WHERE organization.organization_id = $organization_id
+AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
+AND invitation.token = $token
 """
 )
 
@@ -874,19 +885,17 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteCancelBadOutcome.AUTHOR_REVOKED
 
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
-        if row is None:
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
+        if invitation_info is None:
             return InviteCancelBadOutcome.INVITATION_NOT_FOUND
-        if row["deleted_on"] is not None:
+        if invitation_info.deleted_on is not None:
             return InviteCancelBadOutcome.INVITATION_ALREADY_DELETED
 
         await conn.execute(
             *_q_delete_invitation(
-                invitation_internal_id=row["invitation_internal_id"],
+                invitation_internal_id=invitation_info.internal_id,
                 on=now,
-                reason="CANCELLED",  # TODO: use an enum see #8224
+                reason=InvitationStatus.CANCELLED.str,
             )
         )
 
@@ -987,46 +996,34 @@ class PGInviteComponent(BaseInviteComponent):
 
         if organization.is_expired:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
-        if not row:
+
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
+        if not invitation_info:
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
-        (
-            _id,
-            type,
-            created_by_user_id_str,
-            created_by_device_id_str,
-            created_by_email,
-            created_by_label,
-            claimer_email,
-            created_on,
-            deleted_on,
-            _deleted_reason,
-        ) = row
-        created_by_user_id = UserID.from_hex(created_by_user_id_str)
-        created_by_device_id = DeviceID.from_hex(created_by_device_id_str)
-        if deleted_on:
+
+        if invitation_info.deleted_on:
             return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
-        assert created_by_email is not None
-        greeter_human_handle = HumanHandle(email=created_by_email, label=created_by_label)
-        if type == InvitationType.USER.str:
+
+        greeter_human_handle = HumanHandle(
+            email=invitation_info.created_by_email, label=invitation_info.created_by_label
+        )
+        if invitation_info.type == InvitationType.USER:
             return UserInvitation(
-                created_by_user_id=created_by_user_id,
-                created_by_device_id=created_by_device_id,
+                created_by_user_id=invitation_info.created_by_user_id,
+                created_by_device_id=invitation_info.created_by_device_id,
                 created_by_human_handle=greeter_human_handle,
-                claimer_email=claimer_email,
+                claimer_email=invitation_info.claimer_email,
                 token=token,
-                created_on=created_on,
+                created_on=invitation_info.created_on,
                 status=InvitationStatus.READY,
             )
         else:  # Device
             return DeviceInvitation(
-                created_by_user_id=created_by_user_id,
-                created_by_device_id=created_by_device_id,
+                created_by_user_id=invitation_info.created_by_user_id,
+                created_by_device_id=invitation_info.created_by_device_id,
                 created_by_human_handle=greeter_human_handle,
                 token=token,
-                created_on=created_on,
+                created_on=invitation_info.created_on,
                 status=InvitationStatus.READY,
             )
 
@@ -1376,13 +1373,13 @@ class PGInviteComponent(BaseInviteComponent):
 
     # Helpers
 
-    async def get_active_attempt(
+    async def get_greeting_session(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         greeter: UserID,
         invitation_internal_id: int,
-    ) -> tuple[int, GreetingAttemptID]:
+    ) -> int:
         greeting_session_id = await conn.fetchval(
             *_q_get_or_create_greeting_session(
                 invitation_internal_id=invitation_internal_id,
@@ -1391,7 +1388,14 @@ class PGInviteComponent(BaseInviteComponent):
             )
         )
         assert greeting_session_id is not None
+        return greeting_session_id
 
+    async def get_active_greeting_attempt(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        greeting_session_id: int,
+    ) -> tuple[int, GreetingAttemptID]:
         new_greeting_attempt_id = GreetingAttemptID.new()
         row = await conn.fetchrow(
             *_q_get_or_create_active_attempt(
@@ -1441,27 +1445,33 @@ class PGInviteComponent(BaseInviteComponent):
         invitation_internal_id: int,
         now: DateTime,
     ) -> GreetingAttemptID:
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_attempt(
+        greeting_session_id = await self.get_greeting_session(
             conn,
             organization_id=organization_id,
             greeter=greeter,
             invitation_internal_id=invitation_internal_id,
         )
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_greeting_attempt(
+            conn,
+            organization_id=organization_id,
+            greeting_session_id=greeting_session_id,
+        )
         is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        while not is_active:
-            (
-                greeting_attempt_internal_id,
-                greeting_attempt_id,
-            ) = await self.get_active_attempt(
-                conn,
-                organization_id=organization_id,
-                greeter=greeter,
-                invitation_internal_id=invitation_internal_id,
-            )
-            is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        if is_active:
+            return greeting_attempt_id
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_greeting_attempt(
+            conn,
+            organization_id=organization_id,
+            greeting_session_id=greeting_session_id,
+        )
+        is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        assert is_active
         return greeting_attempt_id
 
     async def new_attempt_for_claimer(
@@ -1472,27 +1482,33 @@ class PGInviteComponent(BaseInviteComponent):
         invitation_internal_id: int,
         now: DateTime,
     ) -> GreetingAttemptID:
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_attempt(
+        greeting_session_id = await self.get_greeting_session(
             conn,
             organization_id=organization_id,
             greeter=greeter,
             invitation_internal_id=invitation_internal_id,
         )
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_greeting_attempt(
+            conn,
+            organization_id=organization_id,
+            greeting_session_id=greeting_session_id,
+        )
         is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        while not is_active:
-            (
-                greeting_attempt_internal_id,
-                greeting_attempt_id,
-            ) = await self.get_active_attempt(
-                conn,
-                organization_id=organization_id,
-                greeter=greeter,
-                invitation_internal_id=invitation_internal_id,
-            )
-            is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        if is_active:
+            return greeting_attempt_id
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_greeting_attempt(
+            conn,
+            organization_id=organization_id,
+            greeting_session_id=greeting_session_id,
+        )
+        is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
+        assert is_active
         return greeting_attempt_id
 
     def is_greeter_allowed(
@@ -1508,19 +1524,29 @@ class PGInviteComponent(BaseInviteComponent):
         else:
             raise NotImplementedError
 
-    async def get_invitation_info(
+    async def lock_invitation(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        token: InvitationToken,
+        identifier: InvitationToken | GreetingAttemptID,
     ) -> InvitationInfo | None:
-        row = await conn.fetchrow(
-            *_q_info_invitation(organization_id=organization_id.str, token=token.hex)
-        )
+        if isinstance(identifier, InvitationToken):
+            row = await conn.fetchrow(
+                *_q_info_invitation_for_update(
+                    organization_id=organization_id.str, token=identifier.hex
+                )
+            )
+        elif isinstance(identifier, GreetingAttemptID):
+            row = await conn.fetchrow(
+                *_q_info_invitation_for_update_from_attempt_id(
+                    organization_id=organization_id.str, greeting_attempt_id=identifier
+                )
+            )
         if not row:
             return None
         (
             invitation_internal_id,
+            token,
             type,
             created_by_user_id_str,
             created_by_device_id_str,
@@ -1536,6 +1562,7 @@ class PGInviteComponent(BaseInviteComponent):
         )
         return InvitationInfo(
             internal_id=invitation_internal_id,
+            token=InvitationToken.from_hex(token),
             type=InvitationType.from_str(type),
             created_by_user_id=UserID.from_hex(created_by_user_id_str),
             created_by_device_id=DeviceID.from_hex(created_by_device_id_str),
@@ -1547,15 +1574,18 @@ class PGInviteComponent(BaseInviteComponent):
             deleted_reason=deleted_reason,
         )
 
-    async def get_greeting_attempt_info_for_update(
+    async def get_greeting_attempt_info(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         greeting_attempt: GreetingAttemptID,
+        invitation_token: InvitationToken,
     ) -> GreetingAttemptInfo | None:
         row = await conn.fetchrow(
-            *_q_greeting_attempt_info_for_update(
-                organization_id=organization_id.str, greeting_attempt_id=greeting_attempt
+            *_q_greeting_attempt_info(
+                organization_id=organization_id.str,
+                greeting_attempt_id=greeting_attempt,
+                token=invitation_token.hex,
             )
         )
         if not row:
@@ -1563,16 +1593,6 @@ class PGInviteComponent(BaseInviteComponent):
         (
             greeting_attempt_internal_id,
             greeting_attempt_id,
-            invitation_internal_id,
-            invitation_type,
-            invitation_created_by_user_id_str,
-            invitation_created_by_device_id_str,
-            invitation_created_by_email,
-            invitation_created_by_label,
-            invitation_claimer_email,
-            invitation_created_on,
-            invitation_deleted_on,
-            invitation_deleted_reason,
             greeter,
             greeting_attempt_claimer_joined,
             greeting_attempt_greeter_joined,
@@ -1580,23 +1600,6 @@ class PGInviteComponent(BaseInviteComponent):
             greeting_attempt_cancelled_reason,
             greeting_attempt_cancelled_on,
         ) = row
-        invitation_deleted_reason = (
-            InvitationStatus.from_str(invitation_deleted_reason)
-            if invitation_deleted_reason is not None
-            else None
-        )
-        invitation_info = InvitationInfo(
-            internal_id=invitation_internal_id,
-            type=InvitationType.from_str(invitation_type),
-            created_by_user_id=UserID.from_hex(invitation_created_by_user_id_str),
-            created_by_device_id=DeviceID.from_hex(invitation_created_by_device_id_str),
-            created_by_email=invitation_created_by_email,
-            created_by_label=invitation_created_by_label,
-            claimer_email=invitation_claimer_email,
-            created_on=invitation_created_on,
-            deleted_on=invitation_deleted_on,
-            deleted_reason=invitation_deleted_reason,
-        )
         greeting_attempt_cancelled_reason = (
             CancelledGreetingAttemptReason.from_str(greeting_attempt_cancelled_reason)
             if greeting_attempt_cancelled_reason is not None
@@ -1610,7 +1613,6 @@ class PGInviteComponent(BaseInviteComponent):
         return GreetingAttemptInfo(
             internal_id=greeting_attempt_internal_id,
             greeting_attempt_id=GreetingAttemptID.from_hex(greeting_attempt_id),
-            invitation_info=invitation_info,
             greeter=UserID.from_hex(greeter),
             claimer_joined=greeting_attempt_claimer_joined,
             greeter_joined=greeting_attempt_greeter_joined,
@@ -1755,7 +1757,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
         # unique_active_attempt index is ensuring that there is only one active attempt at a time
-        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation_info.is_finished():
@@ -1802,7 +1804,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
 
         # unique_active_attempt index is ensuring that there is only one active attempt at a time
-        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
         if invitation_info.is_finished():
@@ -1853,20 +1855,21 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
-            conn, organization_id, greeting_attempt
-        )
-        if greeting_attempt_info is None:
+        invitation_info = await self.lock_invitation(conn, organization_id, greeting_attempt)
+        if invitation_info is None:
             return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if greeting_attempt_info.invitation_info.is_finished():
+        if invitation_info.is_finished():
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if greeting_attempt_info.invitation_info.is_cancelled():
+        if invitation_info.is_cancelled():
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
-
-        if not self.is_greeter_allowed(
-            greeting_attempt_info.invitation_info, greeter, greeter_profile
-        ):
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt, invitation_info.token
+        )
+        if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
             return GreetingAttemptCancelledBadOutcome(*cancelled_info)
@@ -1896,18 +1899,26 @@ class PGInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteClaimerCancelGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
-            conn, organization_id, greeting_attempt
+        # Lock common topic because we need it later to check if the greeter is allowed
+        # Still, we want to lock it before the invitation to have a consistent lock order
+        await self.user._check_common_topic(conn, organization_id)
+
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
+        if invitation_info is None:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
+        if invitation_info.is_finished():
+            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt, token
         )
         if greeting_attempt_info is None:
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if greeting_attempt_info.invitation_info.is_finished():
-            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
-        if greeting_attempt_info.invitation_info.is_cancelled():
-            return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
         match await self.user._get_profile_for_user(
-            conn, organization_id, greeting_attempt_info.greeter
+            conn, organization_id, greeting_attempt_info.greeter, lock_common_topic=False
         ):
             case UserProfile() as greeter_profile:
                 pass
@@ -1917,7 +1928,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_REVOKED
 
         if not self.is_greeter_allowed(
-            greeting_attempt_info.invitation_info, greeting_attempt_info.greeter, greeter_profile
+            invitation_info, greeting_attempt_info.greeter, greeter_profile
         ):
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
@@ -1962,20 +1973,21 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStepBadOutcome.AUTHOR_REVOKED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
-            conn, organization_id, greeting_attempt
-        )
-        if greeting_attempt_info is None:
+        invitation_info = await self.lock_invitation(conn, organization_id, greeting_attempt)
+        if invitation_info is None:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if greeting_attempt_info.invitation_info.is_finished():
+        if invitation_info.is_finished():
             return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
-        if greeting_attempt_info.invitation_info.is_cancelled():
+        if invitation_info.is_cancelled():
             return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
-
-        if not self.is_greeter_allowed(
-            greeting_attempt_info.invitation_info, greeter, greeter_profile
-        ):
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt, invitation_info.token
+        )
+        if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
             return GreetingAttemptCancelledBadOutcome(*cancelled_info)
@@ -2014,18 +2026,26 @@ class PGInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteClaimerStepBadOutcome.ORGANIZATION_EXPIRED
 
-        greeting_attempt_info = await self.get_greeting_attempt_info_for_update(
-            conn, organization_id, greeting_attempt
+        # Lock common topic because we need it later to check if the greeter is allowed
+        # Still, we want to lock it before the invitation to have a consistent lock order
+        await self.user._check_common_topic(conn, organization_id)
+
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
+        if invitation_info is None:
+            return InviteClaimerStepBadOutcome.INVITATION_NOT_FOUND
+        if invitation_info.is_finished():
+            return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
+        if invitation_info.is_cancelled():
+            return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
+
+        greeting_attempt_info = await self.get_greeting_attempt_info(
+            conn, organization_id, greeting_attempt, token
         )
         if greeting_attempt_info is None:
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
-        if greeting_attempt_info.invitation_info.is_finished():
-            return InviteClaimerStepBadOutcome.INVITATION_COMPLETED
-        if greeting_attempt_info.invitation_info.is_cancelled():
-            return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
 
         match await self.user._get_profile_for_user(
-            conn, organization_id, greeting_attempt_info.greeter
+            conn, organization_id, greeting_attempt_info.greeter, lock_common_topic=False
         ):
             case UserProfile() as greeter_profile:
                 pass
@@ -2035,7 +2055,7 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteClaimerStepBadOutcome.GREETER_REVOKED
 
         if not self.is_greeter_allowed(
-            greeting_attempt_info.invitation_info, greeting_attempt_info.greeter, greeter_profile
+            invitation_info, greeting_attempt_info.greeter, greeter_profile
         ):
             return InviteClaimerStepBadOutcome.GREETER_NOT_ALLOWED
 
@@ -2087,7 +2107,7 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
         # unique_active_attempt index is ensuring that there is only one active attempt at a time
-        invitation_info = await self.get_invitation_info(conn, organization_id, token)
+        invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
         if invitation_info.is_finished():
