@@ -60,7 +60,7 @@ from parsec.components.postgresql.utils import (
     q_user_internal_id,
     transaction,
 )
-from parsec.components.user import CheckDeviceBadOutcome, CheckUserBadOutcome
+from parsec.components.user import CheckDeviceBadOutcome, GetProfileForUserUserBadOutcome
 from parsec.config import BackendConfig
 from parsec.events import EventEnrollmentConduit, EventInvitation
 
@@ -1792,12 +1792,12 @@ class PGInviteComponent(BaseInviteComponent):
         if org.is_expired:
             return InviteClaimerStartGreetingAttemptBadOutcome.ORGANIZATION_EXPIRED
 
-        match await self.user._check_user(conn, organization_id, greeter):
-            case (greeter_profile, _):
+        match await self.user._get_profile_for_user(conn, organization_id, greeter):
+            case UserProfile() as greeter_profile:
                 pass
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+            case GetProfileForUserUserBadOutcome.USER_NOT_FOUND:
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_FOUND
-            case CheckUserBadOutcome.USER_REVOKED:
+            case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
 
         invitation_info = await self.get_invitation_info(conn, organization_id, token)
@@ -1904,12 +1904,14 @@ class PGInviteComponent(BaseInviteComponent):
         if greeting_attempt_info.invitation_info.is_cancelled():
             return InviteClaimerCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
 
-        match await self.user._check_user(conn, organization_id, greeting_attempt_info.greeter):
-            case (greeter_profile, _):
+        match await self.user._get_profile_for_user(
+            conn, organization_id, greeting_attempt_info.greeter
+        ):
+            case UserProfile() as greeter_profile:
                 pass
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+            case GetProfileForUserUserBadOutcome.USER_NOT_FOUND:
                 assert False
-            case CheckUserBadOutcome.USER_REVOKED:
+            case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerCancelGreetingAttemptBadOutcome.GREETER_REVOKED
 
         if not self.is_greeter_allowed(
@@ -2020,12 +2022,14 @@ class PGInviteComponent(BaseInviteComponent):
         if greeting_attempt_info.invitation_info.is_cancelled():
             return InviteClaimerStepBadOutcome.INVITATION_CANCELLED
 
-        match await self.user._check_user(conn, organization_id, greeting_attempt_info.greeter):
-            case (greeter_profile, _):
+        match await self.user._get_profile_for_user(
+            conn, organization_id, greeting_attempt_info.greeter
+        ):
+            case UserProfile() as greeter_profile:
                 pass
-            case CheckUserBadOutcome.USER_NOT_FOUND:
+            case GetProfileForUserUserBadOutcome.USER_NOT_FOUND:
                 assert False
-            case CheckUserBadOutcome.USER_REVOKED:
+            case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStepBadOutcome.GREETER_REVOKED
 
         if not self.is_greeter_allowed(
