@@ -51,6 +51,9 @@ fn set_env(tmp_dir: &str, url: &ParsecAddr) {
     std::env::set_var(PARSEC_BASE_HOME_DIR, format!("{tmp_dir}/cache"));
     std::env::set_var(PARSEC_BASE_DATA_DIR, format!("{tmp_dir}/share"));
     std::env::set_var(PARSEC_BASE_CONFIG_DIR, format!("{tmp_dir}/config"));
+    // Hidden environ variable only used for CLI testing to customize the throttling time
+    // in invitation polling, without that the tests would be much slower for no reason.
+    std::env::set_var("_PARSEC_INVITE_POLLING_THROTTLE_MS", "10");
 }
 
 fn unique_org_id() -> OrganizationID {
