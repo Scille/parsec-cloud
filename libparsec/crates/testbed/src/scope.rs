@@ -100,24 +100,14 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
         No,
     }
 
-    let config = {
-        let var = std::env::var("TESTBED_SERVER").or_else(|_| {
-            // `TESTBED_SERVER` is the name of the var in the client tests (given
-            // only an url is expected), while we have `TESTBED_SERVER` here given we
-            // also accept SKIP/AUTOSTART.
-            // So here we fallback on `TESTBED_SERVER` to save pain from the dev if
-            // both env vars have been mixed.
-            std::env::var("TESTBED_SERVER")
-        });
-        match var {
-            Ok(var) if var.to_uppercase() == "AUTOSTART" || var == "1" || var.is_empty() => {
-                ServerConfig::Default
-            }
-            // Err is when env variable is not set
-            Err(_) => ServerConfig::Default,
-            Ok(val) if val.to_uppercase() == "SKIP" || val == "0" => ServerConfig::No,
-            Ok(url) => ServerConfig::Custom { url },
+    let config = match std::env::var("TESTBED_SERVER") {
+        Ok(var) if var.to_uppercase() == "AUTOSTART" || var == "1" || var.is_empty() => {
+            ServerConfig::Default
         }
+        // Err is when env variable is not set
+        Err(_) => ServerConfig::Default,
+        Ok(val) if val.to_uppercase() == "SKIP" || val == "0" => ServerConfig::No,
+        Ok(url) => ServerConfig::Custom { url },
     };
 
     // Quick return for the simple cases
