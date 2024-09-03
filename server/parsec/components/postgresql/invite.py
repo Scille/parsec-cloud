@@ -425,7 +425,7 @@ async def q_take_invitation_create_write_lock(
     await conn.execute(*_q_lock(organization_id=organization_id.str))
 
 
-_q_get_greeting_session = Q(
+_q_get_or_create_greeting_session = Q(
     f"""
 WITH result AS (
     INSERT INTO greeting_session(invitation, greeter)
@@ -445,7 +445,7 @@ LIMIT 1
 """
 )
 
-_q_get_active_attempt = Q(
+_q_get_or_create_active_attempt = Q(
     f"""
 WITH result AS (
     INSERT INTO greeting_attempt(
@@ -886,7 +886,7 @@ class PGInviteComponent(BaseInviteComponent):
             *_q_delete_invitation(
                 invitation_internal_id=row["invitation_internal_id"],
                 on=now,
-                reason="CANCELLED",  # TODO: use an enum
+                reason="CANCELLED",  # TODO: use an enum see #8224
             )
         )
 
@@ -1229,7 +1229,7 @@ class PGInviteComponent(BaseInviteComponent):
                         *_q_delete_invitation(
                             invitation_internal_id=invitation_internal_id,
                             on=now,
-                            reason="FINISHED",  # TODO: use an enum
+                            reason="FINISHED",  # TODO: use an enum see #8224
                         )
                     )
                     assert outcome == "UPDATE 1", outcome
@@ -1384,7 +1384,7 @@ class PGInviteComponent(BaseInviteComponent):
         invitation_internal_id: int,
     ) -> tuple[int, GreetingAttemptID]:
         greeting_session_id = await conn.fetchval(
-            *_q_get_greeting_session(
+            *_q_get_or_create_greeting_session(
                 invitation_internal_id=invitation_internal_id,
                 organization_id=organization_id.str,
                 greeter_user_id=greeter,
@@ -1394,7 +1394,7 @@ class PGInviteComponent(BaseInviteComponent):
 
         new_greeting_attempt_id = GreetingAttemptID.new()
         row = await conn.fetchrow(
-            *_q_get_active_attempt(
+            *_q_get_or_create_active_attempt(
                 organization_id=organization_id.str,
                 greeting_session_id=greeting_session_id,
                 new_greeting_attempt_id=new_greeting_attempt_id,
@@ -1754,6 +1754,7 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
+        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.get_invitation_info(conn, organization_id, token)
         if invitation_info is None:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
@@ -1800,6 +1801,7 @@ class PGInviteComponent(BaseInviteComponent):
             case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
 
+        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.get_invitation_info(conn, organization_id, token)
         if invitation_info is None:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
@@ -2084,6 +2086,7 @@ class PGInviteComponent(BaseInviteComponent):
         if current_profile != UserProfile.ADMIN:
             return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
+        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.get_invitation_info(conn, organization_id, token)
         if invitation_info is None:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
@@ -2107,7 +2110,7 @@ class PGInviteComponent(BaseInviteComponent):
             *_q_delete_invitation(
                 invitation_internal_id=invitation_info.internal_id,
                 on=now,
-                reason="FINISHED",  # TODO: use an enum
+                reason="FINISHED",  # TODO: use an enum see #8224
             )
         )
 

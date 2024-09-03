@@ -14,7 +14,6 @@ Response = authenticated_cmds.v4.invite_greeter_start_greeting_attempt.Rep | Non
 async def test_authenticated_invite_greeter_start_greeting_attempt_ok(
     coolorg: CoolorgRpcClients,
 ) -> None:
-    # This is a scenario where the greeter starts first.
     invitation_token = coolorg.invited_alice_dev3.token
 
     # Greeter goes first
