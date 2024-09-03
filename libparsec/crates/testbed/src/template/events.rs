@@ -9,7 +9,7 @@ use libparsec_types::prelude::*;
 use serde_with::serde_as;
 
 use super::crc_hash::CrcHash;
-use super::utils::user_id_from_device_id;
+use super::utils::{get_user_current_profile, user_id_from_device_id};
 use super::{utils, TestbedTemplate, TestbedTemplateBuilder};
 
 #[derive(Default)]
@@ -1189,7 +1189,7 @@ impl TestbedEventUpdateUserProfile {
 
         let (_, author) = utils::non_revoked_admins(&builder.events)
             .find(|(author_user_id, _)| *author_user_id != user)
-            .expect("Not available user to act as author (organization with a single user ?)")
+            .expect("No available user to act as author (organization with a single user ?)")
             .to_owned();
 
         // 2) Actual creation
@@ -1242,7 +1242,7 @@ impl TestbedEventRevokeUser {
 
         let (_, author) = utils::non_revoked_admins(&builder.events)
             .find(|(author_user_id, _)| *author_user_id != user)
-            .expect("Not available user to act as author (organization with a single user ?)")
+            .expect("No available user to act as author (organization with a single user ?)")
             .to_owned();
 
         // 2) Actual creation
@@ -1313,6 +1313,15 @@ impl TestbedEventNewRealm {
                 _ => unreachable!(),
             }
             .to_owned();
+
+        if builder.check_consistency {
+            match get_user_current_profile(&builder.events, first_owner) {
+                UserProfile::Admin | UserProfile::Standard => (),
+                UserProfile::Outsider => {
+                    panic!("Realm creator cannot be Outsider !");
+                }
+            }
+        }
 
         // 2) Actual creation
 
@@ -1393,6 +1402,21 @@ impl TestbedEventShareRealm {
         if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
             utils::assert_realm_exists(&builder.events, realm);
+
+            match role {
+                None | Some(RealmRole::Reader | RealmRole::Contributor) => (),
+                Some(RealmRole::Owner | RealmRole::Manager) => {
+                    match get_user_current_profile(&builder.events, user) {
+                        UserProfile::Admin | UserProfile::Standard => (),
+                        UserProfile::Outsider => {
+                            panic!(
+                                "User {} is Outsider, realm cannot be shared with him as {:?}",
+                                user, role
+                            );
+                        }
+                    }
+                }
+            }
         }
 
         let (_, author) = utils::non_revoked_realm_owners(&builder.events, realm)

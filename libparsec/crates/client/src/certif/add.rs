@@ -22,19 +22,19 @@ pub enum InvalidCertificateError {
     // but it is incompatible with the other certificates we already have.
     #[error("Certificate `{hint}` breaks consistency: it declares to be signed by a author that doesn't exist")]
     NonExistingAuthor { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: it declares to be older than it author (created on {author_created_on})")]
+    #[error("Certificate `{hint}` breaks consistency: it declares to be older than its author (created on {author_created_on})")]
     OlderThanAuthor {
         hint: String,
         author_created_on: DateTime,
     },
     #[error("Certificate `{hint}` breaks consistency: it declares to be signed by itself, which is not allowed")]
     SelfSigned { hint: String },
-    #[error("Certificate `{hint}` breaks consistency: it author has already been revoked on {author_revoked_on}")]
+    #[error("Certificate `{hint}` breaks consistency: its author has already been revoked on {author_revoked_on}")]
     RevokedAuthor {
         hint: String,
         author_revoked_on: DateTime,
     },
-    #[error("Certificate `{hint}` breaks consistency: it author is expected to be Admin but instead has profile {author_profile:?}")]
+    #[error("Certificate `{hint}` breaks consistency: its author is expected to be Admin but instead has profile {author_profile:?}")]
     AuthorNotAdmin {
         hint: String,
         author_profile: UserProfile,
@@ -74,8 +74,6 @@ pub enum InvalidCertificateError {
         hint: String,
         service_revoked_on: DateTime,
     },
-    #[error("Certificate `{hint}` breaks consistency: related user cannot change profile to Outsider given it still has Owner/Manager role in some realms")]
-    CannotDowngradeUserToOutsider { hint: String },
     #[error("Certificate `{hint}` breaks consistency: as first device certificate for its user it must have the same author that the user certificate ({user_author:?})")]
     UserFirstDeviceAuthorMismatch {
         hint: String,
@@ -106,7 +104,7 @@ pub enum InvalidCertificateError {
         hint: String,
         author_role: RealmRole,
     },
-    #[error("Certificate `{hint}` breaks consistency: user has Outsider profile, and hence cannot have Owner/Manager role in the realm given it is shared with others !")]
+    #[error("Certificate `{hint}` breaks consistency: user has Outsider profile, and hence cannot have Owner/Manager role in the realm")]
     RealmOutsiderCannotBeOwnerOrManager { hint: String },
     #[error("Certificate `{hint}` breaks consistency: author already has a shamir recovery setup")]
     ShamirRecoveryAlreadySetup { hint: String },
@@ -1344,40 +1342,9 @@ async fn check_user_update_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 7) If user is downgraded to Outsider, it should not be Owner/Manager of any shared realm
-    if cooked.new_profile == UserProfile::Outsider {
-        for certif in store
-            .get_user_realms_roles(UpTo::Timestamp(cooked.timestamp), cooked.user_id)
-            .await?
-        {
-            match certif.role {
-                // Outsider can be owner only if the workspace is not shared
-                Some(RealmRole::Owner) => {
-                    let roles = store
-                        .get_realm_roles(UpTo::Timestamp(cooked.timestamp), certif.realm_id)
-                        .await?;
-                    // If the workspace is not shared, there should be only a single certificate
-                    // (given one cannot change it own role !)
-                    if roles.len() != 1 {
-                        let hint = mk_hint();
-                        let what =
-                            Box::new(InvalidCertificateError::CannotDowngradeUserToOutsider {
-                                hint,
-                            });
-                        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
-                    }
-                }
-                // Outsider can never be manager
-                Some(RealmRole::Manager) => {
-                    let hint = mk_hint();
-                    let what =
-                        Box::new(InvalidCertificateError::CannotDowngradeUserToOutsider { hint });
-                    return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
-                }
-                None | Some(RealmRole::Contributor) | Some(RealmRole::Reader) => (),
-            }
-        }
-    }
+    // Note that an Outsider is not allowed to be Owner/Manager of a realm, however we
+    // allow it if it was due to a profile change. Hence here we don't need to check the
+    // role the user has in the realms he is part of.
 
     Ok(())
 }
@@ -1475,8 +1442,9 @@ async fn check_realm_role_certificate_consistency(
     let realm_roles = store
         .get_realm_roles(UpTo::Timestamp(cooked.timestamp), cooked.realm_id)
         .await?;
+    let is_realm_creation = realm_roles.is_empty();
 
-    if realm_roles.is_empty() {
+    if is_realm_creation {
         // 2.a) The realm is a new one, so certificate must be self-signed with a OWNER role.
 
         if author_user_id != cooked.user_id {
@@ -1588,25 +1556,19 @@ async fn check_realm_role_certificate_consistency(
     )
     .await?;
 
-    match profile {
-        // OUTSIDER user:
-        // - can be READER/COLLABORATOR
-        // - cannot be MANAGER
-        // - can only be OWNER of not-shared workspaces
-        UserProfile::Outsider
-            if (cooked.role == Some(RealmRole::Owner) && !realm_roles.is_empty())
-                || cooked.role == Some(RealmRole::Manager) =>
-        {
-            // Given self-signing is only allowed for the first realm role certificate,
-            // a workspace with an outsider owner necessarily contains only this first
-            // realm role certificate. Hence the only valid situation is if we are
-            // currently adding this initial realm role certificate.
+    match (profile, cooked.role) {
+        // Be exhaustive on all allowed cases, as this would help whenever
+        // `UserProfile`/`RealmRole` gets modified.
+        (_, None)
+        | (UserProfile::Outsider, Some(RealmRole::Reader | RealmRole::Contributor))
+        | (UserProfile::Standard | UserProfile::Admin, _) => (),
+        // Forbidden cases
+        (UserProfile::Outsider, Some(RealmRole::Manager | RealmRole::Owner)) => {
             let hint = mk_hint();
             let what =
                 Box::new(InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { hint });
             return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
         }
-        _ => (),
     }
 
     Ok(())

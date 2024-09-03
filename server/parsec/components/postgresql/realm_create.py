@@ -7,6 +7,7 @@ from parsec._parsec import (
     OrganizationID,
     RealmRole,
     RealmRoleCertificate,
+    UserProfile,
     VerifyKey,
 )
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
@@ -145,6 +146,9 @@ async def realm_create(
             return RealmCreateStoreBadOutcome.AUTHOR_NOT_FOUND
         case AuthAndLockCommonOnlyBadOutcome.AUTHOR_REVOKED:
             return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
+
+    if db_common.user_current_profile == UserProfile.OUTSIDER:
+        return RealmCreateStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
     match realm_create_validate(
         now=now,

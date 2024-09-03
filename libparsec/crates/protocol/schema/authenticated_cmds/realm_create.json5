@@ -26,6 +26,10 @@
                 ]
             },
             {
+                // Author is OUTSIDER which cannot be OWNER of a realm
+                "status": "author_not_allowed"
+            },
+            {
                 "status": "invalid_certificate"
             },
             {

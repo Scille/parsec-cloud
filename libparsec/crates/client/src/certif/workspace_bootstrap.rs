@@ -114,6 +114,9 @@ pub(super) async fn bootstrap_workspace(
                 CertifEnsureRealmCreatedError::Stopped => {
                     return Err(CertifBootstrapWorkspaceError::Stopped)
                 }
+                CertifEnsureRealmCreatedError::AuthorNotAllowed => {
+                    return Err(CertifBootstrapWorkspaceError::AuthorNotAllowed)
+                }
                 CertifEnsureRealmCreatedError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,

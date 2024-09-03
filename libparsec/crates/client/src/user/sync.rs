@@ -20,6 +20,8 @@ pub enum UserSyncError {
     Offline,
     #[error("Component has stopped")]
     Stopped,
+    #[error("Author not allowed")]
+    AuthorNotAllowed,
     #[error("Sequester service `{service_id}` rejected the data: `{}`", .reason.as_ref().map(|x| x.as_ref()).unwrap_or_else(|| "<no reason>"))]
     RejectedBySequesterService {
         service_id: SequesterServiceID,
@@ -237,6 +239,7 @@ async fn outbound_sync_inner(ops: &UserOps) -> Result<OutboundSyncOutcome, UserS
             .map_err(|err| match err {
                 CertifEnsureRealmCreatedError::Stopped => UserSyncError::Stopped,
                 CertifEnsureRealmCreatedError::Offline => UserSyncError::Offline,
+                CertifEnsureRealmCreatedError::AuthorNotAllowed => UserSyncError::AuthorNotAllowed,
                 CertifEnsureRealmCreatedError::TimestampOutOfBallpark {
                     server_timestamp,
                     client_timestamp,
