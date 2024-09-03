@@ -15,6 +15,10 @@ use crate::{
 
 const USER_SYNC_MONITOR_NAME: &str = "user_sync";
 
+// Local user manifest currently doesn't need to be synchronized, hence the
+// user sync monitor is never used (especially since it current implementation
+// is now incompatible with OUTSIDER users now that they can created realm).
+#[allow(unused)]
 pub(crate) async fn start_user_sync_monitor(
     user_ops: Arc<UserOps>,
     event_bus: EventBus,
@@ -88,6 +92,13 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                             event_bus.wait_server_online().await;
                             continue;
                         }
+                        UserSyncError::AuthorNotAllowed => {
+                            // OUTSIDER user are not allowed to create realm in Parsec v3.
+                            // In practice this is not an issue given we don't need to sync
+                            // user manifest for the moment.
+                            log::warn!("Rejected upload: OUTSIDER is not allowed to create realm",);
+                            break;
+                        }
                         UserSyncError::RejectedBySequesterService { service_id, reason } => {
                             // Note `UserOps` is responsible for sending the
                             // reject by sequester event on the event bus
@@ -96,16 +107,19 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                                 service_id,
                                 reason.as_ref().map_or("<no reason>", |r| r.as_str())
                             );
+                            break;
                         }
                         UserSyncError::InvalidCertificate(error) => {
                             // Note `UserOps` is responsible for sending the
                             // invalid certificate event on the event bus
                             log::warn!("Invalid certificate detected: {}", error);
+                            break;
                         }
                         error @ UserSyncError::TimestampOutOfBallpark { .. } => {
                             // Note `UserOps` is responsible for sending the
                             // bad timestamp event on the event bus
                             log::warn!("Client/server clock drift detected: {:?}", error);
+                            break;
                         }
                         UserSyncError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor

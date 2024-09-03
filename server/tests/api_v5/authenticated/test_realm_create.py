@@ -12,6 +12,7 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SecretKey,
     SecretKeyAlgorithm,
+    UserProfile,
     VlobID,
     authenticated_cmds,
 )
@@ -23,22 +24,38 @@ from tests.common import (
     generate_realm_role_certificate,
     get_last_realm_certificate_timestamp,
 )
+from tests.common.data import alice_gives_profile
 
 
+@pytest.mark.parametrize(
+    "kind",
+    ("as_admin", "as_standard"),
+)
 async def test_authenticated_realm_create_ok(
-    coolorg: CoolorgRpcClients,
-    backend: Backend,
+    coolorg: CoolorgRpcClients, backend: Backend, kind: str
 ) -> None:
+    match kind:
+        case "as_admin":
+            author = coolorg.alice
+        case "as_standard":
+            author = coolorg.bob
+        case unknown:
+            assert False, unknown
+
     certif = generate_realm_role_certificate(
-        coolorg, user_id=coolorg.alice.user_id, role=RealmRole.OWNER, realm_id=VlobID.new()
+        coolorg,
+        author=author.device_id,
+        user_id=author.user_id,
+        role=RealmRole.OWNER,
+        realm_id=VlobID.new(),
     )
 
     expected_topics = await backend.organization.test_dump_topics(coolorg.organization_id)
     expected_topics.realms[certif.realm_id] = certif.timestamp
 
     with backend.event_bus.spy() as spy:
-        rep = await coolorg.alice.realm_create(
-            realm_role_certificate=certif.dump_and_sign(coolorg.alice.signing_key)
+        rep = await author.realm_create(
+            realm_role_certificate=certif.dump_and_sign(author.signing_key)
         )
         assert rep == authenticated_cmds.latest.realm_create.RepOk()
         await spy.wait_event_occurred(
@@ -224,6 +241,49 @@ async def test_authenticated_realm_create_require_greater_timestamp(
     assert rep == authenticated_cmds.latest.realm_create.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
     )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    (
+        "never_allowed",
+        "no_longer_allowed",
+        "realm_already_exists_and_not_allowed",
+    ),
+)
+async def test_authenticated_realm_create_author_not_allowed(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+    kind: str,
+) -> None:
+    match kind:
+        case "never_allowed":
+            # Mallory starts as `OUTSIDER`
+            author = coolorg.mallory
+            realm_id = VlobID.new()
+            pass
+
+        case "no_longer_allowed":
+            await alice_gives_profile(coolorg, backend, coolorg.bob.user_id, UserProfile.OUTSIDER)
+            author = coolorg.bob
+            realm_id = VlobID.new()
+
+        case "realm_already_exists_and_not_allowed":
+            author = coolorg.mallory
+            realm_id = coolorg.wksp1_id
+
+        case _:
+            assert False
+
+    certif = generate_realm_role_certificate(
+        coolorg,
+        author=author.device_id,
+        user_id=author.user_id,
+        role=RealmRole.OWNER,
+        realm_id=realm_id,
+    )
+    rep = await author.realm_create(realm_role_certificate=certif.dump_and_sign(author.signing_key))
+    assert rep == authenticated_cmds.v5.realm_create.RepAuthorNotAllowed()
 
 
 async def test_authenticated_realm_create_http_common_errors(

@@ -46,8 +46,8 @@ use crate::{
     event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
-        start_user_sync_monitor, start_workspaces_bootstrap_monitor,
-        start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
+        start_workspaces_bootstrap_monitor, start_workspaces_process_needs_monitor,
+        start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
 };
@@ -177,8 +177,20 @@ impl Client {
                 start_workspaces_refresh_list_monitor(client.event_bus.clone(), client.clone())
                     .await;
 
-            let user_sync_monitor =
-                start_user_sync_monitor(client.user_ops.clone(), client.event_bus.clone()).await;
+            // TODO: rework user manifest sync once needed
+            //
+            // User manifest currently doesn't need to be synced (i.e. we only
+            // use local user manifest, and rebuild it from scratch on every new
+            // client).
+            //
+            // The current user manifest sync system relies on realm to store the
+            // data, which is no longer allowed for users with OUTSIDER profile.
+            //
+            // Hence enabling the user sync monitor should have no effect, but it's
+            // safer to disable it entirely.
+
+            // let user_sync_monitor =
+            //     start_user_sync_monitor(client.user_ops.clone(), client.event_bus.clone()).await;
 
             let certif_poll_monitor = start_certif_poll_monitor(
                 client.certificates_ops.clone(),
@@ -198,7 +210,7 @@ impl Client {
             monitors.push(workspaces_bootstrap_monitor);
             monitors.push(workspaces_process_needs_monitor);
             monitors.push(workspaces_refresh_list_monitor);
-            monitors.push(user_sync_monitor);
+            // monitors.push(user_sync_monitor);
             monitors.push(certif_poll_monitor);
             monitors.push(server_config_monitor);
             monitors.push(connection_monitor);

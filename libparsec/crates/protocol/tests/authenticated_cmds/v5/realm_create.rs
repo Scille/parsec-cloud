@@ -174,3 +174,23 @@ pub fn rep_require_greater_timestamp() {
 
     p_assert_eq!(data2, expected);
 }
+
+pub fn rep_author_not_allowed() {
+    // Generated from Parsec 3.0.0-rc.1+dev
+    // Content:
+    //   status: 'author_not_allowed'
+    let raw: &[u8] = hex!("81a6737461747573b2617574686f725f6e6f745f616c6c6f776564").as_ref();
+
+    let expected = authenticated_cmds::realm_create::Rep::AuthorNotAllowed;
+
+    let data = authenticated_cmds::realm_create::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::realm_create::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}

@@ -113,6 +113,9 @@ class MemoryRealmComponent(BaseRealmComponent):
             if author_user.is_revoked:
                 return RealmCreateStoreBadOutcome.AUTHOR_REVOKED
 
+            if author_user.current_profile == UserProfile.OUTSIDER:
+                return RealmCreateStoreBadOutcome.AUTHOR_NOT_ALLOWED
+
             assert author_verify_key == author_device.cooked.verify_key
             match realm_create_validate(
                 now=now,

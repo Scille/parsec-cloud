@@ -6,7 +6,7 @@ use crate::TestbedEventNewDevice;
 
 use super::{
     TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewSequesterService,
-    TestbedEventNewUser,
+    TestbedEventNewUser, TestbedEventUpdateUserProfile,
 };
 
 pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) -> UserID {
@@ -384,4 +384,33 @@ pub(super) fn assert_user_has_non_deleted_shamir_recovery(
             _ => false,
         })
         .unwrap_or_else(|| panic!("User {} doesn't have any Shamir recovery", user))
+}
+
+pub(super) fn get_user_current_profile(events: &'_ [TestbedEvent], user: UserID) -> UserProfile {
+    for event in events.iter().rev() {
+        match event {
+            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                first_user_id: candidate,
+                ..
+            }) if *candidate == user => {
+                return UserProfile::Admin;
+            }
+            TestbedEvent::NewUser(TestbedEventNewUser {
+                user_id: candidate,
+                initial_profile,
+                ..
+            }) if *candidate == user => {
+                return *initial_profile;
+            }
+            TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
+                user: candidate,
+                profile,
+                ..
+            }) if *candidate == user => {
+                return *profile;
+            }
+            _ => (),
+        }
+    }
+    panic!("User {} doesn't exist", user);
 }

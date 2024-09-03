@@ -262,6 +262,7 @@ class RealmCreateStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
 
 
 class RealmShareStoreBadOutcome(BadOutcomeEnum):
@@ -634,6 +635,8 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_create.RepRealmAlreadyExists(
                     last_realm_certificate_timestamp=error.certificate_timestamp
                 )
+            case RealmCreateStoreBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.realm_create.RepAuthorNotAllowed()
             case RealmCreateStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmCreateStoreBadOutcome.ORGANIZATION_EXPIRED:

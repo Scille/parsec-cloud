@@ -34,6 +34,11 @@ class RepRealmAlreadyExists(Rep):
     @property
     def last_realm_certificate_timestamp(self) -> DateTime: ...
 
+class RepAuthorNotAllowed(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
+
 class RepInvalidCertificate(Rep):
     def __init__(
         self,
