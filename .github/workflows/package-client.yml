@@ -331,7 +331,7 @@ jobs:
         # we need to escape the flag another time by adding another `--`.
         run: >-
           npm run electron:release
-          ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' }}
+          ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' || '' }}
           ${{ matrix.platform == 'linux' && 'appimage' || '' }}
           ${{ inputs.nightly_build && '--nightly' || '' }}
         env:
