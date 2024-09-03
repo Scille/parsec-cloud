@@ -469,6 +469,7 @@ WITH result AS (
         $new_greeting_attempt_id,
         $greeting_session_id
     )
+    -- The `unique_active_attempt` index ensures that there is only one active attempt at a time
     ON CONFLICT DO NOTHING
     RETURNING greeting_attempt._id, greeting_attempt_id
 )
@@ -1409,107 +1410,72 @@ class PGInviteComponent(BaseInviteComponent):
         greeting_attempt_id = GreetingAttemptID.from_hex(greeting_attempt_id)
         return greeting_attempt_internal_id, greeting_attempt_id
 
-    async def greeter_join_or_cancel(
+    async def join_or_cancel(
         self,
+        peer: GreeterOrClaimer,
         conn: AsyncpgConnection,
         greeting_attempt_internal_id: int,
         now: DateTime,
     ) -> bool:
+        request = (
+            _q_greeter_join_or_cancel
+            if peer == GreeterOrClaimer.GREETER
+            else _q_claimer_join_or_cancel
+        )
         cancelled_on = await conn.fetchval(
-            *_q_greeter_join_or_cancel(
+            *request(
                 greeting_attempt_internal_id=greeting_attempt_internal_id,
                 now=DateTime.now(),
             )
         )
         return cancelled_on is None
 
-    async def claimer_join_or_cancel(
+    async def new_attempt(
         self,
+        peer: GreeterOrClaimer,
         conn: AsyncpgConnection,
-        greeting_attempt_internal_id: int,
+        organization_id: OrganizationID,
+        greeter: UserID,
+        invitation_internal_id: int,
         now: DateTime,
-    ) -> bool:
-        cancelled_on = await conn.fetchval(
-            *_q_claimer_join_or_cancel(
-                greeting_attempt_internal_id=greeting_attempt_internal_id,
-                now=DateTime.now(),
+    ) -> GreetingAttemptID:
+        # Get the greeting session
+        greeting_session_id = await self.get_greeting_session(
+            conn,
+            organization_id=organization_id,
+            greeter=greeter,
+            invitation_internal_id=invitation_internal_id,
+        )
+        # Get the active attempt
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+        ) = await self.get_active_greeting_attempt(
+            conn,
+            organization_id=organization_id,
+            greeting_session_id=greeting_session_id,
+        )
+        # Try to join the attempt
+        is_active = await self.join_or_cancel(peer, conn, greeting_attempt_internal_id, now)
+        # The attempt has been joined
+        if is_active:
+            return greeting_attempt_id
+        # The attempt was already joined and has been cancelled
+        else:
+            # Get a fresh attempt
+            (
+                greeting_attempt_internal_id,
+                greeting_attempt_id,
+            ) = await self.get_active_greeting_attempt(
+                conn,
+                organization_id=organization_id,
+                greeting_session_id=greeting_session_id,
             )
-        )
-        return cancelled_on is None
-
-    async def new_attempt_for_greeter(
-        self,
-        conn: AsyncpgConnection,
-        organization_id: OrganizationID,
-        greeter: UserID,
-        invitation_internal_id: int,
-        now: DateTime,
-    ) -> GreetingAttemptID:
-        greeting_session_id = await self.get_greeting_session(
-            conn,
-            organization_id=organization_id,
-            greeter=greeter,
-            invitation_internal_id=invitation_internal_id,
-        )
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_greeting_attempt(
-            conn,
-            organization_id=organization_id,
-            greeting_session_id=greeting_session_id,
-        )
-        is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        if is_active:
+            # Join the attempt
+            is_active = await self.join_or_cancel(peer, conn, greeting_attempt_internal_id, now)
+            # It has to be active since we just created it
+            assert is_active
             return greeting_attempt_id
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_greeting_attempt(
-            conn,
-            organization_id=organization_id,
-            greeting_session_id=greeting_session_id,
-        )
-        is_active = await self.greeter_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        assert is_active
-        return greeting_attempt_id
-
-    async def new_attempt_for_claimer(
-        self,
-        conn: AsyncpgConnection,
-        organization_id: OrganizationID,
-        greeter: UserID,
-        invitation_internal_id: int,
-        now: DateTime,
-    ) -> GreetingAttemptID:
-        greeting_session_id = await self.get_greeting_session(
-            conn,
-            organization_id=organization_id,
-            greeter=greeter,
-            invitation_internal_id=invitation_internal_id,
-        )
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_greeting_attempt(
-            conn,
-            organization_id=organization_id,
-            greeting_session_id=greeting_session_id,
-        )
-        is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        if is_active:
-            return greeting_attempt_id
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-        ) = await self.get_active_greeting_attempt(
-            conn,
-            organization_id=organization_id,
-            greeting_session_id=greeting_session_id,
-        )
-        is_active = await self.claimer_join_or_cancel(conn, greeting_attempt_internal_id, now)
-        assert is_active
-        return greeting_attempt_id
 
     def is_greeter_allowed(
         self,
@@ -1756,7 +1722,6 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
-        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteGreeterStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
@@ -1768,7 +1733,8 @@ class PGInviteComponent(BaseInviteComponent):
         if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteGreeterStartGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
-        greeter_attempt_id = await self.new_attempt_for_greeter(
+        greeter_attempt_id = await self.new_attempt(
+            GreeterOrClaimer.GREETER,
             conn,
             organization_id=organization_id,
             greeter=greeter,
@@ -1803,7 +1769,6 @@ class PGInviteComponent(BaseInviteComponent):
             case GetProfileForUserUserBadOutcome.USER_REVOKED:
                 return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_REVOKED
 
-        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteClaimerStartGreetingAttemptBadOutcome.INVITATION_NOT_FOUND
@@ -1815,7 +1780,8 @@ class PGInviteComponent(BaseInviteComponent):
         if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
             return InviteClaimerStartGreetingAttemptBadOutcome.GREETER_NOT_ALLOWED
 
-        greeter_attempt_id = await self.new_attempt_for_claimer(
+        greeter_attempt_id = await self.new_attempt(
+            GreeterOrClaimer.CLAIMER,
             conn,
             organization_id=organization_id,
             greeter=greeter,
@@ -2106,7 +2072,6 @@ class PGInviteComponent(BaseInviteComponent):
         if current_profile != UserProfile.ADMIN:
             return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
-        # unique_active_attempt index is ensuring that there is only one active attempt at a time
         invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:
             return InviteCompleteBadOutcome.INVITATION_NOT_FOUND
