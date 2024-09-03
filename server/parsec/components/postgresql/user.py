@@ -147,9 +147,9 @@ class PGUserComponent(BaseUserComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID,
-        lock_common_topic: bool = True,
+        check_common_topic: bool = True,
     ) -> UserProfile | GetProfileForUserUserBadOutcome:
-        if lock_common_topic:
+        if check_common_topic:
             await self._check_common_topic(conn, organization_id)
         u_row = await conn.fetchrow(
             *_q_get_profile_for_user(organization_id=organization_id.str, user_id=user_id)
