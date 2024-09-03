@@ -6,6 +6,8 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import override
 
+from asyncpg import Record
+
 from parsec._parsec import (
     CancelledGreetingAttemptReason,
     DateTime,
@@ -85,6 +87,38 @@ class InvitationInfo:
     def is_cancelled(self) -> bool:
         return self.deleted_reason == InvitationStatus.CANCELLED
 
+    @classmethod
+    def from_record(cls, record: Record) -> InvitationInfo:
+        (
+            invitation_internal_id,
+            token,
+            type,
+            created_by_user_id_str,
+            created_by_device_id_str,
+            created_by_email,
+            created_by_label,
+            claimer_email,
+            created_on,
+            deleted_on,
+            deleted_reason,
+        ) = record
+        deleted_reason = (
+            InvitationStatus.from_str(deleted_reason) if deleted_reason is not None else None
+        )
+        return cls(
+            internal_id=invitation_internal_id,
+            token=InvitationToken.from_hex(token),
+            type=InvitationType.from_str(type),
+            created_by_user_id=UserID.from_hex(created_by_user_id_str),
+            created_by_device_id=DeviceID.from_hex(created_by_device_id_str),
+            created_by_email=created_by_email,
+            created_by_label=created_by_label,
+            claimer_email=claimer_email,
+            created_on=created_on,
+            deleted_on=deleted_on,
+            deleted_reason=deleted_reason,
+        )
+
 
 @dataclass(frozen=True)
 class GreetingAttemptInfo:
@@ -104,6 +138,39 @@ class GreetingAttemptInfo:
         if self.cancelled_by is None or self.cancelled_on is None or self.cancelled_reason is None:
             return None
         return self.cancelled_by, self.cancelled_reason, self.cancelled_on
+
+    @classmethod
+    def from_record(cls, record: Record) -> GreetingAttemptInfo:
+        (
+            greeting_attempt_internal_id,
+            greeting_attempt_id,
+            greeter,
+            greeting_attempt_claimer_joined,
+            greeting_attempt_greeter_joined,
+            greeting_attempt_cancelled_by,
+            greeting_attempt_cancelled_reason,
+            greeting_attempt_cancelled_on,
+        ) = record
+        greeting_attempt_cancelled_reason = (
+            CancelledGreetingAttemptReason.from_str(greeting_attempt_cancelled_reason)
+            if greeting_attempt_cancelled_reason is not None
+            else None
+        )
+        greeting_attempt_cancelled_by = (
+            GreeterOrClaimer.from_str(greeting_attempt_cancelled_by)
+            if greeting_attempt_cancelled_by is not None
+            else None
+        )
+        return GreetingAttemptInfo(
+            internal_id=greeting_attempt_internal_id,
+            greeting_attempt_id=GreetingAttemptID.from_hex(greeting_attempt_id),
+            greeter=UserID.from_hex(greeter),
+            claimer_joined=greeting_attempt_claimer_joined,
+            greeter_joined=greeting_attempt_greeter_joined,
+            cancelled_by=greeting_attempt_cancelled_by,
+            cancelled_reason=greeting_attempt_cancelled_reason,
+            cancelled_on=greeting_attempt_cancelled_on,
+        )
 
 
 _q_retrieve_compatible_user_invitation = Q(
@@ -245,9 +312,14 @@ ORDER BY created_on
 )
 
 
-def make_q_info_invitation_for_update(from_greeting_attempt_id: bool = False) -> Q:
+def make_q_info_invitation(
+    from_greeting_attempt_id: bool = False, for_share: bool = False, for_update: bool = False
+) -> Q:
+    assert for_update ^ for_share
+    share_or_update = "SHARE" if for_share else "UPDATE"
+
     if from_greeting_attempt_id:
-        select_invitation = """
+        select_invitation = f"""
             SELECT invitation._id AS invitation_internal_id
             FROM greeting_attempt
             INNER JOIN greeting_session ON greeting_attempt.greeting_session = greeting_session._id
@@ -255,16 +327,16 @@ def make_q_info_invitation_for_update(from_greeting_attempt_id: bool = False) ->
             INNER JOIN organization ON invitation.organization = organization._id
             WHERE organization.organization_id = $organization_id
             AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
-            FOR UPDATE OF invitation
+            FOR {share_or_update} OF invitation
             """
     else:
-        select_invitation = """
+        select_invitation = f"""
             SELECT invitation._id AS invitation_internal_id
             FROM invitation
             INNER JOIN organization ON invitation.organization = organization._id
             WHERE organization.organization_id = $organization_id
             AND token = $token
-            FOR UPDATE OF invitation
+            FOR {share_or_update} OF invitation
             """
     return Q(f"""
         WITH selected_invitation AS ({select_invitation})
@@ -287,9 +359,10 @@ def make_q_info_invitation_for_update(from_greeting_attempt_id: bool = False) ->
         """)
 
 
-_q_info_invitation_for_update = make_q_info_invitation_for_update()
-_q_info_invitation_for_update_from_attempt_id = make_q_info_invitation_for_update(
-    from_greeting_attempt_id=True
+_q_info_invitation_for_share = make_q_info_invitation(for_share=True)
+_q_info_invitation_for_update = make_q_info_invitation(for_update=True)
+_q_info_invitation_for_update_from_greeting_attempt_id = make_q_info_invitation(
+    for_update=True, from_greeting_attempt_id=True
 )
 
 
@@ -998,7 +1071,7 @@ class PGInviteComponent(BaseInviteComponent):
         if organization.is_expired:
             return InviteAsInvitedInfoBadOutcome.ORGANIZATION_EXPIRED
 
-        invitation_info = await self.lock_invitation(conn, organization_id, token)
+        invitation_info = await self.get_invitation(conn, organization_id, token)
         if not invitation_info:
             return InviteAsInvitedInfoBadOutcome.INVITATION_NOT_FOUND
 
@@ -1490,55 +1563,39 @@ class PGInviteComponent(BaseInviteComponent):
         else:
             raise NotImplementedError
 
+    async def get_invitation(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, token: InvitationToken
+    ) -> InvitationInfo | None:
+        row = await conn.fetchrow(
+            *_q_info_invitation_for_share(organization_id=organization_id.str, token=token.hex)
+        )
+        return None if row is None else InvitationInfo.from_record(row)
+
     async def lock_invitation(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
-        identifier: InvitationToken | GreetingAttemptID,
+        identifier: InvitationToken,
     ) -> InvitationInfo | None:
-        if isinstance(identifier, InvitationToken):
-            row = await conn.fetchrow(
-                *_q_info_invitation_for_update(
-                    organization_id=organization_id.str, token=identifier.hex
-                )
+        row = await conn.fetchrow(
+            *_q_info_invitation_for_update(
+                organization_id=organization_id.str, token=identifier.hex
             )
-        elif isinstance(identifier, GreetingAttemptID):
-            row = await conn.fetchrow(
-                *_q_info_invitation_for_update_from_attempt_id(
-                    organization_id=organization_id.str, greeting_attempt_id=identifier
-                )
+        )
+        return None if row is None else InvitationInfo.from_record(row)
+
+    async def lock_invitation_from_greeting_attempt_id(
+        self,
+        conn: AsyncpgConnection,
+        organization_id: OrganizationID,
+        greeting_attempt_id: GreetingAttemptID,
+    ) -> InvitationInfo | None:
+        row = await conn.fetchrow(
+            *_q_info_invitation_for_update_from_greeting_attempt_id(
+                organization_id=organization_id.str, greeting_attempt_id=greeting_attempt_id
             )
-        if not row:
-            return None
-        (
-            invitation_internal_id,
-            token,
-            type,
-            created_by_user_id_str,
-            created_by_device_id_str,
-            created_by_email,
-            created_by_label,
-            claimer_email,
-            created_on,
-            deleted_on,
-            deleted_reason,
-        ) = row
-        deleted_reason = (
-            InvitationStatus.from_str(deleted_reason) if deleted_reason is not None else None
         )
-        return InvitationInfo(
-            internal_id=invitation_internal_id,
-            token=InvitationToken.from_hex(token),
-            type=InvitationType.from_str(type),
-            created_by_user_id=UserID.from_hex(created_by_user_id_str),
-            created_by_device_id=DeviceID.from_hex(created_by_device_id_str),
-            created_by_email=created_by_email,
-            created_by_label=created_by_label,
-            claimer_email=claimer_email,
-            created_on=created_on,
-            deleted_on=deleted_on,
-            deleted_reason=deleted_reason,
-        )
+        return None if row is None else InvitationInfo.from_record(row)
 
     async def get_greeting_attempt_info(
         self,
@@ -1554,38 +1611,7 @@ class PGInviteComponent(BaseInviteComponent):
                 token=invitation_token.hex,
             )
         )
-        if not row:
-            return None
-        (
-            greeting_attempt_internal_id,
-            greeting_attempt_id,
-            greeter,
-            greeting_attempt_claimer_joined,
-            greeting_attempt_greeter_joined,
-            greeting_attempt_cancelled_by,
-            greeting_attempt_cancelled_reason,
-            greeting_attempt_cancelled_on,
-        ) = row
-        greeting_attempt_cancelled_reason = (
-            CancelledGreetingAttemptReason.from_str(greeting_attempt_cancelled_reason)
-            if greeting_attempt_cancelled_reason is not None
-            else None
-        )
-        greeting_attempt_cancelled_by = (
-            GreeterOrClaimer.from_str(greeting_attempt_cancelled_by)
-            if greeting_attempt_cancelled_by is not None
-            else None
-        )
-        return GreetingAttemptInfo(
-            internal_id=greeting_attempt_internal_id,
-            greeting_attempt_id=GreetingAttemptID.from_hex(greeting_attempt_id),
-            greeter=UserID.from_hex(greeter),
-            claimer_joined=greeting_attempt_claimer_joined,
-            greeter_joined=greeting_attempt_greeter_joined,
-            cancelled_by=greeting_attempt_cancelled_by,
-            cancelled_reason=greeting_attempt_cancelled_reason,
-            cancelled_on=greeting_attempt_cancelled_on,
-        )
+        return None if row is None else GreetingAttemptInfo.from_record(row)
 
     async def cancel_greeting_attempt(
         self,
@@ -1821,7 +1847,9 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_REVOKED
 
-        invitation_info = await self.lock_invitation(conn, organization_id, greeting_attempt)
+        invitation_info = await self.lock_invitation_from_greeting_attempt_id(
+            conn, organization_id, greeting_attempt
+        )
         if invitation_info is None:
             return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
         if invitation_info.is_finished():
@@ -1939,7 +1967,9 @@ class PGInviteComponent(BaseInviteComponent):
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteGreeterStepBadOutcome.AUTHOR_REVOKED
 
-        invitation_info = await self.lock_invitation(conn, organization_id, greeting_attempt)
+        invitation_info = await self.lock_invitation_from_greeting_attempt_id(
+            conn, organization_id, greeting_attempt
+        )
         if invitation_info is None:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
         if invitation_info.is_finished():
