@@ -75,14 +75,12 @@ WHERE
 _q_get_profile_for_user = Q(
     f"""
 SELECT
-    COALESCE(profile.profile, user_.initial_profile) AS profile,
+    COALESCE(user_.current_profile, user_.initial_profile) AS profile,
     user_.revoked_on
 FROM user_
-LEFT JOIN profile ON user_._id = profile.user_
 WHERE
     organization = { q_organization_internal_id("$organization_id") }
     AND user_id = $user_id
-ORDER BY profile.certified_on DESC LIMIT 1
 """
 )
 
@@ -108,17 +106,23 @@ class PGUserComponent(BaseUserComponent):
         self.pool = pool
         self.event_bus = event_bus
 
+    async def _check_common_topic(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID
+    ) -> DateTime:
+        common_timestamp = await conn.fetchval(
+            *_q_check_common_topic(organization_id=organization_id.str)
+        )
+        if common_timestamp is None:
+            common_timestamp = DateTime.from_timestamp_micros(0)
+        return common_timestamp
+
     async def _check_device(
         self,
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
     ) -> tuple[UserID, UserProfile, DateTime] | CheckDeviceBadOutcome:
-        common_timestamp = await conn.fetchval(
-            *_q_check_common_topic(organization_id=organization_id.str)
-        )
-        if common_timestamp is None:
-            common_timestamp = DateTime.from_timestamp_micros(0)
+        common_timestamp = await self._check_common_topic(conn, organization_id)
         d_row = await conn.fetchrow(
             *_q_get_device(organization_id=organization_id.str, device_id=device_id)
         )
@@ -143,7 +147,10 @@ class PGUserComponent(BaseUserComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         user_id: UserID,
+        lock_common_topic: bool = True,
     ) -> UserProfile | GetProfileForUserUserBadOutcome:
+        if lock_common_topic:
+            await self._check_common_topic(conn, organization_id)
         u_row = await conn.fetchrow(
             *_q_get_profile_for_user(organization_id=organization_id.str, user_id=user_id)
         )

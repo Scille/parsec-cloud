@@ -105,7 +105,7 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_not_found(
-    coolorg: CoolorgRpcClients,
+    coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=GreetingAttemptID.new(),
