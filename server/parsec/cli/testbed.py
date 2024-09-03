@@ -36,7 +36,6 @@ from parsec.config import BackendConfig, LogLevel, MockedBlockStoreConfig, Mocke
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
 
-DEFAULT_ORGANIZATION_LIFE_LIMIT = 10 * 60  # 10mn
 DEFAULT_PORT = 6770
 
 
@@ -129,7 +128,6 @@ app.debug = True
 
 # Must be overwritten before the app is started !
 app.state.testbed = None
-app.state.orga_life_limit = DEFAULT_ORGANIZATION_LIFE_LIMIT
 
 app.add_middleware(
     CORSMiddleware,
@@ -146,7 +144,6 @@ app.add_middleware(
 @app.post("/testbed/new/{template}")
 async def test_new(template: str, request: Request, background_tasks: BackgroundTasks) -> Response:
     testbed: TestbedBackend = request.app.state.testbed
-    orga_life_limit: float = request.app.state.orga_life_limit
 
     try:
         (new_org_id, template_crc, _) = await testbed.new_organization(template)
@@ -156,13 +153,27 @@ async def test_new(template: str, request: Request, background_tasks: Background
             content=b"unknown template",
         )
 
-    async def _organization_garbage_collector():
-        await asyncio.sleep(orga_life_limit)
-        logger.info("Dropping testbed org due to time limit", organization=new_org_id.str)
-        # Dropping is idempotent, so no need for error handling
-        await testbed.backend.test_drop_organization(new_org_id)
+    match request.query_params.get("ttl"):
+        case None as orga_life_limit:
+            pass
+        case str() as raw:
+            try:
+                orga_life_limit = float(raw)
+            except ValueError:
+                return Response(
+                    status_code=400,
+                    content=b"invalid ttl query param",
+                )
 
-    background_tasks.add_task(_organization_garbage_collector)
+    if orga_life_limit:
+
+        async def _organization_garbage_collector():
+            await asyncio.sleep(orga_life_limit)
+            logger.info("Dropping testbed org due to time limit", organization=new_org_id.str)
+            # Dropping is idempotent, so no need for error handling
+            await testbed.backend.test_drop_organization(new_org_id)
+
+        background_tasks.add_task(_organization_garbage_collector)
 
     return Response(
         status_code=200,
@@ -243,14 +254,6 @@ async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[Test
     help="Port to listen on",
 )
 @click.option(
-    "--orga-life-limit",
-    default=DEFAULT_ORGANIZATION_LIFE_LIMIT,
-    show_default=True,
-    type=float,
-    envvar="PARSEC_ORGA_LIFE_LIMIT",
-    help="How long before the organization gets automatically removed",
-)
-@click.option(
     "--server-addr",
     envvar="PARSEC_SERVER_ADDR",
     default="parsec3://saas.parsec.invalid",
@@ -274,7 +277,6 @@ async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[Test
 def testbed_cmd(
     host: str,
     port: int,
-    orga_life_limit: float,
     server_addr: ParsecAddr,
     stop_after_process: int | None,
     log_level: LogLevel,
@@ -311,7 +313,6 @@ def testbed_cmd(
 
                 app.state.testbed = testbed
                 app.state.backend = testbed.backend
-                app.state.orga_life_limit = orga_life_limit
                 await serve_parsec_asgi_app(host=host, port=port, app=app)
 
                 click.echo("bye ;-)")

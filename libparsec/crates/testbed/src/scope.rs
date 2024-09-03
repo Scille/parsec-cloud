@@ -6,7 +6,7 @@ use lazy_static::lazy_static;
 
 use libparsec_types::prelude::*;
 
-use crate::{test_drop_testbed, test_new_testbed, TestbedEnv};
+use crate::{test_drop_testbed, test_new_testbed, TestbedEnv, TestbedTimeToLive};
 
 /// Keep track of testbed's lifetime, don't drop this before the test is done !
 pub struct TestbedScope {
@@ -28,9 +28,13 @@ impl TestbedScope {
             },
             Run::WithoutServer => None,
         };
-        let env = test_new_testbed(template, server_addr)
-            .await
-            .expect("cannot start testbed scope");
+        let env = test_new_testbed(
+            template,
+            server_addr,
+            TestbedTimeToLive::Limited { seconds: 60 },
+        )
+        .await
+        .expect("cannot start testbed scope");
         Some(Self { env })
     }
 

@@ -17,7 +17,12 @@ pub async fn test_new_testbed(
     template: &str,
     server_addr: Option<&ParsecAddr>,
 ) -> Result<PathBuf, TestbedError> {
-    let env = libparsec_testbed::test_new_testbed(template, server_addr).await?;
+    let env = libparsec_testbed::test_new_testbed(
+        template,
+        server_addr,
+        libparsec_testbed::TestbedTimeToLive::Unlimited,
+    )
+    .await?;
 
     Ok(env.discriminant_dir.clone())
 }
