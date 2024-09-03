@@ -776,6 +776,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             invitation = org.invitations[attempt.token]
         except KeyError:
             return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if attempt.greeter_id != greeter:
+            return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         if invitation.is_completed:
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
@@ -810,9 +812,10 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         try:
             attempt = org.greeting_attempts[greeting_attempt]
-            assert attempt.token == token
             invitation = org.invitations[attempt.token]
         except KeyError:
+            return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if attempt.token != token:
             return InviteClaimerCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         greeter_user = org.users[attempt.greeter_id]
@@ -867,6 +870,8 @@ class MemoryInviteComponent(BaseInviteComponent):
             invitation = org.invitations[attempt.token]
         except KeyError:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if attempt.greeter_id != greeter:
+            return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         if invitation.is_completed:
             return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
@@ -910,9 +915,10 @@ class MemoryInviteComponent(BaseInviteComponent):
 
         try:
             attempt = org.greeting_attempts[greeting_attempt]
-            assert attempt.token == token
             invitation = org.invitations[attempt.token]
         except KeyError:
+            return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if attempt.token != token:
             return InviteClaimerStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
 
         greeter_user = org.users[attempt.greeter_id]

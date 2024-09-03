@@ -158,6 +158,13 @@ async def test_invited_invite_claimer_step_greeting_attempt_not_found(
 
     assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotFound()
 
+    # Zack uses Alice greeting attempt
+    rep = await coolorg.invited_zack.invite_claimer_step(
+        greeting_attempt=greeting_attempt,
+        claimer_step=invited_cmds.v4.invite_claimer_step.ClaimerStepNumber2GetNonce(),
+    )
+    assert rep == invited_cmds.v4.invite_claimer_step.RepGreetingAttemptNotFound()
+
 
 async def test_invited_invite_claimer_step_greeting_attempt_not_joined(
     coolorg: CoolorgRpcClients,

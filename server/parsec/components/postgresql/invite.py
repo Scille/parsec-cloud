@@ -1828,14 +1828,14 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_COMPLETED
         if invitation_info.is_cancelled():
             return InviteGreeterCancelGreetingAttemptBadOutcome.INVITATION_CANCELLED
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
-            return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeting_attempt_info = await self.get_greeting_attempt_info(
             conn, organization_id, greeting_attempt, invitation_info.token
         )
         if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
             return InviteGreeterCancelGreetingAttemptBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+            return InviteGreeterCancelGreetingAttemptBadOutcome.AUTHOR_NOT_ALLOWED
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
             return GreetingAttemptCancelledBadOutcome(*cancelled_info)
@@ -1946,14 +1946,14 @@ class PGInviteComponent(BaseInviteComponent):
             return InviteGreeterStepBadOutcome.INVITATION_COMPLETED
         if invitation_info.is_cancelled():
             return InviteGreeterStepBadOutcome.INVITATION_CANCELLED
-        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
-            return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
 
         greeting_attempt_info = await self.get_greeting_attempt_info(
             conn, organization_id, greeting_attempt, invitation_info.token
         )
         if greeting_attempt_info is None or greeting_attempt_info.greeter != greeter:
             return InviteGreeterStepBadOutcome.GREETING_ATTEMPT_NOT_FOUND
+        if not self.is_greeter_allowed(invitation_info, greeter, greeter_profile):
+            return InviteGreeterStepBadOutcome.AUTHOR_NOT_ALLOWED
 
         if (cancelled_info := greeting_attempt_info.cancelled_info()) is not None:
             return GreetingAttemptCancelledBadOutcome(*cancelled_info)

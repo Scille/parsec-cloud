@@ -8,10 +8,17 @@ from parsec._parsec import (
     DateTime,
     GreeterOrClaimer,
     GreetingAttemptID,
+    UserProfile,
     authenticated_cmds,
     invited_cmds,
 )
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin,
+    bob_becomes_admin_and_changes_alice,
+)
 
 Response = authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.Rep | None
 
@@ -24,6 +31,19 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
         author=coolorg.alice.device_id,
         greeter=coolorg.alice.user_id,
         token=coolorg.invited_alice_dev3.token,
+    )
+    assert isinstance(outcome, GreetingAttemptID)
+    return outcome
+
+
+@pytest.fixture
+async def zack_greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
+    outcome = await backend.invite.greeter_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        greeter=coolorg.alice.user_id,
+        token=coolorg.invited_zack.token,
     )
     assert isinstance(outcome, GreetingAttemptID)
     return outcome
@@ -48,10 +68,13 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_ok(
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_author_not_allowed(
     coolorg: CoolorgRpcClients,
-    greeting_attempt: GreetingAttemptID,
+    zack_greeting_attempt: GreetingAttemptID,
+    backend: Backend,
 ) -> None:
-    rep = await coolorg.bob.invite_greeter_cancel_greeting_attempt(
-        greeting_attempt=greeting_attempt,
+    await bob_becomes_admin_and_changes_alice(coolorg, backend, UserProfile.STANDARD)
+
+    rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
+        greeting_attempt=zack_greeting_attempt,
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
 
@@ -88,13 +111,25 @@ async def test_authenticated_invite_greeter_cancel_greeting_attempt_invitation_c
 
 
 async def test_authenticated_invite_greeter_cancel_greeting_attempt_greeting_attempt_not_found(
-    coolorg: CoolorgRpcClients,
+    coolorg: CoolorgRpcClients, zack_greeting_attempt: GreetingAttemptID, backend: Backend
 ) -> None:
     rep = await coolorg.alice.invite_greeter_cancel_greeting_attempt(
         greeting_attempt=GreetingAttemptID.new(),
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
+    assert (
+        rep
+        == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+    )
 
+    # Make Bob an admin
+    await bob_becomes_admin(coolorg, backend)
+
+    # Bob uses Alice greeting attempt
+    rep = await coolorg.bob.invite_greeter_cancel_greeting_attempt(
+        greeting_attempt=zack_greeting_attempt,
+        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+    )
     assert (
         rep
         == authenticated_cmds.v4.invite_greeter_cancel_greeting_attempt.RepGreetingAttemptNotFound()

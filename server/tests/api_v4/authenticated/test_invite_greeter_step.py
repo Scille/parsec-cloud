@@ -9,11 +9,18 @@ from parsec._parsec import (
     GreetingAttemptID,
     PrivateKey,
     PublicKey,
+    UserProfile,
     authenticated_cmds,
     invited_cmds,
 )
 from parsec.components.invite import NotReady
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 @pytest.fixture
@@ -24,6 +31,19 @@ async def greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> Gree
         author=coolorg.alice.device_id,
         greeter=coolorg.alice.user_id,
         token=coolorg.invited_alice_dev3.token,
+    )
+    assert isinstance(outcome, GreetingAttemptID)
+    return outcome
+
+
+@pytest.fixture
+async def zack_greeting_attempt(coolorg: CoolorgRpcClients, backend: Backend) -> GreetingAttemptID:
+    outcome = await backend.invite.greeter_start_greeting_attempt(
+        now=DateTime.now(),
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        greeter=coolorg.alice.user_id,
+        token=coolorg.invited_zack.token,
     )
     assert isinstance(outcome, GreetingAttemptID)
     return outcome
@@ -91,10 +111,14 @@ async def test_authenticated_invite_greeter_step_ok(
 
 
 async def test_authenticated_invite_greeter_step_author_not_allowed(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients, zack_greeting_attempt: GreetingAttemptID, backend
 ) -> None:
-    rep = await coolorg.bob.invite_greeter_step(
-        greeting_attempt=greeting_attempt,
+    await bob_becomes_admin_and_changes_alice(
+        coolorg=coolorg, backend=backend, new_alice_profile=UserProfile.STANDARD
+    )
+
+    rep = await coolorg.alice.invite_greeter_step(
+        greeting_attempt=zack_greeting_attempt,
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber3GetNonce(),
     )
 
@@ -127,13 +151,22 @@ async def test_authenticated_invite_greeter_step_invitation_completed(
 
 
 async def test_authenticated_invite_greeter_step_greeting_attempt_not_found(
-    coolorg: CoolorgRpcClients, greeting_attempt: GreetingAttemptID
+    coolorg: CoolorgRpcClients, zack_greeting_attempt: GreetingAttemptID, backend: Backend
 ) -> None:
     rep = await coolorg.alice.invite_greeter_step(
         greeting_attempt=GreetingAttemptID.new(),
         greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber3GetNonce(),
     )
+    assert rep == authenticated_cmds.v4.invite_greeter_step.RepGreetingAttemptNotFound()
 
+    # Make Bob an admin
+    await bob_becomes_admin(coolorg=coolorg, backend=backend)
+
+    # Bob uses Alice greeting attempt
+    rep = await coolorg.bob.invite_greeter_step(
+        greeting_attempt=zack_greeting_attempt,
+        greeter_step=authenticated_cmds.v4.invite_greeter_step.GreeterStepNumber3GetNonce(),
+    )
     assert rep == authenticated_cmds.v4.invite_greeter_step.RepGreetingAttemptNotFound()
 
 
