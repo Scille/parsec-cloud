@@ -105,13 +105,21 @@ async def test_invited_invite_claimer_cancel_greeting_attempt_greeter_revoked(
 
 
 async def test_invited_invite_claimer_cancel_greeting_attempt_greeting_attempt_not_found(
-    coolorg: CoolorgRpcClients, backend: Backend
+    coolorg: CoolorgRpcClients, backend: Backend, greeting_attempt: GreetingAttemptID
 ) -> None:
     rep = await coolorg.invited_alice_dev3.invite_claimer_cancel_greeting_attempt(
         greeting_attempt=GreetingAttemptID.new(),
         reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
     )
+    assert (
+        rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
+    )
 
+    # Zack uses Alice greeting attempt
+    rep = await coolorg.invited_zack.invite_claimer_cancel_greeting_attempt(
+        greeting_attempt=greeting_attempt,
+        reason=CancelledGreetingAttemptReason.MANUALLY_CANCELLED,
+    )
     assert (
         rep == invited_cmds.v4.invite_claimer_cancel_greeting_attempt.RepGreetingAttemptNotFound()
     )

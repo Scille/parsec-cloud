@@ -262,12 +262,9 @@ async def alice_gives_profile(
     return certif
 
 
-async def bob_becomes_admin_and_changes_alice(
-    coolorg: CoolorgRpcClients, backend: Backend, new_alice_profile: UserProfile | None
-) -> tuple[
-    tuple[UserUpdateCertificate, bytes],
-    tuple[RevokedUserCertificate | UserUpdateCertificate, bytes],
-]:
+async def bob_becomes_admin(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> tuple[UserUpdateCertificate, bytes]:
     # Bob becomes ADMIN...
 
     t0 = DateTime.now()
@@ -287,7 +284,16 @@ async def bob_becomes_admin_and_changes_alice(
         user_update_certificate=raw_certif0,
     )
     assert isinstance(outcome, UserUpdateCertificate)
+    return certif0, raw_certif0
 
+
+async def bob_becomes_admin_and_changes_alice(
+    coolorg: CoolorgRpcClients, backend: Backend, new_alice_profile: UserProfile | None
+) -> tuple[
+    tuple[UserUpdateCertificate, bytes],
+    tuple[RevokedUserCertificate | UserUpdateCertificate, bytes],
+]:
+    (certif0, raw_certif0) = await bob_becomes_admin(coolorg, backend)
     # ...then change Alice's profile (or revoke her) !
 
     t1 = DateTime.now()
