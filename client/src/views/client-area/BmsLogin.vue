@@ -234,7 +234,7 @@ async function onLoginClicked(): Promise<void> {
     return;
   }
   querying.value = true;
-  const response = await BmsAccessInstance.get().login(email.value, password.value);
+  const response = await BmsAccessInstance.get().login(email.value.toLowerCase(), password.value);
 
   if (response.ok) {
     emits('loginSuccess', await BmsAccessInstance.get().getToken(), BmsAccessInstance.get().getPersonalInformation());
