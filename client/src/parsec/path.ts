@@ -47,9 +47,18 @@ function filenameWithoutExtension(filename: EntryName): EntryName {
   return filename;
 }
 
+async function joinMultiple(path: FsPath, entries: EntryName[]): Promise<FsPath> {
+  let result: FsPath = path;
+  for (const entry of entries) {
+    result = await libparsec.pathJoin(result, entry);
+  }
+  return result;
+}
+
 export const Path = {
   parse,
   join,
+  joinMultiple,
   normalize,
   parent,
   filename,
