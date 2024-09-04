@@ -47,7 +47,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
         (Some(main_process_id), _) => TestenvConfig::StartNewServer {
             stop_after_process: main_process_id,
         },
-        (None, Err(_)) => panic!(concat!(
+        (None, Err(_)) => anyhow::bail!(concat!(
             "You must at least provide a main process id (via the CLI) ",
             "or set the testbed server url (via the env variable TESTBED_SERVER)"
         )),
