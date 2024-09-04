@@ -13,7 +13,7 @@ from uuid import UUID
 import anyio
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
-from parsec._parsec import OrganizationID, UserID, UserProfile, VlobID
+from parsec._parsec import DeviceID, OrganizationID, UserID, UserProfile, VlobID
 from parsec.client_context import AuthenticatedClientContext
 from parsec.config import BackendConfig
 from parsec.events import (
@@ -227,6 +227,7 @@ class EventBus:
 class RegisteredClient:
     channel_sender: MemoryObjectSendStream[tuple[Event, bytes]]
     organization_id: OrganizationID
+    device_id: DeviceID
     user_id: UserID
     realms: set[VlobID]
     profile: UserProfile
@@ -375,6 +376,7 @@ class BaseEventsComponent:
         registered = RegisteredClient(
             channel_sender=channel_sender,
             organization_id=client_ctx.organization_id,
+            device_id=client_ctx.device_id,
             user_id=client_ctx.user_id,
             realms=realms,
             profile=user_profile,

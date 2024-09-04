@@ -38,7 +38,8 @@ class GenerateEvent(Protocol):
 INVITATION_TOKEN = InvitationToken.from_hex("f22a1230c2d6463d85b1b7575e601d9f")
 ENROLLMENT_ID = EnrollmentID.from_hex("be6510e4-3e0b-4144-b3a7-fd5ad2c01fd8")
 VLOB_ID = VlobID.from_hex("cc7dca19-447c-4aca-9c99-b8205655afee")
-DEVICE_ID = DeviceID.new()
+DEVICE_ID = DeviceID.from_hex("86615315-5af4-4b55-bc6c-723bd72df7ac")
+OTHER_DEVICE_ID = DeviceID.from_hex("ad372e4d-d5fc-42d0-a1d7-259ccca45267")
 TIMESTAMP = DateTime.from_rfc3339("2024-03-17T08:42:30Z")
 ALICE_USER_ID = UserID.test_from_nickname("alice")
 
@@ -274,6 +275,121 @@ async def test_authenticated_events_listen_not_available(minimalorg: MinimalorgR
     assert res.json() == {"detail": "Bad accept type"}
 
 
+async def test_self_vlob_events_skipped(
+    coolorg: CoolorgRpcClients,
+    backend: Backend,
+) -> None:
+    async with coolorg.alice.events_listen() as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        async def send_vlob_event(author: DeviceID, vlob_id: VlobID):
+            await backend.event_bus.send(
+                events.EventVlob(
+                    organization_id=coolorg.organization_id,
+                    author=author,
+                    realm_id=coolorg.wksp1_id,
+                    timestamp=TIMESTAMP,
+                    vlob_id=vlob_id,
+                    version=1,
+                    blob=b"ok",
+                    last_common_certificate_timestamp=TIMESTAMP,
+                    last_realm_certificate_timestamp=TIMESTAMP,
+                )
+            )
+
+        await send_vlob_event(coolorg.alice.device_id, VlobID.new())
+        await send_vlob_event(coolorg.bob.device_id, VLOB_ID)
+
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventVlob(
+                realm_id=coolorg.wksp1_id,
+                author=coolorg.bob.device_id,
+                timestamp=TIMESTAMP,
+                vlob_id=VLOB_ID,
+                version=1,
+                blob=b"ok",
+                last_common_certificate_timestamp=TIMESTAMP,
+                last_realm_certificate_timestamp=TIMESTAMP,
+            )
+        )
+
+
+async def test_self_certificate_events_provided(
+    minimalorg: MinimalorgRpcClients,
+    backend: Backend,
+) -> None:
+    async with minimalorg.alice.events_listen() as alice_sse:
+        # First event is always ServiceConfig
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        await backend.event_bus.send(
+            events.EventCommonCertificate(
+                organization_id=minimalorg.organization_id, timestamp=TIMESTAMP
+            )
+        )
+        await backend.event_bus.send(
+            events.EventSequesterCertificate(
+                organization_id=minimalorg.organization_id, timestamp=TIMESTAMP
+            )
+        )
+        await backend.event_bus.send(
+            events.EventShamirRecoveryCertificate(
+                organization_id=minimalorg.organization_id,
+                timestamp=TIMESTAMP,
+                # Alice should be in the participants to receive the event.
+                participants=(
+                    ALICE_USER_ID,
+                    UserID.test_from_nickname("bob"),
+                    UserID.test_from_nickname("mallory"),
+                ),
+            )
+        )
+        await backend.event_bus.send(
+            events.EventRealmCertificate(
+                organization_id=minimalorg.organization_id,
+                timestamp=TIMESTAMP,
+                realm_id=VLOB_ID,
+                user_id=ALICE_USER_ID,
+                role_removed=False,
+            )
+        )
+
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventCommonCertificate(timestamp=TIMESTAMP),
+        )
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventSequesterCertificate(timestamp=TIMESTAMP),
+        )
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventShamirRecoveryCertificate(
+                timestamp=TIMESTAMP
+            )
+        )
+        event = await alice_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventRealmCertificate(
+                timestamp=TIMESTAMP, realm_id=VLOB_ID
+            )
+        )
+
+
 async def test_receive_event_of_newly_shared_realm(
     minimalorg: MinimalorgRpcClients,
     backend: Backend,
@@ -292,7 +408,7 @@ async def test_receive_event_of_newly_shared_realm(
             await backend.event_bus.send(
                 events.EventVlob(
                     organization_id=org,
-                    author=minimalorg.alice.device_id,
+                    author=OTHER_DEVICE_ID,
                     realm_id=VLOB_ID,
                     timestamp=TIMESTAMP,
                     vlob_id=VLOB_ID,
@@ -383,7 +499,7 @@ async def test_receive_event_of_newly_shared_realm(
             assert event == authenticated_cmds.v4.events_listen.RepOk(
                 authenticated_cmds.v4.events_listen.APIEventVlob(
                     realm_id=VLOB_ID,
-                    author=minimalorg.alice.device_id,
+                    author=OTHER_DEVICE_ID,
                     timestamp=TIMESTAMP,
                     vlob_id=VLOB_ID,
                     version=version,
