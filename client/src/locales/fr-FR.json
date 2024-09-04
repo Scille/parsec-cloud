@@ -42,15 +42,15 @@
         },
         "contributor": {
             "label": "Contributeur",
-            "description": "Peut voir, ouvrir et ajouter des fichiers."
+            "description": "Peut voir, éditer, importer et supprimer des fichiers."
         },
         "manager": {
             "label": "Gérant",
-            "description": "Gère l'espace de travail et les droits des utilisateurs."
+            "description": "Peut gérer l'accès des utilisateurs à cet espace de travail."
         },
         "owner": {
             "label": "Propriétaire",
-            "description": "Possède l'espace de travail, peut gérer les droits des utilisateurs et rechiffrer l'espace."
+            "description": "Peut gérer l'accès des utilisateurs et rechiffrer l'espace de travail. Peut promouvoir d'autres utilisateurs au rôle de Propriétaire."
         },
         "none": "Non partagé",
         "members": "Membre ({count}) | Membres ({count})",
