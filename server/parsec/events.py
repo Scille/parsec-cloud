@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from abc import ABC
 from base64 import b64encode
-from typing import TYPE_CHECKING, Annotated, Literal, TypeAlias, override
+from typing import TYPE_CHECKING, Annotated, Literal, override
 from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, PlainValidator, ValidationError
@@ -129,6 +129,13 @@ class ClientBroadcastableEvent(ABC):
 
 
 class EventPinged(BaseModel, ClientBroadcastableEvent):
+    """
+    Dummy event used for test only.
+
+    This event is broadcasted to every user in the organization (including the
+    user that fired it).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["PINGED"] = "PINGED"
     event_id: UUID = Field(default_factory=uuid4)
@@ -147,6 +154,15 @@ class EventPinged(BaseModel, ClientBroadcastableEvent):
 
 
 class EventInvitation(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform an invitation has changed status.
+
+    This event is used in two way:
+
+    - Broadcasted to the invitation greeter to notify him the claimer is connected
+      to the server (and hence he can start the greeting procedure).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["INVITATION"] = "INVITATION"
     event_id: UUID = Field(default_factory=uuid4)
@@ -171,6 +187,13 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
 
 
 class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
+    """
+    Event broadcasted to the organization admins to inform them someone has submit
+    a request for PKI invitation (given this kind of invitation is initiated by
+    the greeter that uses his own PKI's signing key to prove he is legit to
+    request such invitation).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["PKI_ENROLLMENT"] = "PKI_ENROLLMENT"
     event_id: UUID = Field(default_factory=uuid4)
@@ -191,6 +214,14 @@ class EventPkiEnrollment(BaseModel, ClientBroadcastableEvent):
 
 
 class EventVlob(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform that a vlob has been modified.
+
+    This event is broadcasted to all members of the vlob's realm, except the
+    author of the vlob modification (since it is assumed he already knows
+    about the changes !).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["VLOB"] = "VLOB"
     event_id: UUID = Field(default_factory=uuid4)
@@ -206,7 +237,12 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
 
     @override
     def is_event_for_client(self, client: RegisteredClient) -> bool:
-        return self.organization_id == client.organization_id and self.realm_id in client.realms
+        return (
+            self.organization_id == client.organization_id
+            # Skip the author of the event, given he obviously already knows about this vlob !
+            and self.author != client.device_id
+            and self.realm_id in client.realms
+        )
 
     @override
     def dump_as_apiv4_sse_payload(self) -> bytes:
@@ -226,6 +262,17 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
 
 
 class EventCommonCertificate(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform about a new common certificate.
+
+    This event is broadcasted to all users, including the author of the new
+    certificate. This is needed since the author cannot integrate his new
+    certificate without asking the server for new certificates (otherwise the
+    author might not be aware of an older certificate that was concurrently
+    added, only to reject it once he finds out since certificates must be
+    added ordered by age).
+    """
+
     model_config = ConfigDict(strict=True)
     type: Literal["COMMON_CERTIFICATE"] = "COMMON_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
@@ -247,6 +294,13 @@ class EventCommonCertificate(BaseModel, ClientBroadcastableEvent):
 
 
 class EventSequesterCertificate(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform about a new sequester certificate.
+
+    This event is broadcasted to all users of the organization (also note sequester
+    certificates are created by the sequester authority, hence they have no author).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["SEQUESTER_CERTIFICATE"] = "SEQUESTER_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
@@ -268,6 +322,17 @@ class EventSequesterCertificate(BaseModel, ClientBroadcastableEvent):
 
 
 class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform about a new shamir recovery certificate.
+
+    This event is broadcasted to all participants, which includes both the recipients
+    and the author of the new certificate. This is needed since the author cannot
+    integrate his new certificate without asking the server for new certificates
+    (otherwise the author might not be aware of an older certificate that was
+    concurrently added, only to reject it once he finds out since certificates
+    must be added ordered by age).
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["SHAMIR_RECOVERY_CERTIFICATE"] = "SHAMIR_RECOVERY_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
@@ -292,6 +357,20 @@ class EventShamirRecoveryCertificate(BaseModel, ClientBroadcastableEvent):
 
 
 class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
+    """
+    Event used to inform about a new realm certificate.
+
+    This event is broadcasted to all members of the realm, including the author
+    of the new certificate. This is needed since the author cannot integrate his
+    new certificate without asking the server for new certificates (otherwise the
+    author might not be aware of an older certificate that was concurrently
+    added, only to reject it once he finds out since certificates must be
+    added ordered by age).
+
+    Note this event is also used during SSE connection initialization to handle concurrent
+    changes while the database is queried.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["REALM_CERTIFICATE"] = "REALM_CERTIFICATE"
     event_id: UUID = Field(default_factory=uuid4)
@@ -319,6 +398,12 @@ class EventRealmCertificate(BaseModel, ClientBroadcastableEvent):
 # Not a `ClientBroadcastableEvent` given organization config event is a fake one generated
 # on demand and always provided as the first event when a client connects to the SSE endpoint.
 class EventOrganizationConfig(BaseModel):
+    """
+    Fake event systemically provided as first event of an SSE connection.
+
+    This is a convenient way to provide the server configuration of a client.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_CONFIG"] = "ORGANIZATION_CONFIG"
     event_id: UUID = Field(default_factory=uuid4)
@@ -340,6 +425,13 @@ class EventOrganizationConfig(BaseModel):
 
 
 class EventEnrollmentConduit(BaseModel):
+    """
+    This event is only used internally and never broadcasted to users.
+
+    It is used by server in the invitation conduit system to synchronize the
+    claimer and greeter while they are waiting for each other during talk/listen.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ENROLLMENT_CONDUIT"] = "ENROLLMENT_CONDUIT"
     event_id: UUID = Field(default_factory=uuid4)
@@ -349,6 +441,12 @@ class EventEnrollmentConduit(BaseModel):
 
 
 class EventOrganizationExpired(BaseModel):
+    """
+    This event is only used internally and never broadcasted to users.
+
+    It is used to close SSE connection to users of an expired organization.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["ORGANIZATION_EXPIRED"] = "ORGANIZATION_EXPIRED"
     event_id: UUID = Field(default_factory=uuid4)
@@ -356,6 +454,14 @@ class EventOrganizationExpired(BaseModel):
 
 
 class EventUserRevokedOrFrozen(BaseModel):
+    """
+    This event is only used internally and never broadcasted to users.
+
+    It is used for two things:
+    - Closing the SSE connections to a revoked or frozen user.
+    - Updating the auth system's cache.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_REVOKED_OR_FROZEN"] = "USER_REVOKED_OR_FROZEN"
     event_id: UUID = Field(default_factory=uuid4)
@@ -364,6 +470,12 @@ class EventUserRevokedOrFrozen(BaseModel):
 
 
 class EventUserUnfrozen(BaseModel):
+    """
+    This event is only used internally and never broadcasted to users.
+
+    It is used to update the auth system's cache.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_UNFROZEN"] = "USER_UNFROZEN"
     event_id: UUID = Field(default_factory=uuid4)
@@ -372,6 +484,13 @@ class EventUserUnfrozen(BaseModel):
 
 
 class EventUserUpdated(BaseModel):
+    """
+    This event is only used internally and never broadcasted to users.
+
+    It is used during SSE connection initialization to handle concurrent
+    changes while the database is queried.
+    """
+
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     type: Literal["USER_UPDATED"] = "USER_UPDATED"
     event_id: UUID = Field(default_factory=uuid4)
@@ -380,8 +499,7 @@ class EventUserUpdated(BaseModel):
     new_profile: UserProfileField
 
 
-# TODO: Replace with `type` once the linter supports it
-Event: TypeAlias = (
+type Event = (
     EventPinged
     | EventInvitation
     | EventPkiEnrollment
