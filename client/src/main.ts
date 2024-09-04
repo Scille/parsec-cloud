@@ -87,7 +87,7 @@ async function setupApp(): Promise<void> {
   // from within `setupApp`, so instead it should be called in fire-and-forget
   // and only awaited when it is called from third party code (i.e. when
   // obtained through `window.nextStageHook`, see below)
-  const nextStage = async (configPath?: string, locale?: Locale): Promise<void> => {
+  const nextStage = async (testbedDiscriminantPath?: string, locale?: Locale): Promise<void> => {
     await router.isReady();
 
     const configDir = await libparsec.getDefaultConfigDir();
@@ -105,8 +105,9 @@ async function setupApp(): Promise<void> {
     window.isDev = (): boolean => false;
     window.isLinux = (): boolean => isLinux;
 
-    if (configPath) {
-      window.getConfigDir = (): string => configPath;
+    if (testbedDiscriminantPath) {
+      window.getConfigDir = (): string => testbedDiscriminantPath;
+      window.getDataBaseDir = (): string => testbedDiscriminantPath;
     }
 
     if (locale) {
@@ -145,6 +146,14 @@ async function setupApp(): Promise<void> {
       return [libparsec, nextStage];
     };
   } else if (import.meta.env.VITE_TESTBED_SERVER) {
+    const msg = `\`TESTBED_SERVER\` environ variable detected, creating a new coolorg testbed organization with server ${
+      import.meta.env.VITE_TESTBED_SERVER
+    }`;
+    console.log(msg);
+    if (isElectron()) {
+      (window as any).electronAPI.log('debug', msg);
+    }
+
     // Dev mode, provide a default testbed
     const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER);
     if (configResult.ok) {
