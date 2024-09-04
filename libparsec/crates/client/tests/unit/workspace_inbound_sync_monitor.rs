@@ -3,6 +3,7 @@
 use std::collections::VecDeque;
 use std::sync::{Arc, Mutex};
 
+use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_platform_async::prelude::*;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -11,8 +12,14 @@ use super::{
     inbound_sync_monitor_loop, InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome,
 };
 use crate::event_bus::AnySpiedEvent;
+use crate::monitors::workspace_inbound_sync::RealInboundSyncManagerIO;
 use crate::workspace::{
-    InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceSyncError,
+    InboundSyncOutcome, WorkspaceExternalInfo, WorkspaceGetNeedInboundSyncEntriesError,
+    WorkspaceSyncError,
+};
+use crate::{
+    CertificateOps, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceOps,
+    WorkspaceStorageCacheSize,
 };
 
 /*
@@ -167,6 +174,66 @@ async fn get_need_inbound_sync_stopped() {
         TestcaseRunOutcome::MonitorHasStopped,
     )
     .await
+}
+
+#[parsec_test(testbed = "coolorg")]
+async fn real_io_provides_a_starting_event(env: &TestbedEnv) {
+    let alice = env.local_device("alice@dev1");
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let config = Arc::new(ClientConfig {
+        config_dir: env.discriminant_dir.to_owned(),
+        data_base_dir: env.discriminant_dir.to_owned(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
+        proxy: ProxyConfig::default(),
+        with_monitors: false,
+        prevent_sync_pattern: Regex::from_regex_str(r"\.tmp$").unwrap(),
+    });
+    let event_bus = EventBus::default();
+    let cmds = Arc::new(
+        AuthenticatedCmds::new(&config.config_dir, alice.clone(), config.proxy.clone()).unwrap(),
+    );
+    let certificates_ops = Arc::new(
+        CertificateOps::start(
+            config.clone(),
+            alice.clone(),
+            event_bus.clone(),
+            cmds.clone(),
+        )
+        .await
+        .unwrap(),
+    );
+    let workspace_ops = Arc::new(
+        WorkspaceOps::start(
+            config.clone(),
+            alice.clone(),
+            cmds,
+            certificates_ops,
+            event_bus.clone(),
+            wksp1_id,
+            WorkspaceExternalInfo {
+                entry: LocalUserManifestWorkspaceEntry {
+                    id: wksp1_id,
+                    name: "wksp1".parse().unwrap(),
+                    name_origin: CertificateBasedInfoOrigin::Placeholder,
+                    role: RealmRole::Owner,
+                    role_origin: CertificateBasedInfoOrigin::Placeholder,
+                },
+                workspace_index: 0,
+                total_workspaces: 1,
+            },
+        )
+        .await
+        .unwrap(),
+    );
+
+    let io = RealInboundSyncManagerIO::new(workspace_ops, event_bus);
+    let first_event = io.wait_for_next_incoming_event().await;
+    p_assert_matches!(
+        first_event,
+        WaitForNextIncomingEventOutcome::NewEvent(IncomingEvent::MissedServerEvents)
+    );
 }
 
 /*

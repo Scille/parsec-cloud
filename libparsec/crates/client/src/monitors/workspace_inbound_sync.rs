@@ -95,6 +95,15 @@ impl RealInboundSyncManagerIO {
     fn new(workspace_ops: Arc<WorkspaceOps>, event_bus: EventBus) -> Self {
         let (tx, rx) = channel::unbounded::<IncomingEvent>();
 
+        // A workspace (and its related monitors, including this one!) can be
+        // started/stopped at any time.
+        // This means we cannot rely on the connection monitor to send us a
+        // `MissedServerEvents` as starting point (which is what does the
+        // monitors that start with the client).
+        // So instead we manually inject a this event to correctly start ourself.
+        tx.send(IncomingEvent::MissedServerEvents)
+            .expect("channel just created");
+
         let event_missed_server_events_lifetime = {
             let tx = tx.clone();
             event_bus.connect(move |_: &EventMissedServerEvents| {
