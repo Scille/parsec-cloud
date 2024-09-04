@@ -69,7 +69,13 @@ fn task_future_factory(
         let _events_connection_lifetime = events_connection_lifetime;
 
         // Start a sub-task that will do the actual synchronization work
-        let (syncer_tx, syncer_rx) = channel::unbounded::<VlobID>();
+
+        // Note the rendez-vous channel (i.e. bound with zero capacity) used for
+        // communication.
+        // This is because we want the entry waiting for sync to stay in the
+        // `to_sync` list, so that the due time can be updated if additional
+        // modification occurs.
+        let (syncer_tx, syncer_rx) = channel::bounded::<VlobID>(0);
         let syncer = spawn({
             let workspace_ops = workspace_ops.clone();
             let tx = tx.clone();
@@ -202,6 +208,9 @@ fn task_future_factory(
                         Err(_) => Action::Stop,
                     }
                 },
+                // We also keep the due time last, as a new local change on a file
+                // that has reach it due time means we should keep waiting instead
+                // of synchronizing it right away.
                 _ = device.time_provider.sleep(to_sleep) => Action::DueTimeReached,
             );
 
@@ -216,28 +225,35 @@ fn task_future_factory(
 
                 Action::DueTimeReached => {
                     let now = device.now();
-                    let mut next_due_time = None;
-                    to_sync.retain(|entry_id, time| {
-                        if time.due_time < now {
-                            // TODO: error handling ? what if syncer needs to stop by itself
-                            // due to internal error ?
-                            let _ = syncer_tx.send(*entry_id);
-                            false
-                        } else {
-                            match next_due_time {
-                                None => {
-                                    next_due_time = Some(time.due_time);
-                                }
-                                Some(due_time) if due_time > time.due_time => {
-                                    next_due_time = Some(time.due_time);
-                                }
-                                _ => (),
+
+                    let due = to_sync
+                        .iter()
+                        .filter_map(|(entry_id, time)| {
+                            if time.due_time < now {
+                                Some(*entry_id)
+                            } else {
+                                None
                             }
-                            true
-                        }
-                    });
+                        })
+                        .next();
+                    if let Some(entry_id) = due {
+                        to_sync.remove(&entry_id);
+                        // TODO: error handling ? what if syncer needs to stop by itself
+                        // due to internal error ?
+
+                        // Block until the sub-task is ready to sync our entry.
+                        let _ = syncer_tx.send_async(entry_id).await;
+                    }
+
                     // Due time has been reached, don't forget to update it !
-                    due_time = next_due_time;
+                    //
+                    // Note there may be multiple entries that have reached their due time,
+                    // but we only sync a single one here.
+                    //
+                    // This is because during the time it took to sync the first entry,
+                    // some further change may have modified the others due entries, which
+                    // hence should get there due time recomputed.
+                    due_time = to_sync.values().map(|time| time.due_time).min();
                 }
 
                 Action::NewLocalChange { entry_id } => {
