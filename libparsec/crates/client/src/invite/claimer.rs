@@ -131,7 +131,52 @@ async fn cancel_greeting_attempt_and_warn_on_error(
     }
 }
 
-// Greeter step helper
+// Claimer step helper
+
+async fn _run_claimer_step(
+    cmds: &InvitedCmds,
+    req: invite_claimer_step::Req,
+) -> Result<Option<invite_claimer_step::GreeterStep>, ClaimInProgressError> {
+    let rep = cmds.send(req).await?;
+
+    // Handle the response
+    match rep {
+        invite_claimer_step::Rep::NotReady => Ok(None),
+        invite_claimer_step::Rep::Ok { greeter_step } => Ok(Some(greeter_step)),
+        // Expected errors
+        invite_claimer_step::Rep::GreeterNotAllowed => Err(ClaimInProgressError::GreeterNotAllowed),
+        invite_claimer_step::Rep::GreeterRevoked => Err(ClaimInProgressError::GreeterNotAllowed),
+        invite_claimer_step::Rep::GreetingAttemptCancelled {
+            origin,
+            reason,
+            timestamp,
+        } => Err(ClaimInProgressError::GreetingAttemptCancelled {
+            origin,
+            reason,
+            timestamp,
+        }),
+        // Unexpected errors
+        invite_claimer_step::Rep::UnknownStatus { .. }
+        | invite_claimer_step::Rep::GreetingAttemptNotFound
+        | invite_claimer_step::Rep::GreetingAttemptNotJoined
+        | invite_claimer_step::Rep::StepMismatch
+        | invite_claimer_step::Rep::StepTooAdvanced => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
+async fn run_claimer_step(
+    cmds: &InvitedCmds,
+    greeting_attempt: GreetingAttemptID,
+    claimer_step: invite_claimer_step::ClaimerStep,
+) -> Result<Option<invite_claimer_step::GreeterStep>, ClaimInProgressError> {
+    let req = invite_claimer_step::Req {
+        greeting_attempt,
+        claimer_step,
+    };
+    _run_claimer_step(cmds, req.clone()).await
+}
 
 async fn run_claimer_step_until_ready(
     cmds: &InvitedCmds,
@@ -151,36 +196,12 @@ async fn run_claimer_step_until_ready(
         throttle.throttle().await;
 
         // Send the request
-        let rep = cmds.send(req.clone()).await?;
+        let rep = _run_claimer_step(cmds, req.clone()).await?;
 
         // Handle the response
         return match rep {
-            invite_claimer_step::Rep::NotReady => continue,
-            invite_claimer_step::Rep::Ok { greeter_step } => Ok(greeter_step),
-            // Expected errors
-            invite_claimer_step::Rep::GreeterNotAllowed => {
-                Err(ClaimInProgressError::GreeterNotAllowed)
-            }
-            invite_claimer_step::Rep::GreeterRevoked => {
-                Err(ClaimInProgressError::GreeterNotAllowed)
-            }
-            invite_claimer_step::Rep::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            } => Err(ClaimInProgressError::GreetingAttemptCancelled {
-                origin,
-                reason,
-                timestamp,
-            }),
-            // Unexpected errors
-            invite_claimer_step::Rep::UnknownStatus { .. }
-            | invite_claimer_step::Rep::GreetingAttemptNotFound
-            | invite_claimer_step::Rep::GreetingAttemptNotJoined
-            | invite_claimer_step::Rep::StepMismatch
-            | invite_claimer_step::Rep::StepTooAdvanced => {
-                Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
-            }
+            None => continue,
+            Some(greeter_step) => Ok(greeter_step),
         };
     }
 }
@@ -737,15 +758,22 @@ impl BaseClaimInProgress3Ctx {
     }
 
     async fn do_acknowledge(&self) -> Result<(), ClaimInProgressError> {
-        let greeter_step = run_claimer_step_until_ready(
+        // Only perform the acknowledge step once
+        // This is for two reasons:
+        // 1. We don't need to wait for the greeter to actually receive it
+        // 2. The invitation might get marked as completed by the greeter
+        //    once it has received our acknowledgement. That means that there
+        //    are no guarantees that will be able to get the 8th greeter step
+        //    if we poll for it.
+        let greeter_step = run_claimer_step(
             &self.cmds,
             self.greeting_attempt,
             invite_claimer_step::ClaimerStep::Number8Acknowledge,
-            &self.time_provider,
         )
         .await?;
         match greeter_step {
-            invite_claimer_step::GreeterStep::Number8WaitPeerAcknowledgment => {}
+            None => {}
+            Some(invite_claimer_step::GreeterStep::Number8WaitPeerAcknowledgment) => {}
             _ => return Err(anyhow::anyhow!("Unexpected greeter step: {:?}", greeter_step).into()),
         }
         Ok(())
