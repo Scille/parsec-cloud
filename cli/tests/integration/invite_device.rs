@@ -58,7 +58,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    let p_greeter = std::process::Command::cargo_bin("parsec_cli")
+    let mut p_greeter = std::process::Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
             "greet-invitation",
@@ -74,7 +74,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let p_claimer = std::process::Command::cargo_bin("parsec_cli")
+    let mut p_claimer = std::process::Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
             "claim-invitation",
@@ -88,10 +88,10 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let mut stdout_greeter = BufReader::new(p_greeter.stdout.unwrap());
-    let mut stdout_claimer = BufReader::new(p_claimer.stdout.unwrap());
-    let mut stdin_greeter = p_greeter.stdin.unwrap();
-    let mut stdin_claimer = p_claimer.stdin.unwrap();
+    let mut stdout_greeter = BufReader::new(p_greeter.stdout.take().unwrap());
+    let mut stdout_claimer = BufReader::new(p_claimer.stdout.take().unwrap());
+    let mut stdin_greeter = p_greeter.stdin.take().unwrap();
+    let mut stdin_claimer = p_claimer.stdin.take().unwrap();
     let mut buf = String::new();
 
     stdin_greeter
@@ -123,4 +123,6 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .write_all(format!("{DEFAULT_DEVICE_PASSWORD}\n").as_bytes())
         .unwrap();
     wait_for(&mut stdout_claimer, &mut buf, "Saved");
+    assert!(p_greeter.wait().unwrap().success());
+    assert!(p_claimer.wait().unwrap().success());
 }
