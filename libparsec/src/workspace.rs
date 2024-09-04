@@ -36,6 +36,8 @@ fn borrow_workspace(workspace: Handle) -> anyhow::Result<Arc<libparsec_client::W
 pub enum ClientStartWorkspaceError {
     #[error("Workspace not found")]
     WorkspaceNotFound,
+    #[error("Cannot refresh workspace: {}", .0)]
+    CannotRefreshWorkspace(#[from] libparsec_client::workspace::WorkspaceSyncError),
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
 }
@@ -112,6 +114,22 @@ pub async fn client_start_workspace(
     })?;
 
     let workspace_ops = client.start_workspace(realm_id).await?;
+    workspace_ops.refresh_realm_checkpoint().await?;
+    loop {
+        let entries = workspace_ops
+            .get_need_inbound_sync(32)
+            .await
+            .map_err(anyhow::Error::from)?;
+        if entries.is_empty() {
+            break;
+        }
+        for entry in entries {
+            workspace_ops
+                .inbound_sync(entry)
+                .await
+                .map_err(anyhow::Error::from)?;
+        }
+    }
 
     // 3. Finally register the workspace to get a handle
 

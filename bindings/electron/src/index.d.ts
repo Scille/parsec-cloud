@@ -938,6 +938,10 @@ export type ClientStartInvitationGreetError =
 
 
 // ClientStartWorkspaceError
+export interface ClientStartWorkspaceErrorCannotRefreshWorkspace {
+    tag: "CannotRefreshWorkspace"
+    error: string
+}
 export interface ClientStartWorkspaceErrorInternal {
     tag: "Internal"
     error: string
@@ -947,6 +951,7 @@ export interface ClientStartWorkspaceErrorWorkspaceNotFound {
     error: string
 }
 export type ClientStartWorkspaceError =
+  | ClientStartWorkspaceErrorCannotRefreshWorkspace
   | ClientStartWorkspaceErrorInternal
   | ClientStartWorkspaceErrorWorkspaceNotFound
 

@@ -1091,10 +1091,15 @@ export type ClientStartInvitationGreetError =
 
 // ClientStartWorkspaceError
 export enum ClientStartWorkspaceErrorTag {
+    CannotRefreshWorkspace = 'ClientStartWorkspaceErrorCannotRefreshWorkspace',
     Internal = 'ClientStartWorkspaceErrorInternal',
     WorkspaceNotFound = 'ClientStartWorkspaceErrorWorkspaceNotFound',
 }
 
+export interface ClientStartWorkspaceErrorCannotRefreshWorkspace {
+    tag: ClientStartWorkspaceErrorTag.CannotRefreshWorkspace
+    error: string
+}
 export interface ClientStartWorkspaceErrorInternal {
     tag: ClientStartWorkspaceErrorTag.Internal
     error: string
@@ -1104,6 +1109,7 @@ export interface ClientStartWorkspaceErrorWorkspaceNotFound {
     error: string
 }
 export type ClientStartWorkspaceError =
+  | ClientStartWorkspaceErrorCannotRefreshWorkspace
   | ClientStartWorkspaceErrorInternal
   | ClientStartWorkspaceErrorWorkspaceNotFound
 

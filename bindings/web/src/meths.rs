@@ -4383,6 +4383,13 @@ fn variant_client_start_workspace_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::ClientStartWorkspaceError::CannotRefreshWorkspace { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartWorkspaceErrorCannotRefreshWorkspace".into(),
+            )?;
+        }
         libparsec::ClientStartWorkspaceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,

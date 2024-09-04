@@ -30,6 +30,9 @@ class ClientStartWorkspaceError(ErrorVariant):
     class WorkspaceNotFound:
         pass
 
+    class CannotRefreshWorkspace:
+        pass
+
     class Internal:
         pass
 
