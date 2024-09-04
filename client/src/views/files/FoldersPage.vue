@@ -630,8 +630,8 @@ async function startImportFiles(imports: FileImportTuple[]): Promise<void> {
     let fileName = imp.file.name;
     if (imp.file.webkitRelativePath) {
       const parsed = await Path.parse(`/${imp.file.webkitRelativePath}`);
-      importPath = await Path.join(imp.path, parsed[0]);
-      fileName = parsed[1];
+      importPath = await Path.joinMultiple(imp.path, parsed.slice(0, -1));
+      fileName = parsed[parsed.length - 1];
       imp.path = importPath;
     }
     const fullPath = await Path.join(importPath, fileName);
