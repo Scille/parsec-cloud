@@ -42,15 +42,15 @@
         },
         "contributor": {
             "label": "Contributor",
-            "description": "Can view, open and upload files."
+            "description": "Can view, edit, import and delete files."
         },
         "manager": {
             "label": "Manager",
-            "description": "Manages the workspace and its users."
+            "description": "Can manage user access to this workspace."
         },
         "owner": {
             "label": "Owner",
-            "description": "Owns the workspace, can manage user rights and re-encrypt the workspace."
+            "description": "Can manage user access and re-encrypt the workspace. Can promote other users to Owner."
         },
         "none": "Not shared",
         "members": "Member ({count}) | Members ({count})",
