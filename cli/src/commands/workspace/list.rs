@@ -4,15 +4,15 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct ListWorkspaces {}
+    pub struct Args {}
 );
 
-pub async fn list_workspaces(list_workspaces: ListWorkspaces) -> anyhow::Result<()> {
-    let ListWorkspaces {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         device,
         config_dir,
         password_stdin,
-    } = list_workspaces;
+    } = args;
     log::trace!(
         "Listing workspaces (confdir={}, device={})",
         config_dir.display(),

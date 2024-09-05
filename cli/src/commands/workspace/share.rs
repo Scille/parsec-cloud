@@ -6,7 +6,7 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct ShareWorkspace {
+    pub struct Args {
         /// Workspace id
         #[arg(short, long, value_parser = VlobID::from_hex)]
         workspace_id: VlobID,
@@ -19,15 +19,15 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn share_workspace(share_workspace: ShareWorkspace) -> anyhow::Result<()> {
-    let ShareWorkspace {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         workspace_id,
         user_id,
         role,
         device,
         config_dir,
         password_stdin,
-    } = share_workspace;
+    } = args;
     log::trace!(
         "Sharing workspace {workspace_id} to {user_id} with role {role} (confdir={}, device={})",
         config_dir.display(),

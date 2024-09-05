@@ -6,20 +6,20 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct CreateWorkspace {
+    pub struct Args {
         /// New workspace name
         #[arg(short, long)]
         name: EntryName,
     }
 );
 
-pub async fn create_workspace(create_workspace: CreateWorkspace) -> anyhow::Result<()> {
-    let CreateWorkspace {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         name,
         device,
         config_dir,
         password_stdin,
-    } = create_workspace;
+    } = args;
     log::trace!(
         "Creating workspace {name} (confdir={}, device={})",
         config_dir.display(),
