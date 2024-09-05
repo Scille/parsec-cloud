@@ -176,13 +176,13 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         total: usersResult.value.length,
         admins: usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin).length,
         standards: usersResult.value.filter((user) => user.currentProfile === UserProfile.Standard).length,
-        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.External).length,
+        externals: usersResult.value.filter((user) => user.currentProfile === UserProfile.External).length,
       },
       size: {
         metadata: 14_234_953,
         data: 5_348_491_032,
       },
-      outsidersAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
+      externalsAllowed: clientInfoResult.value.serverConfig.userProfileOutsiderAllowed,
       userLimit:
         clientInfoResult.value.serverConfig.activeUsersLimit.tag === ActiveUsersLimitTag.LimitedTo
           ? (clientInfoResult.value.serverConfig.activeUsersLimit as ActiveUsersLimitLimitedTo).x1
