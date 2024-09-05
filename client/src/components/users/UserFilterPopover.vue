@@ -80,10 +80,7 @@
             @ion-change="users.unselectHiddenUsers()"
           />
         </ion-item>
-        <ion-item
-          class="list-group-item ion-no-padding"
-          id="filter-check-outsider"
-        >
+        <ion-item class="list-group-item ion-no-padding">
           <ion-label
             class="body"
             @click="users.filters.profileExternal = !users.filters.profileExternal"
