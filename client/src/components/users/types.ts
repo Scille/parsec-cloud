@@ -35,7 +35,7 @@ export interface UserFilterLabels {
   statusRevoked?: boolean;
   profileAdmin?: boolean;
   profileStandard?: boolean;
-  profileOutsider?: boolean;
+  profileExternal?: boolean;
 }
 
 export interface UserFilterChangeEvent {
@@ -53,7 +53,7 @@ export class UserCollection {
       statusRevoked: true,
       profileAdmin: true,
       profileStandard: true,
-      profileOutsider: true,
+      profileExternal: true,
     };
   }
 
@@ -95,7 +95,7 @@ export class UserCollection {
     if (
       (!this.filters.profileAdmin && user.currentProfile === UserProfile.Admin) ||
       (!this.filters.profileStandard && user.currentProfile === UserProfile.Standard) ||
-      (!this.filters.profileOutsider && user.currentProfile === UserProfile.External)
+      (!this.filters.profileExternal && user.currentProfile === UserProfile.External)
     ) {
       return false;
     }

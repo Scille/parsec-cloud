@@ -86,12 +86,12 @@
         >
           <ion-label
             class="body"
-            @click="users.filters.profileOutsider = !users.filters.profileOutsider"
+            @click="users.filters.profileExternal = !users.filters.profileExternal"
           >
             {{ $msTranslate('UsersPage.filter.external') }}
           </ion-label>
           <ms-checkbox
-            v-model="users.filters.profileOutsider"
+            v-model="users.filters.profileExternal"
             @ion-change="users.unselectHiddenUsers()"
           />
         </ion-item>
