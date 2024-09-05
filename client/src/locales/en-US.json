@@ -27,8 +27,8 @@
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
-            "outsiderProfile": "Outsiders cannot change roles",
-            "outsiderLimitedRole": "Outsiders can only be Readers or Contributors",
+            "outsiderProfile": "Externals cannot change roles",
+            "outsiderLimitedRole": "Externals can only be Readers or Contributors",
             "insufficientRole": "Only Managers and Owners can change roles",
             "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
             "managerCannotPromoteToManager": "Managers cannot promote to Manager",
@@ -581,7 +581,7 @@
                 "unavailable": "Unavailable"
             },
             "configuration": {
-                "outsidersAllowed": "Outsider profile",
+                "outsidersAllowed": "External profile",
                 "userLimit": "User limit",
                 "unlimited": "Unlimited",
                 "allowed": "Enabled",
@@ -874,7 +874,7 @@
                 "description": "Can create workspaces."
             },
             "outsider": {
-                "label": "Outsider",
+                "label": "External",
                 "description": "Can only access shared workspaces."
             }
         },
@@ -1012,7 +1012,7 @@
             "profile": "Profile",
             "admin": "Administrator",
             "standard": "Standard",
-            "outsider": "Outsider"
+            "outsider": "External"
         },
         "assignRoles": {
             "title": "Copy workspace roles",
@@ -1336,7 +1336,7 @@
             },
             "admin": "Administrator | Administrators",
             "standard": "Standard | Standards",
-            "outsider": "Outsider | Outsiders",
+            "outsider": "External | Externals",
             "consumptionDetail": "Consumption detail",
             "nonPaying": "Non paying",
             "paying": "charged",
