@@ -45,11 +45,11 @@ export function canChangeRole(
   userRole: WorkspaceRole | null,
   targetRole: WorkspaceRole | null,
 ): RoleUpdateAuthorization {
-  // Outsiders cannot do anything
+  // Externals cannot do anything
   if (clientProfile === UserProfile.External) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.externalProfile' };
   }
-  // Outsiders cannot be set to Managers or Owners
+  // Externals cannot be set to Managers or Owners
   if (userProfile === UserProfile.External && (targetRole === WorkspaceRole.Manager || targetRole === WorkspaceRole.Owner)) {
     return { authorized: false, reason: 'workspaceRoles.updateRejectedReasons.externalLimitedRole' };
   }

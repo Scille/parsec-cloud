@@ -175,7 +175,7 @@ function currentUserMatchSearch(): boolean {
 }
 
 function isSelectDisabled(role: WorkspaceRole | null): boolean {
-  // Outsider should not be able to change anything
+  // External should not be able to change anything
   if (ownProfile === UserProfile.External) {
     return true;
   }

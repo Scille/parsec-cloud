@@ -12,7 +12,7 @@
             </ion-title>
 
             <div class="org-config-list">
-              <!-- Outsider profile -->
+              <!-- External profile -->
               <div class="org-config-list-item">
                 <ion-label class="org-info-item-title body">
                   {{ $msTranslate('OrganizationPage.infoPage.configuration.externalsAllowed') }}
@@ -159,7 +159,7 @@
                       {{ orgInfo.users.standards }}
                     </ion-text>
                   </div>
-                  <!-- Outsiders if allowed -->
+                  <!-- Externals if allowed -->
                   <div
                     v-if="orgInfo.externalsAllowed"
                     class="user-active-list-item"

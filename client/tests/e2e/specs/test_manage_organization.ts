@@ -55,7 +55,7 @@ describe('Check manage org page', () => {
     cy.get('.sidebar').find('.organization').find('ion-item').first().contains('Information').click();
     cy.get('.topbar-left').find('.title-h2').contains('Information');
 
-    // Config outsider
+    // Config external
     cy.get('.org-config').find('.org-info-title').contains('Configuration');
     cy.get('.org-config').find('.org-info-item-title').eq(0).contains('Outsider profile');
     cy.get('.org-config').find('.org-config-list-item__value').eq(0).contains('Enabled');
@@ -86,7 +86,7 @@ describe('Check manage org page', () => {
     cy.get('.org-user').find('ion-chip').eq(1).contains('Standard');
     cy.get('.org-user').find('.user-active-list-item__value').eq(1).contains('3');
 
-    // Outsider
+    // External
     cy.get('.org-user').find('ion-chip').eq(2).contains('Outsider');
     cy.get('.org-user').find('.user-active-list-item__value').eq(2).contains('2');
 

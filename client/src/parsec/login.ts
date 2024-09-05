@@ -266,7 +266,7 @@ export async function getClientProfile(): Promise<UserProfile> {
   if (result.ok) {
     return result.value.currentProfile;
   } else {
-    // Outsider is the most restrictive
+    // External is the most restrictive
     return UserProfile.External;
   }
 }

@@ -342,7 +342,7 @@ msTest('Filter users list', async ({ usersPage }) => {
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.filter((u) => u.profile !== 'Administrator' && u.active === true).map((u) => u.name),
   );
-  // Also hides outsiders
+  // Also hides external
   await toggleFilter(usersPage, 'Outsider');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.filter((u) => u.profile !== 'Administrator' && u.profile !== 'Outsider' && u.active === true).map((u) => u.name),

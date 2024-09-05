@@ -63,7 +63,7 @@ describe('Workspace role', () => {
       false,
       'Only Managers and Owners can change roles',
     ],
-    // user is outsider, can be reader or contributor
+    // user is external, can be reader or contributor
     [UserProfile.External, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
     // ... but cannot be manager or owner
     [
@@ -96,7 +96,7 @@ describe('Workspace role', () => {
     ],
     // both are owners, change to contributor
     [UserProfile.Standard, WorkspaceRole.Owner, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Contributor, true, ''],
-    // client is outsider, can't do anything
+    // client is external, can't do anything
     [
       UserProfile.Standard,
       WorkspaceRole.Reader,
