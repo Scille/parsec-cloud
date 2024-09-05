@@ -424,22 +424,6 @@ class EventOrganizationConfig(BaseModel):
         )
 
 
-class EventEnrollmentConduit(BaseModel):
-    """
-    This event is only used internally and never broadcasted to users.
-
-    It is used by server in the invitation conduit system to synchronize the
-    claimer and greeter while they are waiting for each other during talk/listen.
-    """
-
-    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    type: Literal["ENROLLMENT_CONDUIT"] = "ENROLLMENT_CONDUIT"
-    event_id: UUID = Field(default_factory=uuid4)
-    organization_id: OrganizationIDField
-    token: InvitationTokenField
-    greeter: UserIDField
-
-
 class EventOrganizationExpired(BaseModel):
     """
     This event is only used internally and never broadcasted to users.
@@ -509,7 +493,6 @@ type Event = (
     | EventShamirRecoveryCertificate
     | EventRealmCertificate
     | EventOrganizationConfig
-    | EventEnrollmentConduit
     | EventOrganizationExpired
     | EventUserRevokedOrFrozen
     | EventUserUnfrozen

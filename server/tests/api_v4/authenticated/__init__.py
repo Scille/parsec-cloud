@@ -5,12 +5,6 @@ from .test_block_read import *  # noqa
 from .test_certificate_get import *  # noqa
 from .test_device_create import *  # noqa
 from .test_events_listen import *  # noqa
-from .test_invite_1_greeter_wait_peer import *  # noqa
-from .test_invite_2a_greeter_get_hashed_nonce import *  # noqa
-from .test_invite_2b_greeter_send_nonce import *  # noqa
-from .test_invite_3a_greeter_wait_peer_trust import *  # noqa
-from .test_invite_3b_greeter_signify_trust import *  # noqa
-from .test_invite_4_greeter_communicate import *  # noqa
 from .test_invite_cancel import *  # noqa
 from .test_invite_list import *  # noqa
 from .test_invite_new_device import *  # noqa

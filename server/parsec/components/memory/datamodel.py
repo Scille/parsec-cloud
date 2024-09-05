@@ -42,7 +42,6 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
-from parsec.components.invite import ConduitState
 from parsec.components.sequester import SequesterServiceType
 
 
@@ -291,10 +290,6 @@ class MemoryInvitation:
     created_on: DateTime
     deleted_on: DateTime | None = None
     deleted_reason: MemoryInvitationDeletedReason | None = None
-    conduit_state: ConduitState = ConduitState.STATE_1_WAIT_PEERS
-    conduit_is_last_exchange: bool = False
-    conduit_greeter_payload: bytes | None = field(default=None, repr=False)
-    conduit_claimer_payload: bytes | None = field(default=None, repr=False)
 
     # New fields for the new invitation system
     # TODO: remove the old fields once the new system is fully deployed
