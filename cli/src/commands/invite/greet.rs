@@ -17,20 +17,20 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct GreetInvitation {
+    pub struct Args {
         /// Invitation token
         #[arg(short, long, value_parser = InvitationToken::from_hex)]
         token: InvitationToken,
     }
 );
 
-pub async fn greet_invitation(greet_invitation: GreetInvitation) -> anyhow::Result<()> {
-    let GreetInvitation {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         token,
         device,
         config_dir,
         password_stdin,
-    } = greet_invitation;
+    } = args;
     log::trace!(
         "Greeting invitation (confdir={}, device={})",
         config_dir.display(),

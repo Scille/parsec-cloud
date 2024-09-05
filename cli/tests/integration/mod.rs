@@ -1,14 +1,11 @@
 mod bootstrap_organization;
-mod cancel_invitation;
 mod create_organization;
 mod create_workspace;
 mod device_option;
 mod export_recovery_device;
 mod import_recovery_device;
-mod invite_device;
-mod invite_user;
+mod invitations;
 mod list_devices;
-mod list_invitations;
 mod list_users;
 mod ls;
 mod remove_device;
