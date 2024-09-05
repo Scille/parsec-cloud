@@ -272,8 +272,7 @@ class BaseEventsComponent:
             return
 
         if not isinstance(event, ClientBroadcastableEvent):
-            # The event is only meant for cross-server communicated (e.g. conduit
-            # exchange), skip it
+            # The event is only meant for cross-server communicated, skip it
             return
 
         # It's likely the latest api is the most used, hence we only dump the
