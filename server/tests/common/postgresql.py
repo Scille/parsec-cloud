@@ -92,7 +92,6 @@ SELECT
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_setup', '_id'), 7000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('shamir_recovery_share', '_id'), 8000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('invitation', '_id'), 9000),
-    SETVAL(PG_GET_SERIAL_SEQUENCE('invitation_conduit', '_id'), 10000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('pki_enrollment', '_id'), 11000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm', '_id'), 12000),
     SETVAL(PG_GET_SERIAL_SEQUENCE('realm_user_role', '_id'), 13000),

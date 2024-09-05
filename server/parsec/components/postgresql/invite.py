@@ -217,37 +217,23 @@ LIMIT 1
 
 _q_insert_invitation = Q(
     f"""
-WITH new_invitations AS (
-    INSERT INTO invitation(
-        organization,
-        token,
-        type,
-        claimer_email,
-        created_by,
-        created_on
-    )
-    VALUES (
-        { q_organization_internal_id("$organization_id") },
-        $token,
-        $type,
-        $claimer_email,
-        { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
-        $created_on
-    )
-    RETURNING _id, created_by
-)
-INSERT INTO invitation_conduit(
-    invitation,
-    greeter
+INSERT INTO invitation(
+    organization,
+    token,
+    type,
+    claimer_email,
+    created_by,
+    created_on
 )
 VALUES (
-    (SELECT _id FROM new_invitations),
-    (
-        SELECT device.user_
-        FROM new_invitations
-        INNER JOIN device ON new_invitations.created_by = device._id
-    )
+    { q_organization_internal_id("$organization_id") },
+    $token,
+    $type,
+    $claimer_email,
+    { q_device_internal_id(organization_id="$organization_id", device_id="$created_by") },
+    $created_on
 )
+RETURNING _id, created_by
 """
 )
 
@@ -382,86 +368,6 @@ INNER JOIN organization ON invitation.organization = organization._id
 WHERE organization.organization_id = $organization_id
 AND greeting_attempt.greeting_attempt_id = $greeting_attempt_id
 AND invitation.token = $token
-"""
-)
-
-_q_get_invitation_created_by = Q(
-    f"""
-SELECT
-    { q_user(_id=q_device(_id="invitation.created_by", select="user_"), select="user_id") } as created_by
-FROM invitation
-WHERE
-    organization = { q_organization_internal_id("$organization_id") }
-    AND token = $token
-"""
-)
-
-_q_conduit_greeter_info = Q(
-    f"""
-SELECT
-    invitation._id AS invitation_internal_id,
-    invitation_conduit._id AS conduit_internal_id,
-    conduit_state,
-    conduit_greeter_payload,
-    conduit_claimer_payload,
-    deleted_on,
-    last_exchange
-FROM invitation
-INNER JOIN invitation_conduit ON
-    invitation._id = invitation_conduit.invitation
-WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND invitation.token = $token
-    AND invitation_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
-FOR UPDATE
-"""
-)
-
-
-_q_conduit_claimer_info = Q(
-    f"""
-SELECT
-    invitation._id AS invitation_internal_id,
-    invitation_conduit._id AS conduit_internal_id,
-    conduit_state,
-    conduit_greeter_payload,
-    conduit_claimer_payload,
-    deleted_on,
-    last_exchange
-FROM invitation
-INNER JOIN invitation_conduit ON
-    invitation._id = invitation_conduit.invitation
-WHERE
-    invitation.organization = { q_organization_internal_id("$organization_id") }
-    AND token = $token
-    AND invitation_conduit.greeter = { q_user_internal_id(organization_id="$organization_id", user_id="$greeter_user_id") }
-FOR UPDATE
-"""
-)
-
-
-_q_conduit_update = Q(
-    """
-UPDATE invitation_conduit
-SET
-    conduit_state = $conduit_state,
-    conduit_greeter_payload = $conduit_greeter_payload,
-    conduit_claimer_payload = $conduit_claimer_payload
-WHERE
-    _id = $conduit_internal_id
-"""
-)
-
-_q_conduit_update_with_last_exchange = Q(
-    """
-UPDATE invitation_conduit
-SET
-    conduit_state = $conduit_state,
-    conduit_greeter_payload = $conduit_greeter_payload,
-    conduit_claimer_payload = $conduit_claimer_payload,
-    last_exchange = $last
-WHERE
-    _id = $conduit_internal_id
 """
 )
 

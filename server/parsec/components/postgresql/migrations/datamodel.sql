@@ -195,15 +195,6 @@ CREATE TYPE invitation_type AS ENUM ('USER', 'DEVICE', 'SHAMIR_RECOVERY');
 CREATE TYPE invitation_deleted_reason AS ENUM (
     'FINISHED', 'CANCELLED', 'ROTTEN'
 );
-CREATE TYPE invitation_conduit_state AS ENUM (
-    '1_WAIT_PEERS',
-    '2_1_CLAIMER_HASHED_NONCE',
-    '2_2_GREETER_NONCE',
-    '2_3_CLAIMER_NONCE',
-    '3_1_CLAIMER_TRUST',
-    '3_2_GREETER_TRUST',
-    '4_COMMUNICATE'
-);
 
 CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'MANUALLY_CANCELLED',
@@ -278,21 +269,6 @@ CREATE TABLE greeting_step (
 
     UNIQUE (greeting_attempt, step)
 );
-
-
-CREATE TABLE invitation_conduit (
-    _id SERIAL PRIMARY KEY,
-    invitation INTEGER REFERENCES invitation (_id) NOT NULL,
-    greeter INTEGER REFERENCES user_ (_id) NOT NULL,
-
-    conduit_state INVITATION_CONDUIT_STATE NOT NULL DEFAULT '1_WAIT_PEERS',
-    conduit_greeter_payload BYTEA,
-    conduit_claimer_payload BYTEA,
-    last_exchange BOOLEAN,
-
-    UNIQUE (invitation, greeter)
-);
-
 
 -------------------------------------------------------
 --  PKI enrollment

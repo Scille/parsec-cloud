@@ -43,11 +43,6 @@ deleted_invitations AS (
     WHERE organization in (select * from deleted_organizations)
     RETURNING _id
 ),
-deleted_invitation_conduits AS (
-    DELETE FROM invitation_conduit
-    WHERE invitation in (select * from deleted_invitations)
-    RETURNING _id
-),
 deleted_realms AS (
     DELETE FROM realm
     WHERE organization in (select * from deleted_organizations)
@@ -323,31 +318,6 @@ new_invitations AS (
     FROM invitation
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id, token
-),
-new_invitation_conduits AS (
-    INSERT INTO invitation_conduit (
-        invitation,
-        greeter,
-        conduit_state,
-        conduit_greeter_payload,
-        conduit_claimer_payload
-    )
-    SELECT
-        (
-            SELECT _id FROM new_invitations
-            WHERE token = { q_invitation(_id="invitation_conduit.invitation", select="token") }
-        ),
-        (
-            SELECT _id FROM new_users
-            WHERE user_id = { q_user(_id="invitation_conduit.greeter", select="user_id") }
-        ),
-        conduit_state,
-        conduit_greeter_payload,
-        conduit_claimer_payload
-    FROM invitation_conduit
-    INNER JOIN invitation ON invitation._id = invitation_conduit.invitation
-    WHERE invitation.organization = { q_organization_internal_id("$source_id") }
-    RETURNING _id
 ),
 new_realms AS (
     INSERT INTO realm (
