@@ -204,7 +204,7 @@ jobs:
 
       - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-snap
+          name: linux-snap-${{ runner.arch }}-electron
           path: |
             Parsec_${{ steps.version.outputs.full }}_linux_*.snap
             Parsec-SBOM-*.spdx.json
@@ -225,18 +225,21 @@ jobs:
             raw_latest_file: latest.yml
             extension: exe
             os_alias: win
+            artifact_tag: windows-exe
           - name: 🍎 macOS
             platform: macos
             os: macos-12
             raw_latest_file: latest-mac.yml
-            extension: dmg
+            extension: "*" # Use wildcard to match dmg and zip extension
             os_alias: mac
+            artifact_tag: macos-dmg
           - name: 🐧 AppImage 4 Linux
             platform: linux
             os: ubuntu-22.04
             raw_latest_file: latest-linux.yml
             os_alias: linux
             extension: AppImage
+            artifact_tag: linux-appimage
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
@@ -352,7 +355,7 @@ jobs:
           tool: syft@0.84.0
 
       - name: Generate SBOM
-        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.platform }}-${{ matrix.extension }}.spdx.json .
+        run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}.spdx.json .
 
       - name: Debug dist folder
         if: runner.debug || false
@@ -385,7 +388,7 @@ jobs:
 
       - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-${{ matrix.extension }}
+          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
           path: |
             client/electron/dist/${{ steps.build-info.outputs.app_file }}
             client/electron/dist/${{ steps.build-info.outputs.app_file }}.blockmap
@@ -397,7 +400,7 @@ jobs:
       - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
         if: matrix.platform == 'windows'
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-electron-app-${{ matrix.extension }}-pre-built
+          name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built
           path: |
             client/electron/app
             client/electron/build
