@@ -55,7 +55,13 @@ impl Monitor {
             self.task.abort();
         }
         let m = &mut self.task;
-        m.await.map_err(|e| e.into())
+        m.await.or_else(|e| {
+            if e.is_cancelled() {
+                Ok(())
+            } else {
+                Err(e.into())
+            }
+        })
     }
 }
 
