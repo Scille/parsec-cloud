@@ -275,7 +275,7 @@ export async function isAdmin(): Promise<boolean> {
   return (await getClientProfile()) === UserProfile.Admin;
 }
 
-export async function isOutsider(): Promise<boolean> {
+export async function isExternal(): Promise<boolean> {
   return (await getClientProfile()) === UserProfile.External;
 }
 
