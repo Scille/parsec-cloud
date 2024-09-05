@@ -7,7 +7,7 @@ use crate::utils::load_client;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct WorkspaceImport {
+    pub struct Args {
         /// Workspace id
         #[arg(short, long, value_parser = VlobID::from_hex)]
         workspace_id: VlobID,
@@ -18,8 +18,8 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn workspace_import(args: WorkspaceImport) -> anyhow::Result<()> {
-    let WorkspaceImport {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         src,
         dest,
         workspace_id,

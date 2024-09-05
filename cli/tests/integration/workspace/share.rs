@@ -1,6 +1,6 @@
 use libparsec::{tmp_path, RealmRole, TmpPath};
 
-use super::bootstrap_cli_test;
+use crate::tests::bootstrap_cli_test;
 use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::start_client,
@@ -30,7 +30,8 @@ async fn share_workspace(tmp_path: TmpPath) {
     log::debug!("Share the workspace with bob as a contributor");
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "share-workspace",
+        "workspace",
+        "share",
         "--device",
         &alice.device_id.hex(),
         "--workspace-id",

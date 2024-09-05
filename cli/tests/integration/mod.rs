@@ -1,6 +1,5 @@
 mod bootstrap_organization;
 mod create_organization;
-mod create_workspace;
 mod device_option;
 mod export_recovery_device;
 mod import_recovery_device;
@@ -11,12 +10,11 @@ mod ls;
 mod remove_device;
 mod rm;
 mod shamir_setup_create;
-mod share_workspace;
 mod stats_organization;
 mod stats_server;
 mod status_organization;
 mod version;
-mod workspace_import;
+mod workspace;
 
 use std::{
     io::BufRead,
