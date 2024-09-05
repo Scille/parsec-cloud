@@ -17,6 +17,6 @@ describe('User Avatar', () => {
       },
     });
 
-    expect(wrapper.get('.tag').text()).to.equal('Outsider');
+    expect(wrapper.get('.tag').text()).to.equal('External');
   });
 });

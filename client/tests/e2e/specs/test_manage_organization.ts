@@ -57,7 +57,7 @@ describe('Check manage org page', () => {
 
     // Config external
     cy.get('.org-config').find('.org-info-title').contains('Configuration');
-    cy.get('.org-config').find('.org-info-item-title').eq(0).contains('Outsider profile');
+    cy.get('.org-config').find('.org-info-item-title').eq(0).contains('External profile');
     cy.get('.org-config').find('.org-config-list-item__value').eq(0).contains('Enabled');
     cy.get('.org-config').find('.org-info-item-title').eq(1).contains('User limit');
     cy.get('.org-config').find('.org-config-list-item__value').eq(1).contains('Unlimited');
@@ -87,7 +87,7 @@ describe('Check manage org page', () => {
     cy.get('.org-user').find('.user-active-list-item__value').eq(1).contains('3');
 
     // External
-    cy.get('.org-user').find('ion-chip').eq(2).contains('Outsider');
+    cy.get('.org-user').find('ion-chip').eq(2).contains('External');
     cy.get('.org-user').find('.user-active-list-item__value').eq(2).contains('2');
 
     // Revoked users
