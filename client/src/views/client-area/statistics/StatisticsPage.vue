@@ -67,7 +67,7 @@
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
                 {{
-                  $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
+                  $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.externals' : 'clientArea.statistics.external')
                 }}
               </ion-text>
             </div>
@@ -138,7 +138,7 @@
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
                 {{
-                  $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
+                  $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.externals' : 'clientArea.statistics.external')
                 }}
               </ion-text>
             </div>

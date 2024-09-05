@@ -9,7 +9,7 @@ export function getProfileTranslationKey(profile: UserProfile): Translatable {
   } else if (profile === UserProfile.Standard) {
     return 'UsersPage.profile.standard.label';
   } else if (profile === UserProfile.Outsider) {
-    return 'UsersPage.profile.outsider.label';
+    return 'UsersPage.profile.external.label';
   }
   return '';
 }

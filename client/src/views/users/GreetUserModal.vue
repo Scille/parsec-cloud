@@ -209,8 +209,8 @@ const profileOptions: MsOptions = new MsOptions([
   },
   {
     key: UserProfile.Outsider,
-    label: 'UsersPage.profile.outsider.label',
-    description: 'UsersPage.profile.outsider.description',
+    label: 'UsersPage.profile.external.label',
+    description: 'UsersPage.profile.external.description',
   },
 ]);
 

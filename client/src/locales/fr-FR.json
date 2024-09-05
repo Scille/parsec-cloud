@@ -27,8 +27,8 @@
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
-            "outsiderProfile": "Les utilisateurs externes ne peuvent pas changer les rôles",
-            "outsiderLimitedRole": "Les utilisateurs externes ne peuvent être que Lecteur ou Contributeur",
+            "externalProfile": "Les utilisateurs externes ne peuvent pas changer les rôles",
+            "externalLimitedRole": "Les utilisateurs externes ne peuvent être que Lecteur ou Contributeur",
             "insufficientRole": "Seuls les Gérants et les Propriétaires peuvent changer les rôles",
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
@@ -581,7 +581,7 @@
                 "unavailable": "Non disponible"
             },
             "configuration": {
-                "outsidersAllowed": "Profil externe",
+                "externalsAllowed": "Profil externe",
                 "userLimit": "Limite d'utilisateurs",
                 "unlimited": "Illimitée",
                 "allowed": "Activé",
@@ -873,7 +873,7 @@
                 "label": "Standard",
                 "description": "Peut créer des espaces de travail et partager des fichiers."
             },
-            "outsider": {
+            "external": {
                 "label": "Externe",
                 "description": "Peut uniquement accéder aux espaces de travail qui lui sont partagés."
             }
@@ -1012,7 +1012,7 @@
             "profile": "Profil",
             "admin": "Administrateur",
             "standard": "Standard",
-            "outsider": "Externe"
+            "external": "Externe"
         },
         "assignRoles": {
             "title": "Transférer les rôles",
@@ -1336,7 +1336,7 @@
             },
             "admin": "Administrateur | Administrateurs",
             "standard": "Standard | Standards",
-            "outsider": "Externe | Externes",
+            "external": "Externe | Externes",
             "consumptionDetail": "Détail des consommations",
             "nonPaying": "Non payant",
             "paying": "payant",

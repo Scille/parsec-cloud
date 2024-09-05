@@ -64,7 +64,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ organizationStats.outsiderUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.active }) }}
+                {{ $msTranslate({ key: 'clientArea.statistics.external', count: organizationStats.outsiderUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -135,7 +135,7 @@
                 {{ organizationStats.outsiderUsersDetail.revoked }}
               </ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: organizationStats.outsiderUsersDetail.revoked }) }}
+                {{ $msTranslate({ key: 'clientArea.statistics.external', count: organizationStats.outsiderUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>

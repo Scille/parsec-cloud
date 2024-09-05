@@ -88,7 +88,7 @@
             class="body"
             @click="users.filters.profileOutsider = !users.filters.profileOutsider"
           >
-            {{ $msTranslate('UsersPage.filter.outsider') }}
+            {{ $msTranslate('UsersPage.filter.external') }}
           </ion-label>
           <ms-checkbox
             v-model="users.filters.profileOutsider"

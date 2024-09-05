@@ -15,7 +15,7 @@
               <!-- Outsider profile -->
               <div class="org-config-list-item">
                 <ion-label class="org-info-item-title body">
-                  {{ $msTranslate('OrganizationPage.infoPage.configuration.outsidersAllowed') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.configuration.externalsAllowed') }}
                 </ion-label>
                 <div
                   class="org-config-list-item__value body-sm"
