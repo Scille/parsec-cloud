@@ -10,7 +10,10 @@ use libparsec_types::prelude::*;
 use super::Monitor;
 use crate::{
     event_bus::{EventBus, EventMonitorCrashed, EventWorkspaceOpsOutboundSyncNeeded},
-    workspace::{InboundSyncOutcome, OutboundSyncOutcome, WorkspaceOps, WorkspaceSyncError},
+    workspace::{
+        InboundSyncOutcome, OutboundSyncOutcome, WorkspaceGetNeedOutboundSyncEntriesError,
+        WorkspaceOps, WorkspaceSyncError,
+    },
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";
@@ -46,6 +49,7 @@ fn task_future_factory(
     event_bus: EventBus,
     device: Arc<LocalDevice>,
 ) -> (impl Future<Output = ()>, Box<dyn FnOnce() + Send + 'static>) {
+    let realm_id = workspace_ops.realm_id();
     let (tx, rx) = channel::unbounded::<VlobID>();
 
     let request_stop = event::Event::new();
@@ -83,18 +87,21 @@ fn task_future_factory(
                 macro_rules! handle_workspace_sync_error {
                     ($err:expr) => {
                         match $err {
-                                WorkspaceSyncError::Offline => {
-                                    event_bus.wait_server_online().await;
-                                }
-                                WorkspaceSyncError::Stopped => {
-                                    return;
-                                }
-
+                            WorkspaceSyncError::Offline => {
+                                event_bus.wait_server_online().await;
+                            }
+                            // We have lost read access to the workspace, the certificates
+                            // ops should soon be notified and work accordingly (typically
+                            // by stopping the workspace and its monitors).
+                            WorkspaceSyncError::NotAllowed => {
+                                log::info!("Workspace {realm_id}: stopping as we no longer allowed to access this realm");
+                                return
+                            },
+                            WorkspaceSyncError::Stopped => {
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                return;
+                            }
                             err @ (
-                                // We have lost read access to the workspace, the certificates
-                                // ops should soon be notified and work accordingly (typically
-                                // by stopping the workspace and its monitors).
-                                WorkspaceSyncError::NotAllowed
                                 // Other errors are unexpected ones
                                 | WorkspaceSyncError::NoKey
                                 | WorkspaceSyncError::NoRealm
@@ -105,13 +112,12 @@ fn task_future_factory(
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                             )
                             => {
-                                log::warn!("Stopping outbound sync monitor due to unexpected outcome: {}", err);
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             }
-
                             WorkspaceSyncError::Internal(err) => {
                                 // Unexpected error occured, better stop the monitor
-                                log::warn!("Certificate monitor has crashed: {}", err);
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 let event = EventMonitorCrashed {
                                     monitor: WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME,
                                     workspace_id: Some(workspace_ops.realm_id()),
@@ -128,9 +134,11 @@ fn task_future_factory(
                         Ok(entry_id) => entry_id,
                         Err(_) => return,
                     };
-                    // TODO: handle errors ?
                     loop {
                         let outcome = workspace_ops.outbound_sync(entry_id).await;
+                        log::debug!(
+                            "Workspace {realm_id}: outbound sync {entry_id}, outcome: {outcome:?}"
+                        );
                         match outcome {
                             Ok(OutboundSyncOutcome::Done) => break,
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
@@ -138,15 +146,21 @@ fn task_future_factory(
                                 // Re-enqueue to retry later
                                 // Note the send may fail if the syncer sub task has crashed,
                                 // in which case there is nothing we can do :(
+                                log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
                                 let _ = tx.send(entry_id);
                                 break;
                             }
                             Err(err) => handle_workspace_sync_error!(err),
                         }
 
-                        match workspace_ops.inbound_sync(entry_id).await {
+                        let outcome = workspace_ops.inbound_sync(entry_id).await;
+                        log::debug!(
+                            "Workspace {realm_id}: inbound sync {entry_id}, outcome: {outcome:?}"
+                        );
+                        match outcome {
                             Ok(InboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
+                                log::info!("Workspace {realm_id}: {entry_id} is busy so aborting sync to retry later");
                                 let _ = tx.send(entry_id);
                                 break;
                             }
@@ -165,14 +179,33 @@ fn task_future_factory(
         let (mut to_sync, mut due_time) = {
             let since = device.now();
             let due_time = since + MIN_SYNC_WAIT;
-            // TODO: error handling
-            let to_sync = workspace_ops
-                .get_need_outbound_sync(u32::MAX)
-                .await
-                .expect("TODO: not expected at all !")
-                .into_iter()
-                .map(|entry_id| (entry_id, DueTime { since, due_time }))
-                .collect::<HashMap<VlobID, DueTime>>();
+
+            let outcome = workspace_ops.get_need_outbound_sync(u32::MAX).await;
+            log::debug!("Workspace {realm_id}: get need outbound sync, outcome: {outcome:?}");
+            let to_sync = match outcome {
+                Ok(to_sync) => to_sync
+                    .into_iter()
+                    .map(|entry_id| (entry_id, DueTime { since, due_time }))
+                    .collect::<HashMap<VlobID, DueTime>>(),
+                Err(err) => {
+                    match err {
+                        WorkspaceGetNeedOutboundSyncEntriesError::Stopped => {
+                            // Shouldn't occur in practice given the monitors are expected
+                            // to be stopped before the opses. In any case we have no
+                            // choice but to also stop.
+                            log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            return;
+                        }
+                        WorkspaceGetNeedOutboundSyncEntriesError::Internal(err) => {
+                            log::warn!(
+                                "Workspace {realm_id}: stopping due to unexpected error: {err:?}"
+                            );
+                            return;
+                        }
+                    }
+                }
+            };
+
             let due_time = if to_sync.is_empty() {
                 None
             } else {
@@ -181,6 +214,7 @@ fn task_future_factory(
             (to_sync, due_time)
         };
 
+        #[derive(Debug)]
         enum Action {
             Stop,
             NewLocalChange { entry_id: VlobID },
@@ -190,8 +224,18 @@ fn task_future_factory(
         let mut stop_requested = pin!(stop_requested);
         loop {
             let to_sleep = match due_time {
-                None => Duration::max_value(),
-                Some(due_time) => due_time - device.now(),
+                None => {
+                    log::debug!("Workspace {realm_id}: sleeping forever");
+                    Duration::max_value()
+                }
+                Some(due_time) => {
+                    let duration = due_time - device.now();
+                    log::debug!(
+                        "Workspace {realm_id}: sleeping for {}ms",
+                        duration.num_milliseconds()
+                    );
+                    duration
+                }
             };
 
             let action = select3_biased!(
@@ -213,6 +257,7 @@ fn task_future_factory(
                 // of synchronizing it right away.
                 _ = device.time_provider.sleep(to_sleep) => Action::DueTimeReached,
             );
+            log::debug!("Workspace {realm_id}: incoming action {action:?}");
 
             match action {
                 Action::Stop => {
@@ -237,12 +282,18 @@ fn task_future_factory(
                         })
                         .next();
                     if let Some(entry_id) = due {
+                        log::debug!(
+                            "Workspace {realm_id}: sending {entry_id} for sub-task to sync"
+                        );
                         to_sync.remove(&entry_id);
-                        // TODO: error handling ? what if syncer needs to stop by itself
-                        // due to internal error ?
-
                         // Block until the sub-task is ready to sync our entry.
-                        let _ = syncer_tx.send_async(entry_id).await;
+                        match syncer_tx.send_async(entry_id).await {
+                            Ok(_) => (),
+                            Err(_) => {
+                                log::warn!("Workspace {realm_id}: stopping due to sub-task unexpectedly stopped");
+                                return;
+                            }
+                        }
                     }
 
                     // Due time has been reached, don't forget to update it !

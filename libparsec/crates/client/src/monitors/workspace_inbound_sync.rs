@@ -197,12 +197,16 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
             // abort our coroutine on teardown instead.
             WaitForNextIncomingEventOutcome::Disconnected => return,
         };
+        log::debug!("Workspace {realm_id}: incoming event {incoming_event:?}");
 
         let to_sync = match incoming_event {
             IncomingEvent::MissedServerEvents => {
                 // Need a loop here to retry the operation in case the server is not available
                 loop {
                     let outcome = io.workspace_ops_refresh_realm_checkpoint().await;
+                    log::debug!(
+                        "Workspace {realm_id}: refresh realm checkpoint, outcome: {outcome:?}"
+                    );
                     match outcome {
                         Ok(()) => break,
                         Err(err) => match err {
@@ -214,7 +218,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 // Shouldn't occur in practice given the monitors are expected
                                 // to be stopped before the opses. In any case we have no
                                 // choice but to also stop.
-                                log::warn!("Workspace {}: WorkspaceOps has stopped, stopping inbound sync monitor", realm_id);
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
                                 return;
                             },
                             err @ (
@@ -232,7 +236,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 | WorkspaceSyncError::Internal(_)
                                 | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                             ) => {
-                                log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                                 return;
                             },
                         },
@@ -240,21 +244,24 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                 }
 
                 let outcome = io.workspace_ops_get_need_inbound_sync(u32::MAX).await;
+                log::debug!("Workspace {realm_id}: get need inbound sync, outcome: {outcome:?}");
                 match outcome {
                     Ok(to_sync) => to_sync,
-                    Err(err) => match err {
-                        WorkspaceGetNeedInboundSyncEntriesError::Stopped => {
-                            // Shouldn't occur in practice given the monitors are expected
-                            // to be stopped before the opses. In any case we have no
-                            // choice but to also stop.
-                            log::warn!("Workspace {}: WorkspaceOps has stopped, stopping inbound sync monitor", realm_id);
-                            return;
+                    Err(err) => {
+                        match err {
+                            WorkspaceGetNeedInboundSyncEntriesError::Stopped => {
+                                // Shouldn't occur in practice given the monitors are expected
+                                // to be stopped before the opses. In any case we have no
+                                // choice but to also stop.
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                                return;
+                            }
+                            WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
+                                log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
+                                return;
+                            }
                         }
-                        WorkspaceGetNeedInboundSyncEntriesError::Internal(err) => {
-                            log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
-                            return;
-                        }
-                    },
+                    }
                 }
             }
             IncomingEvent::RemoteChange { entry_id } => {
@@ -274,6 +281,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
             // Need a loop here to retry the operation in case the server is not available
             loop {
                 let outcome = io.workspace_ops_inbound_sync(entry_id).await;
+                log::debug!("Workspace {realm_id}: inbound sync {entry_id}, outcome: {outcome:?}");
                 match outcome {
                     Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
@@ -282,22 +290,25 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                         break;
                     }
                     Err(err) => match err {
-                        WorkspaceSyncError::Stopped => {
-                            // Shouldn't occur in practice given the monitors are expected
-                            // to be stopped before the opses. In any case we have no
-                            // choice but to also stop.
-                            log::warn!("Workspace {}: WorkspaceOps has stopped, stopping workspace inbound sync monitor", realm_id);
-                            return;
-                        }
                         WorkspaceSyncError::Offline => {
                             io.event_bus_wait_server_online().await;
                             continue;
                         }
+                        // We have lost read access to the workspace, the certificates
+                        // ops should soon be notified and work accordingly (typically
+                        // by stopping the workspace and its monitors).
+                        WorkspaceSyncError::NotAllowed => {
+                            log::info!("Workspace {realm_id}: stopping as we no longer allowed to access this realm");
+                            return;
+                        }
+                        WorkspaceSyncError::Stopped => {
+                            // Shouldn't occur in practice given the monitors are expected
+                            // to be stopped before the opses. In any case we have no
+                            // choice but to also stop.
+                            log::warn!("Workspace {realm_id}: stopping due to unexpected WorkspaceOps stop");
+                            return;
+                        }
                         err @ (
-                            // We have lost read access to the workspace, the certificates
-                            // ops should soon be notified and work accordingly (typically
-                            // by stopping the workspace and its monitors).
-                            WorkspaceSyncError::NotAllowed
                             // Other errors are unexpected ones
                             | WorkspaceSyncError::NoKey
                             | WorkspaceSyncError::NoRealm
@@ -308,13 +319,13 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                             | WorkspaceSyncError::TimestampOutOfBallpark { .. }
                         )
                         => {
-                            log::warn!("Workspace {}: Stopping inbound sync monitor due to unexpected outcome: {}", realm_id, err);
+                            log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                             return;
                         }
 
                         WorkspaceSyncError::Internal(err) => {
                             // Unexpected error occured, better stop the monitor
-                            log::warn!("Certificate monitor has crashed: {}", err);
+                            log::warn!("Workspace {realm_id}: stopping due to unexpected error: {err:?}");
                             let event = EventMonitorCrashed {
                                 monitor: WORKSPACE_INBOUND_SYNC_MONITOR_NAME,
                                 workspace_id: Some(realm_id),
