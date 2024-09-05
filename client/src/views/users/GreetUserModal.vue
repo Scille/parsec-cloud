@@ -158,7 +158,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import TagProfile from '@/components/users/TagProfile.vue';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
-import { GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
+import { CancelledGreetingAttemptReason, GreetInProgressErrorTag, UserGreet, UserInvitation, UserProfile } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
   Answer,
@@ -270,9 +270,21 @@ async function selectGuestSas(code: string | null): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      if (result.error.tag === GreetInProgressErrorTag.GreetingAttemptCancelled) {
+        switch (result.error.reason) {
+          case CancelledGreetingAttemptReason.ManuallyCancelled:
+            await showErrorAndRestart('UsersPage.greet.errors.claimer.manuallyCancelled');
+            break;
+          default:
+            await showErrorAndRestart('UsersPage.greet.errors.claimer.default');
+            break;
+        }
+      } else {
+        await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      }
     }
   } else {
+    await greeter.value.denyTrust();
     await showErrorAndRestart('UsersPage.greet.errors.invalidCodeSelected');
   }
 }
@@ -299,10 +311,22 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok) {
+    let message: Translatable = '';
+    let level: InformationLevel;
+    switch (waitResult.error.tag) {
+      case GreetInProgressErrorTag.Cancelled:
+        message = 'UsersPage.greet.cancelled';
+        level = InformationLevel.Info;
+        break;
+      default:
+        message = 'UsersPage.greet.errors.startFailed';
+        level = InformationLevel.Error;
+        break;
+    }
     props.informationManager.present(
       new Information({
-        message: 'UsersPage.greet.errors.startFailed',
-        level: InformationLevel.Error,
+        message: message,
+        level: level,
       }),
       PresentationMode.Toast,
     );
@@ -408,10 +432,29 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      if (result.error.tag === GreetInProgressErrorTag.PeerReset) {
-        await showErrorAndRestart('UsersPage.greet.errors.peerResetCode');
-      } else {
-        await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      switch (result.error.tag) {
+        case GreetInProgressErrorTag.PeerReset:
+          await showErrorAndRestart('UsersPage.greet.errors.peerResetCode');
+          break;
+        case GreetInProgressErrorTag.GreetingAttemptCancelled:
+          switch (result.error.reason) {
+            case CancelledGreetingAttemptReason.InvalidSasCode:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.invalidSasCode');
+              break;
+            case CancelledGreetingAttemptReason.ManuallyCancelled:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.manuallyCancelled');
+              break;
+            case CancelledGreetingAttemptReason.AutomaticallyCancelled:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.automaticallyCancelled');
+              break;
+            default:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.default');
+              break;
+          }
+          break;
+        default:
+          await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+          break;
       }
     }
   } else if (pageStep.value === GreetUserStep.WaitForGuestInfo) {

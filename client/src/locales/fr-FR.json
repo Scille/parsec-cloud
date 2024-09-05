@@ -687,7 +687,13 @@
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
                 "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
                 "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
-                "emailFailed": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet."
+                "emailFailed": "Une erreur est survenue dans l'envoi de l'email. Veuillez vérifier votre connexion internet.",
+                "claimer": {
+                    "invalidSasCode": "Le code sélectionné sur l'appareil invité est incorrect.",
+                    "manuallyCancelled": "Le processus a été annulé sur l'autre appareil.",
+                    "automaticallyCancelled": "Le processus a été annulé.",
+                    "default": "Une erreur est survenue. Le processus a été annulé."
+                }
             },
             "actions": {
                 "finish": "Terminer",
@@ -703,7 +709,8 @@
             "success": "Vous pouvez vous connecter à cette organisation depuis votre nouvel appareil.",
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
-            "emailSent": "L'email a été envoyé !"
+            "emailSent": "L'email a été envoyé !",
+            "cancelled": "Le processus a été annulé."
         }
     },
     "Password": {
@@ -846,7 +853,14 @@
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
             "usersLimitReached": "La limite d'utilisateurs pour cette organisation a été atteinte.",
             "peerReset": "L'hôte a annulé le processus.",
-            "peerResetCode": "L'hôte a annulé le processus ou a sélectionné un code incorrect."
+            "peerResetCode": "L'hôte a annulé le processus ou a sélectionné un code incorrect.",
+            "cancelled": "Le processus a été annulé.",
+            "greeter": {
+                "invalidSasCode": "L'inviteur n'a pas sélectionné le bon code.",
+                "manuallyCancelled": "L'inviteur a annulé le processus.",
+                "automaticallyCancelled": "Le processus a été annulé.",
+                "default": "Une erreur est survenue. Le processus a été annulé."
+            }
         },
         "cancelConfirm": "Annulation",
         "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
@@ -934,13 +948,20 @@
                 "startFailed": "Impossible de démarrer le processus. Veuillez vérifier que vous êtes bien connecté(e) à Internet.",
                 "retrieveUserInfoFailed": "Échec de la récupération des informations de l'invité. Veuillez redémarrer le processus.",
                 "peerReset": "L'invité a annulé le processus.",
-                "peerResetCode": "L'invité a annulé le processus ou a sélectionné un code incorrect."
+                "peerResetCode": "L'invité a annulé le processus ou a sélectionné un code incorrect.",
+                "claimer": {
+                    "invalidSasCode": "La personne invitée n'a pas sélectionné le bon code.",
+                    "manuallyCancelled": "La personne invitée a annulé le processus.",
+                    "automaticallyCancelled": "Le processus a été annulé.",
+                    "default": "Une erreur est survenue. Le processus a été annulé."
+                }
             },
             "success": "{user} peut maintenant se connecter à l'organisation.",
             "cancelConfirm": "Annulation",
             "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus d'accueil ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
             "cancelYes": "Annuler le processus",
-            "cancelNo": "Reprendre"
+            "cancelNo": "Reprendre",
+            "cancelled": "Le processus a été annulé."
         },
         "invitation": {
             "greetUser": "Accueillir",
@@ -1077,7 +1098,13 @@
             "saveDeviceFailed": "Impossible de sauvegarder les informations. Veuillez réessayer",
             "sendDeviceInfoFailed": "Échec de l'envoi des informations à l'hôte. Veuillez redémarrer le processus.",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus."
+            "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
+            "greeter": {
+                "invalidSasCode": "Le code sélectionné sur l'autre appareil est incorrect.",
+                "manuallyCancelled": "Le processus a été annulé sur l'autre appareil.",
+                "automaticallyCancelled": "Le processus a été annulé.",
+                "default": "Une erreur est survenue. Le processus a été annulé."
+            }
         }
     },
     "Changelog": {

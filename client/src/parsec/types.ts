@@ -2,6 +2,7 @@
 
 export {
   BootstrapOrganizationErrorTag,
+  CancelledGreetingAttemptReason,
   ClaimInProgressErrorTag,
   ClaimerRetrieveInfoErrorTag,
   ClientCancelInvitationErrorTag,

@@ -173,6 +173,7 @@ import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import UserInformation from '@/components/users/UserInformation.vue';
 import {
   AccessStrategy,
+  CancelledGreetingAttemptReason,
   ClaimInProgressErrorTag,
   ClaimerRetrieveInfoErrorTag,
   DeviceSaveStrategy,
@@ -288,9 +289,21 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
       if (result.ok) {
         await nextStep();
       } else {
-        await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
+        if (result.error.tag === ClaimInProgressErrorTag.GreetingAttemptCancelled) {
+          switch (result.error.reason) {
+            case CancelledGreetingAttemptReason.ManuallyCancelled:
+              await showErrorAndRestart('JoinOrganization.errors.greeter.manuallyCancelled');
+              break;
+            default:
+              await showErrorAndRestart('JoinOrganization.errors.greeter.default');
+              break;
+          }
+        } else {
+          await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
+        }
       }
     } else {
+      await claimer.value.denyTrust();
       await showErrorAndRestart('JoinOrganization.errors.invalidCodeSelected');
     }
   }
@@ -404,11 +417,35 @@ async function nextStep(): Promise<void> {
       pageStep.value += 1;
       userInfoPage.value.setFocus();
     } else {
-      if (result.error.tag === ClaimInProgressErrorTag.PeerReset) {
-        await showErrorAndRestart('JoinOrganization.errors.peerResetCode');
-      } else {
-        await showErrorAndRestart({ key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } });
+      let message: Translatable = '';
+      switch (result.error.tag) {
+        case ClaimInProgressErrorTag.PeerReset:
+          message = 'JoinOrganization.errors.peerResetCode';
+          break;
+        case ClaimInProgressErrorTag.Cancelled:
+          message = 'JoinOrganization.errors.cancelled';
+          break;
+        case ClaimInProgressErrorTag.GreetingAttemptCancelled:
+          switch (result.error.reason) {
+            case CancelledGreetingAttemptReason.InvalidSasCode:
+              message = 'JoinOrganization.errors.greeter.invalidSasCode';
+              break;
+            case CancelledGreetingAttemptReason.ManuallyCancelled:
+              message = 'JoinOrganization.errors.greeter.manuallyCancelled';
+              break;
+            case CancelledGreetingAttemptReason.AutomaticallyCancelled:
+              message = 'JoinOrganization.errors.greeter.automaticallyCancelled';
+              break;
+            default:
+              message = 'JoinOrganization.errors.greeter.default';
+              break;
+          }
+          break;
+        default:
+          message = { key: 'JoinOrganization.errors.unexpected', data: { reason: result.error.tag } };
+          break;
       }
+      await showErrorAndRestart(message);
     }
   }
 }
@@ -441,7 +478,7 @@ async function startProcess(): Promise<void> {
         message: message,
         level: InformationLevel.Error,
       }),
-      PresentationMode.Modal,
+      PresentationMode.Toast,
     );
     return;
   }
@@ -461,6 +498,9 @@ async function startProcess(): Promise<void> {
       case ClaimInProgressErrorTag.PeerReset:
         message = 'JoinOrganization.errors.peerReset';
         break;
+      case ClaimInProgressErrorTag.GreetingAttemptCancelled:
+        message = 'JoinOrganization.errors.greeter.default';
+        break;
       default:
         message = { key: 'JoinOrganization.errors.unexpected', data: { reason: waitResult.error.tag } };
         break;
@@ -471,7 +511,7 @@ async function startProcess(): Promise<void> {
         message: message,
         level: InformationLevel.Error,
       }),
-      PresentationMode.Modal,
+      PresentationMode.Toast,
     );
 
     return;

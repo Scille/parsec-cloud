@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { libparsec } from '@/plugins/libparsec';
-
 import {
   AvailableDevice,
   ClaimInProgressError,
@@ -19,10 +17,10 @@ import {
   UserClaimInProgress3Info,
   UserOrDeviceClaimInitialInfoTag,
   UserOrDeviceClaimInitialInfoUser,
-} from '@/parsec/types';
-
+} from '@/parsec';
 import { needsMocks } from '@/parsec/environment';
 import { DEFAULT_HANDLE, MOCK_WAITING_TIME, getClientConfig, wait } from '@/parsec/internals';
+import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 export class UserClaim {
@@ -46,7 +44,7 @@ export class UserClaim {
 
   async abort(): Promise<void> {
     if (this.canceller !== null && !needsMocks()) {
-      libparsec.cancel(this.canceller);
+      await libparsec.cancel(this.canceller);
     }
     if (this.handle !== null && !needsMocks()) {
       await libparsec.claimerGreeterAbortOperation(this.handle);
@@ -137,6 +135,20 @@ export class UserClaim {
           greeterSasChoices: ['1ABC', '2DEF', '3GHI', '4JKL'],
         },
       };
+    }
+  }
+
+  async denyTrust(): Promise<Result<null, ClaimInProgressError>> {
+    this._assertState(true, false);
+    if (!needsMocks()) {
+      this.canceller = await libparsec.newCanceller();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const result = await libparsec.claimerUserInProgress1DoDenyTrust(this.canceller, this.handle!);
+      this.handle = null;
+      this.canceller = null;
+      return result;
+    } else {
+      return { ok: true, value: null };
     }
   }
 
