@@ -164,7 +164,7 @@
                     v-if="orgInfo.outsidersAllowed"
                     class="user-active-list-item"
                   >
-                    <tag-profile :profile="UserProfile.Outsider" />
+                    <tag-profile :profile="UserProfile.External" />
                     <ion-text class="user-active-list-item__value title-h4">
                       {{ orgInfo.users.outsiders }}
                     </ion-text>

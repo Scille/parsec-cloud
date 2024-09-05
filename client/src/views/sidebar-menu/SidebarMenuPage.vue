@@ -48,7 +48,7 @@
                   @click="navigateTo(Routes.Users)"
                   class="organization-card-buttons__item button-medium"
                   id="manageOrganization"
-                  v-show="userInfo.currentProfile != UserProfile.Outsider"
+                  v-show="userInfo.currentProfile != UserProfile.External"
                   button
                 >
                   <ion-icon
@@ -188,7 +188,7 @@
                   class="list-workspaces-header__button"
                   id="new-workspace"
                   :icon="add"
-                  v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
+                  v-show="userInfo && userInfo.currentProfile !== UserProfile.External"
                   @click="createWorkspace"
                 />
               </ion-header>

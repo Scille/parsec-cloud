@@ -9,7 +9,7 @@ describe('Workspace role', () => {
   it.each([
     // client is reader, can not change role of anyone
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Reader,
       UserProfile.Admin,
       WorkspaceRole.Reader,
@@ -27,7 +27,7 @@ describe('Workspace role', () => {
       'Only Managers and Owners can change roles',
     ],
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Contributor,
       UserProfile.Admin,
       WorkspaceRole.Reader,
@@ -37,7 +37,7 @@ describe('Workspace role', () => {
     ],
     // client is contributor, can not change role of anyone
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Reader,
       UserProfile.Admin,
       WorkspaceRole.Contributor,
@@ -55,7 +55,7 @@ describe('Workspace role', () => {
       'Only Managers and Owners can change roles',
     ],
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Contributor,
       UserProfile.Admin,
       WorkspaceRole.Contributor,
@@ -64,10 +64,10 @@ describe('Workspace role', () => {
       'Only Managers and Owners can change roles',
     ],
     // user is outsider, can be reader or contributor
-    [UserProfile.Outsider, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
+    [UserProfile.External, WorkspaceRole.Contributor, UserProfile.Admin, WorkspaceRole.Owner, WorkspaceRole.Reader, true, ''],
     // ... but cannot be manager or owner
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Contributor,
       UserProfile.Admin,
       WorkspaceRole.Owner,
@@ -76,7 +76,7 @@ describe('Workspace role', () => {
       'Outsiders can only be Readers or Contributors',
     ],
     [
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Contributor,
       UserProfile.Admin,
       WorkspaceRole.Owner,
@@ -100,7 +100,7 @@ describe('Workspace role', () => {
     [
       UserProfile.Standard,
       WorkspaceRole.Reader,
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Manager,
       WorkspaceRole.Contributor,
       false,
@@ -109,7 +109,7 @@ describe('Workspace role', () => {
     [
       UserProfile.Standard,
       WorkspaceRole.Reader,
-      UserProfile.Outsider,
+      UserProfile.External,
       WorkspaceRole.Manager,
       WorkspaceRole.Reader,
       false,

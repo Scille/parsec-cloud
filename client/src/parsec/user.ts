@@ -75,7 +75,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         id: 'id3',
         // cspell:disable-next-line
         humanHandle: { label: 'Karl Hungus', email: 'karlhungus@gmail.com' },
-        currentProfile: UserProfile.Outsider,
+        currentProfile: UserProfile.External,
         createdOn: DateTime.utc(1998, 4, 22),
         createdBy: 'device',
         revokedOn: null,
@@ -111,7 +111,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           id: 'id6',
           // cspell:disable-next-line
           humanHandle: { label: 'Gaia', email: 'gaia@gmail.com' },
-          currentProfile: UserProfile.Outsider,
+          currentProfile: UserProfile.External,
           createdOn: DateTime.utc(2019, 7, 16),
           createdBy: 'device',
           revokedOn: DateTime.now(),

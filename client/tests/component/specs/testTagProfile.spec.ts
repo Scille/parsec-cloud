@@ -10,7 +10,7 @@ describe('User Avatar', () => {
   it('Display avatar for user', () => {
     const wrapper = mount(TagProfile, {
       props: {
-        profile: UserProfile.Outsider,
+        profile: UserProfile.External,
       },
       global: {
         provide: getDefaultProvideConfig(),

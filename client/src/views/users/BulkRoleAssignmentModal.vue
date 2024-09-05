@@ -228,7 +228,7 @@ async function findWorkspaces(): Promise<void> {
     }
     // Target is an outsider, can't become Owner or Manager
     if (
-      targetUser.value.currentProfile === UserProfile.Outsider &&
+      targetUser.value.currentProfile === UserProfile.External &&
       (update.newRole === WorkspaceRole.Manager || update.newRole === WorkspaceRole.Owner)
     ) {
       update.newRole = WorkspaceRole.Contributor;

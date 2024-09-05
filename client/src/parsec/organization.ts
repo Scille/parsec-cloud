@@ -176,7 +176,7 @@ export async function getOrganizationInfo(): Promise<Result<OrganizationInfo, Or
         total: usersResult.value.length,
         admins: usersResult.value.filter((user) => user.currentProfile === UserProfile.Admin).length,
         standards: usersResult.value.filter((user) => user.currentProfile === UserProfile.Standard).length,
-        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.Outsider).length,
+        outsiders: usersResult.value.filter((user) => user.currentProfile === UserProfile.External).length,
       },
       size: {
         metadata: 14_234_953,

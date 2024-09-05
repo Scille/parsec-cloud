@@ -123,7 +123,7 @@ import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref, computed } from 'vue';
 
 const search = ref('');
-let ownProfile = UserProfile.Outsider;
+let ownProfile = UserProfile.External;
 
 const props = defineProps<{
   workspaceId: WorkspaceID;
@@ -176,7 +176,7 @@ function currentUserMatchSearch(): boolean {
 
 function isSelectDisabled(role: WorkspaceRole | null): boolean {
   // Outsider should not be able to change anything
-  if (ownProfile === UserProfile.Outsider) {
+  if (ownProfile === UserProfile.External) {
     return true;
   }
   // If our role is not Manager or Owner, can't change anything

@@ -82,7 +82,7 @@
 
         <ion-item
           button
-          v-show="clientProfile !== UserProfile.Outsider && false"
+          v-show="clientProfile !== UserProfile.External && false"
           @click="onClick(WorkspaceAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
@@ -110,7 +110,7 @@
         </ion-item>
 
         <ion-item
-          v-show="clientProfile !== UserProfile.Outsider"
+          v-show="clientProfile !== UserProfile.External"
           button
           @click="onClick(WorkspaceAction.Share)"
           class="ion-no-padding list-group-item"

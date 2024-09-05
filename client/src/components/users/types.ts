@@ -24,7 +24,7 @@ function compareUserProfiles(profile1: UserProfile, profile2: UserProfile): numb
   const WEIGHTS = new Map<UserProfile, number>([
     [UserProfile.Admin, 3],
     [UserProfile.Standard, 2],
-    [UserProfile.Outsider, 1],
+    [UserProfile.External, 1],
   ]);
 
   return WEIGHTS.get(profile2)! - WEIGHTS.get(profile1)!;
@@ -95,7 +95,7 @@ export class UserCollection {
     if (
       (!this.filters.profileAdmin && user.currentProfile === UserProfile.Admin) ||
       (!this.filters.profileStandard && user.currentProfile === UserProfile.Standard) ||
-      (!this.filters.profileOutsider && user.currentProfile === UserProfile.Outsider)
+      (!this.filters.profileOutsider && user.currentProfile === UserProfile.External)
     ) {
       return false;
     }
