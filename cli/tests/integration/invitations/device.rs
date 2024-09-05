@@ -7,7 +7,7 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use super::{bootstrap_cli_test, wait_for};
+use crate::tests::{bootstrap_cli_test, wait_for};
 use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::YELLOW,
@@ -20,7 +20,8 @@ async fn invite_device(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "invite-device",
+        "invite",
+        "device",
         "--device",
         &alice.device_id.hex()
     )
@@ -61,7 +62,8 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     let mut p_greeter = std::process::Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
-            "greet-invitation",
+            "invite",
+            "greet",
             "--token",
             &token.hex().to_string(),
             "--device",
@@ -77,7 +79,8 @@ async fn invite_device_dance(tmp_path: TmpPath) {
     let mut p_claimer = std::process::Command::cargo_bin("parsec_cli")
         .unwrap()
         .args([
-            "claim-invitation",
+            "invite",
+            "claim",
             "--addr",
             invitation_addr.to_url().as_ref(),
             "--password-stdin",

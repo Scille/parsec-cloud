@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec::{
-    authenticated_cmds::latest::invite_new_device::{self, InviteNewDeviceRep},
+    authenticated_cmds::latest::invite_new_user::{self, InviteNewUserRep},
     InvitationType, ParsecInvitationAddr,
 };
 
@@ -9,30 +9,42 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct InviteDevice {}
+    pub struct Args {
+        /// Claimer email (i.e.: The invitee)
+        #[arg(short, long)]
+        email: String,
+        /// Send email to the invitee
+        #[arg(short, long, default_value_t)]
+        send_email: bool,
+    }
 );
 
-pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
-    let InviteDevice {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
+        email,
+        send_email,
         device,
         config_dir,
         password_stdin,
-    } = invite_device;
+    } = args;
     log::trace!(
-        "Inviting a device (confdir={}, device={})",
+        "Inviting an user (confdir={}, device={})",
         config_dir.display(),
         device.as_deref().unwrap_or("N/A")
     );
 
     let (cmds, device) = load_cmds(&config_dir, device, password_stdin).await?;
-    let mut handle = start_spinner("Creating device invitation".into());
+    let mut handle = start_spinner("Creating user invitation".into());
 
     let rep = cmds
-        .send(invite_new_device::Req { send_email: false })
+        .send(invite_new_user::Req {
+            claimer_email: email,
+            send_email,
+        })
         .await?;
 
     let url = match rep {
-        InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(
+        InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(
             device.organization_addr.clone(),
             device.organization_id().clone(),
             InvitationType::Device,
@@ -41,7 +53,7 @@ pub async fn invite_device(invite_device: InviteDevice) -> anyhow::Result<()> {
         .to_url(),
         rep => {
             return Err(anyhow::anyhow!(
-                "Server refused to create device invitation: {rep:?}"
+                "Server refused to create user invitation: {rep:?}"
             ));
         }
     };

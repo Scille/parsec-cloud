@@ -9,15 +9,15 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct ListInvitations {}
+    pub struct Args {}
 );
 
-pub async fn list_invitations(list_invitations: ListInvitations) -> anyhow::Result<()> {
-    let ListInvitations {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         device,
         config_dir,
         password_stdin,
-    } = list_invitations;
+    } = args;
     log::trace!(
         "Listing invitations (confdir={}, device={})",
         config_dir.display(),

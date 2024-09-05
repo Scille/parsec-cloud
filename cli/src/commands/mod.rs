@@ -1,15 +1,10 @@
 pub mod bootstrap_organization;
-pub mod cancel_invitation;
-pub mod claim_invitation;
 pub mod create_organization;
 pub mod create_workspace;
 pub mod export_recovery_device;
-pub mod greet_invitation;
 pub mod import_recovery_device;
-pub mod invite_device;
-pub mod invite_user;
+pub mod invite;
 pub mod list_devices;
-pub mod list_invitations;
 pub mod list_users;
 pub mod list_workspaces;
 pub mod ls;

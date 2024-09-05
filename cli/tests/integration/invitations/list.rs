@@ -3,7 +3,7 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use super::bootstrap_cli_test;
+use crate::tests::bootstrap_cli_test;
 use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::{RESET, YELLOW},
@@ -42,7 +42,8 @@ async fn list_invitations(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "list-invitations",
+        "invite",
+        "list",
         "--device",
         &alice.device_id.hex()
     )
@@ -59,7 +60,8 @@ async fn no_invitations(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "list-invitations",
+        "invite",
+        "list",
         "--device",
         &alice.device_id.hex()
     )

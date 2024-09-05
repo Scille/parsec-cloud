@@ -22,12 +22,11 @@ struct Arg {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Contains subcommands related to invitation
+    #[command(subcommand)]
+    Invite(invite::Group),
     /// Configure new organization
     BootstrapOrganization(bootstrap_organization::BootstrapOrganization),
-    /// Cancel invitation
-    CancelInvitation(cancel_invitation::CancelInvitation),
-    /// Claim invitation
-    ClaimInvitation(claim_invitation::ClaimInvitation),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
     /// Create new workspace
@@ -36,16 +35,8 @@ enum Command {
     ExportRecoveryDevice(export_recovery_device::ExportRecoveryDevice),
     /// Import recovery device
     ImportRecoveryDevice(import_recovery_device::ImportRecoveryDevice),
-    /// Create device invitation
-    InviteDevice(invite_device::InviteDevice),
-    /// Create user invitation
-    InviteUser(invite_user::InviteUser),
-    /// Greet invitation
-    GreetInvitation(greet_invitation::GreetInvitation),
     /// List all devices
     ListDevices(list_devices::ListDevices),
-    /// List invitations
-    ListInvitations(list_invitations::ListInvitations),
     /// List users
     ListUsers(list_users::ListUsers),
     /// List workspaces
@@ -82,14 +73,9 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     match arg.command {
+        Command::Invite(invitation) => invite::dispatch_command(invitation).await,
         Command::BootstrapOrganization(bootstrap_organization) => {
             bootstrap_organization::bootstrap_organization(bootstrap_organization).await
-        }
-        Command::CancelInvitation(cancel_invitation) => {
-            cancel_invitation::cancel_invitation(cancel_invitation).await
-        }
-        Command::ClaimInvitation(claim_invitation) => {
-            claim_invitation::claim_invitation(claim_invitation).await
         }
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
@@ -103,15 +89,7 @@ async fn main() -> anyhow::Result<()> {
         Command::ImportRecoveryDevice(import_recovery_device) => {
             import_recovery_device::import_recovery_device(import_recovery_device).await
         }
-        Command::InviteDevice(invite_device) => invite_device::invite_device(invite_device).await,
-        Command::InviteUser(invite_user) => invite_user::invite_user(invite_user).await,
-        Command::GreetInvitation(greet_invitation) => {
-            greet_invitation::greet_invitation(greet_invitation).await
-        }
         Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
-        Command::ListInvitations(list_invitations) => {
-            list_invitations::list_invitations(list_invitations).await
-        }
         Command::ListUsers(list_users) => list_users::list_users(list_users).await,
         Command::ListWorkspaces(list_workspaces) => {
             list_workspaces::list_workspaces(list_workspaces).await

@@ -15,7 +15,7 @@ use libparsec::{
 use crate::utils::*;
 
 #[derive(clap::Parser)]
-pub struct ClaimInvitation {
+pub struct Args {
     /// Server invitation address (e.g.: parsec3://127.0.0.1:41905/Org?no_ssl=true&action=claim_user&token=4e45cc21e7604af196173ff6c9184a1f)
     #[arg(short, long)]
     addr: ParsecInvitationAddr,
@@ -24,11 +24,11 @@ pub struct ClaimInvitation {
     password_stdin: bool,
 }
 
-pub async fn claim_invitation(claim_invitation: ClaimInvitation) -> anyhow::Result<()> {
-    let ClaimInvitation {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         addr,
         password_stdin,
-    } = claim_invitation;
+    } = args;
     log::trace!("Claiming invitation (addr={})", addr);
     let ctx = step0(addr).await?;
 

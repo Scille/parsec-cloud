@@ -3,8 +3,8 @@ use libparsec::{
     InvitationType, ParsecInvitationAddr, ProxyConfig, TmpPath,
 };
 
-use super::bootstrap_cli_test;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
+use crate::tests::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -39,7 +39,8 @@ async fn cancel_invitation(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "cancel-invitation",
+        "invite",
+        "cancel",
         "--device",
         &alice.device_id.hex(),
         "--token",
