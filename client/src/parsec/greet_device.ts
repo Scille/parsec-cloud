@@ -1,8 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { needsMocks } from '@/parsec/environment';
-import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
-import { getParsecHandle } from '@/parsec/routing';
 import {
   ClientNewDeviceInvitationError,
   ClientStartInvitationGreetError,
@@ -17,7 +14,10 @@ import {
   InvitationEmailSentStatus,
   NewInvitationInfo,
   Result,
-} from '@/parsec/types';
+} from '@/parsec';
+import { needsMocks } from '@/parsec/environment';
+import { DEFAULT_HANDLE, MOCK_WAITING_TIME, wait } from '@/parsec/internals';
+import { getParsecHandle } from '@/parsec/routing';
 import { InvitationToken, ParsecInvitationAddr, SASCode, libparsec } from '@/plugins/libparsec';
 
 export class DeviceGreet {
@@ -43,7 +43,7 @@ export class DeviceGreet {
 
   async abort(): Promise<void> {
     if (this.canceller !== null && !needsMocks()) {
-      libparsec.cancel(this.canceller);
+      await libparsec.cancel(this.canceller);
     }
     if (this.handle !== null && !needsMocks()) {
       await libparsec.claimerGreeterAbortOperation(this.handle);
@@ -155,12 +155,12 @@ export class DeviceGreet {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterDeviceInProgress1DoWaitPeerTrust(this.canceller, this.handle!);
-      this.canceller = null;
       if (result.ok) {
         this.handle = result.value.handle;
         this.SASCodeChoices = result.value.claimerSasChoices;
         this.correctSASCode = result.value.claimerSas;
       }
+      this.canceller = null;
       return result;
     } else {
       await wait(MOCK_WAITING_TIME);
@@ -177,16 +177,30 @@ export class DeviceGreet {
     }
   }
 
+  async denyTrust(): Promise<Result<null, GreetInProgressError>> {
+    this._assertState(true, false);
+    if (!needsMocks()) {
+      this.canceller = await libparsec.newCanceller();
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const result = await libparsec.greeterDeviceInProgress2DoDenyTrust(this.canceller, this.handle!);
+      this.handle = null;
+      this.canceller = null;
+      return result;
+    } else {
+      return { ok: true, value: null };
+    }
+  }
+
   async signifyTrust(): Promise<Result<DeviceGreetInProgress3Info, GreetInProgressError>> {
     this._assertState(true, false);
     if (!needsMocks()) {
       this.canceller = await libparsec.newCanceller();
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const result = await libparsec.greeterDeviceInProgress2DoSignifyTrust(this.canceller, this.handle!);
-      this.canceller = null;
       if (result.ok) {
         this.handle = result.value.handle;
       }
+      this.canceller = null;
       return result;
     } else {
       return { ok: true, value: { handle: DEFAULT_HANDLE } };

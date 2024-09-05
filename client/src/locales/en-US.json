@@ -687,7 +687,13 @@
                 "startFailed": "Failed to start the onboarding process. Please make sure you are online.",
                 "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
                 "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
-                "emailFailed": "An error occurred when trying to send the email. Please check your Internet connection."
+                "emailFailed": "An error occurred when trying to send the email. Please check your Internet connection.",
+                "claimer": {
+                    "invalidSasCode": "The code selected on the other device is incorrect.",
+                    "manuallyCancelled": "The process has been cancelled from the other device.",
+                    "automaticallyCancelled": "The process has been cancelled.",
+                    "default": "An error has occurred. The process has been cancelled."
+                }
             },
             "actions": {
                 "finish": "Finish",
@@ -703,7 +709,8 @@
             "success": "You can connect to this organisation from your new device.",
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
-            "emailSent": "Email sent!"
+            "emailSent": "Email sent!",
+            "cancelled": "The process has been cancelled."
         }
     },
     "Password": {
@@ -846,7 +853,14 @@
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
             "usersLimitReached": "The user limit for this organization has been reached.",
             "peerReset": "The host has cancelled the process.",
-            "peerResetCode": "The host has cancelled the process or has selected the wrong code."
+            "peerResetCode": "The host has cancelled the process or has selected the wrong code.",
+            "cancelled": "The process has been cancelled.",
+            "greeter": {
+                "invalidSasCode": "The host has selected the wrong code.",
+                "manuallyCancelled": "The host has cancelled the process.",
+                "automaticallyCancelled": "The process has been cancelled.",
+                "default": "An error has occurred. The process has been cancelled."
+            }
         },
         "cancelConfirm": "Cancel the onboarding",
         "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
@@ -934,13 +948,20 @@
                 "startFailed": "Failed to start the onboarding process. Please make sure you are online.",
                 "retrieveUserInfoFailed": "Failed to retrieve guest's information. Please restart the onboarding process.",
                 "peerReset": "The invitee cancelled the process.",
-                "peerResetCode": "The invitee cancelled the process or has selected the wrong code."
+                "peerResetCode": "The invitee cancelled the process or has selected the wrong code.",
+                "claimer": {
+                    "invalidSasCode": "The invitee has selected the wrong code.",
+                    "manuallyCancelled": "The invitee has cancelled the process.",
+                    "automaticallyCancelled": "The process has been cancelled.",
+                    "default": "An error has occurred. The process has been cancelled."
+                }
             },
             "success": "{user} can now access to the organization.",
             "cancelConfirm": "Cancel the onboarding",
             "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
             "cancelYes": "Cancel process",
-            "cancelNo": "Resume"
+            "cancelNo": "Resume",
+            "cancelled": "The process has been cancelled."
         },
         "invitation": {
             "greetUser": "Greet",
@@ -1077,7 +1098,13 @@
             "saveDeviceFailed": "Failed to save the information, please try again",
             "sendDeviceInfoFailed": "Failed to send information to the host, please restart the onboarding process.",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
-            "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process."
+            "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
+            "greeter": {
+                "invalidSasCode": "The code selected on the other device is incorrect.",
+                "manuallyCancelled": "The process has been cancelled from the other device.",
+                "automaticallyCancelled": "The process has been cancelled.",
+                "default": "An error has occurred. The process has been cancelled."
+            }
         }
     },
     "Changelog": {

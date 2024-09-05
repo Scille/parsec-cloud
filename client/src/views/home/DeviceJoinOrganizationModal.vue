@@ -135,7 +135,9 @@ import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import {
   AccessStrategy,
+  CancelledGreetingAttemptReason,
   ClaimerRetrieveInfoErrorTag,
+  ClaimInProgressErrorTag,
   DeviceClaim,
   DeviceSaveStrategy,
   DeviceSaveStrategyPassword,
@@ -233,9 +235,21 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
     if (result.ok) {
       nextStep();
     } else {
-      await showErrorAndRestart('ClaimDeviceModal.errors.unexpected');
+      if (result.error.tag === ClaimInProgressErrorTag.GreetingAttemptCancelled) {
+        switch (result.error.reason) {
+          case CancelledGreetingAttemptReason.ManuallyCancelled:
+            await showErrorAndRestart('ClaimDeviceModal.errors.greeter.manuallyCancelled');
+            break;
+          default:
+            await showErrorAndRestart('ClaimDeviceModal.errors.greeter.default');
+            break;
+        }
+      } else {
+        await showErrorAndRestart('ClaimDeviceModal.errors.unexpected');
+      }
     }
   } else {
+    await claimer.value.denyTrust();
     await showErrorAndRestart('ClaimDeviceModal.errors.invalidCodeSelected');
   }
 }
@@ -348,7 +362,29 @@ async function nextStep(): Promise<void> {
       waitingForHost.value = false;
       pageStep.value += 1;
     } else {
-      await showErrorAndRestart({ key: 'ClaimDeviceModal.errors.unexpected', data: { reason: result.error.tag } });
+      let message: Translatable = '';
+      switch (result.error.tag) {
+        case ClaimInProgressErrorTag.GreetingAttemptCancelled:
+          switch (result.error.reason) {
+            case CancelledGreetingAttemptReason.InvalidSasCode:
+              message = 'ClaimDeviceModal.errors.greeter.invalidSasCode';
+              break;
+            case CancelledGreetingAttemptReason.ManuallyCancelled:
+              message = 'ClaimDeviceModal.errors.greeter.manuallyCancelled';
+              break;
+            case CancelledGreetingAttemptReason.AutomaticallyCancelled:
+              message = 'ClaimDeviceModal.errors.greeter.automaticallyCancelled';
+              break;
+            default:
+              message = 'ClaimDeviceModal.errors.greeter.default';
+              break;
+          }
+          break;
+        default:
+          message = { key: 'ClaimDeviceModal.errors.unexpected', data: { reason: result.error.tag } };
+          break;
+      }
+      await showErrorAndRestart(message);
     }
   }
 }
@@ -381,7 +417,7 @@ async function startProcess(): Promise<void> {
         message: message,
         level: InformationLevel.Error,
       }),
-      PresentationMode.Modal,
+      PresentationMode.Toast,
     );
     return;
   }
@@ -390,13 +426,24 @@ async function startProcess(): Promise<void> {
   if (!waitResult.ok && !cancelled.value) {
     await claimer.value.abort();
     await modalController.dismiss(null, MsModalResult.Cancel);
+    let message: Translatable = '';
+    switch (waitResult.error.tag) {
+      case ClaimInProgressErrorTag.GreetingAttemptCancelled:
+        message = 'ClaimDeviceModal.errors.greeter.default';
+        break;
+      default:
+        message = { key: 'ClaimDeviceModal.errors.unexpected', data: { reason: waitResult.error.tag } };
+        break;
+    }
+
     await props.informationManager.present(
       new Information({
-        message: { key: 'ClaimDeviceModal.errors.unexpected', data: { reason: waitResult.error.tag } },
+        message: message,
         level: InformationLevel.Error,
       }),
-      PresentationMode.Modal,
+      PresentationMode.Toast,
     );
+
     return;
   }
 

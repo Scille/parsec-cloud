@@ -228,7 +228,7 @@ import LogoIconGradient from '@/assets/images/logo-icon-gradient.svg';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
-import { DeviceGreet } from '@/parsec';
+import { DeviceGreet, GreetInProgressErrorTag, CancelledGreetingAttemptReason } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import {
   Answer,
@@ -338,8 +338,21 @@ async function selectGuestSas(code: string | null): Promise<void> {
       await nextStep();
     } else {
       await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      if (result.error.tag === GreetInProgressErrorTag.GreetingAttemptCancelled) {
+        switch (result.error.reason) {
+          case CancelledGreetingAttemptReason.ManuallyCancelled:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.manuallyCancelled');
+            break;
+          default:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.default');
+            break;
+        }
+      } else {
+        await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      }
     }
   } else {
+    await greeter.value.denyTrust();
     await showErrorAndRestart('DevicesPage.greet.errors.invalidCodeSelected');
   }
 }
@@ -366,10 +379,22 @@ async function startProcess(): Promise<void> {
   }
   const waitResult = await greeter.value.initialWaitGuest();
   if (!waitResult.ok && !cancelled.value) {
+    let message: Translatable = '';
+    let level: InformationLevel;
+    switch (waitResult.error.tag) {
+      case GreetInProgressErrorTag.Cancelled:
+        message = 'DevicesPage.greet.cancelled';
+        level = InformationLevel.Info;
+        break;
+      default:
+        message = 'DevicesPage.greet.errors.startFailed';
+        level = InformationLevel.Error;
+        break;
+    }
     props.informationManager.present(
       new Information({
-        message: 'DevicesPage.greet.errors.startFailed',
-        level: InformationLevel.Error,
+        message: message,
+        level: level,
       }),
       PresentationMode.Toast,
     );
@@ -466,7 +491,24 @@ async function nextStep(): Promise<void> {
     if (result.ok) {
       await nextStep();
     } else {
-      await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      if (result.error.tag === GreetInProgressErrorTag.GreetingAttemptCancelled) {
+        switch (result.error.reason) {
+          case CancelledGreetingAttemptReason.InvalidSasCode:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.invalidSasCode');
+            break;
+          case CancelledGreetingAttemptReason.ManuallyCancelled:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.manuallyCancelled');
+            break;
+          case CancelledGreetingAttemptReason.AutomaticallyCancelled:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.automaticallyCancelled');
+            break;
+          default:
+            await showErrorAndRestart('DevicesPage.greet.errors.claimer.default');
+            break;
+        }
+      } else {
+        await showErrorAndRestart({ key: 'DevicesPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+      }
     }
   } else if (pageStep.value === GreetDeviceStep.WaitForGuestInfo) {
     waitingForGuest.value = true;
