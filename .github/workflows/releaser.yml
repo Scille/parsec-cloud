@@ -109,19 +109,19 @@ jobs:
           cp ${CP_ARGS} artifacts/Windows-X64-wheel/requirements.txt release-files/python-win-requirements.txt
 
           # Snapcraft
-          cp ${CP_ARGS} artifacts/Linux-X64-electron-app-snap/Parsec_${{ needs.version.outputs.full }}_linux_*.snap release-files
+          cp ${CP_ARGS} artifacts/linux-snap-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.snap release-files
 
           # AppImage
-          cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
-          cp ${CP_ARGS} artifacts/Linux-X64-electron-app-AppImage/latest-linux-*.yml release-files
+          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage release-files
+          cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/latest-linux-*.yml release-files
 
           # DMG & ZIP
-          cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/Parsec_${{ needs.version.outputs.full }}_mac_*.unsigned{.dmg,.zip}{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/macOS-X64-electron-app-dmg/latest-mac-*.yml release-files
+          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.unsigned{.dmg,.zip}{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
 
           # EXE
-          cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/Windows-X64-electron-app-exe/latest-win-*.yml release-files
+          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
 
           # CLI
           cp ${CP_ARGS} artifacts/Linux-X64-cli/parsec-cli_${{ needs.version.outputs.full }}_linux_* release-files
