@@ -27,7 +27,7 @@
 ///
 /// Initial situation: we try to sync an entry, and get `local` and `remote` manifests in conflict.
 /// Then:
-/// - A1: `local` is a file, `local` parent exists, is a folder and refers to `local` as its child.
+/// - A1: `local` is a file, `local`'s parent exists, is a folder and refers to `local` as its child.
 /// - A2: Same as A1, but `local` is a folder.
 /// - B1: `local`'s update lock is already held by a concurrent operation.
 /// - B2: `local`'s parent update lock is already held by a concurrent operation.
@@ -55,11 +55,11 @@
 /// - B2: In theory we could wait to acquire the parent update lock (folders are locked for a
 ///       short time, unlike files which are locked for the whole time the file is opened).
 ///       But may lead to unexpected behavior with the entry-change-type corner-case, so
-///       instead we choose follow a "sync operations never wait for update lock" strategy
-///       and just tell the caller to retry later.
-/// - C1/C2/C3: In all those case can can pretend we try to access them a bit earlier
-///       and hit the update lock being held, hence falling into the B1 case.
-/// - D1: This is a corner case, as a child is not accessible unless its parent is (hence
+///       instead we follow a "sync operations never wait for update lock" strategy and
+///       just tell the caller to retry later.
+/// - C1/C2/C3: In all those case we can pretend we tried to access a bit earlier and hit
+///       the update lock being held, hence falling into the B1 case.
+/// - D1: This is a corner case, as a child is not accessible unless its parent is (otherwise
 ///       how the child would have been modified in the first place ?).
 ///       So we just settle the conflict by overwriting `local` with `remote`.
 /// - D2: This is also a corner case (as an entry is not supposed to have its type changed).
@@ -67,10 +67,10 @@
 /// - D3: This case is not possible (we are going to explain why), but seems plausible when
 //        a file child is moved to another parent while also having its content changed o_O.
 ///       The trick is to consider how local changes are made:
-///       - This case cannot occurs due to removing a locally modified file. This is
-///         because the remove operation also clears non-synced changes of the remove
+///       - Removing a locally modified file won't lead to this: this is because the
+///         remove operation also clears non-synced changes of the removed
 ///         item (i.e. it doesn't just update the parent manifest's children).
-///       - The move operation in local is atomic (i.e. old parent, new parent and
+///       - Moving a file in local is an atomic operation (i.e. old parent, new parent and
 ///         child are all modified at once) so the file always has a valid parent.
 ///       From this we can deduce that we should always be able to get the name of the
 ///       file in conflict from its parent \o/
