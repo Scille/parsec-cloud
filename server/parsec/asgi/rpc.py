@@ -412,12 +412,17 @@ async def run_request(
     client_ctx: AuthenticatedClientContext | InvitedClientContext | AnonymousClientContext,
     request: object,
 ) -> object:
+    cmd_func = backend.apis[type(request)]
+
+    # Bind the logger with the command name before logging the request
+    cmd_name = cmd_func._api_info["cmd"]  # type: ignore
+    client_ctx.logger = client_ctx.logger.bind(cmd=cmd_name)
+
     client_ctx.logger.debug(
         "RPC request",
         req=LoggedReq(request),
     )
     try:
-        cmd_func = backend.apis[type(request)]
         rep = await cmd_func(client_ctx, request)
     except HTTPException as exc:
         logger.info(
@@ -434,7 +439,6 @@ async def run_request(
         raise
     client_ctx.logger.info_with_debug_extra(
         "RPC reply",
-        cmd=cmd_func._api_info["cmd"],  # type: ignore
         status=type(rep).__name__,
         debug_extra={"rep": LoggedRep(rep)},
     )
