@@ -95,6 +95,12 @@ async fn outbound_sync_child(
     // Instead we will re-take the lock at the end of the sync to merge the remote manifest
     // with the local changes (and possibly fail to do so if the entry is locked at that point).
 
+    #[cfg(test)]
+    libparsec_tests_fixtures::moment_define_inject_point(
+        libparsec_tests_fixtures::Moment::OutboundSyncLocalRetrieved,
+    )
+    .await;
+
     let (need_sync, base_version) = match &local {
         ArcLocalChildManifest::File(m) => (m.need_sync, m.base.version),
         ArcLocalChildManifest::Folder(m) => (m.need_sync, m.base.version),
@@ -202,6 +208,12 @@ async fn outbound_sync_file(
         ReshapeAndUploadBlocksOutcome::Done(local_reshaped) => local_reshaped,
         ReshapeAndUploadBlocksOutcome::EntryIsBusy => return Ok(OutboundSyncOutcome::EntryIsBusy),
     };
+
+    #[cfg(test)]
+    libparsec_tests_fixtures::moment_define_inject_point(
+        libparsec_tests_fixtures::Moment::OutboundSyncFileReshapedAndBlockUploaded,
+    )
+    .await;
 
     // 2) Upload the manifest on the server
 
