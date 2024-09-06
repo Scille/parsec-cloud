@@ -138,7 +138,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir3"]);
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn add_temporary_entry(
     #[values(true, false)] root_level: bool,
     #[values("file", "folder")] entry_type: &'static str,
@@ -199,6 +199,8 @@ async fn add_temporary_entry(
         }
         _ => panic!("Expected a folder"),
     }
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 0);
 
     // Create a temporary directory
     let target = base_path.join("test.tmp".parse().unwrap());
@@ -231,5 +233,230 @@ async fn add_temporary_entry(
             p_assert_eq!(need_sync, false);
         }
         _ => panic!("Expected a folder"),
+    }
+
+    // Check that the child is in the parent's children
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 1);
+    let (name, stat) = children[0].clone();
+    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
+    match (entry_type, stat) {
+        (
+            "file",
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(need_sync, true);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        (
+            "folder",
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(need_sync, true);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        _ => panic!("Expected a {}", entry_type),
+    }
+
+    // Stop spying
+    drop(spy);
+
+    // Create a non-temporary directory
+    let target = base_path.join("test_not_tmp".parse().unwrap());
+    let non_temporary_child_id = match entry_type {
+        "file" => ops.create_file(target).await.unwrap(),
+        "folder" => ops.create_folder(target).await.unwrap(),
+        _ => panic!("Invalid entry type"),
+    };
+
+    // Check that parent is marked as needing sync
+    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
+    match parent_stat {
+        EntryStat::Folder { need_sync, .. } => {
+            p_assert_eq!(need_sync, true);
+        }
+        _ => panic!("Expected a folder"),
+    }
+
+    // Check that both children are in the parent's children
+    let mut children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 2);
+    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+    let (name, stat) = children[0].clone();
+    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
+    match (entry_type, stat) {
+        (
+            "file",
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(need_sync, true);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        (
+            "folder",
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(need_sync, true);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        _ => panic!("Expected a {}", entry_type),
+    }
+    let (name, stat) = children[1].clone();
+    p_assert_eq!(name, "test_not_tmp".parse::<EntryName>().unwrap());
+    match (entry_type, stat) {
+        (
+            "file",
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(need_sync, true);
+            p_assert_eq!(confinement_point, None);
+        }
+        (
+            "folder",
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(need_sync, true);
+            p_assert_eq!(confinement_point, None);
+        }
+        _ => panic!("Expected a {}", entry_type),
+    }
+
+    // Perform outbound sync
+    loop {
+        let entries = ops.get_need_outbound_sync(32).await.unwrap();
+        if entries.is_empty() {
+            break;
+        }
+        for entry in entries {
+            ops.outbound_sync(entry).await.unwrap();
+        }
+    }
+
+    // Check that parent is not marked as needing sync
+    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
+    match parent_stat {
+        EntryStat::Folder { need_sync, .. } => {
+            p_assert_eq!(need_sync, false);
+        }
+        _ => panic!("Expected a folder"),
+    }
+
+    // Check that both children are in the parent's children
+    let mut children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 2);
+    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+    let (name, stat) = children[0].clone();
+    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
+    match (entry_type, stat) {
+        (
+            "file",
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            // TODO: need_sync should be true, i.e the temporary file should not have been synced
+            // See: https://github.com/Scille/parsec-cloud/issues/8198
+            p_assert_eq!(need_sync, false);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        (
+            "folder",
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, child_id);
+            // TODO: need_sync should be true, i.e the temporary file should not have been synced
+            // See: https://github.com/Scille/parsec-cloud/issues/8198
+            p_assert_eq!(need_sync, false);
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            p_assert_eq!(confinement_point, None);
+        }
+        _ => panic!("Expected a {}", entry_type),
+    }
+    let (name, stat) = children[1].clone();
+    p_assert_eq!(name, "test_not_tmp".parse::<EntryName>().unwrap());
+    match (entry_type, stat) {
+        (
+            "file",
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(need_sync, false);
+            p_assert_eq!(confinement_point, None);
+        }
+        (
+            "folder",
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => {
+            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(need_sync, false);
+            p_assert_eq!(confinement_point, None);
+        }
+        _ => panic!("Expected a {}", entry_type),
     }
 }

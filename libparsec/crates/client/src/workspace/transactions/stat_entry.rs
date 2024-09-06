@@ -106,6 +106,7 @@ pub(crate) async fn stat_entry_by_id(
 
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
+            // TODO: Set confinement point
             confinement_point: None,
             id: manifest.base.id,
             parent: manifest.parent,
@@ -116,6 +117,7 @@ pub(crate) async fn stat_entry_by_id(
             need_sync: manifest.need_sync,
         },
         ArcLocalChildManifest::File(manifest) => EntryStat::File {
+            // TODO: Set confinement point
             confinement_point: None,
             id: manifest.base.id,
             parent: manifest.parent,
