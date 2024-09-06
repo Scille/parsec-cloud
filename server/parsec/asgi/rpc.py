@@ -411,7 +411,7 @@ async def run_request(
     backend: Backend,
     client_ctx: AuthenticatedClientContext | InvitedClientContext | AnonymousClientContext,
     request: object,
-) -> None:
+) -> object:
     client_ctx.logger.debug(
         "RPC request",
         req=LoggedReq(request),
@@ -428,6 +428,9 @@ async def run_request(
         raise
     except Exception as exc:
         logger.error("RPC exception", exc_info=exc)
+        raise
+    except BaseException as exc:
+        logger.debug("RPC base exception", exc_info=exc)
         raise
     client_ctx.logger.info_with_debug_extra(
         "RPC reply",
@@ -828,6 +831,9 @@ class StreamingResponseMiddleware(StreamingResponse):
             raise
         except Exception as exc:
             self.client_ctx.logger.error("SSE session exception", exc_info=exc)
+            raise
+        except BaseException as exc:
+            self.client_ctx.logger.debug("SSE session base exception", exc_info=exc)
             raise
         else:
             self.client_ctx.logger.info("SSE session end")
