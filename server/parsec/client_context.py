@@ -119,7 +119,7 @@ class AuthenticatedClientContext:
 
     def __post_init__(self):
         self.logger = logger.bind(
-            request=uuid4().hex,
+            request=uuid4().hex[:4],
             api=f"{self.settled_api_version.version}.{self.settled_api_version.revision}",
             auth="authenticated",
             organization=self.organization_id.str,
