@@ -31,7 +31,13 @@ from parsec.asgi import app_factory, serve_parsec_asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.options import debug_config_options, logging_config_options
 from parsec.cli.utils import cli_exception_handler
-from parsec.config import BackendConfig, LogLevel, MockedBlockStoreConfig, MockedEmailConfig
+from parsec.config import (
+    BackendConfig,
+    LogLevel,
+    MockedBlockStoreConfig,
+    MockedEmailConfig,
+    PostgreSQLBlockStoreConfig,
+)
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
 
@@ -212,19 +218,29 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 
 
 @asynccontextmanager
-async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[TestbedBackend]:
+async def testbed_backend_factory(
+    server_addr: ParsecAddr, with_postgresql: str | None
+) -> AsyncIterator[TestbedBackend]:
+    db_url = "MOCKED" if with_postgresql is None else with_postgresql
+    blockstore_config = (
+        MockedBlockStoreConfig() if with_postgresql is None else PostgreSQLBlockStoreConfig()
+    )
+    # Same as the defaults in `db_server_options`
+    db_min_connections = 1 if with_postgresql is None else 5
+    db_max_connections = 1 if with_postgresql is None else 7
+
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
         debug=True,
-        db_url="MOCKED",
-        db_min_connections=1,
-        db_max_connections=1,
+        db_url=db_url,
+        db_min_connections=db_min_connections,
+        db_max_connections=db_max_connections,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
         server_addr=server_addr,
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
-        blockstore_config=MockedBlockStoreConfig(),
+        blockstore_config=blockstore_config,
         administration_token="s3cr3t",
         organization_spontaneous_bootstrap=True,
     )
@@ -263,6 +279,14 @@ async def testbed_backend_factory(server_addr: ParsecAddr) -> AsyncIterator[Test
     help="URL to reach this server (typically used in invitation emails)",
 )
 @click.option(
+    "--with-postgresql",
+    envvar="PARSEC_WITH_POSTGRESQL",
+    default=None,
+    show_default=True,
+    metavar="WITH_POSTGRESQL",
+    help="Use a postgresql database instead of the mocked one",
+)
+@click.option(
     "--stop-after-process",
     type=int,
     default=None,
@@ -278,6 +302,7 @@ def testbed_cmd(
     host: str,
     port: int,
     server_addr: ParsecAddr,
+    with_postgresql: str | None,
     stop_after_process: int | None,
     log_level: LogLevel,
     log_format: str,
@@ -303,7 +328,9 @@ def testbed_cmd(
 
                 tg.start_soon(_watch_and_stop_after_process, stop_after_process, tg.cancel_scope)
 
-            async with testbed_backend_factory(server_addr=server_addr) as testbed:
+            async with testbed_backend_factory(
+                server_addr=server_addr, with_postgresql=with_postgresql
+            ) as testbed:
                 click.secho("All set !", fg="yellow")
                 click.echo("Don't forget to export `TESTBED_SERVER` environ variable:")
                 click.secho(
