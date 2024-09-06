@@ -121,6 +121,9 @@ def log_request[**P, T: BaseModel | Response](
         except Exception as e:
             logger.error(f"{request.method} {request.url.path} exception", exc_info=e)
             raise
+        except BaseException as e:
+            logger.debug(f"{request.method} {request.url.path} base exception", exc_info=e)
+            raise
         if isinstance(result, Response):
             debug_extra = {
                 "status_code": result.status_code,
