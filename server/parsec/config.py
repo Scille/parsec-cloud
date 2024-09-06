@@ -50,6 +50,12 @@ class S3BlockStoreConfig(BaseBlockStoreConfig):
     s3_key: str
     s3_secret: str
 
+    def __str__(self) -> str:
+        # Do not show the secret in the logs
+        return f"{self.__class__.__name__}(s3_endpoint_url={self.s3_endpoint_url}, s3_region={self.s3_region}, s3_bucket={self.s3_bucket}, s3_key={self.s3_key})"
+
+    __repr__ = __str__
+
 
 @dataclass(slots=True)
 class SWIFTBlockStoreConfig(BaseBlockStoreConfig):
@@ -60,6 +66,12 @@ class SWIFTBlockStoreConfig(BaseBlockStoreConfig):
     swift_container: str
     swift_user: str
     swift_password: str
+
+    def __str__(self) -> str:
+        # Do not show the password in the logs
+        return f"{self.__class__.__name__}(swift_authurl={self.swift_authurl}, swift_tenant={self.swift_tenant}, swift_container={self.swift_container}, swift_user={self.swift_user})"
+
+    __repr__ = __str__
 
 
 @dataclass(slots=True)
@@ -85,7 +97,10 @@ class SmtpEmailConfig:
     sender: str
 
     def __str__(self) -> str:
+        # Do not show the password in the logs
         return f"{self.__class__.__name__}(sender={self.sender}, host={self.host}, port={self.port}, use_ssl={self.use_ssl})"
+
+    __repr__ = __str__
 
 
 @dataclass(slots=True)
@@ -94,9 +109,6 @@ class MockedEmailConfig:
 
     sender: str
     tmpdir: str
-
-    def __str__(self) -> str:
-        return f"{self.__class__.__name__}(sender={self.sender}, tmpdir={self.tmpdir})"
 
 
 EmailConfig = SmtpEmailConfig | MockedEmailConfig
