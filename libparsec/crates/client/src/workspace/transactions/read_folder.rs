@@ -96,6 +96,7 @@ impl FolderReader {
     /// Return the stat of the folder itself.
     pub fn stat_folder(&self) -> EntryStat {
         EntryStat::Folder {
+            // TODO: Set confinement point
             confinement_point: None,
             id: self.manifest.base.id,
             parent: self.manifest.base.parent,

@@ -306,10 +306,14 @@ async fn outbound_sync_folder(
 
     // Do the actual storage update
 
-    let local_from_remote = Arc::new(LocalFolderManifest::from_remote(
-        remote,
-        &ops.config.prevent_sync_pattern,
-    ));
+    let local_from_remote = Arc::new(
+        LocalFolderManifest::from_remote_with_restored_local_confinement_points(
+            remote,
+            &ops.config.prevent_sync_pattern,
+            local.as_ref(),
+            timestamp,
+        ),
+    );
     updater
         .update_manifest(ArcLocalChildManifest::Folder(local_from_remote))
         .await
