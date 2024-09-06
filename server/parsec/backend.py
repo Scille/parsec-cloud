@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Type, TypeAlias
@@ -38,6 +39,7 @@ from parsec.components.shamir import BaseShamirComponent
 from parsec.components.user import BaseUserComponent
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
+from parsec.logging import get_logger
 from parsec.webhooks import WebhooksComponent
 
 if TYPE_CHECKING:
@@ -52,9 +54,12 @@ if TYPE_CHECKING:
         TestbedEvent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
         TestbedTemplateContent: TypeAlias = Any  # pyright: ignore[reportRedeclaration]
 
+logger = get_logger()
+
 
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
+    logger.info("Backend configuration", **dataclasses.asdict(config))
     if config.db_url == "MOCKED":
         components_factory = mocked_components_factory
     else:
