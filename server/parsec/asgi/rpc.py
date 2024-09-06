@@ -407,6 +407,37 @@ def _parse_auth_headers_or_abort(
     )
 
 
+async def run_request(
+    backend: Backend,
+    client_ctx: AuthenticatedClientContext | InvitedClientContext | AnonymousClientContext,
+    request: object,
+) -> None:
+    client_ctx.logger.debug(
+        "RPC request",
+        req=LoggedReq(request),
+    )
+    try:
+        cmd_func = backend.apis[type(request)]
+        rep = await cmd_func(client_ctx, request)
+    except HTTPException as exc:
+        logger.info(
+            "RPC HTTP error",
+            status_code=exc.status_code,
+            detail=exc.detail,
+        )
+        raise
+    except Exception as exc:
+        logger.error("RPC exception", exc_info=exc)
+        raise
+    client_ctx.logger.info_with_debug_extra(
+        "RPC reply",
+        cmd=cmd_func._api_info["cmd"],  # type: ignore
+        status=type(rep).__name__,
+        debug_extra={"rep": LoggedRep(rep)},
+    )
+    return rep
+
+
 @rpc_router.get("/anonymous/{raw_organization_id}")
 @rpc_router.post("/anonymous/{raw_organization_id}")
 async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
@@ -468,20 +499,7 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
-    client_ctx.logger.debug(
-        "RPC start",
-        req=req,
-    )
-
-    cmd_func = backend.apis[type(req)]
-    rep = await cmd_func(client_ctx, req)
-
-    client_ctx.logger.info_with_debug_extra(
-        "RPC",
-        cmd=cmd_func._api_info["cmd"],  # type: ignore
-        status=type(rep).__name__,
-        debug_extra={"rep": rep},
-    )
+    rep = await run_request(backend, client_ctx, req)
 
     return _rpc_rep(rep, parsed.settled_api_version)
 
@@ -545,20 +563,7 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
-    client_ctx.logger.debug(
-        "RPC start",
-        req=req,
-    )
-
-    cmd_func = backend.apis[type(req)]
-    rep = await cmd_func(client_ctx, req)
-
-    client_ctx.logger.info_with_debug_extra(
-        "RPC",
-        cmd=cmd_func._api_info["cmd"],  # type: ignore
-        status=type(rep).__name__,
-        debug_extra={"rep": rep},
-    )
+    rep = await run_request(backend, client_ctx, req)
 
     return _rpc_rep(rep, parsed.settled_api_version)
 
@@ -638,20 +643,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
     except ValueError:
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
-    client_ctx.logger.debug(
-        "RPC start",
-        req=LoggedReq(req),
-    )
-
-    cmd_func = backend.apis[type(req)]
-    rep = await cmd_func(client_ctx, req)
-
-    client_ctx.logger.info_with_debug_extra(
-        "RPC",
-        cmd=cmd_func._api_info["cmd"],  # type: ignore
-        status=type(rep).__name__,
-        debug_extra={"rep": LoggedRep(rep)},
-    )
+    rep = await run_request(backend, client_ctx, req)
 
     return _rpc_rep(rep, parsed.settled_api_version)
 
@@ -725,7 +717,6 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         device_internal_id=auth_info.device_internal_id,
         device_verify_key=auth_info.device_verify_key,
     )
-    client_ctx.logger.info("Start SSE connection")
 
     return StreamingResponseMiddleware(
         backend,
@@ -784,8 +775,8 @@ class StreamingResponseMiddleware(StreamingResponse):
         # sure the connection was successful (in practice the server responds
         # fast in case of error and potentially up to the keepalive time in case
         # everything is ok).
-        # So, while not strictly needed, we it is better to send an event right
-        # away the client knows it is correctly connected without delay.
+        # So, while not strictly needed, it is better to send an event right
+        # away so the client knows it is correctly connected without delay.
         # Fortunately we just have the right thing for that: the organization
         # config (given it may have changed since the last time the client connected).
         yield self.initial_organization_config_event.dump_as_apiv4_sse_payload()
@@ -825,6 +816,23 @@ class StreamingResponseMiddleware(StreamingResponse):
                     yield apiv4_sse_payload
 
     async def __call__(self, scope, receive, send) -> None:
+        self.client_ctx.logger.info("SSE session start")
+        try:
+            await self._run_session(scope, receive, send)
+        except HTTPException as exc:
+            self.client_ctx.logger.info(
+                "SSE session HTTP error",
+                status_code=exc.status_code,
+                detail=exc.detail,
+            )
+            raise
+        except Exception as exc:
+            self.client_ctx.logger.error("SSE session exception", exc_info=exc)
+            raise
+        else:
+            self.client_ctx.logger.info("SSE session end")
+
+    async def _run_session(self, scope, receive, send) -> None:
         """
         This method is called by the ASGI server to handle the response.
 
@@ -837,6 +845,7 @@ class StreamingResponseMiddleware(StreamingResponse):
             match outcome:
                 case tuple() as item:
                     self.initial_organization_config_event, self.additional_events_receiver = item
+                    self.client_ctx.logger.debug("SSE client registered")
                     return await super().__call__(scope, receive, send)
                 case SseAPiEventsListenBadOutcome.ORGANIZATION_NOT_FOUND:
                     _handshake_abort(
