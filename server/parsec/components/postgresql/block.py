@@ -52,10 +52,8 @@ class PGBlockComponent(BaseBlockComponent):
         return await block_read(self.blockstore, conn, organization_id, author, block_id)
 
     @override
-    @transaction
     async def create(
         self,
-        conn: AsyncpgConnection,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
@@ -66,7 +64,7 @@ class PGBlockComponent(BaseBlockComponent):
     ) -> None | BadKeyIndex | BlockCreateBadOutcome:
         return await block_create(
             self.blockstore,
-            conn,
+            self.pool,
             now,
             organization_id,
             author,
