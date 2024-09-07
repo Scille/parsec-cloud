@@ -17,7 +17,7 @@ from parsec.components.blockstore import (
     BaseBlockStoreComponent,
     BlockStoreReadBadOutcome,
 )
-from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql import AsyncpgPool
 from parsec.components.postgresql.utils import (
     Q,
 )
@@ -105,16 +105,22 @@ SELECT
 
 async def block_read(
     blockstore: BaseBlockStoreComponent,
-    conn: AsyncpgConnection,
+    pool: AsyncpgPool,
     organization_id: OrganizationID,
     author: DeviceID,
     block_id: BlockID,
 ) -> BlockReadResult | BlockReadBadOutcome:
-    row = await conn.fetchrow(
-        *_q_read_fetch_data(
-            organization_id=organization_id.str, device_id=author, block_id=block_id
+    # We shouldn't keep topics lock during step 2:
+    # - Step 2 can take a long time (e.g. with a RAID blockstore configuration).
+    # - In case of PostgreSQL blockstore (only used for testing), this can create
+    #   a deadlock in case of too many concurrent `block_create` given the
+    #   blockstore is waiting on the PostgreSQL connection pool.
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            *_q_read_fetch_data(
+                organization_id=organization_id.str, device_id=author, block_id=block_id
+            )
         )
-    )
     assert row is not None
 
     # 1.1) Check organization
