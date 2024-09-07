@@ -17,7 +17,7 @@ from parsec.components.blockstore import (
     BaseBlockStoreComponent,
     BlockStoreCreateBadOutcome,
 )
-from parsec.components.postgresql import AsyncpgConnection
+from parsec.components.postgresql import AsyncpgPool
 from parsec.components.postgresql.utils import (
     Q,
 )
@@ -39,9 +39,9 @@ VALUES (
 )
 
 
-# `block_create` being performance critical, we rely on a single big query to both
-# lock `common`/`realm` topics and fetches everything needed for access checks
-_q_create_fetch_data_and_lock_topics = Q(
+# `block_create` being performance critical, we rely on a single big query to
+# fetches everything needed for access checks
+_q_create_fetch_data = Q(
     """
 WITH my_organization AS (
     SELECT
@@ -137,7 +137,7 @@ SELECT
 
 async def block_create(
     blockstore: BaseBlockStoreComponent,
-    conn: AsyncpgConnection,
+    pool: AsyncpgPool,
     now: DateTime,
     organization_id: OrganizationID,
     author: DeviceID,
@@ -146,18 +146,57 @@ async def block_create(
     key_index: int,
     block: bytes,
 ) -> None | BadKeyIndex | BlockCreateBadOutcome:
-    # 1) Query the database to get all info about org/device/user/realm/block
-    #    and lock the common & realm topics
+    # Given block metadata and block data are stored on different storages,
+    # being atomic is not easy here :(
+    #
+    # Hence there is three distincts steps here:
+    # 1) Fetch info from PostgreSQL to do access control & ensure the block doesn't
+    #    already exists.
+    # 2) Store the block in the blockstore (e.g. S3).
+    # 3) Store the block in PostgreSQL.
+    #
+    # Importantly, we shouldn't keep topics lock during step 2:
+    # - Step 2 can take a long time (e.g. with a RAID blockstore configuration).
+    # - In case of PostgreSQL blockstore (only used for testing), this can create
+    #   a deadlock in case of too many concurrent `block_create` given the
+    #   blockstore is waiting on the PostgreSQL connection pool.
+    #
+    # On top of that, the blocks only have meaning as part of a file manifest (i.e. a
+    # vlob from the server point of view), which is the one having timestamp.
+    # Hence the the blocks have no concept of creation date (from the client points
+    # point of view at least, as we store an insertion date in the database which
+    # is a useful info for database admin).
+    # This means a block inserted after its author is revoked (or lose his write
+    # access to the realm) won't break causality.
+    #
+    # For those reasons, we ensure at one point in time T during step 1 the author had
+    # the right to create the block, then do the insertion and pretent the step 3's
+    # block insert in PostgreSQL also occured exactly at time T.
+    #
+    # Notes:
+    # - Concurrency is handled in step 3 given block has a unique constraint
+    #   on organization + realm + block ID in PostgreSQL.
+    # - Step 2 can be successful (or can be successful on *some* blockstores in case
+    #   of a RAID blockstores configuration) but step 3 fails.
+    #   This is solved by the fact blockstores follows eventual consistency (i.e. last
+    #   write overwrite the previous ones) and two create operations with the same
+    #   orgID/ID couple are expected to have the same block data.
+    # - A possible performance optimization would be to keep result of step 1 in
+    #   cache (this would also work for `vlob_read` which then wouldn't even have
+    #   to query PostgreSQL !).
 
-    row = await conn.fetchrow(
-        *_q_create_fetch_data_and_lock_topics(
-            organization_id=organization_id.str,
-            device_id=author,
-            realm_id=realm_id,
-            block_id=block_id,
+    # 1) Query the database to get all info about org/device/user/realm/block
+
+    async with pool.acquire() as conn:
+        row = await conn.fetchrow(
+            *_q_create_fetch_data(
+                organization_id=organization_id.str,
+                device_id=author,
+                realm_id=realm_id,
+                block_id=block_id,
+            )
         )
-    )
-    assert row is not None
+        assert row is not None
 
     # 1.1) Check organization
 
@@ -258,17 +297,7 @@ async def block_create(
         case unknown:
             assert False, repr(unknown)
 
-    # 2) Upload block data in blockstore under an arbitrary id
-    # Given block metadata and block data are stored on different storages,
-    # being atomic is not easy here :(
-    # For instance step 2) can be successful (or can be successful on *some*
-    # blockstores in case of a RAID blockstores configuration) but step 4) fails.
-    # This is solved by the fact blockstores are considered idempotent and two
-    # create operations with the same orgID/ID couple are expected to have the
-    # same block data.
-    # Hence any blockstore create failure result in postgres transaction
-    # cancellation, and blockstore create success can be overwritten by another
-    # create in case the postgres transaction was cancelled in step 3)
+    # 2) Upload block data in blockstore
 
     match await blockstore.create(organization_id, block_id, block):
         case None:
@@ -278,21 +307,23 @@ async def block_create(
 
     # 3) Insert the block metadata into the database
 
-    try:
-        ret = await conn.execute(
-            *_q_insert_block(
-                organization_internal_id=organization_internal_id,
-                block_id=block_id,
-                realm_internal_id=realm_internal_id,
-                device_internal_id=device_internal_id,
-                size=len(block),
-                created_on=now,
-                key_index=key_index,
+    # No need for explicit transaction here since we use this session for a single query
+    async with pool.acquire() as conn:
+        try:
+            ret = await conn.execute(
+                *_q_insert_block(
+                    organization_internal_id=organization_internal_id,
+                    block_id=block_id,
+                    realm_internal_id=realm_internal_id,
+                    device_internal_id=device_internal_id,
+                    size=len(block),
+                    created_on=now,
+                    key_index=key_index,
+                )
             )
-        )
-    except UniqueViolationError:
-        # Given concurrent block creation is allowed, unique violation may occur !
-        return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
+        except UniqueViolationError:
+            # Given concurrent block creation is allowed, unique violation may occur !
+            return BlockCreateBadOutcome.BLOCK_ALREADY_EXISTS
 
-    else:
-        assert ret == "INSERT 0 1", f"Insertion error: {ret}"
+        else:
+            assert ret == "INSERT 0 1", f"Insertion error: {ret}"
