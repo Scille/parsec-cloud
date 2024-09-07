@@ -38,10 +38,9 @@ VALUES (
 """
 )
 
-
-# `block_create` being performance critical, we rely on a single big query to
-# fetches everything needed for access checks
-_q_create_fetch_data = Q(
+# `block_create` being performance critical, we rely on a single big query to both
+# lock `common`/`realm` topics and fetches everything needed for access checks.
+_q_create_fetch_data_and_lock_topics = Q(
     """
 WITH my_organization AS (
     SELECT
@@ -170,8 +169,8 @@ async def block_create(
     # access to the realm) won't break causality.
     #
     # For those reasons, we ensure at one point in time T during step 1 the author had
-    # the right to create the block, then do the insertion and pretent the step 3's
-    # block insert in PostgreSQL also occured exactly at time T.
+    # the right to create the block, then do the insertion and pretend the step 3's
+    # block insert in PostgreSQL also occurred exactly at time T.
     #
     # Notes:
     # - Concurrency is handled in step 3 given block has a unique constraint
@@ -187,16 +186,21 @@ async def block_create(
 
     # 1) Query the database to get all info about org/device/user/realm/block
 
+    # Note the topics locked in this query that are going to be released right away
+    # (since the PostgreSQL connection is released right after the query is done).
+    # We keep it this way nevertheless (at least for now) to stay consistent with
+    # the rest of the codebase and to simplify handling of concurrent insertions
+    # of common & realm certificates.
     async with pool.acquire() as conn:
         row = await conn.fetchrow(
-            *_q_create_fetch_data(
+            *_q_create_fetch_data_and_lock_topics(
                 organization_id=organization_id.str,
                 device_id=author,
                 realm_id=realm_id,
                 block_id=block_id,
             )
         )
-        assert row is not None
+    assert row is not None
 
     # 1.1) Check organization
 

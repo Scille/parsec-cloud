@@ -29,7 +29,6 @@ from parsec.components.postgresql.block_read import block_read
 from parsec.components.postgresql.block_test_dump_blocks import block_test_dump_blocks
 from parsec.components.postgresql.utils import (
     Q,
-    no_transaction,
     transaction,
 )
 from parsec.components.realm import BadKeyIndex
@@ -41,15 +40,13 @@ class PGBlockComponent(BaseBlockComponent):
         self.blockstore = blockstore
 
     @override
-    @no_transaction
     async def read(
         self,
-        conn: AsyncpgConnection,
         organization_id: OrganizationID,
         author: DeviceID,
         block_id: BlockID,
     ) -> BlockReadResult | BlockReadBadOutcome:
-        return await block_read(self.blockstore, conn, organization_id, author, block_id)
+        return await block_read(self.blockstore, self.pool, organization_id, author, block_id)
 
     @override
     async def create(
