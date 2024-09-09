@@ -82,6 +82,7 @@ pub async fn fd_resize(
     }
 
     opened_file.flush_needed = true;
+    opened_file.modified_since_opened = true;
 
     super::maybe_early_reshape_and_flush(ops, &mut opened_file)
         .await

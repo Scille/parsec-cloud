@@ -241,6 +241,7 @@ pub async fn open_file_by_id(
                     new_chunks: vec![],
                     removed_chunks,
                     flush_needed,
+                    modified_since_opened: flush_needed,
                 }));
                 opened_files_guard
                     .opened_files

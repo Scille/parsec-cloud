@@ -146,6 +146,7 @@ pub async fn fd_write(
 
     opened_file.bytes_written_since_last_flush += data.len() as u64;
     opened_file.flush_needed = true;
+    opened_file.modified_since_opened = true;
 
     super::maybe_early_reshape_and_flush(ops, &mut opened_file)
         .await
