@@ -48,7 +48,7 @@ import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
-import { Env } from '@/services/environment';
+import { Env, APP_VERSION } from '@/services/environment';
 
 const isOnline = ref(true);
 const isPopoverOpen = ref(false);
@@ -154,8 +154,10 @@ async function openPopover(event: Event): Promise<void> {
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
     await openSettingsModal();
-  } else if (data.option === ProfilePopoverOption.Help) {
-    window.open(I18n.translate({ key: 'MenuPage.helpLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
+  } else if (data.option === ProfilePopoverOption.Documentation) {
+    window.open(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION } }), '_blank');
+  } else if (data.option === ProfilePopoverOption.Feedback) {
+    window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
   } else if (data.option === ProfilePopoverOption.App) {
     await navigateTo(Routes.About);
   } else if (data.option === ProfilePopoverOption.MyProfile) {

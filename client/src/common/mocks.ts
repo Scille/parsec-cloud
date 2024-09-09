@@ -5,8 +5,6 @@
 import { DateTime } from 'luxon';
 import { Translatable } from 'megashark-lib';
 
-export const APP_VERSION = __APP_VERSION__;
-
 export interface Change {
   description: Translatable;
   issue?: string;
