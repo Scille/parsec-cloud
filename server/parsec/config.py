@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from enum import Enum
 from typing import TYPE_CHECKING, Literal
 from urllib.parse import urlparse, urlunparse
@@ -192,3 +192,11 @@ class BackendConfig:
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
     backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
+
+    def logging_kwargs(self) -> dict[str, str]:
+        """
+        Provide a safe dictionnary for logging the backend configuration.
+        """
+        kwargs = {field.name: repr(getattr(self, field.name)) for field in fields(self)}
+        kwargs["administration_token"] = "***"
+        return kwargs
