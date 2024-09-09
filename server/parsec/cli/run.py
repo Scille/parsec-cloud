@@ -26,9 +26,11 @@ from parsec.cli.utils import (
 from parsec.config import (
     BackendConfig,
     BaseBlockStoreConfig,
+    BaseDatabaseConfig,
     EmailConfig,
     LogLevel,
     MockedEmailConfig,
+    PostgreSQLDatabaseConfig,
     SmtpEmailConfig,
 )
 from parsec.logging import get_logger
@@ -310,7 +312,7 @@ organization_id, device_id, device_label (can be null), human_email (can be null
 def run_cmd(
     host: str,
     port: int,
-    db: str,
+    db: BaseDatabaseConfig,
     db_min_connections: int,
     db_max_connections: int,
     sse_keepalive: float,
@@ -341,6 +343,11 @@ def run_cmd(
     debug: bool,
     dev: bool,
 ) -> None:
+    # Set min and max connections
+    if isinstance(db, PostgreSQLDatabaseConfig):
+        db.min_connections = db_min_connections
+        db.max_connections = db_max_connections
+
     # Start a local server
 
     with cli_exception_handler(debug):
@@ -366,9 +373,7 @@ def run_cmd(
 
         app_config = BackendConfig(
             administration_token=administration_token,
-            db_url=db,
-            db_min_connections=db_min_connections,
-            db_max_connections=db_max_connections,
+            db_config=db,
             sse_keepalive=sse_keepalive,
             blockstore_config=blockstore,
             email_config=email_config,
@@ -387,7 +392,7 @@ def run_cmd(
 
         click.echo(
             f"Starting Parsec server on {host}:{port}"
-            f" (db={app_config.db_type}"
+            f"(db={app_config.db_config.type}"
             f" blockstore={app_config.blockstore_config.type}"
             f" email={email_config.type}"
             f" telemetry={'on' if sentry_dsn else 'off'}"

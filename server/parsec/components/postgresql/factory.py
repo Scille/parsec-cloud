@@ -20,7 +20,7 @@ from parsec.components.postgresql.realm import PGRealmComponent
 from parsec.components.postgresql.shamir import PGShamirComponent
 from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
-from parsec.config import BackendConfig
+from parsec.config import BackendConfig, PostgreSQLDatabaseConfig
 from parsec.webhooks import WebhooksComponent
 
 # SSL context is costly to setup, so cache it instead of having `httpx.AsyncClient`
@@ -32,12 +32,13 @@ SSL_CONTEXT = ssl.create_default_context()
 async def components_factory(
     config: BackendConfig,
 ) -> AsyncGenerator[dict[str, Any], None]:
+    assert isinstance(config.db_config, PostgreSQLDatabaseConfig)
     async with asyncpg_pool_factory(
-        url=config.db_url,
-        min_connections=config.db_min_connections,
-        max_connections=config.db_max_connections,
+        url=config.db_config.url,
+        min_connections=config.db_config.min_connections,
+        max_connections=config.db_config.max_connections,
     ) as pool:
-        async with event_bus_factory(db_url=config.db_url) as event_bus:
+        async with event_bus_factory(db_url=config.db_config.url) as event_bus:
             async with httpx.AsyncClient(verify=SSL_CONTEXT) as http_client:
                 webhooks = WebhooksComponent(config, http_client)
                 events = PGEventsComponent(pool=pool, config=config, event_bus=event_bus)
