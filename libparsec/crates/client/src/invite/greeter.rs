@@ -442,12 +442,12 @@ impl BaseGreetInitialCtx {
             return Ok(BaseGreetInProgress1Ctx {
                 token: self.token,
                 greeting_attempt,
-                device: self.device.clone(),
+                device: self.device,
                 greeter_sas,
                 claimer_sas,
                 shared_secret_key,
-                cmds: self.cmds.clone(),
-                event_bus: self.event_bus.clone(),
+                cmds: self.cmds,
+                event_bus: self.event_bus,
             });
         }
         unreachable!()
