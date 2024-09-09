@@ -111,10 +111,11 @@
               <ion-text class="trial-card-text__time title-h3">{{ $msTranslate(formatExpirationTime(expirationDuration)) }}</ion-text>
               <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
             </div>
-            <ion-button class="trial-card__button">
-              <a href="https://parsec.cloud/tarification">
-                {{ $msTranslate('SideMenu.trial.subscribe') }}
-              </a>
+            <ion-button
+              class="trial-card__button"
+              @click="openPricingLink"
+            >
+              {{ $msTranslate('SideMenu.trial.subscribe') }}
             </ion-button>
           </div>
 
@@ -296,7 +297,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient, I18n } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -513,6 +514,10 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 
 async function goToHome(): Promise<void> {
   await switchOrganization(null);
+}
+
+async function openPricingLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'app.pricingLink' }), '_blank');
 }
 </script>
 
@@ -902,12 +907,7 @@ ion-menu {
     --padding-end: 0;
     --padding-top: 0;
     --padding-bottom: 0;
-
-    a {
-      color: var(--parsec-color-light-primary-600);
-      padding: 0.625rem 1rem;
-      width: 100%;
-    }
+    color: var(--parsec-color-light-primary-600);
   }
 }
 
