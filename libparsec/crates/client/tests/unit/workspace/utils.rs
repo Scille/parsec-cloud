@@ -16,6 +16,21 @@ pub(crate) async fn workspace_ops_factory(
     device: &Arc<LocalDevice>,
     realm_id: VlobID,
 ) -> WorkspaceOps {
+    workspace_ops_with_prevent_sync_pattern_factory(
+        discriminant_dir,
+        device,
+        realm_id,
+        Regex::from_regex_str(r"\.tmp$").unwrap(),
+    )
+    .await
+}
+
+pub(crate) async fn workspace_ops_with_prevent_sync_pattern_factory(
+    discriminant_dir: &Path,
+    device: &Arc<LocalDevice>,
+    realm_id: VlobID,
+    prevent_sync_pattern: Regex,
+) -> WorkspaceOps {
     let config = Arc::new(ClientConfig {
         config_dir: discriminant_dir.to_owned(),
         data_base_dir: discriminant_dir.to_owned(),
@@ -23,7 +38,7 @@ pub(crate) async fn workspace_ops_factory(
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: Regex::from_regex_str(r"\.tmp$").unwrap(),
+        prevent_sync_pattern,
     });
     let event_bus = EventBus::default();
     let cmds = Arc::new(
