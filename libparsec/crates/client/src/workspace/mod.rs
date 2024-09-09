@@ -77,6 +77,10 @@ struct OpenedFile {
     /// is needed, but (at least for now) we instead value the simplicity of setting
     /// a flag when a change occured.
     flush_needed: bool,
+    /// Track the fact any modification occured on the file since it has been opened.
+    /// This is useful on close to determine if we should broadcast a
+    /// `WorkspaceOpsOutboundSyncNeeded` event.
+    modified_since_opened: bool,
 }
 
 #[derive(Debug)]

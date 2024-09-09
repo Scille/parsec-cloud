@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use libparsec_types::prelude::*;
 
-use crate::workspace::WorkspaceOps;
+use crate::{workspace::WorkspaceOps, EventWorkspaceOpsOutboundSyncNeeded};
 
 use super::ReshapeAndFlushError;
 
@@ -180,11 +180,11 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
             }) // No ? here: we want to first finish the close before returning the error !
     };
 
-    // 3) Close the updater if the file is no longer opened
+    // 3) Close the updater if the file is no longer opened (and broadcast need sync event)
 
     if !still_opened {
-        // Last step is to close the updater so that the file manifest is no longer locked
-        // in the store.
+        // Since the file is no longer opened, we now have to close the updater so that the
+        // file manifest is no longer locked in the store.
         //
         // To do that we need to take ownership of the updater, which is not easy given it
         // is stored in an Arc !
@@ -196,7 +196,7 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
         // no longer contains their file descriptor's cursor.
         // So we can just wait in a loop until the Arc is only referenced by ourselves.
         let mut our_opened_file_ref_wrapper = Some(opened_file);
-        loop {
+        let owned_opened_file = loop {
             match Arc::try_unwrap(
                 our_opened_file_ref_wrapper
                     .take()
@@ -205,18 +205,33 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
                 // The Arc is single referenced
                 Ok(opened_file_mutex) => {
                     // Unwrap the mutex to obtain ownership on the `OpenedFile` object...
-                    let opened_file = opened_file_mutex.into_inner();
-                    // ...and finally close the updater !
-                    opened_file.updater.close(&ops.store);
-                    break;
+                    break opened_file_mutex.into_inner();
                 }
-                // The Arc is still referenced by others coroutines...
+                // The Arc is still referenced by others coroutines
                 Err(our_opened_file_ref) => {
                     our_opened_file_ref.lock().await;
                     // Put back our reference in the wrapper for the next try
                     our_opened_file_ref_wrapper = Some(our_opened_file_ref);
                 }
             }
+        };
+
+        // Finally close the updater !
+        owned_opened_file.updater.close(&ops.store);
+
+        // Last step is to broadcast an event if the file has been modified.
+        // Note we still broadcast the event even if the flush has failed:
+        // - This simplify code.
+        // - If the file has been modified by previous flushes, those changes will
+        //   be synced on next workspace startup no matter what. So it's more consistent
+        //   to notify about them now.
+        // - If the file hasn't been modified, the outbound sync call is a noop (so no big deal).
+        if owned_opened_file.modified_since_opened {
+            let event = EventWorkspaceOpsOutboundSyncNeeded {
+                realm_id: ops.realm_id,
+                entry_id: owned_opened_file.manifest.base.id,
+            };
+            ops.event_bus.send(&event);
         }
     }
 
