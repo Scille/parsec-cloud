@@ -139,7 +139,7 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
-async fn add_temporary_entry(
+async fn add_confined_entry(
     #[values(true, false)] root_level: bool,
     #[values("file", "folder")] entry_type: &'static str,
     env: &TestbedEnv,
@@ -202,7 +202,7 @@ async fn add_temporary_entry(
     let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
     p_assert_eq!(children.len(), 0);
 
-    // Create a temporary directory
+    // Create the confined child
     let target = base_path.join("test.tmp".parse().unwrap());
     let child_id = match entry_type {
         "file" => ops.create_file(target).await.unwrap(),
@@ -210,7 +210,9 @@ async fn add_temporary_entry(
         _ => panic!("Invalid entry type"),
     };
 
-    // Check that the child is marked as needing sync
+    // Check that the child is marked as needing sync (this is because the child itself
+    // is not aware of its name and can be renamed at anytime, so it's not its job to
+    // decide whether or not it should be synced)
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
         p_assert_eq!(e.realm_id, wksp1_id);
         p_assert_eq!(e.entry_id, child_id);
@@ -277,9 +279,9 @@ async fn add_temporary_entry(
     // Stop spying
     drop(spy);
 
-    // Create a non-temporary directory
+    // Create a non-confined directory
     let target = base_path.join("test_not_tmp".parse().unwrap());
-    let non_temporary_child_id = match entry_type {
+    let non_confined_child_id = match entry_type {
         "file" => ops.create_file(target).await.unwrap(),
         "folder" => ops.create_folder(target).await.unwrap(),
         _ => panic!("Invalid entry type"),
@@ -345,7 +347,7 @@ async fn add_temporary_entry(
                 ..
             },
         ) => {
-            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(id, non_confined_child_id);
             p_assert_eq!(need_sync, true);
             p_assert_eq!(confinement_point, None);
         }
@@ -358,7 +360,7 @@ async fn add_temporary_entry(
                 ..
             },
         ) => {
-            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(id, non_confined_child_id);
             p_assert_eq!(need_sync, true);
             p_assert_eq!(confinement_point, None);
         }
@@ -402,7 +404,7 @@ async fn add_temporary_entry(
             },
         ) => {
             p_assert_eq!(id, child_id);
-            // TODO: need_sync should be true, i.e the temporary file should not have been synced
+            // TODO: need_sync should be true, i.e the confined file should not have been synced
             // See: https://github.com/Scille/parsec-cloud/issues/8198
             p_assert_eq!(need_sync, false);
             // TODO: confinement_point should be Some(parent_id)
@@ -419,7 +421,7 @@ async fn add_temporary_entry(
             },
         ) => {
             p_assert_eq!(id, child_id);
-            // TODO: need_sync should be true, i.e the temporary file should not have been synced
+            // TODO: need_sync should be true, i.e the confined file should not have been synced
             // See: https://github.com/Scille/parsec-cloud/issues/8198
             p_assert_eq!(need_sync, false);
             // TODO: confinement_point should be Some(parent_id)
@@ -440,7 +442,7 @@ async fn add_temporary_entry(
                 ..
             },
         ) => {
-            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(id, non_confined_child_id);
             p_assert_eq!(need_sync, false);
             p_assert_eq!(confinement_point, None);
         }
@@ -453,7 +455,7 @@ async fn add_temporary_entry(
                 ..
             },
         ) => {
-            p_assert_eq!(id, non_temporary_child_id);
+            p_assert_eq!(id, non_confined_child_id);
             p_assert_eq!(need_sync, false);
             p_assert_eq!(confinement_point, None);
         }
