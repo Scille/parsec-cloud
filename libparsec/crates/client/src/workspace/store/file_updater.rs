@@ -144,6 +144,8 @@ pub(super) async fn for_update_file(
 
     let updater = FileUpdater {
         _update_guard: update_guard,
+        #[cfg(debug_assertions)]
+        entry_id: manifest.base.id,
     };
 
     Ok((updater, manifest))
@@ -158,6 +160,8 @@ pub(super) async fn for_update_file(
 #[derive(Debug)]
 pub(crate) struct FileUpdater {
     _update_guard: ManifestUpdateLockGuard,
+    #[cfg(debug_assertions)]
+    entry_id: VlobID,
 }
 
 impl FileUpdater {
@@ -168,6 +172,9 @@ impl FileUpdater {
         new_chunks: impl Iterator<Item = (ChunkID, &[u8])>,
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> Result<(), UpdateFileManifestAndContinueError> {
+        // Sanity check to ensure the caller is not buggy
+        debug_assert_eq!(manifest.base.id, self.entry_id);
+
         let mut storage_guard = store.storage.lock().await;
         let storage = storage_guard
             .as_mut()
