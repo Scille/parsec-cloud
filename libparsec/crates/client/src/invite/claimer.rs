@@ -6,7 +6,7 @@ use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_types::prelude::*;
 
-use crate::invite::common::Throttle;
+use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::ClientConfig;
 
 #[derive(Debug, thiserror::Error)]
@@ -304,31 +304,36 @@ struct BaseClaimInitialCtx {
 
 impl BaseClaimInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseClaimInProgress1Ctx, ClaimInProgressError> {
-        // Wait for the other peer
-        let mut result = self._do_wait_peer().await;
-        // If the attempt was automatically cancelled by the other peer, try again once.
-        // Previous attempts are automatically cancelled when a new start greeting attempt is made.
-        // This way, the peers can synchronize themselves more easily during the wait-peer phase,
-        // without requiring the front-end to deal with it.
-        if let Err(ClaimInProgressError::GreetingAttemptCancelled {
-            origin: GreeterOrClaimer::Greeter,
-            reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
-            ..
-        }) = result
-        {
-            result = self._do_wait_peer().await
+        // Loop over wait peer attempts
+        for attempt in 0.. {
+            let result = self._do_wait_peer().await;
+            // If the attempt was automatically cancelled by the other peer, try again (at most 8 times).
+            // Previous attempts are automatically cancelled when a new start greeting attempt is made.
+            // This way, the peers can synchronize themselves more easily during the wait-peer phase,
+            // without requiring the front-end to deal with it.
+            if let Err(ClaimInProgressError::GreetingAttemptCancelled {
+                origin: GreeterOrClaimer::Greeter,
+                reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
+                ..
+            }) = result
+            {
+                if attempt < WAIT_PEER_MAX_ATTEMPTS {
+                    continue;
+                }
+            }
+            let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = result?;
+            // Move self into the next context
+            return Ok(BaseClaimInProgress1Ctx {
+                config: self.config,
+                cmds: self.cmds,
+                greeting_attempt,
+                greeter_sas,
+                claimer_sas,
+                shared_secret_key,
+                time_provider: self.time_provider,
+            });
         }
-        // Move self into the next context
-        let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = result?;
-        Ok(BaseClaimInProgress1Ctx {
-            config: self.config,
-            cmds: self.cmds,
-            greeting_attempt,
-            greeter_sas,
-            claimer_sas,
-            shared_secret_key,
-            time_provider: self.time_provider,
-        })
+        unreachable!()
     }
 
     async fn _do_wait_peer(
