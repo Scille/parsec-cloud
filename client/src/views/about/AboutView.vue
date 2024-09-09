@@ -127,7 +127,7 @@ async function showChangelog(): Promise<void> {
 </script>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/common/mocks';
+import { APP_VERSION } from '@/services/environment';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';

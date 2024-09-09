@@ -63,9 +63,15 @@
     <div class="footer-list">
       <ion-item
         class="footer-list__item"
-        @click="onOptionClick(ProfilePopoverOption.Help)"
+        @click="onOptionClick(ProfilePopoverOption.Documentation)"
       >
-        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.help') }} </ion-text>
+        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.documentation') }} </ion-text>
+      </ion-item>
+      <ion-item
+        class="footer-list__item"
+        @click="onOptionClick(ProfilePopoverOption.Feedback)"
+      >
+        <ion-text class="body-sm"> {{ $msTranslate('HomePage.topbar.feedback') }} </ion-text>
       </ion-item>
       <ion-item
         class="footer-list__item"
@@ -80,16 +86,17 @@
 <script lang="ts">
 export enum ProfilePopoverOption {
   Settings = 0,
-  Help = 1,
+  Documentation = 1,
   LogOut = 2,
   App = 3,
   MyProfile = 4,
   Update = 5,
+  Feedback = 6,
 }
 </script>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/common/mocks';
+import { APP_VERSION } from '@/services/environment';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { UserProfile } from '@/parsec';
 import { UpdateAvailabilityData } from '@/services/eventDistributor';

@@ -2,6 +2,8 @@
 
 import { EnvironmentType } from 'megashark-lib';
 
+export const APP_VERSION = __APP_VERSION__;
+
 const STRIPE_ENV_VARIABLE = 'VITE_STRIPE_API_KEY';
 // cspell:disable-next-line
 const DEFAULT_STRIPE_API_KEY = 'pk_test_P4dfuyoLBQtDHKjTiNDH3JH700TT3mCLbE';

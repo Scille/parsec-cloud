@@ -101,9 +101,10 @@
         "topbar": {
             "settings": "Paramètres",
             "contactUs": "Nous contacter",
+            "documentation": "Documentation",
             "logout": "Déconnexion",
             "customerArea": "Espace client",
-            "help": "Aide et commentaires",
+            "feedback": "Commentaires",
             "myProfile": "Mon profil",
             "logoutConfirmTitle": "Déconnexion",
             "logoutConfirmQuestion": "Êtes-vous sûr(e) de vouloir vous déconnecter ?",
@@ -265,7 +266,8 @@
     "MenuPage": {
         "about": "À propos",
         "helpLink": "{signUrl}/contact",
-        "contactLink": "{signUrl}/contact"
+        "contactLink": "{signUrl}/contact",
+        "documentationLink": "https://docs.parsec.cloud/fr/{version}"
     },
     "HeaderPage": {
         "titles": {

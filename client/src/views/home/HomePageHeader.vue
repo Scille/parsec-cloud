@@ -53,6 +53,15 @@
     </div>
     <div class="topbar-right">
       <ion-buttons class="topbar-buttons">
+        <!-- doc button -->
+
+        <ion-button
+          class="topbar-buttons__item"
+          @click="documentationClicked"
+        >
+          <ion-icon :icon="documentText" />
+          {{ $msTranslate('HomePage.topbar.documentation') }}
+        </ion-button>
         <!-- contact button -->
 
         <ion-button
@@ -87,12 +96,12 @@
 <script setup lang="ts">
 import { I18n, LogoRowWhite, MsImage } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
-import { arrowBack, chatbubbles, cog, informationCircle, sparkles } from 'ionicons/icons';
+import { arrowBack, chatbubbles, cog, informationCircle, sparkles, documentText } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Answer, askQuestion } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
-import { Env } from '@/services/environment';
+import { Env, APP_VERSION } from '@/services/environment';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
@@ -137,6 +146,10 @@ defineEmits<{
 
 async function contactClicked(): Promise<void> {
   window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
+}
+
+async function documentationClicked(): Promise<void> {
+  window.open(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION } }), '_blank');
 }
 </script>
 

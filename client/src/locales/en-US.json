@@ -101,9 +101,10 @@
         "topbar": {
             "settings": "Settings",
             "contactUs": "Contact us",
+            "documentation": "Documentation",
             "logout": "Log out",
             "customerArea": "Customer area",
-            "help": "Help and feedback",
+            "feedback": "Feedback",
             "myProfile": "My profile",
             "logoutConfirmTitle": "Log out",
             "logoutConfirmQuestion": "Are you sure you want to log out?",
@@ -265,7 +266,8 @@
     "MenuPage": {
         "about": "About",
         "helpLink": "{signUrl}/contact",
-        "contactLink": "{signUrl}/contact"
+        "contactLink": "{signUrl}/contact",
+        "documentationLink": "https://docs.parsec.cloud/en/{version}"
     },
     "HeaderPage": {
         "titles": {
