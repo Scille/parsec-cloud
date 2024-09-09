@@ -35,8 +35,10 @@ from parsec.config import (
     BackendConfig,
     LogLevel,
     MockedBlockStoreConfig,
+    MockedDatabaseConfig,
     MockedEmailConfig,
     PostgreSQLBlockStoreConfig,
+    PostgreSQLDatabaseConfig,
 )
 
 logger: structlog.stdlib.BoundLogger = structlog.get_logger()
@@ -221,21 +223,22 @@ async def test_drop(raw_organization_id: str, request: Request) -> Response:
 async def testbed_backend_factory(
     server_addr: ParsecAddr, with_postgresql: str | None
 ) -> AsyncIterator[TestbedBackend]:
-    db_url = "MOCKED" if with_postgresql is None else with_postgresql
     blockstore_config = (
         MockedBlockStoreConfig() if with_postgresql is None else PostgreSQLBlockStoreConfig()
     )
     # Same as the defaults in `db_server_options`
-    db_min_connections = 1 if with_postgresql is None else 5
-    db_max_connections = 1 if with_postgresql is None else 7
+    if with_postgresql is None:
+        db_config = MockedDatabaseConfig()
+    else:
+        db_config = PostgreSQLDatabaseConfig(
+            url=with_postgresql, min_connections=5, max_connections=7
+        )
 
     # TODO: avoid tempdir for email ?
     tmpdir = tempfile.mkdtemp(prefix="tmp-email-folder-")
     config = BackendConfig(
         debug=True,
-        db_url=db_url,
-        db_min_connections=db_min_connections,
-        db_max_connections=db_max_connections,
+        db_config=db_config,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
         server_addr=server_addr,

@@ -11,8 +11,11 @@ import structlog
 
 from parsec.config import (
     BaseBlockStoreConfig,
+    BaseDatabaseConfig,
     MockedBlockStoreConfig,
+    MockedDatabaseConfig,
     PostgreSQLBlockStoreConfig,
+    PostgreSQLDatabaseConfig,
 )
 from parsec.logging import _make_filtering_bound_logger
 
@@ -241,26 +244,30 @@ def skip_if_postgresql(with_postgresql: bool) -> None:
 
 
 @pytest.fixture
-async def db_url(request: pytest.FixtureRequest) -> str:
+async def db_config(request: pytest.FixtureRequest) -> BaseDatabaseConfig:
     if request.config.getoption("--postgresql"):
         url = get_postgresql_url()
         assert url is not None
-        return url
+        return PostgreSQLDatabaseConfig(
+            url=url,
+            min_connections=1,
+            max_connections=2,
+        )
 
     elif request.node.get_closest_marker("postgresql"):
         pytest.skip("`Test is postgresql-only")
 
     else:
-        return "MOCKED"
+        return MockedDatabaseConfig()
 
 
 @pytest.fixture
-def blockstore_config(db_url: str) -> BaseBlockStoreConfig:
+def blockstore_config(db_config: BaseDatabaseConfig) -> BaseBlockStoreConfig:
     # TODO: allow to test against swift ?
-    if db_url.startswith("postgresql://"):
-        return PostgreSQLBlockStoreConfig()
-    else:
+    if db_config.is_mocked():
         return MockedBlockStoreConfig()
+    else:
+        return PostgreSQLBlockStoreConfig()
 
 
 # Finally other fixtures

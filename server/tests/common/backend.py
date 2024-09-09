@@ -11,7 +11,7 @@ from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
-from parsec.config import BackendConfig, BaseBlockStoreConfig, MockedEmailConfig
+from parsec.config import BackendConfig, BaseBlockStoreConfig, BaseDatabaseConfig, MockedEmailConfig
 from tests.common.postgresql import reset_postgresql_testbed
 
 SERVER_DOMAIN = "parsec.invalid"
@@ -25,15 +25,13 @@ def backend_mocked_data() -> dict[OrganizationID, MemoryOrganization]:
 @pytest.fixture
 def backend_config(
     tmpdir: str,
-    db_url: str,
+    db_config: BaseDatabaseConfig,
     blockstore_config: BaseBlockStoreConfig,
     backend_mocked_data: dict[OrganizationID, MemoryOrganization],
 ) -> BackendConfig:
     return BackendConfig(
         debug=True,
-        db_url=db_url,
-        db_min_connections=1,
-        db_max_connections=2,
+        db_config=db_config,
         sse_keepalive=30,
         forward_proto_enforce_https=None,
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),

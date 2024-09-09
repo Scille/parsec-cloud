@@ -60,7 +60,7 @@ logger = get_logger()
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
     logger.info("Backend configuration", **dataclasses.asdict(config))
-    if config.db_url == "MOCKED":
+    if config.db_config.is_mocked():
         components_factory = mocked_components_factory
     else:
         components_factory = postgresql_components_factory
@@ -109,7 +109,7 @@ class Backend:
     events: BaseEventsComponent
     shamir: BaseShamirComponent
 
-    # Only available if `config.db_url == "MOCKED"`
+    # Only available if `config.db_config.type == "MOCKED"`
     mocked_data: MemoryDatamodel | None = None
 
     apis: dict[Type[Any], ApiFn] = field(init=False)  # pyright: ignore[reportMissingTypeArgument] Req/Rep are currently untyped

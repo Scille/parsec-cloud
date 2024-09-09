@@ -22,9 +22,12 @@ from typing_extensions import Concatenate, ParamSpec
 from parsec._version import __version__
 from parsec.config import (
     BaseBlockStoreConfig,
+    BaseDatabaseConfig,
     LogLevel,
     MockedBlockStoreConfig,
+    MockedDatabaseConfig,
     PostgreSQLBlockStoreConfig,
+    PostgreSQLDatabaseConfig,
     RAID0BlockStoreConfig,
     RAID1BlockStoreConfig,
     RAID5BlockStoreConfig,
@@ -183,6 +186,7 @@ def db_server_options(fn: Callable[Q, T]) -> Callable[Q, T]:
             required=True,
             envvar="PARSEC_DB",
             show_envvar=True,
+            type=_parse_db_param,
             metavar="URL",
             help="""Database configuration.
 Allowed values:
@@ -212,6 +216,15 @@ Allowed values:
     for decorator in decorators:
         fn = decorator(fn)
     return fn
+
+
+def _parse_db_param(value: str) -> BaseDatabaseConfig:
+    if value.upper() == "MOCKED":
+        return MockedDatabaseConfig()
+    elif value.startswith("postgresql://"):
+        return PostgreSQLDatabaseConfig(url=value, min_connections=5, max_connections=7)
+    else:
+        raise click.BadParameter(f"Invalid db type `{value}`")
 
 
 # Blockstore option

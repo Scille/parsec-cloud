@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
+from urllib.parse import urlparse, urlunparse
 
 from parsec._parsec import ActiveUsersLimit, ParsecAddr
 
@@ -12,9 +13,52 @@ if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
 
 
+def hide_password(url: str) -> str:
+    parsed = urlparse(url)
+    if parsed.password is None:
+        return url
+    args = list(parsed)
+    args[1] = f"{parsed.username}:***@{parsed.hostname}:{parsed.port}"
+    return urlunparse(args)
+
+
+class BaseDatabaseConfig:
+    # Overloaded by children
+    type: Literal["POSTGRESQL", "MOCKED"]
+
+    def is_mocked(self) -> bool:
+        raise NotImplementedError
+
+
+@dataclass(slots=True)
+class PostgreSQLDatabaseConfig(BaseDatabaseConfig):
+    type = "POSTGRESQL"
+
+    url: str
+    min_connections: int
+    max_connections: int
+
+    def is_mocked(self) -> bool:
+        return False
+
+    def __str__(self) -> str:
+        url = hide_password(self.url)
+        return f"{self.__class__.__name__}(url={url}, min_connections={self.min_connections}, max_connections={self.max_connections})"
+
+    __repr__ = __str__
+
+
+@dataclass(slots=True)
+class MockedDatabaseConfig(BaseDatabaseConfig):
+    type = "MOCKED"
+
+    def is_mocked(self) -> bool:
+        return True
+
+
 class BaseBlockStoreConfig:
     # Overloaded by children
-    type: str
+    type: Literal["RAID0", "RAID1", "RAID5", "S3", "SWIFT", "POSTGRESQL", "MOCKED"]
 
 
 @dataclass(slots=True)
@@ -126,9 +170,7 @@ class LogLevel(Enum):
 class BackendConfig:
     administration_token: str
 
-    db_url: str
-    db_min_connections: int
-    db_max_connections: int
+    db_config: BaseDatabaseConfig
     sse_keepalive: float  # Set to `math.inf` if disabled
 
     blockstore_config: BaseBlockStoreConfig
@@ -150,10 +192,3 @@ class BackendConfig:
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024
     backend_mocked_data: dict[OrganizationID, MemoryOrganization] | None = None
-
-    @property
-    def db_type(self) -> str:
-        if self.db_url.upper() == "MOCKED":
-            return "MOCKED"
-        else:
-            return "POSTGRESQL"
