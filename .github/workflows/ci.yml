@@ -140,7 +140,7 @@ jobs:
               - newsfragments/**
 
       - name: Install python
-        uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # pin v5.2.0
+        uses: actions/setup-python@29a37be0a3d3e8bf5bc1eb19cd0502922f5b312a  # pin v5.2.0
         id: setup-python
         with:
           python-version: 3.12
