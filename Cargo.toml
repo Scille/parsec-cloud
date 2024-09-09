@@ -93,7 +93,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.86", default-features = false }
+anyhow = { version = "1.0.87", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-lock = { version = "3.4.0", default-features = false }
@@ -103,13 +103,13 @@ base64 = { version = "0.22.1", default-features = false }
 blake2 = { version = "0.10.6", default-features = false }
 bytes = { version = "1.7.1", default-features = false }
 chrono = { version = "0.4.38", default-features = false }
-clap = { version = "4.5.15", default-features = false }
+clap = { version = "4.5.17", default-features = false }
 console_error_panic_hook = { version = "=0.1.6", default-features = false }
 console_log = { version = "1.0.0", default-features = false }
 crc32fast = { version = "1.4.2", default-features = false }
 crypto_box = { version = "0.9.1", default-features = false }
 crypto_secretbox = { version = "0.1.1", default-features = false }
-ctrlc = { version = "3.4.4", default-features = false }
+ctrlc = { version = "3.4.5", default-features = false }
 # You need base64&co ? This is the crate you need !
 data-encoding = { version = "2.6.0", default-features = false }
 digest = { version = "0.10.7", default-features = false }
@@ -119,7 +119,7 @@ email-address-parser = { version = "2.0.0", default-features = false }
 env_logger = { version = "0.10.2", default-features = false }
 event-listener = { version = "5.3.1", default-features = false }
 eventsource-stream = { version = "0.2.3", default-features = false }
-flate2 = { version = "1.0.31", features = ["rust_backend"], default-features = false }
+flate2 = { version = "1.0.33", features = ["rust_backend"], default-features = false }
 flume = { version = "0.11.0", default-features = false }
 fnmatch-regex = { version = "0.2.0", default-features = false }
 fuser = { version = "0.14.0", default-features = false }
@@ -134,14 +134,14 @@ indexed_db_futures = { version = "0.5.0", default-features = false }
 instant = { version = "0.1.13", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
-js-sys = { version = "0.3.69", default-features = false }
+js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "2.3.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.155", default-features = false }
+libc = { version = "0.2.158", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.22", default-features = false }
-miniserde = { version = "0.1.39", default-features = false }
+miniserde = { version = "0.1.40", default-features = false }
 neon = { version = "1.0.0", default-features = false }
 once_cell = { version = "1.19.0", default-features = false }
 openssl = { version = "0.10.66", default-features = false }
@@ -156,24 +156,24 @@ proptest = { version = "1.5.0", default-features = false }
 proptest-state-machine = { version = "0.3.0", default-features = false }
 proc-macro2 = { version = "1.0.86", default-features = false }
 pyo3 = { version = "0.21.2", default-features = false }
-quote = { version = "1.0.36", default-features = false }
+quote = { version = "1.0.37", default-features = false }
 rand = { version = "0.8.5", default-features = false }
 regex = { version = "1.10.6", default-features = false }
 regex-syntax = { version = "0.8.4", default-features = false }
 reqwest-eventsource = { version = "0.6.0", default-features = false }
-reqwest = { version = "0.12.5", default-features = false }
+reqwest = { version = "0.12.7", default-features = false }
 rmp-serde = { version = "1.3.0", default-features = false }
 rpassword = { version = "7.3.1", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
 rstest_reuse = { version = "0.6.0", default-features = false }
 rstest = { version = "0.18.2", default-features = false }
-ruzstd = { version = "0.7.0", default-features = true }
+ruzstd = { version = "0.7.1", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
-serde_json = { version = "1.0.124", default-features = false }
+serde_json = { version = "1.0.128", default-features = false }
 serde_test = { version = "1.0.177", default-features = false }
-serde = { version = "1.0.206", default-features = false }
+serde = { version = "1.0.210", default-features = false }
 serde-wasm-bindgen = { version = "0.6.4", default-features = false }
 serde_with = { version = "3.9.0", default-features = false }
 sha1 = { version = "0.10.6", default-features = false }
@@ -181,19 +181,19 @@ sha2 = { version = "0.10.8", default-features = false }
 sharks = "0.5.0"
 sodiumoxide = { version = "0.2.7", default-features = false }
 sqlx = { version = "0.7.2", default-features = false }
-syn = { version = "2.0.74", default-features = false }
+syn = { version = "2.0.77", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 thiserror = { version = "1.0.63", default-features = false }
-tokio = { version = "1.39.2", default-features = false }
+tokio = { version = "1.40.0", default-features = false }
 unicode-normalization = { version = "0.1.23", default-features = false }
 url = { version = "2.5.2", default-features = false }
 uuid = { version = "1.6.1", default-features = false }
-wasm-bindgen-futures = { version = "0.4.42", default-features = false }
-wasm-bindgen-test = { version = "0.3.42", default-features = false }
+wasm-bindgen-futures = { version = "0.4.43", default-features = false }
+wasm-bindgen-test = { version = "0.3.43", default-features = false }
 wasm-bindgen = { version = "0.2.92", default-features = false }
-web-sys = { version = "0.3.69", default-features = false }
+web-sys = { version = "0.3.70", default-features = false }
 widestring = { version = "1.1.0", default-features = false }
-windows-sys = { version = "0.52.0", default-features = false }
+windows-sys = { version = "0.59.0", default-features = false }
 winfsp_wrs_build = { version = "0.3.0", default-features = false }
 winfsp_wrs = { version = "0.3.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
