@@ -142,7 +142,7 @@ pub(super) async fn for_update_sync_local_only(
 pub(crate) struct SyncUpdater<'a> {
     store: &'a super::WorkspaceStore,
     update_guard: Option<ManifestUpdateLockGuard>,
-    /// Keep the original manifest has two role here:
+    /// Keeping the original manifest has two role here:
     /// - To keep track of child&parent ID since they are required when switching
     ///   to a conflict updater.
     /// - For sanity check to ensure the updated manifest the caller will provide

@@ -115,7 +115,7 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
 
         // Check is the file is opened by another file descriptor.
         // - In this case we should only remove our cursor.
-        // - Otherwise, we should entirely destroy the opened file and it underlying updater lock.
+        // - Otherwise, we should entirely destroy the opened file and its underlying updater lock.
         //
         // Note it could be tempting to use `opened_file.cursors.len() != 0` to check if the file
         // has been opened multiple times. However, this would be incorrect if we do this check
@@ -148,8 +148,7 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
     // We are currently in a strange state where the file descriptor is no longer
     // accessible, but the opened_file object (and it underlying updater) is still alive.
     // What this means is if we abruptly return while the file is opened once, the un-flushed
-    // data will simply be lost and the updater will never be gracefully closed (leading to
-    // a crash on drop).
+    // data will simply be lost and the updater will never be gracefully closed.
     //
     // In practice the only operation that could fail is the flush. So we capture its outcome,
     // finish the close no matter what, then finally return the outcome as our own result.
@@ -165,7 +164,10 @@ pub async fn fd_close(ops: &WorkspaceOps, fd: FileDescriptor) -> Result<(), Work
             .cursors
             .iter()
             .position(|c| c.file_descriptor == fd)
-            // The cursor might have been closed while we were waiting for opened_file's lock
+            // Here is the only special case that goes against the "From now on, no error
+            // should be returned" rule stated above: the cursor have concurrently been
+            // removed while we were waiting for `opened_file`'s lock, hence there is
+            // nothing more to do !
             .ok_or(WorkspaceFdCloseError::BadFileDescriptor)?;
         opened_file.cursors.swap_remove(cursor_index);
 

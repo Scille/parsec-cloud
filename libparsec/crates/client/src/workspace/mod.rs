@@ -56,6 +56,7 @@ struct OpenedFileCursor {
 struct OpenedFile {
     updater: FileUpdater,
     manifest: Arc<LocalFileManifest>,
+    /// The file can be opened multiple time, each one of them having it own cursor.
     cursors: Vec<OpenedFileCursor>,
     /// Track the number of bytes written since the last flush, this is used as
     /// a simple heuristic to determine when to do a chunk reshape & flush.
@@ -66,8 +67,15 @@ struct OpenedFile {
     /// Hence we trigger the reshape once we have written enough bytes to create
     /// a block (depending on manifest's blocksize).
     bytes_written_since_last_flush: u64,
+    /// Chunks no longer used since the last flush. They should be removed from
+    /// the database  on the next flush.
     removed_chunks: Vec<ChunkID>,
+    /// Chunks created since the last flush. They currently live in memory and should
+    /// be written in the database on the next flush.
     new_chunks: Vec<(ChunkID, Vec<u8>)>,
+    /// In theory we could deduce from `removed_chunks`&`new_chunks` if the flush
+    /// is needed, but (at least for now) we instead value the simplicity of setting
+    /// a flag when a change occured.
     flush_needed: bool,
 }
 
@@ -165,7 +173,7 @@ impl WorkspaceOps {
             realm_id,
             workspace_external_info: Mutex::new(workspace_external_info),
             opened_files: Mutex::new(OpenedFiles {
-                // Avoid using 0 as file descriptor as it is error-prone
+                // Avoid using 0 as file descriptor, as it is error-prone
                 next_file_descriptor: FileDescriptor(1),
                 file_descriptors: HashMap::new(),
                 opened_files: HashMap::new(),
