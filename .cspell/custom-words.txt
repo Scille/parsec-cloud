@@ -126,6 +126,7 @@ debouncer
 deconnection
 Deeplink
 dehaze
+Delorean
 deptry
 derandomize
 derivated
