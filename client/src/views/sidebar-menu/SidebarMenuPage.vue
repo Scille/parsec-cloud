@@ -112,7 +112,10 @@
               <ion-text class="trial-card-text__info body">{{ $msTranslate('SideMenu.trial.description') }}</ion-text>
             </div>
             <ion-button class="trial-card__button">
-              <a href="https://parsec.cloud/tarification">
+              <a
+                href="https://parsec.cloud/tarification"
+                target="_blank"
+              >
                 {{ $msTranslate('SideMenu.trial.subscribe') }}
               </a>
             </ion-button>
