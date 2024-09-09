@@ -36,6 +36,7 @@ pub struct Throttle<'a> {
     time_provider: &'a TimeProvider,
     last_call: Option<DateTime>,
     throttle_duration: Duration,
+    attempts: usize,
 }
 
 impl<'a> Throttle<'a> {
@@ -52,14 +53,37 @@ impl<'a> Throttle<'a> {
             time_provider,
             last_call: None,
             throttle_duration,
+            attempts: 0,
         }
+    }
+
+    /// Returns the duration to wait before the next call.
+    /// The duration is computed based on the configured throttle duration
+    /// and the number of attempts done so far.
+    // With the default configured throttle duration of 1 second, the actual
+    // throttle duration is 31ms, 62ms, 125ms, 250ms, 500ms, 1s for the
+    // first 6 attempts, and 1 second for any further attempts.
+    // The faster polling rate during the first attempts is done to speed up
+    // the moments where the peers are running several steps without user
+    // interaction.
+    fn get_duration(&self) -> Duration {
+        let factor = match self.attempts {
+            0 => 32,
+            1 => 16,
+            2 => 8,
+            3 => 4,
+            4 => 2,
+            _ => 1,
+        };
+        self.throttle_duration / factor
     }
 
     pub async fn throttle(&mut self) {
         if let Some(last_call) = self.last_call {
-            let duration = last_call + self.throttle_duration - self.time_provider.now();
+            let duration = last_call + self.get_duration() - self.time_provider.now();
             self.time_provider.sleep(duration).await;
         }
         self.last_call = Some(self.time_provider.now());
+        self.attempts += 1;
     }
 }
