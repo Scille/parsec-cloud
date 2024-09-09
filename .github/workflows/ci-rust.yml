@@ -102,7 +102,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@f2b65a3e67b2ba5ed3b4a631b5e460896e975708 # pin v2.42.37
+      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
         with:
           tool: nextest@0.9.54, wasm-pack@0.12.1, cargo-deny@0.15.0
 
@@ -262,7 +262,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@f2b65a3e67b2ba5ed3b4a631b5e460896e975708 # pin v2.42.37
+      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
         with:
           tool: nextest@0.9.54
 
