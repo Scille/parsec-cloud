@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{fmt::Display, sync::Arc};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -8,7 +8,7 @@ use libparsec_types::prelude::*;
 use super::utils::{ls, workspace_ops_factory};
 use crate::{
     workspace::{EntryStat, MoveEntryMode},
-    EventWorkspaceOpsOutboundSyncNeeded,
+    EventWorkspaceOpsOutboundSyncNeeded, WorkspaceOps,
 };
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -138,236 +138,333 @@ async fn good(#[values(true, false)] root_level: bool, env: &TestbedEnv) {
     p_assert_eq!(ls!(ops, &dir2_str).await, ["subdir3"]);
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum EntryType {
+    File,
+    Folder,
+}
+
+impl Display for EntryType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EntryType::File => write!(f, "file"),
+            EntryType::Folder => write!(f, "folder"),
+        }
+    }
+}
+
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn add_confined_entry(
     #[values(true, false)] root_level: bool,
-    #[values("file", "folder")] entry_type: &'static str,
+    #[values(EntryType::File, EntryType::Folder)] entry_type: EntryType,
     env: &TestbedEnv,
 ) {
-    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
-    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let Env {
+        realm_id,
+        parent_id,
+        base_path,
+    } = bootstrap_env(env, root_level).await;
 
-    // Remove any sub file/folder from the place we are going to test from
-    env.customize(|builder| {
-        if root_level {
-            builder
-                .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
-                .customize(|e| {
-                    let manifest = Arc::make_mut(&mut e.manifest);
-                    manifest.children.clear();
-                });
-            builder.workspace_data_storage_fetch_workspace_vlob(
-                "alice@dev1",
-                wksp1_id,
-                Regex::from_regex_str(r"\.tmp$").unwrap(),
-            );
-        } else {
-            builder
-                .create_or_update_folder_manifest_vlob("alice@dev1", wksp1_id, wksp1_foo_id, None)
-                .customize(|e| {
-                    let manifest = Arc::make_mut(&mut e.manifest);
-                    manifest.children.clear();
-                });
-            builder.workspace_data_storage_fetch_folder_vlob(
-                "alice@dev1",
-                wksp1_id,
-                wksp1_foo_id,
-                Regex::from_regex_str(r"\.tmp$").unwrap(),
-            );
-        }
-    })
-    .await;
-
-    // Choose parent depending on the root level
-    let base_path: FsPath = if root_level {
-        "/".parse().unwrap()
-    } else {
-        "/foo".parse().unwrap()
-    };
-    let parent_id = if root_level { wksp1_id } else { wksp1_foo_id };
+    let confined_entry_name = "test.tmp".parse::<EntryName>().unwrap();
+    let not_confined_entry_name = "test_not_tmp".parse::<EntryName>().unwrap();
 
     // Create a workspace ops instance
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await;
     let mut spy = ops.event_bus.spy.start_expecting();
 
     // Check that parent is up to date
-    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
-    match parent_stat {
-        EntryStat::Folder { need_sync, .. } => {
-            p_assert_eq!(need_sync, false);
-        }
-        _ => panic!("Expected a folder"),
-    }
+    check_need_sync_parent(&ops, parent_id, false).await;
     let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
     p_assert_eq!(children.len(), 0);
 
     // Create the confined child
-    let target = base_path.join("test.tmp".parse().unwrap());
-    let child_id = match entry_type {
-        "file" => ops.create_file(target).await.unwrap(),
-        "folder" => ops.create_folder(target).await.unwrap(),
-        _ => panic!("Invalid entry type"),
+    let target = base_path.join(confined_entry_name.clone());
+    let confined_child_id = match entry_type {
+        EntryType::File => ops.create_file(target).await.unwrap(),
+        EntryType::Folder => ops.create_folder(target).await.unwrap(),
     };
 
     // Check that the child is marked as needing sync (this is because the child itself
     // is not aware of its name and can be renamed at anytime, so it's not its job to
     // decide whether or not it should be synced)
     spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
-        p_assert_eq!(e.realm_id, wksp1_id);
-        p_assert_eq!(e.entry_id, child_id);
+        p_assert_eq!(e.realm_id, realm_id);
+        p_assert_eq!(e.entry_id, confined_child_id);
     });
-    let child_stat = ops.stat_entry_by_id(child_id).await.unwrap();
-    match (entry_type, child_stat) {
-        ("file", EntryStat::File { need_sync, .. }) => {
-            p_assert_eq!(need_sync, true);
-        }
-        ("folder", EntryStat::Folder { need_sync, .. }) => {
-            p_assert_eq!(need_sync, true);
-        }
-        _ => panic!("Expected a {}", entry_type),
-    }
+    check_child(
+        &ops,
+        entry_type,
+        confined_child_id,
+        ExpectedValues {
+            need_sync: true,
+            confinement_point: None,
+        },
+    )
+    .await;
 
     // Check that parent is not marked as needing sync
-    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
-    match parent_stat {
-        EntryStat::Folder { need_sync, .. } => {
-            p_assert_eq!(need_sync, false);
-        }
-        _ => panic!("Expected a folder"),
-    }
+    check_need_sync_parent(&ops, parent_id, false).await;
 
     // Check that the child is in the parent's children
     let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
     p_assert_eq!(children.len(), 1);
-    let (name, stat) = children[0].clone();
-    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
-    match (entry_type, stat) {
-        (
-            "file",
-            EntryStat::File {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            p_assert_eq!(need_sync, true);
+    let (name, stat) = &children[0];
+    p_assert_eq!(name, &confined_entry_name);
+    check_stat(
+        entry_type,
+        confined_child_id,
+        stat,
+        ExpectedValues {
+            need_sync: true,
             // TODO: confinement_point should be Some(parent_id)
             // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        (
-            "folder",
-            EntryStat::Folder {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            p_assert_eq!(need_sync, true);
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        _ => panic!("Expected a {}", entry_type),
-    }
+            confinement_point: None,
+        },
+    );
 
     // Stop spying
     drop(spy);
 
-    // Create a non-confined directory
+    // Create a non-confined file
     let target = base_path.join("test_not_tmp".parse().unwrap());
-    let non_confined_child_id = match entry_type {
-        "file" => ops.create_file(target).await.unwrap(),
-        "folder" => ops.create_folder(target).await.unwrap(),
-        _ => panic!("Invalid entry type"),
+    let not_confined_child_id = match entry_type {
+        EntryType::File => ops.create_file(target).await.unwrap(),
+        EntryType::Folder => ops.create_folder(target).await.unwrap(),
     };
-
     // Check that parent is marked as needing sync
-    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
-    match parent_stat {
-        EntryStat::Folder { need_sync, .. } => {
-            p_assert_eq!(need_sync, true);
-        }
-        _ => panic!("Expected a folder"),
-    }
+    check_need_sync_parent(&ops, parent_id, true).await;
 
     // Check that both children are in the parent's children
     let mut children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
     p_assert_eq!(children.len(), 2);
     children.sort_by(|(a, _), (b, _)| a.cmp(b));
-    let (name, stat) = children[0].clone();
-    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
-    match (entry_type, stat) {
-        (
-            "file",
-            EntryStat::File {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            p_assert_eq!(need_sync, true);
+    let (name, stat) = &children[0];
+    p_assert_eq!(name, &confined_entry_name);
+    check_stat(
+        entry_type,
+        confined_child_id,
+        stat,
+        ExpectedValues {
+            need_sync: true,
             // TODO: confinement_point should be Some(parent_id)
             // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        (
-            "folder",
-            EntryStat::Folder {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            p_assert_eq!(need_sync, true);
+            confinement_point: None,
+        },
+    );
+    let (name, stat) = &children[1];
+    p_assert_eq!(name, &not_confined_entry_name);
+    check_stat(
+        entry_type,
+        not_confined_child_id,
+        stat,
+        ExpectedValues {
+            need_sync: true,
             // TODO: confinement_point should be Some(parent_id)
             // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        _ => panic!("Expected a {}", entry_type),
-    }
-    let (name, stat) = children[1].clone();
-    p_assert_eq!(name, "test_not_tmp".parse::<EntryName>().unwrap());
-    match (entry_type, stat) {
-        (
-            "file",
-            EntryStat::File {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, non_confined_child_id);
-            p_assert_eq!(need_sync, true);
-            p_assert_eq!(confinement_point, None);
-        }
-        (
-            "folder",
-            EntryStat::Folder {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, non_confined_child_id);
-            p_assert_eq!(need_sync, true);
-            p_assert_eq!(confinement_point, None);
-        }
-        _ => panic!("Expected a {}", entry_type),
-    }
+            confinement_point: None,
+        },
+    );
 
-    // Perform outbound sync
+    ops_outbound_sync(&ops).await;
+
+    // Check that parent is not marked as needing sync
+    check_need_sync_parent(&ops, parent_id, false).await;
+
+    // Check that both children are in the parent's children
+    let mut children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 2);
+    children.sort_by(|(a, _), (b, _)| a.cmp(b));
+    let (name, stat) = &children[0];
+    p_assert_eq!(name, &confined_entry_name);
+    check_stat(
+        entry_type,
+        confined_child_id,
+        stat,
+        ExpectedValues {
+            // TODO: need_sync should be true, i.e the confined file should not have been synced
+            // See: https://github.com/Scille/parsec-cloud/issues/8198
+            need_sync: false,
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            confinement_point: None,
+        },
+    );
+    let (name, stat) = &children[1];
+    p_assert_eq!(name, &not_confined_entry_name);
+    check_stat(
+        entry_type,
+        not_confined_child_id,
+        stat,
+        ExpectedValues {
+            need_sync: false,
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            confinement_point: None,
+        },
+    );
+}
+
+struct Env {
+    realm_id: VlobID,
+    parent_id: VlobID,
+    base_path: FsPath,
+}
+
+async fn bootstrap_env(env: &TestbedEnv, root_level: bool) -> Env {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+
+    let (base_path, parent_id) = env
+        .customize(|builder| {
+            let prevent_sync_pattern = Regex::from_regex_str(r"\.tmp$").unwrap();
+            let res = if root_level {
+                // Remove all children from the workspace
+                builder
+                    .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.manifest);
+                        manifest.children.clear();
+                    });
+                ("/".parse().unwrap(), wksp1_id)
+            } else {
+                let wksp1_foo_id = builder.counters.next_entry_id();
+                // Create foo folder
+                builder
+                    .create_or_update_folder_manifest_vlob(
+                        "alice@dev1",
+                        wksp1_id,
+                        wksp1_foo_id,
+                        wksp1_id,
+                    )
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.manifest);
+                        manifest.children.clear();
+                    });
+                builder.workspace_data_storage_fetch_folder_vlob(
+                    "alice@dev1",
+                    wksp1_id,
+                    wksp1_foo_id,
+                    prevent_sync_pattern.clone(),
+                );
+                // Add foo folder to workspace
+                builder
+                    .create_or_update_workspace_manifest_vlob("alice@dev1", wksp1_id)
+                    .customize(|e| {
+                        let manifest = Arc::make_mut(&mut e.manifest);
+                        manifest
+                            .children
+                            .insert("foo".parse().unwrap(), wksp1_foo_id);
+                    });
+                ("/foo".parse().unwrap(), wksp1_foo_id)
+            };
+            // Fetch the workspace data
+            builder.workspace_data_storage_fetch_workspace_vlob(
+                "alice@dev1",
+                wksp1_id,
+                prevent_sync_pattern,
+            );
+            res
+        })
+        .await;
+
+    Env {
+        base_path,
+        parent_id,
+        realm_id: wksp1_id,
+    }
+}
+
+struct ExpectedValues {
+    need_sync: bool,
+    confinement_point: Option<VlobID>,
+}
+
+#[track_caller]
+fn check_child<'a>(
+    ops: &'a WorkspaceOps,
+    entry_type: EntryType,
+    id: VlobID,
+    expected: ExpectedValues,
+) -> impl std::future::Future<Output = ()> + 'a {
+    let caller = std::panic::Location::caller();
+    async move {
+        let child_stat = ops.stat_entry_by_id(id).await.unwrap();
+        check_stat_with_caller(entry_type, id, &child_stat, expected, caller)
+    }
+}
+
+#[track_caller]
+fn check_stat(entry_type: EntryType, id: VlobID, stat: &EntryStat, expected: ExpectedValues) {
+    let caller = std::panic::Location::caller();
+    check_stat_with_caller(entry_type, id, stat, expected, caller)
+}
+
+fn check_stat_with_caller(
+    entry_type: EntryType,
+    id: VlobID,
+    stat: &EntryStat,
+    expected: ExpectedValues,
+    caller: &std::panic::Location<'static>,
+) {
+    let (got_id, need_sync, confinement_point) = match (entry_type, stat) {
+        (
+            EntryType::File,
+            EntryStat::File {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        )
+        | (
+            EntryType::Folder,
+            EntryStat::Folder {
+                id,
+                need_sync,
+                confinement_point,
+                ..
+            },
+        ) => (id, need_sync, confinement_point),
+        _ => panic!("Expected a {} (caller: {})", entry_type, caller),
+    };
+    p_assert_eq!(got_id, &id, "Invalid id in EntryStat (caller: {})", caller);
+    p_assert_eq!(
+        *need_sync,
+        expected.need_sync,
+        "Invalid need_sync (caller: {})",
+        caller
+    );
+    p_assert_eq!(
+        confinement_point,
+        &expected.confinement_point,
+        "Invalid confinement point (caller: {})",
+        caller
+    );
+}
+
+#[track_caller]
+fn check_need_sync_parent<'a>(
+    ops: &'a WorkspaceOps,
+    id: VlobID,
+    expected: bool,
+) -> impl std::future::Future<Output = ()> + 'a {
+    let caller = std::panic::Location::caller();
+    async move {
+        let parent_stat = ops.stat_entry_by_id(id).await.unwrap();
+        check_stat_with_caller(
+            EntryType::Folder,
+            id,
+            &parent_stat,
+            ExpectedValues {
+                need_sync: expected,
+                confinement_point: None,
+            },
+            caller,
+        );
+    }
+}
+
+async fn ops_outbound_sync(ops: &WorkspaceOps) {
     loop {
         let entries = ops.get_need_outbound_sync(32).await.unwrap();
         if entries.is_empty() {
@@ -376,89 +473,5 @@ async fn add_confined_entry(
         for entry in entries {
             ops.outbound_sync(entry).await.unwrap();
         }
-    }
-
-    // Check that parent is not marked as needing sync
-    let parent_stat = ops.stat_entry_by_id(parent_id).await.unwrap();
-    match parent_stat {
-        EntryStat::Folder { need_sync, .. } => {
-            p_assert_eq!(need_sync, false);
-        }
-        _ => panic!("Expected a folder"),
-    }
-
-    // Check that both children are in the parent's children
-    let mut children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
-    p_assert_eq!(children.len(), 2);
-    children.sort_by(|(a, _), (b, _)| a.cmp(b));
-    let (name, stat) = children[0].clone();
-    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
-    match (entry_type, stat) {
-        (
-            "file",
-            EntryStat::File {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            // TODO: need_sync should be true, i.e the confined file should not have been synced
-            // See: https://github.com/Scille/parsec-cloud/issues/8198
-            p_assert_eq!(need_sync, false);
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        (
-            "folder",
-            EntryStat::Folder {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, child_id);
-            // TODO: need_sync should be true, i.e the confined file should not have been synced
-            // See: https://github.com/Scille/parsec-cloud/issues/8198
-            p_assert_eq!(need_sync, false);
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            p_assert_eq!(confinement_point, None);
-        }
-        _ => panic!("Expected a {}", entry_type),
-    }
-    let (name, stat) = children[1].clone();
-    p_assert_eq!(name, "test_not_tmp".parse::<EntryName>().unwrap());
-    match (entry_type, stat) {
-        (
-            "file",
-            EntryStat::File {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, non_confined_child_id);
-            p_assert_eq!(need_sync, false);
-            p_assert_eq!(confinement_point, None);
-        }
-        (
-            "folder",
-            EntryStat::Folder {
-                id,
-                need_sync,
-                confinement_point,
-                ..
-            },
-        ) => {
-            p_assert_eq!(id, non_confined_child_id);
-            p_assert_eq!(need_sync, false);
-            p_assert_eq!(confinement_point, None);
-        }
-        _ => panic!("Expected a {}", entry_type),
     }
 }
