@@ -349,10 +349,9 @@ ion-title {
       width: 100%;
 
       &__text {
-        padding: 0.25rem 0;
-        text-overflow: ellipsis;
+        padding: 0.25rem 0 0;
         white-space: nowrap;
-        overflow: hidden;
+        overflow: scroll;
       }
 
       &__copied {
