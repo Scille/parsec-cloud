@@ -2,6 +2,16 @@
 
 use libparsec_types::prelude::*;
 
+// The maximum number of attempts to wait for a peer to be ready.
+// Note that we only retry if the other peer has cancelled the ongoing
+// greeting attempt by starting a new one (which is done automatically)
+// This number should be high enough to cover the cases where the peer
+// cancels the greeting attempt while the nonces are being exchanged.
+// However, it shouldn't be too high to prevent the other peer from
+// being able re-roll the nonces too many times, for security reasons.
+// Any value between 4 and 32 should match those criteria.
+pub const WAIT_PEER_MAX_ATTEMPTS: usize = 8;
+
 // The default throttle duration is too slow when testing the CLI, hence this environ
 // variable than allows us to customize it (typically setting it to 10ms during tests)
 //
