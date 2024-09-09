@@ -605,3 +605,134 @@ async fn ops_inbound_sync(ops: &WorkspaceOps) {
         }
     }
 }
+
+/// Test that renaming a file or a folder that was confined make it available on remote
+#[parsec_test(testbed = "coolorg", with_server)]
+async fn rename_a_confined_entry_to_not_be_confined(
+    #[values(true, false)] root_level: bool,
+    #[values(EntryType::File, EntryType::Folder)] entry_type: EntryType,
+    env: &TestbedEnv,
+) {
+    let Env {
+        realm_id,
+        parent_id,
+        base_path,
+    } = bootstrap_env(env, root_level).await;
+
+    let confined_entry_name = "test.tmp".parse::<EntryName>().unwrap();
+    let not_confined_entry_name = "test_not_tmp".parse::<EntryName>().unwrap();
+
+    // Create a workspace ops instance
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await;
+
+    // Check that parent is up to date
+    check_need_sync_parent(&ops, parent_id, false).await;
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 0);
+
+    // Create a file that is not confined
+    let target = base_path.join(confined_entry_name.clone());
+    let child_id = match entry_type {
+        EntryType::File => ops.create_file(target).await.unwrap(),
+        EntryType::Folder => ops.create_folder(target).await.unwrap(),
+    };
+
+    // Create a file that is not confined so the parent is marked as needing sync
+    let target = base_path.join("file-to-sync".parse().unwrap());
+    ops.create_folder(target).await.unwrap();
+
+    // Check that the child is in the parent's children
+    let children = dbg!(ops.stat_folder_children_by_id(parent_id).await.unwrap());
+    p_assert_eq!(children.len(), 2);
+    let (name, stat) = children
+        .iter()
+        .find(|(name, _)| name == &confined_entry_name)
+        .unwrap();
+    p_assert_eq!(name, &confined_entry_name);
+    check_stat(
+        entry_type,
+        child_id,
+        stat,
+        ExpectedValues {
+            need_sync: true,
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            confinement_point: None,
+        },
+    );
+
+    // Check that parent is marked as needing sync
+    check_need_sync_parent(&ops, parent_id, true).await;
+
+    // Rename the file to be confined
+    ops.rename_entry_by_id(
+        parent_id,
+        confined_entry_name,
+        not_confined_entry_name.clone(),
+        MoveEntryMode::CanReplace,
+    )
+    .await
+    .unwrap();
+
+    // Check that the child is renamed and need sync
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 2);
+    let (name, stat) = children
+        .iter()
+        .find(|(name, _)| name == &not_confined_entry_name)
+        .unwrap();
+    p_assert_eq!(name, &not_confined_entry_name);
+    check_stat(
+        entry_type,
+        child_id,
+        stat,
+        ExpectedValues {
+            need_sync: true,
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            confinement_point: None,
+        },
+    );
+
+    // Check that parent is still marked as needing sync
+    check_need_sync_parent(&ops, parent_id, true).await;
+
+    let ArcLocalChildManifest::Folder(folder) = ops.store.get_manifest(parent_id).await.unwrap()
+    else {
+        panic!("Expected a folder");
+    };
+    assert!(
+        folder.local_confinement_points.is_empty(),
+        "The child {} should not be in the confinement points list",
+        child_id
+    );
+
+    ops_outbound_sync(&ops).await;
+
+    let bob = env.local_device("bob@dev1");
+    let bob_ops = workspace_ops_with_prevent_sync_pattern_factory(
+        &env.discriminant_dir,
+        &bob,
+        realm_id,
+        Regex::empty(), // Use empty pattern to prevent workspace to filter out any entry
+    )
+    .await;
+    ops_inbound_sync(&bob_ops).await;
+
+    // Check that the child is no longer present on the remote
+    let ArcLocalChildManifest::Folder(folder) =
+        bob_ops.store.get_manifest(parent_id).await.unwrap()
+    else {
+        panic!("Expected a folder");
+    };
+    assert_eq!(
+        folder.children[&not_confined_entry_name], child_id,
+        "{} should be present in the folder",
+        not_confined_entry_name
+    );
+
+    // Ensure that the child is present in the remote
+    let child_manifest = bob_ops.store.get_manifest(child_id).await.unwrap();
+    assert_eq!(child_manifest.parent(), parent_id);
+}
