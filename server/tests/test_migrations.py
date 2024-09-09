@@ -49,9 +49,39 @@ def pg_psql(pg_cluster: Cluster) -> str:
     return pg_cluster._find_pg_binary("psql")  # type: ignore[attr-defined]
 
 
+def collect_data_patches() -> tuple[dict[int, str], dict[int, str]]:
+    PATCH_FILE_PATTERN = r"^(?P<id>\d{4})_(?P<type>before|after).sql$"
+    from tests import migrations as migrations_test_module
+
+    before = {}
+    after = {}
+    for file in importlib.resources.files(migrations_test_module).iterdir():
+        file_name = file.name
+        match = re.search(PATCH_FILE_PATTERN, file_name)
+        assert match or not file_name.endswith(
+            ".sql"
+        ), f"unknown file `{file_name}`, expects only `xxxx_[before|after].sql`"
+        if match:
+            index = int(match.group("id"))
+            if match.group("type") == "before":
+                patches = before
+            else:  # after
+                patches = after
+
+            assert index not in patches  # Sanity check
+            sql = importlib.resources.files(migrations_test_module).joinpath(file_name).read_text()
+            patches[index] = sql
+
+    return before, after
+
+
 @pytest.mark.postgresql
 @pytest.mark.asyncio
-async def test_migrations(pg_cluster_url, pg_psql, pg_dump):
+async def test_migrations(
+    pg_cluster_url: str,
+    pg_psql: str,
+    pg_dump: str,
+):
     async def execute_datamodel() -> None:
         sql = importlib.resources.files(migrations_module).joinpath("datamodel.sql").read_text()
         conn = await asyncpg.connect(pg_cluster_url)
@@ -98,9 +128,20 @@ async def test_migrations(pg_cluster_url, pg_psql, pg_dump):
 
     # Now we apply migrations one after another and also insert the provided data
     migrations = retrieve_migrations()
-    for migration in migrations:
-        result = await apply_migrations(pg_cluster_url, [migration], dry_run=False)
-        assert not result.error
+    patches_before, patches_after = collect_data_patches()
+    conn_for_patches = await asyncpg.connect(pg_cluster_url)
+    try:
+        for migration in migrations:
+            if sql := patches_before.get(migration.index):
+                await conn_for_patches.execute(sql)
+
+            result = await apply_migrations(pg_cluster_url, [migration], dry_run=False)
+            assert not result.error
+
+            if sql := patches_after.get(migration.index):
+                await conn_for_patches.execute(sql)
+    finally:
+        await conn_for_patches.close()
 
     # Save the final state of the database schema
     schema_from_migrations = await dump_schema()
