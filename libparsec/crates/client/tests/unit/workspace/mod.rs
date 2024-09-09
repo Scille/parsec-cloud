@@ -7,6 +7,7 @@ mod create_file;
 mod create_folder;
 mod create_folder_all;
 mod fd_close;
+mod fd_flush;
 mod fd_read;
 mod fd_write;
 mod file_operations;
