@@ -3,296 +3,287 @@
 <head>
   <meta name="viewport" content="width=device-width" />
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <link rel="noopener" href="https://fonts.googleapis.com/css2?family=Albert+Sans" rel="stylesheet">
   <title>Parsec Invitation</title>
   <style>
-    /* -------------------------------------
-            GLOBAL RESETS
-        ------------------------------------- */
 
-    /*All the styling goes here*/
-
-    img {
-      border: none;
-      -ms-interpolation-mode: bicubic;
-      max-width: 100%;
-    }
-
+    /* ----------------------- */
     body {
-      background-color: #f6f6f6;
-      font-family: sans-serif;
-      -webkit-font-smoothing: antialiased;
-      font-size: 14px;
-      line-height: 1.4;
       margin: 0;
       padding: 0;
-      -ms-text-size-adjust: 100%;
-      -webkit-text-size-adjust: 100%;
-    }
-
-    table {
-      border-collapse: separate;
-      mso-table-lspace: 0pt;
-      mso-table-rspace: 0pt;
       width: 100%;
+      background-color: #f5f7fa;
     }
 
-    table td {
-      font-family: sans-serif;
-      font-size: 14px;
-      vertical-align: top;
-    }
-
-    /* -------------------------------------
-            BODY & CONTAINER
-        ------------------------------------- */
-
-    .body {
-      background-color: #f6f6f6;
+    .main-table {
       width: 100%;
+      font-family: 'Albert Sans', Roboto, 'Helvetica Neue', sans-serif;
+      background-color: #f5f7fa;
     }
 
-    /* Set a max-width, and make it display as block so it will automatically stretch to that width, but will also shrink down on a phone or something */
-    .container {
-      display: block;
-      margin: 0 auto !important;
-      /* makes it centered */
-      max-width: 580px;
-      padding: 10px;
-      width: 580px;
+    .card-table {
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0px 2px 1px -1px rgba(0, 0, 0, 0.2), 0px 1px 1px 0px rgba(0, 0, 0, 0.14), 0px 1px 3px 0px rgba(0, 0, 0, 0.12);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 32px;
     }
 
-    /* This should also be a block element, so that it will fill all of the .container */
-    .content {
-      box-sizing: border-box;
-      display: block;
-      margin: 0 auto;
-      max-width: 580px;
-      padding: 10px;
+    .header-section>td {
+      padding: 32px;
     }
 
-    /* -------------------------------------
-            HEADER, FOOTER, MAIN
-        ------------------------------------- */
-    .main {
-      background: #ffffff;
-      border-radius: 3px;
-      width: 100%;
-    }
-
-    .wrapper {
-      box-sizing: border-box;
-      padding: 20px;
-    }
-
-    .content-block {
-      padding-bottom: 10px;
-      padding-top: 10px;
-    }
-
-    .grey-text {
-      margin: 0 1rem 1rem 1rem;
-      color: #778899;
-    }
-
-    .grey-text-url {
-      font-weight: bold;
-    }
-
-    .footer {
-      clear: both;
-      margin-top: 10px;
-      text-align: center;
-      width: 100%;
-    }
-
-    .footer td,
-    .footer p,
-    .footer span,
-    .footer a {
-      color: #999999;
-      font-size: 12px;
-      text-align: center;
-    }
-
-    /* -------------------------------------
-            TYPOGRAPHY
-        ------------------------------------- */
-    h1,
-    h2,
-    h3,
-    h4 {
-      color: #000000;
-      font-family: sans-serif;
-      font-weight: 400;
-      line-height: 1.4;
-      margin: 0;
-      margin-bottom: 30px;
-    }
-
-    h1 {
-      font-size: 35px;
-      font-weight: 300;
-      text-align: center;
-      text-transform: capitalize;
-    }
-
-    p,
-    ul,
-    ol {
-      font-family: sans-serif;
-      font-size: 14px;
-      font-weight: normal;
-      margin: 0;
-      margin-bottom: 15px;
-    }
-
-    p li,
-    ul li,
-    ol li {
-      list-style-position: inside;
-      margin-left: 5px;
-    }
-
-    a {
-      color: #3498db;
-      /* Links text color */
-      text-decoration: underline;
-    }
-
-    /* -------------------------------------
-            BUTTONS
-        ------------------------------------- */
-    .btn {
-      box-sizing: border-box;
-      width: 100%;
-    }
-
-    .btn>tbody>tr>td {
-      padding-bottom: 15px;
-    }
-
-    .btn table {
-      width: auto;
-    }
-
-    .btn table td {
-      background-color: #ffffff;
-      border-radius: 5px;
-      text-align: center;
-    }
-
-    .btn a {
-      background-color: #ffffff;
-      border: solid 1px #3498db;
-      border-radius: 5px;
-      /* set to 1 for squared edges */
-      box-sizing: border-box;
-      color: #3498db;
-      cursor: pointer;
-      display: inline-block;
-      font-size: 14px;
-      font-weight: bold;
-      margin: 0;
-      padding: 12px 25px;
-      text-decoration: none;
-      text-transform: none;
-    }
-
-    .btn-primary table td {
-      background-color: #3498db;
-    }
-
-    .btn-primary a {
-      background-color: #0066ff;
-      /* Button color, to be modified according to graphic chart */
-      border-color: #0066ff;
-      color: #ffffff;
-      /* Button text color */
-    }
-
-    /* -------------------------------------
-            OTHER STYLES THAT MIGHT BE USEFUL
-        ------------------------------------- */
-    .last {
-      margin-bottom: 0;
-    }
-
-    .first {
-      margin-top: 0;
-    }
-
-    .align-center {
-      text-align: center;
-    }
-
-    .align-right {
-      text-align: right;
-    }
-
-    .align-left {
+    .header-section>td>table {
+      border-collapse: collapse;
       text-align: left;
     }
 
-    .clear {
-      clear: both;
+    .header-section .logo td {
+      background-color: white;
+      text-align: center;
     }
 
-    .mt0 {
+    .header-section .logo td img {
+      display: block;
+      width: 130px;
+      margin-top: 8px;
+    }
+
+    .header-section .title h1 {
+      font-size: 22px;
+      margin: 0;
+      margin-top: 32px;
+      margin-bottom: 24px;
+      color: #0058CC;
+      font-weight: 600;
+    }
+
+    .body-section>td>table {
+      border-collapse: collapse;
+      text-align: left;}
+
+    .body-section>td>table td.content-wrapper {
+      padding-top: 0px;
+      padding-left: 32px;
+      padding-right: 32px;
+      padding-bottom: 16px;
+      font-size: 14px;
+    }
+
+    /* content */
+    .content-wrapper .content-section {
+      display: block;
+    }
+
+    .content-wrapper .content-section.first-section {
+      margin-bottom: 24px;
+    }
+
+    .content-wrapper .content-section.second-section {
+      margin-bottom: 24px;
+    }
+
+    .content-wrapper .info-frame {
+      background-color: #F9F9FB;
+      border-radius: 8px;
+      padding: 32px;
+      line-height: 28.9px;
+    }
+
+    .content-wrapper .content-title {
+      padding: 4px 0 4px 8px;
+      color: #004299;
+      font-weight: 500;
+      margin: 0;
+    }
+
+    .content-wrapper .content-number {
+      float: left;
+      display: block;
+      background: #004299;
+      border-radius: 20px;
+      width: 33px;
+      height: 33px;
+    }
+
+    .content-wrapper .content-section-text {
+      line-height: 28.9px;
+      color: #51517B;
+    }
+
+    .content-wrapper .content-number-circle {
+      width: 33px;
+      height: 33px;
+      vertical-align: middle;
+    }
+
+    .content-wrapper .content-number-item {
+      width: 100%;
+      display: inline-block;
+      text-align: center;
+      color: #ffffff;
+      margin: 0;
+    }
+
+    .content-wrapper .container-link {
+      margin-bottom: 0px;
+    }
+
+    .content-wrapper .note {
+      font-size: 14px;
+      color: #51517B;
+      line-height: 24px;
+      letter-spacing: 0.15px;
+      padding-top: 32px;
+    }
+
+    .content-wrapper a {
+      text-decoration: underline;
+    }
+
+    .content-wrapper .button {
+      padding-top: 12px;
+      padding-left: 18px;
+      padding-right: 18px;
+      padding-bottom: 12px;
+      display: inline-block;
+      border-radius: 8px;
+      text-decoration: none;
+      text-transform: none;
+      line-height: normal;
+      color: #FFFFFF;
+      background-color: #4092FF;
+      cursor:pointer;
+      font-size: 14px;
+      margin: 0;
+    }
+
+    .content-wrapper .button-secondary {
+      border: 1px solid #4092FF;
+      color: #4092FF;
+      background-color: #F9F9FB;
+    }
+
+    .content-wrapper .download-link {
+      color: #669;
+      font-size: 13px;
+    }
+    .content-wrapper .note {
+      font-size: 14px;
+      color: #51517B;
+      line-height: 24px;
+      letter-spacing: 0.15px;
+    }
+
+    .content-wrapper .note a {
+      text-decoration: underline;
+    }
+
+    .footer-section>td {
+      text-align: center;
+      background-color: white;
+      padding: 32px;
+    }
+
+    .footer-section>td>table {
+      border-collapse: collapse;
+      border-top: 1px solid #E0E0EB;
+      text-align: center;
+      font-size: 14px;
+      color: #6b6b6b;
+      width: 100%;
+    }
+
+    .footer-section td>table {
+      font-size: 14px;
+    }
+
+    .footer-section .top-section table {
+      width: 100%;
+    }
+
+    .footer-section .top-section td.closing-message-section {
+      text-align: left;
+      padding-top: 24px;
+      padding-bottom: 8px;
+      padding-bottom: 0px;
+    }
+
+    .footer-section .top-section td.closing-message-section p {
       margin-top: 0;
     }
 
-    .mb0 {
-      margin-bottom: 0;
+    .footer-section .top-section td.closing-message-section img {
+      width: 100px;
     }
 
-    .preheader {
-      color: transparent;
-      display: none;
-      height: 0;
-      max-height: 0;
-      max-width: 0;
-      opacity: 0;
-      overflow: hidden;
-      mso-hide: all;
-      visibility: hidden;
-      width: 0;
+    .footer-section .top-section td.company-links-section table {
+      text-align: right;
     }
 
-    .powered-by a {
+    .footer-section .top-section td.company-links-section {
+      padding-top: 24px;
+      padding-bottom: 16px;
+    }
+
+    .footer-section .top-section td.company-links-section .social-networks>td {
+      padding-bottom: 15px;
+    }
+
+    .footer-section .top-section td.company-links-section .social-networks>td a {
       text-decoration: none;
+      color: #6b6b6b;
+      padding: 0 5px;
+      display: inline-block;
+      height: 24px;
+      width: 24px;
     }
 
-    hr {
-      border: 0;
-      border-bottom: 1px solid #f6f6f6;
-      margin: 20px 0;
+    .footer-section .top-section td.company-links-section .social-networks>td a.linkedin,
+    .footer-section .top-section .company-links-section .social-networks>td a.twitter {
+      border-right: 1px solid #C2C2C6;
     }
 
+    .footer-section .top-section td.company-links-section .social-networks>td a img {
+      display: block;
+      width: 24px;
+    }
+
+    .footer-section .top-section td.company-links-section .call-to-action>td {
+      padding-bottom: 10px;
+      color: #6b6b6b;
+    }
+
+    .footer-section .top-section td.company-links-section .call-to-action>td a {
+      color: #3D3D5C;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .footer-section .bottom-section>td {
+      color: #A0A0A0;
+      text-align: center;
+      width: 100%;
+    }
+  </style>
+  <style>
     /* -------------------------------------
             RESPONSIVE AND MOBILE FRIENDLY STYLES
         ------------------------------------- */
     @media only screen and (max-width: 620px) {
-      table[class=body] h1 {
-        font-size: 28px !important;
-        margin-bottom: 10px !important;
-      }
-
-      table[class=body] p,
-      table[class=body] ul,
-      table[class=body] ol,
-      table[class=body] td,
-      table[class=body] span,
-      table[class=body] a {
-        font-size: 16px !important;
-      }
 
       table[class=body] .wrapper,
       table[class=body] .article {
-        padding: 10px !important;
+        padding: 0px !important;
       }
 
-      table[class=body] .content {
-        padding: 0 !important;
+      table[class=body] .logo {
+        padding: 48px 24px 0 !important;
+      }
+
+      table[class=body] .main {
+        padding: 0 24px !important;
       }
 
       table[class=body] .container {
@@ -310,14 +301,9 @@
         width: 100% !important;
       }
 
-      table[class=body] .btn a {
-        width: 100% !important;
-      }
-
-      table[class=body] .img-responsive {
-        height: auto !important;
-        max-width: 100% !important;
-        width: auto !important;
+      table[class=body] .button {
+        width: -webkit-fill-available;
+        text-align: center;
       }
     }
 
@@ -355,166 +341,232 @@
         font-weight: inherit;
         line-height: inherit;
       }
-
-      .btn-primary table td:hover {
-        background-color: #121d43 !important;
-      }
-
-      .btn-primary a:hover {
-        background-color: #121d43 !important;
-        /* Hover button color */
-        border-color: #121d43 !important;
-      }
     }
 
   </style>
 </head>
 
-<body class="">
+<body>
   <!-- These lines are used to isolate the preheader and avoid a preview of the mail's content -->
-  <span class="preheader">
-    Follow these steps to join your new workspace
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
-    &nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;
+  <span class="preheader" style="color: transparent; display: none; height: 0; max-height: 0; max-width: 0; mso-hide: all; visibility: hidden; width: 0;">
+    Follow these steps to join your new workspace on Parsec.
   </span>
-  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="body">
+
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="main-table" style="background-color: #fff; width: 100%;">
     <tr>
-      <td>&nbsp;</td>
-      <td class="container">
-        <div class="content">
+      <td align="center">
+        <table cellspacing="0" cellpadding="0" width="600" class="card-table">
+          <!-- Header Section -->
+          <tr class="header-section">
+            <td>
+              <table cellspacing="0" cellpadding="0" width="100%">
+                <tr class="logo">
+                  <td>
+                    <img src="{{ server_url }}/static/logo-parsec-row.png" alt="Parsec Logo" title="Parsec" width="128" style="height: 21.9px;"/>
+                  </td>
+                </tr>
+                <tr class="title">
+                  <td>
+                    <h1>
+                      {% if is_user_invitation %}
+                      Invitation to join the organization {{ organization_id}}
+                      {% endif %}
+                    </h1>
+                  </td>
+                </tr>
+                <tr>
+                  <td>
+                    <p style="line-height: 28.9px; color: #51517B; font-size: 14px;">{% if is_user_invitation %}
+                    You have received an invitation from <b>{{ greeter }}</b> to join the <b>{{ organization_id}}</b> organization on Parsec.
+                    {% elif is_device_invitation %}
+                    You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
+                    organization on Parsec.
+                    {% elif is_shamir_recovery_invitation %}
+                    You have received an invitation to start a recovery procedure on the <b>{{ organization_id }}</b>
+                    organization on Parsec.
+                    {% endif %}
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
 
-          <!-- PARSEC LOGO -->
-          <p class="align-center">
-            <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-              origin page using window.opener unless link type noopener or noreferrer is specified. -->
-            <a href="https://parsec.cloud/" rel="noopener noreferrer" target="_blank">
-              <img src="{{ server_url }}/static/parsec-vert.png" alt="Parsec Logo" title="Parsec" width="150" height="100" />
-            </a>
-          </p>
-
-          <!-- START CENTERED WHITE CONTAINER -->
-          <table role="presentation" class="main">
-
-
-            <!-- START MAIN CONTENT AREA -->
-            <tr>
-              <td class="wrapper">
-                <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td>
-                      <p>
-
-                        {% if is_user_invitation %}
-                        You have received an invitation from <b></b>{{ greeter }}</b> to join the <b>{{ organization_id
-                          }}</b> organization on Parsec.
-                        {% elif is_device_invitation %}
-                        You have received an invitation to add a new device to the <b>{{ organization_id }}</b>
-                        organization on Parsec.
-                        {% elif is_shamir_recovery_invitation %}
-                        You have received an invitation to start a recovery procedure on the <b>{{ organization_id }}</b>
-                        organization on Parsec.
-                        {% endif %}
-                      </p>
-                      <p>Your next steps:</p>
-                      <p>1. If you haven't already, download the Parsec client via the following link:</p>
-                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
-                        <tbody>
-                          <tr>
-                            <td align="center">
-                              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                                <tbody>
-                                  <tr>
-                                    <td>
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a href="https://parsec.cloud/en/start-parsec" rel="noopener noreferrer" target="_blank">Download Parsec</a>
+          <!-- Main Body Content Placeholder -->
+          <tr class="body-section">
+            <td>
+              <table cellspacing="0" cellpadding="0" width="100%">
+                <tr>
+                  <td class="content-wrapper">
+                    <table
+                      cellspacing="0"
+                      cellpadding="0"
+                      align="center"
+                      width="100%"
+                      style="border-collapse: collapse;"
+                    >
+                      <tr class="content-section first-section">
+                        <td class="info-frame">
+                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <table>
+                                  <tr class="content-number">
+                                    <td class="content-number-circle">
+                                      <p class="content-number-item">1</p>
                                     </td>
                                   </tr>
-                                </tbody>
-                              </table>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <p>2. Once installed, click on the following link to proceed to Parsec:</p>
-                      <table role="presentation" border="0" cellpadding="0" cellspacing="0" class="btn btn-primary">
-                        <tbody>
-                          <tr>
-                            <td align="center">
-                              <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-                                <tbody>
-                                  <tr>
+                                  <tr style="float: left; display: block;">
                                     <td>
-                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                                      <a href="{{ invitation_url }}" rel="noopener noreferrer" target="_blank">Claim invitation</a>
+                                      <p class="content-title">Download Parsec application</p>
                                     </td>
                                   </tr>
-                                </tbody>
-                              </table>
-                            </td>
-                          </tr>
-                        </tbody>
-                      </table>
-                      <div class="grey-text"">
-                        <em>
-                          The button didn't work? You can copy/paste the following link in your browser instead:
-                        </em>
-                        <em class="grey-text-url">
-                          {{ invitation_url }}
-                        </em>
-                      </div>
-                      <p>
-                        {% if is_user_invitation %}
-                        3. Get in touch with <b>{{ greeter }}</b> and follow the next steps on the Parsec client.
-                        {% elif is_device_invitation %}
-                        3. Start the invitation process from a device already part of the organization,
-                        then follow the steps on the Parsec client.
-                        {% elif is_shamir_recovery_invitation %}
-                        3. Get in touch with <b>{{ greeter }}</b> and follow the next steps on the Parsec client.
-                        {% endif %}
-                      </p>
-                      <p>
-                        <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                          origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                          For more information please refer to <a href="https://docs.parsec.cloud"
-                          rel="noopener noreferrer" target="_blank">Parsec documentation</a>
-                      </p>
-                    </td>
-                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <p class="content-section-text">
+                                        If you haven't yet installed, please download it from the following link:</p>
+                                      </p>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                                      <a class="button button-secondary" href="https://parsec.cloud/en/start-parsec" rel="noopener noreferrer" target="_blank" class="button">Download Parsec</a>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <a href="https://parsec.cloud/en/start-parsec" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">https://parsec.cloud/en/start-parsec</a>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr class="content-section second-section">
+                        <td class="info-frame">
+                          <table class="section-content" role="presentation" border="0" cellpadding="0" cellspacing="0">
+                            <tr>
+                              <td>
+                                <table>
+                                  <tr class="content-number">
+                                    <td class="content-number-circle">
+                                      <p class="content-number-item">2</p>
+                                    </td>
+                                  </tr>
+                                  <tr style="float: left; display: block;">
+                                    <td>
+                                      <p class="content-title">Join the organization</p>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <p class="content-section-text">
+                                        {% if greeter %}
+                                        To join the organization please accept the invitation and follow the steps with <b>{{ greeter }}</b>.
+                                        {% else %}
+                                          Start the invitation process from a device already part of the organization, then follow the steps on Parsec.
+                                        {% endif %}
+                                      </p>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                                        origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                                      <a class="button" href="https://parsec.cloud/get-parsec" rel="noopener noreferrer" target="_blank" class="button">Accept invitation</a>
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style="padding-top: 16px;">
+                                      <p style="font-size: 14px; color: #51517B;">If the button does not work, please click on the following link:</p>
+                                      <a href="{{ invitation_url }}" style="font-size: 13px; color: #51517B;" rel="noopener noreferrer" target="_blank">{{ invitation_url }}</a>
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <tr class="content-footer">
+                        <td class="note">
+                          <p style="font-size: 14px; color: #51517B; padding-bottom: 8px;">
+                            <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
+                            origin page using window.opener unless link type noopener or noreferrer is specified. -->
+                            For more information on how to join an organization, please consult the <a style="color: #0058CC;" href="https://docs.parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec documentation</a>.
+                          </p>
+                          <p>You can also consult the user guide: <a style="color: #0058CC;" href="https://docs.parsec.cloud/en/stable/userguide/join_organization.html" rel="noopener noreferrer" target="_blank">Join an organization</a>.</p>
+                        </td>
+                      </tr>
+
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer Section -->
+          <tr class="footer-section">
+            <td>
+                <table cellspacing="0" cellpadding="8">
+                    <tr class="top-section">
+                        <td class="closing-message-section">
+                            <table cellspacing="0" cellpadding="0" align="left">
+                                <tr>
+                                    <td>
+                                        <p>Sincerely<br />
+                                        Parsec Cloud team</p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <img style="margin-top: 12px; height: 16.8px;" src="{{ server_url }}/static/logo-parsec-row.png" alt="Parsec Cloud" title="Parsec" width="100" />
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td class="company-links-section">
+                            <table cellspacing="0" cellpadding="0" align="right">
+                                <tr class="social-networks">
+                                    <td>
+                                        <a class="linkedin"
+                                            href="https://www.linkedin.com/company/parsec-by-scille/mycompany/">
+                                            <img src="cid:linkedin" alt="LinkedIn">
+                                        </a>
+                                        <a class="twitter" href="https://twitter.com/parsecscille">
+                                            <img src="cid:twitter" alt="Twitter">
+                                        </a>
+                                        <a class="parsec" href="https://parsec.cloud">
+                                            <img src="cid:parsec-icon" alt="Parsec">
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr class="call-to-action">
+                                    <td>
+                                        <a href="https://parsec.cloud/get-parsec/" rel="noopener noreferrer"
+                                            target="_blank">Try Parsec Share for free</a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                    <tr class="bottom-section">
+                        <td colspan="2">
+                            <small>2024 • Parsec Cloud</small>
+                        </td>
+                    </tr>
                 </table>
-              </td>
-            </tr>
-
-            <!-- END MAIN CONTENT AREA -->
-          </table>
-          <!-- END CENTERED WHITE CONTAINER -->
-
-          <!-- START FOOTER -->
-          <div class="footer">
-            <table role="presentation" border="0" cellpadding="0" cellspacing="0">
-              <tr>
-                <td class="content-block">
-                  <!-- HTML links that open in a new tab or window allow the target page to access the DOM of the
-                    origin page using window.opener unless link type noopener or noreferrer is specified. -->
-                  <br><a href="https://parsec.cloud" rel="noopener noreferrer" target="_blank">Parsec by Scille</a>.
-                </td>
-              </tr>
-            </table>
-          </div>
-          <!-- END FOOTER -->
-
-        </div>
+            </td>
+          </tr>
+        </table>
       </td>
-      <td>&nbsp;</td>
     </tr>
   </table>
 </body>
