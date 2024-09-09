@@ -199,13 +199,13 @@ async fn ok(#[values(false, true)] local_cache: bool, env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal_client_ready")]
 async fn cursor_not_in_read_mode(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
-    let path = "/bar.txt".parse().unwrap();
     let options = OpenOptions {
         read: false,
         write: false,
@@ -213,7 +213,10 @@ async fn cursor_not_in_read_mode(env: &TestbedEnv) {
         create: false,
         create_new: false,
     };
-    let fd = ops.open_file(path, options).await.unwrap();
+    let fd = ops
+        .open_file_by_id(wksp1_bar_txt_id, options)
+        .await
+        .unwrap();
     p_assert_eq!(fd.0, 1);
 
     let mut buf = vec![];
