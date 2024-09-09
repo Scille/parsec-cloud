@@ -25,6 +25,10 @@ const MAX_SYNC_WAIT: Duration = match Duration::try_minutes(1) {
     Some(v) => v,
     None => panic!("Invalid duration"),
 };
+const SERVER_STORE_UNAVAILABLE_WAIT: Duration = match Duration::try_minutes(1) {
+    Some(v) => v,
+    None => panic!("Invalid duration"),
+};
 
 pub(crate) async fn start_workspace_outbound_sync_monitor(
     workspace_ops: Arc<WorkspaceOps>,
@@ -83,6 +87,7 @@ fn task_future_factory(
         let syncer = spawn({
             let workspace_ops = workspace_ops.clone();
             let tx = tx.clone();
+            let device = device.clone();
             async move {
                 macro_rules! handle_workspace_sync_error {
                     ($err:expr) => {
@@ -142,6 +147,16 @@ fn task_future_factory(
                         match outcome {
                             Ok(OutboundSyncOutcome::Done) => break,
                             Ok(OutboundSyncOutcome::InboundSyncNeeded) => (),
+                            Ok(OutboundSyncOutcome::ServerStoreUnavailable) => {
+                                // Re-enqueue to retry later
+                                log::info!("Workspace {realm_id}: {entry_id} sync failed due to server block store unavailable, aborting sync and waiting {}s", SERVER_STORE_UNAVAILABLE_WAIT.num_seconds());
+                                let _ = tx.send(entry_id);
+                                device
+                                    .time_provider
+                                    .sleep(SERVER_STORE_UNAVAILABLE_WAIT)
+                                    .await;
+                                break;
+                            }
                             Ok(OutboundSyncOutcome::EntryIsBusy) => {
                                 // Re-enqueue to retry later
                                 // Note the send may fail if the syncer sub task has crashed,

@@ -61,11 +61,16 @@ fn folder_has_changed(original: &Arc<LocalFolderManifest>, new: &Arc<LocalFolder
 #[derive(Debug)]
 pub enum OutboundSyncOutcome {
     Done,
+    /// A more recent version of the entry exists on the server, we must first integrate
+    /// it before re-trying to sync our own changes.
     InboundSyncNeeded,
     /// The entry is already locked, this is typically because it is being modified.
     /// Hence now is not the right time to sync it given we will need to re-sync
     /// it after the modification is done. Instead we should just retry later.
     EntryIsBusy,
+    /// The server cannot communicate with the blockstore (e.g. AWS S3) to store
+    /// our blocks. Our only solution is to wait, pray, and retry later.
+    ServerStoreUnavailable,
 }
 
 async fn outbound_sync_child(
@@ -207,6 +212,9 @@ async fn outbound_sync_file(
     let local = match outcome {
         ReshapeAndUploadBlocksOutcome::Done(local_reshaped) => local_reshaped,
         ReshapeAndUploadBlocksOutcome::EntryIsBusy => return Ok(OutboundSyncOutcome::EntryIsBusy),
+        ReshapeAndUploadBlocksOutcome::ServerStoreUnavailable => {
+            return Ok(OutboundSyncOutcome::ServerStoreUnavailable)
+        }
     };
 
     #[cfg(test)]
@@ -605,6 +613,7 @@ async fn upload_manifest<M: RemoteManifest>(
 enum ReshapeAndUploadBlocksOutcome {
     Done(Arc<LocalFileManifest>),
     EntryIsBusy,
+    ServerStoreUnavailable,
 }
 
 async fn reshape_and_upload_blocks(
@@ -645,7 +654,9 @@ async fn reshape_and_upload_blocks(
         .await
         .map(move |outcome| match outcome {
             UploadBlocksOutcome::Done => ReshapeAndUploadBlocksOutcome::Done(manifest),
-            UploadBlocksOutcome::EntryIsBusy => ReshapeAndUploadBlocksOutcome::EntryIsBusy,
+            UploadBlocksOutcome::ServerStoreUnavailable => {
+                ReshapeAndUploadBlocksOutcome::ServerStoreUnavailable
+            }
         })
 }
 
@@ -765,7 +776,7 @@ async fn do_next_reshape_operation(
 
 enum UploadBlocksOutcome {
     Done,
-    EntryIsBusy,
+    ServerStoreUnavailable,
 }
 
 async fn upload_blocks(
@@ -842,7 +853,7 @@ async fn upload_blocks(
                 | Rep::BlockAlreadyExists => (),
                 Rep::AuthorNotAllowed => return Err(WorkspaceSyncError::NotAllowed),
                 // Nothing we can do if server is not ready to store our data, retry later
-                Rep::StoreUnavailable => return Ok(UploadBlocksOutcome::EntryIsBusy),
+                Rep::StoreUnavailable => return Ok(UploadBlocksOutcome::ServerStoreUnavailable),
                     // A key rotation occurred concurrently, should poll for new certificates and retry
                     Rep::BadKeyIndex { last_realm_certificate_timestamp } => {
                         let latest_known_timestamps = PerTopicLastTimestamps::new_for_realm(ops.realm_id, last_realm_certificate_timestamp);
