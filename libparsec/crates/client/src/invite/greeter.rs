@@ -424,22 +424,20 @@ impl BaseGreetInitialCtx {
     async fn do_wait_peer(self) -> Result<BaseGreetInProgress1Ctx, GreetInProgressError> {
         // Loop over wait peer attempts
         for attempt in 0.. {
-            let result = self._do_wait_peer().await;
-            // If the attempt was automatically cancelled by the other peer, try again (at most 8 times).
-            // Previous attempts are automatically cancelled when a new start greeting attempt is made.
-            // This way, the peers can synchronize themselves more easily during the wait-peer phase,
-            // without requiring the front-end to deal with it.
-            if let Err(GreetInProgressError::GreetingAttemptCancelled {
-                origin: GreeterOrClaimer::Claimer,
-                reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
-                ..
-            }) = result
-            {
-                if attempt < WAIT_PEER_MAX_ATTEMPTS {
-                    continue;
-                }
-            }
-            let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) = result?;
+            let (greeting_attempt, greeter_sas, claimer_sas, shared_secret_key) =
+                match self._do_wait_peer().await {
+                    Ok(x) => x,
+                    // If the attempt was automatically cancelled by the other peer, try again (at most 8 times).
+                    // Previous attempts are automatically cancelled when a new start greeting attempt is made.
+                    // This way, the peers can synchronize themselves more easily during the wait-peer phase,
+                    // without requiring the front-end to deal with it.
+                    Err(GreetInProgressError::GreetingAttemptCancelled {
+                        origin: GreeterOrClaimer::Claimer,
+                        reason: CancelledGreetingAttemptReason::AutomaticallyCancelled,
+                        ..
+                    }) if attempt < WAIT_PEER_MAX_ATTEMPTS => continue,
+                    Err(err) => return Err(err),
+                };
             // Move self into the next context
             return Ok(BaseGreetInProgress1Ctx {
                 token: self.token,
