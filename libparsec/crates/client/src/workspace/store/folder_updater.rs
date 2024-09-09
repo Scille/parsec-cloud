@@ -142,6 +142,8 @@ pub(super) async fn for_update_folder(
     let updater = FolderUpdater {
         store,
         update_guard: Some(update_guard),
+        #[cfg(debug_assertions)]
+        entry_id: manifest.base.id,
     };
 
     Ok((updater, manifest))
@@ -183,6 +185,8 @@ pub async fn resolve_path_for_update_folder<'a>(
     let updater = FolderUpdater {
         store,
         update_guard: Some(update_guard),
+        #[cfg(debug_assertions)]
+        entry_id: manifest.id(),
     };
 
     match manifest {
@@ -194,6 +198,8 @@ pub async fn resolve_path_for_update_folder<'a>(
 pub(crate) struct FolderUpdater<'a> {
     store: &'a super::WorkspaceStore,
     update_guard: Option<ManifestUpdateLockGuard>,
+    #[cfg(debug_assertions)]
+    entry_id: VlobID,
 }
 
 impl<'a> FolderUpdater<'a> {
@@ -202,6 +208,19 @@ impl<'a> FolderUpdater<'a> {
         manifest: Arc<LocalFolderManifest>,
         new_child: Option<ArcLocalChildManifest>,
     ) -> Result<(), UpdateFolderManifestError> {
+        // Sanity check to ensure the caller is not buggy
+        #[cfg(debug_assertions)]
+        {
+            assert_eq!(manifest.base.id, self.entry_id);
+            if let Some(new_child) = &new_child {
+                let child_id = match new_child {
+                    ArcLocalChildManifest::File(manifest) => manifest.base.id,
+                    ArcLocalChildManifest::Folder(manifest) => manifest.base.id,
+                };
+                assert_ne!(child_id, self.entry_id);
+            }
+        }
+
         let mut storage_guard = self.store.storage.lock().await;
         let storage = storage_guard
             .as_mut()
