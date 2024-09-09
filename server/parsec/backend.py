@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import dataclasses
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Any, AsyncGenerator, Type, TypeAlias
@@ -59,7 +58,9 @@ logger = get_logger()
 
 @asynccontextmanager
 async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None]:
-    logger.info("Backend configuration", **dataclasses.asdict(config))
+    # Log the backend configuration
+    logger.info("Backend configuration", **config.logging_kwargs())
+
     if config.db_config.is_mocked():
         components_factory = mocked_components_factory
     else:
