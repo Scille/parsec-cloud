@@ -12,7 +12,7 @@ SET current_profile = COALESCE(
         SELECT profile.profile
         FROM profile
         WHERE profile.user_ = user_._id
-        ORDER BY profile.certified_by DESC
+        ORDER BY profile.certified_on DESC
         LIMIT 1
     ),
     initial_profile
