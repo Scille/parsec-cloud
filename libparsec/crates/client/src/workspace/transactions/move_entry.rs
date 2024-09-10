@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -243,9 +243,8 @@ async fn move_entry_same_parent(
     let parent_id = parent_manifest.base.id;
     let mut_parent = Arc::make_mut(&mut parent_manifest);
 
-    let child_id = match mut_parent.children.remove(&src_child_name) {
-        None => return Err(WorkspaceMoveEntryError::SourceNotFound),
-        Some(child_id) => child_id,
+    let Some(child_id) = mut_parent.children.get(&src_child_name).copied() else {
+        return Err(WorkspaceMoveEntryError::SourceNotFound);
     };
 
     // The parent's `children` field may contain invalid data (i.e. referencing
@@ -278,15 +277,12 @@ async fn move_entry_same_parent(
         return Err(WorkspaceMoveEntryError::SourceNotFound);
     }
 
-    use std::collections::hash_map::Entry;
-
-    match mut_parent.children.entry(dst_child_name) {
+    let exchange_src_child_id = match mut_parent.children.get(&dst_child_name).copied() {
         // The destination is maybe taken by an existing child...
-        Entry::Occupied(mut entry) => {
-            let dst_child_previous_id = *entry.get();
+        Some(dst_child_id) => {
             let is_child = ops
                 .store
-                .ensure_manifest_exists_with_parent(dst_child_previous_id, parent_id)
+                .ensure_manifest_exists_with_parent(dst_child_id, parent_id)
                 .await
                 .map_err(|err| match err {
                     EnsureManifestExistsWithParentError::Offline => {
@@ -315,43 +311,42 @@ async fn move_entry_same_parent(
             if is_child {
                 // ...it is an actual child !
                 match mode {
-                    MoveEntryMode::CanReplace => {
-                        entry.insert(child_id);
-                    }
+                    MoveEntryMode::CanReplace => None,
 
                     MoveEntryMode::NoReplace => {
                         return Err(WorkspaceMoveEntryError::DestinationExists {
-                            entry_id: dst_child_previous_id,
+                            entry_id: dst_child_id,
                         });
                     }
 
-                    MoveEntryMode::Exchange => {
-                        entry.insert(child_id);
-                        mut_parent
-                            .children
-                            .insert(src_child_name, dst_child_previous_id);
-                    }
+                    // Modify the source child to point to the destination child
+                    MoveEntryMode::Exchange => Some(dst_child_id),
                 }
             } else {
                 // ...the entry was not a valid child, ignore it
                 if matches!(mode, MoveEntryMode::Exchange) {
                     return Err(WorkspaceMoveEntryError::DestinationNotFound);
                 }
-                entry.insert(child_id);
+                None
             }
         }
 
         // The destination doesn't exist
-        Entry::Vacant(entry) => {
+        None => {
             if matches!(mode, MoveEntryMode::Exchange) {
                 return Err(WorkspaceMoveEntryError::DestinationNotFound);
             }
-            entry.insert(child_id);
+            None
         }
-    }
+    };
 
-    mut_parent.updated = ops.device.time_provider.now();
-    mut_parent.need_sync = true;
+    let now = ops.device.time_provider.now();
+    let data = HashMap::from_iter([
+        (src_child_name, exchange_src_child_id),
+        (dst_child_name, Some(child_id)),
+    ]);
+
+    mut_parent.evolve_children_and_mark_updated(data, &ops.config.prevent_sync_pattern, now);
 
     parent_updater
         .update_folder_manifest(parent_manifest, None)
