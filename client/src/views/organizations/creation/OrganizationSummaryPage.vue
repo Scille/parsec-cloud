@@ -84,6 +84,14 @@
           <ion-text class="summary-item__text body-lg">
             {{ serverType === ServerType.Saas ? $msTranslate('CreateOrganization.saas') : $msTranslate('CreateOrganization.customServer') }}
           </ion-text>
+          <ion-button
+            v-show="canEditServerAddress"
+            fill="clear"
+            class="summary-item__button"
+            @click="$emit('updateServerAddressClicked')"
+          >
+            {{ $msTranslate('CreateOrganization.button.modify') }}
+          </ion-button>
         </div>
       </ion-item>
 
@@ -177,6 +185,7 @@ defineProps<{
   name: string;
   saveStrategy: DeviceSaveStrategyTag;
   canEditOrganizationName?: boolean;
+  canEditServerAddress?: boolean;
   canEditEmail?: boolean;
   canEditName?: boolean;
   canEditSaveStrategy?: boolean;
@@ -186,6 +195,7 @@ defineProps<{
 defineEmits<{
   (e: 'createClicked'): void;
   (e: 'updateOrganizationNameClicked'): void;
+  (e: 'updateServerAddressClicked'): void;
   (e: 'updateNameClicked'): void;
   (e: 'updateEmailClicked'): void;
   (e: 'updateSaveStrategyClicked'): void;

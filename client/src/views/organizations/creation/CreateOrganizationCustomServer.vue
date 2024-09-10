@@ -41,11 +41,13 @@
       :can-edit-email="true"
       :can-edit-name="true"
       :can-edit-organization-name="props.bootstrapLink === undefined"
+      :can-edit-server-address="props.bootstrapLink === undefined"
       :can-edit-save-strategy="true"
       @create-clicked="onCreateClicked"
       @update-email-clicked="onUpdatePersonalInformationClicked"
       @update-name-clicked="onUpdatePersonalInformationClicked"
       @update-organization-name-clicked="onUpdateOrganizationNameClicked"
+      @update-server-address-clicked="onUpdateOrganizationNameClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
       @close-requested="$emit('closeRequested')"
       @go-back-requested="onGoBackRequested"
@@ -146,6 +148,7 @@ async function onUserInformationFilled(chosenName: string, chosenEmail: string):
 }
 
 async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): Promise<void> {
+  currentError.value = undefined;
   saveStrategy.value = chosenSaveStrategy;
   step.value = Steps.Summary;
 }
@@ -206,7 +209,7 @@ async function onCreateClicked(): Promise<void> {
     if (result.error.tag === BootstrapOrganizationErrorTag.AlreadyUsedToken) {
       currentError.value = 'CreateOrganization.errors.alreadyExists';
     } else if (result.error.tag === BootstrapOrganizationErrorTag.Offline) {
-      currentError.value = 'CreateOrganization.errors.offline';
+      currentError.value = 'CreateOrganization.errors.customOffline';
     } else {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: result.error.tag } };
     }
