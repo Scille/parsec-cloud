@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Display, sync::Arc};
+use std::{collections::HashSet, fmt::Display, sync::Arc};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -303,6 +303,115 @@ async fn add_confined_entry(
             confinement_point: None,
         },
     );
+}
+
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
+async fn remove_confined_entry(
+    #[values(true, false)] root_level: bool,
+    #[values(EntryType::File, EntryType::Folder)] entry_type: EntryType,
+    env: &TestbedEnv,
+) {
+    let Env {
+        realm_id,
+        parent_id,
+        base_path,
+    } = bootstrap_env(env, root_level).await;
+
+    // Create a workspace ops instance
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, realm_id.to_owned()).await;
+    let mut spy = ops.event_bus.spy.start_expecting();
+
+    // Check that parent is up to date
+    check_need_sync_parent(&ops, parent_id, false).await;
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 0);
+
+    // Create the confined child
+    let target = base_path.join("test.tmp".parse().unwrap());
+    let confined_child_id = match entry_type {
+        EntryType::File => ops.create_file(target.clone()).await.unwrap(),
+        EntryType::Folder => ops.create_folder(target.clone()).await.unwrap(),
+    };
+
+    // Check that the child is marked as needing sync (this is because the child itself
+    // is not aware of its name and can be renamed at anytime, so it's not its job to
+    // decide whether or not it should be synced)
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, realm_id);
+        p_assert_eq!(e.entry_id, confined_child_id);
+    });
+    check_child(
+        &ops,
+        entry_type,
+        confined_child_id,
+        ExpectedValues {
+            need_sync: true,
+            confinement_point: None,
+        },
+    )
+    .await;
+
+    // Check that parent is not marked as needing sync
+    check_need_sync_parent(&ops, parent_id, false).await;
+
+    // Check that the child is in the parent's children
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    p_assert_eq!(children.len(), 1);
+    let (name, stat) = children[0].clone();
+    p_assert_eq!(name, "test.tmp".parse::<EntryName>().unwrap());
+    check_stat(
+        entry_type,
+        confined_child_id,
+        &stat,
+        ExpectedValues {
+            need_sync: true,
+            // TODO: confinement_point should be Some(parent_id)
+            // See: https://github.com/Scille/parsec-cloud/issues/8276
+            confinement_point: None,
+        },
+    );
+
+    // Check parent manifest content
+    let parent_manifest = ops
+        .store
+        .get_manifest(parent_id)
+        .await
+        .expect("unable to retrieve local manifest");
+
+    if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
+        assert_eq!(
+            folder_manifest.local_confinement_points,
+            HashSet::from([confined_child_id])
+        );
+    } else {
+        panic!("parent expected to be a folder")
+    }
+
+    // Remove child
+    ops.remove_entry(target).await.unwrap();
+
+    // Parent must be updated
+    spy.assert_next(|e: &EventWorkspaceOpsOutboundSyncNeeded| {
+        p_assert_eq!(e.realm_id, realm_id);
+        p_assert_eq!(e.entry_id, parent_id);
+    });
+
+    // Check that the child is NOT in the parent's children
+    let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
+    assert!(children.is_empty());
+
+    // Check parent manifest content
+    let parent_manifest = ops
+        .store
+        .get_manifest(parent_id)
+        .await
+        .expect("unable to retrieve local manifest");
+    if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
+        assert!(folder_manifest.local_confinement_points.is_empty())
+    } else {
+        panic!("parent expected to be a folder")
+    }
 }
 
 struct Env {
