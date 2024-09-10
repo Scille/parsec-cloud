@@ -3,7 +3,10 @@ members = [
     "server",
     "libparsec",
     "libparsec/crates/client",
+    "libparsec/crates/client_certif",
+    "libparsec/crates/client_common",
     "libparsec/crates/client_connection",
+    "libparsec/crates/client_workspace",
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
@@ -27,7 +30,10 @@ members = [
 default-members = [
     "libparsec",
     "libparsec/crates/client",
+    "libparsec/crates/client_certif",
+    "libparsec/crates/client_common",
     "libparsec/crates/client_connection",
+    "libparsec/crates/client_workspace",
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
@@ -83,10 +89,13 @@ libparsec_platform_storage = { path = "libparsec/crates/platform_storage", defau
 libparsec_serialization_format = { path = "libparsec/crates/serialization_format", default-features = false }
 libparsec_testbed = { path = "libparsec/crates/testbed", default-features = false }
 libparsec_tests_fixtures = { path = "libparsec/crates/tests_fixtures", default-features = false }
+libparsec_client = { path = "libparsec/crates/client", default-features = false }
+libparsec_client_certif = { path = "libparsec/crates/client_certif", default-features = false }
+libparsec_client_common = { path = "libparsec/crates/client_common", default-features = false }
+libparsec_client_workspace = { path = "libparsec/crates/client_workspace", default-features = false }
 libparsec_client_connection = { path = "libparsec/crates/client_connection", default-features = false }
 libparsec_platform_async = { path = "libparsec/crates/platform_async", default-features = false }
 libparsec_platform_http_proxy = { path = "libparsec/crates/platform_http_proxy", default-features = false }
-libparsec_client = { path = "libparsec/crates/client", default-features = false }
 libparsec_tests_macros = { path = "libparsec/crates/tests_macros", default-features = false }
 libparsec_tests_lite = { path = "libparsec/crates/tests_lite", default-features = false }
 libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }

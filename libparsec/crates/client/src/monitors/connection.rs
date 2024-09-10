@@ -42,10 +42,13 @@ use libparsec_platform_async::{pretend_future_is_send_on_web, stream::StreamExt}
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
-use crate::event_bus::*;
-
 use super::Monitor;
-use crate::event_bus::{EventBus, EventMissedServerEvents, EventRealmVlobUpdated};
+use crate::{
+    EventBus, EventCertificatesUpdated, EventExpiredOrganization, EventIncompatibleServer,
+    EventInvitationChanged, EventMissedServerEvents, EventOffline, EventOnline,
+    EventPkiEnrollmentUpdated, EventRealmVlobUpdated, EventRevokedSelfUser,
+    EventServerConfigNotified, IncompatibleServerReason,
+};
 
 const CONNECTION_MONITOR_NAME: &str = "connection";
 

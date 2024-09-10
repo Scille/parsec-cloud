@@ -6,10 +6,8 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    event_bus::{
-        EventBus, EventMissedServerEvents, EventMonitorCrashed, EventWorkspaceLocallyCreated,
-    },
-    Client, ClientEnsureWorkspacesBootstrappedError,
+    Client, ClientEnsureWorkspacesBootstrappedError, EventBus, EventMissedServerEvents,
+    EventMonitorCrashed, EventWorkspaceLocallyCreated,
 };
 
 const WORKSPACES_BOOTSTRAP_MONITOR_NAME: &str = "workspaces_bootstrap";

@@ -1993,7 +1993,10 @@ name = "libparsec_client"
 version = "3.0.0-rc.1+dev"
 dependencies = [
  "libparsec_client",
+ "libparsec_client_certif",
+ "libparsec_client_common",
  "libparsec_client_connection",
+ "libparsec_client_workspace",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
  "libparsec_platform_storage",
@@ -2006,6 +2009,37 @@ dependencies = [
  "proptest",
  "proptest-state-machine",
  "sharks",
+]
+
+[[package]]
+name = "libparsec_client_certif"
+version = "3.0.0-rc.1+dev"
+dependencies = [
+ "libparsec_client_common",
+ "libparsec_client_connection",
+ "libparsec_platform_async",
+ "libparsec_platform_storage",
+ "libparsec_protocol",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "log",
+ "paste",
+]
+
+[[package]]
+name = "libparsec_client_common"
+version = "3.0.0-rc.1+dev"
+dependencies = [
+ "libparsec_client_connection",
+ "libparsec_platform_async",
+ "libparsec_platform_storage",
+ "libparsec_protocol",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "log",
+ "paste",
 ]
 
 [[package]]
@@ -2029,6 +2063,27 @@ dependencies = [
  "reqwest-eventsource",
  "thiserror",
  "tokio",
+]
+
+[[package]]
+name = "libparsec_client_workspace"
+version = "3.0.0-rc.1+dev"
+dependencies = [
+ "libparsec_client_certif",
+ "libparsec_client_common",
+ "libparsec_client_connection",
+ "libparsec_platform_async",
+ "libparsec_platform_device_loader",
+ "libparsec_platform_storage",
+ "libparsec_protocol",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "log",
+ "paste",
+ "proptest",
+ "proptest-state-machine",
+ "sharks",
 ]
 
 [[package]]

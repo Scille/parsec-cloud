@@ -11,12 +11,12 @@ use libparsec_types::prelude::*;
 use super::{
     inbound_sync_monitor_loop, InboundSyncManagerIO, IncomingEvent, WaitForNextIncomingEventOutcome,
 };
-use crate::event_bus::AnySpiedEvent;
 use crate::monitors::workspace_inbound_sync::RealInboundSyncManagerIO;
 use crate::workspace::{
     InboundSyncOutcome, WorkspaceExternalInfo, WorkspaceGetNeedInboundSyncEntriesError,
     WorkspaceSyncError,
 };
+use crate::AnySpiedEvent;
 use crate::{
     CertificateOps, ClientConfig, EventBus, MountpointMountStrategy, WorkspaceOps,
     WorkspaceStorageCacheSize,

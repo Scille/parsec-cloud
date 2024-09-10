@@ -5,10 +5,7 @@ use std::{future::Future, sync::Arc};
 use libparsec_platform_async::{pretend_future_is_send_on_web, sleep};
 
 use super::Monitor;
-use crate::{
-    event_bus::{EventBus, EventServerConfigChanged, EventServerConfigNotified},
-    Client, ServerConfig,
-};
+use crate::{Client, EventBus, EventServerConfigChanged, EventServerConfigNotified, ServerConfig};
 
 const SERVER_CONFIG_MONITOR_NAME: &str = "server_config";
 

@@ -13,7 +13,7 @@ use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
 
 use self::store::{UserForUpdateLocalWorkspacesUpdater, UserStore};
-use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
+use crate::{certif::CertificateOps, ClientConfig, EventBus};
 
 #[derive(Debug)]
 pub struct UserOps {

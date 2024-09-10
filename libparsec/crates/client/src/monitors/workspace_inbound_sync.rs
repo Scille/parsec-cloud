@@ -7,12 +7,12 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
-    event_bus::{Broadcastable, EventBus, EventMissedServerEvents, EventRealmVlobUpdated},
     workspace::{
         InboundSyncOutcome, WorkspaceGetNeedInboundSyncEntriesError, WorkspaceOps,
         WorkspaceSyncError,
     },
-    EventBusConnectionLifetime, EventMonitorCrashed,
+    Broadcastable, EventBus, EventBusConnectionLifetime, EventMissedServerEvents,
+    EventMonitorCrashed, EventRealmVlobUpdated,
 };
 
 const WORKSPACE_INBOUND_SYNC_MONITOR_NAME: &str = "workspace_inbound_sync";
