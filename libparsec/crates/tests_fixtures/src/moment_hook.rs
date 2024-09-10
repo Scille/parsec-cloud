@@ -22,6 +22,10 @@ pub enum Moment {
     /// manifest with the reshaped block.
     /// This moment occurs right after the blocks has been uploaded.
     OutboundSyncFileReshapedAndBlockUploaded,
+    /// Before actual stop of the workspace ops, all currently opened files must be
+    /// closed so that they change get flushed to database.
+    /// This moment occurs in `WorkspaceOps::stop` right after the files has been closed.
+    WorkspaceOpsStopAllFdsClosed,
 }
 
 /// Used by the test code to control the execution of the tested code.

@@ -210,6 +210,9 @@ pub async fn open_file_by_id(
     let cursor_insertion_outcome = loop {
         let outcome = ops.store.for_update_file(entry_id, false).await;
         let mut opened_files_guard = ops.opened_files.lock().expect("Mutex is poisoned");
+        if !opened_files_guard.new_open_allowed {
+            return Err(WorkspaceOpenFileError::Stopped);
+        }
 
         let file_descriptor = opened_files_guard.next_file_descriptor;
         let cursor = OpenedFileCursor {
