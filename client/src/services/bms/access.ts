@@ -342,6 +342,9 @@ class BmsAccess {
   }
 
   private tokenIsExpired(token: AuthenticationToken): boolean {
+    if (token === undefined) {
+      return true;
+    }
     const tokenData = decodeToken(token);
     if (!tokenData) {
       return true;
