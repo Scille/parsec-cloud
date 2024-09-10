@@ -249,21 +249,23 @@ pub struct TestbedTemplateBuilder {
     pub(super) check_consistency: bool,
 }
 
+#[track_caller]
 pub(super) fn get_stuff<T>(
     stuff: &[(&'static str, &'static (dyn std::any::Any + Send + Sync))],
     key: &'static str,
 ) -> &'static T {
+    let caller = std::panic::Location::caller();
     let (_, value_any) = stuff.iter().find(|(k, _)| *k == key).unwrap_or_else(|| {
         let available_stuff: Vec<_> = stuff.iter().map(|(k, _)| k).collect();
         panic!(
-            "Key `{}` is not among the stuff (available keys: {:?})",
-            key, available_stuff
+            "Key `{}` is not among the stuff (available keys: {:?}) (caller: {})",
+            key, available_stuff, caller
         );
     });
     value_any.downcast_ref::<T>().unwrap_or_else(|| {
         panic!(
-            "Key `{}` is among the stuff, but you got it type wrong :'(",
-            key
+            "Key `{}` is among the stuff, but you got it type wrong :'( (caller: {})",
+            key, caller
         );
     })
 }
