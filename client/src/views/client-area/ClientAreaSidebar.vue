@@ -268,6 +268,7 @@ import {
   IonList,
   IonText,
   popoverController,
+  IonSkeletonText,
 } from '@ionic/vue';
 import OrganizationSwitchClientPopover from '@/components/organizations/OrganizationSwitchClientPopover.vue';
 import { ClientAreaPages, isDefaultOrganization } from '@/views/client-area/types';
