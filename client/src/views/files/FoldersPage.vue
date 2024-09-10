@@ -936,6 +936,7 @@ async function renameEntries(entries: EntryModel[]): Promise<void> {
     );
   } else {
     entry.name = newName;
+    entry.path = result.value;
   }
 }
 

@@ -72,12 +72,16 @@ export async function rename(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
   newName: EntryName,
-): Promise<Result<null, WorkspaceMoveEntryError>> {
+): Promise<Result<FsPath, WorkspaceMoveEntryError>> {
   if (!needsMocks()) {
     const newPath = await Path.join(await Path.parent(path), newName);
-    return await libparsec.workspaceMoveEntry(workspaceHandle, path, newPath, { tag: MoveEntryModeTag.NoReplace });
+    const result = await libparsec.workspaceMoveEntry(workspaceHandle, path, newPath, { tag: MoveEntryModeTag.NoReplace });
+    if (result.ok) {
+      return { ok: true, value: newPath };
+    }
+    return result;
   } else {
-    return { ok: true, value: null };
+    return { ok: true, value: '/a/b.txt' };
   }
 }
 
