@@ -40,12 +40,12 @@ msTest('List the workspaces', async ({ connected }) => {
   await expect(actionBar.locator('#workspace-filter-select')).toHaveText('Name');
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).toHaveDisabledAttribute();
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#list-view')).toBeEnabled();
-  await expect(connected.locator('.workspaces-grid-item')).toHaveCount(3);
+  await expect(connected.locator('.workspace-card-item')).toHaveCount(3);
 });
 
 for (const workspace of workspaces) {
   msTest(`Check workspace card of ${workspace.name}`, async ({ connected }) => {
-    const workspaceCard = connected.locator('.workspaces-grid-item', { hasText: workspace.name });
+    const workspaceCard = connected.locator('.workspace-card-item', { hasText: workspace.name });
     await expect(workspaceCard).toContainText(workspace.name);
     expect(workspaceCard).toBeDefined();
     const workspaceInfo = workspaceCard.locator('.workspace-info');
@@ -70,7 +70,7 @@ for (const gridMode of [false, true]) {
     // Order by name asc (default)
     let names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName1.localeCompare(wName2));
     if (gridMode) {
-      await expect(connected.locator('.workspaces-container').locator('.card-content__title')).toHaveText(names);
+      await expect(connected.locator('.workspaces-container').locator('.card-workspace__title')).toHaveText(names);
     } else {
       await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
@@ -96,7 +96,7 @@ for (const gridMode of [false, true]) {
     names = workspaces.map((w) => w.name).sort((wName1, wName2) => wName2.localeCompare(wName1));
     await sortSelector.click();
     if (gridMode) {
-      await expect(connected.locator('.workspaces-container').locator('.card-content__title')).toHaveText(names);
+      await expect(connected.locator('.workspaces-container').locator('.card-workspace__title')).toHaveText(names);
     } else {
       await expect(connected.locator('.workspaces-container').locator('.workspace-name__label')).toHaveText(names);
     }
@@ -120,7 +120,7 @@ async function ensureFavorite(page: Page, favoritesCount: number): Promise<void>
   for (let i = 0; i < 3; i++) {
     let item;
     if (await isInGridMode(page)) {
-      item = page.locator('.workspaces-grid-item').nth(i);
+      item = page.locator('.workspace-card-item').nth(i);
     } else {
       item = page.locator('.workspaces-container').locator('.workspace-list-item').nth(i);
     }
@@ -137,15 +137,15 @@ async function ensureFavorite(page: Page, favoritesCount: number): Promise<void>
 }
 
 msTest('Checks favorites', async ({ connected }) => {
-  await expect(connected.locator('.workspaces-grid-item').locator('.card-content__title')).toHaveText([
+  await expect(connected.locator('.workspace-card-item').locator('.card-workspace__title')).toHaveText([
     'The Copper Coronet',
     'Trademeet',
     "Watcher's Keep",
   ]);
   await ensureFavorite(connected, 0);
-  await connected.locator('.workspaces-grid-item').nth(1).locator('.workspace-favorite-icon').click();
+  await connected.locator('.workspace-card-item').nth(1).locator('.workspace-favorite-icon').click();
   // Put favorite in first
-  await expect(connected.locator('.workspaces-grid-item').locator('.card-content__title')).toHaveText([
+  await expect(connected.locator('.workspace-card-item').locator('.card-workspace__title')).toHaveText([
     'Trademeet',
     'The Copper Coronet',
     "Watcher's Keep",
@@ -166,7 +166,7 @@ msTest('Checks favorites', async ({ connected }) => {
   await toggleViewMode(connected);
   await ensureFavorite(connected, 2);
 
-  await connected.locator('.workspaces-grid-item').nth(1).locator('.workspace-favorite-icon').click();
+  await connected.locator('.workspace-card-item').nth(1).locator('.workspace-favorite-icon').click();
   await ensureFavorite(connected, 1);
   await toggleViewMode(connected);
 

@@ -15,7 +15,7 @@
     @mouseleave="isHovered = false"
   >
     <div
-      class="user-card-checkbox"
+      class="card-checkbox"
       v-if="!user.isRevoked() && !user.isCurrent"
     >
       <!-- eslint-disable vue/no-mutating-props -->
@@ -34,7 +34,7 @@
       <user-status-tag :revoked="user.isRevoked()" />
     </div>
     <div
-      class="user-card-option"
+      class="card-option"
       v-show="isHovered || menuOpened"
       @click.stop="onOptionsClick($event)"
     >
@@ -104,18 +104,11 @@ async function onOptionsClick(event: Event): Promise<void> {
 
 <style scoped lang="scss">
 .user-card-item {
-  --background: none;
+  --background: inherit;
   --background-hover: none;
 
-  border: 1px solid var(--parsec-color-light-secondary-medium);
   width: 14rem;
-  border-radius: var(--parsec-radius-12);
-  position: relative;
   height: fit-content;
-
-  &::part(native) {
-    --inner-padding-end: 0px;
-  }
 
   &:hover:not(.revoked) {
     background: var(--parsec-color-light-primary-30);
@@ -136,9 +129,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 
   &.selected:not(.revoked) {
-    --background: var(--parsec-color-light-primary-100);
-    border: 1px solid var(--parsec-color-light-primary-100);
-
     .user-card-info__name {
       color: var(--parsec-color-light-primary-700);
     }
@@ -149,31 +139,15 @@ async function onOptionsClick(event: Event): Promise<void> {
   }
 }
 
-.user-card-option,
-.user-card-checkbox {
-  position: absolute;
-  z-index: 10;
-}
-
-.user-card-checkbox {
+.card-checkbox {
   top: 1rem;
   right: 1rem;
 }
 
-.user-card-option {
-  color: var(--parsec-color-light-secondary-grey);
-  text-align: right;
-  display: flex;
-  align-items: center;
-  bottom: 0;
-  right: 0;
-  font-size: 1.5rem;
+.card-option {
   padding: 1rem;
-  cursor: pointer;
-
-  &:hover {
-    color: var(--parsec-color-light-primary-500);
-  }
+  right: 0;
+  bottom: 0;
 }
 
 .user-card {

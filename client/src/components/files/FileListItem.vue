@@ -11,6 +11,7 @@
       button
       lines="full"
       :detail="false"
+      class="file-list-item"
       :class="{
         selected: entry.isSelected,
         'file-hovered': !entry.isSelected && (menuOpened || isHovered),
