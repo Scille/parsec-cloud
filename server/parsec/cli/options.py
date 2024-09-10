@@ -34,7 +34,7 @@ from parsec.config import (
     S3BlockStoreConfig,
     SWIFTBlockStoreConfig,
 )
-from parsec.logging import configure_logging, configure_sentry_logging
+from parsec.logging import configure_logging, enable_sentry_logging
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -118,7 +118,7 @@ def sentry_config_options(
         # - `SENTRY_DSN`
         # - `SENTRY_ENVIRONMENT`
         # - `SENTRY_RELEASE`
-        # Those variable are only used if the corresponding parameter is not
+        # Those variables are only used if the corresponding parameter is not
         # explicitly provided while calling `sentry_init(**config)`.
         # Hence we make sure we provide the three parameters (note the release
         # is determined from Parsec's version) so those `PARSEC_*` env vars
@@ -144,7 +144,7 @@ def sentry_config_options(
             sentry_dsn: str | None, sentry_environment: str, *args: P.args, **kwargs: P.kwargs
         ) -> R:
             if configure_sentry and sentry_dsn:
-                configure_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
+                enable_sentry_logging(dsn=sentry_dsn, environment=sentry_environment)
 
             kwargs["sentry_dsn"] = sentry_dsn
             kwargs["sentry_environment"] = sentry_environment
