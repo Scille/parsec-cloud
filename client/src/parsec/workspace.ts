@@ -315,7 +315,7 @@ export async function getWorkspaceSharing(
           id: 'id3',
           // cspell:disable-next-line
           humanHandle: { label: 'Jaheira', email: 'jaheira@gmail.com' },
-          profile: UserProfile.Outsider,
+          profile: UserProfile.External,
         },
         null,
       ]);

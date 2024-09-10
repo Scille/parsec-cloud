@@ -94,7 +94,7 @@
             id="profile-button"
             :name="userInfo ? userInfo.humanHandle.label : ''"
             :email="userInfo ? userInfo.humanHandle.email : ''"
-            :profile="userInfo ? userInfo.currentProfile : UserProfile.Outsider"
+            :profile="userInfo ? userInfo.currentProfile : UserProfile.External"
             class="profile-header"
           />
         </ion-buttons>

@@ -266,8 +266,8 @@ export async function getClientProfile(): Promise<UserProfile> {
   if (result.ok) {
     return result.value.currentProfile;
   } else {
-    // Outsider is the most restrictive
-    return UserProfile.Outsider;
+    // External is the most restrictive
+    return UserProfile.External;
   }
 }
 
@@ -275,8 +275,8 @@ export async function isAdmin(): Promise<boolean> {
   return (await getClientProfile()) === UserProfile.Admin;
 }
 
-export async function isOutsider(): Promise<boolean> {
-  return (await getClientProfile()) === UserProfile.Outsider;
+export async function isExternal(): Promise<boolean> {
+  return (await getClientProfile()) === UserProfile.External;
 }
 
 export interface CurrentAvailableDeviceError {

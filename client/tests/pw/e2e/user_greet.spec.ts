@@ -54,7 +54,7 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(profileButton).toHaveText('Choose a profile');
   await profileButton.click();
   const profileDropdown = userGreetModal.page().locator('.dropdown-popover');
-  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Standard', 'Outsider']);
+  await expect(profileDropdown.getByRole('listitem').locator('.option-text__label')).toHaveText(['Administrator', 'Standard', 'External']);
   await profileDropdown.getByRole('listitem').nth(1).click();
   await expect(profileButton).toHaveText('Standard');
   await expect(nextButton).not.toHaveDisabledAttribute();

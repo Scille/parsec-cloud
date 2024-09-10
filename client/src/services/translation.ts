@@ -8,8 +8,8 @@ export function getProfileTranslationKey(profile: UserProfile): Translatable {
     return 'UsersPage.profile.admin.label';
   } else if (profile === UserProfile.Standard) {
     return 'UsersPage.profile.standard.label';
-  } else if (profile === UserProfile.Outsider) {
-    return 'UsersPage.profile.outsider.label';
+  } else if (profile === UserProfile.External) {
+    return 'UsersPage.profile.external.label';
   }
   return '';
 }

@@ -116,7 +116,7 @@
             </div>
             <div class="user-info__role">
               <ion-text class="body">{{ $msTranslate('UsersPage.success.profile') }}</ion-text>
-              <tag-profile :profile="profile ? profile : UserProfile.Outsider" />
+              <tag-profile :profile="profile ? profile : UserProfile.External" />
             </div>
           </div>
         </div>
@@ -208,9 +208,9 @@ const profileOptions: MsOptions = new MsOptions([
     description: 'UsersPage.profile.standard.description',
   },
   {
-    key: UserProfile.Outsider,
-    label: 'UsersPage.profile.outsider.label',
-    description: 'UsersPage.profile.outsider.description',
+    key: UserProfile.External,
+    label: 'UsersPage.profile.external.label',
+    description: 'UsersPage.profile.external.description',
   },
 ]);
 

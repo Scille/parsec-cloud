@@ -60,7 +60,7 @@ export enum RealmRole {
 
 export enum UserProfile {
     Admin = 'UserProfileAdmin',
-    Outsider = 'UserProfileOutsider',
+    External = 'UserProfileExternal',
     Standard = 'UserProfileStandard',
 }
 export type DeviceID = string

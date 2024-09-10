@@ -12,17 +12,17 @@
             </ion-title>
 
             <div class="org-config-list">
-              <!-- Outsider profile -->
+              <!-- External profile -->
               <div class="org-config-list-item">
                 <ion-label class="org-info-item-title body">
-                  {{ $msTranslate('OrganizationPage.infoPage.configuration.outsidersAllowed') }}
+                  {{ $msTranslate('OrganizationPage.infoPage.configuration.externalsAllowed') }}
                 </ion-label>
                 <div
                   class="org-config-list-item__value body-sm"
-                  :class="orgInfo.outsidersAllowed ? 'success' : 'warning'"
+                  :class="orgInfo.externalsAllowed ? 'success' : 'warning'"
                 >
                   {{
-                    orgInfo.outsidersAllowed
+                    orgInfo.externalsAllowed
                       ? $msTranslate('OrganizationPage.infoPage.configuration.allowed')
                       : $msTranslate('OrganizationPage.infoPage.configuration.forbidden')
                   }}
@@ -159,14 +159,14 @@
                       {{ orgInfo.users.standards }}
                     </ion-text>
                   </div>
-                  <!-- Outsiders if allowed -->
+                  <!-- Externals if allowed -->
                   <div
-                    v-if="orgInfo.outsidersAllowed"
+                    v-if="orgInfo.externalsAllowed"
                     class="user-active-list-item"
                   >
-                    <tag-profile :profile="UserProfile.Outsider" />
+                    <tag-profile :profile="UserProfile.External" />
                     <ion-text class="user-active-list-item__value title-h4">
-                      {{ orgInfo.users.outsiders }}
+                      {{ orgInfo.users.externals }}
                     </ion-text>
                   </div>
                 </div>

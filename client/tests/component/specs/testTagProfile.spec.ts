@@ -10,13 +10,13 @@ describe('User Avatar', () => {
   it('Display avatar for user', () => {
     const wrapper = mount(TagProfile, {
       props: {
-        profile: UserProfile.Outsider,
+        profile: UserProfile.External,
       },
       global: {
         provide: getDefaultProvideConfig(),
       },
     });
 
-    expect(wrapper.get('.tag').text()).to.equal('Outsider');
+    expect(wrapper.get('.tag').text()).to.equal('External');
   });
 });

@@ -49,7 +49,7 @@
     <!-- user avatars -->
     <div
       class="workspace-users"
-      v-show="clientProfile !== UserProfile.Outsider"
+      v-show="clientProfile !== UserProfile.External"
     >
       <avatar-group
         v-show="workspace.sharing.length > 0"

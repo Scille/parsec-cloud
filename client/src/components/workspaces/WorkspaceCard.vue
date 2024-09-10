@@ -52,7 +52,7 @@
 
       <div
         class="workspace-info"
-        v-show="clientProfile !== UserProfile.Outsider"
+        v-show="clientProfile !== UserProfile.External"
       >
         <ion-text class="label-file-size body-sm">
           <span v-show="false">

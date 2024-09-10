@@ -261,13 +261,13 @@ interface OrganizationInfo {
     active: number;
     admins: number;
     standards: number;
-    outsiders: number;
+    externals: number;
   };
   size: {
     metadata: number;
     data: number;
   };
-  outsidersAllowed: boolean;
+  externalsAllowed: boolean;
   userLimit?: number;
   hasUserLimit: boolean;
   organizationAddr: ParsecOrganizationAddr;

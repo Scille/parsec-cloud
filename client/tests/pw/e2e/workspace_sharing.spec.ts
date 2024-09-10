@@ -25,7 +25,7 @@ msTest('Update user role', async ({ workspaceSharingModal }) => {
   const roleDropdown = workspaceSharingModal.page().locator('.dropdown-popover');
   const roles = roleDropdown.getByRole('listitem');
   await expect(roles.locator('.option-text__label')).toHaveText(['Owner', 'Manager', 'Contributor', 'Reader', 'Not shared']);
-  // User is outsider, owner and manager should be disabled
+  // User is external, owner and manager should be disabled
   for (const [index, role] of (await roles.all()).entries()) {
     if (index === 0 || index === 1) {
       await expect(role).toHaveTheClass('item-disabled');

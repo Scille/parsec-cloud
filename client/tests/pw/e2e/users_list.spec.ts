@@ -51,13 +51,13 @@ const USERS = [
     // cspell:disable-next-line
     name: 'Karl Hungus',
     email: 'karlhungus@gmail.com',
-    profile: 'Outsider',
+    profile: 'External',
     active: true,
   },
   {
     name: 'Gaia',
     email: 'gaia@gmail.com',
-    profile: 'Outsider',
+    profile: 'External',
     active: false,
   },
 ];
@@ -315,7 +315,7 @@ msTest('User filter popover default state', async ({ usersPage }) => {
   const profileGroup = popover.locator('#user-filter-list').getByRole('group').nth(1);
   await expect(profileGroup.locator('.list-group-title')).toHaveText('Profile');
   await expect(profileGroup.getByRole('listitem')).toHaveCount(3);
-  await expect(profileGroup.getByRole('listitem')).toHaveText(['Administrator', 'Standard', 'Outsider']);
+  await expect(profileGroup.getByRole('listitem')).toHaveText(['Administrator', 'Standard', 'External']);
   for (const checkbox of await profileGroup.locator('ion-checkbox').all()) {
     await expect(checkbox).toHaveState('checked');
   }
@@ -342,15 +342,15 @@ msTest('Filter users list', async ({ usersPage }) => {
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.filter((u) => u.profile !== 'Administrator' && u.active === true).map((u) => u.name),
   );
-  // Also hides outsiders
-  await toggleFilter(usersPage, 'Outsider');
+  // Also hides external
+  await toggleFilter(usersPage, 'External');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.filter((u) => u.profile !== 'Administrator' && u.profile !== 'Outsider' && u.active === true).map((u) => u.name),
+    USERS.filter((u) => u.profile !== 'Administrator' && u.profile !== 'External' && u.active === true).map((u) => u.name),
   );
   // Show admins again
   await toggleFilter(usersPage, 'Administrator');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.filter((u) => u.profile !== 'Outsider' && u.active === true).map((u) => u.name),
+    USERS.filter((u) => u.profile !== 'External' && u.active === true).map((u) => u.name),
   );
   await expect(usersPage.locator('.no-match-result')).toBeHidden();
   // Also hide active users
@@ -427,7 +427,7 @@ msTest('Sort users list', async ({ usersPage }) => {
   const PROFILE_WEIGHTS = new Map([
     ['Administrator', 8],
     ['Standard', 4],
-    ['Outsider', 2],
+    ['External', 2],
   ]);
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
     USERS.sort((u1, u2) => {

@@ -9,7 +9,7 @@
       <ms-action-bar id="workspaces-ms-action-bar">
         <!-- contextual menu -->
         <ms-action-bar-button
-          v-show="clientProfile != UserProfile.Outsider"
+          v-show="clientProfile != UserProfile.External"
           id="button-new-workspace"
           :button-label="'WorkspacesPage.createWorkspace'"
           :icon="addCircle"
@@ -49,7 +49,7 @@
               {{ $msTranslate('WorkspacesPage.noWorkspaces') }}
             </ion-text>
             <ion-button
-              v-show="clientProfile != UserProfile.Outsider"
+              v-show="clientProfile != UserProfile.External"
               id="new-workspace"
               fill="outline"
               @click="openCreateWorkspaceModal()"
@@ -74,7 +74,7 @@
               </ion-label>
               <ion-label
                 class="workspace-list-header__label cell-title label-users"
-                v-show="clientProfile !== UserProfile.Outsider"
+                v-show="clientProfile !== UserProfile.External"
               >
                 {{ $msTranslate('WorkspacesPage.listDisplayTitles.sharedWith') }}
               </ion-label>
@@ -243,7 +243,7 @@ const msSorterLabels = {
   asc: 'HomePage.organizationList.sortOrderAsc',
   desc: 'HomePage.organizationList.sortOrderDesc',
 };
-const clientProfile: Ref<UserProfile> = ref(UserProfile.Outsider);
+const clientProfile: Ref<UserProfile> = ref(UserProfile.External);
 let hotkeys: HotkeyGroup | null = null;
 
 async function loadFavorites(): Promise<void> {
