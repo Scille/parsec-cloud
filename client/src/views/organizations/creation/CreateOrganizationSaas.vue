@@ -42,6 +42,7 @@
       :can-edit-email="false"
       :can-edit-name="false"
       :can-edit-organization-name="true"
+      :can-edit-server-address="false"
       :can-edit-save-strategy="true"
       @create-clicked="onCreateClicked"
       @update-save-strategy-clicked="onUpdateSaveStrategyClicked"
@@ -168,6 +169,7 @@ async function onAuthenticationChosen(chosenSaveStrategy: DeviceSaveStrategy): P
   if (!personalInformation.value) {
     window.electronAPI.log('error', 'OrganizationCreation: missing data on auth chosen, should not happen');
   }
+  currentError.value = undefined;
   saveStrategy.value = chosenSaveStrategy;
   step.value = Steps.Summary;
 }

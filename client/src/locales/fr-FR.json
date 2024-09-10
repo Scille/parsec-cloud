@@ -242,6 +242,7 @@
         "errors": {
             "timestampOutOfBallpark": "L'heure de votre appareil est différente de celle du serveur. Veuillez vérifier votre horloge et vous assurer qu'elle est à jour (l'horloge de votre machine est {clientTime}, l'horloge du serveur est {serverTime}).",
             "offline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet.",
+            "customOffline": "Impossible de contacter le serveur. Veuillez vérifier que vous êtes connecté(e) à Internet et que l'adresse du serveur est correcte.",
             "alreadyExists": "Ce nom d'organisation n'est pas disponible, veuillez en choisir un autre.",
             "generic": "Impossible de créer l'organisation (raison: {reason}).",
             "customOrderNotAuthorized": "Les clients sous contrat personnalisé ne sont pas autorisés à créer une organisation directement. Si vous avez besoin d'une organisation supplémentaire, veuillez nous contacter."
