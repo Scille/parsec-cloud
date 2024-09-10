@@ -44,6 +44,7 @@ impl TestbedTemplate {
         &self.events[self.custom_events_offset..]
     }
 
+    #[track_caller]
     pub fn get_stuff<T>(&self, key: &'static str) -> &'static T {
         build::get_stuff(&self.stuff, key)
     }
