@@ -49,10 +49,13 @@ pub fn main(mut cx: ModuleContext) -> NeonResult<()> {
         builder.target(env_logger::Target::Pipe(Box::new(log_file)));
         log_file_path
     };
-    builder.init();
 
-    #[cfg(target_family = "unix")]
-    log::info!("Writing log to {}", log_file_path.display());
+    if let Err(e) = builder.try_init() {
+        log::error!("Logging already initialized: {e}")
+    } else {
+        #[cfg(target_family = "unix")]
+        log::info!("Writing log to {}", log_file_path.display());
+    };
 
     meths::register_meths(&mut cx)
 }
