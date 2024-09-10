@@ -85,6 +85,8 @@ struct OpenedFile {
 
 #[derive(Debug)]
 struct OpenedFiles {
+    /// Opening new file is not allowed during `WorkspaceOps::stop`
+    new_open_allowed: bool,
     next_file_descriptor: FileDescriptor,
     // TODO: use rustc-hash instead of std hashmap ? (or even vec ?)
     // TODO: use optimistic locking ?
@@ -177,6 +179,7 @@ impl WorkspaceOps {
             realm_id,
             workspace_external_info: Mutex::new(workspace_external_info),
             opened_files: Mutex::new(OpenedFiles {
+                new_open_allowed: true,
                 // Avoid using 0 as file descriptor, as it is error-prone
                 next_file_descriptor: FileDescriptor(1),
                 file_descriptors: HashMap::new(),
@@ -190,11 +193,24 @@ impl WorkspaceOps {
     /// Once stopped, it can still theoretically be used (i.e. `stop` doesn't
     /// consume `self`), but will do nothing but return stopped error.
     pub(crate) async fn stop(&self) -> anyhow::Result<()> {
+        // Forbid new file open to avoid concurrent open while we are closing
+        // the already opened ones.
+        {
+            let mut opened_files = self.opened_files.lock().expect("Mutex is poisoned");
+            opened_files.new_open_allowed = false;
+        }
+
         // If we are already closed, there is not file descriptors to close so this
         // operation is a noop.
         let close_outcome = transactions::close_all_fds(self)
             .await
             .context("cannot close opened file");
+
+        #[cfg(test)]
+        libparsec_tests_fixtures::moment_define_inject_point(
+            libparsec_tests_fixtures::Moment::WorkspaceOpsStopAllFdsClosed,
+        )
+        .await;
 
         // Continue even if the close has failed: no matter what we still want to
         // close the store.

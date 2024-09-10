@@ -1,13 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{num::NonZeroU64, sync::Arc};
+use std::{
+    num::NonZeroU64,
+    sync::{Arc, Mutex},
+};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::{assert_ls, ls, workspace_ops_factory};
 use crate::{
-    workspace::{EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceOpenFileError},
+    workspace::{
+        EntryStat, OpenOptions, WorkspaceFdReadError, WorkspaceFdWriteError, WorkspaceOpenFileError,
+    },
     EventWorkspaceOpsOutboundSyncNeeded,
 };
 
@@ -16,7 +21,7 @@ async fn not_existing(#[values(true, false)] open_in_root: bool, env: &TestbedEn
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
@@ -50,7 +55,7 @@ async fn cannot_open_folder(#[values(true, false)] open_in_root: bool, env: &Tes
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
@@ -82,7 +87,7 @@ async fn cannot_open_root(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
@@ -109,13 +114,11 @@ async fn open_for_read_write(
     #[values(true, false)] write_mode: bool,
     env: &TestbedEnv,
 ) {
-    use crate::workspace::WorkspaceFdWriteError;
-
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let mut spy = ops.event_bus.spy.start_expecting();
 
@@ -167,7 +170,7 @@ async fn open_with_create(#[values(true, false)] file_already_exists: bool, env:
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
 
     let mut spy = ops.event_bus.spy.start_expecting();
@@ -219,7 +222,7 @@ async fn open_with_create_new(#[values(true, false)] file_already_exists: bool, 
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
     assert_ls!(ops, "/", ["bar.txt", "foo"]).await;
 
     let mut spy = ops.event_bus.spy.start_expecting();
@@ -278,7 +281,7 @@ async fn open_with_truncate(env: &TestbedEnv) {
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let mut spy = ops.event_bus.spy.start_expecting();
 
@@ -325,7 +328,7 @@ async fn multiple_opens(env: &TestbedEnv) {
     let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let mut spy = ops.event_bus.spy.start_expecting();
 
@@ -488,7 +491,7 @@ async fn write_open_but_no_modif(
     }
 
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await;
 
     let spy = ops.event_bus.spy.start_expecting();
 
@@ -501,6 +504,106 @@ async fn write_open_but_no_modif(
     spy.assert_no_events();
 
     ops.stop().await.unwrap();
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn close_on_workspace_ops_stop(
+    #[values(false, true)] with_concurrent_open: bool,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+    let wksp1_foo_egg_txt_id: VlobID = *env.template.get_stuff("wksp1_foo_egg_txt_id");
+
+    let alice = env.local_device("alice@dev1");
+
+    let ops = Arc::new(workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id).await);
+
+    let fd1 = ops
+        .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_write())
+        .await
+        .unwrap();
+    let outcome = ops.fd_write(fd1, 6, b"after the close").await;
+    p_assert_matches!(outcome, Ok(15));
+
+    let _fd2 = ops
+        .open_file_by_id(wksp1_foo_egg_txt_id, OpenOptions::read_only())
+        .await
+        .unwrap();
+
+    let concurrent_open_outcome = Arc::new(Mutex::new(None));
+    if with_concurrent_open {
+        let ops = ops.clone();
+        let concurrent_open_outcome = concurrent_open_outcome.clone();
+
+        libparsec_tests_fixtures::moment_inject_hook(
+            Moment::WorkspaceOpsStopAllFdsClosed,
+            async move {
+                let outcome = ops
+                    .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_only())
+                    .await;
+                concurrent_open_outcome
+                    .lock()
+                    .expect("Mutex is poisoned")
+                    .replace(outcome);
+            },
+        );
+    }
+
+    // Stop should close the files
+
+    let config = ops.config.clone();
+    let device = ops.device.clone();
+    let cmds = ops.cmds.clone();
+    let certificates_ops = ops.certificates_ops.clone();
+    let realm_id = ops.realm_id;
+    let event_bus = crate::EventBus::default();
+
+    ops.stop().await.unwrap();
+
+    let ops = crate::workspace::WorkspaceOps::start(
+        config,
+        device,
+        cmds,
+        certificates_ops,
+        event_bus,
+        realm_id,
+        crate::workspace::WorkspaceExternalInfo {
+            entry: LocalUserManifestWorkspaceEntry {
+                id: realm_id,
+                name: "wksp1".parse().unwrap(),
+                name_origin: CertificateBasedInfoOrigin::Placeholder,
+                role: RealmRole::Owner,
+                role_origin: CertificateBasedInfoOrigin::Placeholder,
+            },
+            workspace_index: 0,
+            total_workspaces: 1,
+        },
+    )
+    .await
+    .unwrap();
+
+    if with_concurrent_open {
+        let concurrent_open_outcome = concurrent_open_outcome
+            .lock()
+            .expect("Mutex is poisoned")
+            .take()
+            .expect("Concurrent open not called !");
+        p_assert_matches!(
+            concurrent_open_outcome,
+            Err(WorkspaceOpenFileError::Stopped)
+        );
+    }
+
+    // Restart to ensure the file has been correctly modified
+
+    let fd3 = ops
+        .open_file_by_id(wksp1_bar_txt_id, OpenOptions::read_only())
+        .await
+        .unwrap();
+    let mut fd3_buff = vec![];
+    ops.fd_read(fd3, 0, 100, &mut fd3_buff).await.unwrap();
+    p_assert_eq!(fd3_buff, b"hello after the close");
 }
 
 // TODO: open with parent or target manifest not in client
