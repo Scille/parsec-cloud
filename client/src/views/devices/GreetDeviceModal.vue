@@ -126,20 +126,12 @@
                     class="email-button"
                     @click="sendEmail"
                     fill="outline"
-                    :disabled="elapsedCount > 0"
+                    v-show="!isEmailSent"
                   >
-                    <span v-show="!isEmailSent">
-                      {{ $msTranslate('DevicesPage.greet.actions.sendEmail') }}
-                    </span>
-                    <span v-show="isEmailSent && elapsedCount === 0">
-                      {{ $msTranslate('DevicesPage.greet.actions.reSendEmail') }}
-                    </span>
-                    <span v-show="elapsedCount > 0">
-                      {{ $msTranslate({ key: 'DevicesPage.greet.actions.waitBeforeResending', data: { seconds: elapsedCount } }) }}
-                    </span>
+                    {{ $msTranslate('DevicesPage.greet.actions.sendEmail') }}
                   </ion-button>
                   <ion-text
-                    v-if="elapsedCount > 0"
+                    v-show="isEmailSent"
                     class="small-text subtitles-sm"
                   >
                     {{ $msTranslate('DevicesPage.greet.emailSent') }}
@@ -723,6 +715,7 @@ onMounted(async () => {
       }
 
       .email {
+        height: 1em;
         display: flex;
         flex-direction: column;
         gap: 1rem;
@@ -757,7 +750,6 @@ onMounted(async () => {
         align-items: center;
         gap: 0.5rem;
         position: absolute;
-        bottom: -2rem;
       }
     }
   }
