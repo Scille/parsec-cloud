@@ -74,6 +74,11 @@
     justify-content: center;
     align-items: center;
     height: 100%;
+    gap: 1rem;
+
+    ion-text {
+      color: var(--parsec-color-light-secondary-grey);
+    }
   }
 }
 

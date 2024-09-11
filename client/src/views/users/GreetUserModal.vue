@@ -142,7 +142,7 @@
             v-show="waitingForGuest"
             class="spinner-container"
           >
-            <ion-text>
+            <ion-text class="subtitles-normal">
               {{ $msTranslate('UsersPage.greet.waiting') }}
             </ion-text>
             <ms-spinner class="spinner" />
