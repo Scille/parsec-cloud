@@ -674,10 +674,11 @@ pub(crate) async fn retrieve_path_from_id(
     store: &super::WorkspaceStore,
     entry_id: VlobID,
 ) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+    // Initialize the results
     let mut parts = Vec::new();
     let mut confinement: Option<VlobID> = None;
 
-    // Initialize
+    // Initialize the loop state
     let mut current_entry_id = entry_id;
     let mut current_parent_id = store
         .get_manifest(entry_id)
@@ -698,7 +699,9 @@ pub(crate) async fn retrieve_path_from_id(
         })?
         .parent();
 
+    // Loop until we reach the root
     while current_entry_id != current_parent_id {
+        // Get the parent manifest
         let parent_manifest =
             store
                 .get_manifest(current_parent_id)
@@ -721,40 +724,48 @@ pub(crate) async fn retrieve_path_from_id(
                         err.context("cannot retrieve path").into()
                     }
                 })?;
-        match parent_manifest {
-            ArcLocalChildManifest::Folder(manifest) => {
-                // Update path
-                let child_name = manifest
-                    .children
-                    .iter()
-                    .find_map(|(name, id)| {
-                        if *id == current_entry_id {
-                            Some(name)
-                        } else {
-                            None
-                        }
-                    })
-                    .ok_or(ResolvePathError::EntryNotFound)?;
-                parts.push(child_name.clone());
-                // Update confinement point (priority to the top most confinement point)
-                confinement = confinement.or_else(|| {
-                    if manifest
-                        .local_confinement_points
-                        .contains(&current_entry_id)
-                    {
-                        Some(current_parent_id)
-                    } else {
-                        None
-                    }
-                });
-                // Update loop state
-                current_entry_id = current_parent_id;
-                current_parent_id = manifest.parent;
-            }
+
+        // A parent manifest should always be a folder
+        let parent_manifest = match parent_manifest {
             ArcLocalChildManifest::File(_) => {
                 return Err(anyhow::anyhow!("parent id points to a file").into());
             }
-        }
+            ArcLocalChildManifest::Folder(manifest) => manifest,
+        };
+
+        // Update the path result
+        let child_name = parent_manifest
+            .children
+            .iter()
+            .find_map(|(name, id)| {
+                if *id == current_entry_id {
+                    Some(name)
+                } else {
+                    None
+                }
+            })
+            .ok_or(ResolvePathError::EntryNotFound)?;
+        parts.push(child_name.clone());
+
+        // Update the confinement point result
+        // Give priority to the top most confinement point
+        confinement = confinement.or_else(|| {
+            if parent_manifest
+                .local_confinement_points
+                .contains(&current_entry_id)
+            {
+                Some(current_parent_id)
+            } else {
+                None
+            }
+        });
+
+        // Update the loop state
+        current_entry_id = current_parent_id;
+        current_parent_id = parent_manifest.parent;
     }
+
+    // Reverse the parts to get the path
+    parts.reverse();
     Ok((FsPath::from_parts(parts), confinement.into()))
 }
