@@ -42,6 +42,21 @@
         class="modal-footer-buttons"
       >
         <ion-button
+          fill="clear"
+          size="default"
+          id="previous-button"
+          @click="$emit('goBackRequested')"
+          v-show="!hidePrevious"
+        >
+          {{ $msTranslate('CreateOrganization.button.previous') }}
+          <ion-icon
+            slot="start"
+            :icon="chevronBack"
+            size="small"
+          />
+        </ion-button>
+
+        <ion-button
           fill="solid"
           size="default"
           @click="$emit('organizationNameChosen', organizationName)"
@@ -65,7 +80,7 @@
 import { OrganizationID } from '@/parsec';
 import { IonPage, IonButton, IonText, IonButtons, IonFooter, IonIcon } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
-import { chevronForward } from 'ionicons/icons';
+import { chevronBack, chevronForward } from 'ionicons/icons';
 import { organizationValidator } from '@/common/validators';
 import { Translatable, Validity, MsInput } from 'megashark-lib';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
@@ -75,10 +90,12 @@ const props = defineProps<{
   organizationName?: OrganizationID;
   error?: Translatable;
   disableOrganizationNameField?: boolean;
+  hidePrevious?: boolean;
 }>();
 
 defineEmits<{
   (e: 'organizationNameChosen', name: OrganizationID): void;
+  (e: 'goBackRequested'): void;
   (e: 'closeRequested'): void;
 }>();
 

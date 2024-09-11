@@ -6,7 +6,9 @@
       v-show="step === Steps.BmsLogin"
       @login-success="onLoginSuccess"
       @close-requested="$emit('closeRequested', false)"
+      @go-back-requested="$emit('backRequested')"
       @forgotten-password-clicked="step = Steps.BmsForgotPassword"
+      :show-back-button="true"
     />
     <bms-forgot-password
       v-if="step === Steps.BmsForgotPassword"
@@ -20,6 +22,8 @@
       :organization-name="organizationName ?? ''"
       @organization-name-chosen="onOrganizationNameChosen"
       :error="currentError"
+      @go-back-requested="$emit('backRequested')"
+      :hide-previous="bootstrapLink !== undefined"
       @close-requested="$emit('closeRequested', false)"
     />
     <organization-authentication-page
@@ -107,6 +111,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'closeRequested', force: boolean): void;
+  (e: 'backRequested'): void;
   (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
 }>();
 

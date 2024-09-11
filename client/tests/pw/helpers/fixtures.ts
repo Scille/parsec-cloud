@@ -137,7 +137,7 @@ export const msTest = base.extend<{
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button__item').click();
+    await home.locator('.saas-login-button__item').nth(1).click();
     await expect(home).toHaveURL(/.+\/clientArea$/);
 
     // Switch to first org

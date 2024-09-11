@@ -11,8 +11,9 @@
       :disable-server-addr-field="bootstrapLink !== undefined"
       :disable-organization-name-field="bootstrapLink !== undefined"
       @organization-name-and-server-chosen="onOrganizationNameAndServerChosen"
+      @go-back-requested="$emit('backRequested')"
       @close-requested="$emit('closeRequested')"
-      :hide-previous="true"
+      :hide-previous="bootstrapLink !== undefined"
     />
     <organization-user-information-page
       v-show="step === Steps.PersonalInformation"
@@ -107,6 +108,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'closeRequested'): void;
+  (e: 'backRequested'): void;
   (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
 }>();
 

@@ -1211,12 +1211,13 @@
     },
     "clientArea": {
         "app": {
-            "titleLinkOrganization": "Link you customer account to your new organization",
+            "titleLinkOrganization": "Link your customer account to your new organization",
             "titleLogin": "Log in to your customer account",
             "emailLabel": "Email",
             "password": "Password",
             "forgottenPassword": "Forgot your password?",
             "login": "Log in",
+            "backButton": "Back",
             "saveLogin": "Remember me",
             "loginFailed": "Cannot log in. Please check your email and password.",
             "networkFailed": "Could not reach the server. Make sure that you are online and try again.",

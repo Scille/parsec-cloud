@@ -40,8 +40,8 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link you customer account to your new organization');
-  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
@@ -55,7 +55,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(bmsContainer).toBeHidden();
   await expect(orgNameContainer).toBeVisible();
   await expect(orgNameContainer.locator('.modal-header-title__text')).toHaveText('Create an organization');
-  const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button');
+  const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
   await expect(orgNameNext).toHaveDisabledAttribute();
 
   await cancelAndResume(home, orgNameContainer);
@@ -174,8 +174,8 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login');
-  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link you customer account to your new organization');
-  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
+  await expect(bmsContainer.locator('.modal-header-title__text')).toHaveText('Link your customer account to your new organization');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
   await expect(bmsNext).toHaveDisabledAttribute();
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await expect(bmsNext).toHaveDisabledAttribute();
@@ -262,7 +262,7 @@ msTest('Fail to login to BMS', async ({ home }) => {
   await MockBms.mockLogin(home, { POST: { errors: { status: 401 } } });
 
   const bmsContainer = modal.locator('.saas-login');
-  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();
@@ -276,7 +276,7 @@ msTest('Cannot reach the BMS', async ({ home }) => {
   const modal = await openCreateOrganizationModal(home);
 
   const bmsContainer = modal.locator('.saas-login');
-  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();
@@ -295,13 +295,13 @@ msTest('Edit from summary', async ({ home }) => {
   await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR);
 
   const bmsContainer = modal.locator('.saas-login');
-  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item');
+  const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
   await bmsNext.click();
 
   const orgNameContainer = modal.locator('.organization-name-page');
-  const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button');
+  const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
   await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
   await orgNameNext.click();
 
@@ -361,7 +361,7 @@ msTest('Try to create an org with custom order', async ({ home }) => {
   const bmsContainer = modal.locator('.saas-login');
   await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
-  await bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').click();
+  await bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1).click();
   await expect(modal).toBeHidden();
   await expect(home).toShowInformationModal(
     'Clients with a custom contract are not allowed to directly create organizations. If you need another organization, please contact us.',

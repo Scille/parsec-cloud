@@ -36,7 +36,7 @@ msTest('Go through trial org creation process', async ({ home }) => {
   const userInfoContainer = modal.locator('.user-information-page');
   const userPrevious = modal.locator('.user-information-page-footer').locator('ion-button').nth(0);
   const userNext = modal.locator('.user-information-page-footer').locator('ion-button').nth(1);
-  await expect(userPrevious).toBeHidden();
+  await expect(userPrevious).toBeVisible();
   await expect(userNext).toBeVisible();
   await expect(userNext).toHaveDisabledAttribute();
   await expect(userInfoContainer.locator('.modal-header-title__text')).toHaveText('Enter your personal information');
