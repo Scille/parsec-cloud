@@ -11,9 +11,9 @@ use libparsec_platform_async::lock::{Mutex as AsyncMutex, MutexGuard as AsyncMut
 use libparsec_types::prelude::*;
 
 use crate::{
-    event_bus::EventBus,
     monitors::{inbound_sync_monitor_factory, outbound_sync_monitor_factory, Monitor},
     workspace_ops::WorkspaceOps,
+    EventBus,
 };
 
 struct RunningWorkspaceMonitors {

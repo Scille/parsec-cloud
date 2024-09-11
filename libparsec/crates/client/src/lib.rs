@@ -1,19 +1,18 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 #![doc = include_str!("../README.md")]
-mod certif;
 mod client;
-mod config;
-mod event_bus;
 mod invite;
 mod monitors;
 mod user;
 // Workspaces can be started & accessed independently of each other, so we expose it directly
-pub mod workspace;
+pub use libparsec_client_workspace as workspace;
 
 // For clarity, user & certificate stuff are re-exposed through client
-pub use certif::*;
 pub use client::*;
-pub use config::*;
-pub use event_bus::*;
 pub use invite::*;
+use libparsec_client_certif as certif;
+pub use libparsec_client_certif::*;
+pub use libparsec_client_common::config::*;
+use libparsec_client_common::event_bus;
+pub use libparsec_client_common::event_bus::*;

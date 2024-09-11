@@ -29,14 +29,13 @@ pub use self::{
 };
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
-    config::{ClientConfig, ServerConfig},
-    event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
         start_user_sync_monitor, start_workspaces_bootstrap_monitor,
         start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
+    ClientConfig, EventBus, ServerConfig,
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;

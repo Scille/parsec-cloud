@@ -6,8 +6,8 @@ use libparsec_platform_async::{channel, pretend_future_is_send_on_web};
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMissedServerEvents, EventMonitorCrashed},
-    Client, ClientRefreshWorkspacesListError, EventNewCertificates,
+    Client, ClientRefreshWorkspacesListError, EventBus, EventMissedServerEvents,
+    EventMonitorCrashed, EventNewCertificates,
 };
 
 const WORKSPACES_REFRESH_LIST_MONITOR_NAME: &str = "workspaces_refresh_list";

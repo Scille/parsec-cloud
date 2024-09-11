@@ -9,11 +9,11 @@ use libparsec_types::prelude::*;
 
 use super::Monitor;
 use crate::{
-    event_bus::{EventBus, EventMonitorCrashed, EventWorkspaceOpsOutboundSyncNeeded},
     workspace::{
         InboundSyncOutcome, OutboundSyncOutcome, WorkspaceGetNeedOutboundSyncEntriesError,
         WorkspaceOps, WorkspaceSyncError,
     },
+    EventBus, EventMonitorCrashed, EventWorkspaceOpsOutboundSyncNeeded,
 };
 
 const WORKSPACE_OUTBOUND_SYNC_MONITOR_NAME: &str = "workspace_outbound_sync";

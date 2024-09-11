@@ -7,11 +7,10 @@ use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
-    event_bus::*,
+    EventBus, EventCertificatesUpdated, EventMissedServerEvents, EventMonitorCrashed,
 };
 
 use super::Monitor;
-use crate::event_bus::{EventBus, EventMissedServerEvents};
 
 const CERTIF_POLL_MONITOR_NAME: &str = "certif_poll";
 

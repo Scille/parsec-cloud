@@ -12,7 +12,10 @@ repository.workspace = true
 workspace = true
 
 [dependencies]
+libparsec_client_common = { workspace = true }
+libparsec_client_certif = { workspace = true }
 libparsec_client_connection = { workspace = true }
+libparsec_client_workspace = { workspace = true }
 libparsec_types = { workspace = true }
 libparsec_platform_async = { workspace = true }
 libparsec_platform_device_loader = { workspace = true }
@@ -30,6 +33,9 @@ proptest = { workspace = true, features = ["default"] }
 proptest-state-machine = { workspace = true }
 libparsec_platform_storage = { workspace = true, features = ["expose-test-methods"] }
 libparsec_client = { workspace = true, features = ["expose-test-methods"] }
+libparsec_client_common = { workspace = true, features = ["expose-test-methods"] }
+libparsec_client_certif = { workspace = true, features = ["expose-test-methods"] }
+libparsec_client_workspace = { workspace = true, features = ["expose-test-methods"] }
 
 [features]
 expose-test-methods = []

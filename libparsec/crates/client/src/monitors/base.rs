@@ -5,7 +5,7 @@ use std::future::Future;
 use libparsec_platform_async::{spawn, JoinHandle};
 use libparsec_types::prelude::*;
 
-use crate::event_bus::EventBus;
+use crate::EventBus;
 
 /// A monitor is a background task reacting to the events.
 ///
