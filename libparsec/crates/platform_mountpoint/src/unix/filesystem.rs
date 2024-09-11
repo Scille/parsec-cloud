@@ -141,7 +141,11 @@ async fn reply_with_lookup(
     entry_id: VlobID,
     reply: fuser::ReplyEntry,
 ) {
-    match ops.stat_entry_by_id(entry_id).await {
+    // Disable confinement point computation
+    match ops
+        .stat_entry_by_id_with_confinement_already_computed(entry_id, None)
+        .await
+    {
         Ok(stat) => reply.entry(
             &TTL,
             &entry_stat_to_file_attr(stat, inode, uid, gid),
