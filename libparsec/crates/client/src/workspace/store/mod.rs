@@ -211,6 +211,13 @@ impl WorkspaceStore {
         resolve_path::resolve_path(self, path).await
     }
 
+    pub(crate) async fn retrieve_path_from_id(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+        resolve_path::retrieve_path_from_id(self, entry_id).await
+    }
+
     pub fn get_root_manifest(&self) -> Arc<LocalFolderManifest> {
         self.current_view_cache
             .lock()

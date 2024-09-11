@@ -27,6 +27,24 @@ pub(crate) enum PathConfinementPoint {
     Confined(VlobID),
 }
 
+impl From<PathConfinementPoint> for Option<VlobID> {
+    fn from(val: PathConfinementPoint) -> Self {
+        match val {
+            PathConfinementPoint::None => None,
+            PathConfinementPoint::Confined(id) => Some(id),
+        }
+    }
+}
+
+impl From<Option<VlobID>> for PathConfinementPoint {
+    fn from(val: Option<VlobID>) -> Self {
+        match val {
+            None => PathConfinementPoint::None,
+            Some(id) => PathConfinementPoint::Confined(id),
+        }
+    }
+}
+
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ResolvePathError {
     #[error("Cannot reach the server")]
@@ -645,4 +663,98 @@ pub(crate) async fn resolve_path_for_reparenting(
             | CacheOnlyPathResolutionOutcome::Done { .. } => unreachable!(),
         }
     }
+}
+
+/// Retrieve the path and the confinement point of a given entry ID.
+/// Both information are acquired without locking, so keep in mind that
+/// they could get outdated by the time you use them. This is fine however,
+/// since this is typically used for providing information to the user
+/// (e.g. for file and folder stats)
+pub(crate) async fn retrieve_path_from_id(
+    store: &super::WorkspaceStore,
+    entry_id: VlobID,
+) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+    let mut parts = Vec::new();
+    let mut confinement: Option<VlobID> = None;
+
+    // Initialize
+    let mut current_entry_id = entry_id;
+    let mut current_parent_id = store
+        .get_manifest(entry_id)
+        .await
+        .map_err(|err| match err {
+            super::GetManifestError::Offline => ResolvePathError::Offline,
+            super::GetManifestError::Stopped => ResolvePathError::Stopped,
+            super::GetManifestError::EntryNotFound => ResolvePathError::EntryNotFound,
+            super::GetManifestError::NoRealmAccess => ResolvePathError::NoRealmAccess,
+            super::GetManifestError::InvalidKeysBundle(err) => {
+                ResolvePathError::InvalidKeysBundle(err)
+            }
+            super::GetManifestError::InvalidCertificate(err) => {
+                ResolvePathError::InvalidCertificate(err)
+            }
+            super::GetManifestError::InvalidManifest(err) => ResolvePathError::InvalidManifest(err),
+            super::GetManifestError::Internal(err) => err.context("cannot retrieve path").into(),
+        })?
+        .parent();
+
+    while current_entry_id != current_parent_id {
+        let parent_manifest =
+            store
+                .get_manifest(current_parent_id)
+                .await
+                .map_err(|err| match err {
+                    super::GetManifestError::Offline => ResolvePathError::Offline,
+                    super::GetManifestError::Stopped => ResolvePathError::Stopped,
+                    super::GetManifestError::EntryNotFound => ResolvePathError::EntryNotFound,
+                    super::GetManifestError::NoRealmAccess => ResolvePathError::NoRealmAccess,
+                    super::GetManifestError::InvalidKeysBundle(err) => {
+                        ResolvePathError::InvalidKeysBundle(err)
+                    }
+                    super::GetManifestError::InvalidCertificate(err) => {
+                        ResolvePathError::InvalidCertificate(err)
+                    }
+                    super::GetManifestError::InvalidManifest(err) => {
+                        ResolvePathError::InvalidManifest(err)
+                    }
+                    super::GetManifestError::Internal(err) => {
+                        err.context("cannot retrieve path").into()
+                    }
+                })?;
+        match parent_manifest {
+            ArcLocalChildManifest::Folder(manifest) => {
+                // Update path
+                let child_name = manifest
+                    .children
+                    .iter()
+                    .find_map(|(name, id)| {
+                        if *id == current_entry_id {
+                            Some(name)
+                        } else {
+                            None
+                        }
+                    })
+                    .ok_or(ResolvePathError::EntryNotFound)?;
+                parts.push(child_name.clone());
+                // Update confinement point (priority to the top most confinement point)
+                confinement = confinement.or_else(|| {
+                    if manifest
+                        .local_confinement_points
+                        .contains(&current_entry_id)
+                    {
+                        Some(current_parent_id)
+                    } else {
+                        None
+                    }
+                });
+                // Update loop state
+                current_entry_id = current_parent_id;
+                current_parent_id = manifest.parent;
+            }
+            ArcLocalChildManifest::File(_) => {
+                return Err(anyhow::anyhow!("parent id points to a file").into());
+            }
+        }
+    }
+    Ok((FsPath::from_parts(parts), confinement.into()))
 }

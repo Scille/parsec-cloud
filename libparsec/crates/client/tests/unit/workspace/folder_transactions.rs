@@ -489,12 +489,12 @@ struct ExpectedValues {
 }
 
 #[track_caller]
-fn check_child<'a>(
-    ops: &'a WorkspaceOps,
+fn check_child(
+    ops: &'_ WorkspaceOps,
     entry_type: EntryType,
     id: VlobID,
     expected: ExpectedValues,
-) -> impl std::future::Future<Output = ()> + 'a {
+) -> impl std::future::Future<Output = ()> + '_ {
     let caller = std::panic::Location::caller();
     async move {
         let child_stat = ops.stat_entry_by_id(id).await.unwrap();
@@ -552,11 +552,11 @@ fn check_stat_with_caller(
 }
 
 #[track_caller]
-fn check_need_sync_parent<'a>(
-    ops: &'a WorkspaceOps,
+fn check_need_sync_parent(
+    ops: &'_ WorkspaceOps,
     id: VlobID,
     expected: bool,
-) -> impl std::future::Future<Output = ()> + 'a {
+) -> impl std::future::Future<Output = ()> + '_ {
     let caller = std::panic::Location::caller();
     async move {
         let parent_stat = ops.stat_entry_by_id(id).await.unwrap();
