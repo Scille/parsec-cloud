@@ -380,42 +380,35 @@ async fn move_entry_different_parents<'a>(
 
     let now = ops.device.time_provider.now();
     let src_parent_id = updater.src_parent_manifest.base.id;
-    let src_child_id = updater.src_child_manifest.id();
+    let child_id = updater.src_child_manifest.id();
     let dst_parent_id = updater.dst_parent_manifest.base.id;
 
     let mut_src_parent = Arc::make_mut(&mut updater.src_parent_manifest);
-    let child_id = mut_src_parent
-        .children
-        .remove(&src_child_name)
-        .expect("already checked");
-    mut_src_parent.updated = now;
-    mut_src_parent.need_sync = true;
 
+    // Change src child's parent to dst parent
     match &mut updater.src_child_manifest {
         ArcLocalChildManifest::File(manifest) => {
             let mut_manifest = Arc::make_mut(manifest);
-            mut_manifest.parent = updater.dst_parent_manifest.base.id;
+            mut_manifest.parent = dst_parent_id;
             mut_manifest.updated = now;
             mut_manifest.need_sync = true;
-            assert_eq!(mut_manifest.base.id, child_id); // Sanity check
         }
         ArcLocalChildManifest::Folder(manifest) => {
             let mut_manifest = Arc::make_mut(manifest);
-            mut_manifest.parent = updater.dst_parent_manifest.base.id;
+            mut_manifest.parent = dst_parent_id;
             mut_manifest.updated = now;
             mut_manifest.need_sync = true;
-            assert_eq!(mut_manifest.base.id, child_id); // Sanity check
         }
     }
 
     let mut_dst_parent = Arc::make_mut(&mut updater.dst_parent_manifest);
-    match mut_dst_parent.children.entry(dst_child_name) {
+
+    let exchange_src_child_id = match mut_dst_parent.children.get(&dst_child_name).copied() {
         // The destination is maybe taken by an existing child...
-        std::collections::hash_map::Entry::Occupied(mut entry) => {
-            let dst_child_previous_id = *entry.get();
+        Some(dst_child_id) => {
             let is_child = ops
                 .store
-                .ensure_manifest_exists_with_parent(dst_child_previous_id, dst_parent_id)
+                .ensure_manifest_exists_with_parent(dst_child_id, dst_parent_id)
                 .await
                 .map_err(|err| match err {
                     EnsureManifestExistsWithParentError::Offline => {
@@ -444,25 +437,16 @@ async fn move_entry_different_parents<'a>(
             if is_child {
                 // ...it is an actual child !
                 match mode {
-                    MoveEntryMode::CanReplace => {
-                        entry.insert(child_id);
-                    }
+                    MoveEntryMode::CanReplace => None,
 
                     MoveEntryMode::NoReplace => {
                         return Err(WorkspaceMoveEntryError::DestinationExists {
-                            entry_id: dst_child_previous_id,
+                            entry_id: dst_child_id,
                         });
                     }
 
                     MoveEntryMode::Exchange => {
-                        entry.insert(child_id);
-
-                        // Also move destination child into sourc location
-
-                        mut_src_parent
-                            .children
-                            .insert(src_child_name, dst_child_previous_id);
-
+                        // Also move destination child into source location
                         match &mut updater
                             .dst_child_manifest
                             .as_mut()
@@ -470,21 +454,22 @@ async fn move_entry_different_parents<'a>(
                         {
                             ArcLocalChildManifest::File(manifest) => {
                                 let mut_manifest = Arc::make_mut(manifest);
-                                mut_manifest.parent = updater.src_parent_manifest.base.id;
+                                mut_manifest.parent = src_parent_id;
                                 mut_manifest.updated = now;
                                 mut_manifest.need_sync = true;
-                                assert_eq!(mut_manifest.base.id, dst_child_previous_id);
                                 // Sanity check
+                                debug_assert_eq!(mut_manifest.base.id, dst_child_id);
                             }
                             ArcLocalChildManifest::Folder(manifest) => {
                                 let mut_manifest = Arc::make_mut(manifest);
-                                mut_manifest.parent = updater.src_parent_manifest.base.id;
+                                mut_manifest.parent = src_parent_id;
                                 mut_manifest.updated = now;
                                 mut_manifest.need_sync = true;
-                                assert_eq!(mut_manifest.base.id, dst_child_previous_id);
                                 // Sanity check
+                                debug_assert_eq!(mut_manifest.base.id, dst_child_id);
                             }
                         }
+                        Some(dst_child_id)
                     }
                 }
             } else {
@@ -492,20 +477,31 @@ async fn move_entry_different_parents<'a>(
                 if matches!(mode, MoveEntryMode::Exchange) {
                     return Err(WorkspaceMoveEntryError::DestinationNotFound);
                 }
-                entry.insert(child_id);
+                None
             }
         }
 
         // The destination doesn't exist
-        std::collections::hash_map::Entry::Vacant(entry) => {
+        None => {
             if matches!(mode, MoveEntryMode::Exchange) {
                 return Err(WorkspaceMoveEntryError::DestinationNotFound);
             }
-            entry.insert(child_id);
+            None
         }
-    }
-    mut_dst_parent.updated = now;
-    mut_dst_parent.need_sync = true;
+    };
+    let src_parent_data = HashMap::from_iter([(src_child_name, exchange_src_child_id)]);
+    let dst_parent_data = HashMap::from_iter([(dst_child_name, Some(child_id))]);
+
+    mut_src_parent.evolve_children_and_mark_updated(
+        src_parent_data,
+        &ops.config.prevent_sync_pattern,
+        now,
+    );
+    mut_dst_parent.evolve_children_and_mark_updated(
+        dst_parent_data,
+        &ops.config.prevent_sync_pattern,
+        now,
+    );
 
     updater.update_manifests().await.map_err(|err| match err {
         UpdateFolderManifestError::Stopped => WorkspaceMoveEntryError::Stopped,
@@ -519,7 +515,7 @@ async fn move_entry_different_parents<'a>(
     ops.event_bus.send(&event);
     let event = EventWorkspaceOpsOutboundSyncNeeded {
         realm_id: ops.realm_id,
-        entry_id: src_child_id,
+        entry_id: child_id,
     };
     ops.event_bus.send(&event);
     let event = EventWorkspaceOpsOutboundSyncNeeded {
