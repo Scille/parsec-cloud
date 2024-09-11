@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{GetManifestError, PathConfinementPoint, ResolvePathError},
+        store::{GetManifestError, ResolvePathError},
         WorkspaceOps,
     },
 };
@@ -104,10 +104,30 @@ pub(crate) async fn stat_entry_by_id(
             GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
+    let (_, confinement_point) =
+        ops.store
+            .retrieve_path_from_id(entry_id)
+            .await
+            .map_err(|err| match err {
+                ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
+                ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
+                ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+                ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                ResolvePathError::InvalidKeysBundle(err) => {
+                    WorkspaceStatEntryError::InvalidKeysBundle(err)
+                }
+                ResolvePathError::InvalidCertificate(err) => {
+                    WorkspaceStatEntryError::InvalidCertificate(err)
+                }
+                ResolvePathError::InvalidManifest(err) => {
+                    WorkspaceStatEntryError::InvalidManifest(err)
+                }
+                ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
+            })?;
+
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
-            // TODO: Set confinement point
-            confinement_point: None,
+            confinement_point: confinement_point.into(),
             id: manifest.base.id,
             parent: manifest.parent,
             created: manifest.base.created,
@@ -117,8 +137,7 @@ pub(crate) async fn stat_entry_by_id(
             need_sync: manifest.need_sync,
         },
         ArcLocalChildManifest::File(manifest) => EntryStat::File {
-            // TODO: Set confinement point
-            confinement_point: None,
+            confinement_point: confinement_point.into(),
             id: manifest.base.id,
             parent: manifest.parent,
             created: manifest.base.created,
@@ -158,14 +177,9 @@ pub(crate) async fn stat_entry(
                 ResolvePathError::Internal(err) => err.context("cannot resolve path").into(),
             })?;
 
-    let confinement_point = match confinement_point {
-        PathConfinementPoint::None => None,
-        PathConfinementPoint::Confined(id) => Some(id),
-    };
-
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
-            confinement_point,
+            confinement_point: confinement_point.into(),
             id: manifest.base.id,
             parent: manifest.parent,
             created: manifest.base.created,
@@ -175,7 +189,7 @@ pub(crate) async fn stat_entry(
             need_sync: manifest.need_sync,
         },
         ArcLocalChildManifest::File(manifest) => EntryStat::File {
-            confinement_point,
+            confinement_point: confinement_point.into(),
             id: manifest.base.id,
             parent: manifest.parent,
             created: manifest.base.created,
