@@ -99,10 +99,12 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
         (result.value as EntryStatFile).isFile = (): boolean => true;
         (result.value as EntryStatFile).name = fileName;
         (result.value as EntryStatFile).path = path;
+        (result.value as EntryStatFile).isConfined = (): boolean => result.value.confinementPoint !== null;
       } else {
         (result.value as EntryStatFolder).isFile = (): boolean => false;
         (result.value as EntryStatFolder).name = fileName;
         (result.value as EntryStatFolder).path = path;
+        (result.value as EntryStatFolder).isConfined = (): boolean => result.value.confinementPoint !== null;
       }
     }
     return result as Result<EntryStat, WorkspaceStatEntryError>;
@@ -128,6 +130,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       value: {
         tag: FileType.File,
         confinementPoint: null,
+        isConfined: (): boolean => false,
         id: `${MOCK_FILE_ID}`,
         // Invalid parent ID, but hard to craft the correct one...
         parent: `${MOCK_FILE_ID}`,
@@ -148,6 +151,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
       value: {
         tag: FileType.Folder,
         confinementPoint: null,
+        isConfined: (): boolean => false,
         id: `${MOCK_FILE_ID}`,
         // Invalid parent ID, but hard to craft the correct one...
         parent: `${MOCK_FILE_ID}`,
@@ -190,10 +194,12 @@ export async function statFolderChildren(
         (stat as EntryStatFile).isFile = (): boolean => true;
         (stat as EntryStatFile).name = name;
         (stat as EntryStatFile).path = await Path.join(path, name);
+        (stat as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
       } else {
         (stat as EntryStatFolder).isFile = (): boolean => false;
         (stat as EntryStatFolder).name = name;
         (stat as EntryStatFolder).path = await Path.join(path, name);
+        (stat as EntryStatFolder).isConfined = (): boolean => stat.confinementPoint !== null;
       }
       cooked.push(stat as EntryStat);
     }
@@ -208,8 +214,8 @@ export async function statFolderChildren(
 
   const FILE_PREFIX = 'File_';
   const FOLDER_PREFIX = 'Dir_';
-  const fileCount = Math.floor(Math.random() * 1) + 2;
-  const folderCount = Math.floor(Math.random() * 1) + 2;
+  const fileCount = 2;
+  const folderCount = 2;
 
   function generateEntryName(prefix: string = '', addExtension = false): string {
     const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
@@ -235,6 +241,7 @@ export async function statFolderChildren(
     const stat: EntryStat = {
       tag: FileType.File,
       confinementPoint: null,
+      isConfined: (): boolean => false,
       id: crypto.randomUUID().toString(),
       parent: parentId,
       created: createdDate,
@@ -258,6 +265,7 @@ export async function statFolderChildren(
     const stat: EntryStat = {
       tag: FileType.Folder,
       confinementPoint: null,
+      isConfined: (): boolean => false,
       id: crypto.randomUUID().toString(),
       parent: parentId,
       created: createdDate,

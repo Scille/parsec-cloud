@@ -25,6 +25,7 @@ describe('File List Item', () => {
     const FILE: FileModel = {
       tag: FileType.File,
       confinementPoint: null,
+      isConfined: (): boolean => false,
       id: '67',
       parent: '66',
       created: DateTime.now(),
@@ -65,6 +66,7 @@ describe('File List Item', () => {
     const FOLDER: FolderModel = {
       tag: FileType.Folder,
       confinementPoint: null,
+      isConfined: (): boolean => false,
       id: '67',
       parent: '66',
       created: DateTime.now(),
