@@ -714,7 +714,8 @@
             "linkCopiedToClipboard": "Le lien a été copié dans le presse-papier.",
             "linkNotCopiedToClipboard": "Impossible de copier le lien. Il est possible que votre navigateur ou votre appareil n'autorise pas le copier/coller.",
             "emailSent": "L'email a été envoyé !",
-            "cancelled": "Le processus a été annulé."
+            "cancelled": "Le processus a été annulé.",
+            "waiting": "En attente de l'invité..."
         }
     },
     "Password": {
@@ -965,7 +966,8 @@
             "cancelConfirmSubtitle": "Êtes-vous sûr(e) de vouloir annuler le processus d'accueil ? Les informations ne seront pas sauvegardées, vous devrez reprendre depuis le debut.",
             "cancelYes": "Annuler le processus",
             "cancelNo": "Reprendre",
-            "cancelled": "Le processus a été annulé."
+            "cancelled": "Le processus a été annulé.",
+            "waiting": "En attente de l'invité..."
         },
         "invitation": {
             "greetUser": "Accueillir",
