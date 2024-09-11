@@ -107,6 +107,7 @@ export class EntryCollection<Model extends EntryModel> {
         // entry is already listed, updated it
         existing.baseVersion = entry.baseVersion;
         existing.confinementPoint = entry.confinementPoint;
+        existing.isConfined = (): boolean => entry.confinementPoint !== null;
         existing.created = entry.created;
         existing.name = entry.name;
         existing.needSync = entry.needSync;
