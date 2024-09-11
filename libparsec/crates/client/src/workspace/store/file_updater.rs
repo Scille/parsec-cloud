@@ -173,7 +173,8 @@ impl FileUpdater {
         removed_chunks: impl Iterator<Item = ChunkID>,
     ) -> Result<(), UpdateFileManifestAndContinueError> {
         // Sanity check to ensure the caller is not buggy
-        debug_assert_eq!(manifest.base.id, self.entry_id);
+        #[cfg(debug_assertions)]
+        assert_eq!(manifest.base.id, self.entry_id);
 
         let mut storage_guard = store.storage.lock().await;
         let storage = storage_guard
