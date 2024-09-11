@@ -6,8 +6,8 @@
         "projectSources": "https://github.com/Scille/parsec-cloud",
         "issueUrl": "https://github.com/Scille/parsec-cloud/issues/{issue}",
         "license": "BUSL-1.1",
-        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/master/LICENSE",
-        "history": "https://docs.parsec.cloud/en/stable/history.html",
+        "licenseLink": "https://raw.githubusercontent.com/Scille/parsec-cloud/{version}/LICENSE",
+        "history": "https://docs.parsec.cloud/en/{version}/history.html",
         "pricingLink": "https://parsec.cloud/en/tarification/"
     },
     "quit": {
