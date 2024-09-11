@@ -22,7 +22,7 @@ msTest('Log into the customer area', async ({ home }) => {
   await expect(home.locator('.saas-login-container').locator('.saas-login__title')).toHaveText('Log in to your customer account');
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-  await home.locator('.saas-login-button__item').click();
+  await home.locator('.saas-login-button__item').nth(1).click();
   await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
   const logOutButton = home.locator('.header-content').locator('.custom-button').first();
   await expect(logOutButton).toHaveText('Log out');
@@ -45,7 +45,7 @@ msTest('Log into the customer area failed', async ({ home }) => {
   await expect(home).toHaveURL(/.+\/home$/);
   await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), 'invalid_password');
-  await home.locator('.saas-login-button__item').click();
+  await home.locator('.saas-login-button__item').nth(1).click();
   const error = home.locator('.saas-login-container').locator('.login-button-error');
   await expect(error).toBeVisible();
   await expect(error).toHaveText('Cannot log in. Please check your email and password.');
@@ -140,7 +140,7 @@ for (const frozen of [false, true]) {
     await button.click();
     await fillIonInput(home.locator('.input-container').nth(0).locator('ion-input'), DEFAULT_USER_INFORMATION.email);
     await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
-    await home.locator('.saas-login-button__item').click();
+    await home.locator('.saas-login-button__item').nth(1).click();
     const orgSwitchButton = home.locator('.sidebar-header').locator('.card-header-title');
     await expect(orgSwitchButton).toHaveText('All organizations');
     await orgSwitchButton.click();

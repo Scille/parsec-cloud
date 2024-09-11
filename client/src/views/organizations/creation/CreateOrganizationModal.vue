@@ -14,18 +14,21 @@
         :information-manager="informationManager"
         @close-requested="onCloseRequested"
         @organization-created="onOrganizationCreated"
+        @back-requested="onBackToServerChoice"
       />
       <create-organization-custom-server
         v-if="serverType === ServerType.Custom"
         :bootstrap-link="bootstrapLink"
         @close-requested="onCloseRequested"
         @organization-created="onOrganizationCreated"
+        @back-requested="onBackToServerChoice"
       />
       <create-organization-trial
         v-if="serverType === ServerType.Trial"
         :bootstrap-link="bootstrapLink"
         @close-requested="onCloseRequested"
         @organization-created="onOrganizationCreated"
+        @back-requested="onBackToServerChoice"
         :information-manager="informationManager"
       />
     </div>
@@ -102,6 +105,10 @@ async function onOrganizationCreated(
       ? AccessStrategy.useKeyring(device)
       : AccessStrategy.usePassword(device, (saveStrategy as DeviceSaveStrategyPassword).password);
   await modalController.dismiss({ device: device, access: accessStrategy }, MsModalResult.Confirm);
+}
+
+async function onBackToServerChoice(): Promise<void> {
+  serverType.value = undefined;
 }
 </script>
 

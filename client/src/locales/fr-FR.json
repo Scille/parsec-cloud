@@ -1217,6 +1217,7 @@
             "password": "Mot de passe",
             "forgottenPassword": "Mot de passe oublié ?",
             "login": "Se connecter",
+            "backButton": "Retour",
             "saveLogin": "Se souvenir de moi",
             "loginFailed": "Impossible de se connecter. Veuillez vérifier votre email et mot de passe.",
             "networkFailed": "Impossible de contacter le serveur. Veuillez vérifier votre connexion à internet.",

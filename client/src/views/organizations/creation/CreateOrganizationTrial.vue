@@ -6,8 +6,9 @@
       v-show="step === Steps.PersonalInformation"
       :class="step === Steps.PersonalInformation ? 'active' : ''"
       @user-information-filled="onUserInformationFilled"
+      @go-back-requested="$emit('backRequested')"
       @close-requested="$emit('closeRequested')"
-      :hide-previous="true"
+      :hide-previous="bootstrapLink !== undefined"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
@@ -71,6 +72,7 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'closeRequested'): void;
+  (e: 'backRequested'): void;
   (e: 'organizationCreated', organizationName: OrganizationID, device: AvailableDevice, saveStrategy: DeviceSaveStrategy): void;
 }>();
 

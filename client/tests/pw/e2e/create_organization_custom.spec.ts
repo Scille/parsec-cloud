@@ -36,7 +36,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(orgServerContainer.locator('.modal-header-title__text')).toHaveText('Create organization on my Parsec server');
   const orgPrevious = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(0);
   const orgNext = orgServerContainer.locator('.organization-name-and-server-page-footer').locator('ion-button').nth(1);
-  await expect(orgPrevious).toBeHidden();
+  await expect(orgPrevious).toBeVisible();
   await expect(orgNext).toHaveDisabledAttribute();
   await fillIonInput(orgServerContainer.locator('ion-input').nth(0), DEFAULT_ORGANIZATION_INFORMATION.name);
   await expect(orgNext).toHaveDisabledAttribute();

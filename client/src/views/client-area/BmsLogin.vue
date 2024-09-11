@@ -107,8 +107,18 @@
           </ion-text>
         </div>
 
-        <!-- login button -->
+        <!-- back and login buttons -->
         <div class="saas-login-button">
+          <ion-text
+            v-show="showBackButton"
+            :disabled="querying"
+            class="button-medium custom-button custom-button-ghost saas-login-button__item"
+            button
+            @click="$emit('goBackRequested')"
+          >
+            <ion-icon :icon="arrowBack" />
+            {{ $msTranslate('clientArea.app.backButton') }}
+          </ion-text>
           <ion-button
             v-if="!loading"
             :disabled="!emailInputRef || emailInputRef.validity !== Validity.Valid || !password.length || querying"
@@ -182,7 +192,7 @@
 import { IonButton, IonText, IonButtons, IonFooter, IonIcon, IonSkeletonText } from '@ionic/vue';
 import { MsInput, MsPasswordInput, Translatable, Validity, MsSpinner, MsCheckbox } from 'megashark-lib';
 import { emailValidator } from '@/common/validators';
-import { warning, arrowForward, close } from 'ionicons/icons';
+import { warning, arrowBack, arrowForward, close } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
@@ -191,11 +201,13 @@ import { Env } from '@/services/environment';
 const props = defineProps<{
   email?: string;
   hideHeader?: boolean;
+  showBackButton?: boolean;
 }>();
 
 const emits = defineEmits<{
   (e: 'loginSuccess', token: AuthenticationToken, personalInformation: PersonalInformationResultData): void;
   (e: 'closeRequested'): void;
+  (e: 'goBackRequested'): void;
   (e: 'forgottenPasswordClicked'): void;
 }>();
 
@@ -343,12 +355,18 @@ async function onLoginClicked(): Promise<void> {
       display: flex;
       gap: 1rem;
       align-items: center;
+      justify-content: end;
       margin-top: 0.5rem;
       width: 100%;
 
       &__item {
         height: 2.5rem;
         border-radius: var(--parsec-radius-6);
+        border: 1px solid transparent;
+
+        &:hover {
+          border: 1px solid var(--parsec-color-light-secondary-contrast);
+        }
       }
 
       .skeleton-login-button {
