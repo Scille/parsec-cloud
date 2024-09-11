@@ -97,7 +97,20 @@ const UNSIGNED_ARTIFACT_NAME =
  * @see https://www.electron.build/configuration/configuration
  */
 const options = {
-  appId: 'cloud.parsec.parsec-v3',
+  /* eslint-disable max-len */
+  /*
+   * Doc mentions that it's used as a CFBundleIdentifier on MacOS, and as an Application User Model ID on Windows
+   * (https://www.electron.build/configuration/configuration.html#configuration)
+   * The doc for CFBundleIdentifier specifies that this should be in reverse-dns format
+   *   https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html#//apple_ref/doc/uid/20001431-102070
+   * The doc for Application User Model ID specifies that it should be in the `CompanyName.ProductName.SubProduct.VersionInformation` format
+   *   https://learn.microsoft.com/en-us/windows/win32/shell/appids?redirectedfrom=MSDN
+   * Since this is what determines the name of the app in the installer on Windows but it doesn't seem to have any visible effect
+   * on MacOS, we decided to prioritize the Windows format.
+   */
+  /* eslint-enable max-len */
+  appId: 'ParsecCloud.Parsec.Parsec.3',
+  productName: 'Parsec',
   artifactName: UNSIGNED_ARTIFACT_NAME,
   buildVersion: '3.0.0-rc.1+dev',
   protocols: {
