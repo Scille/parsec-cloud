@@ -714,7 +714,8 @@
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "emailSent": "Email sent!",
-            "cancelled": "The process has been cancelled."
+            "cancelled": "The process has been cancelled.",
+            "waiting": "Waiting for the guest..."
         }
     },
     "Password": {
@@ -965,7 +966,8 @@
             "cancelConfirmSubtitle": "Are you sure you want to cancel the onboarding process? Information will not be saved, you will have to restart.",
             "cancelYes": "Cancel process",
             "cancelNo": "Resume",
-            "cancelled": "The process has been cancelled."
+            "cancelled": "The process has been cancelled.",
+            "waiting": "Waiting for the guest..."
         },
         "invitation": {
             "greetUser": "Greet",
