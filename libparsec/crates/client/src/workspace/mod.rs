@@ -311,7 +311,16 @@ impl WorkspaceOps {
         &self,
         entry_id: VlobID,
     ) -> Result<EntryStat, WorkspaceStatEntryError> {
-        transactions::stat_entry_by_id(self, entry_id).await
+        transactions::stat_entry_by_id(self, entry_id, None).await
+    }
+
+    pub async fn stat_entry_by_id_with_confinement_already_computed(
+        &self,
+        entry_id: VlobID,
+        precomputed_confinement_point: Option<VlobID>,
+    ) -> Result<EntryStat, WorkspaceStatEntryError> {
+        transactions::stat_entry_by_id(self, entry_id, Some(precomputed_confinement_point.into()))
+            .await
     }
 
     pub async fn open_folder_reader(

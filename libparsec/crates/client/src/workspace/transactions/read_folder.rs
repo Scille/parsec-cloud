@@ -123,9 +123,16 @@ impl FolderReader {
             Some((child_name, child_id)) => (child_name, *child_id),
             None => return Ok(FolderReaderStatNextOutcome::NoMoreEntries),
         };
-        // TODO: `stat_entry_by_id` does compute the confinement point, although
-        // we already have it here. We could avoid recomputing it.
-        let child_stat = match ops.stat_entry_by_id(child_id).await {
+        // Check confinement point here instead of computing it in the `stat_entry_by_id` method
+        let confinement_point = if self.manifest.local_confinement_points.contains(&child_id) {
+            PathConfinementPoint::Confined(expected_parent_id)
+        } else {
+            self.confinement_point
+        };
+        let child_stat = match ops
+            .stat_entry_by_id_with_confinement_already_computed(child_id, confinement_point.into())
+            .await
+        {
             Ok(stat) => stat,
             Err(err) => {
                 return Err(match err {

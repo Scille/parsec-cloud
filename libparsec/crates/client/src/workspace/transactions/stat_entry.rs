@@ -6,7 +6,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{GetManifestError, ResolvePathError},
+        store::{GetManifestError, PathConfinementPoint, ResolvePathError},
         WorkspaceOps,
     },
 };
@@ -84,6 +84,7 @@ impl From<ConnectionError> for WorkspaceStatEntryError {
 pub(crate) async fn stat_entry_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
+    precomputed_confinement_point: Option<PathConfinementPoint>,
 ) -> Result<EntryStat, WorkspaceStatEntryError> {
     let manifest = ops
         .store
@@ -104,26 +105,31 @@ pub(crate) async fn stat_entry_by_id(
             GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
         })?;
 
-    let (_, confinement_point) =
-        ops.store
-            .retrieve_path_from_id(entry_id)
-            .await
-            .map_err(|err| match err {
-                ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
-                ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
-                ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-                ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-                ResolvePathError::InvalidKeysBundle(err) => {
-                    WorkspaceStatEntryError::InvalidKeysBundle(err)
-                }
-                ResolvePathError::InvalidCertificate(err) => {
-                    WorkspaceStatEntryError::InvalidCertificate(err)
-                }
-                ResolvePathError::InvalidManifest(err) => {
-                    WorkspaceStatEntryError::InvalidManifest(err)
-                }
-                ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
-            })?;
+    let confinement_point = match precomputed_confinement_point {
+        None => {
+            ops.store
+                .retrieve_path_from_id(entry_id)
+                .await
+                .map_err(|err| match err {
+                    ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
+                    ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
+                    ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+                    ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                    ResolvePathError::InvalidKeysBundle(err) => {
+                        WorkspaceStatEntryError::InvalidKeysBundle(err)
+                    }
+                    ResolvePathError::InvalidCertificate(err) => {
+                        WorkspaceStatEntryError::InvalidCertificate(err)
+                    }
+                    ResolvePathError::InvalidManifest(err) => {
+                        WorkspaceStatEntryError::InvalidManifest(err)
+                    }
+                    ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
+                })?
+                .1
+        }
+        Some(confinement_point) => confinement_point,
+    };
 
     let info = match manifest {
         ArcLocalChildManifest::Folder(manifest) => EntryStat::Folder {
