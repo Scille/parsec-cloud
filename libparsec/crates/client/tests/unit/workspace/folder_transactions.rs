@@ -198,7 +198,7 @@ async fn add_confined_entry(
         confined_child_id,
         ExpectedValues {
             need_sync: true,
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     )
     .await;
@@ -217,9 +217,7 @@ async fn add_confined_entry(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
 
@@ -247,9 +245,7 @@ async fn add_confined_entry(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
     let (name, stat) = &children[1];
@@ -260,8 +256,6 @@ async fn add_confined_entry(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
@@ -285,9 +279,7 @@ async fn add_confined_entry(
             // TODO: need_sync should be true, i.e the confined file should not have been synced
             // See: https://github.com/Scille/parsec-cloud/issues/8198
             need_sync: false,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
     let (name, stat) = &children[1];
@@ -298,8 +290,6 @@ async fn add_confined_entry(
         stat,
         ExpectedValues {
             need_sync: false,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
