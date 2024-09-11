@@ -476,9 +476,39 @@ async fn ops_outbound_sync(ops: &WorkspaceOps) {
     }
 }
 
+async fn rename_same_parent(
+    flavor: RenameFlavor,
+    ops: Arc<WorkspaceOps>,
+    parent_id: VlobID,
+    parent_path: FsPath,
+    src: EntryName,
+    dst: EntryName,
+) {
+    match flavor {
+        RenameFlavor::RenameEntry => ops
+            .rename_entry_by_id(parent_id, src, dst, MoveEntryMode::CanReplace)
+            .await
+            .unwrap(),
+        RenameFlavor::MoveEntry => ops
+            .move_entry(
+                parent_path.join(src),
+                parent_path.join(dst),
+                MoveEntryMode::CanReplace,
+            )
+            .await
+            .unwrap(),
+    }
+}
+
+enum RenameFlavor {
+    RenameEntry,
+    MoveEntry,
+}
+
 /// Test that renaming a file or a folder to match the prevent sync pattern make the file disappear from the parent in the remote
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn rename_a_entry_to_be_confined(
+    #[values(RenameFlavor::RenameEntry, RenameFlavor::MoveEntry)] rename_flavor: RenameFlavor,
     #[values(true, false)] root_level: bool,
     #[values(EntryType::File, EntryType::Folder)] entry_type: EntryType,
     env: &TestbedEnv,
@@ -494,7 +524,7 @@ async fn rename_a_entry_to_be_confined(
 
     // Create a workspace ops instance
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await;
+    let ops = Arc::new(workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await);
 
     // Check that parent is up to date
     check_need_sync_parent(&ops, parent_id, false).await;
@@ -529,14 +559,15 @@ async fn rename_a_entry_to_be_confined(
     check_need_sync_parent(&ops, parent_id, true).await;
 
     // Rename the file to be confined
-    ops.rename_entry_by_id(
+    rename_same_parent(
+        rename_flavor,
+        ops.clone(),
         parent_id,
+        base_path,
         not_confined_entry_name.clone(),
         confined_entry_name.clone(),
-        MoveEntryMode::CanReplace,
     )
-    .await
-    .unwrap();
+    .await;
 
     // Check that the child is renamed and need sync
     let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
@@ -609,6 +640,7 @@ async fn ops_inbound_sync(ops: &WorkspaceOps) {
 /// Test that renaming a file or a folder that was confined make it available on remote
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn rename_a_confined_entry_to_not_be_confined(
+    #[values(RenameFlavor::RenameEntry, RenameFlavor::MoveEntry)] rename_flavor: RenameFlavor,
     #[values(true, false)] root_level: bool,
     #[values(EntryType::File, EntryType::Folder)] entry_type: EntryType,
     env: &TestbedEnv,
@@ -624,7 +656,7 @@ async fn rename_a_confined_entry_to_not_be_confined(
 
     // Create a workspace ops instance
     let alice = env.local_device("alice@dev1");
-    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await;
+    let ops = Arc::new(workspace_ops_factory(&env.discriminant_dir, &alice, realm_id).await);
 
     // Check that parent is up to date
     check_need_sync_parent(&ops, parent_id, false).await;
@@ -666,14 +698,15 @@ async fn rename_a_confined_entry_to_not_be_confined(
     check_need_sync_parent(&ops, parent_id, true).await;
 
     // Rename the file to be confined
-    ops.rename_entry_by_id(
+    rename_same_parent(
+        rename_flavor,
+        ops.clone(),
         parent_id,
-        confined_entry_name,
+        base_path,
+        confined_entry_name.clone(),
         not_confined_entry_name.clone(),
-        MoveEntryMode::CanReplace,
     )
-    .await
-    .unwrap();
+    .await;
 
     // Check that the child is renamed and need sync
     let children = ops.stat_folder_children_by_id(parent_id).await.unwrap();
