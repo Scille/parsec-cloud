@@ -34,7 +34,7 @@
           <ion-button
             class="changelog-btn button-outline"
             target="_blank"
-            :href="$msTranslate('app.history')"
+            :href="$msTranslate({ key: 'app.history', data: { version: version } })"
           >
             {{ $msTranslate('AboutPage.update.showChangelog') }}
           </ion-button>
@@ -64,7 +64,7 @@
         </ion-label>
         <ion-text class="app-info-value">
           <a
-            :href="$msTranslate('app.licenseLink')"
+            :href="$msTranslate({ key: 'app.licenseLink', data: { version: version } })"
             target="_blank"
             class="link"
           >
@@ -133,6 +133,7 @@ import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const upToDate = ref(true);
+const version = ref(`v${APP_VERSION.replace('+dev', '')}`);
 
 async function update(): Promise<void> {
   console.log('update');
