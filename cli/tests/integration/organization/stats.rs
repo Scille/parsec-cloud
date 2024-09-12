@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::bootstrap_cli_test;
 use crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN;
+use crate::tests::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -34,7 +34,8 @@ async fn stats_organization(tmp_path: TmpPath) {
     );
 
     crate::assert_cmd_success!(
-        "stats-organization",
+        "organization",
+        "stats",
         "--organization-id",
         org_id.as_ref(),
         "--addr",

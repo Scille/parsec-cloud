@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::{bootstrap_cli_test, unique_org_id};
 use crate::testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, TESTBED_SERVER};
+use crate::tests::{bootstrap_cli_test, unique_org_id};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -9,7 +9,8 @@ async fn create_organization(tmp_path: TmpPath) {
     bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
-        "create-organization",
+        "organization",
+        "create",
         "--organization-id",
         unique_org_id().as_ref(),
         "--addr",

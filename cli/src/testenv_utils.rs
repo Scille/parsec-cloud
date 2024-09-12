@@ -15,8 +15,7 @@ use libparsec::{
 };
 
 use crate::{
-    bootstrap_organization::bootstrap_organization_req,
-    create_organization::create_organization_req,
+    organization::{bootstrap::bootstrap_organization_req, create::create_organization_req},
     utils::{RESET, YELLOW},
 };
 

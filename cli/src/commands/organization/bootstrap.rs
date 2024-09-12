@@ -10,7 +10,7 @@ use libparsec::{
 use crate::utils::*;
 
 #[derive(clap::Parser)]
-pub struct BootstrapOrganization {
+pub struct Args {
     /// Bootstrap address
     /// (e.g: parsec3://127.0.0.1:6770/Org?no_ssl=true&action=bootstrap_organization&token=59961ba6dcc9b018d2fdc9da1c0c762b716a27cff30594562dc813e4b765871a)
     #[arg(short, long)]
@@ -57,16 +57,14 @@ pub async fn bootstrap_organization_req(
     .await?)
 }
 
-pub async fn bootstrap_organization(
-    bootstrap_organization: BootstrapOrganization,
-) -> anyhow::Result<()> {
-    let BootstrapOrganization {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         email,
         label,
         addr,
         device_label,
         password_stdin,
-    } = bootstrap_organization;
+    } = args;
     log::trace!("Bootstrapping organization (addr={addr})");
 
     let human_handle = HumanHandle::new(&email, &label)

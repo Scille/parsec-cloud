@@ -105,7 +105,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
         .unwrap();
 
     let org_id = super::unique_org_id();
-    let org_addr = crate::commands::create_organization::create_organization_req(
+    let org_addr = crate::commands::organization::create::create_organization_req(
         &org_id,
         &url,
         crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN,
@@ -115,7 +115,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
 
     let client_config = libparsec::ClientConfig::default();
     let first_available_device =
-        crate::commands::bootstrap_organization::bootstrap_organization_req(
+        crate::commands::organization::bootstrap::bootstrap_organization_req(
             client_config.clone(),
             org_addr,
             "dev1".parse().unwrap(),
