@@ -4,20 +4,20 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct ListUsers {
+    pub struct Args {
         /// Skip revoked users
         #[arg(short, long, default_value_t)]
         skip_revoked: bool,
     }
 );
 
-pub async fn list_users(list_users: ListUsers) -> anyhow::Result<()> {
-    let ListUsers {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         skip_revoked,
         device,
         config_dir,
         password_stdin,
-    } = list_users;
+    } = args;
     log::trace!(
         "Listing users (confdir={}, device={}, skip_revoked={skip_revoked})",
         config_dir.display(),

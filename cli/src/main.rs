@@ -28,6 +28,9 @@ enum Command {
     /// Contains subcommands related to invitation
     #[command(subcommand)]
     Invite(invite::Group),
+    /// Contains subcommands related to user
+    #[command(subcommand)]
+    User(user::Group),
     /// Contains subcommands related to workspace
     #[command(subcommand)]
     Workspace(workspace::Group),
@@ -35,8 +38,6 @@ enum Command {
     BootstrapOrganization(bootstrap_organization::BootstrapOrganization),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
-    /// List users
-    ListUsers(list_users::ListUsers),
     #[cfg(feature = "testenv")]
     /// Create a temporary environment and initialize a test setup for parsec.
     /// #### WARNING: it also leaves an in-memory server running in the background.
@@ -65,6 +66,7 @@ async fn main() -> anyhow::Result<()> {
     match arg.command {
         Command::Device(device) => device::dispatch_command(device).await,
         Command::Invite(invitation) => invite::dispatch_command(invitation).await,
+        Command::User(user) => user::dispatch_command(user).await,
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
         Command::BootstrapOrganization(bootstrap_organization) => {
             bootstrap_organization::bootstrap_organization(bootstrap_organization).await
@@ -72,7 +74,6 @@ async fn main() -> anyhow::Result<()> {
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
         }
-        Command::ListUsers(list_users) => list_users::list_users(list_users).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
         Command::StatsOrganization(stats_organization) => {
