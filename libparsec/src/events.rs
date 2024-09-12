@@ -8,6 +8,8 @@ use std::sync::Arc;
 use libparsec_client::EventBusConnectionLifetime;
 use libparsec_types::prelude::*;
 
+use crate::handle::Handle;
+
 #[derive(Debug)]
 pub enum ClientEvent {
     // Dummy event for tests only
@@ -119,16 +121,17 @@ pub(crate) struct OnEventCallbackPlugged {
 
 impl OnEventCallbackPlugged {
     pub fn new(
+        handle: Handle,
         // Access to the event bus is done through this callback.
         // Ad-hoc code should be added to the binding system to handle this (hence
         // why this is passed as a parameter instead of as part of `ClientConfig`:
         // we can have a simple `if func_name == "client_login"` that does a special
         // cooking of it last param.
         #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
-            dyn Fn(ClientEvent) + Send + Sync,
+            dyn Fn(Handle, ClientEvent) + Send + Sync,
         >,
         // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-        #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
+        #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
     ) -> Self {
         // SAFETY: `EventBus` requires callback to be `Send`, however on web the runtime
         // is strictly single-threaded and callback must be `!Send`.
@@ -136,9 +139,10 @@ impl OnEventCallbackPlugged {
         // send'ness of the callback given it will never leave the current thread.
         #[cfg(target_arch = "wasm32")]
         let on_event_callback = unsafe {
-            std::mem::transmute::<Arc<dyn Fn(ClientEvent)>, Arc<dyn Fn(ClientEvent) + Send + Sync>>(
-                on_event_callback,
-            )
+            std::mem::transmute::<
+                Arc<dyn Fn(Handle, ClientEvent)>,
+                Arc<dyn Fn(Handle, ClientEvent) + Send + Sync>,
+            >(on_event_callback)
         };
 
         let event_bus = libparsec_client::EventBus::default();
@@ -148,53 +152,59 @@ impl OnEventCallbackPlugged {
         let ping = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |e: &libparsec_client::EventPing| {
-                (on_event_callback)(ClientEvent::Ping {
-                    ping: e.ping.clone(),
-                });
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::Ping {
+                        ping: e.ping.clone(),
+                    },
+                );
             })
         };
 
         let offline = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventOffline| {
-                (on_event_callback)(ClientEvent::Offline);
+                (on_event_callback)(handle, ClientEvent::Offline);
             })
         };
         let online = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventOnline| {
-                (on_event_callback)(ClientEvent::Online);
+                (on_event_callback)(handle, ClientEvent::Online);
             })
         };
 
         let server_config_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventServerConfigChanged| {
-                (on_event_callback)(ClientEvent::ServerConfigChanged);
+                (on_event_callback)(handle, ClientEvent::ServerConfigChanged);
             })
         };
         let workspace_self_access_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |_: &libparsec_client::EventWorkspacesSelfListChanged| {
-                    (on_event_callback)(ClientEvent::WorkspacesSelfListChanged);
+                    (on_event_callback)(handle, ClientEvent::WorkspacesSelfListChanged);
                 },
             )
         };
         let workspace_locally_created = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventWorkspaceLocallyCreated| {
-                (on_event_callback)(ClientEvent::WorkspaceLocallyCreated);
+                (on_event_callback)(handle, ClientEvent::WorkspaceLocallyCreated);
             })
         };
         let workspace_watched_entry_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceWatchedEntryChanged| {
-                    (on_event_callback)(ClientEvent::WorkspaceWatchedEntryChanged {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceWatchedEntryChanged {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                        },
+                    );
                 },
             )
         };
@@ -202,10 +212,13 @@ impl OnEventCallbackPlugged {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncStarted| {
-                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncStarted {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOpsOutboundSyncStarted {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                        },
+                    );
                 },
             )
         };
@@ -213,13 +226,16 @@ impl OnEventCallbackPlugged {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncProgress| {
-                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncProgress {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                        blocks: e.blocks,
-                        block_index: e.block_index,
-                        blocksize: e.blocksize,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOpsOutboundSyncProgress {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                            blocks: e.blocks,
+                            block_index: e.block_index,
+                            blocksize: e.blocksize,
+                        },
+                    );
                 },
             )
         };
@@ -227,10 +243,13 @@ impl OnEventCallbackPlugged {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncAborted| {
-                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncAborted {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOpsOutboundSyncAborted {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                        },
+                    );
                 },
             )
         };
@@ -238,10 +257,13 @@ impl OnEventCallbackPlugged {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceOpsOutboundSyncDone| {
-                    (on_event_callback)(ClientEvent::WorkspaceOpsOutboundSyncDone {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOpsOutboundSyncDone {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                        },
+                    );
                 },
             )
         };
@@ -249,53 +271,65 @@ impl OnEventCallbackPlugged {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventWorkspaceOpsInboundSyncDone| {
-                    (on_event_callback)(ClientEvent::WorkspaceOpsInboundSyncDone {
-                        realm_id: e.realm_id,
-                        entry_id: e.entry_id,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::WorkspaceOpsInboundSyncDone {
+                            realm_id: e.realm_id,
+                            entry_id: e.entry_id,
+                        },
+                    );
                 },
             )
         };
         let invitation_changed = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |e: &libparsec_client::EventInvitationChanged| {
-                (on_event_callback)(ClientEvent::InvitationChanged {
-                    token: e.token,
-                    status: e.status,
-                });
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::InvitationChanged {
+                        token: e.token,
+                        status: e.status,
+                    },
+                );
             })
         };
         let expired_organization = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventExpiredOrganization| {
-                (on_event_callback)(ClientEvent::ExpiredOrganization);
+                (on_event_callback)(handle, ClientEvent::ExpiredOrganization);
             })
         };
         let revoked_self_user = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |_: &libparsec_client::EventRevokedSelfUser| {
-                (on_event_callback)(ClientEvent::RevokedSelfUser);
+                (on_event_callback)(handle, ClientEvent::RevokedSelfUser);
             })
         };
         let too_much_drift_with_server_clock = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
                 move |e: &libparsec_client::EventTooMuchDriftWithServerClock| {
-                    (on_event_callback)(ClientEvent::TooMuchDriftWithServerClock {
-                        ballpark_client_early_offset: e.ballpark_client_early_offset,
-                        ballpark_client_late_offset: e.ballpark_client_late_offset,
-                        client_timestamp: e.client_timestamp,
-                        server_timestamp: e.server_timestamp,
-                    });
+                    (on_event_callback)(
+                        handle,
+                        ClientEvent::TooMuchDriftWithServerClock {
+                            ballpark_client_early_offset: e.ballpark_client_early_offset,
+                            ballpark_client_late_offset: e.ballpark_client_late_offset,
+                            client_timestamp: e.client_timestamp,
+                            server_timestamp: e.server_timestamp,
+                        },
+                    );
                 },
             )
         };
         let incompatible_server = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(move |e: &libparsec_client::EventIncompatibleServer| {
-                (on_event_callback)(ClientEvent::IncompatibleServer {
-                    detail: e.0.to_string(),
-                });
+                (on_event_callback)(
+                    handle,
+                    ClientEvent::IncompatibleServer {
+                        detail: e.0.to_string(),
+                    },
+                );
             })
         };
         // let invalid_keys_bundle = {

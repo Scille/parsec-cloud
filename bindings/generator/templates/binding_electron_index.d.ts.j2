@@ -29,7 +29,7 @@ string
 {%- elif t.kind in ("bytes", "bytes_based") -%}
 Uint8Array
 {%- elif t.kind == "OnClientEventCallback" -%}
-(event: ClientEvent) => void
+(handle: number, event: ClientEvent) => void
 {%- elif t.kind == "enum" -%}
 {{ t.name }}
 {%- else -%}

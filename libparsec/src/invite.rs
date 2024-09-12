@@ -100,9 +100,11 @@ pub async fn bootstrap_organization(
     // why this is passed as a parameter instead of as part of `ClientConfig`:
     // we can have a simple `if func_name == "client_login"` that does a special
     // cooking of it last param.
-    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
+    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
+        dyn Fn(Handle, ClientEvent) + Send + Sync,
+    >,
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
+    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
 
     bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
     save_strategy: DeviceSaveStrategy,
@@ -111,7 +113,11 @@ pub async fn bootstrap_organization(
     sequester_authority_verify_key: Option<SequesterVerifyKeyDer>,
 ) -> Result<AvailableDevice, BootstrapOrganizationError> {
     let config: Arc<libparsec_client::ClientConfig> = config.into();
-    let events_plugged = OnEventCallbackPlugged::new(on_event_callback);
+    let events_plugged = OnEventCallbackPlugged::new(
+        // Pass invalid handle, since it's not needed by the possible raised events during a bootstrap
+        Handle::from(0u32),
+        on_event_callback,
+    );
     // TODO: connect event_bus to on_event_callback
 
     let finalize_ctx = libparsec_client::bootstrap_organization(
@@ -222,9 +228,11 @@ pub async fn claimer_retrieve_info(
     // why this is passed as a parameter instead of as part of `ClientConfig`:
     // we can have a simple `if func_name == "client_login"` that does a special
     // cooking of it last param.
-    #[cfg(not(target_arch = "wasm32"))] _on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
+    #[cfg(not(target_arch = "wasm32"))] _on_event_callback: Arc<
+        dyn Fn(Handle, ClientEvent) + Send + Sync,
+    >,
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(ClientEvent)>,
+    #[cfg(target_arch = "wasm32")] _on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
 
     addr: ParsecInvitationAddr,
 ) -> Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError> {

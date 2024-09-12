@@ -40,7 +40,7 @@ export async function createOrganization(
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  function parsecEventCallback(event: ClientEvent): void {
+  function parsecEventCallback(_handle: number, event: ClientEvent): void {
     console.log('On event', event);
   }
 
@@ -102,7 +102,7 @@ export async function bootstrapOrganization(
   deviceLabel: string,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<AvailableDevice, BootstrapOrganizationError>> {
-  function parsecEventCallback(event: ClientEvent): void {
+  function parsecEventCallback(_handle: number, event: ClientEvent): void {
     console.log('On event', event);
   }
 

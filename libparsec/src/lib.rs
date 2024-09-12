@@ -18,6 +18,7 @@ pub use cancel::*;
 pub use client::*;
 pub use config::*;
 pub use events::*;
+pub use handle::Handle;
 pub use invite::*;
 pub use libparsec_client_connection::*;
 pub use libparsec_platform_device_loader::*;

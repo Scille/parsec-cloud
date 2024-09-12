@@ -132,11 +132,11 @@ for x in {{ param_name }}.iter() {
 }
 let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "OnClientEventCallback" %}
-let {{ param_name }} = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
+let {{ param_name }} = std::sync::Arc::new(move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
     // TODO: Better error handling here (log error ?)
     let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}(event).expect("event type conversion error");
-    on_event_callback.call1(&JsValue::NULL, &js_event).expect("error in event callback");
-}) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+    on_event_callback.call2(&JsValue::NULL, &Number::from(handle), &js_event).expect("error in event callback");
+}) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 {% elif type.kind == "enum"%}
 let {{ param_name }} = {{ enum_js_to_rs_function_name(type) }}(&{{ param_name }})?;
 {% endif %}

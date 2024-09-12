@@ -6777,22 +6777,25 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
             js_fn: Some(js_val.root(&mut cx)),
             channel: cx.channel(),
         });
-        std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            let callback2 = callback.clone();
-            callback.channel.send(move |mut cx| {
-                // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                if let Some(ref js_fn) = callback2.js_fn {
-                    js_fn
-                        .to_inner(&mut cx)
-                        .call_with(&cx)
-                        .arg(js_event)
-                        .apply::<JsValue, _>(&mut cx)?;
-                }
-                Ok(())
-            });
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+        std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                let callback2 = callback.clone();
+                callback.channel.send(move |mut cx| {
+                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                    // the current task if an unrelated event handler has a bug...)
+                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
+                    let js_number = JsNumber::new(&mut cx, handle);
+                    if let Some(ref js_fn) = callback2.js_fn {
+                        js_fn
+                            .to_inner(&mut cx)
+                            .call_with(&cx)
+                            .args((js_number, js_event))
+                            .apply::<JsValue, _>(&mut cx)?;
+                    }
+                    Ok(())
+                });
+            },
+        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
     };
     let bootstrap_organization_addr = {
         let js_val = cx.argument::<JsString>(2)?;
@@ -7451,22 +7454,25 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
             js_fn: Some(js_val.root(&mut cx)),
             channel: cx.channel(),
         });
-        std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            let callback2 = callback.clone();
-            callback.channel.send(move |mut cx| {
-                // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                if let Some(ref js_fn) = callback2.js_fn {
-                    js_fn
-                        .to_inner(&mut cx)
-                        .call_with(&cx)
-                        .arg(js_event)
-                        .apply::<JsValue, _>(&mut cx)?;
-                }
-                Ok(())
-            });
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+        std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                let callback2 = callback.clone();
+                callback.channel.send(move |mut cx| {
+                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                    // the current task if an unrelated event handler has a bug...)
+                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
+                    let js_number = JsNumber::new(&mut cx, handle);
+                    if let Some(ref js_fn) = callback2.js_fn {
+                        js_fn
+                            .to_inner(&mut cx)
+                            .call_with(&cx)
+                            .args((js_number, js_event))
+                            .apply::<JsValue, _>(&mut cx)?;
+                    }
+                    Ok(())
+                });
+            },
+        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
     };
     let addr = {
         let js_val = cx.argument::<JsString>(2)?;
@@ -8924,22 +8930,25 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
             js_fn: Some(js_val.root(&mut cx)),
             channel: cx.channel(),
         });
-        std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            let callback2 = callback.clone();
-            callback.channel.send(move |mut cx| {
-                // TODO: log an error instead of panic ? (it is a bit harsh to crash
-                // the current task if an unrelated event handler has a bug...)
-                let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                if let Some(ref js_fn) = callback2.js_fn {
-                    js_fn
-                        .to_inner(&mut cx)
-                        .call_with(&cx)
-                        .arg(js_event)
-                        .apply::<JsValue, _>(&mut cx)?;
-                }
-                Ok(())
-            });
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+        std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                let callback2 = callback.clone();
+                callback.channel.send(move |mut cx| {
+                    // TODO: log an error instead of panic ? (it is a bit harsh to crash
+                    // the current task if an unrelated event handler has a bug...)
+                    let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
+                    let js_number = JsNumber::new(&mut cx, handle);
+                    if let Some(ref js_fn) = callback2.js_fn {
+                        js_fn
+                            .to_inner(&mut cx)
+                            .call_with(&cx)
+                            .args((js_number, js_event))
+                            .apply::<JsValue, _>(&mut cx)?;
+                    }
+                    Ok(())
+                });
+            },
+        ) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
     };
     let access = {
         let js_val = cx.argument::<JsObject>(2)?;

@@ -73,7 +73,7 @@ export class DeviceClaim {
   }
 
   async retrieveInfo(invitationLink: string): Promise<Result<UserOrDeviceClaimInitialInfoDevice, ClaimerRetrieveInfoError>> {
-    function eventCallback(event: ClientEvent): void {
+    function eventCallback(_handle: number, event: ClientEvent): void {
       console.log('On event', event);
     }
 
