@@ -192,6 +192,7 @@ async fn add_confined_entry(
         p_assert_eq!(e.realm_id, realm_id);
         p_assert_eq!(e.entry_id, confined_child_id);
     });
+    drop(spy);
     check_child(
         &ops,
         entry_type,
@@ -221,8 +222,19 @@ async fn add_confined_entry(
         },
     );
 
-    // Stop spying
-    drop(spy);
+    // Check parent manifest content
+    let parent_manifest = ops
+        .store
+        .get_manifest(parent_id)
+        .await
+        .expect("unable to retrieve local manifest");
+    if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
+        assert!(folder_manifest
+            .local_confinement_points
+            .contains(&confined_child_id));
+    } else {
+        panic!("parent expected to be a folder")
+    }
 
     // Create a non-confined file
     let target = base_path.join("test_not_tmp".parse().unwrap());
@@ -260,6 +272,24 @@ async fn add_confined_entry(
         },
     );
 
+    // Check parent manifest content
+    let parent_manifest = ops
+        .store
+        .get_manifest(parent_id)
+        .await
+        .expect("unable to retrieve local manifest");
+    if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
+        assert!(folder_manifest
+            .local_confinement_points
+            .contains(&confined_child_id));
+        assert!(!folder_manifest
+            .local_confinement_points
+            .contains(&not_confined_child_id));
+    } else {
+        panic!("parent expected to be a folder")
+    }
+
+    // Outbound sync
     ops_outbound_sync(&ops).await;
 
     // Check that parent is not marked as needing sync
@@ -293,6 +323,29 @@ async fn add_confined_entry(
             confinement_point: None,
         },
     );
+
+    // Check parent manifest content
+    let parent_manifest = ops
+        .store
+        .get_manifest(parent_id)
+        .await
+        .expect("unable to retrieve local manifest");
+    if let ArcLocalChildManifest::Folder(folder_manifest) = parent_manifest {
+        assert!(folder_manifest
+            .local_confinement_points
+            .contains(&confined_child_id));
+        assert!(!folder_manifest
+            .local_confinement_points
+            .contains(&not_confined_child_id));
+        assert!(!folder_manifest
+            .remote_confinement_points
+            .contains(&confined_child_id));
+        assert!(!folder_manifest
+            .remote_confinement_points
+            .contains(&not_confined_child_id));
+    } else {
+        panic!("parent expected to be a folder")
+    }
 }
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
