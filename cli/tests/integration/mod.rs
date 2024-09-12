@@ -1,13 +1,10 @@
 mod bootstrap_organization;
 mod create_organization;
+mod device;
 mod device_option;
-mod export_recovery_device;
-mod import_recovery_device;
 mod invitations;
-mod list_devices;
 mod list_users;
 mod ls;
-mod remove_device;
 mod rm;
 mod shamir_setup_create;
 mod stats_organization;
