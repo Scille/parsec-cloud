@@ -241,7 +241,7 @@ pub async fn open_folder_reader_by_id(
             GetManifestError::InvalidManifest(err) => {
                 WorkspaceOpenFolderReaderError::InvalidManifest(err)
             }
-            GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
+            GetManifestError::Internal(err) => err.context("cannot get manifest").into(),
         })?;
 
     let (_, confinement_point) =
