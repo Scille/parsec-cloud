@@ -6,11 +6,11 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device]
-    pub struct RemoveDevice {}
+    pub struct Args {}
 );
 
-pub async fn remove_device(remove_device: RemoveDevice) -> anyhow::Result<()> {
-    let RemoveDevice { device, config_dir } = remove_device;
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args { device, config_dir } = args;
     log::trace!(
         "Removing device {} (confdir={})",
         device.as_deref().unwrap_or("N/A"),

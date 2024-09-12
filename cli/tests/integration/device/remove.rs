@@ -5,7 +5,7 @@ use libparsec::{tmp_path, TmpPath};
 
 use crate::testenv_utils::TestOrganization;
 
-use super::{bootstrap_cli_test, wait_for};
+use crate::tests::{bootstrap_cli_test, wait_for};
 
 #[rstest::rstest]
 #[tokio::test]
@@ -14,7 +14,7 @@ async fn remove_device(tmp_path: TmpPath) {
 
     let process = std::process::Command::cargo_bin("parsec_cli")
         .unwrap()
-        .args(["remove-device", "--device", &alice.device_id.hex()])
+        .args(["device", "remove", "--device", &alice.device_id.hex()])
         .stdin(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
         .stdout(std::process::Stdio::piped())

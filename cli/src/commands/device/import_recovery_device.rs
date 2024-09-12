@@ -8,7 +8,7 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
-    pub struct ImportRecoveryDevice {
+    pub struct Args {
         /// Recovery file
         #[arg(short, long)]
         input: PathBuf,
@@ -18,15 +18,13 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn import_recovery_device(
-    import_recovery_device: ImportRecoveryDevice,
-) -> anyhow::Result<()> {
-    let ImportRecoveryDevice {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         input,
         passphrase,
         config_dir,
         password_stdin,
-    } = import_recovery_device;
+    } = args;
     log::trace!(
         "Importing recovery device from {} (confdir={})",
         input.display(),

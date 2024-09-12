@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::bootstrap_cli_test;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
+use crate::tests::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -12,6 +12,7 @@ async fn export_recovery_device(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
+        "device",
         "export-recovery-device",
         "--device",
         &alice.device_id.hex(),

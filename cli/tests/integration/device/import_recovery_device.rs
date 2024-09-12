@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::bootstrap_cli_test;
 use crate::testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD};
+use crate::tests::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -16,6 +16,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
+        "device",
         "import-recovery-device",
         "--input",
         &input.to_string_lossy(),
