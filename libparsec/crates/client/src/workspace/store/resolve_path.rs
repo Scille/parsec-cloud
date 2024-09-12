@@ -23,14 +23,14 @@ use super::{
 /// that takes precedence.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum PathConfinementPoint {
-    None,
+    NotConfined,
     Confined(VlobID),
 }
 
 impl From<PathConfinementPoint> for Option<VlobID> {
     fn from(val: PathConfinementPoint) -> Self {
         match val {
-            PathConfinementPoint::None => None,
+            PathConfinementPoint::NotConfined => None,
             PathConfinementPoint::Confined(id) => Some(id),
         }
     }
@@ -39,7 +39,7 @@ impl From<PathConfinementPoint> for Option<VlobID> {
 impl From<Option<VlobID>> for PathConfinementPoint {
     fn from(val: Option<VlobID>) -> Self {
         match val {
-            None => PathConfinementPoint::None,
+            None => PathConfinementPoint::NotConfined,
             Some(id) => PathConfinementPoint::Confined(id),
         }
     }
@@ -251,7 +251,7 @@ fn cache_only_path_resolution(
                     StepKind::Root => {
                         let manifest =
                             ArcLocalChildManifest::Folder(cache.manifests.root_manifest().clone());
-                        let confinement = PathConfinementPoint::None;
+                        let confinement = PathConfinementPoint::NotConfined;
                         return CacheOnlyPathResolutionOutcome::Done {
                             manifest,
                             confinement,
@@ -263,7 +263,10 @@ fn cache_only_path_resolution(
         };
 
         let (parent_manifest, parent_confinement) = match &last_step {
-            StepKind::Root => (cache.manifests.root_manifest(), PathConfinementPoint::None),
+            StepKind::Root => (
+                cache.manifests.root_manifest(),
+                PathConfinementPoint::NotConfined,
+            ),
             StepKind::Child {
                 manifest,
                 confinement,
@@ -300,11 +303,11 @@ fn cache_only_path_resolution(
         // Top-most confinement point shadows child ones if any
         let confinement = match parent_confinement {
             confinement @ PathConfinementPoint::Confined(_) => confinement,
-            PathConfinementPoint::None => {
+            PathConfinementPoint::NotConfined => {
                 if parent_manifest.local_confinement_points.contains(&child_id) {
                     PathConfinementPoint::Confined(parent_id)
                 } else {
-                    PathConfinementPoint::None
+                    PathConfinementPoint::NotConfined
                 }
             }
         };
@@ -676,7 +679,7 @@ pub(crate) async fn retrieve_path_from_id(
 ) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
     // Initialize the results
     let mut parts = Vec::new();
-    let mut confinement: Option<VlobID> = None;
+    let mut confinement = PathConfinementPoint::NotConfined;
 
     // Initialize the loop state
     let mut current_entry_id = entry_id;
@@ -749,16 +752,19 @@ pub(crate) async fn retrieve_path_from_id(
 
         // Update the confinement point result
         // Give priority to the top most confinement point
-        confinement = confinement.or_else(|| {
-            if parent_manifest
-                .local_confinement_points
-                .contains(&current_entry_id)
-            {
-                Some(current_parent_id)
-            } else {
-                None
+        confinement = match confinement {
+            PathConfinementPoint::Confined(id) => PathConfinementPoint::Confined(id),
+            PathConfinementPoint::NotConfined => {
+                if parent_manifest
+                    .local_confinement_points
+                    .contains(&current_entry_id)
+                {
+                    PathConfinementPoint::Confined(current_parent_id)
+                } else {
+                    PathConfinementPoint::NotConfined
+                }
             }
-        });
+        };
 
         // Update the loop state
         current_entry_id = current_parent_id;
@@ -767,5 +773,5 @@ pub(crate) async fn retrieve_path_from_id(
 
     // Reverse the parts to get the path
     parts.reverse();
-    Ok((FsPath::from_parts(parts), confinement.into()))
+    Ok((FsPath::from_parts(parts), confinement))
 }

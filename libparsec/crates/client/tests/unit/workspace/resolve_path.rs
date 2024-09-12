@@ -19,7 +19,7 @@ async fn ok(env: &TestbedEnv) {
 
     // Resolve root
     let (manifest, confinement) = ops.store.resolve_path(&"/".parse().unwrap()).await.unwrap();
-    p_assert_eq!(confinement, PathConfinementPoint::None);
+    p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_id);
 
     // Resolve child folder
@@ -28,7 +28,7 @@ async fn ok(env: &TestbedEnv) {
         .resolve_path(&"/foo".parse().unwrap())
         .await
         .unwrap();
-    p_assert_eq!(confinement, PathConfinementPoint::None);
+    p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_foo_id);
 
     // Resolve child file
@@ -37,7 +37,7 @@ async fn ok(env: &TestbedEnv) {
         .resolve_path(&"/foo/egg.txt".parse().unwrap())
         .await
         .unwrap();
-    p_assert_eq!(confinement, PathConfinementPoint::None);
+    p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_foo_egg_txt_id);
 }
 
@@ -102,7 +102,7 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
         .resolve_path(&"/bar.txt".parse().unwrap())
         .await
         .unwrap();
-    p_assert_eq!(confinement, PathConfinementPoint::None);
+    p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_bar_txt_id);
 }
 
