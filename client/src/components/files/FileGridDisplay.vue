@@ -8,37 +8,39 @@
     @files-added="$emit('filesAdded', $event)"
     :is-reader="ownRole === WorkspaceRole.Reader"
   >
-    <div class="folders-container-grid">
-      <file-card
-        class="folder-grid-item"
-        v-for="folder in folders.getEntries()"
-        :key="folder.id"
-        :entry="folder"
-        v-show="!folder.isConfined()"
-        :show-checkbox="hasSelected()"
-        @click="$emit('click', folder, $event)"
-        @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-        @files-added="onFilesAdded"
-        :is-workspace-reader="ownRole === WorkspaceRole.Reader"
-      />
-      <file-card
-        class="folder-grid-item"
-        v-for="file in files.getEntries()"
-        :key="file.id"
-        :entry="file"
-        v-show="!file.isConfined()"
-        :show-checkbox="hasSelected()"
-        @click="$emit('click', file, $event)"
-        @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
-        @files-added="onFilesAdded"
-      />
+    <div class="scroll">
+      <div class="folders-container-grid">
+        <file-card
+          class="folder-grid-item"
+          v-for="folder in folders.getEntries()"
+          :key="folder.id"
+          :entry="folder"
+          v-show="!folder.isConfined()"
+          :show-checkbox="hasSelected()"
+          @click="$emit('click', folder, $event)"
+          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @files-added="onFilesAdded"
+          :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+        />
+        <file-card
+          class="folder-grid-item"
+          v-for="file in files.getEntries()"
+          :key="file.id"
+          :entry="file"
+          v-show="!file.isConfined()"
+          :show-checkbox="hasSelected()"
+          @click="$emit('click', file, $event)"
+          @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
+          @files-added="onFilesAdded"
+        />
 
-      <file-card-processing
-        v-for="op in operationsInProgress"
-        :key="op.data.id"
-        :data="op.data"
-        :progress="op.progress"
-      />
+        <file-card-processing
+          v-for="op in operationsInProgress"
+          :key="op.data.id"
+          :data="op.data"
+          :progress="op.progress"
+        />
+      </div>
     </div>
   </file-drop-zone>
 </template>
@@ -79,6 +81,11 @@ function hasSelected(): boolean {
 </script>
 
 <style scoped lang="scss">
+.scroll {
+  padding: 0;
+  margin-bottom: 0;
+}
+
 .folders-container-grid {
   display: flex;
   flex-wrap: wrap;

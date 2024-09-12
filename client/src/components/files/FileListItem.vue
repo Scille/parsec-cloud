@@ -6,6 +6,7 @@
     :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
     :is-reader="isWorkspaceReader"
+    class="drop-zone-item"
   >
     <ion-item
       button
@@ -153,6 +154,10 @@ async function onOptionsClick(event: Event): Promise<void> {
 </script>
 
 <style lang="scss" scoped>
+.drop-zone-item {
+  height: fit-content;
+}
+
 .file-name {
   .file-icon {
     width: 2rem;
