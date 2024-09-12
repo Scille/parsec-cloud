@@ -36,15 +36,6 @@ impl From<PathConfinementPoint> for Option<VlobID> {
     }
 }
 
-impl From<Option<VlobID>> for PathConfinementPoint {
-    fn from(val: Option<VlobID>) -> Self {
-        match val {
-            None => PathConfinementPoint::NotConfined,
-            Some(id) => PathConfinementPoint::Confined(id),
-        }
-    }
-}
-
 #[derive(Debug, thiserror::Error)]
 pub(crate) enum ResolvePathError {
     #[error("Cannot reach the server")]
