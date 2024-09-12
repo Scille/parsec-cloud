@@ -124,10 +124,16 @@ impl FolderReader {
             None => return Ok(FolderReaderStatNextOutcome::NoMoreEntries),
         };
         // Check confinement point here instead of computing it in the `stat_entry_by_id` method
-        let confinement_point = if self.manifest.local_confinement_points.contains(&child_id) {
-            PathConfinementPoint::Confined(expected_parent_id)
-        } else {
-            self.confinement_point
+        // Note that the confinement point is the top-most parent that has its child with a confined
+        let confinement_point = match self.confinement_point {
+            PathConfinementPoint::Confined(_) => self.confinement_point,
+            PathConfinementPoint::NotConfined => {
+                if self.manifest.local_confinement_points.contains(&child_id) {
+                    PathConfinementPoint::Confined(expected_parent_id)
+                } else {
+                    PathConfinementPoint::NotConfined
+                }
+            }
         };
         let child_stat = match ops
             .stat_entry_by_id_with_known_confinement_point(child_id, confinement_point)
