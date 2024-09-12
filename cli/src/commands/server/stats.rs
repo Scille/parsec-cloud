@@ -7,7 +7,7 @@ use libparsec::{DateTime, ParsecAddr};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
-    pub struct StatsServer {
+    pub struct Args {
         /// Output format (json/csv)
         #[arg(short, long, default_value_t = Format::Json)]
         format: Format,
@@ -66,13 +66,13 @@ pub async fn stats_server_req(
         .await?)
 }
 
-pub async fn stats_server(stats_organization: StatsServer) -> anyhow::Result<()> {
-    let StatsServer {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         format,
         end_date,
         token,
         addr,
-    } = stats_organization;
+    } = args;
     log::trace!("Retrieving server's stats (addr={addr}, format={format})");
 
     let rep = stats_server_req(&addr, &token, format, end_date).await?;

@@ -22,6 +22,9 @@ struct Arg {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Contains subcommands related to server operations
+    #[command(subcommand)]
+    Server(server::Group),
     /// Contains subcommands related to devices
     #[command(subcommand)]
     Device(device::Group),
@@ -46,8 +49,6 @@ enum Command {
     RunTestenv(run_testenv::RunTestenv),
     /// Get data & user statistics on organization
     StatsOrganization(stats_organization::StatsOrganization),
-    /// Get a per-organization report of server usage
-    StatsServer(stats_server::StatsServer),
     /// Get organization status
     StatusOrganization(status_organization::StatusOrganization),
     /// Create a shamir setup
@@ -67,6 +68,7 @@ async fn main() -> anyhow::Result<()> {
         Command::Device(device) => device::dispatch_command(device).await,
         Command::Invite(invitation) => invite::dispatch_command(invitation).await,
         Command::User(user) => user::dispatch_command(user).await,
+        Command::Server(server) => server::dispatch_command(server).await,
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
         Command::BootstrapOrganization(bootstrap_organization) => {
             bootstrap_organization::bootstrap_organization(bootstrap_organization).await
@@ -79,7 +81,6 @@ async fn main() -> anyhow::Result<()> {
         Command::StatsOrganization(stats_organization) => {
             stats_organization::stats_organization(stats_organization).await
         }
-        Command::StatsServer(stats_server) => stats_server::stats_server(stats_server).await,
         Command::StatusOrganization(status_organization) => {
             status_organization::status_organization(status_organization).await
         }

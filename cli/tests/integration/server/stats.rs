@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::bootstrap_cli_test;
 use crate::testenv_utils::DEFAULT_ADMINISTRATION_TOKEN;
+use crate::tests::bootstrap_cli_test;
 
 #[rstest::rstest]
 #[tokio::test]
@@ -9,7 +9,8 @@ async fn stats_server(tmp_path: TmpPath) {
     let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
-        "stats-server",
+        "server",
+        "stats",
         "--addr",
         &url.to_string(),
         "--token",
@@ -23,7 +24,8 @@ async fn csv_format(tmp_path: TmpPath) {
     let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
-        "stats-server",
+        "server",
+        "stats",
         "--addr",
         &url.to_string(),
         "--token",
@@ -40,7 +42,8 @@ async fn with_end_date(tmp_path: TmpPath) {
     let (url, _, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
     crate::assert_cmd_success!(
-        "stats-server",
+        "server",
+        "stats",
         "--addr",
         &url.to_string(),
         "--token",
