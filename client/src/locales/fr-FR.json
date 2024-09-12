@@ -231,7 +231,7 @@
             "continue": "Continuer"
         },
         "server": {
-            "saas": "Créer mon organisation sur Parsec Share",
+            "saas": "Créer mon organisation sur Parsec",
             "soon": "Bientôt disponible",
             "trial": {
                 "title": "Essayer Parsec pendant 15 jours",
