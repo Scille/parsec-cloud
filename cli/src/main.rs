@@ -22,6 +22,9 @@ struct Arg {
 
 #[derive(Subcommand)]
 enum Command {
+    /// Contains subcommands related to devices
+    #[command(subcommand)]
+    Device(device::Group),
     /// Contains subcommands related to invitation
     #[command(subcommand)]
     Invite(invite::Group),
@@ -32,16 +35,8 @@ enum Command {
     BootstrapOrganization(bootstrap_organization::BootstrapOrganization),
     /// Create new organization
     CreateOrganization(create_organization::CreateOrganization),
-    /// Export recovery device
-    ExportRecoveryDevice(export_recovery_device::ExportRecoveryDevice),
-    /// Import recovery device
-    ImportRecoveryDevice(import_recovery_device::ImportRecoveryDevice),
-    /// List all devices
-    ListDevices(list_devices::ListDevices),
     /// List users
     ListUsers(list_users::ListUsers),
-    /// Remove device
-    RemoveDevice(remove_device::RemoveDevice),
     #[cfg(feature = "testenv")]
     /// Create a temporary environment and initialize a test setup for parsec.
     /// #### WARNING: it also leaves an in-memory server running in the background.
@@ -68,6 +63,7 @@ async fn main() -> anyhow::Result<()> {
     env_logger::init();
 
     match arg.command {
+        Command::Device(device) => device::dispatch_command(device).await,
         Command::Invite(invitation) => invite::dispatch_command(invitation).await,
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
         Command::BootstrapOrganization(bootstrap_organization) => {
@@ -76,15 +72,7 @@ async fn main() -> anyhow::Result<()> {
         Command::CreateOrganization(create_organization) => {
             create_organization::create_organization(create_organization).await
         }
-        Command::ExportRecoveryDevice(export_recovery_device) => {
-            export_recovery_device::export_recovery_device(export_recovery_device).await
-        }
-        Command::ImportRecoveryDevice(import_recovery_device) => {
-            import_recovery_device::import_recovery_device(import_recovery_device).await
-        }
-        Command::ListDevices(list_devices) => list_devices::list_devices(list_devices).await,
         Command::ListUsers(list_users) => list_users::list_users(list_users).await,
-        Command::RemoveDevice(remove_device) => remove_device::remove_device(remove_device).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
         Command::StatsOrganization(stats_organization) => {

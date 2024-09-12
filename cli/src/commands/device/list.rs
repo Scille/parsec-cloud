@@ -7,11 +7,11 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir]
-    pub struct ListDevices {}
+    pub struct Args {}
 );
 
-pub async fn list_devices(list_devices: ListDevices) -> anyhow::Result<()> {
-    let config_dir = list_devices.config_dir;
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let config_dir = args.config_dir;
     log::trace!("Listing devices under {}", config_dir.display());
     let devices = list_available_devices(&config_dir).await;
     let config_dir_str = config_dir.to_string_lossy();

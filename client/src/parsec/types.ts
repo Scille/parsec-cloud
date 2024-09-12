@@ -188,12 +188,14 @@ interface OwnDeviceInfo extends DeviceInfo {
 
 interface EntryStatFolder extends ParsecEntryStatFolder {
   isFile: () => boolean;
+  isConfined: () => boolean;
   path: FsPath;
   name: EntryName;
 }
 
 interface EntryStatFile extends ParsecEntryStatFile {
   isFile: () => boolean;
+  isConfined: () => boolean;
   path: FsPath;
   name: EntryName;
 }

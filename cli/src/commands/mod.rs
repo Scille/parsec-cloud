@@ -1,12 +1,9 @@
 pub mod bootstrap_organization;
 pub mod create_organization;
-pub mod export_recovery_device;
-pub mod import_recovery_device;
+pub mod device;
 pub mod invite;
-pub mod list_devices;
 pub mod list_users;
 pub mod ls;
-pub mod remove_device;
 pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
