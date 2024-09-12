@@ -199,10 +199,10 @@ impl ParsecFileSystemInterface {
             }
 
             OpenedObj::Folder { id, .. } => {
-                // Disable confinement point computation
+                // Confinement point information is unused here so ignore it
                 let outcome = self
                     .ops
-                    .stat_entry_by_id_with_confinement_already_computed(*id, None)
+                    .stat_entry_by_id_ignore_confinement_point(*id)
                     .await;
                 match outcome {
                     Ok(stat) => Ok(parsec_entry_stat_to_winfsp_file_info(&stat)),
@@ -972,11 +972,8 @@ impl FileSystemInterface for ParsecFileSystemInterface {
 
                     let parent_stat = self
                         .ops
-                        // Disable confinement point computation
-                        .stat_entry_by_id_with_confinement_already_computed(
-                            directory_parent_id,
-                            None,
-                        )
+                        // Confinement point information is unused here so ignore it
+                        .stat_entry_by_id_ignore_confinement_point(directory_parent_id)
                         .await
                         .map_err(|err| match err {
                             WorkspaceStatEntryError::Offline => STATUS_HOST_UNREACHABLE,

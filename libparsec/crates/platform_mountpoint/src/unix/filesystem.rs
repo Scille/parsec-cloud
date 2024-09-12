@@ -141,9 +141,9 @@ async fn reply_with_lookup(
     entry_id: VlobID,
     reply: fuser::ReplyEntry,
 ) {
-    // Disable confinement point computation
+    // Confinement point information is unused here so ignore it
     match ops
-        .stat_entry_by_id_with_confinement_already_computed(entry_id, None)
+        .stat_entry_by_id_ignore_confinement_point(entry_id)
         .await
     {
         Ok(stat) => reply.entry(
