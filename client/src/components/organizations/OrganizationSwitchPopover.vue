@@ -77,6 +77,8 @@ interface ConnectedOrganization {
   handle: ConnectionHandle;
   device: AvailableDevice;
   trial: boolean;
+  isExpired: boolean;
+  isOnline: boolean;
 }
 
 const connectedOrgs: Ref<Array<ConnectedOrganization>> = ref([]);
@@ -93,6 +95,8 @@ onMounted(async () => {
       userLabel: info.device.humanHandle.label,
       device: info.device,
       trial: isTrialOrganizationDevice(info.device),
+      isExpired: info.isExpired,
+      isOnline: info.isOnline,
     };
   });
   currentOrg.value = connectedOrgs.value.find((org) => org.active);

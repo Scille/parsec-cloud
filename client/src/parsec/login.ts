@@ -41,6 +41,8 @@ import { DateTime } from 'luxon';
 export interface LoggedInDeviceInfo {
   handle: ConnectionHandle;
   device: AvailableDevice;
+  isExpired: boolean;
+  isOnline: boolean;
 }
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
@@ -59,6 +61,13 @@ export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | nul
     return info.handle;
   }
   return null;
+}
+
+export function getConnectionInfo(handle: ConnectionHandle | null = null): LoggedInDeviceInfo | undefined {
+  if (!handle) {
+    handle = getParsecHandle();
+  }
+  return loggedInDevices.find((info) => info.handle === handle);
 }
 
 interface OrganizationInfo {
@@ -126,12 +135,19 @@ export async function login(
   device: AvailableDevice,
   accessStrategy: DeviceAccessStrategy,
 ): Promise<Result<ConnectionHandle, ClientStartError>> {
-  function parsecEventCallback(distributor: EventDistributor, event: ClientEvent): void {
+  function parsecEventCallback(distributor: EventDistributor, event: ClientEvent, handle: ConnectionHandle): void {
+    const connInfo = getConnectionInfo(handle);
     switch (event.tag) {
       case ClientEventTag.Online:
+        if (connInfo) {
+          connInfo.isOnline = true;
+        }
         distributor.dispatchEvent(Events.Online);
         break;
       case ClientEventTag.Offline:
+        if (connInfo) {
+          connInfo.isOnline = false;
+        }
         distributor.dispatchEvent(Events.Offline);
         break;
       case ClientEventTag.InvitationChanged:
@@ -149,6 +165,9 @@ export async function login(
         eventDistributor.dispatchEvent(Events.ClientRevoked);
         break;
       case ClientEventTag.ExpiredOrganization:
+        if (connInfo) {
+          connInfo.isExpired = true;
+        }
         eventDistributor.dispatchEvent(Events.ExpiredOrganization);
         break;
       case ClientEventTag.WorkspaceLocallyCreated:
@@ -177,14 +196,14 @@ export async function login(
     return { ok: true, value: info.handle };
   }
 
+  const callback = (handle: ConnectionHandle, event: ClientEvent): void => {
+    parsecEventCallback(eventDistributor, event, handle);
+  };
   if (!needsMocks()) {
-    const callback = (_handle: number, event: ClientEvent): void => {
-      parsecEventCallback(eventDistributor, event);
-    };
     const clientConfig = getClientConfig();
     const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
     if (result.ok) {
-      loggedInDevices.push({ handle: result.value, device: device });
+      loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false });
     }
     return result;
   } else {
@@ -192,7 +211,8 @@ export async function login(
       accessStrategy.tag === DeviceAccessStrategyTag.Password &&
       ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
     ) {
-      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device });
+      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, isExpired: false, isOnline: true });
+      callback(DEFAULT_HANDLE, { tag: ClientEventTag.Online });
       return { ok: true, value: DEFAULT_HANDLE };
     }
     return {
