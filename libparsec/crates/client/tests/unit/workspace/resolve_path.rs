@@ -106,7 +106,7 @@ async fn ok_with_confinement(env: &TestbedEnv) {
     p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_foo_spam_egg_id);
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
@@ -132,7 +132,7 @@ async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
 
     let err = ops
         .store
-        .resolve_path(&"/foo/uknown.txt".parse().unwrap())
+        .resolve_path(&"/foo/unknown.txt".parse().unwrap())
         .await
         .unwrap_err();
     p_assert_matches!(err, ResolvePathError::EntryNotFound);
