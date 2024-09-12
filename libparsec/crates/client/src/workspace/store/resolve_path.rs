@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use libparsec_platform_async::event::EventListener;
 use libparsec_types::prelude::*;
@@ -693,6 +693,9 @@ pub(crate) async fn retrieve_path_from_id(
         })?
         .parent();
 
+    // Protect against circular paths
+    let mut seen: HashSet<VlobID> = HashSet::from_iter([current_entry_id]);
+
     // Loop until we reach the root
     while current_entry_id != current_parent_id {
         // Get the parent manifest
@@ -722,7 +725,7 @@ pub(crate) async fn retrieve_path_from_id(
         // A parent manifest should always be a folder
         let parent_manifest = match parent_manifest {
             ArcLocalChildManifest::File(_) => {
-                return Err(anyhow::anyhow!("parent id points to a file").into());
+                return Err(ResolvePathError::EntryNotFound);
             }
             ArcLocalChildManifest::Folder(manifest) => manifest,
         };
@@ -755,6 +758,11 @@ pub(crate) async fn retrieve_path_from_id(
         // Update the loop state
         current_entry_id = current_parent_id;
         current_parent_id = parent_manifest.parent;
+
+        // Protect against circular paths
+        if !seen.insert(current_entry_id) {
+            return Err(ResolvePathError::EntryNotFound);
+        }
     }
 
     // Reverse the parts to get the path

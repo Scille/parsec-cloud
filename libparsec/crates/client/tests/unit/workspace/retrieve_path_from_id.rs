@@ -21,27 +21,23 @@ async fn ok(env: &TestbedEnv) {
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     // Resolve root
-    let (manifest, confinement) = ops.store.resolve_path(&"/".parse().unwrap()).await.unwrap();
+    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
-    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_id);
+    p_assert_eq!(path, "/".parse().unwrap());
 
     // Resolve child folder
-    let (manifest, confinement) = ops
-        .store
-        .resolve_path(&"/foo".parse().unwrap())
-        .await
-        .unwrap();
+    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
-    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_foo_id);
+    p_assert_eq!(path, "/foo".parse().unwrap());
 
     // Resolve child file
-    let (manifest, confinement) = ops
+    let (path, confinement) = ops
         .store
-        .resolve_path(&"/foo/egg.txt".parse().unwrap())
+        .retrieve_path_from_id(wksp1_foo_egg_txt_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
-    p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_foo_egg_txt_id);
+    p_assert_eq!(path, "/foo/egg.txt".parse().unwrap());
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -74,42 +70,39 @@ async fn ok_with_confinement(env: &TestbedEnv) {
         .unwrap();
 
     // Resolve root
-    let (manifest, confinement) = ops.store.resolve_path(&"/".parse().unwrap()).await.unwrap();
+    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
-    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_id);
+    p_assert_eq!(path, "/".parse().unwrap());
 
     // Resolve foo folder
-    let (manifest, confinement) = ops
-        .store
-        .resolve_path(&"/foo.tmp".parse().unwrap())
-        .await
-        .unwrap();
+    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
-    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_foo_id);
+    p_assert_eq!(path, "/foo.tmp".parse().unwrap());
 
     // Resolve spam folder
-    let (manifest, confinement) = ops
+    let (path, confinement) = ops
         .store
-        .resolve_path(&"/foo.tmp/spam.tmp".parse().unwrap())
+        .retrieve_path_from_id(wksp1_foo_spam_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
-    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(m) if m.base.id == wksp1_foo_spam_id);
+    p_assert_eq!(path, "/foo.tmp/spam.tmp".parse().unwrap());
 
     // Resolve egg file
-    let (manifest, confinement) = ops
+    let (path, confinement) = ops
         .store
-        .resolve_path(&"/foo.tmp/spam.tmp/egg.txt".parse().unwrap())
+        .retrieve_path_from_id(wksp1_foo_spam_egg_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
-    p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_foo_spam_egg_id);
+    p_assert_eq!(path, "/foo.tmp/spam.tmp/egg.txt".parse().unwrap());
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
     env.customize(|builder| {
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(
@@ -132,7 +125,7 @@ async fn inconsistent_path_unknown_child_id(env: &TestbedEnv) {
 
     let err = ops
         .store
-        .resolve_path(&"/foo/uknown.txt".parse().unwrap())
+        .retrieve_path_from_id(VlobID::default())
         .await
         .unwrap_err();
     p_assert_matches!(err, ResolvePathError::EntryNotFound);
@@ -162,16 +155,16 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
-    let (manifest, confinement) = ops
+    let (path, confinement) = ops
         .store
-        .resolve_path(&"/bar.txt".parse().unwrap())
+        .retrieve_path_from_id(wksp1_bar_txt_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
-    p_assert_matches!(manifest, ArcLocalChildManifest::File(m) if m.base.id == wksp1_bar_txt_id);
+    p_assert_eq!(path, "/bar.txt".parse().unwrap());
 }
 
-#[parsec_test(testbed = "minimal_client_ready")]
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn inconsistent_path_parent_mismatch(
     #[values("other_entry", "self_referencing")] kind: &str,
     env: &TestbedEnv,
@@ -213,7 +206,7 @@ async fn inconsistent_path_parent_mismatch(
 
     let err = ops
         .store
-        .resolve_path(&"/foo".parse().unwrap())
+        .retrieve_path_from_id(wksp1_foo_id)
         .await
         .unwrap_err();
 
@@ -230,16 +223,20 @@ async fn inconsistent_path_parent_mismatch(
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
-async fn inconsistent_path_recursive(#[values("root", "child")] kind: &str, env: &TestbedEnv) {
+async fn inconsistent_path_recursive_by_children(
+    #[values("root", "child")] kind: &str,
+    env: &TestbedEnv,
+) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
     let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
     let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
+    let (recursive_target_id, expected_path) = match kind {
+        "root" => (wksp1_id, "/".parse().unwrap()),
+        "child" => (wksp1_foo_id, "/foo".parse().unwrap()),
+        unknown => panic!("Unknown kind: {}", unknown),
+    };
+
     env.customize(|builder| {
-        let recursive_target_id = match kind {
-            "root" => wksp1_id,
-            "child" => wksp1_foo_id,
-            unknown => panic!("Unknown kind: {}", unknown),
-        };
         builder
             .workspace_data_storage_local_folder_manifest_create_or_update(
                 "alice@dev1",
@@ -259,10 +256,88 @@ async fn inconsistent_path_recursive(#[values("root", "child")] kind: &str, env:
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
+    let (path, confinement) = ops
+        .store
+        .retrieve_path_from_id(recursive_target_id)
+        .await
+        .unwrap();
+    p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
+    p_assert_eq!(path, expected_path);
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn inconsistent_path_recursive_by_parent(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
+
+    env.customize(|builder| {
+        builder
+            .workspace_data_storage_local_folder_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                None,
+            )
+            .customize(|x| {
+                let manifest = Arc::make_mut(&mut x.local_manifest);
+                manifest.parent = wksp1_foo_spam_id;
+            });
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
     let err = ops
         .store
-        .resolve_path(&"/foo/spam/recursive".parse().unwrap())
+        .retrieve_path_from_id(wksp1_foo_spam_id)
         .await
         .unwrap_err();
-    p_assert_matches!(err, ResolvePathError::EntryNotFound);
+    p_assert_matches!(err, ResolvePathError::EntryNotFound)
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn inconsistent_path_recursive_by_parent_and_children(env: &TestbedEnv) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+    let wksp1_foo_spam_id: VlobID = *env.template.get_stuff("wksp1_foo_spam_id");
+
+    env.customize(|builder| {
+        builder
+            .workspace_data_storage_local_folder_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_id,
+                None,
+            )
+            .customize(|x| {
+                let manifest = Arc::make_mut(&mut x.local_manifest);
+                manifest.parent = wksp1_foo_spam_id;
+            });
+        builder
+            .workspace_data_storage_local_folder_manifest_create_or_update(
+                "alice@dev1",
+                wksp1_id,
+                wksp1_foo_spam_id,
+                None,
+            )
+            .customize(|x| {
+                let manifest = Arc::make_mut(&mut x.local_manifest);
+                manifest
+                    .children
+                    .insert("recursive".parse().unwrap(), wksp1_foo_id);
+            });
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let err = ops
+        .store
+        .retrieve_path_from_id(wksp1_foo_spam_id)
+        .await
+        .unwrap_err();
+    p_assert_matches!(err, ResolvePathError::EntryNotFound)
 }
