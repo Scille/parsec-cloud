@@ -743,18 +743,13 @@ pub(crate) async fn retrieve_path_from_id(
 
         // Update the confinement point result
         // Give priority to the top most confinement point
-        confinement = match confinement {
-            PathConfinementPoint::Confined(id) => PathConfinementPoint::Confined(id),
-            PathConfinementPoint::NotConfined => {
-                if parent_manifest
-                    .local_confinement_points
-                    .contains(&current_entry_id)
-                {
-                    PathConfinementPoint::Confined(current_parent_id)
-                } else {
-                    PathConfinementPoint::NotConfined
-                }
-            }
+        confinement = if parent_manifest
+            .local_confinement_points
+            .contains(&current_entry_id)
+        {
+            PathConfinementPoint::Confined(current_parent_id)
+        } else {
+            confinement
         };
 
         // Update the loop state
