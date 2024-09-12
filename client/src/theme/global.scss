@@ -80,21 +80,21 @@ ion-title {
   position: relative;
   z-index: 3;
 
-  .drop-zone-active {
-    &::before {
-      width: 100%;
-      height: 100%;
-      top: 0rem;
-      left: 0rem;
-      background: var(--parsec-color-light-outline);
-      outline-offset: -1.5px;
-      outline: 1.5px dashed var(--parsec-color-light-primary-400);
-    }
+  .drop-active {
+    z-index: 2;
+    width: calc(100% - 2px);
+    left: 0;
+    top: 0;
+    height: 100%;
+    outline-offset: -1.5px;
+    outline: 1.5px dashed var(--parsec-color-light-primary-400) !important;
+    background: var(--parsec-color-light-outline);
   }
 }
 
-.drop-zone .folders-container-grid .drop-zone-active::before {
-  border-radius: var(--parsec-radius-12);
+.drop-zone .folders-container-grid .drop-active {
+  border-radius: var(--parsec-radius-12) !important;
+  width: 100%;
 }
 
 // no search result matching

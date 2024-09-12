@@ -9,6 +9,10 @@
     @dragleave.prevent="onDragLeave()"
   >
     <slot />
+    <div
+      class="drop-zone-dashed"
+      :class="isActive ? 'drop-active' : ''"
+    />
 
     <div
       v-show="isActive && props.showDropMessage"
@@ -72,7 +76,6 @@ onUnmounted(() => {
 });
 
 async function onDrop(event: DragEvent): Promise<void> {
-  event.stopImmediatePropagation();
   if (props.isReader) {
     await informationManager.present(
       new Information({
@@ -86,6 +89,7 @@ async function onDrop(event: DragEvent): Promise<void> {
   if (props.disabled) {
     return;
   }
+  event.stopPropagation();
   dragEnterCount.value = 0;
   const imports = await getFilesFromDrop(event, props.currentPath);
   if (imports.length) {
@@ -119,22 +123,21 @@ function reset(): void {
 .drop-zone {
   width: 100%;
   height: 100%;
-}
-
-.drop-zone-active {
   position: relative;
 
-  &::before {
-    content: '';
-    width: calc(100% + 2rem);
-    height: calc(100% - 2.5rem);
-    border-radius: var(--parsec-radius-6);
-    outline: 2px dashed var(--parsec-color-light-primary-400);
-    outline-offset: -2px;
+  &-dashed {
+    pointer-events: none;
     position: absolute;
+    left: -0.5rem;
+    right: -0.5rem;
     top: 1rem;
-    left: -1rem;
-    z-index: 2;
+    bottom: 1.5rem;
+    z-index: 1100;
+
+    &.drop-active {
+      outline: 2px dashed var(--parsec-color-light-primary-400);
+      border-radius: var(--parsec-radius-8);
+    }
   }
 }
 
@@ -145,7 +148,8 @@ function reset(): void {
   transform: translate(-50%, -50%);
   width: fit-content;
   background-color: var(--parsec-color-light-primary-50);
-  border-radius: var(--parsec-radius-6);
+  border-radius: var(--parsec-radius-8);
+  box-shadow: var(--parsec-shadow-strong);
   padding: 0.75rem;
   display: flex;
   align-items: center;
