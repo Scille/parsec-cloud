@@ -128,7 +128,7 @@ async fn stat_entry_by_id_helper(
     expected_confinement_point: Option<VlobID>,
 ) -> (EntryStat, Option<VlobID>) {
     match kind {
-        "vanilla" => (
+        "find_confinement_point" => (
             ops.stat_entry_by_id(entry_id).await.unwrap(),
             expected_confinement_point,
         ),
@@ -158,7 +158,12 @@ async fn stat_entry_by_id_helper(
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn stat_entry_by_id(
     #[values(true, false)] local_cache: bool,
-    #[values("vanilla", "ignore_confinement_point", "known_confinement_point")] kind: &'_ str,
+    #[values(
+        "find_confinement_point",
+        "ignore_confinement_point",
+        "known_confinement_point"
+    )]
+    kind: &'_ str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
@@ -331,7 +336,12 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn stat_entry_on_confined_entry(
     #[values(true, false)] local_cache: bool,
-    #[values("vanilla", "ignore_confinement_point", "known_confinement_point")] kind: &'_ str,
+    #[values(
+        "find_confinement_point",
+        "ignore_confinement_point",
+        "known_confinement_point"
+    )]
+    kind: &'_ str,
     env: &TestbedEnv,
 ) {
     let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");

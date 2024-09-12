@@ -291,7 +291,7 @@ fn cache_only_path_resolution(
             return CacheOnlyPathResolutionOutcome::EntryNotFound;
         }
 
-        // Top-most confinement point shadows child ones if any
+        // Root-most confinement point shadows child ones if any
         let confinement = match parent_confinement {
             confinement @ PathConfinementPoint::Confined(_) => confinement,
             PathConfinementPoint::NotConfined => {
@@ -742,7 +742,7 @@ pub(crate) async fn retrieve_path_from_id(
         parts.push(child_name.clone());
 
         // Update the confinement point result
-        // Give priority to the top most confinement point
+        // Give priority to the root-most confinement point
         confinement = if parent_manifest
             .local_confinement_points
             .contains(&current_entry_id)
