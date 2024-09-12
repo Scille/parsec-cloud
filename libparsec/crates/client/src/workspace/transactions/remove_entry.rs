@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::ConnectionError;
 use libparsec_types::prelude::*;
@@ -112,9 +112,9 @@ pub(crate) async fn remove_entry(
     let parent_id = parent_manifest.base.id;
     let mut_parent_manifest = Arc::make_mut(&mut parent_manifest);
 
-    let child_id = match mut_parent_manifest.children.remove(&child_name) {
+    let child_id = match mut_parent_manifest.children.get(&child_name) {
         None => return Err(WorkspaceRemoveEntryError::EntryNotFound),
-        Some(child_id) => child_id,
+        Some(&child_id) => child_id,
     };
 
     let child = ops
@@ -208,8 +208,11 @@ pub(crate) async fn remove_entry(
         ) => return Err(WorkspaceRemoveEntryError::EntryIsFile),
     }
 
-    mut_parent_manifest.updated = ops.device.time_provider.now();
-    mut_parent_manifest.need_sync = true;
+    mut_parent_manifest.evolve_children_and_mark_updated(
+        HashMap::from([(child_name, None)]),
+        &ops.config.prevent_sync_pattern,
+        ops.device.time_provider.now(),
+    );
 
     parent_updater
         .update_folder_manifest(parent_manifest, None)
