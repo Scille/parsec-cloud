@@ -28,6 +28,7 @@ mod outbound_sync_root;
 mod read_folder;
 mod remove_entry;
 mod resolve_path;
+mod retrieve_path_from_id;
 mod stat_entry;
 mod utils;
 
