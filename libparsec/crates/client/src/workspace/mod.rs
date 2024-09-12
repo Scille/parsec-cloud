@@ -314,13 +314,24 @@ impl WorkspaceOps {
         transactions::stat_entry_by_id(self, entry_id, None).await
     }
 
-    pub async fn stat_entry_by_id_with_confinement_already_computed(
+    pub(crate) async fn stat_entry_by_id_with_known_confinement_point(
         &self,
         entry_id: VlobID,
-        precomputed_confinement_point: Option<VlobID>,
+        precomputed_confinement_point: store::PathConfinementPoint,
     ) -> Result<EntryStat, WorkspaceStatEntryError> {
-        transactions::stat_entry_by_id(self, entry_id, Some(precomputed_confinement_point.into()))
-            .await
+        transactions::stat_entry_by_id(self, entry_id, Some(precomputed_confinement_point)).await
+    }
+
+    pub async fn stat_entry_by_id_ignore_confinement_point(
+        &self,
+        entry_id: VlobID,
+    ) -> Result<EntryStat, WorkspaceStatEntryError> {
+        transactions::stat_entry_by_id(
+            self,
+            entry_id,
+            Some(store::PathConfinementPoint::NotConfined),
+        )
+        .await
     }
 
     pub async fn open_folder_reader(

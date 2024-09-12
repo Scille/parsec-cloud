@@ -130,7 +130,7 @@ impl FolderReader {
             self.confinement_point
         };
         let child_stat = match ops
-            .stat_entry_by_id_with_confinement_already_computed(child_id, confinement_point.into())
+            .stat_entry_by_id_with_known_confinement_point(child_id, confinement_point)
             .await
         {
             Ok(stat) => stat,
