@@ -125,9 +125,13 @@ async fn stat_entry_by_id_helper(
     ops: &WorkspaceOps,
     entry_id: VlobID,
     kind: &'_ str,
+    expected_confinement_point: Option<VlobID>,
 ) -> (EntryStat, Option<VlobID>) {
     match kind {
-        "vanilla" => (ops.stat_entry_by_id(entry_id).await.unwrap(), None),
+        "vanilla" => (
+            ops.stat_entry_by_id(entry_id).await.unwrap(),
+            expected_confinement_point,
+        ),
         "ignore_confinement_point" => (
             ops.stat_entry_by_id_ignore_confinement_point(entry_id)
                 .await
@@ -185,7 +189,8 @@ async fn stat_entry_by_id(
 
     // Workspace
 
-    let (info, expected_confinement_point) = stat_entry_by_id_helper(&ops, wksp1_id, kind).await;
+    let (info, expected_confinement_point) =
+        stat_entry_by_id_helper(&ops, wksp1_id, kind, None).await;
     p_assert_matches!(
         info,
         EntryStat::Folder{
@@ -214,7 +219,7 @@ async fn stat_entry_by_id(
     // Folder
 
     let (info, expected_confinement_point) =
-        stat_entry_by_id_helper(&ops, wksp1_foo_id, kind).await;
+        stat_entry_by_id_helper(&ops, wksp1_foo_id, kind, None).await;
     p_assert_matches!(
         info,
         EntryStat::Folder{
@@ -242,7 +247,7 @@ async fn stat_entry_by_id(
 
     // File
     let (info, expected_confinement_point) =
-        stat_entry_by_id_helper(&ops, wksp1_bar_txt_id, kind).await;
+        stat_entry_by_id_helper(&ops, wksp1_bar_txt_id, kind, None).await;
     p_assert_matches!(
         info,
         EntryStat::File{
@@ -315,6 +320,215 @@ async fn stat_entry_on_speculative_workspace(env: &TestbedEnv) {
             p_assert_eq!(parent, wksp1_id);
             p_assert_eq!(created, now);
             p_assert_eq!(updated, now);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+}
+
+#[parsec_test(testbed = "minimal_client_ready", with_server)]
+async fn stat_entry_on_confined_entry(
+    #[values(true, false)] local_cache: bool,
+    #[values("vanilla", "ignore_confinement_point", "known_confinement_point")] kind: &'_ str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_foo_id: VlobID = *env.template.get_stuff("wksp1_foo_id");
+
+    if !local_cache {
+        env.customize(|builder| {
+            builder.filter_client_storage_events(|event| match event {
+                // Missing workspace manifest is replaced by a speculative one (so no
+                // server fetch will occur), that's not what we want here !
+                TestbedEvent::WorkspaceDataStorageFetchFolderVlob(e)
+                    if e.local_manifest.base.is_root() =>
+                {
+                    true
+                }
+                TestbedEvent::WorkspaceDataStorageFetchFileVlob(_)
+                | TestbedEvent::WorkspaceDataStorageFetchFolderVlob(_)
+                | TestbedEvent::WorkspaceCacheStorageFetchBlock(_) => false,
+                _ => true,
+            });
+        })
+        .await;
+    }
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    // Confined from a non temporary folder
+    let parent_id = wksp1_foo_id;
+    let child_id = ops
+        .create_file("/foo/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+
+    let info = ops
+        .stat_entry(&"/foo/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, Some(wksp1_foo_id));
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+
+    let (info, expected_confinement_point) =
+        stat_entry_by_id_helper(&ops, child_id, kind, Some(wksp1_foo_id)).await;
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, expected_confinement_point);
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+
+    // Confined from a temporary folder in root
+    let parent_id = ops
+        .create_folder("/foo.tmp".parse().unwrap())
+        .await
+        .unwrap();
+    let child_id = ops
+        .create_file("/foo.tmp/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+
+    let info = ops
+        .stat_entry(&"/foo.tmp/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, Some(wksp1_id));
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+
+    let (info, expected_confinement_point) =
+        stat_entry_by_id_helper(&ops, child_id, kind, Some(wksp1_id)).await;
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, expected_confinement_point);
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+
+    // Confined from a temporary folder in a non-root folder
+    let parent_id = ops
+        .create_folder("/foo/foo.tmp".parse().unwrap())
+        .await
+        .unwrap();
+    let child_id = ops
+        .create_file("/foo/foo.tmp/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+
+    let info = ops
+        .stat_entry(&"/foo/foo.tmp/bar.tmp".parse().unwrap())
+        .await
+        .unwrap();
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, Some(wksp1_foo_id));
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
+            p_assert_eq!(base_version, 0);
+            p_assert_eq!(is_placeholder, true);
+            p_assert_eq!(need_sync, true);
+            true
+        }
+    );
+
+    let (info, expected_confinement_point) =
+        stat_entry_by_id_helper(&ops, child_id, kind, Some(wksp1_foo_id)).await;
+    p_assert_matches!(
+        info,
+        EntryStat::File{
+            confinement_point,
+            id,
+            parent,
+            base_version,
+            is_placeholder,
+            need_sync,
+            ..
+        }
+        if {
+            p_assert_eq!(confinement_point, expected_confinement_point);
+            p_assert_eq!(id, child_id);
+            p_assert_eq!(parent, parent_id);
             p_assert_eq!(base_version, 0);
             p_assert_eq!(is_placeholder, true);
             p_assert_eq!(need_sync, true);
