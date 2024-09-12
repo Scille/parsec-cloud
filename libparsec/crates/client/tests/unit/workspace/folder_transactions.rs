@@ -390,7 +390,7 @@ async fn remove_confined_entry(
         confined_child_id,
         ExpectedValues {
             need_sync: true,
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     )
     .await;
@@ -409,9 +409,7 @@ async fn remove_confined_entry(
         &stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
 
@@ -701,8 +699,6 @@ async fn rename_a_entry_to_be_confined(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
@@ -732,9 +728,7 @@ async fn rename_a_entry_to_be_confined(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
 
@@ -840,16 +834,14 @@ async fn rename_a_confined_entry_to_not_be_confined(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
 
     // Check that parent is marked as needing sync
     check_need_sync_parent(&ops, parent_id, true).await;
 
-    // Rename the file to be confined
+    // Rename the file to a non-confined name
     rename_same_parent(
         rename_flavor,
         ops.clone(),
@@ -874,8 +866,6 @@ async fn rename_a_confined_entry_to_not_be_confined(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
@@ -976,8 +966,6 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
@@ -1008,9 +996,7 @@ async fn rename_a_entry_to_be_confined_with_different_parent(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(different_parent_id),
         },
     );
 
@@ -1125,16 +1111,14 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
-            confinement_point: None,
+            confinement_point: Some(parent_id),
         },
     );
 
     // Check that parent is marked as needing sync
     check_need_sync_parent(&ops, parent_id, true).await;
 
-    // Rename the file to be confined
+    // Rename the file to a non-confined name
     ops.move_entry(
         base_path.join(confined_entry_name.clone()),
         different_parent_path.join(not_confined_entry_name.clone()),
@@ -1157,8 +1141,6 @@ async fn rename_a_confined_entry_to_not_be_confined_with_different_parent(
         stat,
         ExpectedValues {
             need_sync: true,
-            // TODO: confinement_point should be Some(parent_id)
-            // See: https://github.com/Scille/parsec-cloud/issues/8276
             confinement_point: None,
         },
     );
