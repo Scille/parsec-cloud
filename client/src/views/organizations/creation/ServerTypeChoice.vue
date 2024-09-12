@@ -14,15 +14,22 @@
         @click="serverChoice = ServerType.Saas"
         :class="{ selected: serverChoice === ServerType.Saas }"
       >
-        <!-- <ms-image
-          :image="ParsecMockup"
-          class="server-choice-item__image"
-        /> -->
-        <!-- should be replaced with megashark-lib -->
         <div class="server-choice-item__image">
           <img
-            src="@/assets/images/mockup.svg"
-            alt="trial"
+            src="@/assets/images/background/background-shapes-small.svg"
+            id="top-left"
+          />
+          <img
+            src="@/assets/images/background/background-shapes-small.svg"
+            id="top-right"
+          />
+          <img
+            src="@/assets/images/background/background-shapes-small.svg"
+            id="center"
+          />
+          <img
+            src="@/assets/images/app-icon-parsec.svg"
+            class="icon"
           />
         </div>
         <ion-text class="server-choice-item__label subtitles-normal">
@@ -36,14 +43,9 @@
         @click="serverChoice = ServerType.Trial"
         :class="{ selected: serverChoice === ServerType.Trial }"
       >
-        <!-- <ms-image
-          :image="Trial"
-          class="server-choice-item__image"
-        /> -->
-        <!-- should be replaced with megashark-lib -->
         <div class="server-choice-item__image">
           <img
-            src="@/assets/images/trial.svg"
+            :src="getImagePath()"
             alt="trial"
           />
         </div>
@@ -75,6 +77,9 @@
 import { IonPage, IonButton, IonText, IonFooter } from '@ionic/vue';
 import { ref } from 'vue';
 import { ServerType } from '@/services/parsecServers';
+import { I18n } from 'megashark-lib';
+import TrialUS from '@/assets/images/trial-US.svg';
+import TrialFR from '@/assets/images/trial-FR.svg';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
 const emits = defineEmits<{
@@ -89,6 +94,16 @@ async function onChoiceMade(): Promise<void> {
     return;
   }
   emits('serverChosen', serverChoice.value);
+}
+
+function getImagePath(): string {
+  const locale = I18n.getLocale();
+  switch (locale) {
+    case 'fr-FR':
+      return TrialFR;
+    default:
+      return TrialUS;
+  }
 }
 </script>
 
@@ -131,6 +146,46 @@ async function onChoiceMade(): Promise<void> {
       display: flex;
       justify-content: center;
       align-items: center;
+      position: relative;
+      overflow: hidden;
+
+      #top-left {
+        position: absolute;
+        top: -4rem;
+        left: -7rem;
+        rotate: 30deg;
+        z-index: 2;
+        transition:
+          left 0.3s,
+          top 0.3s;
+      }
+
+      #top-right {
+        position: absolute;
+        top: -5rem;
+        right: -6rem;
+        rotate: -30deg;
+        z-index: 2;
+        transition:
+          right 0.3s,
+          top 0.3s;
+      }
+
+      #center {
+        position: absolute;
+        bottom: -6.5rem;
+        left: 2rem;
+        rotate: 30deg;
+        z-index: 2;
+        transition:
+          left 0.3s,
+          bottom 0.3s;
+      }
+
+      .icon {
+        position: relative;
+        z-index: 3;
+      }
     }
 
     &__label {
@@ -151,6 +206,21 @@ async function onChoiceMade(): Promise<void> {
       .server-choice-item__image {
         outline: 3px solid var(--parsec-color-light-primary-100);
         color: var(--parsec-color-light-secondary-grey);
+
+        #top-left {
+          top: -3rem;
+          left: -5.5rem;
+        }
+
+        #top-right {
+          top: -3rem;
+          right: -5rem;
+        }
+
+        #center {
+          bottom: -4.5rem;
+          left: 1rem;
+        }
       }
     }
 
@@ -158,6 +228,21 @@ async function onChoiceMade(): Promise<void> {
       .server-choice-item__image {
         outline: 3px solid var(--parsec-color-light-primary-300);
         background-color: var(--parsec-color-light-primary-30);
+
+        #top-left {
+          top: -3rem;
+          left: -5.5rem;
+        }
+
+        #top-right {
+          top: -3rem;
+          right: -5rem;
+        }
+
+        #center {
+          bottom: -4.5rem;
+          left: 1rem;
+        }
       }
       .server-choice-item__label {
         color: var(--parsec-color-light-primary-600);

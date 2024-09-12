@@ -18,7 +18,7 @@ msTest('Opens the create organization modal', async ({ home }) => {
   await expect(modal.locator('.modal-header-title__text')).toHaveText('Create an organization');
   await expect(modal.locator('.modal-header__text')).toHaveText('Choose the option that best suits your needs:');
   await expect(modal.locator('.server-choice-item').locator('.server-choice-item__label')).toHaveText([
-    'Create my organization on Parsec Share',
+    'Create my organization on Parsec',
     'Try Parsec for 15 days (Your organization and associated data will be deleted at the end of the trial period)',
   ]);
   await expect(modal.locator('.server-modal-footer').locator('ion-button').nth(0)).toHaveText('Use a different Parsec server');
