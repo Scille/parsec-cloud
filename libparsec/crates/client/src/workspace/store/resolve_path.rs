@@ -659,90 +659,54 @@ pub(crate) async fn resolve_path_for_reparenting(
     }
 }
 
-/// Retrieve the path and the confinement point of a given entry ID.
-/// Both information are acquired without locking, so keep in mind that
-/// they could get outdated by the time you use them. This is fine however,
-/// since this is typically used for providing information to the user
-/// (e.g. for file and folder stats)
-pub(crate) async fn retrieve_path_from_id(
-    store: &super::WorkspaceStore,
+enum CacheOnlyRetrievalOutcome {
+    Done(FsPath, PathConfinementPoint),
+    EntryNotFound,
+    NeedPopulateCache(VlobID),
+}
+
+fn cache_only_retrieve_path_from_id(
+    cache: &mut super::CurrentViewCache,
     entry_id: VlobID,
-) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+) -> CacheOnlyRetrievalOutcome {
     // Initialize the results
     let mut parts = Vec::new();
     let mut confinement = PathConfinementPoint::NotConfined;
 
+    // Get the root ID
+    let root_entry_id = cache.manifests.root_manifest().base.id;
+
     // Initialize the loop state
     let mut current_entry_id = entry_id;
-    let mut current_parent_id = store
-        .get_manifest(entry_id)
-        .await
-        .map_err(|err| match err {
-            super::GetManifestError::Offline => ResolvePathError::Offline,
-            super::GetManifestError::Stopped => ResolvePathError::Stopped,
-            super::GetManifestError::EntryNotFound => ResolvePathError::EntryNotFound,
-            super::GetManifestError::NoRealmAccess => ResolvePathError::NoRealmAccess,
-            super::GetManifestError::InvalidKeysBundle(err) => {
-                ResolvePathError::InvalidKeysBundle(err)
-            }
-            super::GetManifestError::InvalidCertificate(err) => {
-                ResolvePathError::InvalidCertificate(err)
-            }
-            super::GetManifestError::InvalidManifest(err) => ResolvePathError::InvalidManifest(err),
-            super::GetManifestError::Internal(err) => err.context("cannot retrieve path").into(),
-        })?
-        .parent();
-
-    // Protect against circular paths
+    let mut current_parent_id = match cache.manifests.get(&current_entry_id) {
+        Some(manifest) => manifest.parent(),
+        None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(current_entry_id),
+    };
     let mut seen: HashSet<VlobID> = HashSet::from_iter([current_entry_id]);
 
     // Loop until we reach the root
-    while current_entry_id != current_parent_id {
+    while current_entry_id != root_entry_id {
         // Get the parent manifest
-        let parent_manifest =
-            store
-                .get_manifest(current_parent_id)
-                .await
-                .map_err(|err| match err {
-                    super::GetManifestError::Offline => ResolvePathError::Offline,
-                    super::GetManifestError::Stopped => ResolvePathError::Stopped,
-                    super::GetManifestError::EntryNotFound => ResolvePathError::EntryNotFound,
-                    super::GetManifestError::NoRealmAccess => ResolvePathError::NoRealmAccess,
-                    super::GetManifestError::InvalidKeysBundle(err) => {
-                        ResolvePathError::InvalidKeysBundle(err)
-                    }
-                    super::GetManifestError::InvalidCertificate(err) => {
-                        ResolvePathError::InvalidCertificate(err)
-                    }
-                    super::GetManifestError::InvalidManifest(err) => {
-                        ResolvePathError::InvalidManifest(err)
-                    }
-                    super::GetManifestError::Internal(err) => {
-                        err.context("cannot retrieve path").into()
-                    }
-                })?;
-
-        // A parent manifest should always be a folder
-        let parent_manifest = match parent_manifest {
-            ArcLocalChildManifest::File(_) => {
-                return Err(ResolvePathError::EntryNotFound);
+        let parent_manifest = match cache.manifests.get(&current_parent_id) {
+            Some(ArcLocalChildManifest::Folder(manifest)) => manifest,
+            Some(ArcLocalChildManifest::File(_)) => {
+                return CacheOnlyRetrievalOutcome::EntryNotFound
             }
-            ArcLocalChildManifest::Folder(manifest) => manifest,
+            None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(current_parent_id),
         };
 
         // Update the path result
-        let child_name = parent_manifest
-            .children
-            .iter()
-            .find_map(|(name, id)| {
-                if *id == current_entry_id {
-                    Some(name)
-                } else {
-                    None
-                }
-            })
-            .ok_or(ResolvePathError::EntryNotFound)?;
-        parts.push(child_name.clone());
+        let child_name = parent_manifest.children.iter().find_map(|(name, id)| {
+            if *id == current_entry_id {
+                Some(name)
+            } else {
+                None
+            }
+        });
+        match child_name {
+            None => return CacheOnlyRetrievalOutcome::EntryNotFound,
+            Some(child_name) => parts.push(child_name.clone()),
+        }
 
         // Update the confinement point result
         // Give priority to the root-most confinement point
@@ -761,11 +725,66 @@ pub(crate) async fn retrieve_path_from_id(
 
         // Protect against circular paths
         if !seen.insert(current_entry_id) {
-            return Err(ResolvePathError::EntryNotFound);
+            return CacheOnlyRetrievalOutcome::EntryNotFound;
         }
     }
 
     // Reverse the parts to get the path
     parts.reverse();
-    Ok((FsPath::from_parts(parts), confinement))
+    CacheOnlyRetrievalOutcome::Done(FsPath::from_parts(parts), confinement)
+}
+
+/// Retrieve the path and the confinement point of a given entry ID.
+pub(crate) async fn retrieve_path_from_id(
+    store: &super::WorkspaceStore,
+    entry_id: VlobID,
+) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+    loop {
+        // Most of the time we should have each entry in the path already in the cache,
+        // so we want to lock the cache once and only release it in the unlikely case
+        // we need to fetch from the local storage or server.
+        let cache_only_outcome = {
+            let mut cache = store.current_view_cache.lock().expect("Mutex is poisoned");
+            cache_only_retrieve_path_from_id(&mut cache, entry_id)
+        };
+        match cache_only_outcome {
+            CacheOnlyRetrievalOutcome::Done(path, confinement_point) => {
+                return Ok((path, confinement_point))
+            }
+            CacheOnlyRetrievalOutcome::EntryNotFound => {
+                return Err(ResolvePathError::EntryNotFound)
+            }
+            // We got a cache miss
+            CacheOnlyRetrievalOutcome::NeedPopulateCache(cache_miss_entry_id) => {
+                populate_cache_from_local_storage_or_server(store, cache_miss_entry_id)
+                    .await
+                    .map_err(|err| match err {
+                        PopulateCacheFromLocalStorageOrServerError::Offline => {
+                            ResolvePathError::Offline
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::Stopped => {
+                            ResolvePathError::Stopped
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::EntryNotFound => {
+                            ResolvePathError::EntryNotFound
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::NoRealmAccess => {
+                            ResolvePathError::NoRealmAccess
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::InvalidKeysBundle(err) => {
+                            ResolvePathError::InvalidKeysBundle(err)
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::InvalidCertificate(err) => {
+                            ResolvePathError::InvalidCertificate(err)
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::InvalidManifest(err) => {
+                            ResolvePathError::InvalidManifest(err)
+                        }
+                        PopulateCacheFromLocalStorageOrServerError::Internal(err) => {
+                            err.context("cannot fetch manifest").into()
+                        }
+                    })?;
+            }
+        }
+    }
 }
