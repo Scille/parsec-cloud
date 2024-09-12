@@ -6,9 +6,9 @@ pub mod ls;
 pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
+pub mod server;
 pub mod shamir_setup;
 pub mod stats_organization;
-pub mod stats_server;
 pub mod status_organization;
 pub mod user;
 pub mod workspace;
