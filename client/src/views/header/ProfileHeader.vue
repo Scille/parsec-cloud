@@ -35,7 +35,7 @@
 
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserProfile, logout as parsecLogout } from '@/parsec';
+import { UserProfile, logout as parsecLogout, getConnectionInfo } from '@/parsec';
 import { Routes, getConnectionHandle, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
@@ -50,7 +50,7 @@ import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
 import { Env, APP_VERSION } from '@/services/environment';
 
-const isOnline = ref(true);
+const isOnline = ref(false);
 const isPopoverOpen = ref(false);
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
@@ -79,6 +79,11 @@ onMounted(async () => {
       }
     },
   );
+
+  const connInfo = getConnectionInfo();
+  if (connInfo) {
+    isOnline.value = connInfo.isOnline;
+  }
 
   window.electronAPI.getUpdateAvailability();
 });

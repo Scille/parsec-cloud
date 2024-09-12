@@ -99,10 +99,9 @@
           </div>
 
           <!-- frozen organization -->
-          <!-- a isFrozen condition should be added -->
           <div
             class="freeze-card"
-            v-if="orgInfo?.frozen"
+            v-if="isExpired"
           >
             <ion-icon
               class="freeze-card__icon"
@@ -345,8 +344,7 @@ import {
   isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
-  OrganizationInfo,
-  getOrganizationInfo,
+  getConnectionInfo,
 } from '@/parsec';
 import {
   Routes,
@@ -416,7 +414,7 @@ const favorites: Ref<WorkspaceID[]> = ref([]);
 const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
-const orgInfo: Ref<OrganizationInfo | null> = ref(null);
+const isExpired = ref(false);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -472,13 +470,20 @@ async function loadAll(): Promise<void> {
 
 onMounted(async () => {
   eventDistributorCbId = await eventDistributor.registerCallback(
-    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated,
+    Events.WorkspaceCreated | Events.WorkspaceFavorite | Events.WorkspaceUpdated | Events.ExpiredOrganization,
     async (event: Events, _data?: EventData) => {
       if (event === Events.WorkspaceCreated || event === Events.WorkspaceFavorite || event === Events.WorkspaceUpdated) {
         await loadAll();
+      } else if (event === Events.ExpiredOrganization) {
+        isExpired.value = true;
       }
     },
   );
+
+  const connInfo = getConnectionInfo();
+  if (connInfo) {
+    isExpired.value = connInfo.isExpired;
+  }
 
   setToastOffset(computedWidth.value);
   await loadAll();
@@ -497,12 +502,6 @@ onMounted(async () => {
     if (isTrialOrg.value) {
       expirationDuration.value = getDurationBeforeExpiration(currentDevice.value.createdOn);
     }
-  }
-
-  const result = await getOrganizationInfo();
-
-  if (result.ok) {
-    orgInfo.value = result.value;
   }
 });
 
