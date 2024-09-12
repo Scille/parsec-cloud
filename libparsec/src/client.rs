@@ -65,9 +65,11 @@ impl From<libparsec_platform_device_loader::LoadDeviceError> for ClientStartErro
 pub async fn client_start(
     config: ClientConfig,
 
-    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<dyn Fn(ClientEvent) + Send + Sync>,
+    #[cfg(not(target_arch = "wasm32"))] on_event_callback: Arc<
+        dyn Fn(Handle, ClientEvent) + Send + Sync,
+    >,
     // On web we run on the JS runtime which is mono-threaded, hence everything is !Send
-    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(ClientEvent)>,
+    #[cfg(target_arch = "wasm32")] on_event_callback: Arc<dyn Fn(Handle, ClientEvent)>,
 
     access: DeviceAccessStrategy,
 ) -> Result<Handle, ClientStartError> {
@@ -120,7 +122,7 @@ pub async fn client_start(
 
     // 3) Actually start the client
 
-    let on_event = OnEventCallbackPlugged::new(on_event_callback);
+    let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback);
     let client = libparsec_client::Client::start(config, on_event.event_bus.clone(), device)
         .await
         .map_err(ClientStartError::Internal)?;

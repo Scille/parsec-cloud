@@ -2417,7 +2417,7 @@ export type WorkspaceWatchError =
 export interface LibParsecPlugin {
     bootstrapOrganization(
         config: ClientConfig,
-        on_event_callback: (event: ClientEvent) => void,
+        on_event_callback: (handle: number, event: ClientEvent) => void,
         bootstrap_organization_addr: ParsecOrganizationBootstrapAddr,
         save_strategy: DeviceSaveStrategy,
         human_handle: HumanHandle,
@@ -2461,7 +2461,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
     claimerRetrieveInfo(
         config: ClientConfig,
-        on_event_callback: (event: ClientEvent) => void,
+        on_event_callback: (handle: number, event: ClientEvent) => void,
         addr: ParsecInvitationAddr
     ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
     claimerUserFinalizeSaveLocalDevice(
@@ -2554,7 +2554,7 @@ export interface LibParsecPlugin {
     ): Promise<Result<null, ClientShareWorkspaceError>>
     clientStart(
         config: ClientConfig,
-        on_event_callback: (event: ClientEvent) => void,
+        on_event_callback: (handle: number, event: ClientEvent) => void,
         access: DeviceAccessStrategy
     ): Promise<Result<Handle, ClientStartError>>
     clientStartDeviceInvitationGreet(

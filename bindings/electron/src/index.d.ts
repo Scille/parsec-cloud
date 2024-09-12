@@ -2017,7 +2017,7 @@ export type WorkspaceWatchError =
 
 export function bootstrapOrganization(
     config: ClientConfig,
-    on_event_callback: (event: ClientEvent) => void,
+    on_event_callback: (handle: number, event: ClientEvent) => void,
     bootstrap_organization_addr: string,
     save_strategy: DeviceSaveStrategy,
     human_handle: HumanHandle,
@@ -2061,7 +2061,7 @@ export function claimerGreeterAbortOperation(
 ): Promise<Result<null, ClaimerGreeterAbortOperationError>>
 export function claimerRetrieveInfo(
     config: ClientConfig,
-    on_event_callback: (event: ClientEvent) => void,
+    on_event_callback: (handle: number, event: ClientEvent) => void,
     addr: string
 ): Promise<Result<UserOrDeviceClaimInitialInfo, ClaimerRetrieveInfoError>>
 export function claimerUserFinalizeSaveLocalDevice(
@@ -2154,7 +2154,7 @@ export function clientShareWorkspace(
 ): Promise<Result<null, ClientShareWorkspaceError>>
 export function clientStart(
     config: ClientConfig,
-    on_event_callback: (event: ClientEvent) => void,
+    on_event_callback: (handle: number, event: ClientEvent) => void,
     access: DeviceAccessStrategy
 ): Promise<Result<number, ClientStartError>>
 export function clientStartDeviceInvitationGreet(

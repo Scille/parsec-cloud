@@ -2,7 +2,16 @@
 
 from typing import Callable
 
-from .common import Variant, DateTime, InvitationToken, InvitationStatus, VlobID, IndexInt, SizeInt
+from .common import (
+    DateTime,
+    Handle,
+    IndexInt,
+    InvitationStatus,
+    InvitationToken,
+    SizeInt,
+    Variant,
+    VlobID,
+)
 
 
 class ClientEvent(Variant):
@@ -80,5 +89,5 @@ class ClientEvent(Variant):
     #     detail: str
 
 
-class OnClientEventCallback(Callable[[ClientEvent], None]):  # type: ignore[misc]
+class OnClientEventCallback(Callable[[Handle, ClientEvent], None]):  # type: ignore[misc]
     ...

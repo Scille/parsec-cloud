@@ -251,22 +251,23 @@ let callback = std::sync::Arc::new(Callback{
     channel: cx.channel(),
 });
 std::sync::Arc::new(
-    move |event: libparsec::ClientEvent| {
+    move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
         let callback2 = callback.clone();
         callback.channel.send(move |mut cx| {
             // TODO: log an error instead of panic ? (it is a bit harsh to crash
             // the current task if an unrelated event handler has a bug...)
             let js_event = {{ variant_rs_to_js_function_name(type.event_type) }}({{ mut_cx_ref }}, event)?;
+            let js_handle = JsNumber::new(&mut cx, handle);
             if let Some(ref js_fn) = callback2.js_fn {
                 js_fn.to_inner(&mut cx)
                 .call_with(&cx)
-                .arg(js_event)
+                .args((js_handle, js_event))
                 .apply::<JsValue, _>(&mut cx)?;
             }
             Ok(())
         });
     }
-) as std::sync::Arc<dyn Fn(libparsec::ClientEvent) + Send + Sync>
+) as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent) + Send + Sync>
 {%- elif type.kind == "enum" -%}
 {
     let js_string = {{ js_val }}.value({{ mut_cx_ref }});

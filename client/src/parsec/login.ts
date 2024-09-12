@@ -178,7 +178,7 @@ export async function login(
   }
 
   if (!needsMocks()) {
-    const callback = (event: ClientEvent): void => {
+    const callback = (_handle: number, event: ClientEvent): void => {
       parsecEventCallback(eventDistributor, event);
     };
     const clientConfig = getClientConfig();

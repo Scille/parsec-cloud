@@ -42,7 +42,7 @@ pub async fn bootstrap_organization_req(
         client_config.data_base_dir.display()
     );
 
-    let on_event_callback = Arc::new(|_| ());
+    let on_event_callback = Arc::new(|_, _| ());
 
     Ok(libparsec::bootstrap_organization(
         client_config,

@@ -7716,14 +7716,17 @@ pub fn bootstrapOrganization(
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+        let on_event_callback = std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                // TODO: Better error handling here (log error ?)
+                let js_event =
+                    variant_client_event_rs_to_js(event).expect("event type conversion error");
+                on_event_callback
+                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
+                    .expect("error in event callback");
+            },
+        )
+            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 
         let bootstrap_organization_addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -8056,14 +8059,17 @@ pub fn claimerRetrieveInfo(config: Object, on_event_callback: Function, addr: St
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+        let on_event_callback = std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                // TODO: Better error handling here (log error ?)
+                let js_event =
+                    variant_client_event_rs_to_js(event).expect("event type conversion error");
+                on_event_callback
+                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
+                    .expect("error in event callback");
+            },
+        )
+            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 
         let addr = {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
@@ -8809,14 +8815,17 @@ pub fn clientStart(config: Object, on_event_callback: Function, access: Object) 
         let config = config.into();
         let config = struct_client_config_js_to_rs(config)?;
 
-        let on_event_callback = std::sync::Arc::new(move |event: libparsec::ClientEvent| {
-            // TODO: Better error handling here (log error ?)
-            let js_event =
-                variant_client_event_rs_to_js(event).expect("event type conversion error");
-            on_event_callback
-                .call1(&JsValue::NULL, &js_event)
-                .expect("error in event callback");
-        }) as std::sync::Arc<dyn Fn(libparsec::ClientEvent)>;
+        let on_event_callback = std::sync::Arc::new(
+            move |handle: libparsec::Handle, event: libparsec::ClientEvent| {
+                // TODO: Better error handling here (log error ?)
+                let js_event =
+                    variant_client_event_rs_to_js(event).expect("event type conversion error");
+                on_event_callback
+                    .call2(&JsValue::NULL, &Number::from(handle), &js_event)
+                    .expect("error in event callback");
+            },
+        )
+            as std::sync::Arc<dyn Fn(libparsec::Handle, libparsec::ClientEvent)>;
 
         let access = access.into();
         let access = variant_device_access_strategy_js_to_rs(access)?;

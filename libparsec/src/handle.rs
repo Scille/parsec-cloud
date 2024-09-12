@@ -141,6 +141,10 @@ impl InitializingGuard {
 
         self.handle
     }
+
+    pub fn handle(&self) -> Handle {
+        self.handle
+    }
 }
 
 impl Drop for InitializingGuard {

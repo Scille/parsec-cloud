@@ -102,7 +102,7 @@ async function testBootstrapOrganization(): Promise<void> {
   };
 
   // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-  const onEventCallback = (e: ClientEvent) => {
+  const onEventCallback = (_handle: number, e: ClientEvent) => {
     console.log(`Event received from libparsec: ${e}`);
   };
   const bootstrapAddrResult = await libparsec.testGetTestbedBootstrapOrganizationAddr(configPath);
