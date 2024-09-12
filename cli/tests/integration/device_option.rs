@@ -40,7 +40,8 @@ async fn device_not_found(tmp_path: TmpPath) {
 
     crate::assert_cmd_failure!(
         with_password = "a password",
-        "list-users",
+        "user",
+        "list",
         "--device",
         A_DEVICE_THAT_DOES_NOT_EXIST
     )
@@ -87,7 +88,7 @@ async fn missing_option(tmp_path: TmpPath) {
     let mut available_devices_string_list = String::new();
     format_device::<4>(&devices, &mut available_devices_string_list).unwrap();
 
-    crate::assert_cmd_failure!("list-users").stderr(
+    crate::assert_cmd_failure!("user", "list").stderr(
         predicates::str::contains("Error: Missing option '--device'")
             .and(predicates::str::contains("Available devices:"))
             .and(predicates::str::contains(&available_devices_string_list)),
@@ -165,7 +166,7 @@ async fn multiple_device_found(tmp_path: TmpPath) {
     let mut available_devices_string_list = String::new();
     format_device::<3>(&devices, &mut available_devices_string_list).unwrap();
 
-    crate::assert_cmd_failure!("list-users", "--device", first_dev_id_prefix).stderr(
+    crate::assert_cmd_failure!("user", "list", "--device", first_dev_id_prefix).stderr(
         predicates::str::contains(format!(
             "Error: Multiple devices found for `{first_dev_id_prefix}`:"
         ))

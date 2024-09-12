@@ -1,7 +1,7 @@
 use libparsec::{tmp_path, TmpPath};
 use predicates::prelude::PredicateBooleanExt;
 
-use super::bootstrap_cli_test;
+use crate::tests::bootstrap_cli_test;
 use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     utils::{GREEN, RESET},
@@ -14,7 +14,8 @@ async fn list_users(tmp_path: TmpPath) {
 
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "list-users",
+        "user",
+        "list",
         "--device",
         &alice.device_id.hex()
     )

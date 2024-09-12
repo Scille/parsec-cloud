@@ -3,13 +3,13 @@ mod create_organization;
 mod device;
 mod device_option;
 mod invitations;
-mod list_users;
 mod ls;
 mod rm;
 mod shamir_setup_create;
 mod stats_organization;
 mod stats_server;
 mod status_organization;
+mod user;
 mod version;
 mod workspace;
 
