@@ -7,20 +7,20 @@ use libparsec::{OrganizationID, ParsecAddr};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
-    pub struct StatsOrganization {
+    pub struct Args {
         /// OrganizationID
         #[arg(short, long)]
         organization_id: OrganizationID,
     }
 );
 
-pub async fn stats_organization_req(
+pub async fn status_organization_req(
     organization_id: &OrganizationID,
     addr: &ParsecAddr,
     administration_token: &str,
 ) -> anyhow::Result<Value> {
     let url = addr.to_http_url(Some(&format!(
-        "/administration/organizations/{organization_id}/stats"
+        "/administration/organizations/{organization_id}"
     )));
 
     let rep = Client::new()
@@ -32,15 +32,15 @@ pub async fn stats_organization_req(
     Ok(rep.json::<Value>().await?)
 }
 
-pub async fn stats_organization(stats_organization: StatsOrganization) -> anyhow::Result<()> {
-    let StatsOrganization {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         organization_id,
         token,
         addr,
-    } = stats_organization;
-    log::trace!("Retrieving stats for organization {organization_id} (addr={addr})");
+    } = args;
+    log::trace!("Retrieving status of organization {organization_id} (addr={addr})");
 
-    let rep = stats_organization_req(&organization_id, &addr, &token).await?;
+    let rep = status_organization_req(&organization_id, &addr, &token).await?;
 
     println!("{:#}", rep);
 

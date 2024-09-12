@@ -1,8 +1,8 @@
 use libparsec::{tmp_path, TmpPath};
 
-use super::{bootstrap_cli_test, unique_org_id};
+use crate::tests::{bootstrap_cli_test, unique_org_id};
 use crate::{
-    create_organization::create_organization_req,
+    organization::create::create_organization_req,
     testenv_utils::{DEFAULT_ADMINISTRATION_TOKEN, DEFAULT_DEVICE_PASSWORD, TESTBED_SERVER},
 };
 
@@ -23,7 +23,8 @@ async fn bootstrap_organization(tmp_path: TmpPath) {
     log::debug!("Bootstrapping organization {organization_id}");
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
-        "bootstrap-organization",
+        "organization",
+        "bootstrap",
         "--addr",
         &organization_addr.to_string(),
         "--device-label",

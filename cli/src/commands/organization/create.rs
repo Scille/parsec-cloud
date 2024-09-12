@@ -8,7 +8,7 @@ use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = addr, token]
-    pub struct CreateOrganization {
+    pub struct Args {
         /// OrganizationID
         #[arg(short, long)]
         organization_id: OrganizationID,
@@ -66,12 +66,12 @@ pub async fn create_organization_req(
     }
 }
 
-pub async fn create_organization(create_organization: CreateOrganization) -> anyhow::Result<()> {
-    let CreateOrganization {
+pub async fn main(args: Args) -> anyhow::Result<()> {
+    let Args {
         organization_id,
         token,
         addr,
-    } = create_organization;
+    } = args;
     log::trace!("Creating organization \"{organization_id}\" (addr={addr})");
 
     let mut handle = start_spinner("Creating organization".into());

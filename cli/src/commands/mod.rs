@@ -1,14 +1,11 @@
-pub mod bootstrap_organization;
-pub mod create_organization;
 pub mod device;
 pub mod invite;
 pub mod ls;
+pub mod organization;
 pub mod rm;
 #[cfg(feature = "testenv")]
 pub mod run_testenv;
 pub mod server;
 pub mod shamir_setup;
-pub mod stats_organization;
-pub mod status_organization;
 pub mod user;
 pub mod workspace;

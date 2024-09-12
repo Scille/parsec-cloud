@@ -1,14 +1,11 @@
-mod bootstrap_organization;
-mod create_organization;
 mod device;
 mod device_option;
 mod invitations;
 mod ls;
+mod organization;
 mod rm;
 mod server;
 mod shamir_setup_create;
-mod stats_organization;
-mod status_organization;
 mod user;
 mod version;
 mod workspace;
