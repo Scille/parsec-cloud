@@ -12,6 +12,8 @@ use libparsec_tests_lite::prelude::*;
 
 type AliceLocalFolderManifest = Box<dyn FnOnce(&Device) -> (&'static [u8], LocalFolderManifest)>;
 
+const PREVENT_SYNC_PATTERN_TMP: &str = r"\.tmp$";
+
 #[rstest]
 #[case::folder_manifest(Box::new(|alice: &Device| {
     let now = "2021-12-04T11:50:43.208821Z".parse().unwrap();
@@ -329,7 +331,7 @@ fn from_remote(
     HashSet::from_iter([VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()]),
     HashSet::new(),
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 #[case::remote_children_not_confined(
     HashMap::from([
@@ -343,7 +345,7 @@ fn from_remote(
     HashSet::new(),
     HashSet::new(),
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 #[case::local_children_confined(
     HashMap::new(),
@@ -357,7 +359,7 @@ fn from_remote(
     HashSet::new(),
     HashSet::from_iter([VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()]),
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 #[case::local_children_confined_with_outdated_pattern(
     HashMap::new(),
@@ -389,7 +391,7 @@ fn from_remote(
     HashSet::new(),
     HashSet::new(),
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 #[case::remote_and_local_both_confined_on_same_name(
     HashMap::from([
@@ -405,7 +407,7 @@ fn from_remote(
     HashSet::from_iter([VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()]),
     HashSet::from_iter([VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()]),
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 #[case::remote_and_local_both_confined_with_additional_local_changes(
     HashMap::from([
@@ -426,7 +428,7 @@ fn from_remote(
     HashSet::from_iter([VlobID::from_hex("187A239DBAA44343ADFC3742BA5882C2").unwrap()]),
     // need_sync = false given everything not confined is ignored
     false,
-    ".tmp",
+    PREVENT_SYNC_PATTERN_TMP,
 )]
 fn from_remote_with_restored_local_confinement_points(
     timestamp: DateTime,
@@ -690,7 +692,7 @@ fn evolve_children_and_mark_updated(
     #[case] expected_local_confinement_points: HashSet<VlobID>,
     #[case] expected_need_sync: bool,
 ) {
-    let prevent_sync_pattern = Regex::from_regex_str(".tmp").unwrap();
+    let prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
     let t2 = "2000-01-02T00:00:00Z".parse().unwrap();
 
@@ -711,7 +713,7 @@ fn evolve_children_and_mark_updated(
         need_sync: false,
         updated: t1,
         local_confinement_points: HashSet::from_iter(children.iter().filter_map(|(name, id)| {
-            if name.as_ref().ends_with(".tmp") {
+            if prevent_sync_pattern.is_match(name.as_ref()) {
                 Some(*id)
             } else {
                 None
@@ -793,7 +795,7 @@ fn apply_prevent_sync_pattern_nothing_confined() {
     };
 
     // New prevent sync pattern doesn't match any entry, so nothing should change
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm2 = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm2, lfm);
@@ -873,7 +875,7 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
     };
 
     // We re-apply the same `.tmp` prevent sync pattern, so nothing should change
-    let current_prevent_sync_pattern = Regex::from_regex_str(".tmp").unwrap();
+    let current_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm2 = lfm.apply_prevent_sync_pattern(&current_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm2, lfm);
@@ -922,7 +924,7 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     };
 
     // Now we change the prevent sync pattern to something that matches some of the local children
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     // TODO: this test seems to fail because `apply_prevent_sync_pattern` first remove
@@ -1015,7 +1017,7 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
     };
 
     // Now we change the prevent sync pattern to something that matches some of the remote children
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(
