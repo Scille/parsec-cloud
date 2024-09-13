@@ -905,6 +905,10 @@ export type ClientShareWorkspaceError =
 
 
 // ClientStartError
+export interface ClientStartErrorDeviceUsedByAnotherProcess {
+    tag: "DeviceUsedByAnotherProcess"
+    error: string
+}
 export interface ClientStartErrorInternal {
     tag: "Internal"
     error: string
@@ -922,6 +926,7 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     error: string
 }
 export type ClientStartError =
+  | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
@@ -1308,6 +1313,15 @@ export interface UserOrDeviceClaimInitialInfoUser {
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
+
+
+// WaitForDeviceAvailableError
+export interface WaitForDeviceAvailableErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type WaitForDeviceAvailableError =
+  | WaitForDeviceAvailableErrorInternal
 
 
 // WorkspaceCreateFileError
@@ -2336,6 +2350,10 @@ export function validateOrganizationId(
 export function validatePath(
     raw: string
 ): Promise<boolean>
+export function waitForDeviceAvailable(
+    config_dir: string,
+    device_id: string
+): Promise<Result<null, WaitForDeviceAvailableError>>
 export function workspaceCreateFile(
     workspace: number,
     path: string

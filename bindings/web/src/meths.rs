@@ -4324,6 +4324,13 @@ fn variant_client_start_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::ClientStartError::DeviceUsedByAnotherProcess { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientStartErrorDeviceUsedByAnotherProcess".into(),
+            )?;
+        }
         libparsec::ClientStartError::Internal { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientStartErrorInternal".into())?;
         }
@@ -6530,6 +6537,27 @@ fn variant_user_or_device_claim_initial_info_rs_to_js(
                 &js_obj,
                 &"greeterHumanHandle".into(),
                 &js_greeter_human_handle,
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// WaitForDeviceAvailableError
+
+#[allow(dead_code)]
+fn variant_wait_for_device_available_error_rs_to_js(
+    rs_obj: libparsec::WaitForDeviceAvailableError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WaitForDeviceAvailableError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WaitForDeviceAvailableErrorInternal".into(),
             )?;
         }
     }
@@ -10111,6 +10139,46 @@ pub fn validatePath(raw: String) -> Promise {
     future_to_promise(async move {
         let ret = libparsec::validate_path(&raw);
         Ok(ret.into())
+    })
+}
+
+// wait_for_device_available
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise {
+    future_to_promise(async move {
+        let config_dir = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let device_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::wait_for_device_available(&config_dir, device_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_wait_for_device_available_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
     })
 }
 

@@ -1049,12 +1049,17 @@ export type ClientShareWorkspaceError =
 
 // ClientStartError
 export enum ClientStartErrorTag {
+    DeviceUsedByAnotherProcess = 'ClientStartErrorDeviceUsedByAnotherProcess',
     Internal = 'ClientStartErrorInternal',
     LoadDeviceDecryptionFailed = 'ClientStartErrorLoadDeviceDecryptionFailed',
     LoadDeviceInvalidData = 'ClientStartErrorLoadDeviceInvalidData',
     LoadDeviceInvalidPath = 'ClientStartErrorLoadDeviceInvalidPath',
 }
 
+export interface ClientStartErrorDeviceUsedByAnotherProcess {
+    tag: ClientStartErrorTag.DeviceUsedByAnotherProcess
+    error: string
+}
 export interface ClientStartErrorInternal {
     tag: ClientStartErrorTag.Internal
     error: string
@@ -1072,6 +1077,7 @@ export interface ClientStartErrorLoadDeviceInvalidPath {
     error: string
 }
 export type ClientStartError =
+  | ClientStartErrorDeviceUsedByAnotherProcess
   | ClientStartErrorInternal
   | ClientStartErrorLoadDeviceDecryptionFailed
   | ClientStartErrorLoadDeviceInvalidData
@@ -1544,6 +1550,18 @@ export interface UserOrDeviceClaimInitialInfoUser {
 export type UserOrDeviceClaimInitialInfo =
   | UserOrDeviceClaimInitialInfoDevice
   | UserOrDeviceClaimInitialInfoUser
+
+// WaitForDeviceAvailableError
+export enum WaitForDeviceAvailableErrorTag {
+    Internal = 'WaitForDeviceAvailableErrorInternal',
+}
+
+export interface WaitForDeviceAvailableErrorInternal {
+    tag: WaitForDeviceAvailableErrorTag.Internal
+    error: string
+}
+export type WaitForDeviceAvailableError =
+  | WaitForDeviceAvailableErrorInternal
 
 // WorkspaceCreateFileError
 export enum WorkspaceCreateFileErrorTag {
@@ -2736,6 +2754,10 @@ export interface LibParsecPlugin {
     validatePath(
         raw: string
     ): Promise<boolean>
+    waitForDeviceAvailable(
+        config_dir: Path,
+        device_id: DeviceID
+    ): Promise<Result<null, WaitForDeviceAvailableError>>
     workspaceCreateFile(
         workspace: Handle,
         path: FsPath
