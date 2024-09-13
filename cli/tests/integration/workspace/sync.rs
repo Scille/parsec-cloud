@@ -1,24 +1,22 @@
 use std::sync::Arc;
 
-use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, TmpPath, VlobID};
+use libparsec::{internal::Client, tmp_path, EntryName, EntryStat, LocalDevice, TmpPath, VlobID};
 
 use crate::{
     testenv_utils::{TestOrganization, DEFAULT_DEVICE_PASSWORD},
     tests::bootstrap_cli_test,
-    utils::start_client,
+    utils::{start_client, StartedClient},
 };
 
 struct Setup {
-    alice_client: Arc<Client>,
-    bob_client: Arc<Client>,
+    alice_client: Arc<StartedClient>,
+    bob_client: Arc<StartedClient>,
     workspace_id: VlobID,
 }
 
-async fn setup(tmp_path: &TmpPath) -> Setup {
-    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(tmp_path).await.unwrap();
-
+async fn setup_workspace(alice: Arc<LocalDevice>, bob: Arc<LocalDevice>) -> Setup {
     log::debug!("Create a workspace for alice");
-    let alice_client = start_client(alice.clone()).await.unwrap();
+    let alice_client = start_client(alice).await.unwrap();
 
     let wid = alice_client
         .create_workspace("new-workspace".parse().unwrap())
@@ -34,7 +32,7 @@ async fn setup(tmp_path: &TmpPath) -> Setup {
         .unwrap();
 
     log::debug!("Ensure bob has access to the workspace");
-    let bob_client = start_client(bob.clone()).await.unwrap();
+    let bob_client = start_client(bob).await.unwrap();
     bob_client.poll_server_for_new_certificates().await.unwrap();
     bob_client.refresh_workspaces_list().await.unwrap();
     let bob_wksp_list = bob_client.list_workspaces().await;
@@ -80,13 +78,18 @@ async fn find_foo_file(client: &Client, wid: VlobID) -> Option<(EntryName, Entry
 #[rstest::rstest]
 #[tokio::test]
 async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
     let Setup {
         alice_client,
         bob_client,
         workspace_id,
-    } = setup(&tmp_path).await;
+    } = setup_workspace(alice.clone(), bob.clone()).await;
+
     // Ensure bob does not see the file foo.txt because alice is not synced
     assert!(find_foo_file(&bob_client, workspace_id).await.is_none());
+
+    drop(alice_client); // Drop needed to release the IPC lock
 
     // Alice sync its changes
     crate::assert_cmd_success!(
@@ -94,7 +97,7 @@ async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath) {
         "workspace",
         "sync",
         "--device",
-        &alice_client.device_id().hex(),
+        &alice.device_id.hex(),
         "--workspace",
         &workspace_id.hex()
     );
@@ -123,11 +126,13 @@ async fn workspace_sync_alice_need_to_sync(tmp_path: TmpPath) {
 #[rstest::rstest]
 #[tokio::test]
 async fn workspace_sync_bob_need_to_sync(tmp_path: TmpPath) {
+    let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
+
     let Setup {
         alice_client,
         bob_client,
         workspace_id,
-    } = setup(&tmp_path).await;
+    } = setup_workspace(alice.clone(), bob.clone()).await;
 
     // Alice sync its changes
     {
@@ -146,15 +151,21 @@ async fn workspace_sync_bob_need_to_sync(tmp_path: TmpPath) {
     }
 
     // Ensure bob does not see the file foo.txt because he is not synced
-    assert!(find_foo_file(&bob_client, workspace_id).await.is_none());
+    {
+        assert!(find_foo_file(&bob_client, workspace_id).await.is_none());
+        drop(bob_client); // Drop needed to release the IPC lock
+    }
+
     crate::assert_cmd_success!(
         with_password = DEFAULT_DEVICE_PASSWORD,
         "workspace",
         "sync",
         "--device",
-        &bob_client.device_id().hex(),
+        &bob.device_id.hex(),
         "--workspace",
         &workspace_id.hex()
     );
+
+    let bob_client = start_client(bob.clone()).await.unwrap();
     assert!(find_foo_file(&bob_client, workspace_id).await.is_some());
 }

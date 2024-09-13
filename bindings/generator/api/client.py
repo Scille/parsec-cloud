@@ -24,10 +24,23 @@ from .common import (
     VariantItemUnit,
     VlobID,
     RealmRole,
+    Ref,
 )
 from .invite import DeviceSaveStrategy
 from .config import ClientConfig
 from .events import OnClientEventCallback
+
+
+class WaitForDeviceAvailableError(ErrorVariant):
+    class Internal:
+        pass
+
+
+async def wait_for_device_available(
+    config_dir: Ref[Path],
+    device_id: DeviceID,
+) -> Result[None, WaitForDeviceAvailableError]:
+    raise NotImplementedError
 
 
 class DeviceAccessStrategy(Variant):
@@ -43,6 +56,9 @@ class DeviceAccessStrategy(Variant):
 
 
 class ClientStartError(ErrorVariant):
+    class DeviceUsedByAnotherProcess:
+        pass
+
     class LoadDeviceInvalidPath:
         pass
 

@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::Path, sync::Arc};
 
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
@@ -30,11 +30,39 @@ fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>
 }
 
 /*
+ * Wait for device available
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum WaitForDeviceAvailableError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub async fn wait_for_device_available(
+    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] config_dir: &Path,
+    #[cfg_attr(target_arch = "wasm32", allow(unused_variables))] device_id: DeviceID,
+) -> Result<(), WaitForDeviceAvailableError> {
+    // On web there is no other processes able to use the devices we have access of.
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        // Wait for the lock, take it, then release it right away
+        libparsec_platform_ipc::lock_device_for_use(config_dir, device_id)
+            .await
+            .map_err(WaitForDeviceAvailableError::Internal)?;
+    }
+
+    Ok(())
+}
+
+/*
  * Start
  */
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientStartError {
+    #[error("Device already used by another process")]
+    DeviceUsedByAnotherProcess,
     #[error(transparent)]
     LoadDeviceInvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -81,6 +109,8 @@ pub async fn client_start(
 
     // 2) Make sure another client is not running this device
 
+    // 2.1) Is our own process already running this device ?
+
     enum RegisterFailed {
         AlreadyRegistered(Handle),
         ConcurrentRegister(EventListener),
@@ -120,6 +150,19 @@ pub async fn client_start(
         }
     };
 
+    // 2.2) Is another process running this device ?
+
+    // On web there is no other processes able to use the devices we have access of.
+    #[cfg(not(target_arch = "wasm32"))]
+    let device_in_use_guard = {
+        use libparsec_platform_ipc::{try_lock_device_for_use, TryLockDeviceForUseError};
+
+        try_lock_device_for_use(&config.config_dir, device.device_id).map_err(|err| match err {
+            TryLockDeviceForUseError::AlreadyInUse => ClientStartError::DeviceUsedByAnotherProcess,
+            TryLockDeviceForUseError::Internal(err) => err.into(),
+        })?
+    };
+
     // 3) Actually start the client
 
     let on_event = OnEventCallbackPlugged::new(initializing.handle(), on_event_callback);
@@ -128,7 +171,15 @@ pub async fn client_start(
         .map_err(ClientStartError::Internal)?;
 
     let handle = initializing.initialized(move |item: &mut HandleItem| {
-        let starting = std::mem::replace(item, HandleItem::Client { client, on_event });
+        let starting = std::mem::replace(
+            item,
+            HandleItem::Client {
+                client,
+                on_event,
+                #[cfg(not(target_arch = "wasm32"))]
+                device_in_use_guard,
+            },
+        );
         match starting {
             HandleItem::StartingClient {
                 to_wake_on_done, ..
@@ -156,15 +207,25 @@ pub enum ClientStopError {
 
 pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     let client_handle = client;
-    let (client, on_event) = take_and_close_handle(client_handle, |x| match x {
-        HandleItem::Client { client, on_event } => Ok((client, on_event)),
-        // Note we consider an error if the handle is in `HandleItem::StartingClient` state
-        // this is because at that point this is not a legit use of the handle given it
-        // has never been yet provided to the caller in the first place !
-        // On top of that it simplifies the start logic (given it guarantees nothing will
-        // concurrently close the handle)
-        invalid => Err(invalid),
-    })?;
+    let (client, on_event, device_in_use_guard) =
+        take_and_close_handle(client_handle, |x| match x {
+            HandleItem::Client {
+                client,
+                on_event,
+                #[cfg(not(target_arch = "wasm32"))]
+                device_in_use_guard,
+            } => {
+                #[cfg(target_arch = "wasm32")]
+                let device_in_use_guard = ();
+                Ok((client, on_event, device_in_use_guard))
+            }
+            // Note we consider an error if the handle is in `HandleItem::StartingClient` state
+            // this is because at that point this is not a legit use of the handle given it
+            // has never been yet provided to the caller in the first place !
+            // On top of that it simplifies the start logic (given it guarantees nothing will
+            // concurrently close the handle)
+            invalid => Err(invalid),
+        })?;
 
     // Note stopping the client also stop all it related workspace ops
     client.stop().await;
@@ -172,6 +233,11 @@ pub async fn client_stop(client: Handle) -> Result<(), ClientStopError> {
     // Wait until after the client is closed to disconnect the event bus to ensure
     // we don't miss any event fired during client teardown
     drop(on_event);
+
+    // Also wait until after the client is closed to allow other process to use our device.
+    // (This is a noop on web, as no other processes are able to use the devices we have access of).
+    #[cfg_attr(target_arch = "wasm32", allow(dropping_copy_types))]
+    drop(device_in_use_guard);
 
     // Finally cleanup the handles related to the client's workspaces and mountpoints
     // (Note the mountpoints are automatically unmounted when the handle item is dropped).

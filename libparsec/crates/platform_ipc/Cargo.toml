@@ -1,0 +1,41 @@
+[package]
+name = "libparsec_platform_ipc"
+publish.workspace = true
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+version.workspace = true
+repository.workspace = true
+
+[lints]
+workspace = true
+
+[features]
+test-with-testbed = ["libparsec_testbed", "libparsec_platform_async"]
+
+[dependencies]
+libparsec_types = { workspace = true }
+libparsec_testbed = { workspace = true, optional = true }
+libparsec_platform_async = { workspace = true, optional = true }
+
+log = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true, features = ["rt"] }
+
+[target.'cfg(target_family = "unix")'.dependencies]
+libc = { workspace = true }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_System_IO",
+    "Win32_Storage_FileSystem",
+] }
+
+[dev-dependencies]
+libparsec_tests_lite = { workspace = true }
+libparsec_platform_async = { workspace = true }
+# Note `libparsec_tests_fixtures` enables our `test-with-testbed` feature
+libparsec_tests_fixtures = { workspace = true, features = ["test-with-platform-ipc-testbed"] }

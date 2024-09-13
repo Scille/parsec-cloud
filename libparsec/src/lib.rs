@@ -32,14 +32,14 @@ pub use workspace::*;
 
 pub mod internal {
     pub use libparsec_client::{
-        claimer_retrieve_info, Client, DeviceClaimFinalizeCtx, DeviceClaimInProgress1Ctx,
-        DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx, DeviceClaimInitialCtx,
-        DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx, DeviceGreetInProgress3Ctx,
-        DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus, UserClaimFinalizeCtx,
-        UserClaimInProgress1Ctx, UserClaimInProgress2Ctx, UserClaimInProgress3Ctx,
-        UserClaimInitialCtx, UserGreetInProgress1Ctx, UserGreetInProgress2Ctx,
-        UserGreetInProgress3Ctx, UserGreetInProgress4Ctx, UserGreetInitialCtx,
-        UserOrDeviceClaimInitialCtx,
+        claimer_retrieve_info, Client, ClientConfig, DeviceClaimFinalizeCtx,
+        DeviceClaimInProgress1Ctx, DeviceClaimInProgress2Ctx, DeviceClaimInProgress3Ctx,
+        DeviceClaimInitialCtx, DeviceGreetInProgress1Ctx, DeviceGreetInProgress2Ctx,
+        DeviceGreetInProgress3Ctx, DeviceGreetInProgress4Ctx, DeviceGreetInitialCtx, EventBus,
+        UserClaimFinalizeCtx, UserClaimInProgress1Ctx, UserClaimInProgress2Ctx,
+        UserClaimInProgress3Ctx, UserClaimInitialCtx, UserGreetInProgress1Ctx,
+        UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
+        UserGreetInitialCtx, UserOrDeviceClaimInitialCtx,
     };
 }
 

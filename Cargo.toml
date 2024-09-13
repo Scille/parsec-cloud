@@ -7,6 +7,7 @@ members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_ipc",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
@@ -31,6 +32,7 @@ default-members = [
     "libparsec/crates/crypto",
     "libparsec/crates/platform_async",
     "libparsec/crates/platform_device_loader",
+    "libparsec/crates/platform_ipc",
     "libparsec/crates/platform_mountpoint",
     "libparsec/crates/platform_storage",
     "libparsec/crates/protocol",
@@ -84,6 +86,7 @@ libparsec_protocol = { path = "libparsec/crates/protocol", default-features = fa
 libparsec_crypto = { path = "libparsec/crates/crypto", default-features = false }
 libparsec_types = { path = "libparsec/crates/types", default-features = false }
 libparsec_platform_device_loader = { path = "libparsec/crates/platform_device_loader", default-features = false }
+libparsec_platform_ipc = { path = "libparsec/crates/platform_ipc", default-features = false }
 libparsec_platform_mountpoint = { path = "libparsec/crates/platform_mountpoint", default-features = false }
 libparsec_platform_storage = { path = "libparsec/crates/platform_storage", default-features = false }
 libparsec_serialization_format = { path = "libparsec/crates/serialization_format", default-features = false }

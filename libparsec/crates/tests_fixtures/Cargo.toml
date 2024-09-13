@@ -15,6 +15,7 @@ workspace = true
 default = [
     "test-with-client-connection-testbed",
     "test-with-platform-device-loader-testbed",
+    "test-with-platform-ipc-testbed",
     "test-with-platform-storage-testbed",
 ]
 test-with-client-connection-testbed = [
@@ -24,6 +25,10 @@ test-with-client-connection-testbed = [
 test-with-platform-device-loader-testbed = [
     "libparsec_platform_device_loader",
     "libparsec_platform_device_loader/test-with-testbed",
+]
+test-with-platform-ipc-testbed = [
+    "libparsec_platform_ipc",
+    "libparsec_platform_ipc/test-with-testbed",
 ]
 test-with-platform-storage-testbed = [
     "libparsec_platform_storage",
@@ -37,6 +42,7 @@ libparsec_testbed = { workspace = true }
 # Enable testbed support in crates here
 libparsec_client_connection = { workspace = true, optional = true }
 libparsec_platform_device_loader = { workspace = true, optional = true }
+libparsec_platform_ipc = { workspace = true, optional = true }
 libparsec_platform_storage = { workspace = true, optional = true }
 
 uuid = { workspace = true, features = ["v4", "fast-rng"] }

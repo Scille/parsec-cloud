@@ -15,6 +15,7 @@ testenv = []
 [dependencies]
 libparsec = { workspace = true }
 libparsec_client_connection = { workspace = true }
+libparsec_platform_ipc = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }

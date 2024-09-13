@@ -52,6 +52,9 @@ pub(crate) enum HandleItem {
     Client {
         client: Arc<libparsec_client::Client>,
         on_event: crate::OnEventCallbackPlugged,
+        #[cfg(not(target_arch = "wasm32"))]
+        #[allow(unused)]
+        device_in_use_guard: libparsec_platform_ipc::InUseDeviceLockGuard,
     },
 
     StartingWorkspace {

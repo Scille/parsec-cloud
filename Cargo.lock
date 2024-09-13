@@ -1937,6 +1937,7 @@ dependencies = [
  "libparsec_crypto",
  "libparsec_platform_async",
  "libparsec_platform_device_loader",
+ "libparsec_platform_ipc",
  "libparsec_platform_mountpoint",
  "libparsec_platform_storage",
  "libparsec_protocol",
@@ -2117,6 +2118,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "libparsec_platform_ipc"
+version = "3.0.1-a.0"
+dependencies = [
+ "libc",
+ "libparsec_platform_async",
+ "libparsec_testbed",
+ "libparsec_tests_fixtures",
+ "libparsec_tests_lite",
+ "libparsec_types",
+ "log",
+ "tokio",
+ "windows-sys 0.59.0",
+]
+
+[[package]]
 name = "libparsec_platform_mountpoint"
 version = "3.0.1-a.0"
 dependencies = [
@@ -2224,6 +2240,7 @@ version = "3.0.1-a.0"
 dependencies = [
  "libparsec_client_connection",
  "libparsec_platform_device_loader",
+ "libparsec_platform_ipc",
  "libparsec_platform_storage",
  "libparsec_testbed",
  "libparsec_tests_lite",
@@ -2885,6 +2902,7 @@ dependencies = [
  "env_logger",
  "libparsec",
  "libparsec_client_connection",
+ "libparsec_platform_ipc",
  "log",
  "predicates",
  "reqwest",
