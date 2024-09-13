@@ -1,12 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{fmt::Display, path::Path, sync::Arc};
+use std::{fmt::Display, ops::Deref, path::Path, sync::Arc};
 
 use libparsec::{
     internal::{Client, EventBus},
     list_available_devices, AuthenticatedCmds, AvailableDevice, ClientConfig, DeviceAccessStrategy,
     DeviceFileType, DeviceLabel, HumanHandle, LocalDevice, Password, ProxyConfig, SASCode,
     UserProfile,
+};
+use libparsec_platform_ipc::{
+    lock_device_for_use, try_lock_device_for_use, InUseDeviceLockGuard, TryLockDeviceForUseError,
 };
 use spinners::{Spinner, Spinners, Stream};
 
@@ -224,26 +227,54 @@ pub async fn load_client(
     config_dir: &Path,
     device: Option<String>,
     password_stdin: bool,
-) -> anyhow::Result<Arc<Client>> {
+) -> anyhow::Result<Arc<StartedClient>> {
     let device = load_and_unlock_device(config_dir, device, password_stdin).await?;
     let client = start_client(device).await?;
 
     Ok(client)
 }
 
-pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<Client>> {
-    Client::start(
-        Arc::new(
-            ClientConfig {
-                with_monitors: false,
-                ..Default::default()
-            }
-            .into(),
-        ),
-        EventBus::default(),
-        device,
-    )
-    .await
+pub struct StartedClient {
+    client: Arc<Client>,
+    _device_in_use_guard: InUseDeviceLockGuard,
+}
+
+impl Deref for StartedClient {
+    type Target = Client;
+
+    fn deref(&self) -> &Self::Target {
+        &self.client
+    }
+}
+
+pub async fn start_client(device: Arc<LocalDevice>) -> anyhow::Result<Arc<StartedClient>> {
+    let config: Arc<libparsec::internal::ClientConfig> = Arc::new(
+        ClientConfig {
+            with_monitors: false,
+            ..Default::default()
+        }
+        .into(),
+    );
+
+    let device_in_use_guard = match try_lock_device_for_use(&config.config_dir, device.device_id) {
+        Ok(device_in_use_guard) => device_in_use_guard,
+        Err(TryLockDeviceForUseError::AlreadyInUse) => {
+            let mut handle =
+                start_spinner("Device already used by another process, waiting...".into());
+            let device_in_use_guard =
+                lock_device_for_use(&config.config_dir, device.device_id).await?;
+            handle.stop_with_newline();
+            device_in_use_guard
+        }
+        Err(TryLockDeviceForUseError::Internal(err)) => return Err(err),
+    };
+
+    let client = Client::start(config, EventBus::default(), device).await?;
+
+    Ok(Arc::new(StartedClient {
+        client,
+        _device_in_use_guard: device_in_use_guard,
+    }))
 }
 
 pub fn start_spinner(text: String) -> Spinner {

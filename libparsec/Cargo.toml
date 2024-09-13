@@ -41,3 +41,4 @@ dirs = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 libparsec_platform_mountpoint = { workspace = true }
+libparsec_platform_ipc = { workspace = true }

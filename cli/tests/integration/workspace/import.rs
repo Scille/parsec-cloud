@@ -11,18 +11,24 @@ use crate::{
 async fn workspace_import_file(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, bob, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let alice_client = start_client(alice.clone()).await.unwrap();
+    let wid = {
+        let alice_client = start_client(alice.clone()).await.unwrap();
 
-    // Create the workspace used to copy the file to
-    let wid = alice_client
-        .create_workspace("new-workspace".parse().unwrap())
-        .await
-        .unwrap();
-    alice_client.ensure_workspaces_bootstrapped().await.unwrap();
-    alice_client
-        .share_workspace(wid, bob.user_id, Some(libparsec::RealmRole::Reader))
-        .await
-        .unwrap();
+        // Create the workspace used to copy the file to
+        let wid = alice_client
+            .create_workspace("new-workspace".parse().unwrap())
+            .await
+            .unwrap();
+        alice_client.ensure_workspaces_bootstrapped().await.unwrap();
+        alice_client
+            .share_workspace(wid, bob.user_id, Some(libparsec::RealmRole::Reader))
+            .await
+            .unwrap();
+
+        alice_client.stop().await;
+
+        wid
+    };
 
     // Create a file to copy
     let file = tmp_path.join("test.txt");
