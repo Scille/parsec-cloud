@@ -21,23 +21,27 @@ async fn ok(env: &TestbedEnv) {
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
     // Resolve root
-    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
+    let (manifest, path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, "/".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_id);
 
     // Resolve child folder
-    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
+    let (manifest, path, confinement) =
+        ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, "/foo".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_id);
 
     // Resolve child file
-    let (path, confinement) = ops
+    let (manifest, path, confinement) = ops
         .store
         .retrieve_path_from_id(wksp1_foo_egg_txt_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, "/foo/egg.txt".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_foo_egg_txt_id);
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]
@@ -70,32 +74,37 @@ async fn ok_with_confinement(env: &TestbedEnv) {
         .unwrap();
 
     // Resolve root
-    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
+    let (manifest, path, confinement) = ops.store.retrieve_path_from_id(wksp1_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, "/".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_id);
 
     // Resolve foo folder
-    let (path, confinement) = ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
+    let (manifest, path, confinement) =
+        ops.store.retrieve_path_from_id(wksp1_foo_id).await.unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
     p_assert_eq!(path, "/foo.tmp".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_id);
 
     // Resolve spam folder
-    let (path, confinement) = ops
+    let (manifest, path, confinement) = ops
         .store
         .retrieve_path_from_id(wksp1_foo_spam_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
     p_assert_eq!(path, "/foo.tmp/spam.tmp".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == wksp1_foo_spam_id);
 
     // Resolve egg file
-    let (path, confinement) = ops
+    let (manifest, path, confinement) = ops
         .store
         .retrieve_path_from_id(wksp1_foo_spam_egg_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::Confined(wksp1_id));
     p_assert_eq!(path, "/foo.tmp/spam.tmp/egg.txt".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_foo_spam_egg_id);
 }
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
@@ -155,13 +164,14 @@ async fn base_path_mismatch_is_ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
-    let (path, confinement) = ops
+    let (manifest, path, confinement) = ops
         .store
         .retrieve_path_from_id(wksp1_bar_txt_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, "/bar.txt".parse().unwrap());
+    p_assert_matches!(manifest, ArcLocalChildManifest::File(manifest) if manifest.base.id == wksp1_bar_txt_id);
 }
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
@@ -256,13 +266,14 @@ async fn inconsistent_path_recursive_by_children(
     let alice = env.local_device("alice@dev1");
     let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
 
-    let (path, confinement) = ops
+    let (manifest, path, confinement) = ops
         .store
         .retrieve_path_from_id(recursive_target_id)
         .await
         .unwrap();
     p_assert_eq!(confinement, PathConfinementPoint::NotConfined);
     p_assert_eq!(path, expected_path);
+    p_assert_matches!(manifest, ArcLocalChildManifest::Folder(manifest) if manifest.base.id == recursive_target_id);
 }
 
 #[parsec_test(testbed = "minimal_client_ready")]

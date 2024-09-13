@@ -8,10 +8,7 @@ use libparsec_types::prelude::*;
 use crate::{
     certif::{InvalidCertificateError, InvalidKeysBundleError, InvalidManifestError},
     workspace::{
-        store::{
-            EnsureManifestExistsWithParentError, GetManifestError, PathConfinementPoint,
-            ResolvePathError,
-        },
+        store::{EnsureManifestExistsWithParentError, PathConfinementPoint, ResolvePathError},
         EntryStat, WorkspaceOps, WorkspaceStatEntryError,
     },
 };
@@ -229,47 +226,26 @@ pub async fn open_folder_reader_by_id(
     ops: &WorkspaceOps,
     entry_id: VlobID,
 ) -> Result<FolderReader, WorkspaceOpenFolderReaderError> {
-    let manifest = ops
+    let (manifest, _, confinement_point) = ops
         .store
-        .get_manifest(entry_id)
+        .retrieve_path_from_id(entry_id)
         .await
         .map_err(|err| match err {
-            GetManifestError::Offline => WorkspaceOpenFolderReaderError::Offline,
-            GetManifestError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
-            GetManifestError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
-            GetManifestError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
-            GetManifestError::InvalidKeysBundle(err) => {
+            ResolvePathError::Offline => WorkspaceOpenFolderReaderError::Offline,
+            ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
+            ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
+            ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
+            ResolvePathError::InvalidKeysBundle(err) => {
                 WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
             }
-            GetManifestError::InvalidCertificate(err) => {
+            ResolvePathError::InvalidCertificate(err) => {
                 WorkspaceOpenFolderReaderError::InvalidCertificate(err)
             }
-            GetManifestError::InvalidManifest(err) => {
+            ResolvePathError::InvalidManifest(err) => {
                 WorkspaceOpenFolderReaderError::InvalidManifest(err)
             }
-            GetManifestError::Internal(err) => err.context("cannot get manifest").into(),
+            ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
         })?;
-
-    let (_, confinement_point) =
-        ops.store
-            .retrieve_path_from_id(entry_id)
-            .await
-            .map_err(|err| match err {
-                ResolvePathError::Offline => WorkspaceOpenFolderReaderError::Offline,
-                ResolvePathError::Stopped => WorkspaceOpenFolderReaderError::Stopped,
-                ResolvePathError::EntryNotFound => WorkspaceOpenFolderReaderError::EntryNotFound,
-                ResolvePathError::NoRealmAccess => WorkspaceOpenFolderReaderError::NoRealmAccess,
-                ResolvePathError::InvalidKeysBundle(err) => {
-                    WorkspaceOpenFolderReaderError::InvalidKeysBundle(err)
-                }
-                ResolvePathError::InvalidCertificate(err) => {
-                    WorkspaceOpenFolderReaderError::InvalidCertificate(err)
-                }
-                ResolvePathError::InvalidManifest(err) => {
-                    WorkspaceOpenFolderReaderError::InvalidManifest(err)
-                }
-                ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
-            })?;
 
     match manifest {
         ArcLocalChildManifest::Folder(manifest) => Ok(FolderReader {

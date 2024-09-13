@@ -86,51 +86,52 @@ pub(crate) async fn stat_entry_by_id(
     entry_id: VlobID,
     maybe_known_confinement_point: Option<PathConfinementPoint>,
 ) -> Result<EntryStat, WorkspaceStatEntryError> {
-    let manifest = ops
-        .store
-        .get_manifest(entry_id)
-        .await
-        .map_err(|err| match err {
-            GetManifestError::Offline => WorkspaceStatEntryError::Offline,
-            GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
-            GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-            GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-            GetManifestError::InvalidKeysBundle(err) => {
-                WorkspaceStatEntryError::InvalidKeysBundle(err)
-            }
-            GetManifestError::InvalidCertificate(err) => {
-                WorkspaceStatEntryError::InvalidCertificate(err)
-            }
-            GetManifestError::InvalidManifest(err) => WorkspaceStatEntryError::InvalidManifest(err),
-            GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
-        })?;
-
-    let confinement_point = match maybe_known_confinement_point {
-        Some(known_confinement_point) => known_confinement_point,
+    let (manifest, confinement_point) = match maybe_known_confinement_point {
+        Some(known_confinement_point) => {
+            let manifest = ops
+                .store
+                .get_manifest(entry_id)
+                .await
+                .map_err(|err| match err {
+                    GetManifestError::Offline => WorkspaceStatEntryError::Offline,
+                    GetManifestError::Stopped => WorkspaceStatEntryError::Stopped,
+                    GetManifestError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+                    GetManifestError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                    GetManifestError::InvalidKeysBundle(err) => {
+                        WorkspaceStatEntryError::InvalidKeysBundle(err)
+                    }
+                    GetManifestError::InvalidCertificate(err) => {
+                        WorkspaceStatEntryError::InvalidCertificate(err)
+                    }
+                    GetManifestError::InvalidManifest(err) => {
+                        WorkspaceStatEntryError::InvalidManifest(err)
+                    }
+                    GetManifestError::Internal(err) => err.context("cannot resolve path").into(),
+                })?;
+            (manifest, known_confinement_point)
+        }
         None => {
-            let (_, confinement_point) =
-                ops.store
-                    .retrieve_path_from_id(entry_id)
-                    .await
-                    .map_err(|err| match err {
-                        ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
-                        ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
-                        ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
-                        ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
-                        ResolvePathError::InvalidKeysBundle(err) => {
-                            WorkspaceStatEntryError::InvalidKeysBundle(err)
-                        }
-                        ResolvePathError::InvalidCertificate(err) => {
-                            WorkspaceStatEntryError::InvalidCertificate(err)
-                        }
-                        ResolvePathError::InvalidManifest(err) => {
-                            WorkspaceStatEntryError::InvalidManifest(err)
-                        }
-                        ResolvePathError::Internal(err) => {
-                            err.context("cannot retrieve path").into()
-                        }
-                    })?;
-            confinement_point
+            let (manifest, _, confinement_point) = ops
+                .store
+                .retrieve_path_from_id(entry_id)
+                .await
+                .map_err(|err| match err {
+                    ResolvePathError::Offline => WorkspaceStatEntryError::Offline,
+                    ResolvePathError::Stopped => WorkspaceStatEntryError::Stopped,
+                    ResolvePathError::EntryNotFound => WorkspaceStatEntryError::EntryNotFound,
+                    ResolvePathError::NoRealmAccess => WorkspaceStatEntryError::NoRealmAccess,
+                    ResolvePathError::InvalidKeysBundle(err) => {
+                        WorkspaceStatEntryError::InvalidKeysBundle(err)
+                    }
+                    ResolvePathError::InvalidCertificate(err) => {
+                        WorkspaceStatEntryError::InvalidCertificate(err)
+                    }
+                    ResolvePathError::InvalidManifest(err) => {
+                        WorkspaceStatEntryError::InvalidManifest(err)
+                    }
+                    ResolvePathError::Internal(err) => err.context("cannot retrieve path").into(),
+                })?;
+            (manifest, confinement_point)
         }
     };
 
