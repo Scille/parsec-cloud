@@ -89,6 +89,15 @@
       padding-top: 10px;
     }
 
+    .grey-text {
+      margin: 0 1rem 1rem 1rem;
+      color: #778899;
+    }
+
+    .grey-text-url {
+      font-weight: bold;
+    }
+
     .footer {
       clear: both;
       margin-top: 10px;
@@ -452,6 +461,14 @@
                           </tr>
                         </tbody>
                       </table>
+                      <div class="grey-text"">
+                        <em>
+                          The button didn't work? You can copy/paste the following link in your browser instead:
+                        </em>
+                        <em class="grey-text-url">
+                          {{ invitation_url }}
+                        </em>
+                      </div>
                       <p>
                         {% if greeter %}
                         3. Get in touch with <b>{{ greeter }}</b> and follow the next steps on the Parsec client.
