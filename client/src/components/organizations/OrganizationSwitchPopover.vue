@@ -32,7 +32,10 @@
           @click="onOrganizationClick(org)"
         >
           <div class="organization">
-            <ion-avatar class="organization-avatar">
+            <ion-avatar
+              class="organization-avatar"
+              :class="org.isOnline ? 'online' : 'offline'"
+            >
               <ms-image
                 v-if="org.trial"
                 :image="LogoIconGradient"
@@ -220,7 +223,14 @@ async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
         width: 0.625rem;
         border-radius: var(--parsec-radius-circle);
         border: 3px solid var(--parsec-color-light-secondary-white);
+      }
+
+      &.online:not(.ellipsis)::after {
         background-color: var(--parsec-color-light-success-500);
+      }
+
+      &.offline:not(.ellipsis)::after {
+        background-color: var(--parsec-color-light-secondary-light);
       }
     }
 
