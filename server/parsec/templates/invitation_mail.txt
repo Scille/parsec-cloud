@@ -8,7 +8,7 @@ Your next steps:
 
 1. If you haven't already, download the Parsec client via the following link: https://parsec.cloud/en/start-parsec
 
-2. Once installed, click on the following link to proceed to Parsec: {{ invitation_url }}
+2. Once installed, open the following link to proceed to Parsec: {{ invitation_url }}
 
 {% if greeter %}
 3. Get in touch with {{ greeter }} and follow the next steps on the Parsec client.
