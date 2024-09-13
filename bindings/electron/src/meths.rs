@@ -3906,6 +3906,11 @@ fn variant_client_start_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::ClientStartError::DeviceUsedByAnotherProcess { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ClientStartErrorDeviceUsedByAnotherProcess").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientStartError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ClientStartErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -5838,6 +5843,26 @@ fn variant_user_or_device_claim_initial_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// WaitForDeviceAvailableError
+
+#[allow(dead_code)]
+fn variant_wait_for_device_available_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::WaitForDeviceAvailableError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::WaitForDeviceAvailableError::Internal { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "WaitForDeviceAvailableErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceCreateFileError
 
 #[allow(dead_code)]
@@ -6784,12 +6809,12 @@ fn bootstrap_organization(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     // TODO: log an error instead of panic ? (it is a bit harsh to crash
                     // the current task if an unrelated event handler has a bug...)
                     let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_number = JsNumber::new(&mut cx, handle);
+                    let js_handle = JsNumber::new(&mut cx, handle);
                     if let Some(ref js_fn) = callback2.js_fn {
                         js_fn
                             .to_inner(&mut cx)
                             .call_with(&cx)
-                            .args((js_number, js_event))
+                            .args((js_handle, js_event))
                             .apply::<JsValue, _>(&mut cx)?;
                     }
                     Ok(())
@@ -7461,12 +7486,12 @@ fn claimer_retrieve_info(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     // TODO: log an error instead of panic ? (it is a bit harsh to crash
                     // the current task if an unrelated event handler has a bug...)
                     let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_number = JsNumber::new(&mut cx, handle);
+                    let js_handle = JsNumber::new(&mut cx, handle);
                     if let Some(ref js_fn) = callback2.js_fn {
                         js_fn
                             .to_inner(&mut cx)
                             .call_with(&cx)
-                            .args((js_number, js_event))
+                            .args((js_handle, js_event))
                             .apply::<JsValue, _>(&mut cx)?;
                     }
                     Ok(())
@@ -8937,12 +8962,12 @@ fn client_start(mut cx: FunctionContext) -> JsResult<JsPromise> {
                     // TODO: log an error instead of panic ? (it is a bit harsh to crash
                     // the current task if an unrelated event handler has a bug...)
                     let js_event = variant_client_event_rs_to_js(&mut cx, event)?;
-                    let js_number = JsNumber::new(&mut cx, handle);
+                    let js_handle = JsNumber::new(&mut cx, handle);
                     if let Some(ref js_fn) = callback2.js_fn {
                         js_fn
                             .to_inner(&mut cx)
                             .call_with(&cx)
-                            .args((js_number, js_event))
+                            .args((js_handle, js_event))
                             .apply::<JsValue, _>(&mut cx)?;
                     }
                     Ok(())
@@ -11353,6 +11378,73 @@ fn validate_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// wait_for_device_available
+fn wait_for_device_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let config_dir = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let device_id = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::wait_for_device_available(&config_dir, device_id).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err =
+                            variant_wait_for_device_available_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // workspace_create_file
 fn workspace_create_file(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -12838,6 +12930,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     cx.export_function("validateInvitationToken", validate_invitation_token)?;
     cx.export_function("validateOrganizationId", validate_organization_id)?;
     cx.export_function("validatePath", validate_path)?;
+    cx.export_function("waitForDeviceAvailable", wait_for_device_available)?;
     cx.export_function("workspaceCreateFile", workspace_create_file)?;
     cx.export_function("workspaceCreateFolder", workspace_create_folder)?;
     cx.export_function("workspaceCreateFolderAll", workspace_create_folder_all)?;
