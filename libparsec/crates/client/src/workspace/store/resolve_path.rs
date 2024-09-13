@@ -660,7 +660,7 @@ pub(crate) async fn resolve_path_for_reparenting(
 }
 
 enum CacheOnlyRetrievalOutcome {
-    Done(FsPath, PathConfinementPoint),
+    Done((ArcLocalChildManifest, FsPath, PathConfinementPoint)),
     EntryNotFound,
     NeedPopulateCache(VlobID),
 }
@@ -676,12 +676,14 @@ fn cache_only_retrieve_path_from_id(
     // Get the root ID
     let root_entry_id = cache.manifests.root_manifest().base.id;
 
+    let entry_manifest = match cache.manifests.get(&entry_id) {
+        Some(manifest) => manifest.clone(),
+        None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(entry_id),
+    };
+
     // Initialize the loop state
     let mut current_entry_id = entry_id;
-    let mut current_parent_id = match cache.manifests.get(&current_entry_id) {
-        Some(manifest) => manifest.parent(),
-        None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(current_entry_id),
-    };
+    let mut current_parent_id = entry_manifest.parent();
     let mut seen: HashSet<VlobID> = HashSet::from_iter([current_entry_id]);
 
     // Loop until we reach the root
@@ -731,14 +733,14 @@ fn cache_only_retrieve_path_from_id(
 
     // Reverse the parts to get the path
     parts.reverse();
-    CacheOnlyRetrievalOutcome::Done(FsPath::from_parts(parts), confinement)
+    CacheOnlyRetrievalOutcome::Done((entry_manifest, FsPath::from_parts(parts), confinement))
 }
 
 /// Retrieve the path and the confinement point of a given entry ID.
 pub(crate) async fn retrieve_path_from_id(
     store: &super::WorkspaceStore,
     entry_id: VlobID,
-) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+) -> Result<(ArcLocalChildManifest, FsPath, PathConfinementPoint), ResolvePathError> {
     loop {
         // Most of the time we should have each entry in the path already in the cache,
         // so we want to lock the cache once and only release it in the unlikely case
@@ -748,8 +750,8 @@ pub(crate) async fn retrieve_path_from_id(
             cache_only_retrieve_path_from_id(&mut cache, entry_id)
         };
         match cache_only_outcome {
-            CacheOnlyRetrievalOutcome::Done(path, confinement_point) => {
-                return Ok((path, confinement_point))
+            CacheOnlyRetrievalOutcome::Done((entry_manifest, path, confinement_point)) => {
+                return Ok((entry_manifest, path, confinement_point))
             }
             CacheOnlyRetrievalOutcome::EntryNotFound => {
                 return Err(ResolvePathError::EntryNotFound)

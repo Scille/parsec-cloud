@@ -211,10 +211,10 @@ impl WorkspaceStore {
         resolve_path::resolve_path(self, path).await
     }
 
-    pub(crate) async fn retrieve_path_from_id(
+    pub async fn retrieve_path_from_id(
         &self,
         entry_id: VlobID,
-    ) -> Result<(FsPath, PathConfinementPoint), ResolvePathError> {
+    ) -> Result<(ArcLocalChildManifest, FsPath, PathConfinementPoint), ResolvePathError> {
         resolve_path::retrieve_path_from_id(self, entry_id).await
     }
 
