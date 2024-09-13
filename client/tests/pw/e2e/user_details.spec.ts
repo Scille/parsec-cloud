@@ -19,7 +19,7 @@ async function openModalWithUser(usersPage: Page, userIndex: number): Promise<Lo
 msTest('User details modal', async ({ usersPage }) => {
   const modal = await openModalWithUser(usersPage, 3);
 
-  await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Member details');
   const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
   await expect(detailsItems.nth(0).locator('.details-item__title')).toHaveText('Name');
   // cspell:disable-next-line
@@ -38,7 +38,7 @@ msTest('User details modal', async ({ usersPage }) => {
 msTest('User details modal no common workspaces', async ({ usersPage }) => {
   const modal = await openModalWithUser(usersPage, 4);
 
-  await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
+  await expect(modal.locator('.ms-modal-header__title')).toHaveText('Member details');
   const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
   await expect(detailsItems.nth(0).locator('.details-item__title')).toHaveText('Name');
   await expect(detailsItems.nth(0).locator('.details-item__text')).toHaveText('Patches');

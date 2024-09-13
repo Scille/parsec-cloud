@@ -47,15 +47,15 @@
         },
         "manager": {
             "label": "Manager",
-            "description": "Can manage user access to this workspace."
+            "description": "Can manage member access to this workspace."
         },
         "owner": {
             "label": "Owner",
-            "description": "Can manage user access and re-encrypt the workspace. Can promote other users to Owner."
+            "description": "Can manage member access and re-encrypt the workspace. Can promote other members to Owner."
         },
         "none": "Not shared",
         "members": "Member ({count}) | Members ({count})",
-        "suggestion": "Suggested users"
+        "suggestion": "Suggested members"
     },
     "link": {
         "invalid": "The provided link is invalid.",
@@ -70,7 +70,7 @@
         "readOnly": "Only unread",
         "goToWorkspace": "Go to this workspace",
         "openImportedMenu": "Open imported files menu",
-        "viewJoinedUsers": "View users",
+        "viewJoinedUsers": "View members",
         "goToDevices": "Go to my devices",
         "openEnclosingFolder": "Open enclosing folder",
         "noNotification": "You are up to date!",
@@ -87,7 +87,7 @@
         "workspaceAccess": "You have access to the workspace {workspace}",
         "userJoinWorkspace": "{name} has joined the workspace {workspace}",
         "multipleUsersJoinWorkspace": "{count} have joined the workspace {workspace}",
-        "users": "users",
+        "users": "members",
         "userSharedDocument": "{name} shared a new document",
         "allImportedElements": "All your elements have been imported",
         "newDeviceAdded": "A new device has been added to the organization",
@@ -125,7 +125,7 @@
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
             "sortByOrganization": "Organization",
-            "sortByUserName": "User Name",
+            "sortByUserName": "Member Name",
             "sortByLastLogin": "Last login",
             "labelSortBy": "Sort by",
             "search": "Search",
@@ -275,7 +275,7 @@
         "titles": {
             "workspaces": "My workspaces",
             "about": "About",
-            "users": "Users",
+            "users": "Members",
             "organization": {
                 "storage": "Storage",
                 "information": "Information"
@@ -302,7 +302,7 @@
         },
         "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
         "owner": "owner",
-        "noMatch": "No user found that matches '{query}'."
+        "noMatch": "No members found that matches '{query}'."
     },
     "SettingsModal": {
         "pageTitle": "Settings",
@@ -393,7 +393,7 @@
         "listDisplayTitles": {
             "name": "Name",
             "role": "Role",
-            "sharedWith": "Users",
+            "sharedWith": "Members",
             "lastUpdate": "Last updated",
             "size": "Size"
         },
@@ -575,8 +575,8 @@
             "users": {
                 "revokedUsers": "Revoked",
                 "activeUsers": "Active",
-                "title": "Users",
-                "seeUsers": "See users"
+                "title": "Members",
+                "seeUsers": "See members"
             },
             "size": {
                 "metadata": "Meta-data",
@@ -586,7 +586,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "External profile",
-                "userLimit": "User limit",
+                "userLimit": "Member limit",
                 "unlimited": "Unlimited",
                 "allowed": "Enabled",
                 "forbidden": "Disabled",
@@ -627,7 +627,7 @@
         "workspaces": "Workspaces",
         "favorites": "Favorites",
         "noWorkspace": "No workspaces",
-        "users": "Users",
+        "users": "Members",
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
@@ -830,7 +830,7 @@
         "instructions": {
             "start": {
                 "first": "In order to avoid any attack, you will have to be in direct contact with the host during the whole onboarding process.",
-                "second": "The host will have to go to Users, then Pending invitation to start the process.",
+                "second": "The host will have to go to Members, then Pending invitation to start the process.",
                 "greeter": "You will be welcomed into the organization {organizationName} by {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -863,7 +863,7 @@
             "noneCodeSelected": "If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.",
             "unexpected": "An unexpected error occurred (reason: {reason}).",
             "invalidCodeSelected": "You did not select the correct code. Please restart the onboarding process.",
-            "usersLimitReached": "The user limit for this organization has been reached.",
+            "usersLimitReached": "The member limit for this organization has been reached.",
             "peerReset": "The host has cancelled the process.",
             "peerResetCode": "The host has cancelled the process or has selected the wrong code.",
             "cancelled": "The process has been cancelled.",
@@ -888,8 +888,8 @@
             "joinedOn": "Joined On"
         },
         "currentUser": "(You)",
-        "inviteUser": "Invite a user",
-        "itemCount": "No user | One user | {count} users",
+        "inviteUser": "Invite a member",
+        "itemCount": "No members | One member | {count} members",
         "profile": {
             "admin": {
                 "label": "Administrator",
@@ -912,14 +912,14 @@
             "email": "Email address:",
             "profile": "Profile choice:"
         },
-        "emptyList": "No user to display.",
-        "noMatch": "No users matching your filters.",
-        "listUsersFailed": "Failed to retrieve the users list. Please make sure you are online.",
-        "userSelectedCount": "No user selected | One user selected | {count} users selected",
+        "emptyList": "No members to display.",
+        "noMatch": "No members matching your filters.",
+        "listUsersFailed": "Failed to retrieve the members list. Please make sure you are online.",
+        "userSelectedCount": "No members selected | One member selected | {count} members selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
-            "titleDetails": "User details",
-            "actionRevoke": "Revoke this user | Revoke these users",
+            "titleDetails": "Member details",
+            "actionRevoke": "Revoke this member | Revoke these members",
             "actionDetails": "View details",
             "titleAssignRoles": "Copy roles",
             "actionAssignRoles": "Copy workspace roles to...",
@@ -927,19 +927,19 @@
         },
         "greet": {
             "titles": {
-                "waitForGuest": "Onboard a new user",
+                "waitForGuest": "Onboard a new member",
                 "provideHostCode": "Share your code",
                 "getGuestCode": "Get guest code",
                 "contactDetails": "Contact details",
-                "summary": "User has been added successfully!"
+                "summary": "Member has been added successfully!"
             },
             "subtitles": {
-                "waitForGuest1": "To onboard a new user, you have to be in direct contact with them during the onboarding process (around 2 minutes).",
+                "waitForGuest1": "To onboard a new member, you have to be in direct contact with them during the onboarding process (around 2 minutes).",
                 "waitForGuest2": "Please do not close this window during the onboarding process.",
                 "provideHostCode": "Give the code below to the guest.",
                 "getGuestCode": "Click on the code given to you by the guest.",
                 "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",
-                "checkUserInfo": "You can update the user name, device and profile."
+                "checkUserInfo": "You can update the member name, device and profile."
             },
             "steps": {
                 "hostCode": "Host code",
@@ -983,7 +983,7 @@
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "The email {email} is already used by a member of this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
-            "inviteFailedNotAllowed": "Only an administrator can invite new users into the organization.",
+            "inviteFailedNotAllowed": "Only an administrator can invite new members into the organization.",
             "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
             "cancelSuccess": "Invitation has been cancelled.",
             "cancelFailed": "Failed to cancel invitation",
@@ -1005,12 +1005,12 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Invite a new user",
-            "label": "User's email",
+            "label": "Member's email",
             "placeholder": "john.smith{'@'}example.com",
             "create": "Invite"
         },
         "UserDetailsModal": {
-            "title": "User details",
+            "title": "Member details",
             "subtitles": {
                 "name": "Name",
                 "joined": "Joined",
@@ -1024,13 +1024,13 @@
             "failedToListWorkspaces": "Failed to list workspaces."
         },
         "revocation": {
-            "revokeTitle": "Revoke this user? | Revoke these users?",
-            "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} users, preventing them from accessing this organization. Are you sure you want to proceed?",
+            "revokeTitle": "Revoke this member? | Revoke these members?",
+            "revokeQuestion": "This will revoke {user}, preventing them from accessing this organization. Are you sure you want to proceed? | This will revoke these {count} members, preventing them from accessing this organization. Are you sure you want to proceed?",
             "revokeYes": "Revoke",
             "revokeNo": "Cancel",
-            "revokeFailed": "Failed to revoke this user | Failed to revoke any user",
-            "revokeSuccess": "{user} has been revoked. They can no longer access this organization. | {count} users have been revoked, they can no longer access this organization.",
-            "revokeSomeFailed": "Some users could not be revoked"
+            "revokeFailed": "Failed to revoke this member | Failed to revoke any members",
+            "revokeSuccess": "{user} has been revoked. They can no longer access this organization. | {count} members have been revoked, they can no longer access this organization.",
+            "revokeSomeFailed": "Some members could not be revoked"
         },
         "sort": {
             "byName": "Name",
@@ -1204,8 +1204,8 @@
     "UserSelect": {
         "defaultLabel": "Choose a person",
         "defaultPlaceholder": "Name or email of the person",
-        "noMatch": "No users found",
-        "queryFailed": "An error prevents us from listing the users."
+        "noMatch": "No members found",
+        "queryFailed": "An error prevents us from listing the members."
     },
     "clientArea": {
         "app": {
@@ -1370,7 +1370,7 @@
         "statistics": {
             "titles": {
                 "stats": "Statistics",
-                "users": "Users",
+                "users": "Members",
                 "active": "active",
                 "revoked": "revoked",
                 "storage": "Used storage"
@@ -1465,7 +1465,7 @@
             },
             "stopSubscription": {
                 "title": "Would you like to stop your subscription?",
-                "description": "The organization will become unavailable to all users.",
+                "description": "The organization will become unavailable to all members.",
                 "button": "Stop my subscription",
                 "questionTitle": "Stop the subscription",
                 "questionMessage": "Are you sure you want to cancel the subscription?",
@@ -1500,8 +1500,8 @@
             "summary": {
                 "estimatedAmount": "Estimated amount",
                 "withdrawal": "Withdrawal on {date} | Withdrawal today",
-                "withdrawalDescription": "Estimated amount based on the number of active users and storage used.",
-                "users": "Active users",
+                "withdrawalDescription": "Estimated amount based on the number of active members and storage used.",
+                "users": "Active members",
                 "storage": "Used storage"
             },
             "invoices": {

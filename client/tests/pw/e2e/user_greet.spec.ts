@@ -5,7 +5,7 @@ import { msTest } from '@tests/pw/helpers/fixtures';
 import { answerQuestion } from '@tests/pw/helpers/utils';
 
 msTest('Open the greet user modal', async ({ userGreetModal }) => {
-  await expect(userGreetModal.locator('.modal-header__title')).toHaveText('Onboard a new user');
+  await expect(userGreetModal.locator('.modal-header__title')).toHaveText('Onboard a new member');
   await expect(userGreetModal.locator('#next-button')).toHaveText('Start');
   await expect(userGreetModal.locator('.closeBtn')).toBeVisible();
 });
@@ -40,7 +40,7 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await userGreetModal.page().waitForTimeout(200);
 
   await expect(title).toHaveText('Contact details');
-  await expect(subtitle).toHaveText('You can update the user name, device and profile.');
+  await expect(subtitle).toHaveText('You can update the member name, device and profile.');
   await expect(userGreetModal).toHaveWizardStepper(['Host code', 'Guest code', 'Contact details'], 2);
   await expect(nextButton).toBeVisible();
   await expect(nextButton).toHaveDisabledAttribute();
@@ -61,7 +61,7 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(nextButton).toHaveText('Approve');
   await nextButton.click();
 
-  await expect(title).toHaveText('User has been added successfully!');
+  await expect(title).toHaveText('Member has been added successfully!');
   await expect(nextButton).not.toHaveDisabledAttribute();
   await expect(nextButton).toBeVisible();
   await expect(modalContent.locator('.final-step').locator('.person-name')).toHaveText('Gordon Freeman');
@@ -83,7 +83,7 @@ msTest('User join select invalid SAS code', async ({ userGreetModal }) => {
   await choices.nth(0).click();
 
   await expect(userGreetModal.page()).toShowToast('You did not select the correct code. Please restart the onboarding process.', 'Error');
-  await expect(title).toHaveText('Onboard a new user');
+  await expect(title).toHaveText('Onboard a new member');
 });
 
 msTest('User join select no SAS code', async ({ userGreetModal }) => {
@@ -98,7 +98,7 @@ msTest('User join select no SAS code', async ({ userGreetModal }) => {
     'If you did not see the correct code, this could be a sign of a security issue during the onboarding. Please restart the process.',
     'Error',
   );
-  await expect(title).toHaveText('Onboard a new user');
+  await expect(title).toHaveText('Onboard a new member');
 });
 
 msTest('Close user greet process', async ({ userGreetModal }) => {

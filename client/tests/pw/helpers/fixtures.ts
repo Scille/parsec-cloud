@@ -70,7 +70,7 @@ export const msTest = base.extend<{
 
   usersPage: async ({ connected }, use) => {
     await connected.locator('.sidebar').locator('#manageOrganization').click();
-    await expect(connected).toHavePageTitle('Users');
+    await expect(connected).toHavePageTitle('Members');
     await expect(connected).toBeUserPage();
     use(connected);
   },
