@@ -221,7 +221,7 @@ Allowed values:
 def _parse_db_param(value: str) -> BaseDatabaseConfig:
     if value.upper() == "MOCKED":
         return MockedDatabaseConfig()
-    elif value.startswith("postgresql://"):
+    elif value.startswith("postgresql://") or value.startswith("postgres://"):
         return PostgreSQLDatabaseConfig(url=value, min_connections=5, max_connections=7)
     else:
         raise click.BadParameter(f"Invalid db type `{value}`")
