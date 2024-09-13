@@ -223,6 +223,7 @@ jobs:
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg*
+            release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.zip*
             release-files/parsec-cli_${{ needs.version.outputs.full }}_linux_*
             release-files/python-*-requirements.txt
             release-files/python-*-requirements.txt.sha256
