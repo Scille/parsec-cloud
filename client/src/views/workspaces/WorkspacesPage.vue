@@ -229,7 +229,7 @@ const routeWatchCancel = watchRoute(async () => {
   const query = getCurrentRouteQuery();
   if (query.workspaceName) {
     await createWorkspace(query.workspaceName);
-    await navigateTo(Routes.Workspaces, { query: {} });
+    await navigateTo(Routes.Workspaces, { replace: true, query: {} });
   } else if (query.fileLink) {
     const success = await handleFileLink(query.fileLink);
     if (!success) {
