@@ -26,10 +26,9 @@ import os
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = [
-    "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
     "sphinx_copybutton",
     "sphinx_rtd_theme",
+    "sphinx_tabs.tabs",
     # Allow to use svg images in latex build.
     # https://www.sphinx-doc.org/en/master/usage/extensions/imgconverter.html
     "sphinx.ext.imgconverter",
@@ -106,6 +105,11 @@ pygments_style = "sphinx"
 # If true, keep warnings as "system message" paragraphs in the built
 # documents.
 # keep_warnings = False
+
+# -- sphinx-tabs
+#
+# By default, tabs can be closed by selecting the open tab.
+sphinx_tabs_disable_tab_closing = True
 
 
 # -- Options for HTML output -------------------------------------------
