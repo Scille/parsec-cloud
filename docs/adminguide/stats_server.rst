@@ -15,7 +15,7 @@ In order to extract server statistics, the administrator needs to provide :
 
 .. code-block:: shell
 
-    parsec.cli core stats_server --addr=parsec3://example.com --administration-token=s3cr3t --at 2023-05-13 --output 202001-my_server_stats.csv --format=csv
+    parsec-cli server stats --addr=parsec3://example.com --token=s3cr3t --end-date=2024-08-31 --format=csv > 202408-my_server_stats.csv
 
 Information available in the extraction are :
 
