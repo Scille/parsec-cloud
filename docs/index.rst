@@ -31,11 +31,11 @@ You can also use the search function in the top left corner.
     userguide/installation
     userguide/join_organization
     userguide/first_steps
+    userguide/parsec_workspaces
     userguide/new_organization
     userguide/new_user
     userguide/new_device
     userguide/recovery_device
-    userguide/share_data
     userguide/revoke_user
     userguide/troubleshooting
 
