@@ -159,11 +159,11 @@ jobs:
         timeout-minutes: 10
 
       - name: Build CLI binary
-        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec_cli
+        run: cargo build ${{ env.CARGO_CI_FLAGS }} --package parsec-cli
         timeout-minutes: 5
 
       - name: Test CLI
-        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec_cli
+        run: cargo nextest run ${{ env.CARGO_NEXTEST_CI_FLAGS }} --package parsec-cli
         timeout-minutes: 10
 
       - name: Retrieve clippy args

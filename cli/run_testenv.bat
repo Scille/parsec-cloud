@@ -23,7 +23,7 @@ endlocal & set "uid=%uid%"
 del "%lock%" 2>nul
 
 :: Here we run the testenv with the terminal PID: %PID%
-cargo run --package parsec_cli --features testenv run-testenv --main-process-id %PID% --source-file "%source_file%" %*
+cargo run --package parsec-cli --features testenv run-testenv --main-process-id %PID% --source-file "%source_file%" %*
 
 :: Here we remove all the environment variables
 endlocal

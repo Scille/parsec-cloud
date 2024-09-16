@@ -114,7 +114,7 @@ macro_rules! assert_cmd {
             .write_stdin(format!("{password}\n", password = $pass))
     };
     ($($cmd:expr),+) => {
-        assert_cmd::Command::cargo_bin("parsec_cli")
+        assert_cmd::Command::cargo_bin("parsec-cli")
             .unwrap()
             .args([$($cmd),+])
     };

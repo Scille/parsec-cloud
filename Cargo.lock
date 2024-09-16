@@ -2876,7 +2876,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "parsec_cli"
+name = "parsec-cli"
 version = "3.0.0-rc.1+dev"
 dependencies = [
  "anyhow",

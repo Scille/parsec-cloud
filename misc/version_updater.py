@@ -245,7 +245,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Parsec: [JSON_VERSION_FIELD],
     },
     ROOT_DIR / "cli/tests/integration/version.rs": {
-        Tool.Parsec: [ReplaceRegex(r'"parsec_cli .*", ', '"parsec_cli {version}", ')]
+        Tool.Parsec: [ReplaceRegex(r'"parsec-cli .*", ', '"parsec-cli {version}", ')]
     },
     ROOT_DIR / "client/electron/assets/installer.nsh": {
         Tool.WinFSP: [ReplaceRegex(r'WINFSP_VERSION ".*"', 'WINFSP_VERSION "{version}"')],

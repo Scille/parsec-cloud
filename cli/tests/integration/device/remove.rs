@@ -12,7 +12,7 @@ use crate::tests::{bootstrap_cli_test, wait_for};
 async fn remove_device(tmp_path: TmpPath) {
     let (_, TestOrganization { alice, .. }, _) = bootstrap_cli_test(&tmp_path).await.unwrap();
 
-    let process = std::process::Command::cargo_bin("parsec_cli")
+    let process = std::process::Command::cargo_bin("parsec-cli")
         .unwrap()
         .args(["device", "remove", "--device", &alice.device_id.hex()])
         .stdin(std::process::Stdio::piped())
