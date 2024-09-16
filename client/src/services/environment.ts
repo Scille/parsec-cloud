@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-import { EnvironmentType } from 'megashark-lib';
+import { EnvironmentType, I18n } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
 
@@ -60,10 +60,45 @@ function getTrialServers(): Array<string> {
   return DEFAULT_TRIAL_SERVERS;
 }
 
+const CLEAN_APP_VERSION = `${APP_VERSION.slice(0, APP_VERSION.indexOf('+') === -1 ? undefined : APP_VERSION.indexOf('+'))}`;
+const APP_VERSION_PREFIX = `v${CLEAN_APP_VERSION}`;
+
+async function openDocumentationLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }), '_blank');
+}
+
+async function openContactLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: getSignUrl() } }), '_blank');
+}
+
+async function openLicenseLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'app.licenseLink', data: { version: APP_VERSION_PREFIX } }), '_blank');
+}
+
+async function openChangelogLink(): Promise<void> {
+  window.open(I18n.translate({ key: 'app.history', data: { version: APP_VERSION_PREFIX } }), '_blank');
+}
+
+async function openSourcesLink(): Promise<void> {
+  window.open(I18n.translate('app.projectSources'), '_blank');
+}
+
+async function openDeveloperLink(): Promise<void> {
+  window.open(I18n.translate('app.developerLink'), '_blank');
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
   getSignUrl,
   getSaasServers,
   getTrialServers,
+  Links: {
+    openDocumentationLink,
+    openContactLink,
+    openLicenseLink,
+    openChangelogLink,
+    openSourcesLink,
+    openDeveloperLink,
+  },
 };

@@ -42,13 +42,13 @@ import useUploadMenu from '@/services/fileUploadMenu';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, askQuestion, I18n } from 'megashark-lib';
+import { Answer, askQuestion } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
 import { chevronDown } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, Ref } from 'vue';
-import { Env, APP_VERSION } from '@/services/environment';
+import { Env } from '@/services/environment';
 
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
@@ -160,9 +160,9 @@ async function openPopover(event: Event): Promise<void> {
   } else if (data.option === ProfilePopoverOption.Settings) {
     await openSettingsModal();
   } else if (data.option === ProfilePopoverOption.Documentation) {
-    window.open(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION } }), '_blank');
+    await Env.Links.openDocumentationLink();
   } else if (data.option === ProfilePopoverOption.Feedback) {
-    window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: Env.getSignUrl() } }), '_blank');
+    await Env.Links.openContactLink();
   } else if (data.option === ProfilePopoverOption.App) {
     await navigateTo(Routes.About);
   } else if (data.option === ProfilePopoverOption.MyProfile) {

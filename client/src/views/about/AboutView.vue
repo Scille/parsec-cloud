@@ -33,8 +33,7 @@
           <ion-text class="app-info-value"> v{{ APP_VERSION }} </ion-text>
           <ion-button
             class="changelog-btn button-outline"
-            target="_blank"
-            :href="$msTranslate({ key: 'app.history', data: { version: version } })"
+            @click="Env.Links.openChangelogLink"
           >
             {{ $msTranslate('AboutPage.update.showChangelog') }}
           </ion-button>
@@ -47,13 +46,12 @@
           {{ $msTranslate('AboutPage.appInfo.developer') }}
         </ion-label>
         <ion-text class="app-info-value">
-          <a
-            :href="$msTranslate('app.developerLink')"
-            target="_blank"
+          <span
+            @click="Env.Links.openDeveloperLink"
             class="link"
           >
-            <span>{{ $msTranslate('app.developer') }}</span>
-          </a>
+            {{ $msTranslate('app.developer') }}
+          </span>
         </ion-text>
       </ion-item>
 
@@ -63,13 +61,12 @@
           {{ $msTranslate('AboutPage.appInfo.license') }}
         </ion-label>
         <ion-text class="app-info-value">
-          <a
-            :href="$msTranslate({ key: 'app.licenseLink', data: { version: version } })"
-            target="_blank"
+          <span
+            @click="Env.Links.openLicenseLink"
             class="link"
           >
             {{ $msTranslate('app.license') }}
-          </a>
+          </span>
         </ion-text>
       </ion-item>
 
@@ -79,14 +76,15 @@
           {{ $msTranslate('AboutPage.appInfo.project') }}
         </ion-label>
         <ion-text class="app-info-value">
-          <a
+          <span
+            @click="Env.Links.openSourcesLink"
             target="_blank"
             :href="$msTranslate('app.projectSources')"
             class="link"
           >
             <ion-icon :icon="logoGithub" />
             GitHub
-          </a>
+          </span>
         </ion-text>
       </ion-item>
     </ion-list>
@@ -127,13 +125,12 @@ async function showChangelog(): Promise<void> {
 </script>
 
 <script setup lang="ts">
-import { APP_VERSION } from '@/services/environment';
+import { Env, APP_VERSION } from '@/services/environment';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText } from '@ionic/vue';
 import { logoGithub } from 'ionicons/icons';
 import { ref } from 'vue';
 
 const upToDate = ref(true);
-const version = ref(`v${APP_VERSION.replace('+dev', '')}`);
 
 async function update(): Promise<void> {
   console.log('update');
@@ -230,6 +227,7 @@ async function update(): Promise<void> {
     flex-direction: row;
     align-items: center;
     gap: 0.5rem;
+    cursor: pointer;
 
     ion-icon {
       color: var(--parsec-color-light-primary-800);
