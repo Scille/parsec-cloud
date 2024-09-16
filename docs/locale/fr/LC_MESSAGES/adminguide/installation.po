@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-30 10:20+0200\n"
+"POT-Creation-Date: 1980-01-01 00:00+0000\n"
 "PO-Revision-Date: 2024-07-30 10:18+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language: fr\n"
@@ -17,21 +17,56 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
-#: ../../adminguide/installation.rst:7
-msgid "Install Linux Parsec client"
-msgstr "Installation du client Linux Parsec"
-
-#: ../../adminguide/installation.rst:9
+#: ../../adminguide/installation.rst:5
 msgid ""
-"Administrative operations must be performed with Parsec client for Linux."
-" They can be performed from another machine."
+"Administrative operations must be performed with Parsec CLI for Linux. They "
+"can be performed from another machine."
 msgstr ""
-"Les opérations administratives doivent être effectuées avec le client "
-"Parsec pour Linux. Elles peuvent être effectuées à partir d'une autre "
-"machine."
+"Les opérations administratives doivent être effectuées avec l'interface en ligne "
+"de commande (CLI) Parsec pour Linux. Elles peuvent être effectuées à partir "
+"d'une autre machine."
 
-#: ../../adminguide/installation.rst:11
-msgid "See :ref:`Install Parsec (User Guide) <doc_userguide_install_parsec>`."
+#: ../../adminguide/installation.rst:8
+msgid "Install Linux Parsec CLI"
+msgstr "Installation de la CLI Parsec sur Linux"
+
+#: ../../adminguide/installation.rst:10
+msgid ""
+"Parsec is also available as a command line interface (CLI) for Linux. It is "
+"a standalone binary that is provided in our GitHub releases."
 msgstr ""
-"Voir :ref:`Installation de Parsec (Guide utilisateur) "
-"<doc_userguide_install_parsec>`."
+"Parsec est également disponible en tant qu'interface en ligne de commande "
+"(CLI) pour Linux. C'est un binaire autonome fourni dans nos versions GitHub."
+
+#: ../../adminguide/installation.rst:12
+msgid "Download the CLI by following this link:"
+msgstr "Téléchargez la CLI en suivant ce lien :"
+
+#: ../../adminguide/installation.rst:14
+# Left `msgstr` empty, that way we use the same value untranslated.
+# The reason is because the link + version is managed by `version_updater` script and it doesn't handle well wrapped line.
+msgid ""
+"`Parsec CLI v3.0.1-a.0 <https://github.com/Scille/parsec-cloud/releases/"
+"download/v3.0.1-a.0/parsec-cli_3.0.1-a.0_linux_x86_64>`_."
+msgstr ""
+
+#: ../../adminguide/installation.rst:16
+msgid "Make the file executable"
+msgstr "Rendre le fichier exécutable"
+
+#: ../../adminguide/installation.rst:18
+msgid "Right-click/Properties/Allow executing file as program"
+msgstr ""
+"Clic droit/Propriétés/Autoriser l'exécution du fichier en tant que programme"
+
+#: ../../adminguide/installation.rst:19
+msgid "Or use the `chmod` command:"
+msgstr "Ou utilisez la commande `chmod` :"
+
+#: ../../adminguide/installation.rst:25
+msgid "Verify the installation by running the following command:"
+msgstr "Vérifiez l'installation en exécutant la commande suivante :"
+
+#: ../../adminguide/installation.rst:31
+msgid "The CLI should output its version:"
+msgstr "La CLI devrait afficher sa version :"
