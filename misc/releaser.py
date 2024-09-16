@@ -405,7 +405,7 @@ def run_cmd(*cmd: Any, verbose: bool = False) -> str:
 
 
 def get_version_from_code() -> Version:
-    return Version.parse(version_updater.TOOLS_VERSION[version_updater.Tool.Parsec])
+    return Version.parse(version_updater.get_tool_version(version_updater.Tool.Parsec))
 
 
 def update_version_files(version: Version) -> set[Path]:
@@ -413,7 +413,7 @@ def update_version_files(version: Version) -> set[Path]:
     Update the required files to the provided version.
     Return the set of updated files
     """
-    version_updater.TOOLS_VERSION[version_updater.Tool.Parsec] = str(version)
+    version_updater.set_tool_version(version_updater.Tool.Parsec, str(version))
     res = version_updater.check_tool(version_updater.Tool.Parsec, update=True)
     if res.errors:
         raise ReleaseError("Error while updating version files:\n" + "\n".join(res.errors))
@@ -692,7 +692,7 @@ def check_release(version: Version) -> None:
         raise ReleaseError(
             f"Invalid __version__ in server/parsec/_version.py: expected `{COLOR_YELLOW}{version}{COLOR_END}`, got `{COLOR_YELLOW}{code_version}{COLOR_END}`"
         )
-    version_updater.TOOLS_VERSION[version_updater.Tool.Parsec] = str(version)
+    version_updater.set_tool_version(version_updater.Tool.Parsec, str(version))
     version_updater.check_tool(version_updater.Tool.Parsec, update=False)
     success()
 
@@ -853,7 +853,7 @@ def rollback_main(args: argparse.Namespace) -> None:
 
 
 def version_main(args: argparse.Namespace) -> None:
-    raw_version: str = args.version or version_updater.TOOLS_VERSION[version_updater.Tool.Parsec]
+    raw_version: str = args.version or version_updater.get_tool_version(version_updater.Tool.Parsec)
 
     assert isinstance(raw_version, str)
     version = Version.parse(raw_version)
