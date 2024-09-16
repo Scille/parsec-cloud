@@ -93,7 +93,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.87", default-features = false }
+anyhow = { version = "1.0.89", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-lock = { version = "3.4.0", default-features = false }
@@ -143,7 +143,7 @@ libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.22", default-features = false }
 miniserde = { version = "0.1.40", default-features = false }
 neon = { version = "1.0.0", default-features = false }
-once_cell = { version = "1.19.0", default-features = false }
+once_cell = { version = "1.20.0", default-features = false }
 openssl = { version = "0.10.66", default-features = false }
 paste = { version = "1.0.15", default-features = false }
 pin-project-lite = { version = "0.2.14", default-features = false }
@@ -151,7 +151,7 @@ percent-encoding = { version = "2.3.1", default-features = false }
 # Utility crate to find system artifacts
 pkg-config = { version = "0.3.30", default-features = false }
 predicates = { version = "3.1.2", default-features = false }
-pretty_assertions = { version = "1.4.0", default-features = false }
+pretty_assertions = { version = "1.4.1", default-features = false }
 proptest = { version = "1.5.0", default-features = false }
 proptest-state-machine = { version = "0.3.0", default-features = false }
 proc-macro2 = { version = "1.0.86", default-features = false }
@@ -167,7 +167,7 @@ rpassword = { version = "7.3.1", default-features = false }
 rsa = { version = "0.8.2", default-features = false }
 rstest_reuse = { version = "0.6.0", default-features = false }
 rstest = { version = "0.18.2", default-features = false }
-ruzstd = { version = "0.7.1", default-features = true }
+ruzstd = { version = "0.7.2", default-features = true }
 sentry = { version = "0.34.0", default-features = false }
 sentry-log = { version = "0.34.0", default-features = false }
 serde_bytes = { version = "0.11.15", default-features = false }
