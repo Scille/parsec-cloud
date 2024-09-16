@@ -132,7 +132,7 @@ import {
   Validity,
 } from 'megashark-lib';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
-import { AvailableDevice, listAvailableDevices } from '@/parsec';
+import { AvailableDevice, isDeviceLoggedIn, listAvailableDevices } from '@/parsec';
 import { Routes } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { StorageManager, StorageManagerKey, StoredDeviceData } from '@/services/storageManager';
@@ -280,27 +280,29 @@ const filteredDevices = computed(() => {
       );
     })
     .sort((a, b) => {
+      const loggedInWeight = (isDeviceLoggedIn(b) ? 3 : 0) - (isDeviceLoggedIn(a) ? 3 : 0);
+
       const aLabel = a.humanHandle.label;
       const bLabel = b.humanHandle.label;
       if (sortBy.value === SortCriteria.Organization) {
         if (sortByAsc.value) {
           // If orgs are the same, sort by user name
           if (a.organizationId === b.organizationId) {
-            return aLabel.localeCompare(bLabel);
+            return loggedInWeight + aLabel.localeCompare(bLabel);
           }
-          return a.organizationId.localeCompare(b.organizationId);
+          return loggedInWeight + a.organizationId.localeCompare(b.organizationId);
         } else {
           // If orgs are the same, sort by user name
           if (a.organizationId === b.organizationId) {
-            return aLabel.localeCompare(bLabel);
+            return loggedInWeight + aLabel.localeCompare(bLabel);
           }
-          return b.organizationId.localeCompare(a.organizationId);
+          return loggedInWeight + b.organizationId.localeCompare(a.organizationId);
         }
       } else if (sortBy.value === SortCriteria.UserName) {
         if (sortByAsc.value) {
-          return aLabel.localeCompare(bLabel);
+          return loggedInWeight + aLabel.localeCompare(bLabel);
         } else {
-          return bLabel.localeCompare(aLabel);
+          return loggedInWeight + bLabel.localeCompare(aLabel);
         }
       } else if (sortBy.value === SortCriteria.LastLogin) {
         const aLastLogin =
@@ -311,11 +313,14 @@ const filteredDevices = computed(() => {
           b.deviceId in storedDeviceDataDict.value && storedDeviceDataDict.value[b.deviceId].lastLogin !== undefined
             ? storedDeviceDataDict.value[b.deviceId].lastLogin
             : DateTime.fromMillis(0);
+        let diff = 0;
         if (sortByAsc.value) {
-          return bLastLogin.diff(aLastLogin).toObject().milliseconds!;
+          diff = bLastLogin.diff(aLastLogin).toObject().milliseconds ?? 0;
         } else {
-          return aLastLogin.diff(bLastLogin).toObject().milliseconds!;
+          diff = aLastLogin.diff(bLastLogin).toObject().milliseconds ?? 0;
         }
+        diff = Math.min(Math.max(diff, -1), 1);
+        return loggedInWeight + diff;
       }
       return 0;
     });
