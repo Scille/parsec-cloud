@@ -13,11 +13,21 @@ In order to extract organization statistics, the administrator needs to provide 
 
 .. code-block:: shell
 
-    $ parsec.cli core stats_organization --addr=parsec3://example.com --administration-token=s3cr3t TestOrganization
+    parsec-cli organization stats --addr=parsec3://example.com --token=s3cr3t --organization-id=TestOrganization
 
-    active_users: 31
-    data_size: 130464340
-    metadata_size: 154131
-    realms: 56
-    users: 31
-    users_per_profile_detail: [{'revoked': 0, 'active': 31, 'profile': Admin}, {'revoked': 0, 'active': 0, 'profile': Standard}, {'revoked': 0, 'active': 0, 'profile': Outsider}]
+Example of output:
+
+.. code-block:: json
+
+    {
+      "active_users": 31,
+      "data_size": 130464340,
+      "metadata_size": 154131,
+      "realms": 56,
+      "users": 31,
+      "users_per_profile_detail": [
+        {"revoked": 0, "active": 31, "profile": "Admin"},
+        {"revoked": 0, "active": 0, "profile": "Standard"},
+        {"revoked": 0, "active": 0, "profile": "Outsider"}
+      ]
+    }
