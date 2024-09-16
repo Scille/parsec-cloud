@@ -1,12 +1,14 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
-
 """
 Helper that help changing the version of a tool across the repository.
 """
 
+from __future__ import annotations
+
 import enum
 import glob
 import re
+import tomllib
 from argparse import ArgumentParser
 from dataclasses import dataclass
 from fileinput import FileInput
@@ -17,7 +19,9 @@ ReplacementPattern = Union[str, Callable[[str], str]]
 
 RawRegexes = list["ReplaceRegex"]
 
-ROOT_DIR = (Path(__file__) / "../..").resolve()
+ROOT_DIR = Path(__file__).parent.parent.resolve()
+VERSIONS_FILE = (Path(__file__).parent / "versions.toml").resolve()
+TOOLS_VERSION: dict[Tool, str] | None = None
 
 
 @dataclass
@@ -104,7 +108,7 @@ def refresh_cargo_lock(updated_files: set[Path]) -> set[Path]:
 
     lines: list[str] = []
     previous_line = None
-    regex, replace = TOML_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
+    regex, replace = TOML_VERSION_FIELD.compile(get_tool_version(Tool.Parsec))
     for line in cargo_lock.read_text().splitlines():
         if previous_line and (
             previous_line.startswith('name = "libparsec')
@@ -137,7 +141,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
         input_lines = lock_file.read_text().splitlines()
 
         # The project's license field is the first "license" field in the file
-        regex, replace = JSON_LICENSE_FIELD.compile(TOOLS_VERSION[Tool.License])
+        regex, replace = JSON_LICENSE_FIELD.compile(get_tool_version(Tool.License))
         step1_lines: list[str] = []
         found_license_count = 0
         for line in input_lines:
@@ -154,7 +158,7 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
         # The project's version field is present twice at the beginning of the file
         found_version_count = 0
         step2_lines: list[str] = []
-        regex, replace = JSON_VERSION_FIELD.compile(TOOLS_VERSION[Tool.Parsec])
+        regex, replace = JSON_VERSION_FIELD.compile(get_tool_version(Tool.Parsec))
         for line in step1_lines:
             match = regex.search(line)
             if match and found_version_count < 2:
@@ -173,20 +177,22 @@ def refresh_npm_package_lock(update_files: set[Path]) -> set[Path]:
     return updated
 
 
-TOOLS_VERSION: dict[Tool, str] = {
-    Tool.Rust: "1.81.0",
-    Tool.Python: "3.12.0",
-    Tool.Poetry: "1.5.1",
-    Tool.Node: "18.12.0",
-    Tool.WasmPack: "0.12.1",
-    Tool.Parsec: "3.0.1-a.0",
-    Tool.Nextest: "0.9.54",
-    Tool.License: "BUSL-1.1",
-    Tool.PostgreSQL: "14.10",
-    Tool.WinFSP: "2.0.23075",
-    Tool.Testbed: "3.0.0-rc.1.dev.19984.b40f8b9",
-    Tool.PreCommit: "3.7.1",
-}
+def get_tools_version() -> dict[Tool, str]:
+    global TOOLS_VERSION
+    if TOOLS_VERSION is None:
+        with open(VERSIONS_FILE, "br") as f:
+            data = tomllib.load(f)
+        TOOLS_VERSION = {Tool(tool): version for tool, version in data.items()}
+    return TOOLS_VERSION
+
+
+def get_tool_version(tool: Tool) -> str:
+    return get_tools_version()[tool]
+
+
+def set_tool_version(tool: Tool, version: str) -> None:
+    tools_version = get_tools_version()
+    tools_version[tool] = version
 
 
 FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
@@ -358,20 +364,19 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"^Licensed Work:  Parsec v.*$", "Licensed Work:  Parsec v{version}")
         ]
     },
-    ROOT_DIR / "misc/version_updater.py": {
-        Tool.Rust: [ReplaceRegex(r'Tool.Rust: "[0-9.]+"', 'Tool.Rust: "{version}"')],
-        Tool.Python: [ReplaceRegex(r'Tool.Python: "[0-9.]+"', 'Tool.Python: "{version}"')],
-        Tool.Poetry: [ReplaceRegex(r'Tool.Poetry: "[0-9.]+"', 'Tool.Poetry: "{version}"')],
-        Tool.Node: [ReplaceRegex(r'Tool.Node: "[0-9.]+"', 'Tool.Node: "{version}"')],
-        Tool.WasmPack: [ReplaceRegex(r'Tool.WasmPack: "[0-9.]+"', 'Tool.WasmPack: "{version}"')],
-        Tool.Nextest: [ReplaceRegex(r'Tool.Nextest: "[0-9.]+"', 'Tool.Nextest: "{version}"')],
-        Tool.Parsec: [ReplaceRegex(r'Tool.Parsec: "[0-9.]+.*",', 'Tool.Parsec: "{version}",')],
-        Tool.License: [
-            ReplaceRegex(r'^    Tool.License: "[^\"]*",', '    Tool.License: "{version}",')
-        ],
-        Tool.WinFSP: [ReplaceRegex(r'Tool.WinFSP: "[0-9.]+"', 'Tool.WinFSP: "{version}"')],
-        Tool.Testbed: [ReplaceRegex(r'Tool.Testbed: "[0-9.]+.*",', 'Tool.Testbed: "{version}",')],
-        Tool.PreCommit: [ReplaceRegex(r'Tool.PreCommit: "[0-9.]+"', 'Tool.PreCommit: "{version}"')],
+    ROOT_DIR / "misc/versions.toml": {
+        Tool.Rust: [ReplaceRegex(r'rust = "[0-9.]+"', 'rust = "{version}"')],
+        Tool.Python: [ReplaceRegex(r'python = "[0-9.]+"', 'python = "{version}"')],
+        Tool.Poetry: [ReplaceRegex(r'poetry = "[0-9.]+"', 'poetry = "{version}"')],
+        Tool.Node: [ReplaceRegex(r'node = "[0-9.]+"', 'node = "{version}"')],
+        Tool.WasmPack: [ReplaceRegex(r'wasm-pack = "[0-9.]+"', 'wasm-pack = "{version}"')],
+        Tool.Nextest: [ReplaceRegex(r'nextest = "[0-9.]+"', 'nextest = "{version}"')],
+        Tool.Parsec: [ReplaceRegex(r'parsec = "[0-9.]+.*"', 'parsec = "{version}"')],
+        Tool.License: [ReplaceRegex(r'license = "[^\"]*"', 'license = "{version}"')],
+        Tool.PostgreSQL: [ReplaceRegex(r'postgres = "[0-9.]+"', 'postgres = "{version}"')],
+        Tool.WinFSP: [ReplaceRegex(r'winfsp = "[0-9.]+"', 'winfsp = "{version}"')],
+        Tool.Testbed: [ReplaceRegex(r'testbed = "[0-9.]+.*"', 'testbed = "{version}"')],
+        Tool.PreCommit: [ReplaceRegex(r'pre-commit = "[0-9.]+"', 'pre-commit = "{version}"')],
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
@@ -513,7 +518,7 @@ def does_every_regex_where_used(filename: Path, have_matched: dict[str, bool]) -
 
 
 def check_tool(tool: Tool, update: bool) -> VersionUpdateResult:
-    version = TOOLS_VERSION[tool]
+    version = get_tool_version(tool)
     update_res = VersionUpdateResult([], set())
 
     for glob_path, tools_in_file in FILES_WITH_VERSION_INFO.items():
@@ -566,7 +571,7 @@ if __name__ == "__main__":
     if args.tool is not None:
         tool = Tool(args.tool)
         if args.version is not None:
-            TOOLS_VERSION[tool] = args.version
+            set_tool_version(tool, args.version)
 
         errors += check_tool(tool, update=not args.check).errors
     else:
