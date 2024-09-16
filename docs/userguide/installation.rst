@@ -75,7 +75,6 @@ Parsec is available for Linux, Mac, and Windows operating systems.
 
               snap install parsec_v3 --classic --channel=v3
 
-
    .. group-tab:: macOS
 
       .. warning::
