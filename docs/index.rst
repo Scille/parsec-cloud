@@ -30,6 +30,7 @@ You can also use the search function in the top left corner.
     introduction
     userguide/installation
     userguide/join_organization
+    userguide/first_steps
     userguide/new_organization
     userguide/new_user
     userguide/new_device
