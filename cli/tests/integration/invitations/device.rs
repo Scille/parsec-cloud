@@ -59,7 +59,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
 
     let token = invitation_addr.token();
 
-    let mut p_greeter = std::process::Command::cargo_bin("parsec_cli")
+    let mut p_greeter = std::process::Command::cargo_bin("parsec-cli")
         .unwrap()
         .args([
             "invite",
@@ -76,7 +76,7 @@ async fn invite_device_dance(tmp_path: TmpPath) {
         .spawn()
         .unwrap();
 
-    let mut p_claimer = std::process::Command::cargo_bin("parsec_cli")
+    let mut p_claimer = std::process::Command::cargo_bin("parsec-cli")
         .unwrap()
         .args([
             "invite",

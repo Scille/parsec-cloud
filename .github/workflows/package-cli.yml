@@ -93,14 +93,14 @@ jobs:
         timeout-minutes: 5
 
       - name: Build CLI
-        run: cargo build -p parsec_cli --release
+        run: cargo build -p parsec-cli --release
         timeout-minutes: 10
 
       - name: Rename CLI artifact
         id: rename
         run: |
           FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_linux_${{ steps.runner-specs.outputs.arch }}"
-          cp -v target/release/parsec_cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
+          cp -v target/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
         timeout-minutes: 1
 

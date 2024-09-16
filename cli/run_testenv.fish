@@ -23,8 +23,8 @@ set SCRIPT_DIR (dirname (realpath (status -f)))
 # In Python we trust (aka shell's tempfile&mktemp doesn't work on all platforms)
 set SOURCE_FILE (python -c "import tempfile; print(tempfile.mkstemp()[1])")
 
-echo ">>> " "cargo run --package parsec_cli --features testenv run-testenv --main-process-id $fish_pid --source-file \"$SOURCE_FILE\" $argv"
-eval cargo run --package parsec_cli --features testenv run-testenv --main-process-id $fish_pid --source-file "$SOURCE_FILE" $argv; or exit $status
+echo ">>> " "cargo run --package parsec-cli --features testenv run-testenv --main-process-id $fish_pid --source-file \"$SOURCE_FILE\" $argv"
+eval cargo run --package parsec-cli --features testenv run-testenv --main-process-id $fish_pid --source-file "$SOURCE_FILE" $argv; or exit $status
 
 # `$SOURCE_FILE` uses bash syntax to configure environ variables (i.e. `export FOO=BAR`)
 # here we convert is to fish syntax (i.e. `set --export FOO BAR`)
