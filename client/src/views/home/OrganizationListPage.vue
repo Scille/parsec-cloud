@@ -74,13 +74,15 @@
             ref="searchInputRef"
           />
           <ms-sorter
+            v-if="confLoaded"
             v-show="deviceList.length > 1"
             id="organization-filter-select"
             :label="'HomePage.organizationList.labelSortBy'"
             :options="msSorterOptions"
-            default-option="organization"
+            :default-option="sortBy"
+            :sort-by-asc="sortByAsc"
             :sorter-labels="msSorterLabels"
-            @change="onMsSorterChange($event)"
+            @change="onMsSorterChange"
           />
           <ion-button
             @click="togglePopover"
@@ -168,17 +170,25 @@ enum SortCriteria {
   Organization = 'organization',
 }
 
+const ORGANIZATION_LIST_DATA_KEY = 'OrganizationList';
+
 const deviceList: Ref<AvailableDevice[]> = ref([]);
 const storedDeviceDataDict = ref<{ [deviceId: string]: StoredDeviceData }>({});
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 const sortBy = ref(SortCriteria.Organization);
 const sortByAsc = ref(true);
+const confLoaded = ref(false);
 const searchQuery = ref('');
 const querying = ref(true);
 const searchInputRef = ref();
 const linkRef = ref();
 const link = ref('');
+
+interface OrganizationListSavedData {
+  sortByAsc?: boolean;
+  sortBy?: SortCriteria;
+}
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -250,6 +260,13 @@ onMounted(async (): Promise<void> => {
     searchInputRef.value.setFocus,
   );
   storedDeviceDataDict.value = await storageManager.retrieveDevicesData();
+  const storedData = await storageManager.retrieveComponentData<OrganizationListSavedData>(ORGANIZATION_LIST_DATA_KEY, {
+    sortBy: SortCriteria.Organization,
+    sortByAsc: true,
+  });
+  sortBy.value = storedData.sortBy;
+  sortByAsc.value = storedData.sortByAsc;
+  confLoaded.value = true;
   await refreshDeviceList();
 });
 
@@ -265,9 +282,14 @@ async function refreshDeviceList(): Promise<void> {
   querying.value = false;
 }
 
-function onMsSorterChange(event: MsSorterChangeEvent): void {
+async function onMsSorterChange(event: MsSorterChangeEvent): Promise<void> {
   sortBy.value = event.option.key;
   sortByAsc.value = event.sortByAsc;
+
+  await storageManager.storeComponentData<OrganizationListSavedData>(ORGANIZATION_LIST_DATA_KEY, {
+    sortBy: event.option.key,
+    sortByAsc: event.sortByAsc,
+  });
 }
 
 const filteredDevices = computed(() => {
