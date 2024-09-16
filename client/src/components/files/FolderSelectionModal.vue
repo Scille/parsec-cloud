@@ -108,7 +108,9 @@ async function update(): Promise<void> {
   const result = await statFolderChildren(workspaceHandle, selectedPath.value);
   if (result.ok) {
     const newEntries: [EntryStat, boolean][] = [];
-    for (const entry of result.value.sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()))) {
+    for (const entry of result.value
+      .filter((entry) => !entry.isConfined())
+      .sort((item1, item2) => Number(item1.isFile()) - Number(item2.isFile()))) {
       const isDisabled = await isEntryDisabled(entry);
       newEntries.push([entry, isDisabled]);
     }
