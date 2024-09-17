@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   parsec-postgres:
     image: postgres:14.10-alpine
@@ -12,7 +10,7 @@ services:
       - parsec-db-data:/var/lib/postgresql/data
 
   parsec-s3:
-    image: quay.io/minio/minio:RELEASE.2023-09-20T22-49-55Z
+    image: quay.io/minio/minio:RELEASE.2024-09-13T20-26-02Z
     container_name: parsec-s3
     command: server --console-address ":9090" --certs-dir /opts/certs /data
     environment:
@@ -40,13 +38,13 @@ services:
       - parsec-smtp
       - parsec-s3
       - parsec-postgres
-    image: ghcr.io/scille/parsec-cloud/parsec-server:2023-10-11-v2.16.0-rc.5.dev-b33d909
+    image: ghcr.io/scille/parsec-cloud/parsec-server:3.0.0-rc.8+dev
     container_name: parsec-server
     env_file:
       - parsec.env
-      - parsec-blockstore.env
+      - parsec-s3.env
       - parsec-db.env
-      - parsec-email.env
+      - parsec-smtp.env
       - parsec-admin-token.env
     environment:
       AWS_CA_BUNDLE: /run/secrets/mini-ca-crt

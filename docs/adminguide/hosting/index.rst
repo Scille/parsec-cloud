@@ -166,7 +166,7 @@ Create the file ``parsec.env`` with the following content to configure the ``par
 
   .. code-block:: bash
 
-    python -m parsec.cli backend run --help
+    python -m parsec run --help
 
   Look for the sections ``[env var: VARIABLE]`` next to each configuration option. For example:
 
@@ -302,7 +302,7 @@ Installation
 
   .. code-block:: bash
 
-    pip install 'parsec-cloud[backend]==3.0.0-rc.8+dev'
+    python -m pip install 'parsec-cloud==3.0.0-rc.8+dev'
 
 4. Prepare the database by applying the migrations:
 
@@ -311,7 +311,7 @@ Installation
     source venv/bin/activate
     set -a
     source parsec-db.env
-    python -m parsec.cli backend migrate
+    python -m parsec migrate
 
 Start the server
 ----------------
@@ -335,7 +335,7 @@ Start the server
     set +a
 
     # Start the parsec server.
-    python -m parsec.cli backend run
+    python -m parsec run
 
 2. Execute the wrapper script ``run-parsec-server``
 
