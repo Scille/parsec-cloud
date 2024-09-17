@@ -70,7 +70,7 @@
           <ms-search-input
             :placeholder="'HomePage.organizationList.search'"
             v-model="searchQuery"
-            id="ms-search-input"
+            id="search-input-organization"
             ref="searchInputRef"
           />
           <ms-sorter

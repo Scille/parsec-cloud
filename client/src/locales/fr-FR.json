@@ -353,6 +353,7 @@
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
+        "filterPlaceholder": "Rechercher",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",

@@ -353,6 +353,7 @@
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
         "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",
+        "filterPlaceholder": "Search",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
