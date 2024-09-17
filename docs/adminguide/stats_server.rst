@@ -17,16 +17,33 @@ In order to extract server statistics, the administrator needs to provide :
 
     parsec-cli server stats --addr=parsec3://example.com --token=s3cr3t --end-date=2024-08-31 --format=csv > 202408-my_server_stats.csv
 
-Information available in the extraction are :
+Example of output:
 
-- organization_id
-- data_size
-- metadata_size
-- realms
-- active_users
-- admin_users_active
-- admin_users_revoked
-- standard_users_active
-- standard_users_revoked
-- outsider_users_active
-- outsider_users_revoked
+.. code-block:: JSON
+
+    {
+      "stats": [
+        {
+          "active_users": 1,
+          "data_size": 18333,
+          "metadata_size": 1158,
+          "organization_id": "JohnOrg",
+          "realms": 2,
+          "users": 1,
+          "users_per_profile_detail": {
+            "ADMIN": {
+              "active": 1,
+              "revoked": 0
+            },
+            "OUTSIDER": {
+              "active": 0,
+              "revoked": 0
+            },
+            "STANDARD": {
+              "active": 0,
+              "revoked": 0
+            }
+          }
+        }
+      ]
+    }
