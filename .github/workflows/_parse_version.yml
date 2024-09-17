@@ -84,6 +84,12 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
+      - name: Install python
+        uses: actions/setup-python@29a37be0a3d3e8bf5bc1eb19cd0502922f5b312a  # pin v5.2.0
+        id: setup-python
+        with:
+          python-version: 3.12
+
       - name: Parse Version
         id: version
         shell: bash

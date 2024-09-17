@@ -230,6 +230,13 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
+    ROOT_DIR / ".github/workflows/_parse_version.yml": {
+        Tool.Python: [
+            ReplaceRegex(
+                r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
+            )
+        ],
+    },
     ROOT_DIR / ".github/workflows/codeql.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
