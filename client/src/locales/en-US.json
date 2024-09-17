@@ -586,7 +586,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "External profile",
-                "userLimit": "Profile limit (not including external)",
+                "userLimit": "Members limit (not including external)",
                 "unlimited": "Unlimited",
                 "allowed": "Enabled",
                 "forbidden": "Disabled",

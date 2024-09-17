@@ -586,7 +586,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite de profils (hors externes)",
+                "userLimit": "Limite du nombre de membre (hors externes)",
                 "unlimited": "Illimitée",
                 "allowed": "Activé",
                 "forbidden": "Désactivé",
