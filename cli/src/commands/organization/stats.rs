@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use reqwest::Client;
 use serde_json::Value;
 
 use libparsec::{OrganizationID, ParsecAddr};
@@ -23,7 +22,8 @@ pub async fn stats_organization_req(
         "/administration/organizations/{organization_id}/stats"
     )));
 
-    let rep = Client::new()
+    let client = libparsec_client_connection::build_client()?;
+    let rep = client
         .get(url)
         .bearer_auth(administration_token)
         .send()
