@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import importlib.resources
 import re
-from base64 import b64decode, b64encode
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime
@@ -223,19 +222,17 @@ async def asyncpg_pool_factory(
 
 
 async def send_signal(conn: AsyncpgConnection, event: Event) -> None:
-    # PostgreSQL's NOTIFY only accept string as payload, hence we must
-    # use base64 on our payload...
-    any_event = AnyEvent(event=event)
-    raw_event = b64encode(any_event.model_dump_json().encode("utf-8")).decode("ascii")
     # Add UUID to ensure the payload is unique given it seems Postgresql can
     # drop duplicated NOTIFY (same channel/payload)
     # see: https://github.com/Scille/parsec-cloud/issues/199
     event_id = uuid4().hex
+    any_event = AnyEvent(event=event)
+    raw_event = any_event.model_dump_json()
     payload = f"{event_id}:{raw_event}"
     await conn.execute("SELECT pg_notify($1, $2)", "app_notification", payload)
 
 
 def parse_signal(payload: str) -> Event:
-    _, raw_event = payload.split(":")
-    any_event = AnyEvent.model_validate_json(b64decode(raw_event.encode("ascii")))
+    _, raw_event = payload.split(":", maxsplit=1)
+    any_event = AnyEvent.model_validate_json(raw_event)
     return any_event.event
