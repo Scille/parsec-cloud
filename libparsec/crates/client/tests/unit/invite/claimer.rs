@@ -5,12 +5,13 @@ use std::sync::{Arc, Mutex};
 use libparsec_client_connection::{
     protocol, test_register_send_hook, test_register_sequence_of_send_hooks,
 };
+use libparsec_protocol::invited_cmds::v4::invite_claimer_step::{ClaimerStep, GreeterStep};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use crate::{
-    claimer_retrieve_info, ClientConfig, ProxyConfig, UserOrDeviceClaimInitialCtx,
-    WorkspaceStorageCacheSize,
+    claimer_retrieve_info, ClientConfig, MountpointMountStrategy, ProxyConfig,
+    UserOrDeviceClaimInitialCtx, WorkspaceStorageCacheSize,
 };
 
 #[parsec_test(testbed = "minimal")]
@@ -66,49 +67,90 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let greeter_private_key = Arc::new(PrivateKey::generate());
     let greeter_nonce: Bytes = Bytes::from_static(b"123");
-    let claimer_public_key = Arc::new(Mutex::new(None)); // Set in invite_1 hook
+    let greeter_id = Arc::new(Mutex::new(None)); // set in start_attempt
+    let claimer_public_key = Arc::new(Mutex::new(None)); // Set in step 0 hook
     let claimer_hashed_nonce = Arc::new(Mutex::new(None)); // Set in invite_2a hook
-    let claimer_nonce = Arc::new(Mutex::new(None)); // Set in invite_2a hook
-
+    let claimer_nonce = Arc::new(Mutex::new(None)); // Set in step 1 hook
+    let greeting_attempt =
+        GreetingAttemptID::from_hex("211575b8-74f9-11ef-8fec-838123f8cb25").unwrap();
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // 1) `invite_1_claimer_wait_peer`
+        // 1) `invite_claimer_start_greeting_attempt`
+        {
+            let greeter_id = greeter_id.clone();
+            move |req: protocol::invited_cmds::latest::invite_claimer_start_greeting_attempt::Req| {
+                let mut guard = greeter_id.lock().unwrap();
+                p_assert_matches!(*guard, None); // Should be set only once !
+                *guard = Some(req.greeter);
+
+                protocol::invited_cmds::latest::invite_claimer_start_greeting_attempt::Rep::Ok { greeting_attempt }
+            }
+        },
+        // 2) `invite_claimer_step` 0 wait peer
         {
             let claimer_public_key = claimer_public_key.clone();
             let greeter_private_key = greeter_private_key.clone();
-            move |req: protocol::invited_cmds::latest::invite_1_claimer_wait_peer::Req| {
+
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 let mut guard = claimer_public_key.lock().unwrap();
                 p_assert_matches!(*guard, None); // Should be set only once !
-                *guard = Some(req.claimer_public_key);
 
-                protocol::invited_cmds::latest::invite_1_claimer_wait_peer::Rep::Ok {
-                    greeter_public_key: greeter_private_key.public_key(),
+                *guard = Some(match req.claimer_step {
+                    ClaimerStep::Number0WaitPeer { public_key } => public_key,
+                    e => panic!("Expected step 0 wait peer, found step {e:?}"),
+                });
+
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number0WaitPeer {
+                        public_key: greeter_private_key.public_key(),
+                    },
                 }
             }
         },
-        // 2) `invite_2a_claimer_send_hashed_nonce`
+        // 3) `invite_claimer_step` 1 send hashed nonce
         {
             let claimer_hashed_nonce = claimer_hashed_nonce.clone();
-            let greeter_nonce = greeter_nonce.clone();
-            move |req: protocol::invited_cmds::latest::invite_2a_claimer_send_hashed_nonce::Req| {
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 let mut guard = claimer_hashed_nonce.lock().unwrap();
                 p_assert_matches!(*guard, None); // Should be set only once !
-                *guard = Some(req.claimer_hashed_nonce);
+                *guard = Some(match req.claimer_step {
+                    ClaimerStep::Number1SendHashedNonce { hashed_nonce } => hashed_nonce,
+                    e => panic!("Expected step 1 send hashed nonce, found step {e:?}"),
+                });
 
-                protocol::invited_cmds::latest::invite_2a_claimer_send_hashed_nonce::Rep::Ok {
-                    greeter_nonce,
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number1GetHashedNonce {},
                 }
             }
         },
-        // 3) `invite_2b_claimer_send_nonce`
+        // 4)  `invite_claimer_step` 2 get nonce
+        {
+            let greeter_nonce = greeter_nonce.clone();
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+                match req.claimer_step {
+                    ClaimerStep::Number2GetNonce {} => {}
+                    e => panic!("Expected step 2 send hashed nonce, found step {e:?}"),
+                };
+
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number2SendNonce { greeter_nonce },
+                }
+            }
+        },
+        // 5) `invite_claimer_step` 3 send nonce
         {
             let claimer_nonce = claimer_nonce.clone();
-            move |req: protocol::invited_cmds::latest::invite_2b_claimer_send_nonce::Req| {
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 let mut guard = claimer_nonce.lock().unwrap();
                 p_assert_matches!(*guard, None); // Should be set only once !
-                *guard = Some(req.claimer_nonce);
+                *guard = Some(match req.claimer_step {
+                    ClaimerStep::Number3SendNonce { claimer_nonce } => claimer_nonce,
+                    e => panic!("Expected step 3 send hashed nonce, found step {e:?}"),
+                });
 
-                protocol::invited_cmds::latest::invite_2b_claimer_send_nonce::Rep::Ok
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number3GetNonce {},
+                }
             }
         },
     );
@@ -119,19 +161,15 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         let guard = claimer_public_key.lock().unwrap();
         (*guard)
             .clone()
-            .expect("set during invite_1_claimer_wait_peer")
+            .expect("set during invite_claimer_start_greeting_attempt")
     };
     let claimer_hashed_nonce = {
         let guard = claimer_hashed_nonce.lock().unwrap();
-        (*guard)
-            .clone()
-            .expect("set during invite_2a_claimer_send_hashed_nonce")
+        (*guard).clone().expect("set during step 1")
     };
     let claimer_nonce = {
         let guard = claimer_nonce.lock().unwrap();
-        (*guard)
-            .clone()
-            .expect("set during invite_2b_claimer_send_nonce")
+        (*guard).clone().expect("set during step 3")
     };
 
     p_assert_eq!(HashDigest::from_data(&claimer_nonce), claimer_hashed_nonce);
@@ -149,8 +187,15 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     test_register_send_hook(
         &env.discriminant_dir,
-        |_req: protocol::invited_cmds::latest::invite_3a_claimer_signify_trust::Req| {
-            protocol::invited_cmds::latest::invite_3a_claimer_signify_trust::Rep::Ok
+        |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+            match req.claimer_step {
+                ClaimerStep::Number4SignifyTrust {} => {}
+                e => panic!("Expected step 4 send hashed nonce, found step {e:?}"),
+            };
+
+            protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                greeter_step: GreeterStep::Number4WaitPeerTrust {},
+            }
         },
     );
 
@@ -162,8 +207,15 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     test_register_send_hook(
         &env.discriminant_dir,
-        |_req: protocol::invited_cmds::latest::invite_3b_claimer_wait_peer_trust::Req| {
-            protocol::invited_cmds::latest::invite_3b_claimer_wait_peer_trust::Rep::Ok
+        |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+            match req.claimer_step {
+                ClaimerStep::Number5WaitPeerTrust {} => {}
+                e => panic!("Expected step 5 send hashed nonce, found step {e:?}"),
+            };
+
+            protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                greeter_step: GreeterStep::Number5SignifyTrust {},
+            }
         },
     );
 
@@ -175,52 +227,72 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let requested_human_handle: HumanHandle = "Requested John Doe <requested.john@example.com>"
         .parse()
         .unwrap();
-    let device_id: DeviceID = "john@dev1".parse().unwrap();
+    let device_id = DeviceID::default();
     let device_label: DeviceLabel = "My dev1".parse().unwrap();
     let human_handle: HumanHandle = "John Doe <john@example.com>".parse().unwrap();
+    let user_id = UserID::default();
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // 1) `invite_4_claimer_communicate`
+        // 1) `step 6` send payload
         {
             let shared_secret_key = shared_secret_key.clone();
             let requested_device_label = requested_device_label.clone();
             let requested_human_handle = requested_human_handle.clone();
-            move |req: protocol::invited_cmds::latest::invite_4_claimer_communicate::Req| {
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+                let payload = match req.claimer_step {
+                    ClaimerStep::Number6SendPayload { claimer_payload } => claimer_payload,
+                    e => panic!("Expected step 6 send hashed nonce, found step {e:?}"),
+                };
                 let in_data =
-                    InviteUserData::decrypt_and_load(&req.payload, &shared_secret_key).unwrap();
+                    InviteUserData::decrypt_and_load(&payload, &shared_secret_key).unwrap();
 
                 p_assert_eq!(in_data.requested_device_label, requested_device_label);
                 p_assert_eq!(in_data.requested_human_handle, requested_human_handle);
 
-                protocol::invited_cmds::latest::invite_4_claimer_communicate::Rep::Ok {
-                    payload: Bytes::from_static(b""),
-                    last: false,
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number6GetPayload {},
                 }
             }
         },
-        // 2) `invite_4_claimer_communicate` confirmation
+        // 2) `step 7` get payload
         {
             let shared_secret_key = shared_secret_key.clone();
             let root_verify_key = env.organization_addr().root_verify_key().to_owned();
-            let device_id = device_id;
             let device_label = device_label.clone();
             let human_handle = human_handle.clone();
-            move |req: protocol::invited_cmds::latest::invite_4_claimer_communicate::Req| {
-                assert!(req.payload.is_empty());
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+                match req.claimer_step {
+                    ClaimerStep::Number7GetPayload {} => {}
+                    e => panic!("Expected step 7 send hashed nonce, found step {e:?}"),
+                };
 
-                let out_payload = InviteUserConfirmation {
+                let greeter_payload = InviteUserConfirmation {
                     device_id,
                     device_label,
                     human_handle,
                     profile: UserProfile::Standard,
                     root_verify_key,
+                    user_id,
                 }
-                .dump_and_encrypt(&shared_secret_key);
+                .dump_and_encrypt(&shared_secret_key)
+                .into();
 
-                protocol::invited_cmds::latest::invite_4_claimer_communicate::Rep::Ok {
-                    payload: out_payload.into(),
-                    last: true,
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number7SendPayload { greeter_payload },
+                }
+            }
+        },
+        // 3) step 8 ack
+        {
+            move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
+                match req.claimer_step {
+                    ClaimerStep::Number8Acknowledge {} => {}
+                    e => panic!("Expected step 8 send hashed nonce, found step {e:?}"),
+                };
+
+                protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
+                    greeter_step: GreeterStep::Number8WaitPeerAcknowledgment {},
                 }
             }
         }
@@ -254,17 +326,19 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let password: Password = "P@ssw0rd.".to_string().into();
     let access = DeviceAccessStrategy::Password { key_file, password };
     let available_device = ctx.save_local_device(&access).await.unwrap();
+
+    p_assert_eq!(available_device.key_file_path, tmp_path.join("device.keys"));
     p_assert_eq!(
-        available_device,
-        AvailableDevice {
-            key_file_path: tmp_path.join("device.keys"),
-            organization_id: new_local_device.organization_id().to_owned(),
-            device_id: new_local_device.device_id,
-            device_label,
-            human_handle,
-            ty: DeviceFileType::Password,
-        }
+        available_device.organization_id,
+        new_local_device.organization_id().to_owned()
     );
+    p_assert_eq!(available_device.device_id, new_local_device.device_id,);
+    p_assert_eq!(available_device.device_label, device_label);
+    p_assert_eq!(available_device.human_handle, human_handle);
+    p_assert_eq!(available_device.ty, DeviceFileType::Password);
+    p_assert_eq!(available_device.server_url, "https://noserver.example.com/");
+    p_assert_eq!(available_device.user_id, user_id);
+    // created_on and protected_on date times not checked
 
     // Check device can be loaded
     let reloaded_new_local_device =
