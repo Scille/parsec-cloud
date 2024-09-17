@@ -20,14 +20,23 @@ Example of output:
 .. code-block:: json
 
     {
-      "active_users": 31,
-      "data_size": 130464340,
-      "metadata_size": 154131,
-      "realms": 56,
-      "users": 31,
-      "users_per_profile_detail": [
-        {"revoked": 0, "active": 31, "profile": "Admin"},
-        {"revoked": 0, "active": 0, "profile": "Standard"},
-        {"revoked": 0, "active": 0, "profile": "Outsider"}
-      ]
+      "active_users": 1,
+      "data_size": 18333,
+      "metadata_size": 1158,
+      "realms": 2,
+      "users": 1,
+      "users_per_profile_detail": {
+        "ADMIN": {
+          "active": 1,
+          "revoked": 0
+        },
+        "OUTSIDER": {
+          "active": 0,
+          "revoked": 0
+        },
+        "STANDARD": {
+          "active": 0,
+          "revoked": 0
+        }
+      }
     }
