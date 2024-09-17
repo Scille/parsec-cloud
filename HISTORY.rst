@@ -5,26 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.0.0-rc.1 (2024-08-13)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.0.0-rc.0 (2024-08-13)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.0.0-b.6 (2024-03-26)
-------------------------------
-
-No significant changes.
-
-
-Parsec v3.0.0-b.1 (2024-03-26)
-------------------------------
+Parsec v3.0.0 (2024-09-18)
+--------------------------
 
 The 3.0 release is a major rewrite of Parsec Client from Python to Rust.
 Parsec Client is now based on a Rust core library (libparsec) and a
