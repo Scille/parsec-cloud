@@ -17,7 +17,7 @@
             <ion-card class="organization-card">
               <ion-card-header
                 class="organization-card-header"
-                :class="{ 'organization-card-header-desktop': isDesktop() }"
+                :class="{ 'organization-card-header-desktop': canSwitchOrg }"
                 @click="openOrganizationChoice($event)"
               >
                 <ion-avatar class="organization-avatar body-lg">
@@ -36,7 +36,7 @@
                 <ms-image
                   :image="ChevronExpand"
                   class="header-icon"
-                  v-show="isDesktop()"
+                  v-show="canSwitchOrg"
                 />
               </ion-card-header>
 
@@ -345,6 +345,8 @@ import {
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
   getConnectionInfo,
+  getLoggedInDevices,
+  LoggedInDeviceInfo,
 } from '@/parsec';
 import {
   Routes,
@@ -415,6 +417,10 @@ const sidebarWidthProperty = ref(`${defaultWidth}px`);
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
+const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
+const canSwitchOrg = computed(() => {
+  return isDesktop() && loggedInDevices.value.length > 1;
+});
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -466,6 +472,8 @@ async function loadAll(): Promise<void> {
   } else {
     console.log('Failed to list workspaces', result.error);
   }
+
+  loggedInDevices.value = await getLoggedInDevices();
 }
 
 onMounted(async () => {
@@ -549,7 +557,7 @@ function onEnd(): void {
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
-  if (!isDesktop()) {
+  if (!canSwitchOrg.value) {
     return;
   }
   const popover = await popoverController.create({

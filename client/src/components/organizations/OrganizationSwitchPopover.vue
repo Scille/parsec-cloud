@@ -76,6 +76,7 @@ import { MsImage, LogoIconGradient } from 'megashark-lib';
 interface ConnectedOrganization {
   id: OrganizationID;
   userLabel: string;
+  userEmail: string;
   active: boolean;
   handle: ConnectionHandle;
   device: AvailableDevice;
@@ -96,6 +97,7 @@ onMounted(async () => {
       active: getConnectionHandle() === info.handle,
       handle: info.handle,
       userLabel: info.device.humanHandle.label,
+      userEmail: info.device.humanHandle.email,
       device: info.device,
       trial: isTrialOrganizationDevice(info.device),
       isExpired: info.isExpired,
@@ -103,7 +105,9 @@ onMounted(async () => {
     };
   });
   currentOrg.value = connectedOrgs.value.find((org) => org.active);
-  filteredOrgs.value = connectedOrgs.value.filter((org) => org.id !== currentOrg.value?.id);
+  filteredOrgs.value = connectedOrgs.value.filter(
+    (org) => org.id !== currentOrg.value?.id || org.userEmail !== currentOrg.value?.userEmail,
+  );
 });
 
 async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
