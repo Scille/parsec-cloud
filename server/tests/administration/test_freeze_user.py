@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
 from typing import Any
 
 import httpx
@@ -95,7 +96,8 @@ async def test_disconnect_sse(
         with pytest.raises(StopAsyncIteration):
             # Loop given the server might have send us some events before the freeze
             while True:
-                await alice_sse.next_event()
+                async with asyncio.timeout(1):
+                    await alice_sse.next_event()
 
         # ...and we cannot reconnect !
 
