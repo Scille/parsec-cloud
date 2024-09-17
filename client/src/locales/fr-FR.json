@@ -983,7 +983,7 @@
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
             "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par une autre personne dans cette organisation.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
-            "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
+            "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
             "cancelSuccess": "Le lien d'invitation n'est plus valide.",
             "cancelFailed": "Impossible d'annuler l'invitation",

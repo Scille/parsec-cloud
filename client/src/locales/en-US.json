@@ -927,7 +927,7 @@
         },
         "greet": {
             "titles": {
-                "waitForGuest": "Onboard a new member",
+                "waitForGuest": "Greet a new member",
                 "provideHostCode": "Share your code",
                 "getGuestCode": "Get guest code",
                 "contactDetails": "Contact details",
@@ -983,7 +983,7 @@
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
             "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
-            "inviteFailedNotAllowed": "Only an administrator can invite new members into the organization.",
+            "inviteFailedNotAllowed": "Only an administrator can invite new members.",
             "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
             "cancelSuccess": "Invitation has been cancelled.",
             "cancelFailed": "Failed to cancel invitation",
