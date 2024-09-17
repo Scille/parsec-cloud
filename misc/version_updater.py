@@ -317,19 +317,24 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
         Tool.Parsec: [
             ReplaceRegex(
-                # TODO: fix me once hosting/index.rst is updated
-                r"parsec-cloud\[backend\]==.+'",
-                "parsec-cloud[backend]=={version}'",
+                r"parsec-cloud==.+'",
+                "parsec-cloud=={version}'",
             ),
         ],
     },
     ROOT_DIR / "docs/adminguide/hosting/parsec-server.docker.yaml": {
+        Tool.Parsec: [
+            ReplaceRegex(
+                r"ghcr.io/scille/parsec-cloud/parsec-server:.+$",
+                "ghcr.io/scille/parsec-cloud/parsec-server:{version}",
+            )
+        ],
         Tool.PostgreSQL: [
             ReplaceRegex(
                 r"image: postgres:\d+.\d+-alpine",
                 hide_patch_version("image: postgres:{version}-alpine"),
             )
-        ]
+        ],
     },
     ROOT_DIR / "docs/conf.py": {
         Tool.Parsec: [ReplaceRegex(r'version = ".*"', 'version = "{version}"')]
