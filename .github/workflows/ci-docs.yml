@@ -16,7 +16,7 @@ concurrency:
 env:
   poetry-version: 1.5.1
   # Convert sphinx warning into errors.
-  SPHINXOPTS: -W
+  SPHINXOPTS: --fail-on-warning --verbose
 
 permissions:
   contents: read
