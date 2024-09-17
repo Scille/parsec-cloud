@@ -530,7 +530,7 @@
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
-                "done": "Terminé",
+                "lastUploaded": "Derniers ajouts",
                 "failed": "Échoué"
             },
             "noImportInProgress": "Pas d'import en cours",

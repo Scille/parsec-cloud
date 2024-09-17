@@ -40,8 +40,8 @@
         @click="currentTab = Tabs.Done"
       >
         <div class="item-container">
-          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
-          <span class="text-counter">{{ doneItems.length > 99 ? '+99' : doneItems.length }}</span>
+          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.lastUploaded') }}</ion-text>
+          <span class="text-counter">{{ doneItems.length() > 99 ? '+99' : doneItems.length() }}</span>
         </div>
       </ion-item>
 
@@ -52,7 +52,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
-          <span class="text-counter">{{ errorItems.length > 99 ? '+99' : errorItems.length }}</span>
+          <span class="text-counter">{{ errorItems.length() > 99 ? '+99' : errorItems.length() }}</span>
         </div>
       </ion-item>
     </ion-list>
@@ -80,18 +80,17 @@
       </template>
       <template v-if="currentTab === Tabs.Done">
         <component
-          v-for="item in doneItems"
+          v-for="item in doneItems.getEntries()"
           :is="getFileOperationComponent(item)"
           :key="item.data.id"
           :state="item.state"
           :state-data="item.stateData"
           :operation-data="item.data"
-          @cancel="cancelOperation"
           @click="onOperationFinishedClick"
         />
         <div
           class="upload-menu-list__empty"
-          v-if="doneItems.length === 0"
+          v-if="doneItems.length() === 0"
         >
           <ms-image :image="NoImportDone" />
           <ion-text class="body-lg">
@@ -101,17 +100,16 @@
       </template>
       <template v-if="currentTab === Tabs.Error">
         <component
-          v-for="item in errorItems"
+          v-for="item in errorItems.getEntries()"
           :is="getFileOperationComponent(item)"
           :key="item.data.id"
           :state="item.state"
           :state-data="item.stateData"
           :operation-data="item.data"
-          @cancel="cancelOperation"
         />
         <div
           class="upload-menu-list__empty"
-          v-if="errorItems.length === 0"
+          v-if="errorItems.length() === 0"
         >
           <ms-image :image="NoImportError" />
           <ion-text class="body-lg">
@@ -139,9 +137,10 @@ import {
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 import type { Component } from 'vue';
 import { DateTime } from 'luxon';
+import { FIFO } from '@/common/queue';
 
 interface OperationItem {
   data: FileOperationData;
@@ -153,7 +152,11 @@ interface OperationItem {
 const menu = useUploadMenu();
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const fileOperations: Ref<Array<OperationItem>> = ref([]);
+const errorHappenedInUpload: Ref<boolean> = ref(false);
+const inProgressItems: Ref<Array<OperationItem>> = ref([]);
+const doneItems = ref(new FIFO<OperationItem>(10));
+const errorItems = ref(new FIFO<OperationItem>(10));
+
 let dbId: string;
 const isFileOperationManagerActive = ref(false);
 const uploadMenuList = ref();
@@ -165,44 +168,6 @@ enum Tabs {
 }
 
 const currentTab = ref(Tabs.InProgress);
-
-const inProgressItems = computed(() => {
-  return fileOperations.value.filter((op) =>
-    [
-      FileOperationState.OperationProgress,
-      FileOperationState.FileAdded,
-      FileOperationState.MoveAdded,
-      FileOperationState.CopyAdded,
-    ].includes(op.state),
-  );
-});
-
-const doneItems = computed(() => {
-  return fileOperations.value
-    .filter((op) =>
-      [
-        FileOperationState.FileImported,
-        FileOperationState.Cancelled,
-        FileOperationState.EntryMoved,
-        FileOperationState.EntryCopied,
-      ].includes(op.state),
-    )
-    .sort((op1, op2) => {
-      const op1Date: DateTime = op1.finishedDate || DateTime.fromSeconds(0);
-      const op2Date: DateTime = op2.finishedDate || DateTime.fromSeconds(0);
-      return op2Date.diff(op1Date).milliseconds || 0;
-    });
-});
-
-const errorItems = computed(() => {
-  return fileOperations.value
-    .filter((op) => [FileOperationState.CreateFailed, FileOperationState.MoveFailed, FileOperationState.CopyFailed].includes(op.state))
-    .sort((op1, op2) => {
-      const op1Date: DateTime = op1.finishedDate || DateTime.fromSeconds(0);
-      const op2Date: DateTime = op2.finishedDate || DateTime.fromSeconds(0);
-      return op2Date.diff(op1Date).milliseconds || 0;
-    });
-});
 
 function toggleMenu(): void {
   if (menu.isMinimized()) {
@@ -232,13 +197,17 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
 }
 
 function updateImportState(id: string, state: FileOperationState, stateData?: StateData): void {
-  const operation = fileOperations.value.find((op) => op.data.id === id);
+  const index = inProgressItems.value.findIndex((op) => op.data.id === id);
+  const operation = inProgressItems.value[index];
   if (operation) {
-    if (
+    operation.state = state;
+    operation.stateData = stateData;
+    if ([FileOperationState.FileImported, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(state)) {
+      operation.finishedDate = DateTime.now();
+      doneItems.value.push(operation);
+      inProgressItems.value.splice(index, 1);
+    } else if (
       [
-        FileOperationState.FileImported,
-        FileOperationState.EntryMoved,
-        FileOperationState.EntryCopied,
         FileOperationState.CreateFailed,
         FileOperationState.MoveFailed,
         FileOperationState.CopyFailed,
@@ -246,10 +215,10 @@ function updateImportState(id: string, state: FileOperationState, stateData?: St
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
+      errorItems.value.push(operation);
+      inProgressItems.value.splice(index, 1);
+      errorHappenedInUpload.value = true;
     }
-
-    operation.state = state;
-    operation.stateData = stateData;
   }
 }
 
@@ -281,8 +250,9 @@ async function onFileOperationEvent(
       break;
     case FileOperationState.OperationAllFinished:
       isFileOperationManagerActive.value = false;
-      if (errorItems.value.length > 0) {
+      if (errorHappenedInUpload.value === true) {
         currentTab.value = Tabs.Error;
+        errorHappenedInUpload.value = false;
       } else {
         currentTab.value = Tabs.Done;
       }
@@ -290,7 +260,7 @@ async function onFileOperationEvent(
     case FileOperationState.FileAdded:
     case FileOperationState.MoveAdded:
     case FileOperationState.CopyAdded:
-      fileOperations.value.push({
+      inProgressItems.value.push({
         data: fileOperationData as FileOperationData,
         state: state,
         stateData: stateData,
