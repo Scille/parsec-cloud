@@ -88,7 +88,7 @@ async def backend_factory(config: BackendConfig) -> AsyncGenerator[Backend, None
         )
 
 
-TEST_BOOTSTRAP_TOKEN = BootstrapToken.new()
+TEST_BOOTSTRAP_TOKEN = BootstrapToken.from_hex("672bc6ba9c43455da28344e975dc72b7")
 
 
 @dataclass(slots=True, eq=False, repr=False)

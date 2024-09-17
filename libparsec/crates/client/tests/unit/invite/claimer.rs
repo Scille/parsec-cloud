@@ -25,9 +25,11 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let config = Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: Regex::from_regex_str(r"\.tmp$").unwrap(),
     });
 
     let alice = env.local_device("alice@dev1");
@@ -53,7 +55,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let ctx = match ctx {
         UserOrDeviceClaimInitialCtx::User(ctx) => {
             p_assert_eq!(ctx.claimer_email, "john@example.com");
-            p_assert_eq!(ctx.greeter_user_id(), alice.user_id);
+            p_assert_eq!(*ctx.greeter_user_id(), alice.user_id);
             p_assert_eq!(*ctx.greeter_human_handle(), alice.human_handle);
             ctx
         }
