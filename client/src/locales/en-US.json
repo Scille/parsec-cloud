@@ -348,7 +348,7 @@
     },
     "WorkspacesPage": {
         "createWorkspace": "New workspace",
-        "itemCount": "Items : 0 | Item : 1 | Items: {count}",
+        "itemCount": "No items | 1 item | {count} items",
         "noWorkspaces": "You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.",
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
@@ -410,7 +410,7 @@
         "createFolder": "New folder",
         "copyHere": "Copy here",
         "import": "Import",
-        "itemCount": "No items | Item : 1 | Items: {count}",
+        "itemCount": "No items | 1 item | {count} items",
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "emptyFolder": "This folder is empty.",
         "listDisplayTitles": {
@@ -889,7 +889,7 @@
         },
         "currentUser": "(You)",
         "inviteUser": "Invite a member",
-        "itemCount": "No members | Member: 1 | Members: {count}",
+        "itemCount": "No members | 1 member | {count} members",
         "profile": {
             "admin": {
                 "label": "Administrator",
@@ -1020,7 +1020,7 @@
             "actions": {
                 "close": "Close"
             },
-            "noSharedWorkspaces": "You have no workspaces in common with this user.",
+            "noSharedWorkspaces": "You have no workspaces in common with this member.",
             "failedToListWorkspaces": "Failed to list workspaces."
         },
         "revocation": {

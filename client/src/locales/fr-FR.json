@@ -348,7 +348,7 @@
     },
     "WorkspacesPage": {
         "createWorkspace": "Nouvel espace de travail",
-        "itemCount": "Aucun élément | Élément : 1 | Éléments : {count}",
+        "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail que vous créerez ou qui vous seront partagés s'afficheront ici.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
@@ -410,7 +410,7 @@
         "createFolder": "Nouveau dossier",
         "copyHere": "Copier ici",
         "import": "Importer",
-        "itemCount": "Aucun élément | Élément : 1 | Éléments : {count} ",
+        "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "listDisplayTitles": {
@@ -889,7 +889,7 @@
         },
         "inviteUser": "Inviter un membre",
         "currentUser": "(Vous)",
-        "itemCount": "Aucun membre | Membre : 1 | Membres : {count}",
+        "itemCount": "Aucun membre | 1 membre | {count} membres",
         "profile": {
             "admin": {
                 "label": "Administrateur",
