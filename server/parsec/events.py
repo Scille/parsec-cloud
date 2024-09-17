@@ -31,8 +31,8 @@ if TYPE_CHECKING:
 # can be passed with the event (on top of that we keep the events in cache for SSE
 # last-event-id, so better avoid too much pressure of the RAM)
 # We keep a large margin with PostgreSQL limit given the event also contains additional
-# fields and must be encoded in base64 (which alone adds ~33% in size).
-EVENT_VLOB_MAX_BLOB_SIZE = 4096
+# fields and the blob is hex encoded.
+EVENT_VLOB_MAX_BLOB_SIZE = 1024
 
 
 OrganizationIDField = Annotated[
