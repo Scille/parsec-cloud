@@ -38,11 +38,7 @@ impl AnonymousCmds {
         addr: ParsecAnonymousAddr,
         proxy: ProxyConfig,
     ) -> anyhow::Result<Self> {
-        let client = {
-            let builder = reqwest::ClientBuilder::default().user_agent(crate::CLIENT_USER_AGENT);
-            let builder = proxy.configure_http_client(builder);
-            builder.build()?
-        };
+        let client = crate::build_client_with_proxy(proxy)?;
         Ok(Self::from_client(client, config_dir, addr))
     }
 

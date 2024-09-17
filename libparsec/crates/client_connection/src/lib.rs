@@ -55,6 +55,31 @@ client_user_agent!("Android");
 #[cfg(target_arch = "wasm32")]
 client_user_agent!("Web");
 
+pub fn build_client() -> libparsec_types::anyhow::Result<reqwest::Client> {
+    build_client_with_proxy(ProxyConfig::default())
+}
+
+pub fn build_client_with_proxy(
+    proxy: ProxyConfig,
+) -> libparsec_types::anyhow::Result<reqwest::Client> {
+    let builder = reqwest::ClientBuilder::default().user_agent(CLIENT_USER_AGENT);
+    #[cfg(not(target_arch = "wasm32"))]
+    let builder = if let Some(cafile) = std::env::var_os("SSL_CAFILE") {
+        use libparsec_types::anyhow::Context;
+        log::debug!("Using SSL_CAFILE: {:?}", cafile);
+        let cafile = std::fs::read(cafile).context("Reading SSL_CAFILE")?;
+        let certs = reqwest::Certificate::from_pem_bundle(&cafile)?;
+        log::trace!("Collected {} certificates", certs.len());
+        certs
+            .into_iter()
+            .fold(builder, |builder, cert| builder.add_root_certificate(cert))
+    } else {
+        builder
+    };
+    let builder = proxy.configure_http_client(builder);
+    Ok(builder.build()?)
+}
+
 #[cfg(test)]
 #[test]
 fn user_agent_without_trailing_whitespace() {

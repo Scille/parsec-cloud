@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use reqwest::Client;
-
 use libparsec::{OrganizationID, ParsecAddr, ParsecOrganizationBootstrapAddr};
 
 use crate::utils::*;
@@ -51,7 +49,8 @@ pub async fn create_organization_req(
 ) -> anyhow::Result<ParsecOrganizationBootstrapAddr> {
     let url = addr.to_http_url(Some("/administration/organizations"));
 
-    let rep = Client::new()
+    let client = libparsec_client_connection::build_client()?;
+    let rep = client
         .post(url)
         .bearer_auth(administration_token)
         .json(&serde_json::json!({

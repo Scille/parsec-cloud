@@ -14,6 +14,7 @@ testenv = []
 
 [dependencies]
 libparsec = { workspace = true }
+libparsec_client_connection = { workspace = true }
 
 anyhow = { workspace = true }
 clap = { workspace = true, features = ["default", "derive", "env"] }
@@ -22,7 +23,7 @@ log = { workspace = true }
 reqwest = { workspace = true, features = ["json"] }
 rpassword = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
-serde_json = { workspace = true }
+serde_json = { workspace = true, features = ["std"] }
 spinners = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 url = { workspace = true, optional = true }
