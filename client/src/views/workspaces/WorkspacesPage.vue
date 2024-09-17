@@ -21,6 +21,11 @@
               {{ $msTranslate({ key: 'WorkspacesPage.itemCount', data: { count: workspaceList.length }, count: workspaceList.length }) }}
             </ion-text>
           </div>
+          <ms-search-input
+            v-model="filterWorkspaceName"
+            placeholder="WorkspacesPage.filterPlaceholder"
+            class="search-filter-workspace"
+          />
           <ms-sorter
             id="workspace-filter-select"
             :options="msSorterOptions"
@@ -153,6 +158,7 @@ import {
   MsGridListToggle,
   MsSorter,
   MsSorterChangeEvent,
+  MsSearchInput,
 } from 'megashark-lib';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -214,6 +220,7 @@ const sortByAsc = ref(true);
 const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 const favorites: Ref<WorkspaceID[]> = ref([]);
+const filterWorkspaceName = ref('');
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -418,19 +425,22 @@ async function refreshWorkspacesList(): Promise<void> {
 }
 
 const filteredWorkspaces = computed(() => {
-  return Array.from(workspaceList.value).sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
-    if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
-      return favorites.value.includes(b.id) ? 1 : -1;
-    }
-    if (sortBy.value === SortWorkspaceBy.Name) {
-      return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
-    } else if (sortBy.value === SortWorkspaceBy.Size) {
-      return sortByAsc.value ? a.size - b.size : b.size - a.size;
-    } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
-      return sortByAsc.value ? b.lastUpdated.diff(a.lastUpdated).milliseconds : a.lastUpdated.diff(b.lastUpdated).milliseconds;
-    }
-    return 0;
-  });
+  const filter = filterWorkspaceName.value.toLocaleLowerCase();
+  return Array.from(workspaceList.value)
+    .filter((workspace) => workspace.currentName.toLocaleLowerCase().includes(filter))
+    .sort((a: WorkspaceInfo, b: WorkspaceInfo) => {
+      if (favorites.value.includes(b.id) !== favorites.value.includes(a.id)) {
+        return favorites.value.includes(b.id) ? 1 : -1;
+      }
+      if (sortBy.value === SortWorkspaceBy.Name) {
+        return sortByAsc.value ? a.currentName.localeCompare(b.currentName) : b.currentName.localeCompare(a.currentName);
+      } else if (sortBy.value === SortWorkspaceBy.Size) {
+        return sortByAsc.value ? a.size - b.size : b.size - a.size;
+      } else if (sortBy.value === SortWorkspaceBy.LastUpdate) {
+        return sortByAsc.value ? b.lastUpdated.diff(a.lastUpdated).milliseconds : a.lastUpdated.diff(b.lastUpdated).milliseconds;
+      }
+      return 0;
+    });
 });
 
 const msSorterOptions: MsOptions = new MsOptions([
