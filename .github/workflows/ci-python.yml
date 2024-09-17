@@ -182,7 +182,7 @@ jobs:
       - name: Check python code style
         run: |
           set -eux
-          for step in black ruff pyright ${{ !inputs.style-only && 'sqlfluff' }}; do
+          for step in black ruff pyright ${{ !inputs.style-only && 'sqlfluff' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
               run \
