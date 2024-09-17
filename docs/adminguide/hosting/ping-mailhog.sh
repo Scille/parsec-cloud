@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 set -a
-source parsec-email.env
+source parsec-smtp.env
 
 curl \
     --url "smtp://127.0.0.1:$PARSEC_EMAIL_PORT" \
