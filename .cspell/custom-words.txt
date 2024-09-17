@@ -358,6 +358,7 @@ makensis
 manylinux
 mapbox
 mapboxgl
+maxsplit
 mediaservice
 megashark
 memfs
