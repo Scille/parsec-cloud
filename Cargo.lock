@@ -2884,6 +2884,7 @@ dependencies = [
  "clap",
  "env_logger",
  "libparsec",
+ "libparsec_client_connection",
  "log",
  "predicates",
  "reqwest",
