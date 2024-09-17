@@ -8,16 +8,19 @@ use libparsec_types::prelude::*;
 
 use crate::{
     bootstrap_organization, test_organization_bootstrap_finalize_ctx_factory,
-    BootstrapOrganizationError, Client, ClientConfig, EventBus, WorkspaceStorageCacheSize,
+    BootstrapOrganizationError, Client, ClientConfig, EventBus, MountpointMountStrategy,
+    WorkspaceStorageCacheSize,
 };
 
 fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
     Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
         data_base_dir: env.discriminant_dir.clone(),
-        mountpoint_base_dir: env.discriminant_dir.clone(),
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
+        mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
+        with_monitors: false,
+        prevent_sync_pattern: Regex::from_regex_str(r"\.tmp$").unwrap(),
     })
 }
 
@@ -37,7 +40,7 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        None,
+        Some(BootstrapToken::from_hex("672bc6ba9c43455da28344e975dc72b7").unwrap()),
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
@@ -63,11 +66,7 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
         .await
         .unwrap();
 
-    client
-        .certificates_ops
-        .poll_server_for_new_certificates(None)
-        .await
-        .unwrap();
+    client.poll_server_for_new_certificates().await.unwrap();
 
     client.stop().await;
 
@@ -176,7 +175,7 @@ async fn bad_token(env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        Some("<invalid token>".to_owned()),
+        None,
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
