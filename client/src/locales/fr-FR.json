@@ -34,8 +34,8 @@
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
             "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
-            "sameRole": "Rôle actuel du membre",
-            "alreadyNotShared": "Déjà non partagé avec ce membre"
+            "sameRole": "Rôle actuel",
+            "alreadyNotShared": "Déjà non partagé"
         },
         "reader": {
             "label": "Lecteur",
@@ -55,7 +55,7 @@
         },
         "none": "Non partagé",
         "members": "Membre ({count}) | Membres ({count})",
-        "suggestion": "Suggestions de membres"
+        "suggestion": "Suggestions"
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
@@ -124,8 +124,8 @@
             "title": "Vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
-            "sortByOrganization": "Organisation",
-            "sortByUserName": "Nom du membre",
+            "sortByOrganization": "Nom de l'organisation",
+            "sortByUserName": "Nom",
             "sortByLastLogin": "Dernière connexion",
             "labelSortBy": "Trier par",
             "search": "Rechercher",
@@ -348,7 +348,7 @@
     },
     "WorkspacesPage": {
         "createWorkspace": "Nouvel espace de travail",
-        "itemCount": "Aucun élément | 1 élément | {count} éléments",
+        "itemCount": "Aucun élément | Élément : 1 | Éléments : {count}",
         "noWorkspaces": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail que vous créerez ou qui vous seront partagés s'afficheront ici.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
@@ -410,7 +410,7 @@
         "createFolder": "Nouveau dossier",
         "copyHere": "Copier ici",
         "import": "Importer",
-        "itemCount": "Aucun élément | Un élément | {count} éléments",
+        "itemCount": "Aucun élément | Élément : 1 | Éléments : {count} ",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "listDisplayTitles": {
@@ -586,7 +586,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite de membres",
+                "userLimit": "Limite de profils (hors externes)",
                 "unlimited": "Illimitée",
                 "allowed": "Activé",
                 "forbidden": "Désactivé",
@@ -889,7 +889,7 @@
         },
         "inviteUser": "Inviter un membre",
         "currentUser": "(Vous)",
-        "itemCount": "Aucun membre | Un membre | {count} membres",
+        "itemCount": "Aucun membre | Membre : 1 | Membres : {count}",
         "profile": {
             "admin": {
                 "label": "Administrateur",
@@ -914,11 +914,11 @@
         },
         "emptyList": "Aucun membre à afficher.",
         "noMatch": "Aucun membre ne correspond à vos filtres.",
-        "listUsersFailed": "Impossible d'obtenir la liste des membres. Veuillez vérifier votre connexion internet.",
+        "listUsersFailed": "Impossible d'obtenir la liste des membres de l'organisation. Veuillez vérifier votre connexion internet.",
         "userSelectedCount": "Aucun membre sélectionné | Un membre sélectionné | {count} membres sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
-            "titleDetails": "Détails du membre",
+            "titleDetails": "Détails",
             "actionRevoke": "Révoquer ce membre | Révoquer ces membres",
             "actionDetails": "Voir les détails",
             "titleAssignRoles": "Copie de rôles",
@@ -931,7 +931,7 @@
                 "provideHostCode": "Partagez votre code",
                 "getGuestCode": "Réception du code de l'invité",
                 "contactDetails": "Coordonnées",
-                "summary": "Le membre a bien été ajouté !"
+                "summary": "Le nouveau membre a bien été ajouté !"
             },
             "subtitles": {
                 "waitForGuest1": "Pour accueillir un nouveau membre, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
@@ -939,7 +939,7 @@
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
-                "checkUserInfo": "Vous pouvez modifier le nom du membre, son appareil et définir son profil."
+                "checkUserInfo": "Vous pouvez modifier son nom, son appareil et définir son profil."
             },
             "steps": {
                 "hostCode": "Code hôte",
@@ -981,7 +981,7 @@
             "rejectUser": "Annuler",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
-            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un membre de cette organisation.",
+            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par une autre personne dans cette organisation.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
             "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
@@ -1005,12 +1005,12 @@
         },
         "CreateUserInvitationModal": {
             "pageTitle": "Inviter un nouveau membre",
-            "label": "Email du membre",
+            "label": "Email",
             "placeholder": "jean.martin{'@'}exemple.com",
             "create": "Inviter"
         },
         "UserDetailsModal": {
-            "title": "Détails du membre",
+            "title": "Détails",
             "subtitles": {
                 "name": "Nom",
                 "joined": "Rejoint",
@@ -1430,7 +1430,7 @@
             "endingDate": "Date de fin",
             "members": {
                 "title": "Licence membre | Licences membres",
-                "admin": "Membre administrateur | Membres administrateur",
+                "admin": "Membre administrateur | Membres administrateurs",
                 "adminDescription": "Tous les accès",
                 "standard": "Membre standard | Membres standards",
                 "standardDescription": "Membre classique",

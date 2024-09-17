@@ -34,8 +34,8 @@
             "managerCannotUpdateManagers": "Managers cannot change the role of other managers",
             "managerCannotPromoteToManager": "Managers cannot promote to Manager",
             "managerCannotPromoteToOwner": "Managers cannot promote to Owner",
-            "sameRole": "Current role of this user",
-            "alreadyNotShared": "Already not shared with this user"
+            "sameRole": "Current role",
+            "alreadyNotShared": "Already not shared"
         },
         "reader": {
             "label": "Reader",
@@ -55,7 +55,7 @@
         },
         "none": "Not shared",
         "members": "Member ({count}) | Members ({count})",
-        "suggestion": "Suggested members"
+        "suggestion": "Suggested"
     },
     "link": {
         "invalid": "The provided link is invalid.",
@@ -124,8 +124,8 @@
             "title": "Your organizations",
             "sortOrderAsc": "Ascending",
             "sortOrderDesc": "Descending",
-            "sortByOrganization": "Organization",
-            "sortByUserName": "Member Name",
+            "sortByOrganization": "Organization name",
+            "sortByUserName": "Name",
             "sortByLastLogin": "Last login",
             "labelSortBy": "Sort by",
             "search": "Search",
@@ -348,7 +348,7 @@
     },
     "WorkspacesPage": {
         "createWorkspace": "New workspace",
-        "itemCount": "No items | 1 item | {count} items",
+        "itemCount": "Items : 0 | Item : 1 | Items: {count}",
         "noWorkspaces": "You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.",
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
@@ -410,7 +410,7 @@
         "createFolder": "New folder",
         "copyHere": "Copy here",
         "import": "Import",
-        "itemCount": "No items | 1 item | {count} items",
+        "itemCount": "No items | Item : 1 | Items: {count}",
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "emptyFolder": "This folder is empty.",
         "listDisplayTitles": {
@@ -586,7 +586,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "External profile",
-                "userLimit": "Member limit",
+                "userLimit": "Profile limit (not including external)",
                 "unlimited": "Unlimited",
                 "allowed": "Enabled",
                 "forbidden": "Disabled",
@@ -889,7 +889,7 @@
         },
         "currentUser": "(You)",
         "inviteUser": "Invite a member",
-        "itemCount": "No members | One member | {count} members",
+        "itemCount": "No members | Member: 1 | Members: {count}",
         "profile": {
             "admin": {
                 "label": "Administrator",
@@ -914,7 +914,7 @@
         },
         "emptyList": "No members to display.",
         "noMatch": "No members matching your filters.",
-        "listUsersFailed": "Failed to retrieve the members list. Please make sure you are online.",
+        "listUsersFailed": "Failed to retrieve the organization members list. Please make sure you are online.",
         "userSelectedCount": "No members selected | One member selected | {count} members selected",
         "userContextMenu": {
             "titleRemove": "Deletion",
@@ -931,7 +931,7 @@
                 "provideHostCode": "Share your code",
                 "getGuestCode": "Get guest code",
                 "contactDetails": "Contact details",
-                "summary": "Member has been added successfully!"
+                "summary": "The new member has been added successfully!"
             },
             "subtitles": {
                 "waitForGuest1": "To onboard a new member, you have to be in direct contact with them during the onboarding process (around 2 minutes).",
@@ -939,7 +939,7 @@
                 "provideHostCode": "Give the code below to the guest.",
                 "getGuestCode": "Click on the code given to you by the guest.",
                 "getUserInfo": "Please wait while the guest enters their contact details. You will have to review them.",
-                "checkUserInfo": "You can update the member name, device and profile."
+                "checkUserInfo": "You can update the name, device and profile."
             },
             "steps": {
                 "hostCode": "Host code",
@@ -981,7 +981,7 @@
             "rejectUser": "Cancel",
             "inviteSuccessMailSent": "An invitation to join the organization has been sent to {email}.",
             "inviteSuccessNoMail": "The invitation was successfully created but we failed to send an email to {email}. Please send the invitation link yourself or try again.",
-            "inviteFailedAlreadyMember": "The email {email} is already used by a member of this organization.",
+            "inviteFailedAlreadyMember": "The email {email} is already used by someone in this organization.",
             "inviteFailedOffline": "Failed to connect to the server. Please make sure you are online.",
             "inviteFailedNotAllowed": "Only an administrator can invite new members into the organization.",
             "inviteFailedUnknown": "An unexpected error occurred, please try again (reason: {reason}).",
@@ -1004,13 +1004,13 @@
             }
         },
         "CreateUserInvitationModal": {
-            "pageTitle": "Invite a new user",
-            "label": "Member's email",
+            "pageTitle": "Invite a new member",
+            "label": "Email",
             "placeholder": "john.smith{'@'}example.com",
             "create": "Invite"
         },
         "UserDetailsModal": {
-            "title": "Member details",
+            "title": "Details",
             "subtitles": {
                 "name": "Name",
                 "joined": "Joined",
