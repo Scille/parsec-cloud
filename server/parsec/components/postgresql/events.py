@@ -5,7 +5,6 @@ from contextlib import asynccontextmanager
 from typing import AsyncIterator, override
 
 import anyio
-import asyncpg
 from anyio.streams.memory import MemoryObjectReceiveStream, MemoryObjectSendStream
 
 from parsec._parsec import (
@@ -44,7 +43,7 @@ class PGEventBus(EventBus):
 
 
 @asynccontextmanager
-async def event_bus_factory(db_url: str) -> AsyncIterator[PGEventBus]:
+async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
     # TODO: add typing once use anyio>=4 (currently incompatible with fastapi)
     send_events_channel, receive_events_channel = anyio.create_memory_object_stream(math.inf)
     receive_events_channel: MemoryObjectReceiveStream[Event]
@@ -57,7 +56,7 @@ async def event_bus_factory(db_url: str) -> AsyncIterator[PGEventBus]:
         _connection_lost = True
         task_group.cancel_scope.cancel()
 
-    async def _pump_events():
+    async def _pump_events(notification_conn: AsyncpgConnection) -> None:
         async for event in receive_events_channel:
             logger.info_with_debug_extra(
                 "Received internal event",
@@ -80,22 +79,18 @@ async def event_bus_factory(db_url: str) -> AsyncIterator[PGEventBus]:
             return
         event_bus._dispatch_incoming_event(event)
 
-    # This connection is dedicated to the notifications listening, so it
-    # would only complicate stuff to include it into the connection pool
-    notification_conn = await asyncpg.connect(db_url)
-    try:
+    async with pool.acquire() as notification_conn:
         try:
             async with anyio.create_task_group() as task_group:
                 notification_conn.add_termination_listener(_on_notification_conn_termination)
                 await notification_conn.add_listener("app_notification", _on_notification)
-                task_group.start_soon(_pump_events)
+                task_group.start_soon(_pump_events, notification_conn)
                 yield event_bus
                 task_group.cancel_scope.cancel()
         finally:
+            await notification_conn.remove_listener("app_notification", _on_notification)
             if _connection_lost:
                 raise ConnectionError("PostgreSQL notification query has been lost")
-    finally:
-        await notification_conn.close()
 
 
 _q_get_orga_and_user_infos = Q("""
