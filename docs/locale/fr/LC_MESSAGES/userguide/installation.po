@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-07-30 15:15+0200\n"
-"PO-Revision-Date: 2024-07-30 15:15+0200\n"
+"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"PO-Revision-Date: 2024-09-18 18:43+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -16,236 +16,301 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.4.4\n"
+"X-Generator: Poedit 3.5\n"
 
 #: ../../userguide/installation.rst:7
 msgid "Install Parsec"
 msgstr "Installation de Parsec"
 
-#: ../../userguide/installation.rst:10
+#: ../../userguide/installation.rst:11
+msgid "Install Parsec app"
+msgstr "Installation de l'application Parsec"
+
+#: ../../userguide/installation.rst:13
+msgid "Parsec is available for Linux, Mac, and Windows operating systems."
+msgstr ""
+"Parsec est disponible pour les systèmes d'exploitation Linux, Mac et Windows."
+
+#: ../../userguide/installation.rst:17
 msgid "Windows"
 msgstr "Windows"
 
-#: ../../userguide/installation.rst:12
-msgid ""
-"Windows installer is available at the latest stable version on `Get Parsec`_."
-msgstr ""
-"La dernière version stable de l'installateur Windows est disponible sur `Get "
-"Parsec`_."
+#: ../../userguide/installation.rst:19
+msgid "Download the latest stable version of the Windows installer:"
+msgstr "Téléchargez la dernière version stable de l'installeur Windows :"
 
-#: ../../userguide/installation.rst:15
-msgid "Linux"
-msgstr "Linux"
+#: ../../userguide/installation.rst
+msgid "download parsec"
+msgstr "télécharger parsec"
 
-#: ../../userguide/installation.rst:18
-msgid "AppImage"
-msgstr "AppImage"
+#: ../../userguide/installation.rst:26
+msgid "Start the ``.exe`` and follow the instructions to install Parsec."
+msgstr "Lancez le ``.exe`` et suivez les instructions pour installer Parsec."
 
-#: ../../userguide/installation.rst:20
-msgid "AppImage is available at the latest stable version on `Get Parsec`_."
-msgstr "La dernière version stable de l'AppImage est disponible sur `Get Parsec`_."
+#: ../../userguide/installation.rst:28
+msgid "Linux (AppImage)"
+msgstr "Linux (AppImage)"
 
-#: ../../userguide/installation.rst:22
-msgid "To use Parsec via the AppImage:"
-msgstr "Pour utiliser Parsec via AppImage:"
+#: ../../userguide/installation.rst:30
+msgid "Download the latest stable version of the **AppImage** file:"
+msgstr "Téléchargez la dernière version stable du fichier **AppImage** :"
 
-#: ../../userguide/installation.rst:24
-msgid "Download AppImage file"
-msgstr "Télécharger le fichier AppImage"
+#: ../../userguide/installation.rst:37
+msgid "Make the ``.AppImage`` file executable"
+msgstr "Rendre le fichier ``.AppImage`` exécutable"
 
-#: ../../userguide/installation.rst:25
-msgid "Make it executable"
-msgstr "Le rendre exécutable"
-
-#: ../../userguide/installation.rst:27
+#: ../../userguide/installation.rst:39
 msgid "Right-click/Properties/Allow executing file as program"
 msgstr ""
 "Clic droit/Propriétés/Autoriser l'exécution du fichier en tant que programme"
 
-#: ../../userguide/installation.rst:28
+#: ../../userguide/installation.rst:40
 msgid "Or use the `chmod` command:"
 msgstr "Ou utilisez la commande `chmod` :"
 
-#: ../../userguide/installation.rst:34
-msgid "Run it (double-click on AppImage file)"
-msgstr "Exécutez-la (double-cliquez sur le fichier AppImage)"
-
-#: ../../userguide/installation.rst:37
-msgid "Snap"
-msgstr "Snap"
-
-#: ../../userguide/installation.rst:39
-msgid "Parsec is available on Snap Store:"
-msgstr "Parsec est disponible sur Snap Store:"
-
 #: ../../userguide/installation.rst:46
-msgid "You can install the snap from the command line by doing:"
-msgstr "Vous pouvez installer le snap depuis la ligne de commande en faisant :"
+msgid "Run it (double-click on the ``.AppImage`` file)"
+msgstr "Exécutez-le (double-cliquez sur le fichier ``.AppImage``)"
 
-#: ../../userguide/installation.rst:52
+#: ../../userguide/installation.rst:48
+msgid "Linux (snap)"
+msgstr "Linux (snap)"
+
+#: ../../userguide/installation.rst:50
 msgid ""
-"If you are familiar with Snap, you may notice that Parsec snap is provided in "
-"classic mode (i.e. without sandbox). This is needed because Parsec needs `Fuse "
-"<https://en.wikipedia.org/wiki/Filesystem_in_Userspace>`_ to mount your data as "
-"a virtual directory, which is not allowed by the Snap sandbox."
+"Parsec is available on the `Snap Store <https://snapcraft.io/parsec/>`_:"
 msgstr ""
-"Si vous connaissez Snap, vous avez peut-être remarqué que le snap Parsec "
-"fonctionne en mode classique (c'est à dire sans isolation). Cela est nécessaire "
-"car Parsec utilise `Fuse <https://fr.wikipedia.org/wiki/"
-"Filesystem_in_Userspace>`_ pour exposer vos données comme un disque virtuel, ce "
-"qui n'est pas autorisé par l'isolation de Snap."
+"Parsec est disponible sur le `Snap Store <https://snapcraft.io/parsec/>`_ :"
 
 #: ../../userguide/installation.rst:56
-msgid ""
-"In order to install multiple versions of Parsec, you need to enable snapd "
-"`parallel instances <https://snapcraft.io/blog/parallel-installs-test-and-run-"
-"multiple-instances-of-snaps>`_:"
-msgstr ""
-"Afin d'installer plusieurs versions de Parsec, vous devez activer snapd "
-"`parallel instances <https://snapcraft.io/blog/parallel-installs-test-and-run-"
-"multiple-instances-of-snaps>`_ :"
+msgid "You can install Parsec from the command line:"
+msgstr "Vous pouvez installer Parsec depuis la ligne de commande :"
 
 #: ../../userguide/installation.rst:62
 msgid ""
-"Then, to install v3.0 (provided you already have v2.17 installed), give it a "
-"specific name:"
+"If you are familiar with Snap, you may notice that Parsec is provided in "
+"*classic* mode (i.e. without sandbox). This is required because Parsec needs "
+"`Fuse <https://en.wikipedia.org/wiki/Filesystem_in_Userspace>`_ to mount "
+"your data as a virtual directory, which is not allowed by the Snap sandbox."
 msgstr ""
-"Ensuite, pour installer la v3.0 (en supposant que la v2.17 soit déjà installée), "
-"donnez-lui un nom spécifique :"
+"Si vous connaissez Snap, vous avez peut-être remarqué que le snap Parsec "
+"fonctionne en mode **classique** (c'est à dire sans isolation). Cela est "
+"nécessaire car Parsec utilise `Fuse <https://fr.wikipedia.org/wiki/"
+"Filesystem_in_Userspace>`_ pour exposer vos données comme un disque virtuel, "
+"ce qui n'est pas autorisé par l'isolation de Snap."
 
-#: ../../userguide/installation.rst:69
+#: ../../userguide/installation.rst:66
+msgid ""
+"In order to install multiple versions of Parsec, you first need to enable "
+"`parallel instances <https://snapcraft.io/blog/parallel-installs-test-and-"
+"run-multiple-instances-of-snaps>`_:"
+msgstr ""
+"Pour installer plusieurs versions de Parsec, vous devez d'abord activer les "
+"`instances parallèles <https://snapcraft.io/blog/parallel-installs-test-and-"
+"run-multiple-instances-of-snaps>`_ :"
+
+#: ../../userguide/installation.rst:72
+msgid ""
+"Then, you can install v3.0 (provided you already have v2.17 installed), give "
+"it a specific name:"
+msgstr ""
+"Ensuite, vous pouvez installer la v3.0 (à condition d'avoir déjà installé la "
+"v2.17), en lui donnant un nom spécifique :"
+
+#: ../../userguide/installation.rst:79
 msgid "macOS"
 msgstr "macOS"
 
-#: ../../userguide/installation.rst:73
-msgid ""
-"Support for macOS is currently under development for the latest version of "
-"Parsec (v3.x)."
-msgstr ""
-"Le support de macOS est actuellement en cours de développement pour la dernière "
-"version de Parsec (v3.x)."
-
-#: ../../userguide/installation.rst:75
-msgid "macOS installer is available at the latest stable version on `Get Parsec`_."
-msgstr ""
-"La dernière version stable de l'installateur macOS est disponible sur `Get "
-"Parsec`_."
-
-#: ../../userguide/installation.rst:77
-msgid ""
-"Parsec requires `macFUSE <https://osxfuse.github.io/>`_ in order to provide a "
-"smooth integration with macOS and let you access your documents via Finder "
-"(macOS file manager). The following sections describe how to install macFUSE "
-"(which can be a little bit troublesome, see `this discussion <https://github.com/"
-"osxfuse/osxfuse/issues/814>`_)."
-msgstr ""
-"Parsec nécessite `macFUSE <https://osxfuse.github.io/>`_ afin de fournir une "
-"intégration fluide avec macOS et de vous permettre d'accéder à vos documents via "
-"Finder (le gestionnaire de fichiers de macOS). Les sections suivantes décrivent "
-"comment installer macFUSE (ce qui peut être un peu difficile, voir `cette "
-"discussion <https://github.com/osxfuse/osxfuse/issues/814>`_)."
-
-#: ../../userguide/installation.rst:81
-msgid "Install macFUSE"
-msgstr "Installation de macFUSE"
-
 #: ../../userguide/installation.rst:83
 msgid ""
-"Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ website."
+"Support for macOS is currently under development, some features are not "
+"fully implemented."
+msgstr ""
+"Le support de macOS est actuellement en cours de développement, certaines "
+"fonctionnalités ne sont pas encore totalement implémentées."
+
+#: ../../userguide/installation.rst:85
+msgid "Download the latest stable version of the **macOS installer**:"
+msgstr "Téléchargez la dernière version stable de l'installateur **macOS** :"
+
+#: ../../userguide/installation.rst:92
+msgid ""
+"Start the ``.dmg`` installer and follow the instructions to install **Parsec "
+"app**."
+msgstr "Lancez le fichier ``.dmg`` et suivez les instructions d'installation."
+
+#: ../../userguide/installation.rst:94
+msgid "Install macFUSE (see below)"
+msgstr "Installation de macFUSE (voir ci-dessous)"
+
+#: ../../userguide/installation.rst:98
+msgid ""
+"Parsec requires `macFUSE <https://osxfuse.github.io/>`_ in order to provide "
+"a smooth integration with macOS and let you access your documents via Finder "
+"(macOS file manager)."
+msgstr ""
+"Parsec nécessite `macFUSE <https://osxfuse.github.io/>`_ afin de fournir une "
+"intégration fluide avec macOS et de vous permettre d'accéder à vos documents "
+"via Finder (le gestionnaire de fichiers de macOS)."
+
+#: ../../userguide/installation.rst:100
+msgid "**Install macFUSE**"
+msgstr "**Installation de macFUSE**"
+
+#: ../../userguide/installation.rst:102
+msgid "This section describe how to install macFUSE."
+msgstr "Cette section décrit comment installer macFUSE."
+
+#: ../../userguide/installation.rst:104
+msgid ""
+"Get the latest version from the `macFUSE <https://osxfuse.github.io/>`_ "
+"website."
 msgstr ""
 "Téléchargez la dernière version sur le site web de `macFUSE <https://osxfuse."
 "github.io/>`_."
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst
 msgid "macFUSE download screen"
 msgstr "écran de téléchargement de macFUSE"
 
-#: ../../userguide/installation.rst:90
+#: ../../userguide/installation.rst:110
 msgid "Open the ``.dmg`` file and follow instructions to install."
 msgstr "Ouvrez le fichier ``.dmg`` et suivez les instructions d'installation."
 
-#: ../../userguide/installation.rst:92
+#: ../../userguide/installation.rst:112
 msgid ""
-"If the opening fails, two options are available in `System Settings > Privacy "
-"and Security`: either check the `App Store and identified developers` box, or "
-"click `Open Anyway` if you don't want to change this setting, which will need to "
-"be done once to open the ``.dmg``, and possibly once more to start the installer."
+"If the opening fails, two options are available in `System Settings > "
+"Privacy and Security`: either check the `App Store and identified "
+"developers` box, or click `Open Anyway` if you don't want to change this "
+"setting, which will need to be done once to open the ``.dmg``, and possibly "
+"once more to start the installer."
 msgstr ""
-"Si l'ouverture échoue, deux options sont disponibles dans `Réglages Système > "
-"Confidentialité et sécurité` : cochez la case `App Store et développeurs "
-"identifiés`, ou cliquez sur `Ouvrir quand meme` si vous ne voulez pas changer ce "
-"paramètre, ce qui devra être fait une fois pour ouvrir le ``.dmg``, et "
-"éventuellement une fois de plus pour démarrer l'installateur."
+"Si l'ouverture échoue, deux options sont disponibles dans `Réglages Système "
+"> Confidentialité et sécurité` : cochez la case `App Store et développeurs "
+"identifiés`, ou cliquez sur `Ouvrir quand meme` si vous ne voulez pas "
+"changer ce paramètre, ce qui devra être fait une fois pour ouvrir le ``."
+"dmg``, et éventuellement une fois de plus pour démarrer l'installateur."
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst:112
 msgid "macFUSE current allow screen"
 msgstr "écran d'autorisation de macFUSE"
 
-#: ../../userguide/installation.rst:98 ../../userguide/installation.rst:125
+#: ../../userguide/installation.rst:118
 msgid "Finally, reboot your Mac to complete the installation."
 msgstr "Enfin, redémarrez votre Mac pour finaliser l'installation."
 
-#: ../../userguide/installation.rst:101
-msgid "Install macFUSE on macOS 12 and older"
-msgstr "Installation de macFUSE sur MacOS 12 ou antérieur"
-
-#: ../../userguide/installation.rst:103
+#: ../../userguide/installation.rst:122
 msgid ""
-"Open the ``.dmg`` file and follow its instructions to install. If the opening "
-"fails, check the `App Store and identified developers` box in `System "
-"Preferences > Security & Privacy`:"
+"On macOS 12 and older, if the installer fails to start, check the `App Store "
+"and identified developers` box in `System Preferences > Security & Privacy`:"
 msgstr ""
-"Ouvrez le fichier en ``.dmg`` et suivez les instruction d'installation. Si "
-"l'ouverture du fichier échoue, cochez la case `App Store et développeurs "
-"identifiés` dans `Confidentialité et sécurité Système > Confidentialité et "
-"sécurité` :"
+"Sur macOS 12 et les versions antérieures, si le programme d'installation ne "
+"démarre pas, cochez la case `App Store et développeurs identifiés` dans "
+"`Confidentialité et sécurité Système > Confidentialité et sécurité` :"
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst
 msgid "macOS path to Security and Privacy"
 msgstr "macOS chemin vers Sécurité et Confidentialité"
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst
 msgid "macOS previous allow identified developer"
 msgstr "macOS ancien autoriser développeurs identifiés"
 
-#: ../../userguide/installation.rst:113
+#: ../../userguide/installation.rst:132
 msgid ""
 "To change this setting, click the lock first which will require admin rights."
 msgstr ""
 "Pour changer ce paramètre, cliquez d'abord sur le cadenas, qui requiert les "
 "droits d'administrateur."
 
-#: ../../userguide/installation.rst:115
+#: ../../userguide/installation.rst:134
 msgid ""
-"Once the installation is done, a `System Extension Updated` window will pop up. "
-"Click `Open Security Preferences`, and click the lock, then click `Allow`:"
+"Once the installation is done, a `System Extension Updated` window will pop "
+"up. Click `Open Security Preferences`, and click the lock, then click "
+"`Allow`:"
 msgstr ""
 "Une fois l'installation terminée, une fenêtre suggérant d'autoriser cette "
-"extension système apparaît. Cliquez sur `Ouvrir les préférences de sécurité`, "
-"puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le cadenas :"
+"extension système apparaît. Cliquez sur `Ouvrir les préférences de "
+"sécurité`, puis cliquez sur `Autoriser` après avoir cliqué à nouveau sur le "
+"cadenas :"
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst
 msgid "Previous System Extension Updated window"
 msgstr "Ancienne fenêtre de mise à jour d'extension système"
 
-#: ../../userguide/installation.rst:-1
+#: ../../userguide/installation.rst
 msgid "macOS previous allow extension"
 msgstr "macOS ancien autoriser extension"
 
-#: ../../userguide/installation.rst:129
+#: ../../userguide/installation.rst:146
+msgid "Update Parsec app"
+msgstr "Mise à jour de l'application Parsec"
+
+#: ../../userguide/installation.rst:148
+msgid ""
+"Automatic updates are supported and enabled. When a new version is released, "
+"Parsec app updates automatically on startup."
+msgstr ""
+"Les mises à jour automatiques sont supportées et activées. Lorsqu'une "
+"nouvelle version est publiée, l'application Parsec se met à jour "
+"automatiquement au démarrage."
+
+#: ../../userguide/installation.rst:150
+msgid ""
+"If Parsec app is running, A message is displayed. Simply click on the "
+"message to update the application."
+msgstr ""
+"Si l'application Parsec est en cours d'exécution, un message s'affiche. Il "
+"suffit de cliquer sur le message pour mettre à jour l'application."
+
+#: ../../userguide/installation.rst:154
 msgid "Install an older version of Parsec"
 msgstr "Installer une ancienne version de Parsec"
 
-#: ../../userguide/installation.rst:133
+#: ../../userguide/installation.rst:158
 msgid ""
-"For security reasons, you should **always install the latest stable version of "
-"Parsec** as it contains the latest security fixes."
+"For security reasons, you should **always install the latest stable version "
+"of Parsec** as it contains the latest security fixes."
 msgstr ""
 "Pour des raisons de sécurité, vous devriez **toujours installer la dernière "
-"version stable de Parsec** car elle contient les derniers correctifs de sécurité."
+"version stable de Parsec** car elle contient les derniers correctifs de "
+"sécurité."
 
-#: ../../userguide/installation.rst:135
+#: ../../userguide/installation.rst:160
 msgid "If you need to access older versions, they are available on `GitHub`_."
 msgstr ""
 "Si vous avez besoin d'accéder à des versions plus anciennes, elle sont "
 "disponibles sur `GitHub`_."
+
+#~ msgid ""
+#~ "Windows installer is available at the latest stable version on `Get "
+#~ "Parsec`_."
+#~ msgstr ""
+#~ "La dernière version stable de l'installateur Windows est disponible sur "
+#~ "`Get Parsec`_."
+
+#~ msgid "Linux"
+#~ msgstr "Linux"
+
+#~ msgid "AppImage is available at the latest stable version on `Get Parsec`_."
+#~ msgstr ""
+#~ "La dernière version stable de l'AppImage est disponible sur `Get Parsec`_."
+
+#~ msgid "To use Parsec via the AppImage:"
+#~ msgstr "Pour utiliser Parsec via AppImage:"
+
+#~ msgid "Download AppImage file"
+#~ msgstr "Télécharger le fichier AppImage"
+
+#~ msgid "Snap"
+#~ msgstr "Snap"
+
+#~ msgid ""
+#~ "macOS installer is available at the latest stable version on `Get "
+#~ "Parsec`_."
+#~ msgstr ""
+#~ "La dernière version stable de l'installateur macOS est disponible sur "
+#~ "`Get Parsec`_."
+
+#~ msgid "Install macFUSE on macOS 12 and older"
+#~ msgstr "Installation de macFUSE sur MacOS 12 ou antérieur"
