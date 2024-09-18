@@ -353,6 +353,7 @@
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
         "newWorkspaceSuccess": "L'espace de travail '{workspace}' a été créé !",
+        "filterPlaceholder": "Nom d'un espace",
         "workspaceContextMenu": {
             "titleOffline": "Hors Connexion",
             "titleManage": "Gestion de l'espace",
@@ -530,7 +531,7 @@
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
-                "done": "Terminé",
+                "lastUploaded": "Derniers ajouts",
                 "failed": "Échoué"
             },
             "noImportInProgress": "Pas d'import en cours",

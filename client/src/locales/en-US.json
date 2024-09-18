@@ -353,6 +353,7 @@
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
         "newWorkspaceSuccess": "The workspace '{workspace}' has been created!",
+        "filterPlaceholder": "Workspace name",
         "workspaceContextMenu": {
             "titleOffline": "Offline",
             "titleManage": "Manage workspace",
@@ -530,7 +531,7 @@
             "browse": "Go to location",
             "tabs": {
                 "inProgress": "In progress",
-                "done": "Done",
+                "lastUploaded": "Last uploaded",
                 "failed": "Failed"
             },
             "noImportInProgress": "No import in progress",

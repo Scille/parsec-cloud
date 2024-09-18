@@ -10,7 +10,7 @@ msTest('Home default state with devices', async ({ home }) => {
   await expect(home.locator('.organization-title')).toHaveText('Your organizations');
   await expect(home.locator('#organization-filter-select')).toHaveText('Organization');
   await expect(home.locator('#create-organization-button')).toHaveText('Create or join');
-  await expect(home.locator('#ms-search-input')).toBeVisible();
+  await expect(home.locator('#search-input-organization')).toBeVisible();
   const cards = home.locator('.organization-list').locator('.organization-card');
 
   await expect(cards).toHaveCount(USER_NAMES.length);
@@ -40,7 +40,7 @@ msTest('Sort devices', async ({ home }) => {
 
 msTest('Filter devices', async ({ home }) => {
   const cards = home.locator('.organization-list').locator('.organization-card');
-  const searchInput = home.locator('#ms-search-input').locator('ion-input');
+  const searchInput = home.locator('#search-input-organization').locator('ion-input');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'cey');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.filter((u) => u.includes('cey')));
@@ -51,7 +51,7 @@ msTest('Filter devices', async ({ home }) => {
 
 msTest('Filter devices no match', async ({ home }) => {
   const cards = home.locator('.organization-list').locator('.organization-card');
-  const searchInput = home.locator('#ms-search-input').locator('ion-input');
+  const searchInput = home.locator('#search-input-organization').locator('ion-input');
   await expect(cards.locator('.organization-card-login__name')).toHaveText(USER_NAMES.sort((u1, u2) => u1.localeCompare(u2)));
   await fillIonInput(searchInput, 'nomatch');
   await expect(cards).toBeHidden();

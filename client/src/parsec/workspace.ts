@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { DataCache } from '@/common/cache';
 import { needsMocks } from '@/parsec/environment';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
@@ -197,6 +198,22 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
         return { ok: false, error: { tag: WorkspaceInfoErrorTag.Internal, error: 'internal' } };
     }
   }
+}
+
+const WORKSPACE_NAMES_CACHE = new DataCache<WorkspaceHandle, string>();
+
+export async function getWorkspaceName(workspaceHandle: WorkspaceHandle): Promise<string> {
+  const name = WORKSPACE_NAMES_CACHE.get(workspaceHandle);
+
+  if (name) {
+    return name;
+  }
+  const result = await getWorkspaceInfo(workspaceHandle);
+  if (!result.ok) {
+    return '';
+  }
+  WORKSPACE_NAMES_CACHE.set(workspaceHandle, result.value.currentName);
+  return result.value.currentName;
 }
 
 export async function createWorkspace(name: WorkspaceName): Promise<Result<WorkspaceID, ClientCreateWorkspaceError>> {

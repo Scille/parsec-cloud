@@ -42,12 +42,15 @@
         {{ workspace.currentName }}
       </ion-title>
 
-      <ion-text class="card-content-last-update subtitles-sm">
+      <ion-text
+        class="card-content-last-update subtitles-sm"
+        v-show="false"
+      >
         <ion-icon
           :icon="time"
           class="time"
         />
-        <span v-show="true">{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
+        <span>{{ $msTranslate(formatTimeSince(workspace.lastUpdated, '--', 'short')) }}</span>
       </ion-text>
 
       <div
@@ -133,7 +136,7 @@ async function onOptionsClick(event: Event): Promise<void> {
   display: flex;
   align-items: center;
   top: 0;
-  right: 1rem;
+  right: 0.5rem;
   font-size: 1.5rem;
   padding: 0.75rem;
 
@@ -236,7 +239,6 @@ async function onOptionsClick(event: Event): Promise<void> {
   padding: 0.625rem 0;
   align-items: center;
   color: var(--parsec-color-light-secondary-grey);
-  border-top: 1px solid var(--parsec-color-light-secondary-disabled);
 
   .not-shared-label {
     color: var(--parsec-color-light-secondary-grey);

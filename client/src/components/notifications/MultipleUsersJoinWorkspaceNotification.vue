@@ -18,7 +18,7 @@
             <strong> {{ notificationData.roles.length }} {{ $msTranslate('notification.users') }} </strong>
           </template>
           <template #workspace>
-            <strong>{{ workspaceInfo ? workspaceInfo.currentName : '' }}</strong>
+            <strong>{{ workspaceName }}</strong>
           </template>
         </i18n-t>
       </ion-text>
@@ -39,24 +39,21 @@
 import { formatTimeSince } from 'megashark-lib';
 import MultipleUsersJoinPopover from '@/components/notifications/MultipleUsersJoinPopover.vue';
 import NotificationItem from '@/components/notifications/NotificationItem.vue';
-import { getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
+import { getWorkspaceName } from '@/parsec';
 import { MultipleUsersJoinWorkspaceData } from '@/services/informationManager';
 import { Notification } from '@/services/notificationManager';
 import { IonIcon, IonText, popoverController } from '@ionic/vue';
 import { people } from 'ionicons/icons';
-import { onMounted, ref, Ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceName = ref('');
 
 const props = defineProps<{
   notification: Notification;
 }>();
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(notificationData.workspaceHandle);
-  if (result.ok) {
-    workspaceInfo.value = result.value;
-  }
+  workspaceName.value = await getWorkspaceName(notificationData.workspaceHandle);
 });
 
 const notificationData = props.notification.getData<MultipleUsersJoinWorkspaceData>();

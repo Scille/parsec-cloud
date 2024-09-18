@@ -3,7 +3,7 @@
 import { Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
-import { fillInputModal } from '@tests/pw/helpers/utils';
+import { fillInputModal, fillIonInput } from '@tests/pw/helpers/utils';
 
 async function isInGridMode(page: Page): Promise<boolean> {
   return (await page.locator('#workspaces-ms-action-bar').locator('#grid-view').getAttribute('disabled')) !== null;
@@ -81,9 +81,9 @@ for (const gridMode of [false, true]) {
     await sortSelector.click();
     const popover = connected.locator('.popover-viewport');
     const sortItems = popover.getByRole('listitem');
-    await expect(sortItems).toHaveCount(3);
-    await expect(sortItems).toHaveText(['Ascending', 'Name', 'Last updated']);
-    for (const [index, checked] of [false, true, false].entries()) {
+    await expect(sortItems).toHaveCount(2);
+    await expect(sortItems).toHaveText(['Ascending', 'Name']);
+    for (const [index, checked] of [false, true].entries()) {
       if (checked) {
         await expect(sortItems.nth(index)).toHaveTheClass('selected');
       } else {
@@ -173,3 +173,22 @@ msTest('Checks favorites', async ({ connected }) => {
   await connected.locator('.workspaces-container').locator('.workspace-list-item').nth(0).locator('.workspace-favorite-icon').click();
   await ensureFavorite(connected, 0);
 });
+
+for (const gridMode of [false, true]) {
+  msTest(`Workspace filter in ${gridMode ? 'grid' : 'list'} mode`, async ({ connected }) => {
+    if (!gridMode) {
+      await toggleViewMode(connected);
+    }
+    const searchInput = connected.locator('#workspaces-ms-action-bar').locator('.search-filter-workspace').locator('ion-input');
+    const container = connected.locator('.workspaces-container');
+    const titles = gridMode ? container.locator('.card-content__title') : container.locator('.workspace-name__label');
+
+    await expect(titles).toHaveText(['The Copper Coronet', 'Trademeet', "Watcher's Keep"]);
+    await fillIonInput(searchInput, 'ee');
+    await expect(titles).toHaveText(['Trademeet', "Watcher's Keep"]);
+    await fillIonInput(searchInput, 'eep');
+    await expect(titles).toHaveText(["Watcher's Keep"]);
+    await fillIonInput(searchInput, '');
+    await expect(titles).toHaveText(['The Copper Coronet', 'Trademeet', "Watcher's Keep"]);
+  });
+}

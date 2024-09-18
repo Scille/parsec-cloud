@@ -23,7 +23,9 @@ msTest('Check if restore-password section is displayed', async ({ myProfilePage 
 msTest('Open authentication section', async ({ myProfilePage }) => {
   await myProfilePage.locator('ion-radio').nth(1).click();
   await expect(myProfilePage.locator('.user-info').locator('.title')).toHaveText('Password');
-  await expect(myProfilePage.locator('ion-input')).toHaveTheClass('input-disabled');
+  await expect(myProfilePage.locator('.user-info').locator('.input-container').locator('.user-info__input')).toHaveTheClass(
+    'input-disabled',
+  );
   await expect(myProfilePage.locator('#change-password-button')).toBeVisible();
 });
 
