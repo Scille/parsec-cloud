@@ -18,8 +18,10 @@ If Parsec does not start automatically, you can still join the organization
 with an **invitation link**. Paste the link on the login screen and click ``Join``.
 
 
-2. Create a secure channel
---------------------------
+.. _doc_userguide_join_organization_token_exchange:
+
+2. Token exchange
+-----------------
 
 In order to create a secure channel between the **guest** (you) and
 the **host**, you will need to carry out a **code exchange** via an

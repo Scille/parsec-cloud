@@ -33,7 +33,7 @@ Moreover, while the file is under copy, its displayed size only grows when a *fl
 
 So this explain why the file can appear with a size of 0 for some time: data is being downloaded into cache and then copied via occasional flush operations.
 
-You could try enabling :ref:`off-line mode <doc_userguide_workspace_offline_mode>` on workspaces before copying large amount of files. In any case, you will need to wait for the copy to be fully finished to be able to open files.
+You could try enabling the off-line mode on Parsec V2 workspaces before copying large amount of files. In any case, you will need to wait for the copy to be fully finished to be able to open files.
 
 How to remove old devices from the login page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

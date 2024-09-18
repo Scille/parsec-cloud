@@ -22,7 +22,7 @@ Workspaces are mounted by default in your system and will also appear in the
 file explorer as regular folders. This is convenient to copy files from and to
 Parsec.
 
-Each workspace has its own :ref:`role-based policy <doc_userguide_share_data_workspace_roles>`
+Each workspace has its own :ref:`role-based policy <doc_userguide_parsec_workspaces_roles>`
 for read and write access. This allows a fine-grained access control as each
 user can have different roles in different workspaces.
 
@@ -45,6 +45,7 @@ user can have different roles in different workspaces.
 ..    :alt: Parsec in file explorer
 
 
+.. _doc_userguide_parsec_workspaces_create:
 
 Create a workspace
 ------------------
@@ -56,9 +57,11 @@ the workspace.
     :align: center
     :alt: Creating a workspace
 
-When you create a workspace, you automatically get the :ref:`Owner role <doc_userguide_share_data_workspace_roles>`
+When you create a workspace, you automatically get the :ref:`Owner role <doc_userguide_parsec_workspaces_roles>`
 within the workspace.
 
+
+.. _doc_userguide_parsec_workspaces_share:
 
 Share a workspace
 -----------------
@@ -67,7 +70,7 @@ If you have the **Owner** or **Manager** role, the ``Sharing and roles`` option
 will be available from the workspace menu.
 
 Find the user you want to share the workspace with and select its
-:ref:`workspace roles <doc_userguide_share_data_workspace_roles>`.
+:ref:`workspace roles <doc_userguide_parsec_workspaces_roles>`.
 
 .. image:: screens/share_workspace.png
     :align: center
@@ -80,7 +83,7 @@ You can remove access to this workspace by selecting ``Not shared`` for a given
 user.
 
 
-.. _doc_userguide_share_data_workspace_roles:
+.. _doc_userguide_parsec_workspaces_roles:
 
 Workspace roles
 ---------------
