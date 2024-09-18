@@ -175,7 +175,8 @@ async fn bad_token(env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        None,
+        // not the bootstrap token defined in server/parsec/backend.py L91
+        Some(BootstrapToken::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap()),
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
