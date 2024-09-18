@@ -9,10 +9,14 @@ In Parsec, your data is securely stored within **workspaces**.
 
 .. image:: screens/parsec_workspace.png
     :align: center
-    :alt: Sharing a workspace
+    :alt: Parsec workspace
 
 You can import your data into a Parsec workspace and manage your files and
 directories as you will do with a regular file explorer.
+
+.. image:: screens/parsec_file_explorer.png
+    :align: center
+    :alt: Parsec file explorer
 
 Workspaces are mounted by default in your system and will also appear in the
 file explorer as regular folders. This is convenient to copy files from and to
