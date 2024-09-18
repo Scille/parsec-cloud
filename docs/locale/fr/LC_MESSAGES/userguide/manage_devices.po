@@ -1,0 +1,129 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"PO-Revision-Date: 2024-09-18 19:41+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../userguide/manage_devices.rst:6
+msgid "Manage your devices"
+msgstr "Gérer vos appareils"
+
+#: ../../userguide/manage_devices.rst:8
+msgid ""
+"When you :ref:`join an organization <doc_userguide_join_organization>`, your "
+"computer is automatically added as a new **device** so you can securely "
+"access Parsec."
+msgstr ""
+"Lorsque vous :ref:`rejoignez une organisation "
+"<doc_userguide_join_organization>`, votre ordinateur est automatiquement "
+"ajouté en tant que nouveau **appareil** afin que vous puissiez accéder à "
+"Parsec en toute sécurité."
+
+#: ../../userguide/manage_devices.rst:12
+msgid ""
+"For enhanced security, the devices you use to access Parsec are uniquely "
+"authenticated. It is  highly recommended to add another device in case you "
+"lose access to your computer or cannot log in for any reason."
+msgstr ""
+"Pour une sécurité accrue, les appareils que vous utilisez pour accéder à "
+"Parsec sont authentifiés de manière unique. Il est fortement recommandé "
+"d'ajouter un autre appareil au cas où vous perdriez l'accès à votre "
+"ordinateur ou ne pourriez pas vous connecter pour une raison quelconque."
+
+#: ../../userguide/manage_devices.rst:18
+msgid ""
+"Device keys are safely stored on your computer and are not sent to the "
+"Parsec server."
+msgstr ""
+"Les clés de l'appareil sont stockées en toute sécurité sur votre ordinateur "
+"et ne sont pas envoyées au serveur de Parsec."
+
+#: ../../userguide/manage_devices.rst:21
+msgid ""
+"Without having added another device, your account cannot be recovered in the "
+"event you lose access to your computer. You will need to be re-invited to :"
+"ref:`join the organization <doc_userguide_join_organization>`."
+msgstr ""
+"Si vous n'avez pas ajouté d'autre appareil, votre compte ne pourra pas être "
+"récupéré si vous perdez l'accès à votre ordinateur. Vous devrez être "
+"réinvité à :ref:`rejoindre l'organisation <doc_userguide_join_organization>`."
+
+#: ../../userguide/manage_devices.rst:27
+msgid "Add a new device"
+msgstr "Ajouter un nouvel appareil"
+
+#: ../../userguide/manage_devices.rst:29
+msgid "You can add a new device from your profile page."
+msgstr ""
+"Vous pouvez ajouter un nouvel appareil à partir de votre page de profil."
+
+#: ../../userguide/manage_devices.rst:31
+msgid ""
+"Click on your name on the main menu (top-right) and select ``My Profile``."
+msgstr ""
+"Cliquez sur votre nom dans le menu principal (en haut à droite) et "
+"sélectionnez ``Mon profil``."
+
+#: ../../userguide/manage_devices.rst:32
+msgid "In ``My devices``, click ``+ Add``."
+msgstr "Dans ``Mes appareils``, cliquez sur ``+ Ajouter``."
+
+#: ../../userguide/manage_devices.rst:-1
+msgid "Device invitation link"
+msgstr "Lien d'invitation à l'appareil"
+
+#: ../../userguide/manage_devices.rst:38
+msgid ""
+"If you send the device invitation link by mail, simply click on the link in "
+"the new device to start Parsec. Otherwise start Parsec on the new device and "
+"select ``Join`` in the welcome page."
+msgstr ""
+"Si vous envoyez le lien d'invitation par courrier, il suffit de cliquer sur "
+"le lien dans le nouvel appareil pour démarrer Parsec. Sinon, démarrez Parsec "
+"sur le nouvel appareil et sélectionnez ``Rejoindre`` dans la page d'accueil."
+
+#: ../../userguide/manage_devices.rst:41
+msgid ""
+"Paste the device invitation link and follow the instructions to perform the "
+"code exchange between your devices."
+msgstr ""
+"Collez le lien d'invitation de l'appareil et suivez les instructions pour "
+"effectuer l'échange de code entre vos appareils."
+
+#: ../../userguide/manage_devices.rst:-1
+msgid "Adding a device"
+msgstr "Ajout d'un appareil"
+
+#: ../../userguide/manage_devices.rst:48
+msgid "Your new device is ready to access Parsec!"
+msgstr "Votre nouvel appareil est prêt à accéder à Parsec !"
+
+#: ../../userguide/manage_devices.rst:52
+msgid ""
+"If one of the codes to share is not present in the other's list, it means "
+"there is a very high probability you are victim of a `Man-in-the-middle "
+"attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can "
+"read more about that process at the :ref:`Cryptography <doc_cryptography>` "
+"section."
+msgstr ""
+"Si l'un des codes à partager n'est pas présent dans la liste de l'autre, "
+"cela signifie qu'il y a une très forte probabilité que vous soyez victime "
+"d'une attaque de type `Man-in-the-middle <https://fr.wikipedia.org/wiki/"
+"Attaque_de_l%27homme_du_milieu>`_. Vous pouvez en savoir plus sur ce "
+"processus dans la section :ref:`Cryptographie <doc_cryptographie>`."
