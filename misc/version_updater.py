@@ -184,7 +184,7 @@ TOOLS_VERSION: dict[Tool, str] = {
     Tool.License: "BUSL-1.1",
     Tool.PostgreSQL: "14.10",
     Tool.WinFSP: "2.0.23075",
-    Tool.Testbed: "3.0.0-rc.1.dev.19971.ffd0be4",
+    Tool.Testbed: "3.0.0-rc.1.dev.19984.b40f8b9",
     Tool.PreCommit: "3.7.1",
 }
 
