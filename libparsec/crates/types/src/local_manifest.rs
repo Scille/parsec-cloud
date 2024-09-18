@@ -813,6 +813,26 @@ impl LocalFolderManifest {
         self.updated = timestamp;
     }
 
+    pub fn apply_prevent_sync_pattern(
+        &self,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> Self {
+        let result = self.clone();
+        result
+            // .update_local_confinement_points_with_new_entries(prevent_sync_pattern)
+            .filter_local_confinement_points()
+            // At this point, `result.children` no longer contains previous local confined entries
+            .restore_remote_confinement_points()
+            // At this point, `result.children` contains previous remote confined entries
+            .filter_remote_entries(prevent_sync_pattern)
+            // At this point, `result.children` no longer contains new remote confined entries
+            // and `remote_confinement_points` has reached it final value.
+            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
+        // At this point, `result.children` contains the local confined entries,
+        // and `local_confinement_points` has reached it final value.
+    }
+
     /// Clear the local confinement points, and remove from the local children any
     /// entry that was previously confined.
     ///
@@ -831,6 +851,71 @@ impl LocalFolderManifest {
             .retain(|_, entry_id| !self.local_confinement_points.contains(entry_id));
 
         self.local_confinement_points.clear();
+        self
+    }
+
+    /// Clear the `remote_confinement_points` and restore from `base.children` any
+    /// entry that was previously confined in the local children.
+    ///
+    /// This method can be seen as the opposite of `filter_remote_entries`.
+    ///
+    /// For example, considering a manifest with:
+    /// - `remote_confinement_points`: [1]
+    /// - `children`: `{"b.txt": 2}`
+    /// - `base.children`: `{"a.tmp": 1, "c.tmp": 3}`
+    ///
+    /// Then the resulting manifest would have an empty `remote_confinement points` and
+    /// `{"a.tmp": 1, "b.txt": 2}` as `children`.
+    fn restore_remote_confinement_points(mut self) -> Self {
+        if self.remote_confinement_points.is_empty() {
+            return self;
+        }
+
+        for (name, entry_id) in self.base.children.iter() {
+            if self.remote_confinement_points.contains(entry_id) {
+                self.children.insert(name.clone(), *entry_id);
+            }
+        }
+        self.remote_confinement_points.clear();
+        self
+    }
+
+    /// Apply the prevent sync pattern *on the local children* (i.e. not on
+    /// `base.children` as one could expect) to remove from it all the confined
+    /// entries and collect them into `remote_confinement_points`.
+    ///
+    /// This method is expected to be run on a local manifest where it's local children
+    /// are currently a mere copy of it remote children (i.e. `base.children`).
+    /// This occurs in two places:
+    /// - When creating a new local manifest from a remote manifest.
+    /// - When applying a new prevent sync pattern, in which case `filter_local_confinement_points`
+    ///   and `restore_remote_confinement_points` has just been previously called to revert
+    ///   the local children according to the local&remote confinement points.
+    ///
+    /// Once in this state, it is the method's goal to filter out the entries that
+    /// should be remotely confined (i.e. entries that should be kept in `base.children`,
+    /// but not appear in local children).
+    fn filter_remote_entries(mut self, prevent_sync_pattern: &Regex) -> Self {
+        let remote_confinement_points: HashSet<_> = self
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    Some(*entry_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        if remote_confinement_points.is_empty() {
+            return self;
+        }
+
+        self.remote_confinement_points = remote_confinement_points;
+        self.children
+            .retain(|_, entry_id| !self.remote_confinement_points.contains(entry_id));
+
         self
     }
 
@@ -907,90 +992,6 @@ impl LocalFolderManifest {
             timestamp,
         );
         self
-    }
-
-    /// Apply the prevent sync pattern *on the local children* (i.e. not on
-    /// `base.children` as one could expect) to remove from it all the confined
-    /// entries and collect them into `remote_confinement_points`.
-    ///
-    /// This method is expected to be run on a local manifest where it's local children
-    /// are currently a mere copy of it remote children (i.e. `base.children`).
-    /// This occurs in two places:
-    /// - When creating a new local manifest from a remote manifest.
-    /// - When applying a new prevent sync pattern, in which case `filter_local_confinement_points`
-    ///   and `restore_remote_confinement_points` has just been previously called to revert
-    ///   the local children according to the local&remote confinement points.
-    ///
-    /// Once in this state, it is the method's goal to filter out the entries that
-    /// should be remotely confined (i.e. entries that should be kept in `base.children`,
-    /// but not appear in local children).
-    fn filter_remote_entries(mut self, prevent_sync_pattern: &Regex) -> Self {
-        let remote_confinement_points: HashSet<_> = self
-            .children
-            .iter()
-            .filter_map(|(name, entry_id)| {
-                if prevent_sync_pattern.is_match(name.as_ref()) {
-                    Some(*entry_id)
-                } else {
-                    None
-                }
-            })
-            .collect();
-
-        if remote_confinement_points.is_empty() {
-            return self;
-        }
-
-        self.remote_confinement_points = remote_confinement_points;
-        self.children
-            .retain(|_, entry_id| !self.remote_confinement_points.contains(entry_id));
-
-        self
-    }
-
-    /// Clear the `remote_confinement_points` and restore from `base.children` any
-    /// entry that was previously confined in the local children.
-    ///
-    /// This method can be seen as the opposite of `filter_remote_entries`.
-    ///
-    /// For example, considering a manifest with:
-    /// - `remote_confinement_points`: [1]
-    /// - `children`: `{"b.txt": 2}`
-    /// - `base.children`: `{"a.tmp": 1, "c.tmp": 3}`
-    ///
-    /// Then the resulting manifest would have an empty `remote_confinement points` and
-    /// `{"a.tmp": 1, "b.txt": 2}` as `children`.
-    fn restore_remote_confinement_points(mut self) -> Self {
-        if self.remote_confinement_points.is_empty() {
-            return self;
-        }
-
-        for (name, entry_id) in self.base.children.iter() {
-            if self.remote_confinement_points.contains(entry_id) {
-                self.children.insert(name.clone(), *entry_id);
-            }
-        }
-        self.remote_confinement_points.clear();
-        self
-    }
-
-    pub fn apply_prevent_sync_pattern(
-        &self,
-        prevent_sync_pattern: &Regex,
-        timestamp: DateTime,
-    ) -> Self {
-        let result = self.clone();
-        result
-            .filter_local_confinement_points()
-            // At this point, `result.children` no longer contains previous local confined entries
-            .restore_remote_confinement_points()
-            // At this point, `result.children` contains previous remote confined entries
-            .filter_remote_entries(prevent_sync_pattern)
-            // At this point, `result.children` no longer contains new remote confined entries
-            // and `remote_confinement_points` has reached it final value.
-            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
-        // At this point, `result.children` contains the local confined entries,
-        // and `local_confinement_points` has reached it final value.
     }
 
     pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
