@@ -51,10 +51,11 @@ Then, share your code to the host and wait until it is selected.
 
 .. caution::
 
-  If the code provided by the host is not present in your list, or if your code is not present
-  in the host list, it means there is a very high probability that one of you is victim of a
+  If one of the codes to share is not present in the other's list, it means
+  there is a very high probability you are victim of a
   `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
   You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section.
+
 
 
 3. Set up your account
