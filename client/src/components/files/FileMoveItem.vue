@@ -31,9 +31,9 @@
         </ion-text>
         <ion-label
           class="element-details__workspace body-sm"
-          v-if="workspaceInfo"
+          v-if="workspaceName"
         >
-          {{ workspaceInfo.currentName }}
+          {{ workspaceName }}
         </ion-label>
         <div
           class="element-details-progress-container"
@@ -113,7 +113,7 @@
 <script setup lang="ts">
 import { shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip, Move } from 'megashark-lib';
-import { StartedWorkspaceInfo, getWorkspaceInfo, Path, EntryName } from '@/parsec';
+import { Path, EntryName, getWorkspaceName } from '@/parsec';
 import { MoveData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText, IonButton } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
@@ -125,7 +125,7 @@ const props = defineProps<{
   state: FileOperationState;
 }>();
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceName = ref('');
 const entryName: Ref<EntryName> = ref('');
 
 defineExpose({
@@ -133,10 +133,7 @@ defineExpose({
 });
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(props.operationData.workspaceHandle);
-  if (result.ok) {
-    workspaceInfo.value = result.value;
-  }
+  workspaceName.value = await getWorkspaceName(props.operationData.workspaceHandle);
   entryName.value = (await Path.filename(props.operationData.dstPath)) ?? '';
 });
 

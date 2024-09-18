@@ -112,7 +112,7 @@
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, StartedWorkspaceInfo, UserProfile, getClientInfo, getWorkspaceInfo, isMobile } from '@/parsec';
+import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName } from '@/parsec';
 import {
   Routes,
   currentRouteIs,
@@ -151,7 +151,7 @@ import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceName = ref('');
 const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
@@ -192,12 +192,7 @@ async function updateRoute(): Promise<void> {
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
     if (workspaceHandle) {
-      const result = await getWorkspaceInfo(workspaceHandle);
-      if (result.ok) {
-        workspaceInfo.value = result.value;
-      } else {
-        console.warn('Could not get workspace info', result.error);
-      }
+      workspaceName.value = await getWorkspaceName(workspaceHandle);
     }
 
     const finalPath: RouterPathNode[] = [];
@@ -212,7 +207,7 @@ async function updateRoute(): Promise<void> {
     const workspacePath = await Path.parse(getDocumentPath());
     finalPath.push({
       id: 1,
-      display: workspaceInfo.value ? workspaceInfo.value.currentName : '',
+      display: workspaceName.value,
       name: Routes.Documents,
       query: { documentPath: '/' },
       params: getCurrentRouteParams(),

@@ -31,9 +31,9 @@
         </ion-text>
         <ion-label
           class="element-details__workspace body-sm"
-          v-if="workspaceInfo"
+          v-if="workspaceName"
         >
-          {{ workspaceInfo.currentName }}
+          {{ workspaceName }}
         </ion-label>
         <div
           class="element-details-progress-container"
@@ -106,7 +106,7 @@
 <script setup lang="ts">
 import { shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip, Translatable, Copy } from 'megashark-lib';
-import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
+import { getWorkspaceName } from '@/parsec';
 import {
   CopyData,
   CopyFailedError,
@@ -117,7 +117,7 @@ import {
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { closeCircle, checkmarkCircle } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationData: CopyData;
@@ -125,17 +125,14 @@ const props = defineProps<{
   stateData?: StateData;
 }>();
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceName = ref('');
 
 defineExpose({
   props,
 });
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(props.operationData.workspaceHandle);
-  if (result.ok) {
-    workspaceInfo.value = result.value;
-  }
+  workspaceName.value = await getWorkspaceName(props.operationData.workspaceHandle);
 });
 
 function getProgress(): number {

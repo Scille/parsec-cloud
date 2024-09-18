@@ -31,9 +31,9 @@
           <span class="default-state element-details-info__size">{{ $msTranslate(formatFileSize(fileCache.size)) }}</span>
           <span
             class="default-state element-details-info__workspace"
-            v-if="workspaceInfo"
+            v-if="workspaceName"
           >
-            &bull; {{ workspaceInfo.currentName }}
+            &bull; {{ workspaceName }}
           </span>
           <span
             class="hover-state"
@@ -128,11 +128,11 @@
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { MsImage, MsInformationTooltip } from 'megashark-lib';
-import { StartedWorkspaceInfo, getWorkspaceInfo } from '@/parsec';
+import { getWorkspaceName } from '@/parsec';
 import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
 import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationData: ImportData;
@@ -144,17 +144,14 @@ const props = defineProps<{
 // will never change, so we cache them.
 const fileCache = structuredClone(props.operationData.file);
 
-const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
+const workspaceName = ref('');
 
 defineExpose({
   props,
 });
 
 onMounted(async () => {
-  const result = await getWorkspaceInfo(props.operationData.workspaceHandle);
-  if (result.ok) {
-    workspaceInfo.value = result.value;
-  }
+  workspaceName.value = await getWorkspaceName(props.operationData.workspaceHandle);
 });
 
 function getProgress(): number {
