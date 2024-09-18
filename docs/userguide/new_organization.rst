@@ -1,58 +1,82 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_userguide_installation:
+.. _doc_userguide_new_organization:
 
-Create your own organization
-============================
+.. |first_steps_note| replace:: You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
-Once installed, the Parsec client must be connected to an organization that have been created on a Parsec server.
 
-The simplest way to do that is to create one directly from the Parsec client. It automatically handles all the process securely, and create a temporary account on the `Parsec SAAS service <https://my.parsec.cloud/>`_, sending an invitation link to end registration through email.
+Create an organization
+======================
 
-Creating an organization is proposed automatically if you have no account linked to your Parsec client.
+When you start Parsec for the first time, the welcome screen will propose to
+**create** or **join** an organization.
 
 .. image:: screens/welcome_to_parsec.png
     :align: center
-    :alt: Parsec welcome screen
+    :alt: Welcome to Parsec
 
-Otherwise, you can click on `Create an organization` in the Menu of the login screen.
 
-.. image:: screens/menu_create_an_organization.png
-    :align: center
-    :alt: Create an organization in menu
+Create an organization on Parsec
+--------------------------------
+
+This is the preferred option. Your organization will be securely created on our
+servers and associated to your customer account.
 
 .. note::
 
-    Another possibility (though more technical) is to host you own Parsec server and create the organization on it using the Parsec CLI. You can then join that organization using an organization bootstrap URL.
-    You can read about this in the :ref:`the Hosting server <doc_adminguide_hosting>` part.
+  Please `visit our website to choose the offer <https://parsec.cloud/tarification/>`_
+  that best suits your needs and follow the steps to create your account.
 
-Once you start the process, you are asked for an Email and an Organization Name. This email address will be used to contact you later.
-
-.. image:: screens/create_org.png
+.. image:: screens/create_organization.png
     :align: center
-    :alt: Organization create process
+    :alt: Create an organization
 
-Creating an organization through the Parsec client register yourself as its first user and device (this step is called the bootstrap). This is why you must enter your Username, Device name, and your Password.
+If you already have a customer account on Parsec, follow the steps below to
+create your organization:
 
-.. image:: screens/bootstrap_screen.png
-    :align: center
-    :alt: Organization bootstrap process
+1. Start by clicking ``Create an organization`` on the welcome screen.
+2. Select ``Create my organization on Parsec``.
+3. Log in with your customer account.
+4. Enter the organization name (this name cannot be changed later).
+5. Choose the preferred authentication method (this can be changed later from
+   your profile).
+6. Check the information entered and confirm.
 
-Few key points here:
+🚀 Congratulations, you've just created your organization on Parsec!
 
-- User name is the name you'll be referenced by from within the organization
-- Device name is the name your current hardware will be referenced by (e.g.
-  people will see the work you've done on this computer as from ``my_user@my_device``)
-- The password is used to encrypt your user&device private keys on your computer.
+|first_steps_note|
 
-Once this process is completed, you can log-in to the organization you just created.
+
+Create an organization on Trial
+-------------------------------
+
+Our **Trial service** allows you to **test Parsec for a limited time**. Your
+organization will be securely created on our servers. No customer account is
+required.
 
 .. warning::
 
-    The keys stored encrypted on your computer are what makes Parsec secure.
-    Hence there is no way to recover if you lost them (e.g. if you computer is
-    stolen) or if you forget the password protecting them.
+  Your organization and associated data will be deleted at the end of the trial
+  period.
 
-    To avoid losing access to your data you should always have
-    :ref:`multiple devices <doc_userguide_new_device>` or
-    :ref:`share your workspaces <doc_userguide_share_data>` with other users.
+1. Start by clicking ``Create an organization`` on the welcome screen.
+2. Select ``Try Parsec for 15 days``.
+3. Enter your name and email address.
+
+|first_steps_note|
+
+
+Create an organization on my own Parsec server
+----------------------------------------------
+
+Follow the steps below to create an organization on your own Parsec server:
+
+1. Start by clicking ``Create an organization`` on the welcome screen.
+2. Select ``Use a different Parsec server``.
+3. Specify the organization name and the address of your own Parsec server.
+
+|first_steps_note|
+
+.. note::
+
+  You can read more about hosting Parsec server in the :ref:`Hosting Guide <doc_adminguide_hosting>`.
