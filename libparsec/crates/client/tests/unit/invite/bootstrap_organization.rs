@@ -12,6 +12,13 @@ use crate::{
     WorkspaceStorageCacheSize,
 };
 
+// should be the same as bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
+const TEST_BOOTSTRAP_TOKEN_STR: &str = "672bc6ba9c43455da28344e975dc72b7";
+
+fn test_bootstrap_token() -> BootstrapToken {
+    BootstrapToken::from_hex(TEST_BOOTSTRAP_TOKEN_STR).unwrap()
+}
+
 fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
     Arc::new(ClientConfig {
         config_dir: env.discriminant_dir.clone(),
@@ -40,7 +47,7 @@ async fn ok(#[case] sequestered: bool, env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        Some(BootstrapToken::from_hex("672bc6ba9c43455da28344e975dc72b7").unwrap()),
+        Some(test_bootstrap_token()),
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
@@ -151,7 +158,7 @@ async fn offline(env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        None,
+        Some(test_bootstrap_token()),
     );
     let config = make_config(env);
     let event_bus = EventBus::default();
@@ -175,7 +182,7 @@ async fn bad_token(env: &TestbedEnv) {
     let bootstrap_addr = ParsecOrganizationBootstrapAddr::new(
         env.server_addr.clone(),
         env.organization_id.clone(),
-        // not the bootstrap token defined in server/parsec/backend.py L91
+        // not the bootstrap token defined in server/parsec/backend.py L91 as TEST_BOOTSTRAP_TOKEN
         Some(BootstrapToken::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap()),
     );
     let config = make_config(env);
