@@ -29,19 +29,18 @@ You can also use the search function in the top left corner.
 
     introduction
     userguide/installation
+    userguide/new_organization
+    userguide/manage_organization
     userguide/join_organization
     userguide/first_steps
     userguide/parsec_workspaces
     userguide/manage_devices
-    userguide/new_organization
-    userguide/new_user
-    userguide/revoke_user
     userguide/troubleshooting
 
 .. toctree::
     :maxdepth: 1
-    :caption: Administrator Guide
-    :name: section-admin-guide
+    :caption: Hosting Guide
+    :name: section-hosting-guide
 
     adminguide/installation
     adminguide/stats_server
@@ -56,7 +55,6 @@ You can also use the search function in the top left corner.
     :name: section-advanced-concepts
 
     architecture
-    roles
     cryptography
 
 .. only:: html
