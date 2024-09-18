@@ -881,7 +881,6 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
     p_assert_eq!(lfm2, lfm);
 }
 
-#[ignore = "TODO: investigate apply_prevent_sync_pattern !"]
 #[test]
 fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_pattern() {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
@@ -902,6 +901,8 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     // Create a local folder manifest without any confinement points (the local children
     // have names ending `.tmp`, but we can consider the current prevent sync pattern is
     // something else for now).
+    let file_a_tmp_id = VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap();
+    let file_b_id = VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap();
     let lfm = LocalFolderManifest {
         base: fm.clone(),
         parent: fm.parent,
@@ -911,12 +912,9 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
             (
                 // Not currently confined !
                 "fileA.tmp".parse().unwrap(),
-                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+                file_a_tmp_id,
             ),
-            (
-                "fileB.mp4".parse().unwrap(),
-                VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
-            ),
+            ("fileB.mp4".parse().unwrap(), file_b_id),
         ]),
         local_confinement_points: HashSet::new(),
         remote_confinement_points: HashSet::new(),
@@ -927,36 +925,26 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
-    // TODO: this test seems to fail because `apply_prevent_sync_pattern` first remove
-    // local confinements points from the local children, then add remote confinement points
-    // there instead.
-    // However in our current case there is no local nor remote confinement points, so those
-    // two steps does nothing...
-    // ...then the next step kicks in and considers any entry in the local children matching
-    // the prevent sync pattern should be part of the remote confinement points (while in
-    // fact those peaceful entries have always been part of the local children, and have never
-    // been considered confined up until this point !).
-
-    p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
-    p_assert_eq!(
-        lfm.local_confinement_points,
-        HashSet::from_iter([VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()])
-    );
     p_assert_eq!(
         lfm.children,
         HashMap::from_iter([
-            (
-                "fileA.tmp".parse().unwrap(),
-                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap()
-            ),
-            (
-                "fileB.mp4".parse().unwrap(),
-                VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap()
-            ),
-        ])
+            ("fileA.tmp".parse().unwrap(), file_a_tmp_id),
+            ("fileB.mp4".parse().unwrap(), file_b_id),
+        ]),
+        "No local children should be removed"
+    );
+    p_assert_eq!(
+        lfm.remote_confinement_points,
+        HashSet::new(),
+        "Remote confinement points should be empty"
+    );
+    p_assert_eq!(
+        lfm.local_confinement_points,
+        HashSet::from_iter([file_a_tmp_id]),
+        "fileA.tmp should be in local confinement points"
     );
     p_assert_eq!(lfm.need_sync, true);
-    p_assert_eq!(lfm.updated, t3);
+    p_assert_eq!(lfm.updated, t2);
 }
 
 #[ignore = "TODO: investigate apply_prevent_sync_pattern !"]

@@ -768,7 +768,7 @@ impl LocalFolderManifest {
     ) {
         let mut actually_updated = false;
         // Deal with removal first
-        for (name, entry_id) in data.iter() {
+        for (name, entry_id) in dbg!(&data).iter() {
             // Here `entry_id` can be either:
             // - a new entry id that might overwrite the previous one with the same name if it exists
             // - `None` which means the entry for the corresponding name should be removed
@@ -818,7 +818,10 @@ impl LocalFolderManifest {
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> Self {
-        let result = self.clone();
+        let prev = self
+            .clone()
+            .update_local_confinement_points_with_new_entries(prevent_sync_pattern);
+        let result = prev.clone();
         result
             // .update_local_confinement_points_with_new_entries(prevent_sync_pattern)
             .filter_local_confinement_points()
@@ -828,9 +831,30 @@ impl LocalFolderManifest {
             .filter_remote_entries(prevent_sync_pattern)
             // At this point, `result.children` no longer contains new remote confined entries
             // and `remote_confinement_points` has reached it final value.
-            .restore_local_confinement_points(self, prevent_sync_pattern, timestamp)
+            .restore_local_confinement_points(&prev, prevent_sync_pattern, timestamp)
         // At this point, `result.children` contains the local confined entries,
         // and `local_confinement_points` has reached it final value.
+    }
+
+    fn update_local_confinement_points_with_new_entries(
+        mut self,
+        prevent_sync_pattern: &Regex,
+    ) -> Self {
+        let confined_entry_from_last_sync = self
+            .children
+            .iter()
+            // Check if the entry is not in local_confined_points and is new (i.e. not in base.children)
+            .filter(|(entry, id)| {
+                !self.local_confinement_points.contains(id)
+                    && !self.base.children.contains_key(entry)
+            })
+            // Check if the entry matches the prevent sync pattern
+            .filter(|(name, _)| prevent_sync_pattern.is_match(name.as_ref()))
+            .map(|(_, id)| *id)
+            .collect::<Vec<_>>();
+        self.local_confinement_points
+            .extend(dbg!(confined_entry_from_last_sync));
+        self
     }
 
     /// Clear the local confinement points, and remove from the local children any
