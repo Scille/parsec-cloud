@@ -130,7 +130,12 @@ msTest('Update personal information generic fail', async ({ clientArea }) => {
 msTest('Update personal information timeout', async ({ clientArea }) => {
   await MockBms.mockUserRoute(clientArea, {}, { PATCH: { timeout: true } });
   await goToPersonalPage(clientArea);
-  const dataContainer = clientArea.locator('.personal-data-content').nth(0).locator('.ms-summary-card').nth(0);
+  const dataContainer = clientArea
+    .locator('.personal-data-page')
+    .locator('.personal-data-content')
+    .nth(0)
+    .locator('.ms-summary-card')
+    .nth(0);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText([
     DEFAULT_USER_INFORMATION.firstName,
     DEFAULT_USER_INFORMATION.lastName,
@@ -192,7 +197,12 @@ for (const params of [
   msTest(`Update email fail (status: ${params.status})`, async ({ clientArea }) => {
     await MockBms.mockUpdateEmail(clientArea, { POST: { errors: { status: params.status } } });
     await goToPersonalPage(clientArea);
-    const dataContainer = clientArea.locator('.personal-data-content').nth(1).locator('.ms-summary-card').nth(0);
+    const dataContainer = clientArea
+      .locator('.personal-data-page')
+      .locator('.personal-data-content')
+      .nth(1)
+      .locator('.ms-summary-card')
+      .nth(0);
     await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(DEFAULT_USER_INFORMATION.email);
     const modal = clientArea.locator('.authentication-modal');
     await expect(modal).toBeHidden();
