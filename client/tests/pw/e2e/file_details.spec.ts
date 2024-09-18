@@ -25,7 +25,7 @@ for (const testData of TEST_DATA) {
     const files = connected.locator('.folder-container').getByRole('listitem');
     await expect(files).toHaveCount(4);
     await expect(files.nth(testData.index).locator('.file-name').locator('.file-name__label')).toHaveText(new RegExp(`^${nameMatcher}$`));
-    await expect(files.nth(testData.index).locator('.file-lastUpdate')).toHaveText(/^(\d{1,2} minutes ago|< 1 minute)$/);
+    await expect(files.nth(testData.index).locator('.file-lastUpdate')).toHaveText(/^((?:one|\d{1,2}) minutes? ago|< 1 minute)$/);
     expect(connected.locator('.file-context-menu')).toBeHidden();
     expect(connected.locator('.file-details-modal')).toBeHidden();
     await files.nth(testData.index).hover();
