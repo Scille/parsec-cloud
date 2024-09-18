@@ -527,7 +527,7 @@ async def _human_accesses(
 ) -> None:
     async with (
         config.pool() as pool,
-        event_bus_factory(db_url=config.db_url) as event_bus,
+        event_bus_factory(pool) as event_bus,
     ):
         user_component = PGUserComponent(pool=pool, event_bus=event_bus)
         realm_component = PGRealmComponent(pool=pool, event_bus=event_bus)
