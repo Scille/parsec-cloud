@@ -1,0 +1,143 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"PO-Revision-Date: 2024-09-18 18:49+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../userguide/join_organization.rst:6
+msgid "Join an organization"
+msgstr "Rejoindre une organisation"
+
+#: ../../userguide/join_organization.rst:8
+msgid ""
+"You have been invited to join an organization on Parsec! Before you get "
+"started, please make sure you have :ref:`installed the Parsec app "
+"<doc_userguide_install_parsec>`."
+msgstr ""
+"Vous avez été invité à rejoindre une organisation sur Parsec ! Avant de "
+"commencer, assurez-vous d'avoir :ref:`installé l'application Parsec "
+"<doc_userguide_install_parsec>`."
+
+#: ../../userguide/join_organization.rst:12
+msgid "1. Start the invitation process"
+msgstr "1. Lancer le processus d'invitation"
+
+#: ../../userguide/join_organization.rst:14
+msgid ""
+"If you have received an **invitation email**, simply click the link in the "
+"email. The Parsec app will start and guide you through the invitation "
+"process."
+msgstr ""
+"Si vous avez reçu une **invitation par email**, cliquez simplement sur le "
+"lien contenu dans l'email. L'application Parsec démarrera et vous guidera "
+"tout au long du processus d'invitation."
+
+#: ../../userguide/join_organization.rst:17
+msgid ""
+"If Parsec does not start automatically, you can still join the organization "
+"with an **invitation link**. Paste the link on the login screen and click "
+"``Join``."
+msgstr ""
+"Si Parsec ne démarre pas automatiquement, vous pouvez toujours rejoindre "
+"l'organisation grâce à un **lien d'invitation**. Collez le lien sur l'écran "
+"de connexion et cliquez sur « Rejoindre »."
+
+#: ../../userguide/join_organization.rst:24
+msgid "2. Token exchange"
+msgstr "2. Échange de token"
+
+#: ../../userguide/join_organization.rst:26
+msgid ""
+"In order to create a secure channel between the **guest** (you) and the "
+"**host**, you will need to carry out a **code exchange** via an **authentic "
+"channel** (such as a regular phone call)."
+msgstr ""
+"Afin de créer un canal sécurisé entre l'**invité** (vous) et l'**hôte**, "
+"vous devrez procéder à un **échange de codes** via un **canal authentique** "
+"(tel qu'un appel téléphonique ordinaire)."
+
+#: ../../userguide/join_organization.rst:32
+msgid ""
+"Authentic channels are not confidential, but they guarantee that the "
+"information is not tampered: what your contact says is what you hear. You "
+"should avoid using SMS."
+msgstr ""
+"Les canaux authentiques ne sont pas confidentiels, mais ils garantissent "
+"que l'information n'est pas altérée : ce que votre contact dit est ce que "
+"vous entendez. Les SMS sont à éviter."
+
+#: ../../userguide/join_organization.rst:36
+msgid ""
+"When you are ready, click ``I understand!`` and wait for the host to start "
+"the process on its side."
+msgstr ""
+"Lorsque vous êtes prêt, cliquez sur ``J'ai compris !`` et attendez que "
+"l'hôte lance le processus de son côté."
+
+#: ../../userguide/join_organization.rst:39
+msgid "Select the code provided by your host from the list."
+msgstr "Sélectionnez dans la liste le code fourni par votre hôte."
+
+#: ../../userguide/join_organization.rst:-1
+msgid "List of codes to select the host code"
+msgstr "Liste des codes pour sélectionner le code de l'hôte"
+
+#: ../../userguide/join_organization.rst:46
+msgid "Then, share your code to the host and wait until it is selected."
+msgstr ""
+"Ensuite, communiquez votre code à l'hôte et attendez qu'il soit sélectionné."
+
+#: ../../userguide/join_organization.rst:-1
+msgid "Your guest coded to be provided to the host"
+msgstr "Code de l'invité à fournir à l'hôte"
+
+#: ../../userguide/join_organization.rst:56
+msgid ""
+"If one of the codes to share is not present in the other's list, it means "
+"there is a very high probability you are victim of a `Man-in-the-middle "
+"attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_. You can "
+"read more about that process at the :ref:`Cryptography <doc_cryptography>` "
+"section."
+msgstr ""
+"Si l'un des codes à partager n'est pas présent dans la liste de l'autre, "
+"cela signifie qu'il y a une très forte probabilité que vous soyez victime "
+"d'une attaque de type `Man-in-the-middle <https://fr.wikipedia.org/wiki/"
+"Attaque_de_l%27homme_du_milieu>`_. Vous pouvez en savoir plus sur ce "
+"processus dans la section :ref:`Cryptographie <doc_cryptographie>`."
+
+#: ../../userguide/join_organization.rst:64
+msgid "3. Set up your account"
+msgstr "3. Configurez votre compte"
+
+#: ../../userguide/join_organization.rst:66
+msgid ""
+"Finally, enter your **contact details** and choose the preferred "
+"**authentication method** (this can be changed later from your profile)."
+msgstr ""
+"Enfin, entrez vos **coordonnées** et choisissez la **méthode "
+"d'authentification** préférée (vous pourrez le modifier ultérieurement à "
+"partir de votre profil)."
+
+#: ../../userguide/join_organization.rst:69
+msgid ""
+"You are ready for your :ref:`first steps with Parsec! "
+"<doc_userguide_first_steps>`"
+msgstr ""
+"Vous êtes prêt pour vos :ref:`premiers pas avec Parsec ! "
+"<doc_userguide_first_steps>`"

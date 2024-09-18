@@ -1,0 +1,94 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"PO-Revision-Date: 2024-09-18 18:36+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../userguide/first_steps.rst:6
+msgid "First steps with Parsec"
+msgstr "Premiers pas avec Parsec"
+
+#: ../../userguide/first_steps.rst:8
+msgid "Welcome to Parsec! Here's a brief overview of the user interface."
+msgstr "Bienvenue à Parsec ! Voici un bref aperçu de l'interface utilisateur."
+
+#: ../../userguide/first_steps.rst:-1
+msgid "Parsec graphical user interface overview"
+msgstr "Aperçu de l'interface utilisateur de Parsec"
+
+#: ../../userguide/first_steps.rst:14
+msgid ""
+"\\1. **Organization section**: select your organization and access your "
+"organization details (if allowed by your profile)."
+msgstr ""
+"\\1. **Section organisation** : sélectionnez votre organisation et accédez "
+"aux détails de votre organisation (si votre profil le permet)."
+
+#: ../../userguide/first_steps.rst:16
+msgid ""
+"\\2. **Shared workspaces**: list of workspaces created or shared with you."
+msgstr ""
+"\\2. **Espaces de travail partagés** : liste des espaces de travail créés ou "
+"partagés avec vous."
+
+#: ../../userguide/first_steps.rst:18
+msgid "\\3. **Main menu**: access application settings and your user profile."
+msgstr ""
+"\\3. **Menu principal** : accès aux paramètres de l'application et à votre "
+"profil d'utilisateur."
+
+#: ../../userguide/first_steps.rst:20
+msgid "\\4. **Workspace section**: access a workspace and its documents."
+msgstr ""
+"\\4. **Section espace de travail** : accès à un espace de travail et à ses "
+"documents."
+
+#: ../../userguide/first_steps.rst:24
+msgid "Security best practices"
+msgstr "Bonnes pratiques en matière de sécurité"
+
+#: ../../userguide/first_steps.rst:26
+msgid "To avoid losing access to your data you should always:"
+msgstr "Pour éviter de perdre l'accès à vos données, vous devez toujours :"
+
+#: ../../userguide/first_steps.rst:28
+msgid ""
+":ref:`Add multiple devices <doc_userguide_manage_devices>` to access Parsec"
+msgstr ""
+":ref:`Ajouter plusieurs appareils <doc_userguide_manage_devices>` pour "
+"accéder à Parsec"
+
+#: ../../userguide/first_steps.rst:29
+msgid ""
+":ref:`Share your workspaces <doc_userguide_parsec_workspaces_share>` with "
+"other users"
+msgstr ""
+":ref:`Partagez vos espaces de travail "
+"<doc_userguide_parsec_workspaces_share>` avec d'autres utilisateurs"
+
+#: ../../userguide/first_steps.rst:34
+msgid ""
+"Strong cryptographic security prevents data recovery. This means that if you "
+"lose access to your computer, or cannot log in for any reason, there is no "
+"way to recover your data."
+msgstr ""
+"La sécurité cryptographique forte empêche la récupération des données. Cela "
+"signifie que si vous perdez l'accès à votre ordinateur ou si vous ne pouvez "
+"pas vous connecter pour une raison quelconque, il n'y a aucun moyen de "
+"récupérer vos données."

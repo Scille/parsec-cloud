@@ -1,0 +1,214 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) 2016-present, Scille SAS
+# This file is distributed under the same license as the Parsec package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2024.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"PO-Revision-Date: 2024-09-18 18:55+0200\n"
+"Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Language: fr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"Generated-By: Babel 2.15.0\n"
+"X-Generator: Poedit 3.5\n"
+
+#: ../../userguide/parsec_workspaces.rst:6
+msgid "Parsec workspaces"
+msgstr "Espaces de travail Parsec"
+
+#: ../../userguide/parsec_workspaces.rst:8
+msgid "In Parsec, your data is securely stored within **workspaces**."
+msgstr ""
+"Dans Parsec, vos données sont stockées en toute sécurité dans des **espaces "
+"de travail**."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Parsec workspace"
+msgstr "Espace de travail Parsec"
+
+#: ../../userguide/parsec_workspaces.rst:14
+msgid ""
+"You can import your data into a Parsec workspace and manage your files and "
+"directories as you will do with a regular file explorer."
+msgstr ""
+"Vous pouvez importer vos données dans un espace de travail Parsec et gérer "
+"vos fichiers et répertoires comme vous le feriez avec un explorateur de "
+"fichiers classique."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Parsec file explorer"
+msgstr "Explorateur de fichiers Parsec"
+
+#: ../../userguide/parsec_workspaces.rst:21
+msgid ""
+"Workspaces are mounted by default in your system and will also appear in the "
+"file explorer as regular folders. This is convenient to copy files from and "
+"to Parsec."
+msgstr ""
+"Les espaces de travail sont montés par défaut dans votre système et "
+"apparaissent dans l'explorateur de fichiers comme des dossiers normaux. Ceci "
+"est pratique pour copier des fichiers depuis et vers Parsec."
+
+#: ../../userguide/parsec_workspaces.rst:25
+msgid ""
+"Each workspace has its own :ref:`role-based policy "
+"<doc_userguide_parsec_workspaces_roles>` for read and write access. This "
+"allows a fine-grained access control as each user can have different roles "
+"in different workspaces."
+msgstr ""
+"Chaque espace de travail a sa propre :ref:`politique basée sur les rôles "
+"<doc_userguide_parsec_workspaces_roles>` pour l'accès en lecture et en "
+"écriture. Cela permet un contrôle d'accès très fin car chaque utilisateur "
+"peut avoir différents rôles dans différents espaces de travail."
+
+#: ../../userguide/parsec_workspaces.rst:31
+msgid ""
+"When you are offline, you can still access documents provided they were "
+"synchronized by Parsec while connected. Synchronization will occur "
+"automatically as soon as the connection with the server is established."
+msgstr ""
+"Lorsque vous êtes hors ligne, vous pouvez toujours accéder aux documents à "
+"condition qu'ils aient été synchronisés par Parsec lors de la connexion. La "
+"synchronisation se fait automatiquement dès que la connexion avec le serveur "
+"est établie."
+
+#: ../../userguide/parsec_workspaces.rst:51
+msgid "Create a workspace"
+msgstr "Créer un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:53
+msgid ""
+"You can create a workspace by clicking ``New workspace`` and entering a name "
+"for the workspace."
+msgstr ""
+"Vous pouvez créer un espace de travail en cliquant sur ``Nouvel espace de "
+"travail`` et en saisissant un nom pour l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Creating a workspace"
+msgstr "Créer un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:60
+msgid ""
+"When you create a workspace, you automatically get the :ref:`Owner role "
+"<doc_userguide_parsec_workspaces_roles>` within the workspace."
+msgstr ""
+"Lorsque vous créez un espace de travail, vous obtenez automatiquement le "
+"rôle :ref:`Owner <doc_userguide_parsec_workspaces_roles>` au sein de "
+"l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:67
+msgid "Share a workspace"
+msgstr "Partager un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:69
+msgid ""
+"If you have the **Owner** or **Manager** role, the ``Sharing and roles`` "
+"option will be available from the workspace menu."
+msgstr ""
+"Si vous avez le rôle **Propriétaire** ou **Gestionnaire**, l'option "
+"``Partage et rôles`` sera disponible dans le menu de l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:72
+msgid ""
+"Find the user you want to share the workspace with and select its :ref:"
+"`workspace roles <doc_userguide_parsec_workspaces_roles>`."
+msgstr ""
+"Trouvez l'utilisateur avec lequel vous voulez partager l'espace de travail "
+"et sélectionnez son :ref:`rôles d'espace de travail "
+"<doc_userguide_parsec_workspaces_roles>`."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Sharing a workspace"
+msgstr "Partager un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:79
+msgid ""
+"Depending on the user profile within the organization, some roles may not be "
+"available for the selected user."
+msgstr ""
+"Selon le profil de l'utilisateur au sein de l'organisation, certains rôles "
+"peuvent ne pas être disponibles pour l'utilisateur sélectionné."
+
+#: ../../userguide/parsec_workspaces.rst:82
+msgid ""
+"You can remove access to this workspace by selecting ``Not shared`` for a "
+"given user."
+msgstr ""
+"Vous pouvez supprimer l'accès à cet espace de travail en sélectionnant ``Non "
+"partagé`` pour un utilisateur donné."
+
+#: ../../userguide/parsec_workspaces.rst:89
+msgid "Workspace roles"
+msgstr "Rôles des espaces de travail"
+
+#: ../../userguide/parsec_workspaces.rst:91
+msgid ""
+"The **workspace role** defines what the user is allowed to do within the "
+"workspace. Since the role is specific to the workspace, a user can have "
+"different roles in different workspaces."
+msgstr ""
+"Le **rôle de l'espace de travail** définit ce que l'utilisateur est autorisé "
+"à faire dans l'espace de travail. Comme le rôle est spécifique à l'espace de "
+"travail, un utilisateur peut avoir différents rôles dans différents espaces "
+"de travail."
+
+#: ../../userguide/parsec_workspaces.rst:95
+msgid "Here are the available roles:"
+msgstr "Voici les rôles disponibles :"
+
+#: ../../userguide/parsec_workspaces.rst:97
+msgid "**Reader**: Can view and open files."
+msgstr "**Lecteur** : Peut visualiser et ouvrir des fichiers."
+
+#: ../../userguide/parsec_workspaces.rst:98
+msgid "**Contributor**: Can edit, import and delete files."
+msgstr "**Contributeur** : Peut modifier, importer et supprimer des fichiers."
+
+#: ../../userguide/parsec_workspaces.rst:99
+msgid "**Manager**: Can manage user access to the workspace."
+msgstr ""
+"**Manager** : Peut gérer l'accès des utilisateurs à l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:100
+msgid ""
+"**Owner**: Can manage user access and re-encrypt the workspace. Can promote "
+"other users to Owner"
+msgstr ""
+"**Propriétaire** : Peut gérer l'accès des utilisateurs et re-chiffrer "
+"l'espace de travail. Il peut promouvoir d'autres utilisateurs au rang de "
+"propriétaire"
+
+#: ../../userguide/parsec_workspaces.rst:102
+msgid ""
+"Users without a role in the workspace, are not allowed to access nor see the "
+"workspace."
+msgstr ""
+"Les utilisateurs qui n'ont pas de rôle dans l'espace de travail ne sont pas "
+"autorisés à accéder à l'espace de travail ni à le voir."
+
+#: ../../userguide/parsec_workspaces.rst:106
+msgid "It is recommended to always share the workspace with other users."
+msgstr ""
+"Il est recommandé de toujours partager l'espace de travail avec d'autres "
+"utilisateurs."
+
+#: ../../userguide/parsec_workspaces.rst:108
+msgid ""
+"Strong cryptographic security prevents data recovery. If the workspace is "
+"not shared with others, and the user loses access to its device or cannot "
+"log in for any reason, data stored in the workspace will be lost forever."
+msgstr ""
+"La sécurité cryptographique forte empêche la récupération des données. Si "
+"l'espace de travail n'est pas partagé avec d'autres personnes et que "
+"l'utilisateur perd l'accès à son appareil ou ne peut pas se connecter pour "
+"une raison quelconque, les données stockées dans l'espace de travail seront "
+"perdues à jamais."
