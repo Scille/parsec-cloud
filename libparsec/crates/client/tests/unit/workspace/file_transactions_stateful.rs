@@ -73,7 +73,7 @@ impl FileTransactionStateMachine {
         // Oracle
         let mut expected = vec![0; size as usize];
         let expected_len = self.file.read_at(&mut expected, offset).unwrap();
-        expected.truncate(expected_len as usize);
+        expected.truncate(expected_len);
 
         // SUT
         let mut data = Vec::with_capacity(size as usize);

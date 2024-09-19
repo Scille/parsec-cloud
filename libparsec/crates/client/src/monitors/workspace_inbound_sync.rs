@@ -286,7 +286,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                     Ok(InboundSyncOutcome::NoChange | InboundSyncOutcome::Updated) => break,
                     Ok(InboundSyncOutcome::EntryIsBusy) => {
                         // Re-enqueue to retry later
-                        io.retry_later_busy_entry(entry_id);
+                        io.retry_later_busy_entry(entry_id).await;
                         break;
                     }
                     Err(err) => match err {
@@ -331,7 +331,7 @@ async fn inbound_sync_monitor_loop(realm_id: VlobID, mut io: impl InboundSyncMan
                                 workspace_id: Some(realm_id),
                                 error: Arc::new(err),
                             };
-                            io.event_bus_send(&event);
+                            io.event_bus_send(&event).await;
                             return;
                         }
                     },
