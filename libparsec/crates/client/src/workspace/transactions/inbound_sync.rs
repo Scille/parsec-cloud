@@ -462,7 +462,7 @@ async fn handle_conflict_and_update_store(
             conflicting.updated = *updated;
             conflicting.size = *size;
             conflicting.blocksize = *blocksize;
-            conflicting.blocks = blocks.to_owned();
+            blocks.clone_into(&mut conflicting.blocks);
 
             (child_manifest.base.id, Arc::new(conflicting))
         }

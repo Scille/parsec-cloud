@@ -235,7 +235,7 @@ pub async fn refresh_workspaces_list(
             // Workspace still shared with us, but it might have changed nevertheless
             Some((workspace_index, workspace_entry)) => workspace_ops
                 .update_workspace_external_info(|info| {
-                    info.entry = workspace_entry.to_owned();
+                    workspace_entry.clone_into(&mut info.entry);
                     // Note workspace index doesn't have to be stable, so we can just overwrite it
                     info.workspace_index = workspace_index;
                     info.total_workspaces = total_workspaces;

@@ -185,7 +185,7 @@ async fn remote_only_change(
             });
 
             expected.base.size = remote.size;
-            expected.base.blocks = remote.blocks.clone();
+            expected.base.blocks.clone_from(&remote.blocks);
             expected.size = 10;
             expected.blocks.push(vec![ChunkView {
                 id: chunk_id.into(),
@@ -230,7 +230,7 @@ async fn remote_only_change(
             });
 
             expected.base.size = remote.size;
-            expected.base.blocks = remote.blocks.clone();
+            expected.base.blocks.clone_from(&remote.blocks);
             expected.size = remote.size;
             expected.blocks.push(vec![ChunkView {
                 id: new_chunk_id.into(),
@@ -368,7 +368,7 @@ async fn local_and_remote_changes(
 
             merged.base.parent = new_parent_id;
             merged.parent = new_parent_id;
-            merged.blocks = local.blocks.clone();
+            merged.blocks.clone_from(&local.blocks);
 
             MergeLocalFileManifestOutcome::Merged(merged)
         }
@@ -439,7 +439,7 @@ async fn local_and_remote_changes(
             merged.parent = new_remote_parent_id;
             merged.base.parent = new_remote_parent_id;
             merged.size = local.size;
-            merged.blocks = local.blocks.clone();
+            merged.blocks.clone_from(&local.blocks);
 
             MergeLocalFileManifestOutcome::Merged(merged)
         }
@@ -473,8 +473,8 @@ async fn local_and_remote_changes(
 
             merged.base.author = local_author;
 
-            merged.base.blocks = remote.blocks.clone();
-            merged.blocks = local.blocks.clone();
+            merged.base.blocks.clone_from(&remote.blocks);
+            merged.blocks.clone_from(&local.blocks);
 
             MergeLocalFileManifestOutcome::Merged(merged)
         }
@@ -491,9 +491,9 @@ async fn local_and_remote_changes(
             merged.base.author = local_author;
 
             merged.base.size = remote.size;
-            merged.base.blocks = remote.blocks.clone();
+            merged.base.blocks.clone_from(&remote.blocks);
             merged.size = local.size;
-            merged.blocks = local.blocks.clone();
+            merged.blocks.clone_from(&local.blocks);
 
             MergeLocalFileManifestOutcome::Merged(merged)
         }
