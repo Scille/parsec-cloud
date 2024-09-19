@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
 import re
 import subprocess
 import sys
@@ -83,6 +84,8 @@ RELEASE_REGEX = re.compile(
     r"(?:\+(?P<local>[a-z0-9]+(?:[-_\.][a-z0-9]+)*))?"
     r"$"
 )
+
+DRY_GIT_COMMANDS = os.environ.get("DRY_GIT", "0") == "1"
 
 
 class ReleaseError(Exception):
@@ -377,6 +380,9 @@ _test_format_version(Version(1, 2, 3, dev=4, local="foo.bar"), "1.2.3-dev.4+foo.
 
 
 def run_git(*cmd: Any, verbose: bool = False) -> str:
+    if DRY_GIT_COMMANDS:
+        print(f"{COLOR_DIM}[DRY] >> git {' '.join(map(str, cmd))}{COLOR_END}", file=sys.stderr)
+        return ""
     return run_cmd("git", *cmd, verbose=verbose)
 
 
@@ -748,7 +754,8 @@ def build_main(args: argparse.Namespace) -> None:
 
     ensure_working_in_a_clean_git_repo()
 
-    ensure_working_on_the_correct_branch(release_branch, base_ref, release_version)
+    if not DRY_GIT_COMMANDS:
+        ensure_working_on_the_correct_branch(release_branch, base_ref, release_version)
 
     release_date = datetime.now(tz=timezone.utc)
     license_eol_date = get_licence_eol_date(release_date)
