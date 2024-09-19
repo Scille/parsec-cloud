@@ -1480,7 +1480,7 @@ fn workspace_manifest_check_integrity(timestamp: DateTime) {
     p_assert_eq!(
         lwm.check_data_integrity().unwrap_err(),
         DataError::DataIntegrity {
-            data_type: "libparsec_types::local_manifest::LocalFolderManifest",
+            data_type: "libparsec_types::local_manifest::folder::LocalFolderManifest",
             invariant: "id and parent are the same for root manifest"
         }
     );
@@ -1505,7 +1505,7 @@ fn child_folder_manifest_check_integrity(timestamp: DateTime) {
     p_assert_eq!(
         lcm.check_data_integrity().unwrap_err(),
         DataError::DataIntegrity {
-            data_type: "libparsec_types::local_manifest::LocalFolderManifest",
+            data_type: "libparsec_types::local_manifest::folder::LocalFolderManifest",
             invariant: "id and parent are different for child manifest"
         }
     );
