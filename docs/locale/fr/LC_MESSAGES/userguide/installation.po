@@ -281,36 +281,3 @@ msgid "If you need to access older versions, they are available on `GitHub`_."
 msgstr ""
 "Si vous avez besoin d'accéder à des versions plus anciennes, elle sont "
 "disponibles sur `GitHub`_."
-
-#~ msgid ""
-#~ "Windows installer is available at the latest stable version on `Get "
-#~ "Parsec`_."
-#~ msgstr ""
-#~ "La dernière version stable de l'installateur Windows est disponible sur "
-#~ "`Get Parsec`_."
-
-#~ msgid "Linux"
-#~ msgstr "Linux"
-
-#~ msgid "AppImage is available at the latest stable version on `Get Parsec`_."
-#~ msgstr ""
-#~ "La dernière version stable de l'AppImage est disponible sur `Get Parsec`_."
-
-#~ msgid "To use Parsec via the AppImage:"
-#~ msgstr "Pour utiliser Parsec via AppImage:"
-
-#~ msgid "Download AppImage file"
-#~ msgstr "Télécharger le fichier AppImage"
-
-#~ msgid "Snap"
-#~ msgstr "Snap"
-
-#~ msgid ""
-#~ "macOS installer is available at the latest stable version on `Get "
-#~ "Parsec`_."
-#~ msgstr ""
-#~ "La dernière version stable de l'installateur macOS est disponible sur "
-#~ "`Get Parsec`_."
-
-#~ msgid "Install macFUSE on macOS 12 and older"
-#~ msgstr "Installation de macFUSE sur MacOS 12 ou antérieur"

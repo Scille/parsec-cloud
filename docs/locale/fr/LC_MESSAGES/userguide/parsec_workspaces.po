@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:42+0200\n"
-"PO-Revision-Date: 2024-09-18 18:55+0200\n"
+"POT-Creation-Date: 2024-09-19 17:32+0200\n"
+"PO-Revision-Date: 2024-09-19 17:35+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -114,8 +114,8 @@ msgid ""
 "If you have the **Owner** or **Manager** role, the ``Sharing and roles`` "
 "option will be available from the workspace menu."
 msgstr ""
-"Si vous avez le rôle **Propriétaire** ou **Gestionnaire**, l'option "
-"``Partage et rôles`` sera disponible dans le menu de l'espace de travail."
+"Si vous avez le rôle **Propriétaire** ou **Gérant**, l'option ``Partage et "
+"rôles`` sera disponible dans le menu de l'espace de travail."
 
 #: ../../userguide/parsec_workspaces.rst:72
 msgid ""
@@ -162,32 +162,80 @@ msgstr ""
 "de travail."
 
 #: ../../userguide/parsec_workspaces.rst:95
-msgid "Here are the available roles:"
-msgstr "Voici les rôles disponibles :"
-
-#: ../../userguide/parsec_workspaces.rst:97
-msgid "**Reader**: Can view and open files."
-msgstr "**Lecteur** : Peut visualiser et ouvrir des fichiers."
-
-#: ../../userguide/parsec_workspaces.rst:98
-msgid "**Contributor**: Can edit, import and delete files."
-msgstr "**Contributeur** : Peut modifier, importer et supprimer des fichiers."
-
-#: ../../userguide/parsec_workspaces.rst:99
-msgid "**Manager**: Can manage user access to the workspace."
-msgstr ""
-"**Manager** : Peut gérer l'accès des utilisateurs à l'espace de travail."
-
-#: ../../userguide/parsec_workspaces.rst:100
 msgid ""
-"**Owner**: Can manage user access and re-encrypt the workspace. Can promote "
-"other users to Owner"
+"The available roles and what they allow to do are shown in the following "
+"table."
 msgstr ""
-"**Propriétaire** : Peut gérer l'accès des utilisateurs et re-chiffrer "
-"l'espace de travail. Il peut promouvoir d'autres utilisateurs au rang de "
-"propriétaire"
+"Les rôles disponibles et ce qu'ils permettent de faire sont indiqués dans le "
+"tableau suivant."
+
+#: ../../userguide/parsec_workspaces.rst:101
+msgid "User rights"
+msgstr "Droits de l'utilisateur"
 
 #: ../../userguide/parsec_workspaces.rst:102
+msgid "Reader"
+msgstr "Lecteur"
+
+#: ../../userguide/parsec_workspaces.rst:103
+msgid "Contributor"
+msgstr "Contributeur"
+
+#: ../../userguide/parsec_workspaces.rst:104
+msgid "Manager"
+msgstr "Gérant"
+
+#: ../../userguide/parsec_workspaces.rst:105
+msgid "Owner"
+msgstr "Propriétaire"
+
+#: ../../userguide/parsec_workspaces.rst:106
+msgid "Can view and open files"
+msgstr "Peut visualiser et ouvrir des fichiers"
+
+#: ../../userguide/parsec_workspaces.rst:107
+#: ../../userguide/parsec_workspaces.rst:108
+#: ../../userguide/parsec_workspaces.rst:109
+#: ../../userguide/parsec_workspaces.rst:110
+#: ../../userguide/parsec_workspaces.rst:113
+#: ../../userguide/parsec_workspaces.rst:114
+#: ../../userguide/parsec_workspaces.rst:115
+#: ../../userguide/parsec_workspaces.rst:119
+#: ../../userguide/parsec_workspaces.rst:120
+#: ../../userguide/parsec_workspaces.rst:125
+#: ../../userguide/parsec_workspaces.rst:130
+msgid "✅"
+msgstr "✅"
+
+#: ../../userguide/parsec_workspaces.rst:111
+msgid "Can edit, import and delete files"
+msgstr "Peut modifier, importer et supprimer des fichiers"
+
+#: ../../userguide/parsec_workspaces.rst:112
+#: ../../userguide/parsec_workspaces.rst:117
+#: ../../userguide/parsec_workspaces.rst:118
+#: ../../userguide/parsec_workspaces.rst:122
+#: ../../userguide/parsec_workspaces.rst:123
+#: ../../userguide/parsec_workspaces.rst:124
+#: ../../userguide/parsec_workspaces.rst:127
+#: ../../userguide/parsec_workspaces.rst:128
+#: ../../userguide/parsec_workspaces.rst:129
+msgid "❌"
+msgstr "❌"
+
+#: ../../userguide/parsec_workspaces.rst:116
+msgid "Can manage user access to the workspace"
+msgstr "Peut gérer l'accès des utilisateurs à l'espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:121
+msgid "Can re-encrypt the workspace"
+msgstr "Peut re-chiffrer l'espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:126
+msgid "Can promote other users to Owner"
+msgstr "Peut promouvoir d'autres utilisateurs en tant que Propriétaire"
+
+#: ../../userguide/parsec_workspaces.rst:132
 msgid ""
 "Users without a role in the workspace, are not allowed to access nor see the "
 "workspace."
@@ -195,13 +243,13 @@ msgstr ""
 "Les utilisateurs qui n'ont pas de rôle dans l'espace de travail ne sont pas "
 "autorisés à accéder à l'espace de travail ni à le voir."
 
-#: ../../userguide/parsec_workspaces.rst:106
+#: ../../userguide/parsec_workspaces.rst:136
 msgid "It is recommended to always share the workspace with other users."
 msgstr ""
 "Il est recommandé de toujours partager l'espace de travail avec d'autres "
 "utilisateurs."
 
-#: ../../userguide/parsec_workspaces.rst:108
+#: ../../userguide/parsec_workspaces.rst:138
 msgid ""
 "Strong cryptographic security prevents data recovery. If the workspace is "
 "not shared with others, and the user loses access to its device or cannot "
