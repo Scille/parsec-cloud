@@ -39,7 +39,7 @@ async fn setup(tmp_path: &TmpPath) -> Setup {
     bob_client.refresh_workspaces_list().await.unwrap();
     let bob_wksp_list = bob_client.list_workspaces().await;
     assert!(
-        bob_wksp_list.iter().find(|wksp| wksp.id == wid).is_some(),
+        bob_wksp_list.iter().any(|wksp| wksp.id == wid),
         "Bob does not see the workspace"
     );
 
