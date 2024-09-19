@@ -2,9 +2,6 @@
 
 .. _doc_userguide_new_organization:
 
-.. |first_steps_note| replace:: You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
-
-
 Create an organization
 ======================
 
@@ -44,7 +41,7 @@ create your organization:
 
 🚀 Congratulations, you've just created your organization on Parsec!
 
-|first_steps_note|
+You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
 
 Create an organization on Trial
@@ -63,7 +60,7 @@ required.
 2. Select ``Try Parsec for 15 days``.
 3. Enter your name and email address.
 
-|first_steps_note|
+You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
 
 Create an organization on my own Parsec server
@@ -75,7 +72,7 @@ Follow the steps below to create an organization on your own Parsec server:
 2. Select ``Use a different Parsec server``.
 3. Specify the organization name and the address of your own Parsec server.
 
-|first_steps_note|
+You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps>`
 
 .. note::
 

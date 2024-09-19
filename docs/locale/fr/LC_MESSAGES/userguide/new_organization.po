@@ -6,24 +6,23 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:42+0200\n"
+"POT-Creation-Date: 2024-09-19 17:32+0200\n"
 "PO-Revision-Date: 2024-09-18 19:52+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.5\n"
 
 #: ../../userguide/new_organization.rst:-1
-#: ../../userguide/new_organization.rst:9
+#: ../../userguide/new_organization.rst:6
 msgid "Create an organization"
 msgstr "Créer une organisation"
 
-#: ../../userguide/new_organization.rst:11
+#: ../../userguide/new_organization.rst:8
 msgid ""
 "When you start Parsec for the first time, the welcome screen will propose to "
 "**create** or **join** an organization."
@@ -35,11 +34,11 @@ msgstr ""
 msgid "Welcome to Parsec"
 msgstr "Bienvenue à Parsec"
 
-#: ../../userguide/new_organization.rst:20
+#: ../../userguide/new_organization.rst:17
 msgid "Create an organization on Parsec"
 msgstr "Créer une organisation dans Parsec"
 
-#: ../../userguide/new_organization.rst:22
+#: ../../userguide/new_organization.rst:19
 msgid ""
 "This is the preferred option. Your organization will be securely created on "
 "our servers and associated to your customer account."
@@ -47,7 +46,7 @@ msgstr ""
 "C'est l'option recommandée. Votre organisation sera créée en toute sécurité "
 "sur nos serveurs et associée à votre compte client."
 
-#: ../../userguide/new_organization.rst:27
+#: ../../userguide/new_organization.rst:24
 msgid ""
 "Please `visit our website to choose the offer <https://parsec.cloud/"
 "tarification/>`_ that best suits your needs and follow the steps to create "
@@ -57,7 +56,7 @@ msgstr ""
 "tarification/>`_ qui correspond le mieux à vos besoins et suivez les étapes "
 "pour créer votre compte."
 
-#: ../../userguide/new_organization.rst:34
+#: ../../userguide/new_organization.rst:31
 msgid ""
 "If you already have a customer account on Parsec, follow the steps below to "
 "create your organization:"
@@ -65,28 +64,28 @@ msgstr ""
 "Si vous avez déjà un compte client sur Parsec, suivez les étapes ci-dessous "
 "pour créer votre organisation :"
 
-#: ../../userguide/new_organization.rst:37
-#: ../../userguide/new_organization.rst:62
-#: ../../userguide/new_organization.rst:74
+#: ../../userguide/new_organization.rst:34
+#: ../../userguide/new_organization.rst:59
+#: ../../userguide/new_organization.rst:71
 msgid "Start by clicking ``Create an organization`` on the welcome screen."
 msgstr ""
 "Commencez par cliquer sur ``Créer une organisation`` dans l'écran d'accueil."
 
-#: ../../userguide/new_organization.rst:38
+#: ../../userguide/new_organization.rst:35
 msgid "Select ``Create my organization on Parsec``."
 msgstr "Sélectionnez ``Créer mon organisation sur Parsec``."
 
-#: ../../userguide/new_organization.rst:39
+#: ../../userguide/new_organization.rst:36
 msgid "Log in with your customer account."
 msgstr "Connectez-vous avec votre compte client."
 
-#: ../../userguide/new_organization.rst:40
+#: ../../userguide/new_organization.rst:37
 msgid "Enter the organization name (this name cannot be changed later)."
 msgstr ""
 "Saisissez le nom de l'organisation (ce nom ne pourra pas être modifié "
 "ultérieurement)."
 
-#: ../../userguide/new_organization.rst:41
+#: ../../userguide/new_organization.rst:38
 msgid ""
 "Choose the preferred authentication method (this can be changed later from "
 "your profile)."
@@ -94,25 +93,27 @@ msgstr ""
 "Choisissez la méthode d'authentification préférée (vous pouvez la modifier "
 "ultérieurement à partir de votre profil)."
 
-#: ../../userguide/new_organization.rst:43
+#: ../../userguide/new_organization.rst:40
 msgid "Check the information entered and confirm."
 msgstr "Vérifiez les informations saisies et confirmez."
 
-#: ../../userguide/new_organization.rst:45
+#: ../../userguide/new_organization.rst:42
 msgid "🚀 Congratulations, you've just created your organization on Parsec!"
 msgstr "🚀 Félicitations, vous venez de créer votre organisation sur Parsec !"
 
-#: ../../userguide/new_organization.rst:47
-#: ../../userguide/new_organization.rst:66
-#: ../../userguide/new_organization.rst:78
-msgid "|first_steps_note|"
-msgstr "|first_steps_note|"
+#: ../../userguide/new_organization.rst:44
+#: ../../userguide/new_organization.rst:63
+#: ../../userguide/new_organization.rst:75
+msgid ""
+"You are ready for your :ref:`first steps with Parsec! "
+"<doc_userguide_first_steps>`"
+msgstr ""
 
-#: ../../userguide/new_organization.rst:51
+#: ../../userguide/new_organization.rst:48
 msgid "Create an organization on Trial"
 msgstr "Créer une organisation sur le service d'Essai"
 
-#: ../../userguide/new_organization.rst:53
+#: ../../userguide/new_organization.rst:50
 msgid ""
 "Our **Trial service** allows you to **test Parsec for a limited time**. Your "
 "organization will be securely created on our servers. No customer account is "
@@ -122,7 +123,7 @@ msgstr ""
 "limitée**. Votre organisation sera créée en toute sécurité sur nos serveurs. "
 "Aucun compte client n'est nécessaire."
 
-#: ../../userguide/new_organization.rst:59
+#: ../../userguide/new_organization.rst:56
 msgid ""
 "Your organization and associated data will be deleted at the end of the "
 "trial period."
@@ -130,37 +131,37 @@ msgstr ""
 "Votre organisation et les données associées seront supprimées à la fin de la "
 "période d'essai."
 
-#: ../../userguide/new_organization.rst:63
+#: ../../userguide/new_organization.rst:60
 msgid "Select ``Try Parsec for 15 days``."
 msgstr "Sélectionnez ``Essayez Parsec pendant 15 jours``."
 
-#: ../../userguide/new_organization.rst:64
+#: ../../userguide/new_organization.rst:61
 msgid "Enter your name and email address."
 msgstr "Saisissez votre nom et votre adresse électronique."
 
-#: ../../userguide/new_organization.rst:70
+#: ../../userguide/new_organization.rst:67
 msgid "Create an organization on my own Parsec server"
 msgstr "Créer une organisation sur mon propre serveur Parsec"
 
-#: ../../userguide/new_organization.rst:72
+#: ../../userguide/new_organization.rst:69
 msgid ""
 "Follow the steps below to create an organization on your own Parsec server:"
 msgstr ""
 "Suivez les étapes ci-dessous pour créer une organisation sur votre propre "
 "serveur Parsec :"
 
-#: ../../userguide/new_organization.rst:75
+#: ../../userguide/new_organization.rst:72
 msgid "Select ``Use a different Parsec server``."
 msgstr "Sélectionnez ``Utiliser un autre serveur Parsec``."
 
-#: ../../userguide/new_organization.rst:76
+#: ../../userguide/new_organization.rst:73
 msgid ""
 "Specify the organization name and the address of your own Parsec server."
 msgstr ""
 "Indiquez le nom de l'organisation et l'adresse de votre propre serveur "
 "Parsec."
 
-#: ../../userguide/new_organization.rst:82
+#: ../../userguide/new_organization.rst:79
 msgid ""
 "You can read more about hosting Parsec server in the :ref:`Hosting Guide "
 "<doc_adminguide_hosting>`."
@@ -168,123 +169,5 @@ msgstr ""
 "Vous pouvez en savoir plus sur l'hébergement du serveur Parsec dans le :ref:"
 "`Hosting Guide <doc_adminguide_hosting>`."
 
-#~ msgid "Create your own organization"
-#~ msgstr "Créer votre propre organisation"
-
-#~ msgid ""
-#~ "Once installed, the Parsec client must be connected to an organization "
-#~ "that have been created on a Parsec server."
-#~ msgstr ""
-#~ "Une fois installé, le client Parsec doit se connecter à une organisation "
-#~ "ayant été créée sur un serveur Parsec."
-
-#~ msgid ""
-#~ "The simplest way to do that is to create one directly from the Parsec "
-#~ "client. It automatically handles all the process securely, and create a "
-#~ "temporary account on the `Parsec SAAS service <https://my.parsec.cloud/"
-#~ ">`_, sending an invitation link to end registration through email."
-#~ msgstr ""
-#~ "La façon la plus simple de faire cela est d'en créer une directement "
-#~ "depuis le client Parsec. Cela prend en charge tout le processus de "
-#~ "manière sécurisée, et crée un compte temporaire sur le `service SAAS "
-#~ "Parsec <https://my.parsec.cloud/>`_ en envoyant par email un lien "
-#~ "permettant de terminer l'inscription."
-
-#~ msgid ""
-#~ "Creating an organization is proposed automatically if you have no account "
-#~ "linked to your Parsec client."
-#~ msgstr ""
-#~ "Créer une organisation est proposé automatiquement si aucun compte n'est "
-#~ "lié à votre client Parsec."
-
-#~ msgid "Parsec welcome screen"
-#~ msgstr "L'écran d'accueil de Parsec"
-
-#~ msgid ""
-#~ "Another possibility (though more technical) is to host you own Parsec "
-#~ "server and create the organization on it using the Parsec CLI. You can "
-#~ "then join that organization using an organization bootstrap URL. You can "
-#~ "read about this in the :ref:`the Hosting server <doc_adminguide_hosting>` "
-#~ "part."
-#~ msgstr ""
-#~ "Une autre possibilité (bien que plus technique) est d'héberger votre "
-#~ "propre serveur Parsec et de créer l'organisation sur celui-ci via la CLI "
-#~ "Parsec. Vous pouvez rejoindre cette organisation en fournissant cet URL "
-#~ "de bootstrap à Parsec. Vous pouvez lire plus à ce sujet dans la partie :"
-#~ "ref:`Héberger le serveur <doc_adminguide_hosting>`."
-
-#~ msgid ""
-#~ "Once you start the process, you are asked for an Email and an "
-#~ "Organization Name. This email address will be used to contact you later."
-#~ msgstr ""
-#~ "Une fois que vous avez démarré le processus, il vous sera demandé un "
-#~ "Email et un Nom d'Organisation. C'est cette adresse email qui sera "
-#~ "utilisée pour vous contacter."
-
-#~ msgid "Organization create process"
-#~ msgstr "Processus de création d'organisation"
-
-#~ msgid ""
-#~ "Creating an organization through the Parsec client register yourself as "
-#~ "its first user and device (this step is called the bootstrap). This is "
-#~ "why you must enter your Username, Device name, and your Password."
-#~ msgstr ""
-#~ "Créer une organisation depuis le client Parsec vous enregistre comme son "
-#~ "premier utilisateur et appareil (cette étape est appelée le bootstrap). "
-#~ "C'est pourquoi vous devez entrer votre nom d'utilisateur, d'appareil, et "
-#~ "mot de passe."
-
-#~ msgid "Organization bootstrap process"
-#~ msgstr "Processus de démarrage d'une organisation"
-
-#~ msgid "Few key points here:"
-#~ msgstr "Quelques point importants :"
-
-#~ msgid ""
-#~ "User name is the name you'll be referenced by from within the organization"
-#~ msgstr ""
-#~ "Le nom d'utilisateur est le nom par lequel vous serez connu au sein de "
-#~ "l'organisation"
-
-#~ msgid ""
-#~ "Device name is the name your current hardware will be referenced by (e.g. "
-#~ "people will see the work you've done on this computer as from "
-#~ "``my_user@my_device``)"
-#~ msgstr ""
-#~ "Le nom d'appareil servira à vous identifier dans vos modifications (par "
-#~ "exemple les gens verront votre travail sur cet ordinateur comme provenant "
-#~ "de ``my_user@my_device``)"
-
-#~ msgid ""
-#~ "The password is used to encrypt your user&device private keys on your "
-#~ "computer."
-#~ msgstr ""
-#~ "Le mot de passe est utilisé pour chiffrer vos clés privées d'utilisateur "
-#~ "et de l'appareil sur votre ordinateur."
-
-#~ msgid ""
-#~ "Once this process is completed, you can log-in to the organization you "
-#~ "just created."
-#~ msgstr ""
-#~ "Une fois ce processus complété, vous pouvez vous connecter à "
-#~ "l'organisation que vous venez de créer."
-
-#~ msgid ""
-#~ "The keys stored encrypted on your computer are what makes Parsec secure. "
-#~ "Hence there is no way to recover if you lost them (e.g. if you computer "
-#~ "is stolen) or if you forget the password protecting them."
-#~ msgstr ""
-#~ "Les clés stockées sur votre ordinateur assurent la sécurité de Parsec. De "
-#~ "ce fait il n'est pas possible de les récupérer si vous les perdez (par "
-#~ "exemple si votre ordinateur est volé) ou si vous oubliez le mot de passe "
-#~ "les protégeant."
-
-#~ msgid ""
-#~ "To avoid losing access to your data you should always have :ref:`multiple "
-#~ "devices <doc_userguide_new_device>` or :ref:`share your workspaces "
-#~ "<doc_userguide_share_data>` with other users."
-#~ msgstr ""
-#~ "Pour éviter de perdre l'accès à vos données, vous devriez toujours avoir :"
-#~ "ref:`plusieurs appareils <doc_userguide_new_device>` ou bien :ref:"
-#~ "`partager vos espaces de travail <doc_userguide_share_data>` avec d'autre "
-#~ "utilisateurs."
+#~ msgid "|first_steps_note|"
+#~ msgstr "|first_steps_note|"

@@ -92,12 +92,42 @@ The **workspace role** defines what the user is allowed to do within the
 workspace. Since the role is specific to the workspace, a user can have
 different roles in different workspaces.
 
-Here are the available roles:
+The available roles and what they allow to do are shown in the following table.
 
-- **Reader**: Can view and open files.
-- **Contributor**: Can edit, import and delete files.
-- **Manager**: Can manage user access to the workspace.
-- **Owner**: Can manage user access and re-encrypt the workspace. Can promote other users to Owner
+.. list-table::
+   :align: center
+   :header-rows: 1
+
+   * - User rights
+     - Reader
+     - Contributor
+     - Manager
+     - Owner
+   * - Can view and open files
+     - ✅
+     - ✅
+     - ✅
+     - ✅
+   * - Can edit, import and delete files
+     - ❌
+     - ✅
+     - ✅
+     - ✅
+   * - Can manage user access to the workspace
+     - ❌
+     - ❌
+     - ✅
+     - ✅
+   * - Can re-encrypt the workspace
+     - ❌
+     - ❌
+     - ❌
+     - ✅
+   * - Can promote other users to Owner
+     - ❌
+     - ❌
+     - ❌
+     - ✅
 
 Users without a role in the workspace, are not allowed to access nor see the
 workspace.

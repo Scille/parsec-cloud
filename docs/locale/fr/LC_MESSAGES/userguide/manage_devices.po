@@ -94,7 +94,7 @@ msgid ""
 "the new device to start Parsec. Otherwise start Parsec on the new device and "
 "select ``Join`` in the welcome page."
 msgstr ""
-"Si vous envoyez le lien d'invitation par courrier, il suffit de cliquer sur "
+"Si vous envoyez le lien d'invitation par courriel, il suffit de cliquer sur "
 "le lien dans le nouvel appareil pour démarrer Parsec. Sinon, démarrez Parsec "
 "sur le nouvel appareil et sélectionnez ``Rejoindre`` dans la page d'accueil."
 

@@ -70,12 +70,3 @@ msgstr ""
 "vous permettre d'accéder facilement à la documentation. Vous pouvez "
 "également utiliser la fonction de recherche située dans le coin supérieur "
 "gauche."
-
-#~ msgid "General"
-#~ msgstr "Général"
-
-#~ msgid ""
-#~ "The main documentation for the site is organized into the following "
-#~ "sections:"
-#~ msgstr ""
-#~ "La documentation principale du site est organisée en plusieurs sections :"
