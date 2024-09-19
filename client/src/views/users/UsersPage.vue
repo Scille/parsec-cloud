@@ -174,7 +174,8 @@ async function onDisplayStateChange(): Promise<void> {
 
 const msSorterOptions: MsOptions = new MsOptions([
   { label: 'UsersPage.sort.byName', key: SortProperty.Name },
-  { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
+  // Date is not displayed, it's a bit confusing to use it to sort
+  // { label: 'UsersPage.sort.byJoined', key: SortProperty.JoinedDate },
   { label: 'UsersPage.sort.byProfile', key: SortProperty.Profile },
   { label: 'UsersPage.sort.byStatus', key: SortProperty.Status },
 ]);
