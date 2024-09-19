@@ -188,7 +188,7 @@ async fn inconsistent_path_parent_mismatch(
             wksp1_foo_id,
             ResolvePathError::Internal(
                 DataError::DataIntegrity {
-                    data_type: "libparsec_types::local_manifest::LocalFolderManifest",
+                    data_type: "libparsec_types::local_manifest::folder::LocalFolderManifest",
                     invariant: "id and parent are different for child manifest",
                 }
                 .into(),
