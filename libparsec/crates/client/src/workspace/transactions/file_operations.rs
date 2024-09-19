@@ -132,12 +132,11 @@ fn block_write(
         .get(0..start_index)
         .unwrap_or_default()
         .iter()
-        .map(|chunk_view| {
+        .inspect(|chunk_view| {
             // The same ID might appear in multiple chunks,
             // so it's crucial that we make sure to not remove an ID
             // that ends up being part of the new manifest
             removed_ids.remove(&chunk_view.id);
-            chunk_view
         })
         .cloned()
         .collect();
@@ -178,12 +177,11 @@ fn block_write(
             .get(stop_index..)
             .unwrap_or_default()
             .iter()
-            .map(|chunk_view| {
+            .inspect(|chunk_view| {
                 // The same ID might appear in multiple chunks,
                 // so it's crucial that we make sure to not remove an ID
                 // that ends up being part of the new manifest
                 removed_ids.remove(&chunk_view.id);
-                chunk_view
             })
             .cloned(),
     );
