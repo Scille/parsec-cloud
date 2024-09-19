@@ -63,6 +63,12 @@ repository = "https://github.com/Scille/parsec-cloud"
 undocumented_unsafe_blocks = "deny"
 unwrap_used = "deny"
 
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(use_pure_rust_but_dirty_zstd)',
+    'cfg(skip_fuse_atime_option)',
+] }
+
 # All dependencies should be specified here instead of just in the crate(s) requiring them:
 # - It ensures each given dependency version is consistent across all crates
 # - It simplifies updating dependency version (only a single place to update)
