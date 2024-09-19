@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-18 17:42+0200\n"
-"PO-Revision-Date: 2024-09-18 18:50+0200\n"
+"POT-Creation-Date: 2024-09-19 17:32+0200\n"
+"PO-Revision-Date: 2024-09-19 17:37+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
 "Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
@@ -23,61 +23,56 @@ msgid "Troubleshooting"
 msgstr "Résolution des problèmes"
 
 #: ../../userguide/troubleshooting.rst:10
-msgid ""
-"MS Excel/Word or another MS Office software says the file name is too long"
+msgid "Microsoft Excel/Word or similar software says the file name is too long"
 msgstr ""
-"MS Excel/Word ou un autre logiciel MS Office indique que le nom du fichier "
-"est trop long"
+"MS Excel/Word ou un logiciel similaire indique que le nom du fichier est "
+"trop long"
+
+#: ../../userguide/troubleshooting.rst:12
+msgid ""
+"This error is due to Microsoft's `Maximum File Path Limitation <https://"
+"learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
+"limitation>`_."
+msgstr ""
+"Cette erreur est due à la `Limitation du Chemin d'Accès Maximal <https://"
+"learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-"
+"limitation>`_ de Microsoft."
 
 #: ../../userguide/troubleshooting.rst:14
 msgid ""
-"This error message occurs when you save or open a file if the path to the "
-"file (including the file name) exceeds 218 characters. This limitation "
-"includes three characters representing the drive, the characters in folder "
-"names, the backslash character between folders, and the characters in the "
-"file name."
+"When you save or open a file, its path (including the file name) cannot "
+"exceeds 260 characters. This limitation includes 3 characters for the drive "
+"(i.e. `D:`), the characters in folder names, the backslash character between "
+"folders, and the characters in the file name."
 msgstr ""
-"Ce message d'erreur apparaît lorsque vous enregistrez ou ouvrez un fichier "
-"si le chemin d'accès au fichier (y compris le nom du fichier) dépasse 218 "
-"caractères. Cette limite inclut les trois caractères représentant la lettre "
-"du lecteur, les caractères des noms de dossiers, la barre oblique inverse "
-"entre les dossiers et les caractères du nom du fichier."
+"Lorsque vous enregistrez ou ouvrez un fichier, son chemin d'accès (y compris "
+"le nom du fichier) ne peut dépasser 260 caractères. Cette limite inclut 3 "
+"caractères pour le lecteur (c'est-à-dire « D:` »), les caractères des noms "
+"de dossiers, la barre oblique inverse entre les dossiers et les caractères "
+"du nom du fichier."
 
-#: ../../userguide/troubleshooting.rst:18
+#: ../../userguide/troubleshooting.rst:19
 msgid ""
-"`Error message when you open or save a file in microsoft excel filename "
-"<https://support.microsoft.com/en-us/help/213983/error-message-when-you-open-"
-"or-save-a-file-in-microsoft-excel-filename>`_"
+"So the only solution is to rename the file or the folders containing it in "
+"order to have shorter path."
 msgstr ""
-"`Message d'erreur lors de l'ouverture ou de l'enregistrement d'un fichier "
-"dans microsoft excel nom de fichier <https://support.microsoft.com/en-us/"
-"help/213983/error-message-when-you-open-or-save-a-file-in-microsoft-excel-"
-"filename>`_"
+"La seule solution consiste donc à renommer le fichier ou les dossiers qui le "
+"contiennent afin de raccourcir le chemin d'accès."
 
-#: ../../userguide/troubleshooting.rst:20
+#: ../../userguide/troubleshooting.rst:22
 msgid ""
-"So this is a Microsoft issue, and there is nothing Parsec can do about it. "
-"The only solution is to rename the file, or rename one or more folders that "
-"contain the file in order to have shorter names."
+"Microsoft's article also mentions a more cumbersome approach by modifying a "
+"registry entry. This might work, but it has not been tested in Parsec."
 msgstr ""
-"Il s'agit donc d'un problème lié à Microsoft, et Parsec ne peut rien y "
-"faire. La seule solution est de renommer le fichier, ou de renommer un ou "
-"plusieurs dossiers qui contiennent le fichier afin d'avoir des noms plus "
-"courts."
+"L'article de Microsoft mentionne également une approche plus lourde "
+"consistant à modifier une entrée du registre. Cette méthode pourrait "
+"fonctionner, mais elle n'a pas été testée dans Parsec."
 
-#: ../../userguide/troubleshooting.rst:23
-msgid "Specific to Parsec V2"
-msgstr "Spécifique à Parsec V2"
+#: ../../userguide/troubleshooting.rst:27
+msgid "Copying files from Parsec V2 takes a long time"
+msgstr "La copie des fichiers de Parsec V2 prend beaucoup de temps"
 
-#: ../../userguide/troubleshooting.rst:26
-msgid ""
-"Copying files from Parsec V2 take some time / files are not accessible "
-"during copy"
-msgstr ""
-"La copie des fichiers depuis Parsec V2 prend du temps / les fichiers ne sont "
-"pas accessibles pendant la copie"
-
-#: ../../userguide/troubleshooting.rst:28
+#: ../../userguide/troubleshooting.rst:29
 msgid ""
 "When copying files from a mounted workspace in Parsec V2 the operation may "
 "take some time and the files may not be accessible to open them. After some "
@@ -88,7 +83,7 @@ msgstr ""
 "ne pas être accessibles pour les ouvrir. Après un certain temps, les "
 "fichiers sont copiés et peuvent être ouverts normalement."
 
-#: ../../userguide/troubleshooting.rst:30
+#: ../../userguide/troubleshooting.rst:33
 msgid ""
 "This is most likely due to data is not being present locally in cache. "
 "Reading data when is not in cache is much slower than reading data from from "
@@ -101,7 +96,7 @@ msgstr ""
 "système de fichiers sur disque ordinaire et les performances dépendent "
 "fortement de la vitesse de votre connexion internet."
 
-#: ../../userguide/troubleshooting.rst:32
+#: ../../userguide/troubleshooting.rst:38
 msgid ""
 "Moreover, while the file is under copy, its displayed size only grows when a "
 "*flush* operation occurs. Flush are not explicitly issued by Parsec V2 and "
@@ -114,7 +109,7 @@ msgstr ""
 "lorsque les données écrites depuis le flush précédent sont plus grandes que "
 "la taille de bloc du fichier (c'est-à-dire 512 Ko)."
 
-#: ../../userguide/troubleshooting.rst:34
+#: ../../userguide/troubleshooting.rst:43
 msgid ""
 "So this explain why the file can appear with a size of 0 for some time: data "
 "is being downloaded into cache and then copied via occasional flush "
@@ -124,7 +119,7 @@ msgstr ""
 "pendant un certain temps : les données sont téléchargées dans la mémoire "
 "cache, puis copiées par des opérations de vidage occasionnelles."
 
-#: ../../userguide/troubleshooting.rst:36
+#: ../../userguide/troubleshooting.rst:46
 msgid ""
 "You could try enabling the off-line mode on Parsec V2 workspaces before "
 "copying large amount of files. In any case, you will need to wait for the "
@@ -134,57 +129,3 @@ msgstr ""
 "de travail avant de copier une grande quantité de fichiers. Dans tous les "
 "cas, vous devrez attendre que la copie soit complètement terminée pour "
 "pouvoir ouvrir les fichiers."
-
-#: ../../userguide/troubleshooting.rst:39
-msgid "How to remove old devices from the login page"
-msgstr "Comment supprimer les anciens appareils de la page de connexion"
-
-#: ../../userguide/troubleshooting.rst:41
-msgid ""
-"Old devices remain registered on the computer and are displayed in the login "
-"page. This is usually the case after having tried multiple Parsec beta "
-"versions."
-msgstr ""
-"Les anciens appareils restent enregistrés sur l'ordinateur et sont affichés "
-"sur la page de connexion. C'est généralement le cas après avoir essayé "
-"plusieurs versions bêta de Parsec."
-
-#: ../../userguide/troubleshooting.rst:43
-msgid "You can still remove these devices manually:"
-msgstr "Vous pouvez toujours supprimer ces appareils manuellement :"
-
-#: ../../userguide/troubleshooting.rst:45
-msgid "Go to Parsec configuration directory"
-msgstr "Aller dans le répertoire de configuration de Parsec"
-
-#: ../../userguide/troubleshooting.rst:47
-msgid ""
-"**On Windows**, open the file explorer and put ``%APPDATA%/parsec**`` in the "
-"address bar (or go to ``C:\\Users\\<YourUser>\\AppData\\Roaming``, note that "
-"AppData is a hidden folder)."
-msgstr ""
-"**Sous Windows**, ouvrez l'explorateur de fichiers et mettez ``%APPDATA%/"
-"parsec**`` dans la barre d'adresse (ou allez dans ``C:"
-"\\Users<VotreUtilisateur>\\AppData\\Roaming``, notez qu'AppData est un "
-"dossier caché)."
-
-#: ../../userguide/troubleshooting.rst:48
-msgid "**On Linux**, open ``~/.config/parsec``."
-msgstr "**Sous Linux**, ouvrez ``~/.config/parsec``."
-
-#: ../../userguide/troubleshooting.rst:50
-msgid "Remove unwanted devices in config/devices"
-msgstr "Supprimer les appareils non désirés dans config/devices"
-
-#: ../../userguide/troubleshooting.rst:51
-msgid "Remove unwanted devices in data"
-msgstr "Supprimer les appareils non désirés dans data"
-
-#: ../../userguide/troubleshooting.rst:55
-msgid ""
-"Be very careful. Deleting a device means virtually deleting the data stored "
-"in that device (since there's no way to decrypt it)."
-msgstr ""
-"Soyez très prudent. La suppression d'un appareil signifie virtuellement la "
-"suppression des données qui y sont stockées (puisqu'il n'y a aucun moyen de "
-"les décrypter)."

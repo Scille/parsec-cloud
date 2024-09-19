@@ -30,9 +30,9 @@ You can also use the search function in the top left corner.
     introduction
     userguide/installation
     userguide/new_organization
+    userguide/first_steps
     userguide/manage_organization
     userguide/join_organization
-    userguide/first_steps
     userguide/parsec_workspaces
     userguide/manage_devices
     userguide/troubleshooting
