@@ -1,0 +1,1 @@
+Major update of user documentation for version 3
