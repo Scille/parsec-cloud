@@ -420,21 +420,26 @@ def update_version_files(version: Version) -> set[Path]:
     return res.updated
 
 
-def update_license_file(version: Version, new_release_date: datetime) -> set[Path]:
+def update_license_file(
+    version: Version, new_release_date: datetime, same_version: bool
+) -> set[Path]:
     license_txt = BUSL_LICENSE_FILE.read_text(encoding="utf8")
     half_updated_license_txt = re.sub(
         r"Change Date:.*",
         f"Change Date:  {new_release_date.strftime('%b %d, %Y')}",
         license_txt,
     )
-    updated_version_txt = re.sub(
-        r"Licensed Work:.*",
-        f"Licensed Work:  Parsec v{version}",
-        half_updated_license_txt,
-    )
-    assert (
-        updated_version_txt != half_updated_license_txt
-    ), f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{version}` correspond to the version written on the license file)"
+    if not same_version:
+        updated_version_txt = re.sub(
+            r"Licensed Work:.*",
+            f"Licensed Work:  Parsec v{version}",
+            half_updated_license_txt,
+        )
+        assert (
+            updated_version_txt != half_updated_license_txt
+        ), f"The `Licensed Work` field should have changed, but hasn't (likely because the new version `{version}` correspond to the version written on the license file)"
+    else:
+        updated_version_txt = half_updated_license_txt
     BUSL_LICENSE_FILE.write_bytes(
         updated_version_txt.encode("utf8")
     )  # Use write_bytes to keep \n on Windows
@@ -570,12 +575,16 @@ def inspect_tag(tag: str, yes: bool, gpg_sign: bool) -> None:
 
 
 def create_bump_commit_to_dev_version(
-    version: Version, license_eol_date: datetime, gpg_sign: bool
+    version: Version, license_eol_date: datetime, gpg_sign: bool, same_version: bool
 ) -> None:
-    dev_version = version.evolve(local="dev")
+    dev_version = version.evolve()
+    if dev_version.pre is None:
+        dev_version.pre = ("a", 0)
+    else:
+        dev_version.pre = (dev_version.pre[0], dev_version.pre[1] + 1)
 
     updated_files: set[Path] = set()
-    updated_files |= update_license_file(dev_version, license_eol_date)
+    updated_files |= update_license_file(dev_version, license_eol_date, same_version)
     updated_files |= update_version_files(dev_version)
 
     create_bump_commit_to_new_version(
@@ -722,18 +731,26 @@ def build_main(args: argparse.Namespace) -> None:
     base_ref: str | None = args.base_ref
     current_version = get_version_from_code()
     skip_tag = args.skip_tag
+    same_version = False
 
     if args.nightly:
         release_version = generate_uniq_version(current_version)
         release_branch = "releases/nightly"
         tag = "nightly"
-    elif not args.version:
-        raise SystemExit("version is required for build command")
     else:
-        # TODO: rethink the non-release checks
-        # current_version = get_version_from_repo_describe_tag(args.verbose)
-        # check_non_release(current_version)
-        release_version = args.version
+        if args.current:
+            release_version = current_version
+            same_version = True
+        elif not args.version:
+            raise SystemExit("version is required for build command")
+        else:
+            release_version = args.version
+
+            if release_version <= current_version:
+                raise ReleaseError(
+                    f"Current version is greater or equal that the new version ({COLOR_YELLOW}{current_version}{COLOR_END} >= {COLOR_YELLOW}{release_version}{COLOR_END}).\n"
+                    "If you want to create a new release using the current version, use the `--current` flag instead of `--version <VERSION>`."
+                )
 
         if release_version.is_dev:
             raise ReleaseError(
@@ -747,11 +764,6 @@ def build_main(args: argparse.Namespace) -> None:
     print(f"Release branch: {COLOR_GREEN}{release_branch}{COLOR_END}")
     print(f"Release commit tag: {COLOR_GREEN}{tag}{COLOR_END}")
 
-    if release_version <= current_version:
-        raise ReleaseError(
-            f"Previous version is greater that the new version ({COLOR_YELLOW}{current_version}{COLOR_END} >= {COLOR_YELLOW}{release_version}{COLOR_END})"
-        )
-
     ensure_working_in_a_clean_git_repo()
 
     if not DRY_GIT_COMMANDS:
@@ -761,7 +773,7 @@ def build_main(args: argparse.Namespace) -> None:
     license_eol_date = get_licence_eol_date(release_date)
 
     updated_files: set[Path] = set()
-    updated_files |= update_license_file(release_version, license_eol_date)
+    updated_files |= update_license_file(release_version, license_eol_date, same_version)
     updated_files |= update_version_files(release_version)
     newsfragments = collect_newsfragments()
     updated_files |= update_history_changelog(newsfragments, release_version, yes, release_date)
@@ -781,7 +793,9 @@ def build_main(args: argparse.Namespace) -> None:
 
     # No need to create a dev version for a nightly release.
     if not args.nightly:
-        create_bump_commit_to_dev_version(release_version, license_eol_date, gpg_sign=args.gpg_sign)
+        create_bump_commit_to_dev_version(
+            release_version, license_eol_date, gpg_sign=args.gpg_sign, same_version=same_version
+        )
 
     push_release(tag, release_branch, yes, force_push=args.nightly, skip_tag=skip_tag)
 
@@ -960,6 +974,7 @@ def cli(description: str) -> argparse.Namespace:
     build_exclusion.add_argument(
         "--nightly", action="store_true", help="Prepare for a new nightly release"
     )
+    build_exclusion.add_argument("--current", help="Use the current version", action="store_true")
     build.add_argument("-y", "--yes", help="Reply `yes` to asked question", action="store_true")
     build.add_argument(
         "--no-gpg-sign", dest="gpg_sign", action="store_false", help="Do not sign the commit or tag"
