@@ -160,7 +160,7 @@ class Version:
         in the version number and the generated wheel have the trailing `0` included :(.
         """
 
-        parts = []
+        parts: list[str] = []
 
         parts.append(f"{self.major}.{self.minor}.{self.patch}")
 
@@ -436,7 +436,7 @@ def update_license_file(version: Version, new_release_date: datetime) -> set[Pat
 
 
 def collect_newsfragments() -> list[Path]:
-    fragments = []
+    fragments: list[Path] = []
     fragment_regex = re.compile(r"^[0-9]+\.(" + "|".join(FRAGMENT_TYPES.keys()) + r")\.rst$")
     for entry in FRAGMENTS_DIR.iterdir():
         if entry.name in (".gitkeep", "README.rst"):
@@ -568,7 +568,7 @@ def create_bump_commit_to_dev_version(
 ) -> None:
     dev_version = version.evolve(local="dev")
 
-    updated_files = set()
+    updated_files: set[Path] = set()
     updated_files |= update_license_file(dev_version, license_eol_date)
     updated_files |= update_version_files(dev_version)
 
@@ -625,7 +625,7 @@ def gen_rst_release_entry(
 def convert_newsfragments_to_rst(
     newsfragments: list[Path],
 ) -> defaultdict[str, list[str]]:
-    issues_per_type = defaultdict(list)
+    issues_per_type: defaultdict[str, list[str]] = defaultdict(list)
     for fragment in newsfragments:
         issue_id, type, _ = fragment.name.split(".")
         # Don't add empty fragments. Still needed to be collected as they will be deleted later
@@ -753,7 +753,7 @@ def build_main(args: argparse.Namespace) -> None:
     release_date = datetime.now(tz=timezone.utc)
     license_eol_date = get_licence_eol_date(release_date)
 
-    updated_files = set()
+    updated_files: set[Path] = set()
     updated_files |= update_license_file(release_version, license_eol_date)
     updated_files |= update_version_files(release_version)
     newsfragments = collect_newsfragments()
