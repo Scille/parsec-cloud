@@ -35,7 +35,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let alice = env.local_device("alice@dev1");
 
-    // Step 0: retrieve info
+    // Part 0: retrieve info
 
     test_register_send_hook(&env.discriminant_dir, {
         let alice = alice.clone();
@@ -63,19 +63,17 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         _ => unreachable!(),
     };
 
-    // Step 1: wait peer
-
     let greeter_private_key = Arc::new(PrivateKey::generate());
     let greeter_nonce: Bytes = Bytes::from_static(b"123");
     let greeter_id = Arc::new(Mutex::new(None)); // set in start_attempt
-    let claimer_public_key = Arc::new(Mutex::new(None)); // Set in step 0 hook
-    let claimer_hashed_nonce = Arc::new(Mutex::new(None)); // Set in invite_2a hook
-    let claimer_nonce = Arc::new(Mutex::new(None)); // Set in step 1 hook
+    let claimer_public_key = Arc::new(Mutex::new(None)); // Set in step 0 wait peer
+    let claimer_hashed_nonce = Arc::new(Mutex::new(None)); // Set in step 1 send hashed nonce
+    let claimer_nonce = Arc::new(Mutex::new(None)); // Set in step 3 get nonce
     let greeting_attempt =
         GreetingAttemptID::from_hex("211575b8-74f9-11ef-8fec-838123f8cb25").unwrap();
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // 1) `invite_claimer_start_greeting_attempt`
+        // `invite_claimer_start_greeting_attempt`
         {
             let greeter_id = greeter_id.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_start_greeting_attempt::Req| {
@@ -86,7 +84,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 protocol::invited_cmds::latest::invite_claimer_start_greeting_attempt::Rep::Ok { greeting_attempt }
             }
         },
-        // 2) `invite_claimer_step` 0 wait peer
+        // 0) `invite_claimer_step` wait peer
         {
             let claimer_public_key = claimer_public_key.clone();
             let greeter_private_key = greeter_private_key.clone();
@@ -107,7 +105,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 }
             }
         },
-        // 3) `invite_claimer_step` 1 send hashed nonce
+        // 1) `invite_claimer_step` send hashed nonce
         {
             let claimer_hashed_nonce = claimer_hashed_nonce.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
@@ -123,13 +121,13 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 }
             }
         },
-        // 4)  `invite_claimer_step` 2 get nonce
+        // 2) `invite_claimer_step` get nonce
         {
             let greeter_nonce = greeter_nonce.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
                     ClaimerStep::Number2GetNonce {} => {}
-                    e => panic!("Expected step 2 send hashed nonce, found step {e:?}"),
+                    e => panic!("Expected step 2 get nonce, found step {e:?}"),
                 };
 
                 protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
@@ -137,7 +135,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 }
             }
         },
-        // 5) `invite_claimer_step` 3 send nonce
+        // 3) `invite_claimer_step` send nonce
         {
             let claimer_nonce = claimer_nonce.clone();
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
@@ -145,7 +143,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 p_assert_matches!(*guard, None); // Should be set only once !
                 *guard = Some(match req.claimer_step {
                     ClaimerStep::Number3SendNonce { claimer_nonce } => claimer_nonce,
-                    e => panic!("Expected step 3 send hashed nonce, found step {e:?}"),
+                    e => panic!("Expected step 3 send nonce, found step {e:?}"),
                 });
 
                 protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
@@ -179,7 +177,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     let (expected_claimer_sas, expected_greeter_sas) =
         SASCode::generate_sas_codes(&claimer_nonce, &greeter_nonce, &shared_secret_key);
 
-    // Step 2: signify trust
+    // Part 2: signify trust
 
     let sas_choices = ctx.generate_greeter_sas_choices(3);
     p_assert_eq!(sas_choices.len(), 3);
@@ -187,10 +185,11 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     test_register_send_hook(
         &env.discriminant_dir,
+        // 4) `invite_claimer_step` signify trust
         |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
             match req.claimer_step {
                 ClaimerStep::Number4SignifyTrust {} => {}
-                e => panic!("Expected step 4 send hashed nonce, found step {e:?}"),
+                e => panic!("Expected step 4 signify trust, found step {e:?}"),
             };
 
             protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
@@ -201,16 +200,17 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let ctx = ctx.do_signify_trust().await.unwrap();
 
-    // Step 3: wait peer trust
+    // Part 3: wait peer trust
 
     p_assert_eq!(ctx.claimer_sas(), &expected_claimer_sas);
 
     test_register_send_hook(
         &env.discriminant_dir,
+        // 5) `invite_claimer_step` wait peer trust
         |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
             match req.claimer_step {
                 ClaimerStep::Number5WaitPeerTrust {} => {}
-                e => panic!("Expected step 5 send hashed nonce, found step {e:?}"),
+                e => panic!("Expected step 5 wait peer trust, found step {e:?}"),
             };
 
             protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
@@ -221,7 +221,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     let ctx = ctx.do_wait_peer_trust().await.unwrap();
 
-    // Step 4: claim user
+    // Part 4: claim user
 
     let requested_device_label: DeviceLabel = "Requested My dev1".parse().unwrap();
     let requested_human_handle: HumanHandle = "Requested John Doe <requested.john@example.com>"
@@ -234,7 +234,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
 
     test_register_sequence_of_send_hooks!(
         &env.discriminant_dir,
-        // 1) `step 6` send payload
+        // 6) `invite_claimer_step` send payload
         {
             let shared_secret_key = shared_secret_key.clone();
             let requested_device_label = requested_device_label.clone();
@@ -242,7 +242,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 let payload = match req.claimer_step {
                     ClaimerStep::Number6SendPayload { claimer_payload } => claimer_payload,
-                    e => panic!("Expected step 6 send hashed nonce, found step {e:?}"),
+                    e => panic!("Expected step 6 send payload, found step {e:?}"),
                 };
                 let in_data =
                     InviteUserData::decrypt_and_load(&payload, &shared_secret_key).unwrap();
@@ -255,7 +255,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 }
             }
         },
-        // 2) `step 7` get payload
+        // 7) `invite_claimer_step` get payload
         {
             let shared_secret_key = shared_secret_key.clone();
             let root_verify_key = env.organization_addr().root_verify_key().to_owned();
@@ -264,7 +264,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
                     ClaimerStep::Number7GetPayload {} => {}
-                    e => panic!("Expected step 7 send hashed nonce, found step {e:?}"),
+                    e => panic!("Expected step 7 get payload, found step {e:?}"),
                 };
 
                 let greeter_payload = InviteUserConfirmation {
@@ -283,12 +283,12 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
                 }
             }
         },
-        // 3) step 8 ack
+        // 8) `invite_claimer_step` ack
         {
             move |req: protocol::invited_cmds::latest::invite_claimer_step::Req| {
                 match req.claimer_step {
                     ClaimerStep::Number8Acknowledge {} => {}
-                    e => panic!("Expected step 8 send hashed nonce, found step {e:?}"),
+                    e => panic!("Expected step 8 acknowledge, found step {e:?}"),
                 };
 
                 protocol::invited_cmds::latest::invite_claimer_step::Rep::Ok {
@@ -312,7 +312,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_eq!(ctx.new_local_device.human_handle, human_handle);
     p_assert_eq!(ctx.new_local_device.initial_profile, UserProfile::Standard);
 
-    // Step 5: finalize
+    // Part 5: finalize
 
     let default_file_key = ctx.get_default_key_file();
     let expected_default_file_key = env
