@@ -76,6 +76,7 @@ impl DateTime {
         self.0.timestamp()
     }
 
+    /// adds micro seconds
     pub fn add_us(&self, us: i64) -> Self {
         Self(self.0 + Duration::microseconds(us))
     }

@@ -77,6 +77,7 @@ pub(super) async fn revoke_user(
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
                 timestamp = std::cmp::max(ops.device.time_provider.now(), strictly_greater_than);
+                // TODO add const
             }
         }
     }
