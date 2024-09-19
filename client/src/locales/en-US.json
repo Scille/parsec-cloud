@@ -112,6 +112,7 @@
             "logoutImportsConfirmQuestion": "All imports will be cancelled. Are you sure you want to log out?",
             "logoutYes": "Log out",
             "logoutNo": "Stay connected",
+            "logoutWait": "Logging out. Please wait...",
             "logoutFailed": "An error occurred while logging out.",
             "updateConfirmTitle": "Update Parsec",
             "updateConfirmQuestion": "You will be logged out and the application will close. Make sure to save your work before. Do you want to continue?",

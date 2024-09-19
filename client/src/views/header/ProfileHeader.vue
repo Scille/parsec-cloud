@@ -40,9 +40,8 @@ import { Routes, getConnectionHandle, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, askQuestion } from 'megashark-lib';
+import { Answer, askQuestion, openSpinnerModal } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -53,7 +52,6 @@ import { Env } from '@/services/environment';
 const isOnline = ref(false);
 const isPopoverOpen = ref(false);
 
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
@@ -141,21 +139,16 @@ async function openPopover(event: Event): Promise<void> {
         console.error('Already logged out');
         return;
       }
+      const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
+      const menuCtrls = useUploadMenu();
+      menuCtrls.hide();
+      await injectionProvider.clean(handle);
       const result = await parsecLogout();
       if (!result.ok) {
-        informationManager.present(
-          new Information({
-            message: 'HomePage.topbar.logoutFailed',
-            level: InformationLevel.Error,
-          }),
-          PresentationMode.Toast,
-        );
-      } else {
-        const menuCtrls = useUploadMenu();
-        menuCtrls.hide();
-        await injectionProvider.clean(handle);
-        await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+        window.electronAPI.log('error', `Error when logging out: ${result.error}`);
       }
+      await modal.dismiss();
+      await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
     await openSettingsModal();
