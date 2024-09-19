@@ -273,7 +273,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
                 endpoint_url, region, bucket, key, secret = parts[1:]
             except ValueError:
                 raise click.BadParameter(
-                    "Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>`"
+                    f"Invalid S3 config, must be `s3:[<endpoint_url>]:<region>:<bucket>:<key>:<secret>` ({parts})"
                 )
             # Provide https by default to avoid annoying escaping for most cases
             if (
