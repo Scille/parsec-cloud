@@ -209,7 +209,7 @@ pub(super) fn merge_local_file_manifest(
         let mut merge_in_progress = LocalFileManifest::from_remote(remote);
         merge_in_progress.size = *local_size;
         merge_in_progress.blocksize = *local_blocksize;
-        merge_in_progress.blocks = local_blocks.to_owned();
+        local_blocks.clone_into(&mut merge_in_progress.blocks);
 
         merge_in_progress
     } else {
@@ -376,7 +376,7 @@ pub(super) fn merge_local_folder_manifest(
         *merged_parent = *local_parent;
         *merged_need_sync = *local_need_sync;
         *merged_updated = local.updated;
-        *merged_children = local.children.to_owned();
+        local.children.clone_into(merged_children);
 
         return MergeLocalFolderManifestOutcome::Merged(Arc::new(merge_in_progress));
     }
