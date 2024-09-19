@@ -336,7 +336,9 @@ def _parse_auth_headers_or_abort(
 
     # 3) Check User-Agent, Content-Type & Accept
     user_agent = headers.get("User-Agent", "unknown")
-    if expected_content_type and headers.get("Content-Type") != expected_content_type:
+    content_type = headers.get("Content-Type")
+    if expected_content_type and content_type != expected_content_type:
+        logger.debug("Bad content type", content_type=content_type)
         _handshake_abort_bad_content(api_version=settled_api_version)
     if expected_accept_type and headers.get("Accept") != expected_accept_type:
         _handshake_abort(CustomHttpStatus.BadAcceptType, api_version=settled_api_version)
@@ -504,6 +506,7 @@ async def anonymous_api(raw_organization_id: str, request: Request) -> Response:
     try:
         req = ANONYMOUS_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
     except ValueError:
+        logger.debug("Invalid body for anonymous API")
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
     rep = await run_request(backend, client_ctx, req)
@@ -568,6 +571,7 @@ async def invited_api(raw_organization_id: str, request: Request) -> Response:
     try:
         req = INVITED_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
     except ValueError:
+        logger.debug("Invalid body for invited API")
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
     rep = await run_request(backend, client_ctx, req)
@@ -648,6 +652,7 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
     try:
         req = AUTHENTICATED_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
     except ValueError:
+        logger.debug("Invalid body for authenticated API")
         _handshake_abort_bad_content(api_version=parsed.settled_api_version)
 
     rep = await run_request(backend, client_ctx, req)
