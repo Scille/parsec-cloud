@@ -132,6 +132,20 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
         timeout-minutes: 5
 
+      - name: Ensure the PR head ref is not a perennial branch
+        if: github.event_name == 'pull_request'
+        run: |
+          if [[ "${{ github.head_ref }}" =~ ^releases/.*$ ]]; then
+            (
+              echo 'You are using a perennial branch as a PR head ref, this is forbidden because once merged the branch will be deleted by GitHub.';
+              echo 'If you want to create a PR with a change from a perennial branch, create a feature branch from it (git switch --create my-feature-branch $PERENNIAL_BRANCH)' and use the feature branch as the PR head ref;
+              echo;
+              echo 'If you want to acknowledge a release use `python misc/releaser.py acknowledge $VERSION`';
+            ) >&2
+            exit 0
+          fi
+        timeout-minutes: 1
+
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
         id: newsfragment-have-changed
         with:
