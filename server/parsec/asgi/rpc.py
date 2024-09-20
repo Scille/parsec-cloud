@@ -117,11 +117,6 @@ ANONYMOUS_CMDS_LOAD_FN = {
     for v_version in dir(anonymous_cmds)
     if v_version.startswith("v")
 }
-ANONYMOUS_ORGANIZATION_BOOTSTRAP_CMD_ALL_API_REQS = tuple(
-    getattr(anonymous_cmds, v_version).organization_bootstrap.Req
-    for v_version in dir(anonymous_cmds)
-    if v_version.startswith("v")
-)
 
 
 rpc_router = APIRouter()
