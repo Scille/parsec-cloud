@@ -329,6 +329,11 @@
             "label": "Connexion limitée",
             "description": "L'application réduira la synchronisation des données si votre connexion est limitée"
         },
+        "configDir": {
+            "label": "Dossier de configuration",
+            "description": "Dossier où est stockée la configuration de Parsec",
+            "open": "Ouvrir dans l'explorateur"
+        },
         "language": {
             "label": "Langue",
             "description": "Choisir la langue de l'application",

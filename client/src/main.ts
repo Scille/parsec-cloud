@@ -106,8 +106,11 @@ async function setupApp(): Promise<void> {
     window.isLinux = (): boolean => isLinux;
 
     if (testbedDiscriminantPath) {
+      window.usesTestbed = (): boolean => true;
       window.getConfigDir = (): string => testbedDiscriminantPath;
       window.getDataBaseDir = (): string => testbedDiscriminantPath;
+    } else {
+      window.usesTestbed = (): boolean => false;
     }
 
     if (locale) {
@@ -320,8 +323,11 @@ async function setupApp(): Promise<void> {
       log: (level: 'debug' | 'info' | 'warn' | 'error', message: string): void => {
         console.log(`[MOCKED-ELECTRON-LOG] ${level}: ${message}`);
       },
-      pageIsInitialized: async (): Promise<void> => {
+      pageIsInitialized: (): void => {
         window.isDev = (): boolean => needsMocks();
+      },
+      openConfigDir: (): void => {
+        console.log('Not available');
       },
     };
   }
@@ -426,6 +432,7 @@ declare global {
     isDesktop: () => boolean;
     isLinux: () => boolean;
     isDev: () => boolean;
+    usesTestbed: () => boolean;
     electronAPI: {
       sendConfig: (config: Config) => void;
       closeApp: () => void;
@@ -437,6 +444,7 @@ declare global {
       prepareUpdate: () => void;
       log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
       pageIsInitialized: () => void;
+      openConfigDir: () => void;
     };
   }
 }

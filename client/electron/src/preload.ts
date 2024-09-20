@@ -41,5 +41,8 @@ process.once('loaded', () => {
     pageIsInitialized: () => {
       ipcRenderer.send(PageToWindowChannel.PageIsInitialized);
     },
+    openConfigDir: () => {
+      ipcRenderer.send(PageToWindowChannel.OpenConfigDir);
+    },
   });
 });
