@@ -2,7 +2,8 @@
 
 import httpx
 
-from parsec._parsec import DateTime, FileManifest, VlobID
+from parsec._parsec import DateTime, DeviceID, FileManifest, OrganizationID, VlobID
+from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 
 from .common import MinimalorgRpcClients
 
@@ -58,3 +59,20 @@ def test_serialization_uses_v0_format(minimalorg: MinimalorgRpcClients):
     # Magic number is 4 Bytes, little-endian format. Value : 0xFD2FB528
     # see https://github.com/facebook/zstd/blob/dev/doc/zstd_compression_format.md#zstandard-frames
     assert serialized[1:5] == b"\x28\xb5\x2f\xfd"
+
+
+def test_vlob_event_max_size_compatible_with_postgresql_notify(minimalorg: MinimalorgRpcClients):
+    big_ts = DateTime.from_rfc3339("9999-12-31T12:59:59.999999Z")
+    event = EventVlob(
+        organization_id=OrganizationID("o" * 32),
+        author=DeviceID.new(),
+        realm_id=VlobID.new(),
+        timestamp=big_ts,
+        vlob_id=VlobID.new(),
+        version=2**32 - 1,
+        blob=b"x" * EVENT_VLOB_MAX_BLOB_SIZE,
+        last_common_certificate_timestamp=big_ts,
+        last_realm_certificate_timestamp=big_ts,
+    )
+    dumped = event.dump_as_apiv4_sse_payload()
+    assert len(dumped) < 8000

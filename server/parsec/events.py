@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from abc import ABC
-from base64 import b64encode
+from base64 import b64decode, b64encode
 from typing import TYPE_CHECKING, Annotated, Literal, override
 from uuid import UUID, uuid4
 
@@ -31,8 +31,9 @@ if TYPE_CHECKING:
 # can be passed with the event (on top of that we keep the events in cache for SSE
 # last-event-id, so better avoid too much pressure of the RAM)
 # We keep a large margin with PostgreSQL limit given the event also contains additional
-# fields and the blob is hex encoded.
-EVENT_VLOB_MAX_BLOB_SIZE = 1024
+# fields and the blob is base64 encoded (which alone adds ~33% in size).
+# (Also see `test_vlob_event_max_size_compatible_with_postgresql` test enforcing this).
+EVENT_VLOB_MAX_BLOB_SIZE = 4096
 
 
 OrganizationIDField = Annotated[
@@ -91,22 +92,22 @@ ActiveUsersLimitField = Annotated[
 ]
 
 
-def hex_bytes_validator(val: object) -> bytes:
+def base64_bytes_validator(val: object) -> bytes:
     if isinstance(val, bytes):
         return val
     elif isinstance(val, bytearray):
         return bytes(val)
     elif isinstance(val, str):
-        return bytes.fromhex(val)
+        return b64decode(val)
     raise ValidationError()
 
 
-def hex_bytes_serializer(val: bytes) -> str:
-    return val.hex()
+def base64_bytes_serializer(val: bytes) -> str:
+    return b64encode(val).decode("ascii")
 
 
-HexBytes = Annotated[
-    bytes, PlainValidator(hex_bytes_validator), PlainSerializer(hex_bytes_serializer)
+Base64Bytes = Annotated[
+    bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
 ]
 
 
@@ -231,7 +232,7 @@ class EventVlob(BaseModel, ClientBroadcastableEvent):
     timestamp: DateTimeField
     vlob_id: VlobIDField
     version: int
-    blob: HexBytes | None
+    blob: Base64Bytes | None
     last_common_certificate_timestamp: DateTimeField
     last_realm_certificate_timestamp: DateTimeField
 
