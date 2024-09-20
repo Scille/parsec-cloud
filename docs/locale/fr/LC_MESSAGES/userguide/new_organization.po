@@ -168,6 +168,3 @@ msgid ""
 msgstr ""
 "Vous pouvez en savoir plus sur l'hébergement du serveur Parsec dans le :ref:"
 "`Hosting Guide <doc_adminguide_hosting>`."
-
-#~ msgid "|first_steps_note|"
-#~ msgstr "|first_steps_note|"
