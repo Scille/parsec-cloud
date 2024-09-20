@@ -189,6 +189,11 @@ for (const gridMode of [false, true]) {
     await fillIonInput(searchInput, 'eep');
     await expect(titles).toHaveText(["Watcher's Keep"]);
     await fillIonInput(searchInput, '');
+    await expect(connected.locator('.no-workspaces')).not.toBeVisible();
     await expect(titles).toHaveText(['The Copper Coronet', 'Trademeet', "Watcher's Keep"]);
+    await fillIonInput(searchInput, 'No match');
+    await expect(titles).not.toBeVisible();
+    await expect(connected.locator('.no-workspaces')).toBeVisible();
+    await expect(connected.locator('.no-workspaces').locator('ion-text')).toHaveText('No workspace match this search filter.');
   });
 }

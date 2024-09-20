@@ -51,7 +51,9 @@
               class="no-workspaces-content__image"
             />
             <ion-text>
-              {{ $msTranslate('WorkspacesPage.noWorkspaces') }}
+              {{
+                workspaceList.length > 0 ? $msTranslate('WorkspacesPage.noMatchingWorkspaces') : $msTranslate('WorkspacesPage.noWorkspaces')
+              }}
             </ion-text>
             <ion-button
               v-show="clientProfile != UserProfile.Outsider"
