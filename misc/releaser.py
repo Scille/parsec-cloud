@@ -936,6 +936,15 @@ def acknowledge_main(args: argparse.Namespace) -> None:
     )
 
 
+def history_main(args: argparse.Namespace) -> None:
+    version: Version = get_version_from_code()
+    release_date: datetime = datetime.now(tz=timezone.utc)
+    newsfragments = collect_newsfragments()
+    newsfragment_rst: defaultdict[str, list[str]] = convert_newsfragments_to_rst(newsfragments)
+
+    print(gen_rst_release_entry(version, release_date, newsfragment_rst))
+
+
 def cli(description: str) -> argparse.Namespace:
     def new_parser(
         name: str,
@@ -1037,6 +1046,12 @@ def cli(description: str) -> argparse.Namespace:
         type=str,
         default=None,
         help="The base ref to use when creating the acknowledge branch",
+    )
+    acknowledge = new_parser(
+        "history",
+        history_main,
+        "Display history for current version",
+        subparsers,
     )
 
     return parser.parse_args()
