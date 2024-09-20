@@ -10,6 +10,7 @@ export enum PageToWindowChannel {
   PrepareUpdate = 'parsec-prepare-update',
   Log = 'parsec-log',
   PageIsInitialized = 'parsec-page-is-initialized',
+  OpenConfigDir = 'parsec-open-config-dir',
 }
 
 export enum WindowToPageChannel {

@@ -31,7 +31,7 @@
               slot="start"
               :value="SettingsTabs.Advanced"
               class="menu-list__item"
-              v-show="false"
+              v-show="isDesktop() && !usesTestbed()"
             >
               <div class="item-container">
                 <ion-icon :icon="options" />
@@ -104,13 +104,24 @@
             <div
               v-if="settingTab === SettingsTabs.Advanced"
               class="settings-advanced"
-              v-show="false"
             >
               <ion-list class="settings-list">
+                <!-- open config dir -->
+                <settings-option
+                  v-if="isDesktop() && !usesTestbed()"
+                  title="SettingsModal.configDir.label"
+                  description="SettingsModal.configDir.description"
+                >
+                  <ion-button @click="openConfigDir">
+                    {{ $msTranslate('SettingsModal.configDir.open') }}
+                  </ion-button>
+                </settings-option>
+
                 <!-- display unsync files -->
                 <settings-option
                   :title="'SettingsModal.unsyncFiles.label'"
                   :description="'SettingsModal.unsyncFiles.description'"
+                  v-show="false"
                 >
                   <ion-toggle v-model="config.unsyncFiles" />
                 </settings-option>
@@ -133,10 +144,10 @@
 
 <script setup lang="ts">
 import SettingsOption from '@/components/settings/SettingsOption.vue';
-import { isMacOS } from '@/parsec/environment';
+import { isMacOS, isDesktop, usesTestbed } from '@/parsec/environment';
 import { Config, StorageManager, StorageManagerKey, ThemeManagerKey } from '@/services/storageManager';
 import { MsModal, MsOptions, MsDropdown, Locale, I18n, ThemeManager, Theme, LocaleOptions } from 'megashark-lib';
-import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform } from '@ionic/vue';
+import { IonIcon, IonList, IonPage, IonRadio, IonRadioGroup, IonText, IonToggle, isPlatform, IonButton } from '@ionic/vue';
 import { cog, options } from 'ionicons/icons';
 import { inject, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import { Sentry } from '@/services/sentry';
@@ -202,6 +213,10 @@ async function changeLang(lang: Locale): Promise<void> {
 async function changeTheme(selectedTheme: Theme): Promise<void> {
   config.value.theme = selectedTheme as Theme;
   themeManager.use(selectedTheme as Theme);
+}
+
+async function openConfigDir(): Promise<void> {
+  window.electronAPI.openConfigDir();
 }
 
 onMounted(async (): Promise<void> => {

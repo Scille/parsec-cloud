@@ -329,6 +329,11 @@
             "label": "Metered connection",
             "description": "The application will reduce data synchronization when you are connected to a metered connection"
         },
+        "configDir": {
+            "label": "Configuration folder",
+            "description": "Folder where Parsec configuration is stored",
+            "open": "Open in explorer"
+        },
         "language": {
             "label": "Language",
             "description": "Choose application language",

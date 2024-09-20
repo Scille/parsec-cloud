@@ -44,7 +44,8 @@ const appMenuBarMenuTemplate: (MenuItemConstructorOptions | MenuItem)[] = [
 ];
 
 const configDir = app.getPath('appData');
-const newConfigDir = path.join(configDir, PARSEC_CONFIG_DIR_NAME, ELECTRON_CONFIG_DIR_NAME);
+const parsecConfigDir = path.join(configDir, PARSEC_CONFIG_DIR_NAME);
+const newConfigDir = path.join(parsecConfigDir, ELECTRON_CONFIG_DIR_NAME);
 try {
   fs.mkdirSync(newConfigDir, { recursive: true });
   app.setPath('userData', newConfigDir);
@@ -202,4 +203,8 @@ ipcMain.on(PageToWindowChannel.Log, async (_event, level: 'debug' | 'info' | 'wa
 
 ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
   myCapacitorApp.sendEvent(WindowToPageChannel.IsDevMode, electronIsDev);
+});
+
+ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
+  await shell.openPath(parsecConfigDir);
 });
