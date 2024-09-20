@@ -175,6 +175,40 @@ def debug_config_options(fn: Callable[P, R]) -> Callable[Concatenate[bool, P], R
     return cast(Callable[Concatenate[bool, P], R], fn)
 
 
+DEFAULT_DB_MIN_CONNECTIONS = 5
+DEFAULT_DB_MAX_CONNECTIONS = 7
+
+
+class DBMaxConnectionsOption(click.Option):
+    """
+    DB max connection must be superior to min connection, this is was is
+    enforced here.
+    """
+
+    def handle_parse_result(
+        self, ctx: click.Context, opts: Any, args: list[str]
+    ) -> tuple[Any, list[str]]:
+        value, args = super().handle_parse_result(ctx, opts, args)
+        assert isinstance(value, int)
+
+        # We get the raw data for `db_min_connections` here, so we have to
+        # parse it ourselves
+        raw_db_min_connections = opts.get("db_min_connections", DEFAULT_DB_MIN_CONNECTIONS)
+        try:
+            db_min_connections = int(raw_db_min_connections)
+        except (TypeError, ValueError):
+            # Invalid user-provided data, our min vs max check is useless now since
+            # Click is going to return an error as soon as it parse the min value.
+            return value, args
+
+        if db_min_connections > value:
+            raise click.BadParameter(
+                "'--db-max-connections' must be greater than '--db-min-connections'"
+            )
+
+        return value, args
+
+
 T = TypeVar("T")
 Q = ParamSpec("Q")
 
@@ -198,15 +232,19 @@ Allowed values:
         ),
         click.option(
             "--db-min-connections",
-            default=5,
+            default=DEFAULT_DB_MIN_CONNECTIONS,
             show_default=True,
             envvar="PARSEC_DB_MIN_CONNECTIONS",
             show_envvar=True,
+            # 1 connection always used for listening to PostgreSQL events,
+            # and at least 1 required to be used in the requests.
+            type=click.IntRange(min=2),
             help="Minimal number of connections to the database if using PostgreSQL",
         ),
         click.option(
             "--db-max-connections",
-            default=7,
+            cls=DBMaxConnectionsOption,
+            default=DEFAULT_DB_MAX_CONNECTIONS,
             show_default=True,
             envvar="PARSEC_DB_MAX_CONNECTIONS",
             show_envvar=True,
