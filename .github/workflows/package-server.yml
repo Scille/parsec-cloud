@@ -98,7 +98,7 @@ jobs:
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@bd033a44476646b606efccdd5eed92d5ea1d77ad  # pin v2.20.0
+        uses: pypa/cibuildwheel@d4a2945fcc8d13f20a1b99d461b8e844d5fc6e23  # pin v2.21.1
         with:
           package-dir: server
           output-dir: dist
@@ -136,7 +136,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
+      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
         with:
           tool: syft@0.84.0
 

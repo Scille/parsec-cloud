@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b  # pin v4.0.3
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -102,7 +102,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@1fbea72663f6d4c03efaab13560c8a24cfd2a7cc # pin v1.9.0
+        uses: actions-rust-lang/setup-rust-toolchain@4d1965c9142484e48d40c19de54b5cba84953a06 # pin v1.10.0
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           target: wasm32-unknown-unknown
@@ -123,7 +123,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
+      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 

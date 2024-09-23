@@ -74,7 +74,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b  # pin v4.0.3
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -94,7 +94,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
+      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -195,7 +195,7 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
+      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
         with:
           tool: syft@0.84.0
 
@@ -249,7 +249,7 @@ jobs:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@1e60f620b9541d16bece96c5465dc8ee9832be0b  # pin v4.0.3
+      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -350,7 +350,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@da8fe73ed87107a1cae164305a928b7c8fcff4bc # pin v2.43.1
+      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
         with:
           tool: syft@0.84.0
 
