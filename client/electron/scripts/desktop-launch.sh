@@ -4,11 +4,11 @@
 
 declare -A PIDS
 function async_exec() {
-    $@ &
-    PIDS[$!]=$@
+    "$@" &
+    PIDS[$!]="$@"
 }
 function wait_for_async_execs() {
-    for i in ${!PIDS[@]}
+    for i in "${!PIDS[@]}"
     do
         wait $i && continue || echo "ERROR: ${PIDS[$i]} exited abnormally with status $?"
     done
@@ -211,7 +211,7 @@ function update_gdk_pixbuf {
     rm -f $GDK_PIXBUF_MODULE_FILE
     local loader="$SNAP/usr/lib/$ARCH/gdk-pixbuf-2.0/gdk-pixbuf-query-loaders"
     if [ -f $loader ]; then
-        mkdir -p $(dirname $GDK_PIXBUF_MODULE_FILE)
+        mkdir -p "$(dirname $GDK_PIXBUF_MODULE_FILE)"
         $loader > $GDK_PIXBUF_MODULE_FILE
         sha256sum $loader $GDK_PIXBUF_MODULEDIR/*.so > $GDK_PIXBUF_UPDATE_FILE
     fi
@@ -270,12 +270,12 @@ async_exec migrate_devices_from_snap_user_data $SNAP_USER_DATA
 wait_for_async_execs
 
 if [ -n "$SNAP_DESKTOP_DEBUG" ]; then
-  echo "desktop-launch elapsed time: " $(date +%s.%N --date="$START seconds ago")
+  echo "desktop-launch elapsed time: $(date +%s.%N --date="$START seconds ago")"
   echo "desktop-launch environment:"
   echo "  SNAP=$SNAP"
   echo "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
   echo "  PATH=$PATH"
-  echo "Now running: exec $@"
+  echo "Now running: exec $*"
 fi
 
 exec "$@"
