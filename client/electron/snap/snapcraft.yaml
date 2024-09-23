@@ -208,24 +208,17 @@ parts:
       mkdir -p "$CRAFT_PART_INSTALL"/data-dir
 
   desktop-helpers:
-    plugin: make
-    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
-    source-type: git
-    source-commit: ec861254c2a1d2447b2c589446e6cdf04c75c260
+    plugin: nil
+    source: client/electron/scripts
     prime:
       - bin/desktop-launch-wrapper
       - bin/desktop-launch
-      - flavor-select
     override-build: |
-      cd gtk
-      make -j build
-
       cat > command.sh << EOF
       #!/bin/bash -e
-      exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" "\$@" --no-sandbox
+      exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" --no-sandbox "\$@"
       EOF
 
       mkdir -p "$CRAFT_PART_INSTALL"/bin
-      install -v --mode=755 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
+      install -v --mode=755 desktop-launch.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
       install -v --mode=755 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
-      install -v --mode=644 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
