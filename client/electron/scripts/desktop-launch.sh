@@ -1,5 +1,6 @@
 #!/bin/bash
 # This script is inspired by https://github.com/ubuntu/snapcraft-desktop-helpers
+# cspell:words armhf gnueabihf xlocaledir libva vdpau libvdpau libunity glvnd querymodules LOCPATH wdisplay girepository pixbuf moduledir ibus fcitx immodules
 
 declare -A PIDS
 function async_exec() {
@@ -146,22 +147,22 @@ if [[ -n "$XDG_RUNTIME_DIR" && -z "$DISABLE_WAYLAND" ]]; then
     if [ -n "$WAYLAND_DISPLAY" ]; then
         wdisplay="$WAYLAND_DISPLAY"
     fi
-    wayland_sockpath="$XDG_RUNTIME_DIR/$wdisplay"
-    if [ -S "$wayland_sockpath" ]; then
+    wayland_sock_path="$XDG_RUNTIME_DIR/$wdisplay"
+    if [ -S "$wayland_sock_path" ]; then
         # if running under wayland, use it
         #export WAYLAND_DEBUG=1
         wayland_available=true
     else
         # Consider that XDG_RUNTIME_DIR is /run/user/<uid>/snap.$SNAP
-        wayland_sockpath="$XDG_RUNTIME_DIR/../$wdisplay"
-        wayland_snappath="$XDG_RUNTIME_DIR/$wdisplay"
-        if [ -S "$wayland_sockpath" ]; then
+        wayland_sock_path="$XDG_RUNTIME_DIR/../$wdisplay"
+        wayland_snap_path="$XDG_RUNTIME_DIR/$wdisplay"
+        if [ -S "$wayland_sock_path" ]; then
             # if running under wayland, use it
             #export WAYLAND_DEBUG=1
             wayland_available=true
             # create the compat symlink for now
-            if [ ! -e "$wayland_snappath" ]; then
-                ln -s "$wayland_sockpath" "$wayland_snappath"
+            if [ ! -e "$wayland_snap_path" ]; then
+                ln -s "$wayland_sock_path" "$wayland_snap_path"
             fi
         fi
     fi
@@ -169,11 +170,11 @@ fi
 
 # Make PulseAudio socket available inside the snap-specific $XDG_RUNTIME_DIR
 if [ -n "$XDG_RUNTIME_DIR" ]; then
-    pulsenative="pulse/native"
+    pulse_native="pulse/native"
     for path in "$XDG_RUNTIME_DIR/"{,../}; do
-        pulseaudio_sockpath="$path/$pulsenative"
-        if [ -S "$pulseaudio_sockpath" ]; then
-            export PULSE_SERVER="unix:${pulseaudio_sockpath}"
+        pulseaudio_sock_path="$path/$pulse_native"
+        if [ -S "$pulseaudio_sock_path" ]; then
+            export PULSE_SERVER="unix:${pulseaudio_sock_path}"
             break
         fi
     done
@@ -187,7 +188,7 @@ prepend_dir GI_TYPELIB_PATH $SNAP/usr/lib/gjs/girepository-1.0
 # Gio modules and cache (including gsettings module)
 export GIO_MODULE_DIR=$XDG_CACHE_HOME/gio-modules
 GIO_LAST_UPDATE_FILE=$SNAP_USER_UPDATE_DIR/gio-modules.sha256
-function compile_giomodules {
+function compile_gio_modules {
     if [ -f $1/glib-2.0/gio-querymodules ]; then
         rm -rf $GIO_MODULE_DIR
         ensure_dir_exists $GIO_MODULE_DIR
@@ -196,10 +197,10 @@ function compile_giomodules {
         sha256sum $1/gio/modules/*.so > $GIO_LAST_UPDATE_FILE
     fi
 }
-# Re-compile giomodule cache if it does not exist or if the modules have changed
+# Re-compile gio module cache if it does not exist or if the modules have changed
 # if [ $needs_update = true ]; then
 if ! ([ -f $GIO_LAST_UPDATE_FILE ] && sha256sum --check $GIO_LAST_UPDATE_FILE); then
-    async_exec compile_giomodules $SNAP/usr/lib/$ARCH
+    async_exec compile_gio_modules $SNAP/usr/lib/$ARCH
 fi
 
 # Gdk-pixbuf loaders
