@@ -87,6 +87,10 @@ async function openDeveloperLink(): Promise<void> {
   window.open(I18n.translate('app.developerLink'), '_blank');
 }
 
+async function openTOS(tosLink: string): Promise<void> {
+  window.open(tosLink, '_blank');
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
@@ -100,5 +104,6 @@ export const Env = {
     openChangelogLink,
     openSourcesLink,
     openDeveloperLink,
+    openTOS,
   },
 };

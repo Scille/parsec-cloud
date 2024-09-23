@@ -1,0 +1,1 @@
+Added TOS acceptance on login if the server provides them

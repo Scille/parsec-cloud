@@ -44,5 +44,8 @@ process.once('loaded', () => {
     openConfigDir: () => {
       ipcRenderer.send(PageToWindowChannel.OpenConfigDir);
     },
+    authorizeURL: (url: string) => {
+      ipcRenderer.send(PageToWindowChannel.AuthorizeURL, url);
+    },
   });
 });
