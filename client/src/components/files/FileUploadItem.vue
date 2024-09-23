@@ -37,7 +37,7 @@
           </span>
           <span
             class="hover-state"
-            v-show="[FileOperationState.FileImported].includes(state)"
+            v-show="state === FileOperationState.FileImported"
           >
             {{ $msTranslate('FoldersPage.ImportFile.browse') }}
           </span>
@@ -118,19 +118,20 @@
         />
       </div>
     </ion-item>
-    <ion-progress-bar
+    <ms-progress
       class="element-progress-bar"
-      :value="getProgress() / 100"
+      :progress="getProgress()"
+      :appearance="MsProgressAppearance.Line"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip } from 'megashark-lib';
+import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { getWorkspaceName } from '@/parsec';
 import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
-import { IonButton, IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 
