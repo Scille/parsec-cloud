@@ -249,10 +249,31 @@ fi
 
 [ $needs_update = true ] && echo "SNAP_DESKTOP_LAST_REVISION=$SNAP_REVISION" > $SNAP_LAST_REVISION_FILE
 
+# migrate_devices_from_snap_user_data will move all devices from the snap user data directory to the home config dir ('~/.config/parsec3/libparsec/devices').
+# It will search for any `.keys` files that have `parsec` in their path and move them to the new location (but keep a copy at the previous location).
+function migrate_devices_from_snap_user_data {
+    local config_dir=${XDG_CONFIG_HOME:-$HOME/.config}
+    local device_dir=$config_dir/parsec3/libparsec/devices
+    mkdir -pv $device_dir
+    for old_device_dir in $(find $HOME/snap -type f -name '*.keys' 2>/dev/null | grep parsec | xargs dirname | sort | uniq); do
+        local sentinel_file=$old_device_dir/.parsec-device-already-migrated
+        if [ -e $sentinel_file ]; then
+            continue
+        fi
+        echo "Migrating devices in $old_device_dir to $device_dir"
+        cp --archive --update=none --verbose $old_device_dir/*.keys $device_dir && touch $sentinel_file
+    done
+}
+async_exec migrate_devices_from_snap_user_data $SNAP_USER_DATA
+
 wait_for_async_execs
 
 if [ -n "$SNAP_DESKTOP_DEBUG" ]; then
   echo "desktop-launch elapsed time: " $(date +%s.%N --date="$START seconds ago")
+  echo "desktop-launch environment:"
+  echo "  SNAP=$SNAP"
+  echo "  LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+  echo "  PATH=$PATH"
   echo "Now running: exec $@"
 fi
 
