@@ -329,6 +329,9 @@ async function setupApp(): Promise<void> {
       openConfigDir: (): void => {
         console.log('Not available');
       },
+      authorizeURL: (url: string): void => {
+        console.log(`Dummy Authorize URL ${url}`);
+      },
     };
   }
 }
@@ -445,6 +448,7 @@ declare global {
       log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
       pageIsInitialized: () => void;
       openConfigDir: () => void;
+      authorizeURL: (url: string) => void;
     };
   }
 }

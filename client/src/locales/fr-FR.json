@@ -203,7 +203,18 @@
             "tosLink": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
             "and": "et la ",
             "privacyPolicy": "Politique de Confidentialité",
-            "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/"
+            "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/",
+            "update": {
+                "title": "Nouvelles conditions générales",
+                "subtitle": "Nous avons mis à jour les conditions générales d'utilisation. Veuillez les consulter avant de les accepter.",
+                "tosButton": "Conditions Générales de Vente et d'Utilisation",
+                "url": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
+                "checkbox": "J'ai lu et j'accepte les conditions générales",
+                "yes": "Accepter",
+                "no": "Refuser",
+                "confirmationMessage": "Vous avez accepté les nouvelles conditions générales.",
+                "acceptError": "Une erreur est survenue."
+            }
         },
         "parsecServerUrl": "URL de votre serveur Parsec",
         "loading": "Un instant, nous mettons en place votre organisation",

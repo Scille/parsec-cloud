@@ -11,6 +11,7 @@ export enum PageToWindowChannel {
   Log = 'parsec-log',
   PageIsInitialized = 'parsec-page-is-initialized',
   OpenConfigDir = 'parsec-open-config-dir',
+  AuthorizeURL = 'parsec-authorized-url',
 }
 
 export enum WindowToPageChannel {

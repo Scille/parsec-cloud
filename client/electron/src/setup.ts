@@ -200,6 +200,10 @@ export class ElectronCapacitorApp {
     await this.updater?.checkForUpdates();
   }
 
+  addAuthorizedURL(url: string): void {
+    ALLOWED_URL_LIST.push(url);
+  }
+
   updateConfig(newConfig: object): void {
     this.config = newConfig;
 
@@ -420,7 +424,7 @@ export class ElectronCapacitorApp {
       this.TrayIcon.setContextMenu(Menu.buildFromTemplate(this.TrayMenuTemplate));
     }
 
-    // Setup the main manu bar at the top of our window.
+    // Setup the main menu bar at the top of our window.
     this.MainWindow.setMenu(null);
     // Menu.setApplicationMenu(Menu.buildFromTemplate(this.AppMenuBarMenuTemplate));
 
@@ -446,8 +450,12 @@ export class ElectronCapacitorApp {
       }
 
       // Open browser on trying to reach an external link, but only if we know about it.
-      if (details.url && isAuthorizedUrl(details.url)) {
-        shell.openExternal(details.url);
+      if (details.url) {
+        if (isAuthorizedUrl(details.url)) {
+          shell.openExternal(details.url);
+        } else {
+          console.warn(`App tried to open unauthorized URL ${details.url}`);
+        }
       }
       if (!details.url.includes(this.customScheme)) {
         return { action: 'deny' };
