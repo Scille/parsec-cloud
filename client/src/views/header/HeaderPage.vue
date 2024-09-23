@@ -112,7 +112,18 @@
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName } from '@/parsec';
+import {
+  ClientInfo,
+  Path,
+  UserProfile,
+  getClientInfo,
+  isMobile,
+  getWorkspaceName,
+  getConnectionInfo,
+  getTOS,
+  acceptTOS,
+  logout as parsecLogout,
+} from '@/parsec';
 import {
   Routes,
   currentRouteIs,
@@ -126,11 +137,12 @@ import {
   routerGoBack,
   watchRoute,
   currentRouteIsLoggedRoute,
+  getConnectionHandle,
 } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
-import { InformationManager, InformationManagerKey } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import useSidebarMenu from '@/services/sidebarMenu';
-import { Translatable } from 'megashark-lib';
+import { MsModalResult, Translatable, openSpinnerModal } from 'megashark-lib';
 import NotificationCenterPopover from '@/views/header/NotificationCenterPopover.vue';
 import ProfileHeader from '@/views/header/ProfileHeader.vue';
 import { openSettingsModal } from '@/views/settings';
@@ -145,10 +157,14 @@ import {
   IonPage,
   IonRouterOutlet,
   IonToolbar,
+  modalController,
   popoverController,
 } from '@ionic/vue';
 import { home, menu, notifications, search } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
+import TOSModal from '@/views/organizations/TOSModal.vue';
+import useUploadMenu from '@/services/fileUploadMenu';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
@@ -159,6 +175,7 @@ const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const notificationCenterButton = ref();
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIsLoggedRoute()) {
@@ -246,6 +263,7 @@ onMounted(async () => {
     { key: 'n', modifiers: Modifiers.Ctrl | Modifiers.Shift, platforms: Platforms.Desktop, disableIfModal: true },
     async () => await notificationCenterButton.value.$el.click(),
   );
+
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
@@ -253,6 +271,11 @@ onMounted(async () => {
     console.log('Could not get user info', result.error);
   }
   await updateRoute();
+
+  const connInfo = getConnectionInfo();
+  if (connInfo && connInfo.shouldAcceptTos) {
+    await showTOSModal();
+  }
 });
 
 onUnmounted(async () => {
@@ -261,6 +284,76 @@ onUnmounted(async () => {
   }
   routeWatchCancel();
 });
+
+async function showTOSModal(): Promise<void> {
+  const result = await getTOS();
+
+  if (!result.ok) {
+    return;
+  }
+  if (result.value.perLocaleUrls.size === 0) {
+    window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
+    return;
+  }
+  const tosModal = await modalController.create({
+    component: TOSModal,
+    cssClass: 'modal-tos',
+    componentProps: {
+      tosLinks: result.value.perLocaleUrls,
+    },
+    canDismiss: true,
+    backdropDismiss: false,
+    showBackdrop: true,
+  });
+  await tosModal.present();
+  const { role } = await tosModal.onDidDismiss();
+  await tosModal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
+    const acceptResult = await acceptTOS(result.value.updatedOn);
+    if (acceptResult.ok) {
+      const connInfo = getConnectionInfo();
+      if (connInfo) {
+        connInfo.shouldAcceptTos = false;
+      }
+      informationManager.present(
+        new Information({
+          message: 'CreateOrganization.acceptTOS.update.confirmationMessage',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+      // Early return here. If the user didn't accept the TOS or the acception fails,
+      // we will log them out.
+      return;
+    } else {
+      window.electronAPI.log('error', `Error when accepting the TOS: ${acceptResult.error}`);
+      informationManager.present(
+        new Information({
+          message: 'CreateOrganization.acceptTOS.update.acceptError',
+          level: InformationLevel.Info,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  }
+
+  const handle = getConnectionHandle();
+  if (!handle) {
+    console.error('Already logged out');
+    return;
+  }
+  const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
+  const menuCtrls = useUploadMenu();
+  menuCtrls.hide();
+  await injectionProvider.clean(handle);
+  const logoutResult = await parsecLogout();
+  if (!logoutResult.ok) {
+    window.electronAPI.log('error', `Error when logging out: ${logoutResult.error}`);
+  }
+  await modal.dismiss();
+  await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+}
 
 function getTitleForRoute(): Translatable {
   switch (getCurrentRouteName()) {

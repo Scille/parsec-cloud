@@ -43,6 +43,7 @@ export interface LoggedInDeviceInfo {
   device: AvailableDevice;
   isExpired: boolean;
   isOnline: boolean;
+  shouldAcceptTos: boolean;
 }
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
@@ -66,6 +67,15 @@ export function getDeviceHandle(device: AvailableDevice): ConnectionHandle | nul
 export function getConnectionInfo(handle: ConnectionHandle | null = null): LoggedInDeviceInfo | undefined {
   if (!handle) {
     handle = getParsecHandle();
+  }
+  if (needsMocks()) {
+    return {
+      handle: DEFAULT_HANDLE,
+      device: {} as AvailableDevice,
+      isExpired: false,
+      isOnline: true,
+      shouldAcceptTos: false,
+    };
   }
   return loggedInDevices.find((info) => info.handle === handle);
 }
@@ -150,6 +160,12 @@ export async function login(
         }
         distributor.dispatchEvent(Events.Offline);
         break;
+      case ClientEventTag.MustAcceptTos:
+        if (connInfo) {
+          connInfo.shouldAcceptTos = true;
+        }
+        distributor.dispatchEvent(Events.TOSAcceptRequired);
+        break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {
           token: (event as ClientEventInvitationChanged).token,
@@ -158,8 +174,7 @@ export async function login(
         break;
       case ClientEventTag.IncompatibleServer:
         window.electronAPI.log('warn', `IncompatibleServerEvent: ${event.detail}`);
-        distributor.dispatchEvent(Events.Offline);
-        distributor.dispatchEvent(Events.IncompatibleServer);
+        distributor.dispatchEvent(Events.IncompatibleServer, { reason: event.detail });
         break;
       case ClientEventTag.RevokedSelfUser:
         eventDistributor.dispatchEvent(Events.ClientRevoked);
@@ -203,7 +218,7 @@ export async function login(
     const clientConfig = getClientConfig();
     const result = await libparsec.clientStart(clientConfig, callback, accessStrategy);
     if (result.ok) {
-      loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false });
+      loggedInDevices.push({ handle: result.value, device: device, isExpired: false, isOnline: false, shouldAcceptTos: false });
     }
     return result;
   } else {
@@ -211,7 +226,7 @@ export async function login(
       accessStrategy.tag === DeviceAccessStrategyTag.Password &&
       ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
     ) {
-      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, isExpired: false, isOnline: true });
+      loggedInDevices.push({ handle: DEFAULT_HANDLE, device: device, isExpired: false, isOnline: true, shouldAcceptTos: false });
       callback(DEFAULT_HANDLE, { tag: ClientEventTag.Online });
       return { ok: true, value: DEFAULT_HANDLE };
     }

@@ -211,3 +211,7 @@ ipcMain.on(PageToWindowChannel.PageIsInitialized, async () => {
 ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
   await shell.openPath(parsecConfigDir);
 });
+
+ipcMain.on(PageToWindowChannel.AuthorizeURL, async (_event, url: string) => {
+  myCapacitorApp.addAuthorizedURL(url);
+});

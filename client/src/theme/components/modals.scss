@@ -276,6 +276,9 @@
   max-width: var(--parsec-modal-width-sm);
 }
 
-.authentication-modal::part(content) {
-  max-width: var(--parsec-modal-width-sm);
+.authentication-modal,
+.modal-tos {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
 }

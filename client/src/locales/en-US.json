@@ -203,7 +203,18 @@
             "tosLink": "https://parsec.cloud/wp-content/uploads/2024/09/CGVU-Parsec.pdf",
             "and": "and ",
             "privacyPolicy": "Privacy Policy",
-            "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/"
+            "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/",
+            "update": {
+                "title": "New terms of service",
+                "subtitle": "We have updated our terms of service. Please read and accept them to continue.",
+                "tosButton": "Terms Of Service",
+                "url": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
+                "checkbox": "I have read and accept the new terms.",
+                "yes": "Accept",
+                "no": "Refuse",
+                "confirmationMessage": "You have accepted the new terms of service.",
+                "acceptError": "An error occured."
+            }
         },
         "parsecServerUrl": "URL of your Parsec server",
         "loading": "Just a moment, we are setting up your organization",

@@ -18,6 +18,7 @@ enum Events {
   WorkspaceUpdated = 1 << 9,
   EntryUpdated = 1 << 10,
   EntrySynced = 1 << 11,
+  TOSAcceptRequired = 1 << 12,
 }
 
 interface WorkspaceCreatedData {
@@ -39,7 +40,11 @@ interface EntrySyncedData {
   entryId: EntryID;
 }
 
-type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncedData;
+interface IncompatibleServerData {
+  reason: string;
+}
+
+type EventData = WorkspaceCreatedData | InvitationUpdatedData | UpdateAvailabilityData | EntrySyncedData | IncompatibleServerData;
 
 interface Callback {
   id: string;
