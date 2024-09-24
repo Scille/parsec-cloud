@@ -29,6 +29,7 @@ apps:
     environment:
       SENTRY_DSN_GUI_ELECTRON: https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208
       SENTRY_DSN_GUI_VITE: https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208
+      PARSEC_BASE_CONFIG_DIR: $HOME/.config
 
 parts:
   libparsec:
@@ -215,6 +216,7 @@ parts:
     prime:
       - bin/desktop-launch-wrapper
       - bin/desktop-launch
+      - bin/snap_migrate_devices_from_snap_user_data
       - flavor-select
     override-build: |
       cd gtk
@@ -222,10 +224,12 @@ parts:
 
       cat > command.sh << EOF
       #!/bin/bash -e
+      "\$SNAP/bin/snap_migrate_devices_from_snap_user_data"
       exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" "\$@" --no-sandbox
       EOF
 
       mkdir -p "$CRAFT_PART_INSTALL"/bin
-      install -v --mode=755 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
-      install -v --mode=755 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
-      install -v --mode=644 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
+      install -v --mode=555 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
+      install -v --mode=555 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
+      install -v --mode=555 ${SNAPCRAFT_PROJECT_DIR}/client/electron/scripts/snap_migrate_devices_from_snap_user_data.sh "$CRAFT_PART_INSTALL"/bin/snap_migrate_devices_from_snap_user_data
+      install -v --mode=444 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
