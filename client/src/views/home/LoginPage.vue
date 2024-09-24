@@ -115,6 +115,9 @@ async function setLoginError(error: ClientStartError): Promise<void> {
       window.electronAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.deviceInvalidData';
       break;
+    case ClientStartErrorTag.DeviceUsedByAnotherProcess:
+      errorMessage.value = 'HomePage.organizationLogin.deviceAlreadyUsed';
+      break;
     case ClientStartErrorTag.Internal:
       window.electronAPI.log('warn', error.error);
       errorMessage.value = 'HomePage.organizationLogin.unknownError';

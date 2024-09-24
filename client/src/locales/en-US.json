@@ -159,7 +159,8 @@
             "invalidData": "The device file contains invalid data.",
             "unknownError": "Unknown error.",
             "login": "Log in",
-            "loading": "Loading..."
+            "loading": "Loading...",
+            "deviceAlreadyUsed": "This device is already used by another app."
         },
         "organizationActionSheet": "Organization",
         "keyringFailed": "Could not log in",

@@ -159,7 +159,8 @@
             "invalidData": "Le fichier de l'appareil contient des données invalides.",
             "unknownError": "Erreur inconnue.",
             "login": "Se connecter",
-            "loading": "Chargement..."
+            "loading": "Chargement...",
+            "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application."
         },
         "organizationActionSheet": "Organisation",
         "keyringFailed": "Impossible de se connecter",
