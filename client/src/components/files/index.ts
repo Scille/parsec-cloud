@@ -11,6 +11,7 @@ import FileListDisplay from '@/components/files/FileListDisplay.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/FileListItemProcessing.vue';
 import FileMoveItem from '@/components/files/FileMoveItem.vue';
+import FileQueuedItem from '@/components/files/FileQueuedItem.vue';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
 
 export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
@@ -29,5 +30,6 @@ export {
   FileListItem,
   FileListItemProcessing,
   FileMoveItem,
+  FileQueuedItem,
   FileUploadItem,
 };

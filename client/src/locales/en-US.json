@@ -562,7 +562,11 @@
             "failed": "failed",
             "browse": "Go to location",
             "failedDetails": "Please make sure you are online."
-        }
+        },
+        "uploadsLeft": "Importing {amount} items",
+        "copiesLeft": "Copying {amount} items",
+        "movesLeft": "Moving {amount} items",
+        "operationsLeft": "{amount} operations left"
     },
     "FileDetails": {
         "title": "Details on {name}",
