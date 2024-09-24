@@ -93,7 +93,7 @@ parts:
 
       MEGASHARK_COMMIT_ID=$(jq -r '.packages."node_modules/megashark-lib".resolved' package-lock.json | cut -d '#' -f 2)
       wget https://github.com/Scille/megashark-lib/archive/${MEGASHARK_COMMIT_ID}.tar.gz -O megashark-lib-src.tar.gz
-      mkdir megashark-lib && cd megashark-lib
+      mkdir -pv megashark-lib && cd megashark-lib
       tar --extract --file ../megashark-lib-src.tar.gz --strip-components=1
 
       npm clean-install
