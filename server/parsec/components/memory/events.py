@@ -45,10 +45,10 @@ async def event_bus_factory() -> AsyncIterator[MemoryEventBus]:
 
             logger.info_with_debug_extra(
                 "Received internal event",
-                event_type=event.type,
+                type=event.type,
                 event_id=event.event_id.hex,
-                organization=event.organization_id.str,
-                debug_extra={"event_detail": event},
+                organization_id=event.organization_id.str,
+                debug_extra=event.model_dump(),
             )
 
             event_bus._dispatch_incoming_event(event)
