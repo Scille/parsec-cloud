@@ -26,21 +26,27 @@ msTest('Open authentication section', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('.user-info').locator('.input-container').locator('.user-info__input')).toHaveTheClass(
     'input-disabled',
   );
-  await expect(myProfilePage.locator('#change-password-button')).toBeVisible();
+  await expect(myProfilePage.locator('#change-authentication-button')).toBeVisible();
 });
 
 msTest('Change password', async ({ home, myProfilePage }) => {
   await myProfilePage.locator('ion-radio').nth(1).click();
-  await myProfilePage.locator('.user-info').locator('#change-password-button').click();
-  const changePasswordModal = home.locator('.change-password-modal');
+  await myProfilePage.locator('.user-info').locator('#change-authentication-button').click();
+  const changePasswordModal = home.locator('.change-authentication-modal');
   await expect(changePasswordModal).toBeVisible();
   await expect(changePasswordModal.locator('.modal-header')).toHaveText('Enter your current password');
-  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toHaveDisabledAttribute();
-  await fillIonInput(changePasswordModal.locator('.input-container').locator('ion-input').nth(0), 'P@ssw0rd.');
-  await expect(changePasswordModal.locator('#next-button')).not.toHaveDisabledAttribute();
+  await expect(changePasswordModal.locator('ion-footer').locator('#next-button')).toBeTrulyDisabled();
+  const currentPasswordContainer = changePasswordModal.locator('.input-container').nth(0);
+  await fillIonInput(currentPasswordContainer.locator('ion-input'), 'InvalidP@ssw0rd.');
+  await expect(changePasswordModal.locator('#next-button')).toBeTrulyEnabled();
+  await changePasswordModal.locator('#next-button').click();
+  await expect(currentPasswordContainer.locator('.form-error')).toBeVisible();
+  await expect(currentPasswordContainer.locator('.form-error')).toHaveText('Wrong password. Please try again.');
+
+  await fillIonInput(currentPasswordContainer.locator('ion-input'), 'P@ssw0rd.');
   await changePasswordModal.locator('#next-button').click();
 
-  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Choose a new password');
+  await expect(changePasswordModal.locator('.modal-header')).toHaveText('Choose your new authentication method');
   await expect(changePasswordModal.locator('#next-button')).toHaveDisabledAttribute();
   const passwordInputs = changePasswordModal.locator('.input-container').locator('ion-input');
   await fillIonInput(passwordInputs.nth(1), 'New-P@ssw0rd.6786?6786');
@@ -51,5 +57,5 @@ msTest('Change password', async ({ home, myProfilePage }) => {
   await expect(changePasswordModal.locator('#next-button')).not.toHaveDisabledAttribute();
   await changePasswordModal.locator('#next-button').click();
   await expect(changePasswordModal).toBeHidden();
-  await expect(myProfilePage).toShowToast('Password has been updated. You can log in with your new password.', 'Success');
+  await expect(myProfilePage).toShowToast('Authentication has been updated.', 'Success');
 });

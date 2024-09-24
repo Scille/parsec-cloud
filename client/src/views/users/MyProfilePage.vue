@@ -45,7 +45,7 @@
             v-if="myProfileTab === MyProfileTabs.Authentication"
             class="menu-item-content"
           >
-            <template v-if="clientInfo">
+            <template v-if="clientInfo && currentDevice">
               <!-- inputs fields -->
               <div class="user-info">
                 <ion-text class="user-info__label body title">
@@ -61,17 +61,21 @@
                     :disabled="true"
                     class="user-info__input"
                   />
-                  <ion-button
-                    id="change-password-button"
-                    @click="openChangePassword()"
-                    size="small"
-                  >
-                    {{ $msTranslate('MyProfilePage.changePasswordButton') }}
-                  </ion-button>
                 </div>
                 <div v-show="currentDevice && currentDevice.ty === DeviceFileType.Keyring">
                   <ms-informative-text>{{ $msTranslate('MyProfilePage.systemAuthentication') }}</ms-informative-text>
                 </div>
+                <ion-button
+                  id="change-authentication-button"
+                  class="update-auth-button"
+                  @click="openChangeAuthentication()"
+                  size="small"
+                >
+                  <ion-icon :icon="create" />
+                  <ion-label class="update-auth-button__label">
+                    {{ $msTranslate('MyProfilePage.changeAuthenticationButton') }}
+                  </ion-label>
+                </ion-button>
               </div>
             </template>
             <template v-else>
@@ -93,13 +97,13 @@
 </template>
 
 <script setup lang="ts">
-import { MsInformativeText, MsInput } from 'megashark-lib';
+import { MsInformativeText, MsInput, MsModalResult } from 'megashark-lib';
 import { AvailableDevice, ClientInfo, DeviceFileType, getClientInfo, getCurrentAvailableDevice } from '@/parsec';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import DevicesPage from '@/views/devices/DevicesPage.vue';
-import UpdatePasswordModal from '@/views/users/UpdatePasswordModal.vue';
-import { IonButton, IonContent, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText, modalController } from '@ionic/vue';
-import { lockClosed, phonePortrait, warning } from 'ionicons/icons';
+import UpdateAuthenticationModal from '@/views/users/UpdateAuthenticationModal.vue';
+import { IonButton, IonContent, IonIcon, IonPage, IonRadio, IonRadioGroup, IonText, modalController, IonLabel } from '@ionic/vue';
+import { lockClosed, phonePortrait, warning, create } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
 
 const clientInfo: Ref<ClientInfo | null> = ref(null);
@@ -113,17 +117,24 @@ enum MyProfileTabs {
 
 const myProfileTab = ref(MyProfileTabs.Devices);
 
-async function openChangePassword(): Promise<void> {
+async function openChangeAuthentication(): Promise<void> {
   const modal = await modalController.create({
-    component: UpdatePasswordModal,
-    cssClass: 'change-password-modal',
+    component: UpdateAuthenticationModal,
+    cssClass: 'change-authentication-modal',
     componentProps: {
+      currentDevice: currentDevice.value,
       informationManager: informationManager,
     },
   });
   await modal.present();
-  await modal.onWillDismiss();
+  const { role } = await modal.onWillDismiss();
   await modal.dismiss();
+  if (role === MsModalResult.Confirm) {
+    const result = await getCurrentAvailableDevice();
+    if (result.ok) {
+      currentDevice.value = result.value;
+    }
+  }
 }
 
 onMounted(async () => {
@@ -239,6 +250,14 @@ onMounted(async () => {
 
   ion-text {
     padding: 0.25rem 0;
+  }
+}
+
+.update-auth-button {
+  margin-top: 1em;
+
+  &__label {
+    margin-left: 0.625rem;
   }
 }
 </style>

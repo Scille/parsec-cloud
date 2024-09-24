@@ -3,7 +3,7 @@
 <template>
   <ion-page
     class="modal-stepper"
-    :class="ChangePasswordStep[pageStep]"
+    :class="ChangeAuthenticationStep[pageStep]"
   >
     <!-- close button -->
     <ion-buttons
@@ -33,13 +33,13 @@
 
       <div class="modal-content inner-content">
         <div
-          v-show="pageStep === ChangePasswordStep.OldPassword"
+          v-show="pageStep === ChangeAuthenticationStep.InputCurrentPassword"
           class="step"
         >
           <ms-password-input
-            v-model="oldPassword"
+            v-model="currentPassword"
             @change="updateError"
-            :label="'Password.currentPassword'"
+            label="Password.currentPassword"
             @on-enter-keyup="nextStep()"
             :password-is-invalid="passwordIsInvalid"
             :error-message="errorMessage"
@@ -47,12 +47,12 @@
           />
         </div>
         <div
-          v-show="pageStep === ChangePasswordStep.NewPassword"
+          v-show="pageStep === ChangeAuthenticationStep.ChooseNewAuthMethod"
           class="step"
         >
-          <ms-choose-password-input
-            :password-label="'Password.newPassword'"
-            ref="choosePasswordInput"
+          <choose-authentication
+            ref="chooseAuthRef"
+            :disable-keyring="currentDevice.ty === DeviceFileType.Keyring"
           />
         </div>
       </div>
@@ -74,10 +74,11 @@
             size="default"
             id="next-button"
             @click="nextStep"
-            :disabled="!canGoForward"
+            :disabled="!canGoForward || querying"
           >
             {{ $msTranslate(getNextButtonText()) }}
           </ion-button>
+          <ms-spinner v-show="querying" />
         </ion-buttons>
       </ion-footer>
     </div>
@@ -85,106 +86,119 @@
 </template>
 
 <script setup lang="ts">
-import { MsChoosePasswordInput, MsModalResult, MsPasswordInput, asyncComputed } from 'megashark-lib';
+import { MsModalResult, MsPasswordInput, asyncComputed, MsSpinner } from 'megashark-lib';
 import {
-  AccessStrategy,
   AvailableDevice,
   ClientChangeAuthenticationErrorTag,
-  SaveStrategy,
-  getCurrentAvailableDevice,
-  changePassword as parsecChangePassword,
+  changeAuthentication as parsecChangeAuthentication,
+  DeviceFileType,
+  DeviceAccessStrategyPassword,
+  DeviceAccessStrategyTag,
+  isAuthenticationValid,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { Translatable } from 'megashark-lib';
 import { IonButton, IonButtons, IonFooter, IonHeader, IonIcon, IonPage, IonTitle, modalController } from '@ionic/vue';
 import { close } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
+import { DeviceAccessStrategyKeyring } from '@/plugins/libparsec';
 
-enum ChangePasswordStep {
-  OldPassword,
-  NewPassword,
+enum ChangeAuthenticationStep {
+  Undefined,
+  ChooseNewAuthMethod,
+  InputCurrentPassword,
 }
 
 const props = defineProps<{
+  currentDevice: AvailableDevice;
   informationManager: InformationManager;
 }>();
 
-const currentDevice: Ref<AvailableDevice | null> = ref(null);
-const pageStep = ref(ChangePasswordStep.OldPassword);
-const choosePasswordInput = ref();
-const oldPassword = ref('');
+const pageStep = ref(ChangeAuthenticationStep.Undefined);
+const chooseAuthRef = ref();
+const currentPassword = ref('');
 const errorMessage: Ref<Translatable> = ref('');
 const passwordIsInvalid = ref(false);
 const currentPasswordInput = ref();
+const querying = ref(false);
 
 onMounted(async () => {
   await currentPasswordInput.value.setFocus();
-  const deviceResult = await getCurrentAvailableDevice();
-  currentDevice.value = deviceResult.ok ? deviceResult.value : null;
-
-  if (!currentDevice.value) {
-    props.informationManager.present(
-      new Information({
-        message: 'MyProfilePage.errors.cannotChangePassword',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
-    await cancel();
+  if (props.currentDevice.ty === DeviceFileType.Password) {
+    pageStep.value = ChangeAuthenticationStep.InputCurrentPassword;
+  } else {
+    pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
   }
 });
 
 async function nextStep(): Promise<void> {
-  if (pageStep.value === ChangePasswordStep.OldPassword) {
-    pageStep.value = ChangePasswordStep.NewPassword;
-  } else if (pageStep.value === ChangePasswordStep.NewPassword) {
-    await changePassword();
+  if (pageStep.value === ChangeAuthenticationStep.InputCurrentPassword) {
+    const access: DeviceAccessStrategyPassword = {
+      tag: DeviceAccessStrategyTag.Password,
+      password: currentPassword.value,
+      keyFile: props.currentDevice.keyFilePath,
+    };
+    const result = await isAuthenticationValid(props.currentDevice, access);
+    if (result) {
+      pageStep.value = ChangeAuthenticationStep.ChooseNewAuthMethod;
+    } else {
+      errorMessage.value = 'MyProfilePage.errors.wrongPassword';
+      passwordIsInvalid.value = true;
+    }
+  } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
+    querying.value = true;
+    await changeAuthentication();
+    querying.value = false;
   }
 }
 
 const canGoForward = asyncComputed(async () => {
-  if (!currentDevice.value) {
-    return false;
-  }
-
-  if (pageStep.value === ChangePasswordStep.OldPassword && oldPassword.value.length > 0) {
+  if (pageStep.value === ChangeAuthenticationStep.InputCurrentPassword && currentPassword.value.length > 0) {
     return true;
-  } else if (pageStep.value === ChangePasswordStep.NewPassword && (await choosePasswordInput.value.areFieldsCorrect())) {
-    return true;
+  } else if (pageStep.value === ChangeAuthenticationStep.ChooseNewAuthMethod) {
+    return await chooseAuthRef.value.areFieldsCorrect();
   }
   return false;
 });
 
-async function changePassword(): Promise<void> {
-  if (!currentDevice.value || !choosePasswordInput.value) {
-    return;
+async function changeAuthentication(): Promise<void> {
+  let accessStrategy: DeviceAccessStrategyKeyring | DeviceAccessStrategyPassword;
+
+  if (props.currentDevice.ty === DeviceFileType.Keyring) {
+    accessStrategy = {
+      tag: DeviceAccessStrategyTag.Keyring,
+      keyFile: props.currentDevice.keyFilePath,
+    };
+  } else {
+    accessStrategy = {
+      tag: DeviceAccessStrategyTag.Password,
+      keyFile: props.currentDevice.keyFilePath,
+      password: currentPassword.value,
+    };
   }
-  const result = await parsecChangePassword(
-    AccessStrategy.usePassword(currentDevice.value, oldPassword.value),
-    SaveStrategy.usePassword(choosePasswordInput.value.password),
-  );
+
+  const result = await parsecChangeAuthentication(accessStrategy, chooseAuthRef.value.getSaveStrategy());
 
   if (result.ok) {
     props.informationManager.present(
       new Information({
-        message: 'MyProfilePage.passwordUpdated',
+        message: 'MyProfilePage.authenticationUpdated',
         level: InformationLevel.Success,
       }),
       PresentationMode.Toast,
     );
-    await modalController.dismiss();
+    await modalController.dismiss(undefined, MsModalResult.Confirm);
   } else {
     switch (result.error.tag) {
       case ClientChangeAuthenticationErrorTag.DecryptionFailed: {
-        pageStep.value = ChangePasswordStep.OldPassword;
-        passwordIsInvalid.value = true;
         errorMessage.value = 'MyProfilePage.errors.wrongPassword';
         break;
       }
       default:
         props.informationManager.present(
           new Information({
-            message: 'MyProfilePage.errors.cannotChangePassword',
+            message: 'MyProfilePage.errors.cannotChangeAuthentication',
             level: InformationLevel.Error,
           }),
           PresentationMode.Toast,
@@ -200,10 +214,10 @@ function updateError(): void {
 
 function getTitle(): string {
   switch (pageStep.value) {
-    case ChangePasswordStep.OldPassword:
+    case ChangeAuthenticationStep.InputCurrentPassword:
       return 'MyProfilePage.titleActualPassword';
-    case ChangePasswordStep.NewPassword:
-      return 'MyProfilePage.titleNewPassword';
+    case ChangeAuthenticationStep.ChooseNewAuthMethod:
+      return 'MyProfilePage.titleNewAuthentication';
     default:
       return '';
   }
@@ -215,10 +229,10 @@ async function cancel(): Promise<boolean> {
 
 function getNextButtonText(): string {
   switch (pageStep.value) {
-    case ChangePasswordStep.OldPassword:
+    case ChangeAuthenticationStep.InputCurrentPassword:
       return 'MyProfilePage.nextButton';
-    case ChangePasswordStep.NewPassword:
-      return 'MyProfilePage.changePasswordButton';
+    case ChangeAuthenticationStep.ChooseNewAuthMethod:
+      return 'MyProfilePage.changeAuthenticationButton';
     default:
       return '';
   }

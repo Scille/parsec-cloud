@@ -19,7 +19,7 @@
         justify="start"
         :value="DeviceSaveStrategyTag.Keyring"
         @click="$event.preventDefault()"
-        :disabled="!keyringAvailable"
+        :disabled="!keyringAvailable || disableKeyring"
       >
         <ion-text class="body-lg item-radio__label">
           {{ $msTranslate('Authentication.useKeyring') }}
@@ -68,8 +68,9 @@ const authentication = ref(DeviceSaveStrategyTag.Keyring);
 const keyringAvailable = ref(false);
 const choosePassword = ref();
 
-defineProps<{
+const props = defineProps<{
   showTitle?: boolean;
+  disableKeyring?: boolean;
 }>();
 
 defineExpose({
@@ -81,7 +82,7 @@ defineExpose({
 onMounted(async () => {
   keyringAvailable.value = await isKeyringAvailable();
 
-  if (!keyringAvailable.value) {
+  if (!keyringAvailable.value || props.disableKeyring) {
     authentication.value = DeviceSaveStrategyTag.Password;
   }
 });

@@ -1131,21 +1131,21 @@
     },
     "MyProfilePage": {
         "titleActualPassword": "Saisissez votre mot de passe",
-        "titleNewPassword": "Choisissez un nouveau mot de passe",
+        "titleNewAuthentication": "Choisissez votre nouveau mode d'authentification",
         "password": "Mot de passe",
         "systemAuthentication": "Votre session est gérée avec l'authentification votre appareil.",
         "cancelButton": "Annuler",
         "nextButton": "Continuer",
         "passwordPlaceholder": "••••••••••",
-        "changePasswordButton": "Modifier",
-        "passwordUpdated": "Le mot de passe a été mis à jour. Vous pouvez vous connecter avec votre nouveau mot de passe.",
+        "changeAuthenticationButton": "Modifier",
+        "authenticationUpdated": "L'authentification a été mise à jour.",
         "tabs": {
             "devices": "Mes appareils",
             "authentication": "Authentification"
         },
         "errors": {
             "wrongPassword": "Mot de passe incorrect. Veuillez réessayer.",
-            "cannotChangePassword": "Impossible de changer le mot de passe",
+            "cannotChangeAuthentication": "Impossible de changer l'authentification",
             "failedToRetrieveInformation": "Impossible de récupérer les informations. Veuillez vérifier que vous êtes bien connecté(e) à Internet."
         }
     },
