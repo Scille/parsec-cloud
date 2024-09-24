@@ -80,7 +80,7 @@ async fn loop_require_greater_timestamp(env: &TestbedEnv) {
                 let now = DateTime::now();
                 let device_id = DeviceID::default();
                 let crafted_common_cert = DeviceCertificate {
-                    timestamp: now.add_us(100), // simulate client lagging behind server
+                    timestamp: now.add_us(500), // simulate client lagging behind server
                     user_id: alice.user_id,
                     device_id,
                     author: Some(alice.device_id).into(),
