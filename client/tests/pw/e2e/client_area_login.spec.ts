@@ -24,7 +24,7 @@ msTest('Log into the customer area', async ({ home }) => {
   await fillIonInput(home.locator('.input-container').nth(1).locator('ion-input'), DEFAULT_USER_INFORMATION.password);
   await home.locator('.saas-login-button__item').nth(1).click();
   await expect(home.locator('.header-content').locator('.header-title')).toHaveText('Dashboard');
-  const logOutButton = home.locator('.header-content').locator('.custom-button').first();
+  const logOutButton = home.locator('.sidebar-content').locator('.bottom-section-buttons-logout');
   await expect(logOutButton).toHaveText('Log out');
   await logOutButton.click();
   await answerQuestion(home, true, {
@@ -118,7 +118,7 @@ msTest('Switch org', async ({ clientArea }) => {
 });
 
 msTest('Open settings modal', async ({ clientArea }) => {
-  const settingsButton = clientArea.locator('.header-content').locator('.custom-button').nth(1);
+  const settingsButton = clientArea.locator('.header-content').locator('.custom-button');
   const modal = clientArea.locator('.settings-modal');
   await expect(modal).toBeHidden();
   await settingsButton.click();

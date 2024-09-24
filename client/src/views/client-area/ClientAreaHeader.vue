@@ -17,16 +17,6 @@
     <ion-title class="header-title title-h1">{{ $msTranslate(title) }}</ion-title>
 
     <div class="header-right">
-      <!-- log out -->
-      <ion-text
-        class="button-medium custom-button custom-button-ghost custom-button-danger"
-        button
-        @click="logout"
-      >
-        <ion-icon :icon="logOut" />
-        {{ $msTranslate('clientArea.header.logout') }}
-      </ion-text>
-
       <!-- preferences -->
       <ion-text
         class="button-medium custom-button custom-button-fill"
@@ -56,10 +46,9 @@
 <script setup lang="ts">
 import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { IonText, IonTitle, IonIcon, IonButton } from '@ionic/vue';
-import { navigateTo, Routes } from '@/router';
-import { Translatable, askQuestion, Answer } from 'megashark-lib';
+import { Translatable } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { logOut, cog, menu } from 'ionicons/icons';
+import { cog, menu } from 'ionicons/icons';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { isMobile } from '@/parsec';
 import useSidebarMenu from '@/services/sidebarMenu';
@@ -79,17 +68,6 @@ onMounted(async () => {
     personalInformation.value = await BmsAccessInstance.get().getPersonalInformation();
   }
 });
-
-async function logout(): Promise<void> {
-  const answer = await askQuestion('clientArea.header.logoutConfirmTitle', 'clientArea.header.logoutConfirmQuestion', {
-    yesText: 'clientArea.header.logoutYes',
-    noText: 'clientArea.header.logoutNo',
-  });
-  if (answer === Answer.Yes) {
-    await BmsAccessInstance.get().logout();
-    await navigateTo(Routes.Home, { replace: true });
-  }
-}
 
 async function openPreferencesModal(): Promise<void> {
   await openSettingsModal();

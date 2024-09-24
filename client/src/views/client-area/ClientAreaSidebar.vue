@@ -79,14 +79,18 @@
       <!-- button: go to organization -->
       <div
         class="organization-card-button custom-button custom-button-fill"
-        v-show="showMenu"
-        @click="goToHome"
+        v-show="showMenu && !isDefaultOrganization(organization)"
+        @click="goToOrganization"
       >
+        <ion-icon
+          class="navigate-icon"
+          :icon="arrowForward"
+        />
         <ion-text
           class="button-medium"
           button
         >
-          {{ $msTranslate(isDefaultOrganization(organization) ? 'clientArea.sidebar.goToHome' : 'clientArea.sidebar.goToOrganization') }}
+          {{ $msTranslate('clientArea.sidebar.goToOrganization') }}
         </ion-text>
       </div>
     </ion-card>
@@ -242,12 +246,50 @@
         {{ $msTranslate('clientArea.sidebar.help.button') }}
       </ion-text>
     </div>
+
+    <!-- button: go to home -->
+    <div class="bottom-section">
+      <div
+        class="bottom-section-buttons bottom-section-buttons-home custom-button custom-button-fill"
+        v-show="showMenu"
+        @click="goToHome"
+      >
+        <ion-icon
+          class="bottom-section-icon"
+          :icon="home"
+        />
+        <ion-text
+          class="button-medium"
+          button
+        >
+          {{ $msTranslate('clientArea.sidebar.goToHome') }}
+        </ion-text>
+      </div>
+
+      <!-- button: logout -->
+      <div
+        class="bottom-section-buttons bottom-section-buttons-logout custom-button custom-button-fill"
+        v-show="showMenu"
+        @click="logout"
+      >
+        <ion-icon
+          class="bottom-section-icon"
+          :icon="logOut"
+        />
+        <ion-text
+          class="button-medium"
+          button
+        >
+          {{ $msTranslate('clientArea.sidebar.logout') }}
+        </ion-text>
+      </div>
+    </div>
   </ion-content>
 </template>
 
 <script setup lang="ts">
-import { ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
-import { card, chatbubbleEllipses, podium, grid, idCard, newspaper, add } from 'ionicons/icons';
+import { askQuestion, Answer, ChevronExpand, MsImage, MsModalResult, MsInformationTooltip } from 'megashark-lib';
+import { arrowForward, card, chatbubbleEllipses, home, logOut, podium, grid, idCard, newspaper, add } from 'ionicons/icons';
 import {
   BmsAccessInstance,
   BmsOrganization,
@@ -346,11 +388,22 @@ async function openOrganizationChoice(event: Event): Promise<void> {
   }
 }
 
+async function goToOrganization(): Promise<void> {
+  await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.organization.parsecId }, replace: true });
+}
+
 async function goToHome(): Promise<void> {
-  if (isDefaultOrganization(props.organization)) {
-    await navigateTo(Routes.Home, { skipHandle: true });
-  } else {
-    await navigateTo(Routes.Home, { skipHandle: true, query: { bmsOrganizationId: props.organization.parsecId } });
+  await navigateTo(Routes.Home, { skipHandle: true, replace: true });
+}
+
+async function logout(): Promise<void> {
+  const answer = await askQuestion('clientArea.sidebar.logoutConfirmTitle', 'clientArea.sidebar.logoutConfirmQuestion', {
+    yesText: 'clientArea.sidebar.logoutYes',
+    noText: 'clientArea.sidebar.logoutNo',
+  });
+  if (answer === Answer.Yes) {
+    await BmsAccessInstance.get().logout();
+    await navigateTo(Routes.Home, { replace: true });
   }
 }
 
@@ -575,6 +628,41 @@ async function createOrganization(): Promise<void> {
     &:hover {
       border: 1px solid var(--parsec-color-light-secondary-light);
     }
+  }
+}
+
+.bottom-section {
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 10rem;
+    left: -2rem;
+    width: calc(100% + 4rem);
+    height: 1px;
+    background: var(--parsec-color-light-secondary-disabled);
+    z-index: 2;
+  }
+
+  &-buttons {
+    margin: 1rem 0 0.5rem 0;
+
+    &:hover {
+      background-color: var(--parsec-color-light-secondary-premiere);
+    }
+
+    &-home {
+      background: none;
+    }
+
+    &-logout {
+      background: none;
+      color: var(--parsec-color-light-danger-500);
+      border-color: var(--parsec-color-light-danger-100);
+    }
+  }
+
+  &-icon {
+    margin-bottom: 0.05rem;
   }
 }
 </style>
