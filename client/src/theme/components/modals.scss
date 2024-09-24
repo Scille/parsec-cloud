@@ -250,9 +250,9 @@
   }
 }
 
-.change-password-modal {
+.change-authentication-modal {
   &::part(content) {
-    max-width: var(--parsec-modal-width-sm);
+    max-width: var(--parsec-modal-width-md);
   }
 
   &:has(.NewPassword)::part(content) {

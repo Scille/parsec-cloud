@@ -327,7 +327,7 @@ export async function getCurrentAvailableDevice(): Promise<Result<AvailableDevic
   }
 }
 
-export async function changePassword(
+export async function changeAuthentication(
   accessStrategy: DeviceAccessStrategy,
   saveStrategy: DeviceSaveStrategy,
 ): Promise<Result<null, ClientChangeAuthenticationError>> {
@@ -379,3 +379,16 @@ export const SaveStrategy = {
     };
   },
 };
+
+export async function isAuthenticationValid(device: AvailableDevice, accessStrategy: DeviceAccessStrategy): Promise<boolean> {
+  if (!needsMocks()) {
+    const clientConfig = getClientConfig();
+    const result = await libparsec.clientStart(clientConfig, (_handle: number, _event: ClientEvent) => {}, accessStrategy);
+    return result.ok;
+  } else {
+    return (
+      accessStrategy.tag === DeviceAccessStrategyTag.Password &&
+      ['P@ssw0rd.', 'AVeryL0ngP@ssw0rd'].includes((accessStrategy as DeviceAccessStrategyPassword).password)
+    );
+  }
+}
