@@ -60,10 +60,10 @@ async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
         async for event in receive_events_channel:
             logger.info_with_debug_extra(
                 "Received internal event",
-                event_type=event.type,
+                type=event.type,
                 event_id=event.event_id.hex,
-                organization=event.organization_id.str,
-                debug_extra={"event_detail": event},
+                organization_id=event.organization_id.str,
+                debug_extra=event.model_dump(),
             )
 
             await send_signal(notification_conn, event)
