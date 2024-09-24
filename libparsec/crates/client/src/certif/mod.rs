@@ -51,6 +51,74 @@ use libparsec_types::prelude::*;
 
 use crate::{event_bus::EventBus, ClientConfig};
 
+// The following values define an offset to be used when processing
+// a require greater timestamp error. They are different to give priority
+// to some kind of certificates (ex: a certificate that revokes a user
+// should have more chances to be accepted than a vlob update one)
+// The base offset is the average network round trip time to compensate
+// the first round trip.
+
+// An optimization could be to measure the real round trip time for each request.
+// The issue with that is that we tackling two distinct issues
+// 1. the client clock is lagging behind
+// 2. the client connection is degraded
+// The current approach is only compensating for case 1.
+// Case 2 would benefit from a offset depending on the real round trip time,
+// but if we base our estimate of the round trip time on the expected timestamp
+// provided by the server, case 2 would benefit from an unjustified priority, as
+// it would pass for a client with a very degraded connection (within the limits of the ballpark though).
+// That issue would not arise if we monitor the round trip time only from the client point of view.
+
+/// This value is used to increment the timestamp provided by the backend
+/// when a manifest restamping is required. This value should be kept small
+/// compared to the certificate stamp ahead value, so the certificate updates have
+/// priority over manifest updates.
+/// # in microseconds, or 0.1 seconds, 100 ms (average network round trip time)
+pub const MANIFEST_STAMP_AHEAD_US: i64 = 100_000;
+
+/// This value is used to increment the timestamp provided by the backend
+/// when a certificate restamping is required. This value should be kept big
+/// compared to the manifest stamp ahead value, so the certificate updates have
+/// priority over manifest updates.
+///  # microseconds, or 0.5 seconds
+pub const ROLE_CERTIFICATE_STAMP_AHEAD_US: i64 = 500_000;
+
+/// Archiving doesn't have to use a value as large 0.5 seconds
+/// # microseconds, or 1 milliseconds
+pub const ARCHIVING_CERTIFICATE_STAMP_AHEAD_US: i64 = 1_000;
+
+pub enum GreaterTimestampOffset {
+    ManifestStampAheadUs,
+    RoleCertificateStampAheadUs,
+    ArchivingCertificateStampAheadUs,
+}
+
+impl From<GreaterTimestampOffset> for i64 {
+    fn from(value: GreaterTimestampOffset) -> Self {
+        match value {
+            GreaterTimestampOffset::ManifestStampAheadUs => MANIFEST_STAMP_AHEAD_US,
+            GreaterTimestampOffset::RoleCertificateStampAheadUs => ROLE_CERTIFICATE_STAMP_AHEAD_US,
+            GreaterTimestampOffset::ArchivingCertificateStampAheadUs => {
+                ARCHIVING_CERTIFICATE_STAMP_AHEAD_US
+            }
+        }
+    }
+}
+
+/// ops to have the time provider
+/// offset depending on the type of certificate
+/// strictly_greater_than, the time expected by the server
+pub(crate) fn manage_require_greater_timestamp(
+    ops: &CertificateOps,
+    offset: GreaterTimestampOffset,
+    strictly_greater_than: DateTime,
+) -> DateTime {
+    std::cmp::max(
+        ops.device.time_provider.now(),
+        strictly_greater_than.add_us(offset.into()),
+    )
+}
+
 #[derive(Debug)]
 pub enum CertificateBasedActionOutcome {
     /// The action was already done according to the certificates we have locally,
