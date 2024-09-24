@@ -19,6 +19,7 @@ test-utils = [
     "dep:libparsec_testbed",
     "libparsec_platform_device_loader/test-with-testbed",
     "libparsec_platform_storage/test-with-testbed",
+    "libparsec_platform_ipc/test-with-testbed",
     "libparsec_types/test-mock-time",
 ]
 cli-tests = ["dep:libparsec_tests_fixtures"]
