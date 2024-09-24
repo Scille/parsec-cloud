@@ -192,7 +192,7 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
         .take()
         .map(|mut stderr| {
             let re = regex::Regex::new(r"127.0.0.1:([0-9]+)").unwrap();
-            let mut buf = vec![0u8; 1024];
+            let mut buf = vec![0u8; 2048];
             let mut total = 0;
             let mut sleep_wait_count = 30; // Sleep at most for 3s
             loop {
