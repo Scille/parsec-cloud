@@ -1,0 +1,1 @@
+Fix for lost devices when parsec snap is removed: devices are now stored in ``$HOME/.config`` and are independent from snap. Existing devices are migrated.
