@@ -562,7 +562,11 @@
             "failed": "échoué",
             "browse": "Aller à l'emplacement",
             "failedDetails": "Vérifier votre connexion internet"
-        }
+        },
+        "uploadsLeft": "Importation de {amount} éléments",
+        "copiesLeft": "Copie de {amount} éléments",
+        "movesLeft": "Déplacement de {amount} éléments",
+        "operationsLeft": "{amount} opérations en attente"
     },
     "FileDetails": {
         "title": "Détails de {name}",

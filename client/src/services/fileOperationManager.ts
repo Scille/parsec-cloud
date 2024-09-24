@@ -26,7 +26,7 @@ import {
 import { wait } from '@/parsec/internals';
 import { v4 as uuid4 } from 'uuid';
 
-const MAX_SIMULTANEOUS_IMPORT_JOBS = 5;
+const MAX_SIMULTANEOUS_OPERATIONS = 3;
 
 export const FileOperationManagerKey = 'fileOperationManager';
 
@@ -422,6 +422,7 @@ class FileOperationManager {
 
   private async doMove(data: MoveData): Promise<void> {
     await this.sendState(FileOperationState.MoveStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     let moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, data.forceReplace);
     if (!moveResult.ok) {
@@ -441,15 +442,15 @@ class FileOperationManager {
         moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, false);
         if (moveResult.ok) {
           data.dstPath = dstPath;
-          this.sendState(FileOperationState.EntryMoved, data);
+          await this.sendState(FileOperationState.EntryMoved, data);
         }
         i++;
       }
       if (!moveResult.ok) {
-        this.sendState(FileOperationState.MoveFailed, data, { error: moveResult.error.tag });
+        await this.sendState(FileOperationState.MoveFailed, data, { error: moveResult.error.tag });
       }
     } else {
-      this.sendState(FileOperationState.EntryMoved, data);
+      await this.sendState(FileOperationState.EntryMoved, data);
     }
   }
 
@@ -558,7 +559,7 @@ class FileOperationManager {
         break;
       }
 
-      if (this.operationJobs.length >= MAX_SIMULTANEOUS_IMPORT_JOBS) {
+      if (this.operationJobs.length >= MAX_SIMULTANEOUS_OPERATIONS) {
         // Remove the files that have been cancelled but have not yet
         // started their import
         for (const cancelId of this.cancelList.slice()) {
