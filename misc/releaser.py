@@ -471,7 +471,7 @@ def ensure_working_in_a_clean_git_repo() -> None:
 
 
 def ensure_working_on_the_correct_branch(
-    release_branch: str, base_ref: str | None, version: Version
+    release_branch: str, base_ref: str | None, version: Version, nightly: bool
 ) -> None:
     current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
     print(f"Current branch {COLOR_GREEN}{current_branch}{COLOR_END}")
@@ -480,7 +480,8 @@ def ensure_working_on_the_correct_branch(
         print("Already in the release branch, nothing to do")
         return
 
-    if version.patch == 0:
+    # Force use of the release branch for the next patch version or nightly build
+    if version.patch == 0 or nightly:
         print("Creating release branch...")
         run_git("switch", "--force-create", release_branch, *([base_ref] if base_ref else []))
     else:
@@ -767,7 +768,9 @@ def build_main(args: argparse.Namespace) -> None:
     ensure_working_in_a_clean_git_repo()
 
     if not DRY_GIT_COMMANDS:
-        ensure_working_on_the_correct_branch(release_branch, base_ref, release_version)
+        ensure_working_on_the_correct_branch(
+            release_branch, base_ref, release_version, args.nightly
+        )
 
     release_date = datetime.now(tz=timezone.utc)
     license_eol_date = get_licence_eol_date(release_date)
