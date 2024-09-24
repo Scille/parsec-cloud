@@ -1249,7 +1249,12 @@
         },
         "sidebar": {
             "goToOrganization": "Aller à l'organisation",
-            "goToHome": "Aller à l'accueil",
+            "goToHome": "Retourner à l'accueil",
+            "logout": "Se déconnecter",
+            "logoutConfirmTitle": "Déconnexion",
+            "logoutConfirmQuestion": "Souhaitez-vous vous déconnecter?",
+            "logoutYes": "Me déconnecter",
+            "logoutNo": "Rester connecté",
             "createNewOrganization": "Créer une nouvelle organisation",
             "createFirstOrganization": "Créer mon organisation",
             "allOrganization": "Toutes les organisations",
@@ -1291,12 +1296,7 @@
                 "customOrderStatistics": "Statistiques",
                 "customOrderProcessing": "Suivi de commande"
             },
-            "logout": "Se déconnecter",
-            "preferences": "Préférences",
-            "logoutConfirmTitle": "Déconnexion",
-            "logoutConfirmQuestion": "Souhaitez-vous vous déconnecter?",
-            "logoutYes": "Me déconnecter",
-            "logoutNo": "Rester connecté"
+            "preferences": "Préférences"
         },
         "personalDataPage": {
             "personalInfo": {
