@@ -109,12 +109,12 @@ impl From<GreaterTimestampOffset> for i64 {
 /// offset depending on the type of certificate
 /// strictly_greater_than, the time expected by the server
 pub(crate) fn manage_require_greater_timestamp(
-    ops: &CertificateOps,
+    time_provider: &TimeProvider,
     offset: GreaterTimestampOffset,
     strictly_greater_than: DateTime,
 ) -> DateTime {
     std::cmp::max(
-        ops.device.time_provider.now(),
+        time_provider.now(),
         strictly_greater_than.add_us(offset.into()),
     )
 }

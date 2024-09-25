@@ -17,8 +17,9 @@ use crate::workspace::store::{
     ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
 };
 use crate::{
-    EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted, EventWorkspaceOpsOutboundSyncDone,
-    EventWorkspaceOpsOutboundSyncProgress, EventWorkspaceOpsOutboundSyncStarted,
+    manage_require_greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
+    EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
+    EventWorkspaceOpsOutboundSyncStarted, GreaterTimestampOffset,
 };
 
 pub type WorkspaceGetNeedOutboundSyncEntriesError = WorkspaceStoreOperationError;
@@ -471,8 +472,11 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_upload)),
                 Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
-                    let timestamp =
-                        std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                    let  timestamp = manage_require_greater_timestamp(
+                        &ops.device.time_provider,
+                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        strictly_greater_than,
+                    );
                     to_upload.update_timestamp(timestamp);
                     continue;
                 }
@@ -546,8 +550,11 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_upload)),
                 Rep::BadVlobVersion => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
-                    let timestamp =
-                        std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                    let timestamp = manage_require_greater_timestamp(
+                        &ops.device.time_provider,
+                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        strictly_greater_than,
+                    );
                     to_upload.update_timestamp(timestamp);
                     continue;
                 }

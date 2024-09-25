@@ -6,8 +6,9 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    store::CertifStoreError, CertifPollServerError, CertificateBasedActionOutcome, CertificateOps,
-    InvalidCertificateError, InvalidKeysBundleError,
+    manage_require_greater_timestamp, store::CertifStoreError, CertifPollServerError,
+    CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
+    InvalidKeysBundleError,
 };
 use crate::{
     certif::realm_keys_bundle::EncryptRealmKeysBundleAccessForUserError,
@@ -111,7 +112,11 @@ pub(super) async fn share_realm(
             DoServerCommandOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
-                timestamp = std::cmp::max(ops.device.time_provider.now(), strictly_greater_than);
+                timestamp = manage_require_greater_timestamp(
+                    &ops.device.time_provider,
+                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    strictly_greater_than,
+                );
             }
             DoServerCommandOutcome::MissingKeyRotationCertificate(certificate_timestamp) => {
                 let latest_known_timestamps =

@@ -9,7 +9,10 @@ use libparsec_client_connection::{
 use libparsec_types::prelude::*;
 
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
-use crate::{EventBus, EventTooMuchDriftWithServerClock};
+use crate::{
+    manage_require_greater_timestamp, EventBus, EventTooMuchDriftWithServerClock,
+    GreaterTimestampOffset,
+};
 
 /*
  * new_user_invitation
@@ -1142,8 +1145,11 @@ impl UserGreetInProgress4Ctx {
                     Rep::RequireGreaterTimestamp {
                         strictly_greater_than,
                     } => {
-                        timestamp =
-                            std::cmp::max(strictly_greater_than, self.device.time_provider.now());
+                        timestamp = manage_require_greater_timestamp(
+                            &self.device.time_provider,
+                            GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                            strictly_greater_than,
+                        );
                         continue;
                     }
                     Rep::ActiveUsersLimitReached { .. } => {
@@ -1290,8 +1296,11 @@ impl DeviceGreetInProgress4Ctx {
                     Rep::RequireGreaterTimestamp {
                         strictly_greater_than,
                     } => {
-                        timestamp =
-                            std::cmp::max(strictly_greater_than, self.device.time_provider.now());
+                        timestamp = manage_require_greater_timestamp(
+                            &self.device.time_provider,
+                            GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                            strictly_greater_than,
+                        );
                         continue;
                     }
                     Rep::DeviceAlreadyExists { .. } => {
