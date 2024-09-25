@@ -12,7 +12,7 @@ use crate::{
         CertifPollServerError, CertifValidateManifestError, InvalidCertificateError,
         InvalidManifestError,
     },
-    EventUserOpsOutboundSyncDone,
+    manage_require_greater_timestamp, EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -134,8 +134,11 @@ async fn upload_manifest(
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
-                    timestamp =
-                        std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                    timestamp = manage_require_greater_timestamp(
+                        &ops.device.time_provider,
+                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        strictly_greater_than,
+                    );
                     continue;
                 }
                 // Timeout is about sequester service webhook not being available, no need
@@ -202,8 +205,11 @@ async fn upload_manifest(
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
-                    timestamp =
-                        std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                    timestamp = manage_require_greater_timestamp(
+                        &ops.device.time_provider,
+                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        strictly_greater_than,
+                    );
                     continue;
                 }
                 // Timeout is about sequester service webhook not being available, no need

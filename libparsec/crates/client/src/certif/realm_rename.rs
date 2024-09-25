@@ -10,7 +10,10 @@ use super::{
     CertificateBasedActionOutcome, CertificateOps, InvalidCertificateError, InvalidKeysBundleError,
     UpTo,
 };
-use crate::{certif::CertifPollServerError, EncrytionUsage, EventTooMuchDriftWithServerClock};
+use crate::{
+    certif::CertifPollServerError, manage_require_greater_timestamp, EncrytionUsage,
+    EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifRenameRealmError {
@@ -157,7 +160,11 @@ async fn rename_realm_internal(
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {
-                timestamp = std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                timestamp = manage_require_greater_timestamp(
+                    &ops.device.time_provider,
+                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    strictly_greater_than,
+                );
                 continue;
             }
             Rep::TimestampOutOfBallpark {

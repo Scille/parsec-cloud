@@ -8,7 +8,9 @@ use super::{
     store::{CertifStoreError, RealmBootstrapState},
     CertificateBasedActionOutcome, CertificateOps,
 };
-use crate::EventTooMuchDriftWithServerClock;
+use crate::{
+    manage_require_greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+};
 
 #[derive(Debug, thiserror::Error)]
 pub enum CertifEnsureRealmCreatedError {
@@ -113,7 +115,11 @@ async fn create_realm_idempotent(
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {
-                timestamp = std::cmp::max(strictly_greater_than, ops.device.time_provider.now());
+                timestamp = manage_require_greater_timestamp(
+                    &ops.device.time_provider,
+                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    strictly_greater_than,
+                );
                 continue;
             }
             Rep::TimestampOutOfBallpark {

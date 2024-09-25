@@ -15,7 +15,8 @@ use crate::{
         realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
         CertifPollServerError,
     },
-    EventTooMuchDriftWithServerClock, InvalidKeysBundleError,
+    manage_require_greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    InvalidKeysBundleError,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -127,7 +128,11 @@ pub(super) async fn rotate_realm_key_idempotent(
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {
-                timestamp = std::cmp::max(strictly_greater_than, ops.device.now());
+                timestamp = manage_require_greater_timestamp(
+                    &ops.device.time_provider,
+                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    strictly_greater_than,
+                );
                 continue;
             }
             Rep::TimestampOutOfBallpark {
