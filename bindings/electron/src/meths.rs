@@ -1649,6 +1649,105 @@ fn struct_started_workspace_info_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// Tos
+
+#[allow(dead_code)]
+fn struct_tos_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::Tos> {
+    let per_locale_urls = {
+        let js_val: Handle<JsObject> = obj.get(cx, "perLocaleUrls")?;
+        {
+            let mut d = std::collections::HashMap::with_capacity(
+                js_val.get::<JsNumber, _, _>(cx, "size")?.value(cx) as usize,
+            );
+
+            let js_keys = js_val
+                .call_method_with(cx, "keys")?
+                .apply::<JsObject, _>(cx)?;
+            let js_values = js_val
+                .call_method_with(cx, "values")?
+                .apply::<JsObject, _>(cx)?;
+            let js_keys_next_cb = js_keys.call_method_with(cx, "next")?;
+            let js_values_next_cb = js_values.call_method_with(cx, "next")?;
+
+            loop {
+                let next_js_key = js_keys_next_cb.apply::<JsObject, _>(cx)?;
+                let next_js_value = js_values_next_cb.apply::<JsObject, _>(cx)?;
+
+                let keys_done = next_js_key.get::<JsBoolean, _, _>(cx, "done")?.value(cx);
+                let values_done = next_js_value.get::<JsBoolean, _, _>(cx, "done")?.value(cx);
+                match (keys_done, values_done) {
+                    (true, true) => break,
+                    (false, false) => (),
+                    _ => unreachable!(),
+                }
+
+                let js_key = next_js_key.get::<JsString, _, _>(cx, "value")?;
+                let js_value = next_js_value.get::<JsString, _, _>(cx, "value")?;
+
+                let key = js_key.value(cx);
+                let value = js_value.value(cx);
+                d.insert(key, value);
+            }
+            d
+        }
+    };
+    let updated_on = {
+        let js_val: Handle<JsNumber> = obj.get(cx, "updatedOn")?;
+        {
+            let v = js_val.value(cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    Ok(libparsec::Tos {
+        per_locale_urls,
+        updated_on,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_tos_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::Tos,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_per_locale_urls = {
+        let new_map_code = (cx).string("new Map()");
+        let js_map = neon::reflect::eval(cx, new_map_code)?.downcast_or_throw::<JsObject, _>(cx)?;
+        for (key, value) in rs_obj.per_locale_urls.into_iter() {
+            let js_key = JsString::try_new(cx, key).or_throw(cx)?;
+            let js_value = JsString::try_new(cx, value).or_throw(cx)?;
+            js_map
+                .call_method_with(cx, "set")?
+                .arg(js_key)
+                .arg(js_value)
+                .exec(cx)?;
+        }
+        js_map
+    };
+    js_obj.set(cx, "perLocaleUrls", js_per_locale_urls)?;
+    let js_updated_on = JsNumber::new(cx, {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        match custom_to_rs_f64(rs_obj.updated_on) {
+            Ok(ok) => ok,
+            Err(err) => return cx.throw_type_error(err),
+        }
+    });
+    js_obj.set(cx, "updatedOn", js_updated_on)?;
+    Ok(js_obj)
+}
+
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
@@ -2754,6 +2853,37 @@ fn variant_claimer_retrieve_info_error_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ClientAcceptTosError
+
+#[allow(dead_code)]
+fn variant_client_accept_tos_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientAcceptTosError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientAcceptTosError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptTosError::NoTos { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorNoTos").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptTosError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientAcceptTosError::TosMismatch { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientAcceptTosErrorTosMismatch").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientCancelInvitationError
 
 #[allow(dead_code)]
@@ -2889,6 +3019,7 @@ fn variant_client_event_js_to_rs<'a>(
             };
             Ok(libparsec::ClientEvent::InvitationChanged { token, status })
         }
+        "ClientEventMustAcceptTos" => Ok(libparsec::ClientEvent::MustAcceptTos {}),
         "ClientEventOffline" => Ok(libparsec::ClientEvent::Offline {}),
         "ClientEventOnline" => Ok(libparsec::ClientEvent::Online {}),
         "ClientEventPing" => {
@@ -3189,6 +3320,10 @@ fn variant_client_event_rs_to_js<'a>(
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
         }
+        libparsec::ClientEvent::MustAcceptTos { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientEventMustAcceptTos").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ClientEvent::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ClientEventOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
@@ -3435,6 +3570,33 @@ fn variant_client_event_rs_to_js<'a>(
         libparsec::ClientEvent::WorkspacesSelfListChanged { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ClientEventWorkspacesSelfListChanged").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetTosError
+
+#[allow(dead_code)]
+fn variant_client_get_tos_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ClientGetTosError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::ClientGetTosError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetTosErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetTosError::NoTos { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetTosErrorNoTos").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ClientGetTosError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ClientGetTosErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -8009,6 +8171,74 @@ fn claimer_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
     Ok(promise)
 }
 
+// client_accept_tos
+fn client_accept_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let tos_updated_on = {
+        let js_val = cx.argument::<JsNumber>(1)?;
+        {
+            let v = js_val.value(&mut cx);
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            match custom_from_rs_f64(v) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_accept_tos(client, tos_updated_on).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            #[allow(clippy::let_unit_value)]
+                            let _ = ok;
+                            JsNull::new(&mut cx)
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_accept_tos_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // client_cancel_invitation
 fn client_cancel_invitation(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -8194,6 +8424,56 @@ fn client_create_workspace(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_client_create_workspace_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// client_get_tos
+fn client_get_tos(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let client = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::client_get_tos(client).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_tos_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_client_get_tos_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -12888,9 +13168,11 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "claimerUserInitialDoWaitPeer",
         claimer_user_initial_do_wait_peer,
     )?;
+    cx.export_function("clientAcceptTos", client_accept_tos)?;
     cx.export_function("clientCancelInvitation", client_cancel_invitation)?;
     cx.export_function("clientChangeAuthentication", client_change_authentication)?;
     cx.export_function("clientCreateWorkspace", client_create_workspace)?;
+    cx.export_function("clientGetTos", client_get_tos)?;
     cx.export_function("clientGetUserDevice", client_get_user_device)?;
     cx.export_function("clientInfo", client_info)?;
     cx.export_function("clientListInvitations", client_list_invitations)?;

@@ -208,6 +208,11 @@ export interface StartedWorkspaceInfo {
     mountpoints: Array<[Handle, Path]>
 }
 
+export interface Tos {
+    perLocaleUrls: Map<string, string>
+    updatedOn: DateTime
+}
+
 export interface UserClaimFinalizeInfo {
     handle: Handle
 }
@@ -493,6 +498,36 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorNotFound
   | ClaimerRetrieveInfoErrorOffline
 
+// ClientAcceptTosError
+export enum ClientAcceptTosErrorTag {
+    Internal = 'ClientAcceptTosErrorInternal',
+    NoTos = 'ClientAcceptTosErrorNoTos',
+    Offline = 'ClientAcceptTosErrorOffline',
+    TosMismatch = 'ClientAcceptTosErrorTosMismatch',
+}
+
+export interface ClientAcceptTosErrorInternal {
+    tag: ClientAcceptTosErrorTag.Internal
+    error: string
+}
+export interface ClientAcceptTosErrorNoTos {
+    tag: ClientAcceptTosErrorTag.NoTos
+    error: string
+}
+export interface ClientAcceptTosErrorOffline {
+    tag: ClientAcceptTosErrorTag.Offline
+    error: string
+}
+export interface ClientAcceptTosErrorTosMismatch {
+    tag: ClientAcceptTosErrorTag.TosMismatch
+    error: string
+}
+export type ClientAcceptTosError =
+  | ClientAcceptTosErrorInternal
+  | ClientAcceptTosErrorNoTos
+  | ClientAcceptTosErrorOffline
+  | ClientAcceptTosErrorTosMismatch
+
 // ClientCancelInvitationError
 export enum ClientCancelInvitationErrorTag {
     AlreadyDeleted = 'ClientCancelInvitationErrorAlreadyDeleted',
@@ -576,6 +611,7 @@ export enum ClientEventTag {
     ExpiredOrganization = 'ClientEventExpiredOrganization',
     IncompatibleServer = 'ClientEventIncompatibleServer',
     InvitationChanged = 'ClientEventInvitationChanged',
+    MustAcceptTos = 'ClientEventMustAcceptTos',
     Offline = 'ClientEventOffline',
     Online = 'ClientEventOnline',
     Ping = 'ClientEventPing',
@@ -603,6 +639,9 @@ export interface ClientEventInvitationChanged {
     tag: ClientEventTag.InvitationChanged
     token: InvitationToken
     status: InvitationStatus
+}
+export interface ClientEventMustAcceptTos {
+    tag: ClientEventTag.MustAcceptTos
 }
 export interface ClientEventOffline {
     tag: ClientEventTag.Offline
@@ -670,6 +709,7 @@ export type ClientEvent =
   | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged
+  | ClientEventMustAcceptTos
   | ClientEventOffline
   | ClientEventOnline
   | ClientEventPing
@@ -684,6 +724,30 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncStarted
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
+
+// ClientGetTosError
+export enum ClientGetTosErrorTag {
+    Internal = 'ClientGetTosErrorInternal',
+    NoTos = 'ClientGetTosErrorNoTos',
+    Offline = 'ClientGetTosErrorOffline',
+}
+
+export interface ClientGetTosErrorInternal {
+    tag: ClientGetTosErrorTag.Internal
+    error: string
+}
+export interface ClientGetTosErrorNoTos {
+    tag: ClientGetTosErrorTag.NoTos
+    error: string
+}
+export interface ClientGetTosErrorOffline {
+    tag: ClientGetTosErrorTag.Offline
+    error: string
+}
+export type ClientGetTosError =
+  | ClientGetTosErrorInternal
+  | ClientGetTosErrorNoTos
+  | ClientGetTosErrorOffline
 
 // ClientGetUserDeviceError
 export enum ClientGetUserDeviceErrorTag {
@@ -2523,6 +2587,10 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+    clientAcceptTos(
+        client: Handle,
+        tos_updated_on: DateTime
+    ): Promise<Result<null, ClientAcceptTosError>>
     clientCancelInvitation(
         client: Handle,
         token: InvitationToken
@@ -2536,6 +2604,9 @@ export interface LibParsecPlugin {
         client: Handle,
         name: EntryName
     ): Promise<Result<VlobID, ClientCreateWorkspaceError>>
+    clientGetTos(
+        client: Handle
+    ): Promise<Result<Tos, ClientGetTosError>>
     clientGetUserDevice(
         client: Handle,
         device: DeviceID
