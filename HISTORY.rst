@@ -5,6 +5,26 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.1-rc.0 (2024-09-25)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix for lost devices when parsec snap is removed: devices are now stored in
+  ``$HOME/.config`` and are independent from snap. Existing devices are
+  migrated.
+  (`#8464 <https://github.com/Scille/parsec-cloud/issues/8464>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Major update of user documentation for version 3
+  (`#7634 <https://github.com/Scille/parsec-cloud/issues/7634>`__)
+
+
+
 Parsec v3.0.0 (2024-09-18)
 --------------------------
 
