@@ -1771,6 +1771,91 @@ fn struct_started_workspace_info_rs_to_js(
     Ok(js_obj)
 }
 
+// Tos
+
+#[allow(dead_code)]
+fn struct_tos_js_to_rs(obj: JsValue) -> Result<libparsec::Tos, JsValue> {
+    let per_locale_urls = {
+        let js_val = Reflect::get(&obj, &"perLocaleUrls".into())?;
+        {
+            let js_val = js_val
+                .dyn_into::<Map>()
+                .map_err(|_| TypeError::new("Not a Map"))?;
+            let mut converted = std::collections::HashMap::with_capacity(js_val.size() as usize);
+            let js_keys = js_val.keys();
+            let js_values = js_val.values();
+            loop {
+                let next_js_key = js_keys.next()?;
+                let next_js_value = js_values.next()?;
+                if next_js_key.done() {
+                    assert!(next_js_value.done());
+                    break;
+                }
+                assert!(!next_js_value.done());
+
+                let js_key = next_js_key.value();
+                let js_value = next_js_value.value();
+
+                let key = js_key
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?;
+                let value = js_value
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?;
+                converted.insert(key, value);
+            }
+            converted
+        }
+    };
+    let updated_on = {
+        let js_val = Reflect::get(&obj, &"updatedOn".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    Ok(libparsec::Tos {
+        per_locale_urls,
+        updated_on,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_tos_rs_to_js(rs_obj: libparsec::Tos) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_per_locale_urls = {
+        let js_map = Map::new();
+        for (key, value) in rs_obj.per_locale_urls.into_iter() {
+            let js_key = key.into();
+            let js_value = value.into();
+            js_map.set(&js_key, &js_value);
+        }
+        js_map.into()
+    };
+    Reflect::set(&js_obj, &"perLocaleUrls".into(), &js_per_locale_urls)?;
+    let js_updated_on = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.updated_on) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"updatedOn".into(), &js_updated_on)?;
+    Ok(js_obj)
+}
+
 // UserClaimFinalizeInfo
 
 #[allow(dead_code)]
@@ -2977,6 +3062,44 @@ fn variant_claimer_retrieve_info_error_rs_to_js(
     Ok(js_obj)
 }
 
+// ClientAcceptTosError
+
+#[allow(dead_code)]
+fn variant_client_accept_tos_error_rs_to_js(
+    rs_obj: libparsec::ClientAcceptTosError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientAcceptTosError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptTosErrorInternal".into(),
+            )?;
+        }
+        libparsec::ClientAcceptTosError::NoTos { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientAcceptTosErrorNoTos".into())?;
+        }
+        libparsec::ClientAcceptTosError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptTosErrorOffline".into(),
+            )?;
+        }
+        libparsec::ClientAcceptTosError::TosMismatch { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ClientAcceptTosErrorTosMismatch".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // ClientCancelInvitationError
 
 #[allow(dead_code)]
@@ -3141,6 +3264,7 @@ fn variant_client_event_js_to_rs(obj: JsValue) -> Result<libparsec::ClientEvent,
             };
             Ok(libparsec::ClientEvent::InvitationChanged { token, status })
         }
+        "ClientEventMustAcceptTos" => Ok(libparsec::ClientEvent::MustAcceptTos {}),
         "ClientEventOffline" => Ok(libparsec::ClientEvent::Offline {}),
         "ClientEventOnline" => Ok(libparsec::ClientEvent::Online {}),
         "ClientEventPing" => {
@@ -3488,6 +3612,9 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
+        libparsec::ClientEvent::MustAcceptTos { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientEventMustAcceptTos".into())?;
+        }
         libparsec::ClientEvent::Offline { .. } => {
             Reflect::set(&js_obj, &"tag".into(), &"ClientEventOffline".into())?;
         }
@@ -3754,6 +3881,29 @@ fn variant_client_event_rs_to_js(rs_obj: libparsec::ClientEvent) -> Result<JsVal
                 &"tag".into(),
                 &"ClientEventWorkspacesSelfListChanged".into(),
             )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// ClientGetTosError
+
+#[allow(dead_code)]
+fn variant_client_get_tos_error_rs_to_js(
+    rs_obj: libparsec::ClientGetTosError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::ClientGetTosError::Internal { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorInternal".into())?;
+        }
+        libparsec::ClientGetTosError::NoTos { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorNoTos".into())?;
+        }
+        libparsec::ClientGetTosError::Offline { .. } => {
+            Reflect::set(&js_obj, &"tag".into(), &"ClientGetTosErrorOffline".into())?;
         }
     }
     Ok(js_obj)
@@ -8352,6 +8502,42 @@ pub fn claimerUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
     })
 }
 
+// client_accept_tos
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientAcceptTos(client: u32, tos_updated_on: f64) -> Promise {
+    future_to_promise(async move {
+        let tos_updated_on = {
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            custom_from_rs_f64(tos_updated_on).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::client_accept_tos(client, tos_updated_on).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_accept_tos_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // client_cancel_invitation
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -8460,6 +8646,31 @@ pub fn clientCreateWorkspace(client: u32, name: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_client_create_workspace_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// client_get_tos
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn clientGetTos(client: u32) -> Promise {
+    future_to_promise(async move {
+        let ret = libparsec::client_get_tos(client).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_tos_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_client_get_tos_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

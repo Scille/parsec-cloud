@@ -199,6 +199,12 @@ export interface StartedWorkspaceInfo {
 }
 
 
+export interface Tos {
+    perLocaleUrls: Map<string, string>
+    updatedOn: number
+}
+
+
 export interface UserClaimFinalizeInfo {
     handle: number
 }
@@ -454,6 +460,30 @@ export type ClaimerRetrieveInfoError =
   | ClaimerRetrieveInfoErrorOffline
 
 
+// ClientAcceptTosError
+export interface ClientAcceptTosErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientAcceptTosErrorNoTos {
+    tag: "NoTos"
+    error: string
+}
+export interface ClientAcceptTosErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientAcceptTosErrorTosMismatch {
+    tag: "TosMismatch"
+    error: string
+}
+export type ClientAcceptTosError =
+  | ClientAcceptTosErrorInternal
+  | ClientAcceptTosErrorNoTos
+  | ClientAcceptTosErrorOffline
+  | ClientAcceptTosErrorTosMismatch
+
+
 // ClientCancelInvitationError
 export interface ClientCancelInvitationErrorAlreadyDeleted {
     tag: "AlreadyDeleted"
@@ -529,6 +559,9 @@ export interface ClientEventInvitationChanged {
     token: string
     status: InvitationStatus
 }
+export interface ClientEventMustAcceptTos {
+    tag: "MustAcceptTos"
+}
 export interface ClientEventOffline {
     tag: "Offline"
 }
@@ -595,6 +628,7 @@ export type ClientEvent =
   | ClientEventExpiredOrganization
   | ClientEventIncompatibleServer
   | ClientEventInvitationChanged
+  | ClientEventMustAcceptTos
   | ClientEventOffline
   | ClientEventOnline
   | ClientEventPing
@@ -609,6 +643,25 @@ export type ClientEvent =
   | ClientEventWorkspaceOpsOutboundSyncStarted
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
+
+
+// ClientGetTosError
+export interface ClientGetTosErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientGetTosErrorNoTos {
+    tag: "NoTos"
+    error: string
+}
+export interface ClientGetTosErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientGetTosError =
+  | ClientGetTosErrorInternal
+  | ClientGetTosErrorNoTos
+  | ClientGetTosErrorOffline
 
 
 // ClientGetUserDeviceError
@@ -2116,6 +2169,10 @@ export function claimerUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserClaimInProgress1Info, ClaimInProgressError>>
+export function clientAcceptTos(
+    client: number,
+    tos_updated_on: number
+): Promise<Result<null, ClientAcceptTosError>>
 export function clientCancelInvitation(
     client: number,
     token: string
@@ -2129,6 +2186,9 @@ export function clientCreateWorkspace(
     client: number,
     name: string
 ): Promise<Result<string, ClientCreateWorkspaceError>>
+export function clientGetTos(
+    client: number
+): Promise<Result<Tos, ClientGetTosError>>
 export function clientGetUserDevice(
     client: number,
     device: string
