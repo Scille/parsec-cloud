@@ -22,9 +22,9 @@ msgid ""
 "Administrative operations must be performed with Parsec CLI for Linux. They "
 "can be performed from another machine."
 msgstr ""
-"Les opérations administratives doivent être effectuées avec l'interface en ligne "
-"de commande (CLI) Parsec pour Linux. Elles peuvent être effectuées à partir "
-"d'une autre machine."
+"Les opérations administratives doivent être effectuées avec l'interface en "
+"ligne de commande (CLI) Parsec pour Linux. Elles peuvent être effectuées à "
+"partir d'une autre machine."
 
 #: ../../adminguide/installation.rst:8
 msgid "Install Linux Parsec CLI"
@@ -43,11 +43,9 @@ msgid "Download the CLI by following this link:"
 msgstr "Téléchargez la CLI en suivant ce lien :"
 
 #: ../../adminguide/installation.rst:14
-# Left `msgstr` empty, that way we use the same value untranslated.
-# The reason is because the link + version is managed by `version_updater` script and it doesn't handle well wrapped line.
 msgid ""
-"`Parsec CLI v3.0.1-a.0 <https://github.com/Scille/parsec-cloud/releases/"
-"download/v3.0.1-a.0/parsec-cli_3.0.1-a.0_linux_x86_64>`_."
+"`Parsec CLI v3.0.2-a.0+dev <https://github.com/Scille/parsec-cloud/releases/"
+"download/v3.0.2-a.0+dev/parsec-cli_3.0.2-a.0+dev_linux_x86_64>`_."
 msgstr ""
 
 #: ../../adminguide/installation.rst:16
