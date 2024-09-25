@@ -319,7 +319,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ],
         Tool.WasmPack: [ReplaceRegex(r"wasm-pack@[0-9.]+", "wasm-pack@{version}")],
     },
-    ROOT_DIR / "docs/adminguide/hosting/index.rst": {
+    ROOT_DIR / "docs/hosting/deployment/index.rst": {
         Tool.PostgreSQL: [ReplaceRegex(r"postgres-\d+", only_major_version("postgres-{version}"))],
         Tool.Python: [
             ReplaceRegex(r"- Python v[0-9.]+", hide_patch_version("- Python v{version}")),
@@ -331,7 +331,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ),
         ],
     },
-    ROOT_DIR / "docs/adminguide/hosting/parsec-server.docker.yaml": {
+    ROOT_DIR / "docs/hosting/deployment/parsec-server.docker.yaml": {
         Tool.Parsec: [
             ReplaceRegex(
                 r"ghcr.io/scille/parsec-cloud/parsec-server:.+$",
@@ -345,7 +345,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             )
         ],
     },
-    ROOT_DIR / "docs/adminguide/installation.rst": {
+    ROOT_DIR / "docs/hosting/install_cli.rst": {
         Tool.Parsec: [
             ReplaceRegex(
                 r".. _Parsec CLI v.*: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux_x86_64",
@@ -359,7 +359,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"parsec-cli .*", "parsec-cli {version}"),
         ]
     },
-    ROOT_DIR / "docs/locale/fr/LC_MESSAGES/adminguide/installation.po": {
+    ROOT_DIR / "docs/locale/fr/LC_MESSAGES/hosting/install_cli.po": {
         Tool.Parsec: [
             ReplaceRegex(
                 r"`Parsec CLI v.*`_",

@@ -270,10 +270,10 @@ latex_documents = [
         "howto",
     ),
     (
-        "adminguide/index",
-        "parsec-adminguide.tex",
-        "Parsec Admin Guide",
-        "dev-parsec+adminguide@scille.fr",
+        "hosting/index",
+        "parsec-hosting-guide.tex",
+        "Parsec Hosting Guide",
+        "dev-parsec+hostingguide@scille.fr",
         "howto",
     ),
 ]

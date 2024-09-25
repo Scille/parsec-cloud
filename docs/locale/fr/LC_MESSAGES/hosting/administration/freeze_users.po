@@ -18,11 +18,11 @@ msgstr ""
 "Generated-By: Babel 2.15.0\n"
 "X-Generator: Poedit 3.4.4\n"
 
-#: ../../adminguide/freeze_users.rst:7
+#: ../../hosting/freeze_users.rst:7
 msgid "Freeze users"
 msgstr "Gel des utilisateurs"
 
-#: ../../adminguide/freeze_users.rst:9
+#: ../../hosting/freeze_users.rst:9
 msgid ""
 "Server administrators can *freeze* users via the Administration API. A frozen "
 "user will be temporarily blocked from connecting to Parsec server."
@@ -31,7 +31,7 @@ msgstr ""
 "d'administration. Un utilisateur gelé sera temporairement empêché de se "
 "connecter au serveur Parsec."
 
-#: ../../adminguide/freeze_users.rst:11
+#: ../../hosting/freeze_users.rst:11
 msgid ""
 "This mechanism allows to automatically block users who have been deleted from a "
 "directory service (such as OpenLDAP or Active Directory), while waiting for the "
@@ -43,7 +43,7 @@ msgstr ""
 "attendant que l'administrateur de l'organisation les révoque. Il est exposé sous "
 "la forme de routes HTTP qui ne nécessitent qu'un jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:16
+#: ../../hosting/freeze_users.rst:16
 msgid ""
 "The *freeze* operation is performed by a *Server administrator* and can be "
 "undone. The *revoke* operation is performed by an *Organization administrator* "
@@ -55,11 +55,11 @@ msgstr ""
 "l'organisation* et n'est pas réversible ; il s'agit de la suppression définitive "
 "des droits de l'utilisateur au sein de l'organisation."
 
-#: ../../adminguide/freeze_users.rst:19
+#: ../../hosting/freeze_users.rst:19
 msgid "HTTP ``/users`` route"
 msgstr "Route HTTP ``/users``"
 
-#: ../../adminguide/freeze_users.rst:21
+#: ../../hosting/freeze_users.rst:21
 msgid ""
 "This route is made available as ``/administration/organizations/"
 "<raw_organization_id>/users`` and requires an administration token."
@@ -67,42 +67,42 @@ msgstr ""
 "Cette route est disponible sous ``administration/organisations/"
 "<raw_organization_id>/users`` et nécessite un jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:23
+#: ../../hosting/freeze_users.rst:23
 msgid ""
 "It supports the ``GET`` method which lists information for all users, including:"
 msgstr ""
 "Il prend en charge la méthode ``GET`` qui liste les informations relatives à "
 "tous les utilisateurs, y compris :"
 
-#: ../../adminguide/freeze_users.rst:25
+#: ../../hosting/freeze_users.rst:25
 msgid "Parsec ID"
 msgstr "Parsec ID"
 
-#: ../../adminguide/freeze_users.rst:26
+#: ../../hosting/freeze_users.rst:26
 msgid "user name"
 msgstr "nom de l'utilisateur"
 
-#: ../../adminguide/freeze_users.rst:27
+#: ../../hosting/freeze_users.rst:27
 msgid "user email"
 msgstr "adresse e-mail de l'utilisateur"
 
-#: ../../adminguide/freeze_users.rst:28
+#: ../../hosting/freeze_users.rst:28
 msgid "frozen status"
 msgstr "statut de gel"
 
-#: ../../adminguide/freeze_users.rst:30
+#: ../../hosting/freeze_users.rst:30
 msgid "Here's an example using ``curl`` and ``jq``:"
 msgstr "Voici un exemple utilisant ``curl`` et ``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:37
+#: ../../hosting/freeze_users.rst:37
 msgid "A successful request returns a JSON object with the following structure:"
 msgstr "Une requête réussie renvoie un objet JSON avec la structure suivante :"
 
-#: ../../adminguide/freeze_users.rst:59
+#: ../../hosting/freeze_users.rst:59
 msgid "HTTP ``/users/freeze`` route"
 msgstr "Route HTTP ``/users/freeze``"
 
-#: ../../adminguide/freeze_users.rst:61
+#: ../../hosting/freeze_users.rst:61
 msgid ""
 "This route is made available as ``/administration/organizations/"
 "<raw_organization_id>/users/freeze`` and requires an administration token."
@@ -110,7 +110,7 @@ msgstr ""
 "Cette route est disponible sous ``administration/organisations/"
 "<raw_organization_id>/users/freeze`` et nécessite un jeton d'administration."
 
-#: ../../adminguide/freeze_users.rst:63
+#: ../../hosting/freeze_users.rst:63
 msgid ""
 "It supports the ``POST`` method which modifies the ``frozen`` status for a given "
 "user."
@@ -118,12 +118,12 @@ msgstr ""
 "Il supporte la méthode ``POST`` qui modifie le statut ``frozen`` pour un "
 "utilisateur donné."
 
-#: ../../adminguide/freeze_users.rst:65
+#: ../../hosting/freeze_users.rst:65
 msgid "Here's an example of generating the request data using ``jq``:"
 msgstr ""
 "Voici un exemple de génération des données de la requête en utilisant ``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:76
+#: ../../hosting/freeze_users.rst:76
 msgid ""
 "The request can also use the ``user_email`` field instead of ``user_id`` to "
 "identify the Parsec user (see the :ref:`note on user identification <note-on-"
@@ -134,21 +134,21 @@ msgstr ""
 "on user identification <note-on-user-identification>` ci-dessous pour plus "
 "d'informations) :"
 
-#: ../../adminguide/freeze_users.rst:87
+#: ../../hosting/freeze_users.rst:87
 msgid "Here's an example of running the request using ``curl`` and ``jq``:"
 msgstr ""
 "Voici un exemple d'exécution de la requête en utilisant ``curl`` et ``jq`` :"
 
-#: ../../adminguide/freeze_users.rst:95
+#: ../../hosting/freeze_users.rst:95
 msgid "A successful request returns a JSON dictionary similar to the one below:"
 msgstr ""
 "Une requête réussie renvoie un dictionnaire JSON similaire à celui ci-dessous :"
 
-#: ../../adminguide/freeze_users.rst:107
+#: ../../hosting/freeze_users.rst:107
 msgid "HTTP Error handling"
 msgstr "Traitement des erreurs HTTP"
 
-#: ../../adminguide/freeze_users.rst:109
+#: ../../hosting/freeze_users.rst:109
 msgid ""
 "The following errors can be returned by both ``/users`` and ``/users/freeze`` "
 "routes:"
@@ -156,12 +156,12 @@ msgstr ""
 "Les erreurs suivantes peuvent être retournées par les routes ``/users`` et ``/"
 "users/freeze`` :"
 
-#: ../../adminguide/freeze_users.rst:111
+#: ../../hosting/freeze_users.rst:111
 msgid "``404: Organization not found`` with JSON body ``{\"error\": \"not_found}``"
 msgstr ""
 "``404: Organization not found`` avec JSON body ``{\"error\": \"not_found}``"
 
-#: ../../adminguide/freeze_users.rst:112
+#: ../../hosting/freeze_users.rst:112
 msgid ""
 "``403: Invalid administration token`` with JSON body ``{\"error\": "
 "\"not_allowed\"}``"
@@ -169,11 +169,11 @@ msgstr ""
 "``403: Invalid administration token`` avec JSON body ``{\"error\": "
 "\"not_allowed\"}``"
 
-#: ../../adminguide/freeze_users.rst:113
+#: ../../hosting/freeze_users.rst:113
 msgid "``400: Wrong request format`` with JSON body ``{\"error\": \"bad_data\"}``"
 msgstr "``400: Wrong request format`` avec JSON body ``{\"error\": \"bad_data\"}``"
 
-#: ../../adminguide/freeze_users.rst:115
+#: ../../hosting/freeze_users.rst:115
 msgid ""
 "The following error is returned by the ``/users/freeze`` request if the user "
 "does not exist in the organization:"
@@ -181,15 +181,15 @@ msgstr ""
 "L'erreur suivante est retournée par la requête ``/users/freeze`` si "
 "l'utilisateur n'existe pas dans l'organisation :"
 
-#: ../../adminguide/freeze_users.rst:117
+#: ../../hosting/freeze_users.rst:117
 msgid "``404: User not found`` with JSON body ``{\"error\": \"user_not_found\"}``"
 msgstr "``404: User not found`` avec JSON body ``{\"error\": \"user_not_found\"}``"
 
-#: ../../adminguide/freeze_users.rst:122
+#: ../../hosting/freeze_users.rst:122
 msgid "Note on user identification"
 msgstr "Note sur l'identification de l'utilisateur"
 
-#: ../../adminguide/freeze_users.rst:124
+#: ../../hosting/freeze_users.rst:124
 msgid ""
 "There is a subtle difference between using **Parsec user ID** or **email "
 "address** to identify a user."
@@ -197,7 +197,7 @@ msgstr ""
 "Il existe une différence subtile entre l'utilisation de **l'ID utilisateur "
 "Parsec** ou de **l'adresse e-mail** pour identifier un utilisateur."
 
-#: ../../adminguide/freeze_users.rst:126
+#: ../../hosting/freeze_users.rst:126
 msgid ""
 "The **Parsec user ID** uniquely identifies a user *within the Parsec server*, "
 "regardless of its organization. When a user is revoked, its user ID identifies "
@@ -207,7 +207,7 @@ msgstr ""
 "Parsec*, quelle que soit son organisation. Lorsqu'un utilisateur est révoqué, "
 "son ID identifie l'utilisateur révoqué."
 
-#: ../../adminguide/freeze_users.rst:127
+#: ../../hosting/freeze_users.rst:127
 msgid ""
 "The **email address** identifies an active (i.e. non-revoked) user *within an "
 "organization*. When a user is revoked, its email address can be reused to "
@@ -217,7 +217,7 @@ msgstr ""
 "révoqué) *au sein d'une organisation*. Lorsqu'un utilisateur est révoqué, son "
 "adresse électronique peut être réutilisée pour rejoindre l'organisation."
 
-#: ../../adminguide/freeze_users.rst:129
+#: ../../hosting/freeze_users.rst:129
 msgid ""
 "This means that, over time, an email address can be shared between multiple user "
 "IDs, either from different organizations or within the same organization if it "
@@ -227,39 +227,39 @@ msgstr ""
 "entre plusieurs identifiants d'utilisateurs, qu'ils appartiennent à des "
 "organisations différentes ou à la même organisation s'ils ont été révoqués."
 
-#: ../../adminguide/freeze_users.rst:131
+#: ../../hosting/freeze_users.rst:131
 msgid "Consider the following scenario:"
 msgstr "Considérons le scénario suivant :"
 
-#: ../../adminguide/freeze_users.rst:134
+#: ../../hosting/freeze_users.rst:134
 msgid "Org 1"
 msgstr "Org 1"
 
-#: ../../adminguide/freeze_users.rst:134
+#: ../../hosting/freeze_users.rst:134
 msgid "Org 2"
 msgstr "Org 2"
 
-#: ../../adminguide/freeze_users.rst:136
+#: ../../hosting/freeze_users.rst:136
 msgid "ID **1** alice@mail.com (**revoked**)"
 msgstr "ID **1** alice@mail.com (**révoqué**)"
 
-#: ../../adminguide/freeze_users.rst:136
+#: ../../hosting/freeze_users.rst:136
 msgid "ID **4** bob@mail.com (**active**)"
 msgstr "ID **4** bob@mail.com (**actif**)"
 
-#: ../../adminguide/freeze_users.rst:137
+#: ../../hosting/freeze_users.rst:137
 msgid "ID **2** bob@mail.com (**active**)"
 msgstr "ID **2** bob@mail.com (**actif**)"
 
-#: ../../adminguide/freeze_users.rst:137
+#: ../../hosting/freeze_users.rst:137
 msgid "ID **5** alice@mail.com (**active**)"
 msgstr "ID **5** alice@mail.com (**actif**)"
 
-#: ../../adminguide/freeze_users.rst:138
+#: ../../hosting/freeze_users.rst:138
 msgid "ID **3** alice@mail.com (**active**)"
 msgstr "ID **3** alice@mail.com (**actif**)"
 
-#: ../../adminguide/freeze_users.rst:141
+#: ../../hosting/freeze_users.rst:141
 msgid ""
 "The frozen status specified in the ``POST`` request is always associated with a "
 "Parsec user ID, even if an email address is specified."
@@ -267,7 +267,7 @@ msgstr ""
 "Le statut *frozen* spécifié dans la requête ``POST`` est toujours associé à un "
 "ID d'utilisateur Parsec, même si une adresse e-mail est spécifiée."
 
-#: ../../adminguide/freeze_users.rst:143
+#: ../../hosting/freeze_users.rst:143
 msgid ""
 "Regarding the previous scenario, here are some possible requests and their "
 "outcomes: - Freeze user with ID **1**: will have no consequences since the user "
@@ -284,7 +284,7 @@ msgstr ""
 "com** dans **Org 1** : l'utilisateur avec l'ID **3** sera gelé (l'utilisateur "
 "avec ID **1** n'est pas pris en compte car déjà révoqué)."
 
-#: ../../adminguide/freeze_users.rst:150
+#: ../../hosting/freeze_users.rst:150
 msgid ""
 "Notice that if a user is revoked from an organization and then re-invited with "
 "the same email address, its previous frozen status will **not** be applied to "

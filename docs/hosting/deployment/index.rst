@@ -2,7 +2,7 @@
 
 .. cspell:words conninfo literalinclude linenos
 
-.. _doc_adminguide_hosting:
+.. _doc_hosting_deployment:
 
 .. role:: bash(code)
   :language: bash
@@ -10,11 +10,11 @@
 .. role:: yaml(code)
   :language: yaml
 
-==========================
-Parsec Server installation
-==========================
+=================
+Server Deployment
+=================
 
-This guide covers the installation procedure for the `Parsec`_ server.
+This section covers how to deploy the Parsec server.
 
 .. _Parsec: https://parsec.cloud
 
@@ -22,11 +22,11 @@ Requirements
 ************
 
 - `Docker`_ and the `docker-compose`_ plugin.
-- `Parsec client`_ (Linux).
+- :ref:`Parsec client <doc_userguide_install_parsec>`.
+- :ref:`Parsec CLI <doc_hosting_install_cli>`.
 
 .. _Docker: https://www.docker.com
 .. _docker-compose: https://docs.docker.com/compose/
-.. _parsec client: https://parsec.cloud/get-parsec
 
 Preamble
 ********
