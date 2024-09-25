@@ -10,12 +10,6 @@ from . import (
     certificate_get,
     device_create,
     events_listen,
-    invite_1_greeter_wait_peer,
-    invite_2a_greeter_get_hashed_nonce,
-    invite_2b_greeter_send_nonce,
-    invite_3a_greeter_wait_peer_trust,
-    invite_3b_greeter_signify_trust,
-    invite_4_greeter_communicate,
     invite_cancel,
     invite_complete,
     invite_greeter_cancel_greeting_attempt,
@@ -55,12 +49,6 @@ class AnyCmdReq:
         | certificate_get.Req
         | device_create.Req
         | events_listen.Req
-        | invite_1_greeter_wait_peer.Req
-        | invite_2a_greeter_get_hashed_nonce.Req
-        | invite_2b_greeter_send_nonce.Req
-        | invite_3a_greeter_wait_peer_trust.Req
-        | invite_3b_greeter_signify_trust.Req
-        | invite_4_greeter_communicate.Req
         | invite_cancel.Req
         | invite_complete.Req
         | invite_greeter_cancel_greeting_attempt.Req
@@ -97,12 +85,6 @@ __all__ = [
     "certificate_get",
     "device_create",
     "events_listen",
-    "invite_1_greeter_wait_peer",
-    "invite_2a_greeter_get_hashed_nonce",
-    "invite_2b_greeter_send_nonce",
-    "invite_3a_greeter_wait_peer_trust",
-    "invite_3b_greeter_signify_trust",
-    "invite_4_greeter_communicate",
     "invite_cancel",
     "invite_complete",
     "invite_greeter_cancel_greeting_attempt",
