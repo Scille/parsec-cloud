@@ -8,7 +8,7 @@ from typing import Any, Callable, MutableMapping, TextIO, Union, cast
 
 import sentry_sdk
 import structlog
-from sentry_sdk.integrations.logging import LoggingIntegration
+from sentry_sdk.integrations.asyncio import AsyncioIntegration
 from sentry_sdk.types import Event
 from sentry_sdk.utils import event_from_exception
 from structlog.dev import ConsoleRenderer
@@ -169,6 +169,16 @@ def _structlog_to_sentry_processor(
     # Error & Critical log levels
     if level_number >= logging.ERROR:
         # Cook the exception as a (class, exc, traceback) tuple
+        # This is exactly what the structlog.processors.format_exc_info does
+        # (see  _figure_out_exc_info in structlog.processors.py)
+        # If the event_dict contains the key "exc_info":
+        #   1. If the value is a tuple, use it as-is
+        #   2. If the value is an Exception, cook the tuple from the exception
+        #   3. If the value is true but no tuple, obtain exc_info ourselves and cook the tuple
+        #
+        # NOTE: Why not directly using structlog's internal function?
+        #       v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
+        #       exc_info: ExcInfo | None = _figure_out_exc_info(v)
         v = cast(Union[ExcInfo, Exception, None], data.pop("exc_info", None))
         exc_info: ExcInfo | None
         if isinstance(v, BaseException):
@@ -257,6 +267,8 @@ def configure_structlog_logger(log_level: LogLevel, log_format: str, log_stream:
             structlog.stdlib.add_log_level_number,
             _add_timestamp_processor,
             # Set `exc_info=True` if method name is `exception` and `exc_info` not set
+            # when set to True, the format_exc_info processor below will extract
+            # the exception info from sys.exc_info()
             structlog.dev.set_exc_info,
             # Given Sentry needs the whole event context as a dictionary,
             # this processor must be kept just before we start formatting
@@ -304,15 +316,22 @@ def configure_logging(log_level: LogLevel, log_format: str, log_stream: TextIO) 
 
 
 def enable_sentry_logging(dsn: str, environment: str) -> None:
-    sentry_logging = LoggingIntegration(
-        level=logging.INFO,  # Capture as breadcrumbs
-        event_level=logging.ERROR,  # Send as Sentry event
-    )
     sentry_sdk.init(
         dsn=dsn,
         environment=environment,
         release=__version__,
-        integrations=[sentry_logging],
+        integrations=[
+            # Note that Sentry automatically enables some integrations, like:
+            # AsyncPGIntegration (https://docs.sentry.io/platforms/python/integrations/asyncpg/)
+            # FastApiIntegration (https://docs.sentry.io/platforms/python/integrations/fastapi/)
+            # LoggingIntegration (https://docs.sentry.io/platforms/python/integrations/logging/)
+            # StarletteIntegration (https://docs.sentry.io/platforms/python/integrations/starlette/)
+            #
+            # The asyncio integration is not enabled automatically
+            # and needs to be added manually.
+            # See https://docs.sentry.io/platforms/python/integrations/asyncio/
+            AsyncioIntegration(),
+        ],
         # Set traces_sample_rate to 1.0 to capture 100% of transactions for tracing.
         # Changing the error sample rate requires re-deployment, so instead of
         # dropping events here, it may be better to sate a rate limit at
