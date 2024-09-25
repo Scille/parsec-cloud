@@ -473,7 +473,7 @@ def ensure_working_in_a_clean_git_repo() -> None:
 def ensure_working_on_the_correct_branch(
     release_branch: str, base_ref: str | None, version: Version
 ) -> None:
-    current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD")
+    current_branch = run_git("rev-parse", "--abbrev-ref", "HEAD").strip()
     print(f"Current branch {COLOR_GREEN}{current_branch}{COLOR_END}")
 
     if current_branch == release_branch:
