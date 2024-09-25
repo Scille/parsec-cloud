@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from . import anonymous_cmds, authenticated_cmds, invited_cmds
+from . import anonymous_cmds, authenticated_cmds, invited_cmds, tos_cmds
 
 class ActiveUsersLimit:
     NO_LIMIT: ActiveUsersLimit
@@ -23,4 +23,4 @@ class ActiveUsersLimit:
     def __lt__(self, other: object) -> bool: ...
     def __ne__(self, other: object) -> bool: ...
 
-__all__ = ["ActiveUsersLimit", "anonymous_cmds", "authenticated_cmds", "invited_cmds"]
+__all__ = ["ActiveUsersLimit", "anonymous_cmds", "authenticated_cmds", "invited_cmds", "tos_cmds"]
