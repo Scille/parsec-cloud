@@ -13,18 +13,18 @@ import wasmPack from './scripts/vite_plugin_wasm_pack';
 const plugins: PluginOption[] = [vue(), topLevelAwait()];
 let platform: string;
 
-// Vite only expose in `import.meta.env` the environ variables with a `VITE_` prefix,
+// Vite only expose in `import.meta.env` the environ variables with a `PARSEC_APP_` prefix,
 // however testbed server url must also be configured in Cypress (you guessed it: where
 // only `CYPRESS_` prefixed variables are exposed).
 // So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
-if (process.env.VITE_TESTBED_SERVER || process.env.TESTBED_SERVER) {
+if (process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER) {
   // Why this if guard ? Guess what kiddo !
-  // Setting `process.env.VITE_TESTBED_SERVER = undefined` got chewed up
+  // Setting `process.envPARSEC_APP_TESTBED_SERVER = undefined` got chewed up
   // in the web page into "undefined" string...
-  process.env.VITE_TESTBED_SERVER = process.env.VITE_TESTBED_SERVER || process.env.TESTBED_SERVER;
+  process.env.PARSEC_APP_TESTBED_SERVER = process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER;
 }
-if (process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE) {
-  process.env.VITE_APP_TEST_MODE = process.env.VITE_APP_TEST_MODE || process.env.APP_TEST_MODE;
+if (process.env.PARSEC_APP_TEST_MODE || process.env.APP_TEST_MODE) {
+  process.env.PARSEC_APP_TEST_MODE = process.env.PARSEC_APP_TEST_MODE || process.env.APP_TEST_MODE;
 }
 
 // 1) Detect for what platform we are building for (web or native)
@@ -50,15 +50,15 @@ if (platform === 'web') {
   plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
 }
 
-if (process.env.VITE_SENTRY_AUTH_TOKEN) {
+if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
   const sentryPlugin = sentryVitePlugin({
     org: 'scille',
     project: 'parsec3-frontend',
-    authToken: process.env.VITE_SENTRY_AUTH_TOKEN,
+    authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN,
   });
   plugins.push(sentryPlugin);
 } else {
-  console.log('VITE_SENTRY_AUTH_TOKEN is not set');
+  console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
 }
 
 // 3) Finally configure Vite
@@ -96,6 +96,7 @@ const config: UserConfigExport = () => ({
     // to be a string once replaced in the code.
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version),
   },
+  envPrefix: 'PARSEC_APP_',
   server: {
     port: 8080,
     hmr: true,

@@ -4,7 +4,7 @@ import { EnvironmentType, I18n } from 'megashark-lib';
 
 export const APP_VERSION = __APP_VERSION__;
 
-const STRIPE_ENV_VARIABLE = 'VITE_STRIPE_API_KEY';
+const STRIPE_ENV_VARIABLE = 'PARSEC_APP_STRIPE_API_KEY';
 // cspell:disable-next-line
 const DEFAULT_STRIPE_API_KEY = 'pk_test_P4dfuyoLBQtDHKjTiNDH3JH700TT3mCLbE';
 
@@ -20,7 +20,7 @@ function getStripeApiKey(): { key: string; mode: EnvironmentType } {
   return { key: DEFAULT_STRIPE_API_KEY, mode: EnvironmentType.Development };
 }
 
-const BMS_ENV_VARIABLE = 'VITE_BMS_API_URL';
+const BMS_ENV_VARIABLE = 'PARSEC_APP_BMS_API_URL';
 const DEFAULT_BMS_URL = 'https://bms-dev.parsec.cloud';
 
 function getBmsUrl(): string {
@@ -30,7 +30,7 @@ function getBmsUrl(): string {
   return DEFAULT_BMS_URL;
 }
 
-const SIGN_ENV_VARIABLE = 'VITE_SIGN_URL';
+const SIGN_ENV_VARIABLE = 'PARSEC_APP_SIGN_URL';
 const DEFAULT_SIGN_URL = 'https://sign-dev.parsec.cloud';
 
 function getSignUrl(): string {
@@ -40,8 +40,8 @@ function getSignUrl(): string {
   return DEFAULT_SIGN_URL;
 }
 
-const SAAS_SERVERS_ENV_VARIABLE = 'VITE_SAAS_SERVERS';
-const TRIAL_SERVERS_ENV_VARIABLE = 'VITE_TRIAL_SERVERS';
+const SAAS_SERVERS_ENV_VARIABLE = 'PARSEC_APP_SAAS_SERVERS';
+const TRIAL_SERVERS_ENV_VARIABLE = 'PARSEC_APP_TRIAL_SERVERS';
 
 const DEFAULT_SAAS_SERVERS = ['saas-v3.parsec.cloud', 'saas-demo-v3-mightyfairy.parsec.cloud'];
 const DEFAULT_TRIAL_SERVERS = ['trial.parsec.cloud'];

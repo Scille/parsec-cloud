@@ -5,7 +5,7 @@ import vitePreprocessor from 'cypress-vite';
 
 // Cypress only expose in `Cypress.env()` the environ variables with a `CYPRESS_` prefix,
 // however testbed server url must also be configured in Vite (you guessed it: where
-// only `VITE_` prefixed variables are exposed).
+// only `PARSEC_APP_` prefixed variables are exposed).
 // So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
 process.env.CYPRESS_TESTBED_SERVER = process.env.CYPRESS_TESTBED_SERVER || process.env.TESTBED_SERVER;
 

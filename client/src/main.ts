@@ -148,9 +148,9 @@ async function setupApp(): Promise<void> {
     window.nextStageHook = (): any => {
       return [libparsec, nextStage];
     };
-  } else if (import.meta.env.VITE_TESTBED_SERVER) {
+  } else if (import.meta.env.PARSEC_APP_TESTBED_SERVER) {
     const msg = `\`TESTBED_SERVER\` environ variable detected, creating a new coolorg testbed organization with server ${
-      import.meta.env.VITE_TESTBED_SERVER
+      import.meta.env.PARSEC_APP_TESTBED_SERVER
     }`;
     console.log(msg);
     if (isElectron()) {
@@ -158,13 +158,13 @@ async function setupApp(): Promise<void> {
     }
 
     // Dev mode, provide a default testbed
-    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.VITE_TESTBED_SERVER);
+    const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
     if (configResult.ok) {
       nextStage(configResult.value); // Fire-and-forget call
     } else {
       // eslint-disable-next-line no-alert
       alert(
-        `Failed to initialize using the testbed.\nTESTBED_SERVER is set to '${import.meta.env.VITE_TESTBED_SERVER}'\n${
+        `Failed to initialize using the testbed.\nTESTBED_SERVER is set to '${import.meta.env.PARSEC_APP_TESTBED_SERVER}'\n${
           configResult.error.tag
         }: ${configResult.error.error}`,
       );
@@ -179,7 +179,7 @@ async function setupApp(): Promise<void> {
   // Only set the attribute once nextStageHook has been set
   appElem.setAttribute('app-state', AppState.Initializing);
 
-  if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
+  if (import.meta.env.PARSEC_APP_APP_TEST_MODE?.toLowerCase() === 'true') {
     const x = async (): Promise<void> => {
       await router.isReady();
       router.push('/test');

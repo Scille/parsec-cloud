@@ -120,7 +120,7 @@ const routes: Array<RouteRecordRaw> = [
   },
 ];
 
-if (import.meta.env.VITE_APP_TEST_MODE?.toLowerCase() === 'true') {
+if (import.meta.env.PARSEC_APP_TEST_MODE?.toLowerCase() === 'true') {
   routes.push({
     path: '/test',
     name: 'Test',
