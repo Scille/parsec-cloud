@@ -105,7 +105,7 @@ jobs:
       - name: Build web app
         run: npm run web:release
         env:
-          VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
 
       - name: Generate SBOM
@@ -169,8 +169,8 @@ jobs:
       - name: Patch vite config for snap build
         run: >-
           sed -i
-          -e s'/if (process.env.VITE_SENTRY_AUTH_TOKEN)/if (true)/'
-          -e s';authToken: process.env.VITE_SENTRY_AUTH_TOKEN;authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
+          -e s'/if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN)/if (true)/'
+          -e s';authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN;authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
           vite.config.ts
         working-directory: client
 
@@ -338,7 +338,7 @@ jobs:
           ${{ matrix.platform == 'linux' && 'appimage' || '' }}
           ${{ inputs.nightly_build && '--nightly' || '' }}
         env:
-          VITE_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
         timeout-minutes: 5
 

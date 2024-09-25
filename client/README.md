@@ -129,6 +129,6 @@ ionic cap add ios
 
 ## Variables
 
-| Name                       | Type                 | Description                                   | Remark                                                                                          |
-| -------------------------- | -------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `VITE_DEV_BMS_CREDENTIALS` | `<email>:<password>` | Used as default login credentials for the BMS | Only for development purposes! Avoid using `:` in your password as it will mess up the parsing. |
+| Name                             | Type                 | Description                                   | Remark                                                                                          |
+| -------------------------------- | -------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `PARSEC_APP_DEV_BMS_CREDENTIALS` | `<email>:<password>` | Used as default login credentials for the BMS | Only for development purposes! Avoid using `:` in your password as it will mess up the parsing. |
