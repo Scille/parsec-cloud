@@ -19,7 +19,7 @@ let platform: string;
 // So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
 if (process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER) {
   // Why this if guard ? Guess what kiddo !
-  // Setting `process.envPARSEC_APP_TESTBED_SERVER = undefined` got chewed up
+  // Setting `process.env.PARSEC_APP_TESTBED_SERVER = undefined` got chewed up
   // in the web page into "undefined" string...
   process.env.PARSEC_APP_TESTBED_SERVER = process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER;
 }
