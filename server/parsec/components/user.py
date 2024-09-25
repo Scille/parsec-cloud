@@ -19,6 +19,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
     authenticated_cmds,
+    tos_cmds,
 )
 from parsec.api import api
 from parsec.ballpark import (
@@ -334,6 +335,15 @@ class UserFreezeUserBadOutcome(BadOutcomeEnum):
     NO_USER_ID_NOR_EMAIL = auto()
 
 
+class UserAcceptTosBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    NO_TOS = auto()
+    TOS_MISMATCH = auto()
+
+
 class BaseUserComponent:
     #
     # Public methods
@@ -441,6 +451,15 @@ class BaseUserComponent:
         user_email: str | None,
         frozen: bool,
     ) -> UserInfo | UserFreezeUserBadOutcome:
+        raise NotImplementedError
+
+    async def accept_tos(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        tos_updated_on: DateTime,
+    ) -> None | UserAcceptTosBadOutcome:
         raise NotImplementedError
 
     #
@@ -653,3 +672,29 @@ class BaseUserComponent:
                 client_ctx.author_not_found_abort()
             case UserRevokeUserStoreBadOutcome.AUTHOR_REVOKED:
                 client_ctx.author_revoked_abort()
+
+    @api
+    async def api_tos_accept(
+        self, client_ctx: AuthenticatedClientContext, req: tos_cmds.latest.tos_accept.Req
+    ) -> tos_cmds.latest.tos_accept.Rep:
+        outcome = await self.accept_tos(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            tos_updated_on=req.tos_updated_on,
+        )
+        match outcome:
+            case None:
+                return tos_cmds.latest.tos_accept.RepOk()
+            case UserAcceptTosBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case UserAcceptTosBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case UserAcceptTosBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case UserAcceptTosBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            case UserAcceptTosBadOutcome.NO_TOS:
+                return tos_cmds.latest.tos_accept.RepNoTos()
+            case UserAcceptTosBadOutcome.TOS_MISMATCH:
+                return tos_cmds.latest.tos_accept.RepTosMismatch()

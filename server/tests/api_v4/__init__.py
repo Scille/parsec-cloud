@@ -2,4 +2,5 @@
 
 from .anonymous import *  # noqa
 from .authenticated import *  # noqa
+from .tos import *  # noqa
 from .invited import *  # noqa

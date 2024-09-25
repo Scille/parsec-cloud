@@ -11,6 +11,7 @@ from parsec._parsec import ActiveUsersLimit, ParsecAddr
 
 if TYPE_CHECKING:
     from parsec.components.memory.organization import MemoryOrganization, OrganizationID
+    from parsec.components.organization import TosLocale, TosUrl
 
 
 def hide_password(url: str) -> str:
@@ -188,6 +189,7 @@ class BackendConfig:
     )
     organization_initial_user_profile_outsider_allowed: bool = True
     organization_initial_minimum_archiving_period: int = 2592000  # seconds (i.e 30 days)
+    organization_initial_tos: dict[TosLocale, TosUrl] | None = None
 
     # Number of SSE events kept in memory to allow client to catch up on reconnection
     sse_events_cache_size: int = 1024

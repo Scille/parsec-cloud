@@ -552,7 +552,9 @@ class AnyCmdReq:
         test_rpc_code_need_import_types.add(family_mod_name)
         test_rpc_code_body.append("")
         test_rpc_code_body.append(f"class Base{family_name.capitalize()}RpcClient:")
-        test_rpc_code_body.append("    async def _do_request(self, req: bytes) -> bytes:")
+        test_rpc_code_body.append(
+            "    async def _do_request(self, req: bytes, family: str) -> bytes:"
+        )
         test_rpc_code_body.append("        raise NotImplementedError")
         test_rpc_code_body.append("")
         last_version = max(specs.keys())
@@ -592,7 +594,9 @@ class AnyCmdReq:
             test_rpc_code_body.append(
                 f"        req = {family_mod_name}.latest.{cmd_name}.Req({', '.join(call_params)})"
             )
-            test_rpc_code_body.append("        raw_rep = await self._do_request(req.dump())")
+            test_rpc_code_body.append(
+                f'        raw_rep = await self._do_request(req.dump(), "{family_name}")'
+            )
             test_rpc_code_body.append(
                 f"        return {family_mod_name}.latest.{cmd_name}.Rep.load(raw_rep)"
             )

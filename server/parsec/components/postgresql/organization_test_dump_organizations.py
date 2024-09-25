@@ -4,10 +4,12 @@ from __future__ import annotations
 from parsec._parsec import (
     ActiveUsersLimit,
     BootstrapToken,
+    DateTime,
     OrganizationID,
 )
 from parsec.components.organization import (
     OrganizationDump,
+    TermsOfService,
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
@@ -22,7 +24,9 @@ SELECT
     is_expired,
     active_users_limit,
     user_profile_outsider_allowed,
-    minimum_archiving_period
+    minimum_archiving_period,
+    tos_updated_on,
+    tos_per_locale_urls
 FROM organization
 ORDER BY organization_id
 """)
@@ -84,6 +88,17 @@ async def organization_test_dump_organizations(
             case unknown:
                 assert False, unknown
 
+        match (row["tos_updated_on"], row["tos_per_locale_urls"]):
+            case (None, None):
+                tos = None
+            case (DateTime() as tos_updated_on, dict() as tos_per_locale_urls):
+                for k, v in tos_per_locale_urls.items():
+                    assert isinstance(k, str), tos_per_locale_urls
+                    assert isinstance(v, str), tos_per_locale_urls
+                tos = TermsOfService(updated_on=tos_updated_on, per_locale_urls=tos_per_locale_urls)
+            case unknown:
+                assert False, unknown
+
         items[organization_id] = OrganizationDump(
             organization_id=organization_id,
             bootstrap_token=bootstrap_token,
@@ -92,6 +107,7 @@ async def organization_test_dump_organizations(
             active_users_limit=active_users_limit,
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             minimum_archiving_period=minimum_archiving_period,
+            tos=tos,
         )
 
     return items

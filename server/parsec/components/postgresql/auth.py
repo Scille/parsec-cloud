@@ -72,7 +72,8 @@ _q_authenticated_get_info = Q(
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        is_expired,
+        tos_updated_on
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -91,6 +92,36 @@ my_device AS (
     WHERE
         device.device_id = $device_id
     LIMIT 1
+),
+
+my_user AS (
+    SELECT
+        user_id,
+        revoked_on,
+        frozen,
+        (
+            CASE WHEN user_.tos_accepted_on IS NULL
+                THEN
+                    -- The user hasn't accepted the TOS, this is acceptable if there
+                    -- is no TOS at all for this organization.
+                    COALESCE(
+                        (SELECT TRUE FROM my_organization WHERE tos_updated_on IS NOT NULL),
+                        FALSE
+                    )
+                ELSE
+                    -- The user has accepted an TOS, we must make sure it corresponds to
+                    -- the current one in the organization.
+                    -- If the organization no longer has a TOS, then what the user has
+                    -- accepted in the past is irrelevant.
+                    COALESCE(
+                        (user_.tos_accepted_on < (SELECT tos_updated_on FROM my_organization)),
+                        FALSE
+                    )
+                END
+        ) AS user_must_accept_tos
+    FROM user_
+    INNER JOIN my_device ON user_._id = my_device.user_
+    LIMIT 1
 )
 
 SELECT
@@ -98,21 +129,10 @@ SELECT
     (SELECT is_expired FROM my_organization) as organization_is_expired,
     (SELECT _id FROM my_device) as device_internal_id,
     (SELECT verify_key FROM my_device) as device_verify_key,
-    (
-        SELECT user_id
-        FROM user_
-        INNER JOIN my_device ON user_._id = my_device.user_
-    ) as user_id,
-    (
-        SELECT revoked_on
-        FROM user_
-        INNER JOIN my_device ON user_._id = my_device.user_
-    ) as user_revoked_on,
-    (
-        SELECT frozen
-        FROM user_
-        INNER JOIN my_device ON user_._id = my_device.user_
-    ) as user_is_frozen
+    (SELECT user_id FROM my_user) as user_id,
+    (SELECT revoked_on FROM my_user) as user_revoked_on,
+    (SELECT frozen FROM my_user) as user_is_frozen,
+    (SELECT user_must_accept_tos FROM my_user)
 """
 )
 
@@ -146,6 +166,7 @@ class PGAuthComponent(BaseAuthComponent):
                     active_users_limit=self._config.organization_initial_active_users_limit,
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
+                    tos_per_locale_urls=self._config.organization_initial_tos,
                     bootstrap_token=None,
                 )
                 match outcome:
@@ -248,6 +269,7 @@ class PGAuthComponent(BaseAuthComponent):
         conn: AsyncpgConnection,
         organization_id: OrganizationID,
         device_id: DeviceID,
+        tos_acceptance_required: bool,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         row = await conn.fetchrow(
             *_q_authenticated_get_info(organization_id=organization_id.str, device_id=device_id)
@@ -303,6 +325,15 @@ class PGAuthComponent(BaseAuthComponent):
                 return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
             case unknown:
                 assert False, repr(unknown)
+
+        if tos_acceptance_required:
+            match row["user_must_accept_tos"]:
+                case False:
+                    pass
+                case True:
+                    return AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS
+                case unknown:
+                    assert False, repr(unknown)
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,

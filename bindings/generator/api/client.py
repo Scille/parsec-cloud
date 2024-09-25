@@ -146,6 +146,49 @@ async def client_change_authentication(
     raise NotImplementedError
 
 
+class Tos(Structure):
+    per_locale_urls: dict[str, str]
+    updated_on: DateTime
+
+
+class ClientGetTosError(ErrorVariant):
+    class NoTos:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_get_tos(
+    client: Handle,
+) -> Result[Tos, ClientGetTosError]:
+    raise NotImplementedError
+
+
+class ClientAcceptTosError(ErrorVariant):
+    class NoTos:
+        pass
+
+    class TosMismatch:
+        pass
+
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_accept_tos(
+    client: Handle,
+    tos_updated_on: DateTime,
+) -> Result[None, ClientAcceptTosError]:
+    raise NotImplementedError
+
+
 class UserInfo(Structure):
     id: UserID
     human_handle: HumanHandle

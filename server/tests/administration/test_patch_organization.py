@@ -7,7 +7,8 @@ import httpx
 import pytest
 
 from parsec._parsec import ActiveUsersLimit
-from parsec.components.organization import OrganizationDump
+from parsec.components.organization import OrganizationDump, TermsOfService
+from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from tests.common import Backend, CoolorgRpcClients
 
 
@@ -92,6 +93,7 @@ class PatchOrganizationParams(TypedDict):
             "active_user_limit": None,
             "user_profile_outsider_allowed": True,
             "minimum_archiving_period": 0,
+            "tos": {"en_HK": "https://parsec.invalid/tos_en"},
         },
     ),
 )
@@ -122,8 +124,159 @@ async def test_ok(
             ),
             user_profile_outsider_allowed=params.get("user_profile_outsider_allowed", True),
             minimum_archiving_period=params.get("minimum_archiving_period", 2592000),
+            tos=TermsOfService(updated_on=ANY, per_locale_urls=params["tos"])
+            if "tos" in params
+            else None,
         )
     }
+
+
+async def test_expire_and_cancel_expire(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    coolorg: CoolorgRpcClients,
+):
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
+
+    with backend.event_bus.spy() as spy:
+        # Expire
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"is_expired": True},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        await spy.wait_event_occurred(
+            EventOrganizationExpired(organization_id=coolorg.organization_id)
+        )
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].is_expired is True
+
+        # Re-expire, should be a no-op
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"is_expired": True},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        # Note that the event is triggered again even if it's a no-op (this is no big
+        # deal and simplifies implementation)
+        await spy.wait_event_occurred(
+            EventOrganizationExpired(organization_id=coolorg.organization_id)
+        )
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].is_expired is True
+
+        # Cancel expiration
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"is_expired": False},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        # Cancelling the expiration doesn't trigger any event
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].is_expired is False
+
+        # Re-cancel expiration, should be a no-op
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"is_expired": False},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        # Cancelling the expiration doesn't trigger any event
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].is_expired is False
+
+
+async def test_set_unset_tos(
+    client: httpx.AsyncClient,
+    backend: Backend,
+    coolorg: CoolorgRpcClients,
+):
+    url = f"http://parsec.invalid/administration/organizations/{coolorg.organization_id.str}"
+
+    # Set
+
+    with backend.event_bus.spy() as spy:
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"tos": {"fr_CA": "https://parsec.invalid/tos_fr1"}},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        await spy.wait_event_occurred(
+            EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
+        )
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].tos == TermsOfService(
+            updated_on=ANY, per_locale_urls={"fr_CA": "https://parsec.invalid/tos_fr1"}
+        )
+
+        # Update
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={
+                "tos": {
+                    "fr_CA": "https://parsec.invalid/tos_fr2",
+                    "en_CA": "https://parsec.invalid/tos_en1",
+                }
+            },
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        await spy.wait_event_occurred(
+            EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
+        )
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].tos == TermsOfService(
+            updated_on=ANY,
+            per_locale_urls={
+                "fr_CA": "https://parsec.invalid/tos_fr2",
+                "en_CA": "https://parsec.invalid/tos_en1",
+            },
+        )
+
+        # Unset
+
+        response = await client.patch(
+            url,
+            headers={"Authorization": f"Bearer {backend.config.administration_token}"},
+            json={"tos": None},
+        )
+        assert response.status_code == 200, response.content
+        assert response.json() == {}
+
+        await spy.wait_event_occurred(
+            EventOrganizationTosUpdated(organization_id=coolorg.organization_id)
+        )
+
+        dump = await backend.organization.test_dump_organizations()
+        assert dump[coolorg.organization_id].tos is None
 
 
 async def test_404(

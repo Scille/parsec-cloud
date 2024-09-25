@@ -75,6 +75,10 @@ pub enum ConnectionError {
     #[error("User has been frozen")]
     FrozenUser,
 
+    /// The server requires the user to accept the Terms of Service (TOS)
+    #[error("User must first accept the Terms of Service")]
+    UserMustAcceptTos,
+
     /// The authentication token has expired
     #[error("Authentication token has expired")]
     AuthenticationTokenExpired,

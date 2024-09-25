@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib.resources
+import json
 import re
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
@@ -199,6 +200,10 @@ async def handle_integer(conn: AsyncpgConnection) -> None:
     )
 
 
+async def handle_json(conn: AsyncpgConnection) -> None:
+    await conn.set_type_codec("json", encoder=json.dumps, decoder=json.loads, schema="pg_catalog")
+
+
 @asynccontextmanager
 async def asyncpg_pool_factory(
     url: str, min_connections: int, max_connections: int
@@ -211,6 +216,7 @@ async def asyncpg_pool_factory(
         await handle_datetime(conn)
         await handle_uuid(conn)
         await handle_integer(conn)
+        await handle_json(conn)
 
     async with asyncpg.create_pool(
         url,

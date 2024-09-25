@@ -1,0 +1,32 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "tos_get",
+            "fields": [
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok",
+                "fields": [
+                    {
+                        "name": "per_locale_urls",
+                        // Mapping of locale + URL tuples.
+                        // e.g. {"en_US": "https://example.com/tos_en.html", "fr_FR": "https://example.com/tos_fr.html"}
+                        "type": "Map<String, String>"
+                    },
+                    {
+                        "name": "updated_on",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                "status": "no_tos"
+            }
+        ]
+    }
+]

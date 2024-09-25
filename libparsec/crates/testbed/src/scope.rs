@@ -194,7 +194,7 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
             let re = regex::Regex::new(r"127.0.0.1:([0-9]+)").unwrap();
             let mut buf = vec![0u8; 2048];
             let mut total = 0;
-            let mut sleep_wait_count = 30; // Sleep at most for 3s
+            let mut sleep_wait_count = 300; // Sleep at most for 3s (3s / 10ms)
             loop {
                 let n = stderr
                     .read(&mut buf[total..])
@@ -215,8 +215,8 @@ fn ensure_testbed_server_is_started() -> (Option<ParsecAddr>, Option<std::proces
                     }
                     None => {
                         if sleep_wait_count > 0 {
-                            // Not enough output from subprocess, wait 100ms more
-                            std::thread::sleep(std::time::Duration::new(0, 100000));
+                            // Not enough output from subprocess, wait 10ms more
+                            std::thread::sleep(std::time::Duration::new(0, 10000));
                             sleep_wait_count -= 1;
                         } else {
                             panic!(

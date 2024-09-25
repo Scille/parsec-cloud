@@ -4,10 +4,10 @@ use std::{path::Path, sync::Arc};
 
 use libparsec_client::ServerConfig;
 pub use libparsec_client::{
-    ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError, ClientGetUserDeviceError,
-    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
-    ClientRenameWorkspaceError, ClientRevokeUserError, ClientShareWorkspaceError, DeviceInfo,
-    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientAcceptTosError, ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError,
+    ClientGetTosError, ClientGetUserDeviceError, ClientListUserDevicesError, ClientListUsersError,
+    ClientListWorkspaceUsersError, ClientRenameWorkspaceError, ClientRevokeUserError,
+    ClientShareWorkspaceError, DeviceInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
@@ -374,6 +374,29 @@ pub async fn client_change_authentication(
     )
     .await?;
     Ok(())
+}
+
+/*
+ * Get Terms of Service (TOS)
+ */
+
+pub async fn client_get_tos(client: Handle) -> Result<Tos, ClientGetTosError> {
+    let client = borrow_client(client)?;
+
+    client.get_tos().await
+}
+
+/*
+ * Accept Terms of Service (TOS)
+ */
+
+pub async fn client_accept_tos(
+    client: Handle,
+    tos_updated_on: DateTime,
+) -> Result<(), ClientAcceptTosError> {
+    let client = borrow_client(client)?;
+
+    client.accept_tos(tos_updated_on).await
 }
 
 /*

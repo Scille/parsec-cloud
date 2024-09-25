@@ -33,6 +33,7 @@ from tests.common.rpc import (
     BaseAnonymousRpcClient,
     BaseAuthenticatedRpcClient,
     BaseInvitedRpcClient,
+    BaseTosRpcClient,
 )
 
 
@@ -52,7 +53,7 @@ class AnonymousRpcClient(BaseAnonymousRpcClient):
             "Api-Version": "4.0",
         }
 
-    async def _do_request(self, req: bytes) -> bytes:
+    async def _do_request(self, req: bytes, family: str) -> bytes:
         rep = await self.raw_client.post(self.url, headers=self.headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
@@ -79,7 +80,7 @@ class EventsListenSSE:
             return authenticated_cmds.latest.events_listen.Rep.load(b64decode(sse.data))
 
 
-class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
+class AuthenticatedRpcClient(BaseAuthenticatedRpcClient, BaseTosRpcClient):
     def __init__(
         self,
         raw_client: AsyncClient,
@@ -113,7 +114,12 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
             case tb.TestbedEventBootstrapOrganization() as event:
                 return event.first_user_human_handle
 
-    async def _do_request(self, req: bytes) -> bytes:
+    async def _do_request(self, req: bytes, family: str) -> bytes:
+        if family == "tos":
+            url = f"{self.url}/tos"
+        else:
+            url = self.url
+
         token = AuthenticatedToken.generate_raw(
             device_id=self.device_id,
             timestamp=self.now_factory(),
@@ -123,7 +129,7 @@ class AuthenticatedRpcClient(BaseAuthenticatedRpcClient):
             "Authorization": f"Bearer {token.decode()}",
             **self.headers,
         }
-        rep = await self.raw_client.post(self.url, headers=headers, content=req)
+        rep = await self.raw_client.post(url, headers=headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)
         return rep.content
@@ -194,7 +200,7 @@ class InvitedRpcClient(BaseInvitedRpcClient):
     def token(self) -> InvitationToken:
         return self.event.token
 
-    async def _do_request(self, req: bytes) -> bytes:
+    async def _do_request(self, req: bytes, family: str) -> bytes:
         rep = await self.raw_client.post(self.url, headers=self.headers, content=req)
         if rep.status_code != 200:
             raise RpcTransportError(rep)

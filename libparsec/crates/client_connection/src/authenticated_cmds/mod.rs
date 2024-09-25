@@ -27,7 +27,12 @@ use self::sse::EVENT_STREAM_CONTENT_TYPE;
 /// Method name that will be used for the header `Authorization` to indicate that will be using this method.
 pub const PARSEC_AUTH_METHOD: &str = "PARSEC-SIGN-ED25519";
 
-/// Factory that send commands in a authenticated context.
+/// Send commands in an authenticated context.
+///
+/// This supports both the `authenticated` and `tos` cmds families.
+/// From the client point of view, these families work pretty much
+/// the same way, the only difference is that the server can return
+/// "TOS must be accepted" error when using the `authenticated` family.
 #[derive(Debug)]
 pub struct AuthenticatedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
@@ -85,16 +90,35 @@ impl AuthenticatedCmds {
 
         let request_body = request.api_dump()?;
 
+        let url = match T::FAMILY {
+            ProtocolFamily::Authenticated => self.url.clone(),
+            ProtocolFamily::Tos => {
+                let mut url = self.url.clone();
+                url.path_segments_mut()
+                    .expect("Url is not cannot-be-a-base")
+                    .push("tos");
+                url
+            }
+            // Other families are not supported
+            _ => {
+                // TODO: Once const panic is available we can replace this runtime
+                // error by doing the `match T:::FAMILY { ... }` in a const function.
+                // (see https://rust-lang.github.io/rfcs/2345-const-panic.html)
+                unreachable!("Unsupported family")
+            }
+        };
+
         // Split non-generic code out of `send` to limit the amount of code generated
         // by monomorphization
         let api_version = api_version_major_to_full(T::API_MAJOR_VERSION);
-        let response_body = self.internal_send(api_version, request_body).await?;
+        let response_body = self.internal_send(url, api_version, request_body).await?;
 
         Ok(T::api_load_response(&response_body)?)
     }
 
     async fn internal_send(
         &self,
+        url: Url,
         api_version: &ApiVersion,
         request_body: Vec<u8>,
     ) -> Result<Bytes, ConnectionError> {
@@ -120,7 +144,7 @@ impl AuthenticatedCmds {
 
         let request_builder = self
             .client
-            .post(self.url.clone())
+            .post(url)
             .headers(content_headers)
             .body(request_body);
 
@@ -149,6 +173,7 @@ impl AuthenticatedCmds {
             460 => Err(ConnectionError::ExpiredOrganization),
             461 => Err(ConnectionError::RevokedUser),
             462 => Err(ConnectionError::FrozenUser),
+            463 => Err(ConnectionError::UserMustAcceptTos),
             498 => Err(ConnectionError::AuthenticationTokenExpired),
 
             // Other HTTP codes
@@ -257,6 +282,7 @@ impl AuthenticatedCmds {
             460 => return Err(ConnectionError::ExpiredOrganization),
             461 => return Err(ConnectionError::RevokedUser),
             462 => return Err(ConnectionError::FrozenUser),
+            463 => return Err(ConnectionError::UserMustAcceptTos),
             498 => return Err(ConnectionError::AuthenticationTokenExpired),
 
             // Other HTTP codes

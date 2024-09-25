@@ -50,6 +50,7 @@ pub const PATH_URL_KEY_DERIVATION_UUID: uuid::Uuid =
 
 #[cfg(any(test, feature = "test-fixtures"))]
 /// We define test fixtures here and not in a different crate to prevent cyclic dependencies.
+///
 /// Given this is just an implementation detail, only `libparsec_test_fixtures` should access
 /// this module (and, in turn, 3rd party crates should use `libparsec_test_fixtures`)
 pub mod fixtures;

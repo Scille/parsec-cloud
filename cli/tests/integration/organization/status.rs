@@ -14,7 +14,8 @@ async fn status_organization(tmp_path: TmpPath) {
             "is_bootstrapped": true,
             "is_expired": false,
             "minimum_archiving_period": 2592000,
-            "user_profile_outsider_allowed": true
+            "user_profile_outsider_allowed": true,
+            "tos": null
         })
     );
 

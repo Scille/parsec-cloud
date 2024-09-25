@@ -469,6 +469,7 @@ impl ParsecAddr {
  */
 
 /// Represent the URL to access an organization within a server
+///
 /// (e.g. ``parsec3://parsec.example.com/MyOrg?p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationAddr {
@@ -605,8 +606,9 @@ impl std::str::FromStr for ParsecActionAddr {
  * ParsecOrganizationBootstrapAddr
  */
 
-// Represent the URL to bootstrap an organization within a server
-// (e.g. ``parsec3://parsec.example.com/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB``)  // cspell:disable-line
+/// Represent the URL to bootstrap an organization within a server
+///
+/// (e.g. ``parsec3://parsec.example.com/my_org?a=bootstrap_organization&p=xBCgAAAAAAAAAAAAAAAAAAAB``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecOrganizationBootstrapAddr {
     base: BaseParsecAddr,
@@ -697,6 +699,7 @@ impl ParsecOrganizationBootstrapAddr {
  */
 
 /// Represent the URL to share a file link
+///
 /// (e.g. ``parsec3://parsec.example.com/my_org?a=path&p=k9gCLU3tEnQGRgiDO39X8BFW4gHcADTM4WfM1MzhzNnMvTPMq8y-BnrM-8yiDcyvdlvMv2wjzIskB8zZWi4yFwRtzMxAzIDM0iPMnX8czKY7Pm3M5szoODd-NiI8U3A``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecWorkspacePathAddr {
@@ -786,6 +789,7 @@ impl ParsecWorkspacePathAddr {
  */
 
 /// Represent the URL to invite a user or a device
+///
 /// (e.g. ``parsec3://parsec.example.com/my_org?a=claim_user&p=xBCgAAAAAAAAAAAAAAAAAAAB``)  // cspell:disable-line
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecInvitationAddr {
@@ -908,6 +912,7 @@ impl ParsecInvitationAddr {
  */
 
 /// Represent the URL to invite a user using PKI
+///
 /// (e.g. ``parsec3://parsec.example.com/my_org?a=pki_enrollment``)
 #[derive(Clone, PartialEq, Eq, Hash)]
 pub struct ParsecPkiEnrollmentAddr {

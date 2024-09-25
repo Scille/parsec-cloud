@@ -771,96 +771,17 @@ fn quote_nested_type(
     }
 }
 
-fn quote_type_as_fn_getter_ret_type(ty: &FieldType) -> TokenStream {
-    match ty {
-        FieldType::Map(key, value) => {
-            let key = quote_type_as_fn_getter_ret_type(key);
-            let value = quote_type_as_fn_getter_ret_type(value);
-            quote! { std::collections::HashMap<#key, #value> }
-        }
-        FieldType::List(nested) => {
-            let nested = quote_type_as_fn_getter_ret_type(nested);
-            quote! { Vec<#nested> }
-        }
-        FieldType::Set(nested) => {
-            let nested = quote_type_as_fn_getter_ret_type(nested);
-            quote! { std::collections::HashSet<#nested> }
-        }
-        FieldType::RequiredOption(nested) => {
-            let nested = quote_type_as_fn_getter_ret_type(nested);
-            quote! { Option<#nested> }
-        }
-        FieldType::NonRequiredOption(nested) => {
-            let nested = quote_type_as_fn_getter_ret_type(nested);
-            quote! { Option<#nested> }
-        }
-        FieldType::Tuple(_) => {
-            quote! { Bound<'py, PyTuple> }
-        }
-        FieldType::Custom(_) => {
-            quote! { Bound<'py, PyAny> }
-        }
-        FieldType::Boolean => quote! { bool },
-        FieldType::String => quote! { Bound<'py, PyString> },
-        FieldType::Bytes => quote! { Bound<'py, PyBytes> },
-        FieldType::Integer => quote! { i64 },
-        FieldType::Float => quote! { f64 },
-        FieldType::Version => quote! { u32 },
-        FieldType::Size => quote! { u64},
-        FieldType::Index => quote! { u64 },
-        FieldType::NonZeroInteger => quote! { u64 },
-        FieldType::IntegerBetween1And100 => quote! { u64 },
-        FieldType::PublicKey => quote! { crate::crypto::PublicKey },
-        FieldType::SigningKey => quote! { crate::crypto::SigningKey },
-        FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
-        FieldType::PrivateKey => quote! { crate::crypto::PrivateKey },
-        FieldType::SecretKey => quote! { crate::crypto::SecretKey },
-        FieldType::KeyDerivation => quote! { crate::crypto::KeyDerivation },
-        FieldType::HashDigest => quote! { crate::crypto::HashDigest },
-        FieldType::SequesterVerifyKeyDer => quote! { crate::crypto::SequesterVerifyKeyDer },
-        FieldType::SequesterPublicKeyDer => quote! { crate::crypto::SequesterPublicKeyDer },
-        FieldType::DateTime => quote! { crate::time::DateTime },
-        FieldType::BlockID => quote! { crate::ids::BlockID },
-        FieldType::DeviceID => quote! { crate::ids::DeviceID },
-        FieldType::OrganizationID => quote! { crate::ids::OrganizationID },
-        FieldType::UserID => quote! { crate::ids::UserID },
-        FieldType::VlobID => quote! { crate::ids::VlobID },
-        FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID },
-        FieldType::SequesterServiceID => quote! { crate::ids::SequesterServiceID },
-        FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel },
-        FieldType::HumanHandle => quote! { crate::ids::HumanHandle },
-        FieldType::UserProfile => quote! { &'static PyObject },
-        FieldType::RealmRole => quote! { &'static PyObject },
-        FieldType::BootstrapToken => quote! { crate::token::BootstrapToken },
-        FieldType::InvitationToken => quote! { crate::token::InvitationToken },
-        FieldType::InvitationStatus => quote! { &'static PyObject },
-        FieldType::CertificateSignerOwned => quote! { crate::certif::CertificateSignerOwned },
-        FieldType::BlockAccess => quote! { crate::data::BlockAccess },
-        FieldType::EntryName => quote! { crate::data::EntryName },
-        FieldType::FileManifest => quote! { crate::data::FileManifest },
-        FieldType::FolderManifest => quote! { crate::data::FolderManifest },
-        FieldType::WorkspaceManifest => quote! { crate::data::WorkspaceManifest },
-        FieldType::UserManifest => quote! { crate::data::UserManifest },
-        FieldType::ActiveUsersLimit => quote! { crate::protocol::ActiveUsersLimit },
-        FieldType::ChunkView => quote! { crate::data::ChunkView },
-        FieldType::UsersPerProfileDetailItem => quote! { crate::data::UsersPerProfileDetailItem },
-        FieldType::PkiEnrollmentSubmitPayload => quote! { crate::data::PkiEnrollmentSubmitPayload },
-        FieldType::X509Certificate => quote! { crate::data::X509Certificate },
-        FieldType::ShamirRecoveryShareData => {
-            quote! { crate::shamir::ShamirRecoveryShareData}
-        }
-        FieldType::ShamirShare => {
-            quote! { crate::shamir::ShamirShare}
-        }
-        FieldType::GreetingAttemptID => quote! { crate::ids::GreetingAttemptID },
-        FieldType::CancelledGreetingAttemptReason => {
-            quote! { crate::enumerate::CancelledGreetingAttemptReason }
-        }
-        FieldType::GreeterOrClaimer => quote! { crate::enumerate::GreeterOrClaimer },
-    }
+fn quote_type_as_fn_getter_ret_type(_ty: &FieldType) -> TokenStream {
+    quote! { Bound<'py, PyAny> }
 }
 
 fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) -> TokenStream {
+    macro_rules! quote_rs_to_py_class {
+        ($py_type:path) => {
+            quote! { Bound::new(py, $py_type(#field_path.to_owned()))?.into_any() }
+        };
+    }
+
     match ty {
         FieldType::Map(key, value) => {
             let key_name = quote! { k };
@@ -868,36 +789,62 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
             let conversion_key = quote_type_as_fn_getter_conversion(&key_name, key);
             let conversion_value = quote_type_as_fn_getter_conversion(&value_name, value);
             quote! {
-                #field_path.iter().map(|(k, v)| {
-                    let k = #conversion_key;
-                    let v = #conversion_value;
-                    (k, v)
-                }).collect::<std::collections::HashMap<_, _>>()
+                {
+                    let mut items = PyDict::new_bound(py);
+                    for (k, v) in #field_path.iter() {
+                        let k = #conversion_key;
+                        let v = #conversion_value;
+                        items.set_item(k, v).expect("Failed to set item in PyDict");
+                    }
+                    items.into_any()
+                }
             }
         }
         FieldType::List(nested) => {
             let nested_name = quote! { y };
             let conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
-                #field_path.iter().map(|y| #conversion).collect::<Vec<_>>()
+                {
+                    let mut items = PyList::empty_bound(py);
+                    for y in #field_path.iter() {
+                        items.append(#conversion)?;
+                    }
+                    items.into_any()
+                }
             }
         }
         FieldType::Set(nested) => {
             let nested_name = quote! { y };
             let conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
             quote! {
-                #field_path.iter().map(|y| #conversion).collect::<std::collections::HashSet<_>>()
+                {
+                    let mut items = PySet::empty_bound(py)?;
+                    for y in #field_path.iter() {
+                        items.add(#conversion)?;
+                    }
+                    items.into_any()
+                }
             }
         }
         FieldType::RequiredOption(nested) => {
             let nested_name = quote! { y };
             let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
-            quote! { #field_path.as_ref().map(|y| #nested_conversion) }
+            quote! {
+                match #field_path.as_ref() {
+                    None => PyNone::get_bound(py).to_owned().into_any(),
+                    Some(y) => #nested_conversion,
+                }
+            }
         }
         FieldType::NonRequiredOption(nested) => {
             let nested_name = quote! { y };
             let nested_conversion = quote_type_as_fn_getter_conversion(&nested_name, nested);
-            quote! { #field_path.as_ref().map(|y| #nested_conversion) }
+            quote! {
+                match #field_path.as_ref() {
+                    None => PyNone::get_bound(py).to_owned().into_any(),
+                    Some(y) => #nested_conversion,
+                }
+            }
         }
         FieldType::Tuple(items) => {
             let (items_names, items_conversions): (Vec<_>, Vec<_>) = items
@@ -914,104 +861,82 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
                 {
                     let (#(#items_names),*) = #field_path;
                     PyTuple::new_bound(py, [
-                        #(#items_conversions.into_py(py)),*
-                    ])
+                        #(#items_conversions),*
+                    ]).into_any()
                 }
             }
         }
         FieldType::Custom(nested) => {
             let nested_name = format_ident!("{}", nested);
-            quote! { #nested_name::from_raw(py, #field_path.to_owned()) }
+            quote! { #nested_name::from_raw(py, #field_path.to_owned()).into_any() }
         }
-        FieldType::String => quote! { PyString::new_bound(py, #field_path) },
-        FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path) },
-        FieldType::Boolean => quote! { bool::from(*#field_path) },
-        FieldType::Integer => quote! { i64::from(*#field_path) },
-        FieldType::Float => quote! { f64::from(*#field_path) },
-        FieldType::Version => quote! { u32::from(*#field_path) },
-        FieldType::Size => quote! { u64::from(*#field_path) },
-        FieldType::Index => quote! { u64::from(*#field_path) },
-        FieldType::NonZeroInteger => quote! { u64::from(*#field_path) },
-        FieldType::IntegerBetween1And100 => quote! { u64::from(*#field_path) },
-        FieldType::PublicKey => quote! { crate::crypto::PublicKey(#field_path.to_owned()) },
-        FieldType::SigningKey => quote! { crate::crypto::SigningKey(#field_path.to_owned()) },
-        FieldType::VerifyKey => quote! { crate::crypto::VerifyKey(#field_path.to_owned()) },
-        FieldType::PrivateKey => quote! { crate::crypto::PrivateKey(#field_path.to_owned()) },
-        FieldType::SecretKey => quote! { crate::crypto::SecretKey(#field_path.to_owned()) },
-        FieldType::KeyDerivation => quote! { crate::crypto::KeyDerivation(#field_path.to_owned()) },
-        FieldType::HashDigest => quote! { crate::crypto::HashDigest(#field_path.to_owned()) },
+        FieldType::String => quote! { PyString::new_bound(py, #field_path).into_any() },
+        FieldType::Bytes => quote! { PyBytes::new_bound(py, #field_path).into_any() },
+        FieldType::Boolean => quote! { PyBool::new_bound(py, *#field_path).to_owned().into_any() },
+        FieldType::Float => quote! { PyFloat::new_bound(py, *#field_path).into_any() },
+        FieldType::Integer
+        | FieldType::Version
+        | FieldType::Size
+        | FieldType::Index
+        | FieldType::NonZeroInteger
+        | FieldType::IntegerBetween1And100 => {
+            quote! { (*#field_path).to_object(py).into_bound(py).into_any() }
+        }
+        FieldType::PublicKey => quote_rs_to_py_class!(crate::crypto::PublicKey),
+        FieldType::SigningKey => quote_rs_to_py_class!(crate::crypto::SigningKey),
+        FieldType::VerifyKey => quote_rs_to_py_class!(crate::crypto::VerifyKey),
+        FieldType::PrivateKey => quote_rs_to_py_class!(crate::crypto::PrivateKey),
+        FieldType::SecretKey => quote_rs_to_py_class!(crate::crypto::SecretKey),
+        FieldType::KeyDerivation => quote_rs_to_py_class!(crate::crypto::KeyDerivation),
+        FieldType::HashDigest => quote_rs_to_py_class!(crate::crypto::HashDigest),
         FieldType::SequesterVerifyKeyDer => {
-            quote! { crate::crypto::SequesterVerifyKeyDer(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::crypto::SequesterVerifyKeyDer)
         }
         FieldType::SequesterPublicKeyDer => {
-            quote! { crate::crypto::SequesterPublicKeyDer(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::crypto::SequesterPublicKeyDer)
         }
-        FieldType::DateTime => quote! { crate::time::DateTime(#field_path.to_owned()) },
-        FieldType::BlockID => quote! { crate::ids::BlockID(#field_path.to_owned()) },
-        FieldType::DeviceID => quote! { crate::ids::DeviceID(#field_path.to_owned()) },
-        FieldType::OrganizationID => quote! { crate::ids::OrganizationID(#field_path.to_owned()) },
-        FieldType::UserID => quote! { crate::ids::UserID(#field_path.to_owned()) },
-        FieldType::VlobID => quote! { crate::ids::VlobID(#field_path.to_owned()) },
-        FieldType::EnrollmentID => quote! { crate::ids::EnrollmentID(#field_path.to_owned()) },
-        FieldType::SequesterServiceID => {
-            quote! { crate::ids::SequesterServiceID(#field_path.to_owned()) }
-        }
-        FieldType::DeviceLabel => quote! { crate::ids::DeviceLabel(#field_path.to_owned()) },
-        FieldType::HumanHandle => quote! { crate::ids::HumanHandle(#field_path.to_owned()) },
-        FieldType::UserProfile => {
-            quote! { crate::enumerate::UserProfile::convert(#field_path.to_owned()) }
-        }
-        FieldType::RealmRole => {
-            quote! { crate::enumerate::RealmRole::convert(#field_path.to_owned()) }
-        }
-        FieldType::BootstrapToken => {
-            quote! { crate::token::BootstrapToken(#field_path.to_owned()) }
-        }
-        FieldType::InvitationToken => {
-            quote! { crate::token::InvitationToken(#field_path.to_owned()) }
-        }
-        FieldType::InvitationStatus => {
-            quote! { crate::enumerate::InvitationStatus::convert(#field_path.to_owned()) }
-        }
+        FieldType::DateTime => quote_rs_to_py_class!(crate::time::DateTime),
+        FieldType::BlockID => quote_rs_to_py_class!(crate::ids::BlockID),
+        FieldType::DeviceID => quote_rs_to_py_class!(crate::ids::DeviceID),
+        FieldType::OrganizationID => quote_rs_to_py_class!(crate::ids::OrganizationID),
+        FieldType::UserID => quote_rs_to_py_class!(crate::ids::UserID),
+        FieldType::VlobID => quote_rs_to_py_class!(crate::ids::VlobID),
+        FieldType::EnrollmentID => quote_rs_to_py_class!(crate::ids::EnrollmentID),
+        FieldType::SequesterServiceID => quote_rs_to_py_class!(crate::ids::SequesterServiceID),
+        FieldType::DeviceLabel => quote_rs_to_py_class!(crate::ids::DeviceLabel),
+        FieldType::HumanHandle => quote_rs_to_py_class!(crate::ids::HumanHandle),
+        FieldType::UserProfile => quote_rs_to_py_class!(crate::enumerate::UserProfile),
+        FieldType::RealmRole => quote_rs_to_py_class!(crate::enumerate::RealmRole),
+        FieldType::BootstrapToken => quote_rs_to_py_class!(crate::token::BootstrapToken),
+        FieldType::InvitationToken => quote_rs_to_py_class!(crate::token::InvitationToken),
+        FieldType::InvitationStatus => quote_rs_to_py_class!(crate::enumerate::InvitationStatus),
         FieldType::CertificateSignerOwned => {
-            quote! { crate::certif::CertificateSignerOwned(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::certif::CertificateSignerOwned)
         }
-        FieldType::BlockAccess => quote! { crate::data::BlockAccess(#field_path.to_owned()) },
-        FieldType::EntryName => quote! { crate::data::EntryName(#field_path.to_owned()) },
-        FieldType::FileManifest => quote! { crate::data::FileManifest(#field_path.to_owned()) },
-        FieldType::FolderManifest => quote! { crate::data::FolderManifest(#field_path.to_owned()) },
-        FieldType::WorkspaceManifest => {
-            quote! { crate::data::WorkspaceManifest(#field_path.to_owned()) }
-        }
-        FieldType::UserManifest => quote! { crate::data::UserManifest(#field_path.to_owned()) },
-        FieldType::ActiveUsersLimit => {
-            quote! { crate::protocol::ActiveUsersLimit(#field_path.to_owned()) }
-        }
-        FieldType::ChunkView => quote! { crate::data::ChunkView(#field_path.to_owned()) },
+        FieldType::BlockAccess => quote_rs_to_py_class!(crate::data::BlockAccess),
+        FieldType::EntryName => quote_rs_to_py_class!(crate::data::EntryName),
+        FieldType::FileManifest => quote_rs_to_py_class!(crate::data::FileManifest),
+        FieldType::FolderManifest => quote_rs_to_py_class!(crate::data::FolderManifest),
+        FieldType::WorkspaceManifest => quote_rs_to_py_class!(crate::data::WorkspaceManifest),
+        FieldType::UserManifest => quote_rs_to_py_class!(crate::data::UserManifest),
+        FieldType::ActiveUsersLimit => quote_rs_to_py_class!(crate::protocol::ActiveUsersLimit),
+        FieldType::ChunkView => quote_rs_to_py_class!(crate::data::ChunkView),
         FieldType::UsersPerProfileDetailItem => {
-            quote! { crate::data::UsersPerProfileDetailItem(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::data::UsersPerProfileDetailItem)
         }
         FieldType::PkiEnrollmentSubmitPayload => {
-            quote! { crate::data::PkiEnrollmentSubmitPayload(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::data::PkiEnrollmentSubmitPayload)
         }
-        FieldType::X509Certificate => {
-            quote! { crate::data::X509Certificate(#field_path.to_owned()) }
-        }
+        FieldType::X509Certificate => quote_rs_to_py_class!(crate::data::X509Certificate),
         FieldType::ShamirRecoveryShareData => {
-            quote! { crate::shamir::ShamirRecoveryShareData(#field_path.to_owned())}
+            quote_rs_to_py_class!(crate::shamir::ShamirRecoveryShareData)
         }
-        FieldType::ShamirShare => {
-            quote! { crate::shamir::ShamirShare(#field_path.to_owned())}
-        }
-        FieldType::GreetingAttemptID => {
-            quote! { crate::ids::GreetingAttemptID(#field_path.to_owned()) }
-        }
+        FieldType::ShamirShare => quote_rs_to_py_class!(crate::shamir::ShamirShare),
+        FieldType::GreetingAttemptID => quote_rs_to_py_class!(crate::ids::GreetingAttemptID),
         FieldType::CancelledGreetingAttemptReason => {
-            quote! { crate::enumerate::CancelledGreetingAttemptReason(#field_path.to_owned()) }
+            quote_rs_to_py_class!(crate::enumerate::CancelledGreetingAttemptReason)
         }
-        FieldType::GreeterOrClaimer => {
-            quote! { crate::enumerate::GreeterOrClaimer(#field_path.to_owned()) }
-        }
+        FieldType::GreeterOrClaimer => quote_rs_to_py_class!(crate::enumerate::GreeterOrClaimer),
     }
 }
 

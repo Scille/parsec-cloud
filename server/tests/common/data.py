@@ -465,7 +465,15 @@ type HttpCommonErrorsTester = Callable[
 
 
 # TODO: not sure how to test "organization_not_found"
-@pytest.fixture(params=("organization_expired", "author_revoked", "author_frozen"))
+@pytest.fixture(
+    params=(
+        "organization_expired",
+        "author_revoked",
+        "author_frozen",
+        "tos_not_accepted",
+        "tos_updated_since_acceptation",
+    )
+)
 async def authenticated_http_common_errors_tester(
     request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
 ) -> AsyncGenerator[HttpCommonErrorsTester, None]:
@@ -477,7 +485,127 @@ async def authenticated_http_common_errors_tester(
         match request.param:
             case "organization_expired":
                 outcome = await backend.organization.update(
-                    id=coolorg.organization_id, is_expired=True
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    is_expired=True,
+                )
+                assert outcome is None
+
+                expected_http_status = 460
+
+            case "author_revoked":
+                # Must first promote Bob to ADMIN...
+
+                bob_user_update_certificate = UserUpdateCertificate(
+                    author=coolorg.alice.device_id,
+                    timestamp=DateTime.now(),
+                    user_id=coolorg.bob.user_id,
+                    new_profile=UserProfile.ADMIN,
+                ).dump_and_sign(coolorg.alice.signing_key)
+
+                outcome = await backend.user.update_user(
+                    organization_id=coolorg.organization_id,
+                    now=DateTime.now(),
+                    author=coolorg.alice.device_id,
+                    author_verify_key=coolorg.alice.signing_key.verify_key,
+                    user_update_certificate=bob_user_update_certificate,
+                )
+                assert isinstance(outcome, UserUpdateCertificate)
+
+                # ...to be able to revoke Alice
+
+                certif = RevokedUserCertificate(
+                    author=coolorg.bob.device_id,
+                    user_id=coolorg.alice.user_id,
+                    timestamp=DateTime.now(),
+                )
+                outcome = await backend.user.revoke_user(
+                    now=DateTime.now(),
+                    organization_id=coolorg.organization_id,
+                    author=coolorg.bob.device_id,
+                    author_verify_key=coolorg.bob.signing_key.verify_key,
+                    revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+                )
+                assert isinstance(outcome, RevokedUserCertificate)
+
+                expected_http_status = 461
+
+            case "author_frozen":
+                outcome = await backend.user.freeze_user(
+                    organization_id=coolorg.organization_id,
+                    user_id=coolorg.alice.user_id,
+                    user_email=None,
+                    frozen=True,
+                )
+                assert isinstance(outcome, UserInfo)
+
+                expected_http_status = 462
+
+            case "tos_not_accepted":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    tos={"en_HK": "https://parsec.invalid/tos"},
+                )
+                assert outcome is None
+                expected_http_status = 463
+
+            case "tos_updated_since_acceptation":
+                tos1_updated_on = DateTime.now()
+                outcome = await backend.organization.update(
+                    now=tos1_updated_on,
+                    id=coolorg.organization_id,
+                    tos={"en_HK": "https://parsec.invalid/tos1"},
+                )
+                assert outcome is None
+
+                outcome = await backend.user.accept_tos(
+                    now=DateTime.now(),
+                    organization_id=coolorg.organization_id,
+                    author=coolorg.alice.device_id,
+                    tos_updated_on=tos1_updated_on,
+                )
+                assert outcome is None
+
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    tos={"en_HK": "https://parsec.invalid/tos2"},
+                )
+                assert outcome is None
+
+                expected_http_status = 463
+
+            case unknown:
+                assert False, unknown
+
+        try:
+            await do()
+            assert False, f"{do!r} was expected to raise an `RpcTransportError` exception !"
+        except RpcTransportError as err:
+            assert err.rep.status_code == expected_http_status
+
+    yield _authenticated_http_common_errors_tester
+
+    assert tester_called
+
+
+# TODO: not sure how to test "organization_not_found"
+@pytest.fixture(params=("organization_expired", "author_revoked", "author_frozen"))
+async def tos_http_common_errors_tester(
+    request: pytest.FixtureRequest, coolorg: CoolorgRpcClients, backend: Backend
+) -> AsyncGenerator[HttpCommonErrorsTester, None]:
+    tester_called = False
+
+    async def _tos_http_common_errors_tester(do: HttpCommonErrorsTesterDoCallback):
+        nonlocal tester_called
+        tester_called = True
+        match request.param:
+            case "organization_expired":
+                outcome = await backend.organization.update(
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    is_expired=True,
                 )
                 assert outcome is None
 
@@ -540,7 +668,7 @@ async def authenticated_http_common_errors_tester(
         except RpcTransportError as err:
             assert err.rep.status_code == expected_http_status
 
-    yield _authenticated_http_common_errors_tester
+    yield _tos_http_common_errors_tester
 
     assert tester_called
 
@@ -559,7 +687,9 @@ async def invited_http_common_errors_tester(
         match request.param:
             case "organization_expired":
                 outcome = await backend.organization.update(
-                    id=coolorg.organization_id, is_expired=True
+                    now=DateTime.now(),
+                    id=coolorg.organization_id,
+                    is_expired=True,
                 )
                 assert outcome is None
 
@@ -604,7 +734,7 @@ async def anonymous_http_common_errors_tester(
         match request.param:
             case "organization_expired":
                 outcome = await backend.organization.update(
-                    id=coolorg.organization_id, is_expired=True
+                    now=DateTime.now(), id=coolorg.organization_id, is_expired=True
                 )
                 assert outcome is None
 

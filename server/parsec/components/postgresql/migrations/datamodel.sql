@@ -34,7 +34,13 @@ CREATE TABLE organization (
     sequester_authority_certificate BYTEA,
     -- NULL for non-sequestered organization
     sequester_authority_verify_key_der BYTEA,
-    minimum_archiving_period INTEGER NOT NULL
+    minimum_archiving_period INTEGER NOT NULL,
+    -- NULL if no Term Of Service (TOS) is set
+    tos_updated_on TIMESTAMPTZ,
+    -- NULL if no Term Of Service (TOS) is set
+    -- Stores as JSON a mapping of locale as key and URL as value
+    -- e.g. {"en_US": "https://example.com/tos_en.html", "fr_FR": "https://example.com/tos_fr.html"}
+    tos_per_locale_urls JSON
 );
 
 -------------------------------------------------------
@@ -101,6 +107,8 @@ CREATE TABLE user_ (
     shamir_recovery INTEGER,
     frozen BOOLEAN NOT NULL DEFAULT FALSE,
     current_profile USER_PROFILE NOT NULL,
+    -- NULL if no End User License Agreement has been accepted
+    tos_accepted_on TIMESTAMPTZ,
 
     UNIQUE (organization, user_id)
 );

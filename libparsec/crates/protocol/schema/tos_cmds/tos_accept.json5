@@ -1,0 +1,28 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "tos_accept",
+            "fields": [
+                {
+                    "name": "tos_updated_on",
+                    "type": "DateTime"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                "status": "no_tos"
+            },
+            {
+                // The provided `tos_updated_on` mismatch what is in the server.
+                "status": "tos_mismatch"
+            }
+        ]
+    }
+]

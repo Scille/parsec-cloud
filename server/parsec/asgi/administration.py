@@ -36,9 +36,11 @@ from parsec.components.organization import (
     OrganizationStats,
     OrganizationStatsBadOutcome,
     OrganizationUpdateBadOutcome,
+    TosLocale,
+    TosUrl,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
-from parsec.events import OrganizationIDField
+from parsec.events import DateTimeField, OrganizationIDField
 from parsec.logging import get_logger
 from parsec.types import Unset, UnsetType
 
@@ -79,6 +81,7 @@ class CreateOrganizationIn(BaseModel):
     user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
     minimum_archiving_period: int | Literal[UnsetType.Unset] = Unset
+    tos: dict[TosLocale, TosUrl] | Literal[UnsetType.Unset] = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -156,6 +159,7 @@ async def administration_create_organizations(
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         active_users_limit=body.active_users_limit,
         minimum_archiving_period=body.minimum_archiving_period,
+        tos=body.tos,
     )
     match outcome:
         case BootstrapToken() as bootstrap_token:
@@ -177,12 +181,20 @@ async def administration_create_organizations(
     return CreateOrganizationOut(bootstrap_url=bootstrap_url.to_url())
 
 
+class GetOrganizationOutTos(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    per_locale_urls: dict[TosLocale, TosUrl]
+    updated_on: DateTimeField
+
+
 class GetOrganizationOut(BaseModel):
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     is_bootstrapped: bool
     is_expired: bool
     user_profile_outsider_allowed: bool
     active_users_limit: int | None
     minimum_archiving_period: int
+    tos: GetOrganizationOutTos | None
 
 
 @administration_router.get("/administration/organizations/{raw_organization_id}")
@@ -210,6 +222,12 @@ async def administration_get_organization(
         user_profile_outsider_allowed=organization.user_profile_outsider_allowed,
         active_users_limit=organization.active_users_limit.to_maybe_int(),
         minimum_archiving_period=organization.minimum_archiving_period,
+        tos=None
+        if organization.tos is None
+        else GetOrganizationOutTos(
+            updated_on=organization.tos.updated_on,
+            per_locale_urls=organization.tos.per_locale_urls,
+        ),
     )
 
 
@@ -226,6 +244,7 @@ class PatchOrganizationIn(BaseModel):
     user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
     active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
     minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset
+    tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] | None = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
@@ -256,11 +275,13 @@ async def administration_patch_organization(
     organization_id = parse_organization_id_or_die(raw_organization_id)
 
     outcome = await backend.organization.update(
+        now=DateTime.now(),
         id=organization_id,
         is_expired=body.is_expired,
         active_users_limit=body.active_users_limit,
         user_profile_outsider_allowed=body.user_profile_outsider_allowed,
         minimum_archiving_period=body.minimum_archiving_period,
+        tos=body.tos,
     )
     match outcome:
         case None:

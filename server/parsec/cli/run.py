@@ -14,6 +14,7 @@ from parsec.asgi import app as parsec_app
 from parsec.asgi import serve_parsec_asgi_app
 from parsec.backend import backend_factory
 from parsec.cli.options import (
+    _split_with_escaping,
     blockstore_server_options,
     db_server_options,
     debug_config_options,
@@ -23,6 +24,7 @@ from parsec.cli.options import (
 from parsec.cli.utils import (
     cli_exception_handler,
 )
+from parsec.components.organization import TosLocale, TosUrl
 from parsec.config import (
     BackendConfig,
     BaseBlockStoreConfig,
@@ -52,6 +54,30 @@ def _parse_forward_proto_enforce_https_check_param(
         raise click.BadParameter("Invalid format, should be `<header-name>:<header-value>`")
     # HTTP header key is case-insensitive unlike the header value
     return (key.lower(), value)
+
+
+def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale, TosUrl] | None:
+    if raw_param is None:
+        return None
+
+    locales = {}
+
+    # 1) Split the comma-separated list of `<locale>:<url>`
+
+    for item in _split_with_escaping(raw_param, ","):
+        # 2) Split the `<locale>:<url>` pair
+        try:
+            locale, url = item.split(":", 1)
+            if not locale or not url:
+                raise ValueError
+        except ValueError:
+            raise click.BadParameter(
+                "Invalid format, should be comma-separated list of `<locale>:<url>`"
+            )
+
+        locales[locale] = url
+
+    return locales
 
 
 class DevOption(click.Option):
@@ -181,6 +207,20 @@ organization_id, device_id, device_label (can be null), human_email (can be null
     help="Allow the outsider profiles for the newly created organizations (default: True)",
     default=True,
     type=bool,
+)
+@click.option(
+    "--organization-initial-tos",
+    envvar="PARSEC_ORGANIZATION_INITIAL_TOS",
+    show_envvar=True,
+    callback=lambda ctx, param, value: _parse_organization_initial_tos_url(value),
+    help="""Terms Of Service (TOS) used to configure newly created organizations (default: no TOS)
+
+The TOS should be provided as a comma-separated list of `<locale>:<url>` (with any comma
+in the URL escaped with a backslash).
+
+For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr`.
+""",
+    default=None,
 )
 @click.option(
     "--server-addr",
@@ -324,6 +364,7 @@ def run_cmd(
     organization_bootstrap_webhook: str | None,
     organization_initial_active_users_limit: int | None,
     organization_initial_user_profile_outsider_allowed: bool,
+    organization_initial_tos: dict[TosLocale, TosUrl] | None,
     server_addr: ParsecAddr,
     email_host: str,
     email_port: int,
@@ -388,6 +429,7 @@ def run_cmd(
             if organization_initial_active_users_limit is not None
             else ActiveUsersLimit.NO_LIMIT,
             organization_initial_user_profile_outsider_allowed=organization_initial_user_profile_outsider_allowed,
+            organization_initial_tos=organization_initial_tos,
         )
 
         click.echo(
