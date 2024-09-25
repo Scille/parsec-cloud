@@ -9,6 +9,9 @@
 {%- macro ts_type(type) -%}
 {%- if type.kind == "ref" -%}
 {{ ts_type(type.elem) }}
+{%- elif type.kind == "dict" -%}
+{# JsMap is not available in neon bindings so we use its parent class... #}
+JsObject
 {%- elif type.kind == "list" -%}
 JsArray
 {%- elif type.kind == "tuple" -%}
@@ -57,6 +60,40 @@ JsString
 {%- macro render_downcasted_js_to_rs(js_val, type, mut_cx_ref="&mut cx") -%}
 {%- if type.kind == "ref" -%}
 {{ render_downcasted_js_to_rs(js_val, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "dict" -%}
+{
+    {# `js_value` is a `JsMap` (https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map) typed as a `JsObject` #}
+    {# TODO: add a `js_value instanceof Map` check here... once we figure how to do that in neon :/ #}
+    let mut d = std::collections::HashMap::with_capacity(
+        js_val.get::<JsNumber, _, _>({{ mut_cx_ref }}, "size")?.value({{ mut_cx_ref }}) as usize,
+    );
+
+    let js_keys = js_val.call_method_with({{ mut_cx_ref }}, "keys")?.apply::<JsObject, _>({{ mut_cx_ref }})?;
+    let js_values = js_val.call_method_with({{ mut_cx_ref }}, "values")?.apply::<JsObject, _>({{ mut_cx_ref }})?;
+    let js_keys_next_cb = js_keys.call_method_with({{ mut_cx_ref }}, "next")?;
+    let js_values_next_cb = js_values.call_method_with({{ mut_cx_ref }}, "next")?;
+
+    loop {
+        let next_js_key = js_keys_next_cb.apply::<JsObject, _>({{ mut_cx_ref }})?;
+        let next_js_value = js_values_next_cb.apply::<JsObject, _>({{ mut_cx_ref }})?;
+
+        let keys_done = next_js_key.get::<JsBoolean, _, _>({{ mut_cx_ref }}, "done")?.value({{ mut_cx_ref }});
+        let values_done = next_js_value.get::<JsBoolean, _, _>({{ mut_cx_ref }}, "done")?.value({{ mut_cx_ref }});
+        match (keys_done, values_done) {
+            (true, true) => break,
+            (false, false) => (),
+            _ => unreachable!(),
+        }
+
+        let js_key = next_js_key.get::<{{ ts_type(type.key) }}, _, _>({{ mut_cx_ref }}, "value")?;
+        let js_value = next_js_value.get::<{{ ts_type(type.value) }}, _, _>({{ mut_cx_ref }}, "value")?;
+
+        let key = {{ render_downcasted_js_to_rs("js_key", type.key, mut_cx_ref) }};
+        let value = {{ render_downcasted_js_to_rs("js_value", type.value, mut_cx_ref) }};
+        d.insert(key, value);
+    }
+    d
+}
 {%- elif type.kind == "list" -%}
 {
     let size = {{ js_val }}.len({{ mut_cx_ref }});
@@ -282,6 +319,18 @@ std::sync::Arc::new(
 {%- macro render_rs_to_js(rs_value, type, mut_cx_ref="&mut cx") -%}
 {%- if type.kind == "ref" -%}
 {{ render_rs_to_js(rs_value, type.elem, mut_cx_ref) }}
+{%- elif type.kind == "dict" -%}
+{
+    {# TODO: neon bindings doesn't expose Map, so we need to rely on eval here ! #}
+    let new_map_code = ({{ mut_cx_ref }}).string("new Map()");
+    let js_map = neon::reflect::eval({{ mut_cx_ref }}, new_map_code)?.downcast_or_throw::<JsObject, _>({{ mut_cx_ref }})?;
+    for (key, value) in {{ rs_value }}.into_iter() {
+        let js_key = {{ render_rs_to_js("key", type.key, mut_cx_ref) }};
+        let js_value = {{ render_rs_to_js("value", type.value, mut_cx_ref) }};
+        js_map.call_method_with({{ mut_cx_ref }}, "set")?.arg(js_key).arg(js_value).exec({{ mut_cx_ref }})?;
+    }
+    js_map
+}
 {%- elif type.kind == "list" -%}
 {
     // JsArray::new allocates with `undefined` value, that's why we `set` value

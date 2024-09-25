@@ -9,6 +9,8 @@
 {%- macro function_param_type(type) -%}
 {%- if type.kind == "ref" -%}
 {{ function_param_type(type.elem) }}
+{%- elif type.kind == "dict" -%}
+Object
 {%- elif type.kind == "list" -%}
 Vec<{{ function_param_type(type.elem) }}>
 {%- elif type.kind == "tuple" -%}
@@ -124,11 +126,49 @@ let {{ param_name }} = {
 {% elif type.kind in ("struct", "variant", "result") %}
 let {{ param_name }} = {{ param_name }}.into();
 let {{ param_name }} = {{ render_js_value_to_rs(param_name, type) }};
+{% elif type.kind == "dict" %}
+let {{ param_name }} = {
+    let js_map = {{ param_name }};
+    let mut d = std::collections::HashMap::with_capacity(
+        Reflect::get(&js_map, &"size".into())?.dyn_into::<Number>()?.value_of() as usize
+    );
+
+    let js_keys = Reflect::get(&js_map, &"keys".into())?.dyn_into::<Function>()?.call0(&js_map)?;
+    let js_values = Reflect::get(&js_map, &"values".into())?.dyn_into::<Function>()?.call0(&js_map)?;
+
+    let js_literal_next = "next".into();
+    let js_keys_next_cb = Reflect::get(&js_keys, &js_literal_next)?.dyn_into::<Function>()?;
+    let js_values_next_cb = Reflect::get(&js_values, &js_literal_next)?.dyn_into::<Function>()?;
+
+    let js_literal_done = "done".into();
+    let js_literal_value = "value".into();
+    loop {
+        let next_js_key = js_keys_next_cb.call0(&js_keys)?;
+        let next_js_value = js_values_next_cb.call0(&js_values)?;
+
+        let keys_done = Reflect::get(&next_js_key, &js_literal_done)?.dyn_into::<Boolean>()?.value_of();
+        let values_done = Reflect::get(&next_js_value, &js_literal_done)?.dyn_into::<Boolean>()?.value_of();
+        match (keys_done, values_done) {
+            (true, true) => break,
+            (false, false) => (),
+            _ => unreachable!(),
+        }
+
+        let js_key = Reflect::get(&next_js_key, &js_literal_value)?.dyn_into::<JsString>()?;
+        let js_value = Reflect::get(&next_js_value, &js_literal_value)?.dyn_into::<JsString>()?;
+
+        let rs_key = {{ render_js_value_to_rs("js_key", type.key) }};
+        let rs_value = {{ render_js_value_to_rs("js_value", type.value) }};
+
+        d.insert(rs_key, rs_value);
+    }
+    d
+};
 {% elif type.kind == "list" %}
 let mut {{ param_name }}_converted = Vec::with_capacity({{ param_name }}.len());
-for x in {{ param_name }}.iter() {
-    {{ render_function_param_cooking("x", type.elem) }}
-    {{ param_name }}_converted.push(x);
+for js_elem in {{ param_name }}.iter() {
+    let rs_elem = {{ render_js_value_to_rs("js_elem", type.elem) }};
+    {{ param_name }}_converted.push(rs_elem);
 }
 let {{ param_name }} = {{ param_name }}_converted;
 {% elif type.kind == "OnClientEventCallback" %}
@@ -243,6 +283,31 @@ if {{ js_val }}.is_null() {
 ?.to_vec()
 {%- endif %}
 .map_err(|_| TypeError::new("Not a valid {{ type.name }}"))?
+{%- elif type.kind == "dict" -%}
+{
+    let js_val = {{ js_val }}.dyn_into::<Map>()
+        .map_err(|_| TypeError::new("Not a Map"))?;
+    let mut converted = std::collections::HashMap::with_capacity(js_val.size() as usize);
+    let js_keys = js_val.keys();
+    let js_values = js_val.values();
+    loop {
+        let next_js_key = js_keys.next()?;
+        let next_js_value = js_values.next()?;
+        if next_js_key.done() {
+            assert!(next_js_value.done());
+            break;
+        }
+        assert!(!next_js_value.done());
+
+        let js_key = next_js_key.value();
+        let js_value = next_js_value.value();
+
+        let key = {{ render_js_value_to_rs("js_key", type.key) }};
+        let value = {{ render_js_value_to_rs("js_value", type.value) }};
+        converted.insert(key, value);
+    }
+    converted
+}
 {%- elif type.kind == "list" -%}
 {
     let js_val = {{ js_val }}.dyn_into::<Array>()
@@ -404,6 +469,16 @@ JsValue::from(Uint8Array::from({%- if type.custom_to_rs_bytes -%}
 {{ rs_value }}.as_ref()
 {%- endif -%}
 ))
+{%- elif type.kind == "dict" -%}
+{
+    let js_map = Map::new();
+    for (key, value) in {{ rs_value }}.into_iter() {
+        let js_key = {{ render_rs_to_js_value("key", type.key) }};
+        let js_value = {{ render_rs_to_js_value("value", type.value) }};
+        js_map.set(&js_key, &js_value);
+    }
+    js_map.into()
+}
 {%- elif type.kind == "list" -%}
 {
     // Array::new_with_length allocates with `undefined` value, that's why we `set` value
