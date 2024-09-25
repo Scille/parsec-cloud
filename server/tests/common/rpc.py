@@ -11,9 +11,7 @@ from parsec._parsec import (
     DateTime,
     EnrollmentID,
     GreetingAttemptID,
-    HashDigest,
     InvitationToken,
-    PublicKey,
     SequesterServiceID,
     UserID,
     VerifyKey,
@@ -133,54 +131,6 @@ class BaseAuthenticatedRpcClient:
         req = authenticated_cmds.latest.events_listen.Req()
         raw_rep = await self._do_request(req.dump())
         return authenticated_cmds.latest.events_listen.Rep.load(raw_rep)
-
-    async def invite_1_greeter_wait_peer(
-        self, token: InvitationToken, greeter_public_key: PublicKey
-    ) -> authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep:
-        req = authenticated_cmds.latest.invite_1_greeter_wait_peer.Req(
-            token=token, greeter_public_key=greeter_public_key
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_1_greeter_wait_peer.Rep.load(raw_rep)
-
-    async def invite_2a_greeter_get_hashed_nonce(
-        self, token: InvitationToken
-    ) -> authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Rep:
-        req = authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Req(token=token)
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_2a_greeter_get_hashed_nonce.Rep.load(raw_rep)
-
-    async def invite_2b_greeter_send_nonce(
-        self, token: InvitationToken, greeter_nonce: bytes
-    ) -> authenticated_cmds.latest.invite_2b_greeter_send_nonce.Rep:
-        req = authenticated_cmds.latest.invite_2b_greeter_send_nonce.Req(
-            token=token, greeter_nonce=greeter_nonce
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_2b_greeter_send_nonce.Rep.load(raw_rep)
-
-    async def invite_3a_greeter_wait_peer_trust(
-        self, token: InvitationToken
-    ) -> authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Rep:
-        req = authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Req(token=token)
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_3a_greeter_wait_peer_trust.Rep.load(raw_rep)
-
-    async def invite_3b_greeter_signify_trust(
-        self, token: InvitationToken
-    ) -> authenticated_cmds.latest.invite_3b_greeter_signify_trust.Rep:
-        req = authenticated_cmds.latest.invite_3b_greeter_signify_trust.Req(token=token)
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_3b_greeter_signify_trust.Rep.load(raw_rep)
-
-    async def invite_4_greeter_communicate(
-        self, token: InvitationToken, payload: bytes, last: bool
-    ) -> authenticated_cmds.latest.invite_4_greeter_communicate.Rep:
-        req = authenticated_cmds.latest.invite_4_greeter_communicate.Req(
-            token=token, payload=payload, last=last
-        )
-        raw_rep = await self._do_request(req.dump())
-        return authenticated_cmds.latest.invite_4_greeter_communicate.Rep.load(raw_rep)
 
     async def invite_cancel(
         self, token: InvitationToken
@@ -458,52 +408,6 @@ class BaseAuthenticatedRpcClient:
 class BaseInvitedRpcClient:
     async def _do_request(self, req: bytes) -> bytes:
         raise NotImplementedError
-
-    async def invite_1_claimer_wait_peer(
-        self, claimer_public_key: PublicKey
-    ) -> invited_cmds.latest.invite_1_claimer_wait_peer.Rep:
-        req = invited_cmds.latest.invite_1_claimer_wait_peer.Req(
-            claimer_public_key=claimer_public_key
-        )
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_1_claimer_wait_peer.Rep.load(raw_rep)
-
-    async def invite_2a_claimer_send_hashed_nonce(
-        self, claimer_hashed_nonce: HashDigest
-    ) -> invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Rep:
-        req = invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Req(
-            claimer_hashed_nonce=claimer_hashed_nonce
-        )
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_2a_claimer_send_hashed_nonce.Rep.load(raw_rep)
-
-    async def invite_2b_claimer_send_nonce(
-        self, claimer_nonce: bytes
-    ) -> invited_cmds.latest.invite_2b_claimer_send_nonce.Rep:
-        req = invited_cmds.latest.invite_2b_claimer_send_nonce.Req(claimer_nonce=claimer_nonce)
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_2b_claimer_send_nonce.Rep.load(raw_rep)
-
-    async def invite_3a_claimer_signify_trust(
-        self,
-    ) -> invited_cmds.latest.invite_3a_claimer_signify_trust.Rep:
-        req = invited_cmds.latest.invite_3a_claimer_signify_trust.Req()
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_3a_claimer_signify_trust.Rep.load(raw_rep)
-
-    async def invite_3b_claimer_wait_peer_trust(
-        self,
-    ) -> invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Rep:
-        req = invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Req()
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_3b_claimer_wait_peer_trust.Rep.load(raw_rep)
-
-    async def invite_4_claimer_communicate(
-        self, payload: bytes
-    ) -> invited_cmds.latest.invite_4_claimer_communicate.Rep:
-        req = invited_cmds.latest.invite_4_claimer_communicate.Req(payload=payload)
-        raw_rep = await self._do_request(req.dump())
-        return invited_cmds.latest.invite_4_claimer_communicate.Rep.load(raw_rep)
 
     async def invite_claimer_cancel_greeting_attempt(
         self, greeting_attempt: GreetingAttemptID, reason: CancelledGreetingAttemptReason
