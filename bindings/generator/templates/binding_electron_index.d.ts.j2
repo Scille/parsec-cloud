@@ -10,6 +10,8 @@
 Result<{{ render_type(t.ok) }}, {{ render_type(t.err) }}>
 {%- elif t.kind == "struct" or t.kind == "variant" -%}
 {{ t.name }}
+{%- elif t.kind == "dict" -%}
+Map<{{ render_type(t.key) }}, {{ render_type(t.value) }}>
 {%- elif t.kind == "list" -%}
 Array<{{ render_type(t.elem) }}>
 {%- elif t.kind == "tuple" -%}
