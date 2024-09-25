@@ -147,7 +147,7 @@ web-jobs:
 
 docs-jobs:
   - .github/workflows/ci-docs.yml
-  - docs/adminguide/**
+  - docs/hosting/**
   - docs/userguide/**
   - docs/figures/**
   - docs/_static/**

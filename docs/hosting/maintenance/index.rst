@@ -1,31 +1,31 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_adminguide_server_migration:
+.. _doc_hosting_server_migration:
 
 .. cspell:words linenos literalinclude
 
-=======================
-Parsec Server migration
-=======================
+==================
+Server Maintenance
+==================
 
-This guide covers the migration procedure for the `Parsec`_ server (also called `parsec-server`).
+This section covers how to maintain the Parsec server up to date.
 
 .. note::
 
-  We consider that you are using the same infrastructure configuration as in the :ref:`Parsec Server installation guide <doc_adminguide_hosting>`.
+  We consider that you are using the same infrastructure configuration as in the :ref:`Parsec Server installation guide <doc_hosting_deployment>`.
   Adapt this guide to your own situation.
 
 .. _Parsec: https://parsec.cloud
 
-Updating to a newer version
-***************************
+Upgrade Parsec Server
+*********************
 
 .. warning::
 
   Before updating to a newer version, make sure to back up the database,
   in case you need to roll back the update.
 
-In this guide, we will migrate ``parsec-server`` from version ``v2.15.0`` to ``v2.16.0``.
+In this guide, we will migrate ``parsec-server`` from version ``v3.0.0`` to ``v3.1.0``.
 
 .. _update_docker_image_tag:
 
@@ -39,10 +39,10 @@ In this guide, we will migrate ``parsec-server`` from version ``v2.15.0`` to ``v
       # ...
 
       parsec-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-server:v2.15.0
+        image: ghcr.io/scille/parsec-cloud/parsec-server:v3.0.0
         # ...
 
-  You need to change the used tag (at line **5**) to ``v2.16.0``.
+  You need to change the used tag (at line **5**) to ``v3.1.0``.
 
 2. List the pending migrations to be applied:
 
@@ -90,8 +90,8 @@ In this guide, we will migrate ``parsec-server`` from version ``v2.15.0`` to ``v
 
     docker compose -f parsec-server.docker.yaml restart parsec-server
 
-Rollback to a previous version
-******************************
+Downgrade Parsec Server
+***********************
 
 .. warning::
 
@@ -99,10 +99,10 @@ Rollback to a previous version
   The only possible way to rollback is to use the previous database backup.
   So you will lose the delta of backup vs current database.
 
-To roll back to a previous version, let's say we want to downgrade ``parsec-server`` from version ``v2.16.0`` to ``v2.15.0``.
+To roll back to a previous version, let's say we want to downgrade ``parsec-server`` from version ``v3.1.0`` to ``v3.0.0``.
 
 1. Downgrade the ``parsec-server``'s docker image tag in the docker-compose file (``parsec-server.docker.yaml``).
-   Like in :ref:`Update the parsec-server tag <update_docker_image_tag>` change the tag ``v2.16.0`` to ``v2.15.0``.
+   Like in :ref:`Update the parsec-server tag <update_docker_image_tag>` change the tag ``v3.1.0`` to ``v3.0.0``.
 
 2. Replace the current database with the backup on the Postgres database.
 

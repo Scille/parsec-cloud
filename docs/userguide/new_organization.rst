@@ -76,4 +76,4 @@ You are ready for your :ref:`first steps with Parsec! <doc_userguide_first_steps
 
 .. note::
 
-  You can read more about hosting Parsec server in the :ref:`Hosting Guide <doc_adminguide_hosting>`.
+  You can read more about hosting Parsec server in the :ref:`Deployment Guide <doc_hosting_deployment>`.

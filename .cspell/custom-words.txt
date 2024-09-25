@@ -3,7 +3,6 @@ acapture
 accesslog
 aconnect
 addoption
-adminguide
 ainit
 aiter
 allprojects

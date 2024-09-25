@@ -1,6 +1,6 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_adminguide_freeze_users:
+.. _doc_hosting_freeze_users:
 
 
 Freeze users

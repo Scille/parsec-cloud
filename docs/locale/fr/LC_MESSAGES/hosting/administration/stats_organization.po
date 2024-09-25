@@ -17,17 +17,19 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.15.0\n"
 
-#: ../../adminguide/stats_server.rst:6
-msgid "Extract server statistics"
-msgstr "Extraction des statistiques serveur"
+#: ../../hosting/stats_organization.rst:6
+msgid "Extract organization statistics"
+msgstr "Extraction des statistiques d'organisation"
 
-#: ../../adminguide/stats_server.rst:8
+#: ../../hosting/stats_organization.rst:8
 msgid ""
-"In order to extract server statistics, the administrator needs to provide :"
+"In order to extract organization statistics, the administrator needs to "
+"provide :"
 msgstr ""
-"Afin d'extraire les statistiques serveur, l'administrateur doit fournir :"
+"Afin d'extraire les statistiques d'organisation, l'administrateur doit "
+"fournir :"
 
-#: ../../adminguide/stats_server.rst:10
+#: ../../hosting/stats_organization.rst:10
 msgid ""
 "The parsec metadata server location, through a parsec url ``parsec3://"
 "hostname:port``"
@@ -35,23 +37,15 @@ msgstr ""
 "La localisation du serveur de métadonnées, par une url Parsec``parsec3://"
 "hostname:port``"
 
-#: ../../adminguide/stats_server.rst:11
+#: ../../hosting/stats_organization.rst:11
 msgid "The ``administration_token`` configured in the parsec metadata server"
 msgstr ""
 "Le ``administration_token`` configuré dans le serveur de métadonnées Parsec"
 
-#: ../../adminguide/stats_server.rst:12
-msgid "The extraction date, ignore everything after the date"
-msgstr "La date d'extraction, ignore toutes les informations après cette date"
+#: ../../hosting/stats_organization.rst:12
+msgid "The organization name"
+msgstr "Le nom d'organisation"
 
-#: ../../adminguide/stats_server.rst:13
-msgid "The output filename"
-msgstr "Le nom du fichier de sortie"
-
-#: ../../adminguide/stats_server.rst:14
-msgid "The output file format which can be CSV or JSON"
-msgstr "Le format du fichier de sortie, peut être en CSV ou JSON"
-
-#: ../../adminguide/stats_server.rst:20
+#: ../../hosting/stats_organization.rst:18
 msgid "Example of output:"
 msgstr "Exemple de sortie :"

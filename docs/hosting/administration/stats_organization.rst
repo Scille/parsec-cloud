@@ -1,6 +1,6 @@
 .. Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-.. _doc_adminguide_stats_organization:
+.. _doc_hosting_stats_organization:
 
 Extract organization statistics
 ===============================

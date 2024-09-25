@@ -42,12 +42,12 @@ You can also use the search function in the top left corner.
     :caption: Hosting Guide
     :name: section-hosting-guide
 
-    adminguide/installation
-    adminguide/stats_server
-    adminguide/stats_organization
-    adminguide/hosting/index
-    adminguide/migration/index
-    adminguide/freeze_users
+    hosting/introduction
+    hosting/install_cli
+    hosting/deployment/index
+    hosting/maintenance/index
+    hosting/administration/index
+
 
 .. toctree::
     :maxdepth: 1
