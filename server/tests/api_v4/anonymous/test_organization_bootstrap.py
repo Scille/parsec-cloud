@@ -3,10 +3,12 @@
 from collections.abc import Awaitable
 from dataclasses import dataclass
 from typing import Protocol
+from unittest.mock import ANY
 
 import pytest
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     BootstrapToken,
     DateTime,
     DeviceCertificate,
@@ -27,6 +29,7 @@ from parsec._parsec import (
 )
 from parsec._parsec import testbed as tb
 from parsec.ballpark import BALLPARK_CLIENT_EARLY_OFFSET, BALLPARK_CLIENT_LATE_OFFSET
+from parsec.components.organization import TermsOfService
 from tests.common import AnonymousRpcClient, AsyncClient, Backend, TestbedBackend
 
 
@@ -76,8 +79,12 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
             bootstrap_token = None
             backend.config.organization_spontaneous_bootstrap = True
         else:
+            # Note we also configure an TOS here, this is to make sure this has no impact
+            # on organization bootstrap (as it should be only checked  on user authentication).
             bootstrap_token = await backend.organization.create(
-                now=DateTime.now(), id=organization_id
+                now=DateTime.now(),
+                id=organization_id,
+                tos={"cn_HK": "https://parsec.invalid/tos_cn.pdf"},
             )
             assert isinstance(bootstrap_token, BootstrapToken), bootstrap_token
         return BackendConfig(
@@ -93,6 +100,7 @@ def backend_bootstrap_config(backend: Backend, request: pytest.FixtureRequest) -
 async def test_anonymous_organization_bootstrap_ok(
     organization_id: OrganizationID,
     backend_bootstrap_config: ConfigureBackend,
+    backend: Backend,
     testbed: TestbedBackend,
     anonymous_client: AnonymousRpcClient,
     cleanup_organizations: None,
@@ -112,6 +120,11 @@ async def test_anonymous_organization_bootstrap_ok(
         pytest.xfail(reason="TODO: no sequestered template so far !")
     else:
         sequester_authority_certificate = None
+    if config.spontaneous:
+        backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(3)
+        backend.config.organization_initial_user_profile_outsider_allowed = False
+        backend.config.organization_initial_minimum_archiving_period = 42
+        backend.config.organization_initial_tos = {"cn_HK": "https://parsec.invalid/tos_cn.pdf"}
 
     rep = await anonymous_client.organization_bootstrap(
         bootstrap_token=config.bootstrap_token,
@@ -124,6 +137,25 @@ async def test_anonymous_organization_bootstrap_ok(
     )
 
     assert rep == anonymous_cmds.v4.organization_bootstrap.RepOk()
+
+    # Ensure the default config has been used to configure the organization
+    # when spontaneously created.
+    if config.spontaneous:
+        orgs = await backend.organization.test_dump_organizations()
+        org = orgs[organization_id]
+        assert org.active_users_limit == backend.config.organization_initial_active_users_limit
+        assert (
+            org.user_profile_outsider_allowed
+            == backend.config.organization_initial_user_profile_outsider_allowed
+        )
+        assert (
+            org.minimum_archiving_period
+            == backend.config.organization_initial_minimum_archiving_period
+        )
+        assert backend.config.organization_initial_tos is not None  # Sanity check to please typing
+        assert org.tos == TermsOfService(
+            updated_on=ANY, per_locale_urls=backend.config.organization_initial_tos
+        )
 
 
 @dataclass

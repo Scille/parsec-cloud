@@ -268,10 +268,10 @@ def _parse_db_param(value: str) -> BaseDatabaseConfig:
 # Blockstore option
 
 
-def _split_with_escaping(txt: str) -> list[str]:
+def _split_with_escaping(txt: str, delimiter: str) -> list[str]:
     """
-    Simple colon (i.e. `:`) escaping with backslash
-    Rules (using slash instead of backslash to avoid weird encoding error):
+    Simple delimiter-separated list with backslash escaping.
+    Rules (considering `:` as delimiter and `<bs>` to be the backslash character):
     `<bs>:` -> `:`
     `<bs><bs>` -> `<bs>`
     `<bs>whatever` -> `<bs>whatever`
@@ -281,13 +281,13 @@ def _split_with_escaping(txt: str) -> list[str]:
     escaping = False
     for c in txt:
         if escaping:
-            if c not in ("\\", ":"):
+            if c not in ("\\", delimiter):
                 current_part += "\\"
             current_part += c
         elif c == "\\":
             escaping = True
             continue
-        elif c == ":":
+        elif c == delimiter:
             parts.append(current_part)
             current_part = ""
         else:
@@ -305,7 +305,7 @@ def _parse_blockstore_param(value: str) -> BaseBlockStoreConfig:
     elif value.upper() == "POSTGRESQL":
         return PostgreSQLBlockStoreConfig()
     else:
-        parts = _split_with_escaping(value)
+        parts = _split_with_escaping(value, delimiter=":")
         if parts[0].upper() == "S3":
             try:
                 endpoint_url, region, bucket, key, secret = parts[1:]

@@ -13,6 +13,7 @@ from parsec.components.auth import (
     InvitedAuthInfo,
 )
 from parsec.components.memory.datamodel import MemoryDatamodel, MemoryOrganization
+from parsec.components.organization import TermsOfService
 
 
 class MemoryAuthComponent(BaseAuthComponent):
@@ -33,6 +34,11 @@ class MemoryAuthComponent(BaseAuthComponent):
                     user_profile_outsider_allowed=self._config.organization_initial_user_profile_outsider_allowed,
                     active_users_limit=self._config.organization_initial_active_users_limit,
                     minimum_archiving_period=self._config.organization_initial_minimum_archiving_period,
+                    tos=None
+                    if self._config.organization_initial_tos is None
+                    else TermsOfService(
+                        updated_on=now, per_locale_urls=self._config.organization_initial_tos
+                    ),
                     created_on=now,
                 )
                 self._data.organizations[organization_id] = org
@@ -76,7 +82,7 @@ class MemoryAuthComponent(BaseAuthComponent):
         )
 
     async def _get_authenticated_info(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         try:
             org = self._data.organizations[organization_id]
@@ -96,6 +102,9 @@ class MemoryAuthComponent(BaseAuthComponent):
             return AuthAuthenticatedAuthBadOutcome.USER_REVOKED
         if user.is_frozen:
             return AuthAuthenticatedAuthBadOutcome.USER_FROZEN
+        if tos_acceptance_required and org.tos is not None:
+            if user.tos_accepted_on is None or user.tos_accepted_on < org.tos.updated_on:
+                return AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS
 
         return AuthenticatedAuthInfo(
             organization_id=organization_id,

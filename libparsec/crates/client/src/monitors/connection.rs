@@ -184,6 +184,10 @@ fn handle_sse_error(
             event_bus.send(&EventRevokedSelfUser);
             ControlFlow::Break(())
         }
+        ConnectionError::UserMustAcceptTos => {
+            event_bus.send(&EventMustAcceptTos);
+            ControlFlow::Break(())
+        }
         ConnectionError::UnsupportedApiVersion {
             api_version,
             supported_api_versions,
@@ -195,7 +199,23 @@ fn handle_sse_error(
             event_bus.send(&event);
             ControlFlow::Break(())
         }
-        err => {
+        err @ (ConnectionError::MissingAuthenticationInfo
+        | ConnectionError::BadAuthenticationInfo
+        | ConnectionError::OrganizationNotFound
+        | ConnectionError::BadAcceptType
+        | ConnectionError::InvitationAlreadyUsedOrDeleted
+        | ConnectionError::BadContent
+        | ConnectionError::InvalidResponseStatus(_)
+        | ConnectionError::InvalidResponseContent(_)
+        | ConnectionError::InvitationAlreadyDeleted
+        | ConnectionError::InvitationNotFound
+        | ConnectionError::MissingApiVersion
+        | ConnectionError::MissingSupportedApiVersions
+        | ConnectionError::FrozenUser
+        | ConnectionError::AuthenticationTokenExpired
+        | ConnectionError::Serialization(_)
+        | ConnectionError::WrongApiVersion(_)
+        | ConnectionError::InvalidSSEEventID(_)) => {
             let event =
                 EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
             event_bus.send(&event);

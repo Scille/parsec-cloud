@@ -12,6 +12,7 @@ mod revoke_user;
 mod shamir_setup_create;
 mod share_workspace;
 mod start_workspace;
+mod tos;
 mod utils;
 mod with_monitors;
 mod workspace_refresh_list;

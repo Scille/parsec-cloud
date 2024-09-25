@@ -19,6 +19,7 @@ from parsec._parsec import (
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
+from parsec.components.postgresql.user_accept_tos import user_accept_tos
 from parsec.components.postgresql.user_create_device import user_create_device
 from parsec.components.postgresql.user_create_user import user_create_user
 from parsec.components.postgresql.user_freeze_user import user_freeze_user
@@ -43,6 +44,7 @@ from parsec.components.user import (
     CertificatesBundle,
     CheckDeviceBadOutcome,
     GetProfileForUserUserBadOutcome,
+    UserAcceptTosBadOutcome,
     UserCreateDeviceStoreBadOutcome,
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
@@ -336,3 +338,21 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> dict[UserID, UserDump]:
         return await user_test_dump_current_users(conn, organization_id)
+
+    @override
+    @transaction
+    async def accept_tos(
+        self,
+        conn: AsyncpgConnection,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        tos_updated_on: DateTime,
+    ) -> None | UserAcceptTosBadOutcome:
+        return await user_accept_tos(
+            conn,
+            now,
+            organization_id,
+            author,
+            tos_updated_on,
+        )

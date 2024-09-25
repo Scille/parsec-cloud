@@ -26,14 +26,19 @@ from parsec.components.organization import (
     OrganizationDump,
     OrganizationDumpTopics,
     OrganizationGetBadOutcome,
+    OrganizationGetTosBadOutcome,
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
     OrganizationStatsBadOutcome,
     OrganizationUpdateBadOutcome,
+    TermsOfService,
+    TosLocale,
+    TosUrl,
 )
 from parsec.components.postgresql import AsyncpgConnection, AsyncpgPool
 from parsec.components.postgresql.organization_bootstrap import organization_bootstrap
 from parsec.components.postgresql.organization_create import organization_create
+from parsec.components.postgresql.organization_get_tos import organization_get_tos
 from parsec.components.postgresql.organization_stats import (
     organization_server_stats,
     organization_stats,
@@ -71,7 +76,9 @@ SELECT
     user_profile_outsider_allowed,
     sequester_authority_certificate,
     sequester_authority_verify_key_der,
-    minimum_archiving_period
+    minimum_archiving_period,
+    tos_updated_on,
+    tos_per_locale_urls
 FROM organization
 WHERE organization_id = $organization_id
 {"FOR UPDATE" if for_update else ""}
@@ -122,6 +129,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
+        tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -141,6 +149,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users_limit,
             user_profile_outsider_allowed,
             minimum_archiving_period,
+            None if tos is Unset else tos,
             bootstrap_token,
         )
         match outcome:
@@ -167,29 +176,62 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         if not row:
             return OrganizationGetBadOutcome.ORGANIZATION_NOT_FOUND
 
-        rvk = VerifyKey(row["root_verify_key"]) if row["root_verify_key"] else None
+        match row["root_verify_key"]:
+            case None:
+                rvk = None
+            case bytes() as root_verify_key:
+                rvk = VerifyKey(root_verify_key)
+            case unknown:
+                assert False, unknown
 
-        # Sequester services certificates is None if sequester is not enabled
-        sequester_authority_certificate = None
-        sequester_services_certificates = None
-        sequester_authority_verify_key_der = None
+        match (row["sequester_authority_certificate"], row["sequester_authority_verify_key_der"]):
+            # Sequester services certificates is None if sequester is not enabled
+            case (None, None):
+                sequester_authority_certificate = None
+                sequester_services_certificates = None
+                sequester_authority_verify_key_der = None
 
-        if row["sequester_authority_certificate"]:
-            sequester_authority_verify_key_der = SequesterVerifyKeyDer(
-                row["sequester_authority_verify_key_der"]
-            )
-            sequester_authority_certificate = row["sequester_authority_certificate"]
-            services = await conn.fetch(
-                *_q_get_enabled_service_certificates_for_organization(organization_id=id.str)
-            )
-            sequester_services_certificates = tuple(
-                service["service_certificate"] for service in services
-            )
+            case (
+                bytes() as sequester_authority_certificate,
+                bytes() as raw_sequester_authority_verify_key_der,
+            ):
+                sequester_authority_verify_key_der = SequesterVerifyKeyDer(
+                    raw_sequester_authority_verify_key_der
+                )
+
+                services = await conn.fetch(
+                    *_q_get_enabled_service_certificates_for_organization(organization_id=id.str)
+                )
+                sequester_services_certificates = tuple(
+                    service["service_certificate"] for service in services
+                )
+
+            case unknown:
+                assert False, unknown
 
         raw_bootstrap_token = row["bootstrap_token"]
         bootstrap_token = (
             None if raw_bootstrap_token is None else BootstrapToken.from_hex(raw_bootstrap_token)
         )
+
+        match (row["tos_updated_on"], row["tos_per_locale_urls"]):
+            case (None, None):
+                tos = None
+
+            case (DateTime() as tos_updated_on, dict() as tos_per_locale_urls):
+                # Sanity check to ensure the JSON on database have the expected
+                # {<locale>: <url>} format.
+                for key, value in tos_per_locale_urls.items():
+                    assert isinstance(key, str) and key, tos_per_locale_urls
+                    assert isinstance(value, str) and value, tos_per_locale_urls
+
+                tos = TermsOfService(
+                    updated_on=tos_updated_on,
+                    per_locale_urls=tos_per_locale_urls,
+                )
+
+            case unknown:
+                assert False, unknown
 
         return Organization(
             organization_id=id,
@@ -204,6 +246,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
             minimum_archiving_period=row["minimum_archiving_period"],
+            tos=tos,
         )
 
     @override
@@ -272,21 +315,32 @@ class PGOrganizationComponent(BaseOrganizationComponent):
     async def update(
         self,
         conn: AsyncpgConnection,
+        now: DateTime,
         id: OrganizationID,
         is_expired: Literal[UnsetType.Unset] | bool = Unset,
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
+        tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         return await organization_update(
             self.event_bus,
             conn,
+            now,
             id,
             is_expired,
             active_users_limit,
             user_profile_outsider_allowed,
             minimum_archiving_period,
+            tos,
         )
+
+    @override
+    @no_transaction
+    async def get_tos(
+        self, conn: AsyncpgConnection, id: OrganizationID
+    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+        return await organization_get_tos(conn, id)
 
     @override
     @no_transaction

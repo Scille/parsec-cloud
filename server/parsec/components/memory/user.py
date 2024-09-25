@@ -30,6 +30,7 @@ from parsec.components.realm import CertificateBasedActionIdempotentOutcome
 from parsec.components.user import (
     BaseUserComponent,
     CertificatesBundle,
+    UserAcceptTosBadOutcome,
     UserCreateDeviceStoreBadOutcome,
     UserCreateDeviceValidateBadOutcome,
     UserCreateUserStoreBadOutcome,
@@ -734,3 +735,31 @@ class MemoryUserComponent(BaseUserComponent):
             human_handle=user.cooked.human_handle,
             frozen=user.is_frozen,
         )
+
+    async def accept_tos(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        tos_updated_on: DateTime,
+    ) -> None | UserAcceptTosBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return UserAcceptTosBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return UserAcceptTosBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            device = org.devices[author]
+            author_user_id = device.cooked.user_id
+            user = org.users[author_user_id]
+        except KeyError:
+            return UserAcceptTosBadOutcome.AUTHOR_NOT_FOUND
+
+        if org.tos is None:
+            return UserAcceptTosBadOutcome.NO_TOS
+        if org.tos.updated_on != tos_updated_on:
+            return UserAcceptTosBadOutcome.TOS_MISMATCH
+
+        user.tos_accepted_on = now

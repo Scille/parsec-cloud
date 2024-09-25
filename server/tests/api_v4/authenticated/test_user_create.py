@@ -206,7 +206,9 @@ async def test_authenticated_user_create_active_users_limit_reached(
     backend: Backend,
 ) -> None:
     await backend.organization.update(
-        minimalorg.organization_id, active_users_limit=ActiveUsersLimit.from_maybe_int(1)
+        now=DateTime.now(),
+        id=minimalorg.organization_id,
+        active_users_limit=ActiveUsersLimit.from_maybe_int(1),
     )
     t1 = DateTime.now()
     device_certificate, redacted_device_certificate = generate_new_mike_device_certificates(

@@ -42,6 +42,7 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
 )
+from parsec.components.organization import TermsOfService
 from parsec.components.sequester import SequesterServiceType
 
 
@@ -87,6 +88,7 @@ class MemoryOrganization:
     root_verify_key: VerifyKey | None = field(default=None, repr=False)
     is_expired: bool = False
     minimum_archiving_period: int = 2592000  # 30 days
+    tos: TermsOfService | None = None
 
     # None for non-sequestered organization
     sequester_services: dict[SequesterServiceID, MemorySequesterService] | None = None
@@ -254,6 +256,8 @@ class MemoryUser:
     # Should be updated each time a new vlob is created/updated
     last_vlob_operation_timestamp: DateTime | None = None
     is_frozen: bool = False
+    # None if not yet accepted (or nothing to accept)
+    tos_accepted_on: DateTime | None = None
 
     @property
     def current_profile(self) -> UserProfile:

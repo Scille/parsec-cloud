@@ -7,3 +7,4 @@ use libparsec_serialization_format::protocol_cmds_tests;
 protocol_cmds_tests!("schema/invited_cmds");
 protocol_cmds_tests!("schema/anonymous_cmds");
 protocol_cmds_tests!("schema/authenticated_cmds");
+protocol_cmds_tests!("schema/tos_cmds");

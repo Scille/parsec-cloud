@@ -3,6 +3,7 @@
 #![allow(dead_code)]
 
 mod shamir_setup_create;
+mod tos;
 mod user_revoke;
 mod workspace_bootstrap;
 mod workspace_create;
@@ -20,11 +21,14 @@ use std::{
 };
 
 pub use self::{
+    tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
-    workspace_create::ClientCreateWorkspaceError, workspace_list::WorkspaceInfo,
+    workspace_create::ClientCreateWorkspaceError,
+    workspace_list::WorkspaceInfo,
     workspace_needs::ClientProcessWorkspacesNeedsError,
     workspace_refresh_list::ClientRefreshWorkspacesListError,
-    workspace_rename::ClientRenameWorkspaceError, workspace_share::ClientShareWorkspaceError,
+    workspace_rename::ClientRenameWorkspaceError,
+    workspace_share::ClientShareWorkspaceError,
     workspace_start::ClientStartWorkspaceError,
 };
 use crate::{
@@ -520,6 +524,14 @@ impl Client {
         threshold: u8,
     ) -> Result<(), ClientShamirError> {
         shamir_setup_create::shamir_setup_create(self, share_recipients, threshold).await
+    }
+
+    pub async fn get_tos(&self) -> Result<Tos, ClientGetTosError> {
+        tos::get_tos(self).await
+    }
+
+    pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
+        tos::accept_tos(self, tos_updated_on).await
     }
 }
 

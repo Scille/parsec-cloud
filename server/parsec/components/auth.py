@@ -18,7 +18,12 @@ from parsec._parsec import (
 from parsec.ballpark import timestamps_in_the_ballpark
 from parsec.components.events import EventBus
 from parsec.config import BackendConfig
-from parsec.events import Event, EventUserRevokedOrFrozen, EventUserUnfrozen
+from parsec.events import (
+    Event,
+    EventOrganizationTosUpdated,
+    EventUserRevokedOrFrozen,
+    EventUserUnfrozen,
+)
 from parsec.types import BadOutcomeEnum
 
 
@@ -39,6 +44,7 @@ class AuthAuthenticatedAuthBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     USER_REVOKED = auto()
     USER_FROZEN = auto()
+    USER_MUST_ACCEPT_TOS = auto()
     DEVICE_NOT_FOUND = auto()
     INVALID_SIGNATURE = auto()
     TOKEN_TOO_OLD = auto()
@@ -147,6 +153,14 @@ class BaseAuthComponent:
                     for ((org_id, device_id), v) in self._device_cache.items()
                     if org_id != event.organization_id or v.user_id != event.user_id
                 }
+            # If TOS has changed they must be re-accepted by the users, so we clear the
+            # cache given that the TOS acceptance is checked on cache miss.
+            case EventOrganizationTosUpdated():
+                self._device_cache = {
+                    (org_id, device_id): v
+                    for ((org_id, device_id), v) in self._device_cache.items()
+                    if org_id != event.organization_id
+                }
             case _:
                 pass
 
@@ -169,6 +183,7 @@ class BaseAuthComponent:
         now: DateTime,
         organization_id: OrganizationID,
         token: AuthenticatedToken,
+        tos_acceptance_required: bool = True,
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         try:
             # The cache is only available if the authentication already succeeded,
@@ -176,10 +191,16 @@ class BaseAuthComponent:
             auth_info = self._device_cache[(organization_id, token.device_id)]
 
         except KeyError:
-            outcome = await self._get_authenticated_info(organization_id, token.device_id)
+            outcome = await self._get_authenticated_info(
+                organization_id, token.device_id, tos_acceptance_required=tos_acceptance_required
+            )
             match outcome:
                 case AuthenticatedAuthInfo() as auth_info:
-                    self._device_cache[(organization_id, token.device_id)] = auth_info
+                    # If Terms Of Services acceptance is only checked on cache miss,
+                    # so we shouldn't updated the cache if we got our auth info
+                    # without having checked the TOS acceptance !
+                    if tos_acceptance_required:
+                        self._device_cache[(organization_id, token.device_id)] = auth_info
 
                 case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
                     # Cannot store cache as the organization might be created at anytime !
@@ -197,6 +218,6 @@ class BaseAuthComponent:
         return auth_info
 
     async def _get_authenticated_info(
-        self, organization_id: OrganizationID, device_id: DeviceID
+        self, organization_id: OrganizationID, device_id: DeviceID, tos_acceptance_required: bool
     ) -> AuthenticatedAuthInfo | AuthAuthenticatedAuthBadOutcome:
         raise NotImplementedError

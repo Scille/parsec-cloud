@@ -9,6 +9,8 @@ from parsec._parsec import (
 )
 from parsec.components.organization import (
     OrganizationCreateBadOutcome,
+    TosLocale,
+    TosUrl,
 )
 from parsec.components.postgresql import AsyncpgConnection
 from parsec.components.postgresql.utils import (
@@ -27,7 +29,9 @@ WITH new_organization AS (
         _bootstrapped_on,
         is_expired,
         _expired_on,
-        minimum_archiving_period
+        minimum_archiving_period,
+        tos_updated_on,
+        tos_per_locale_urls
     )
     VALUES (
         $organization_id,
@@ -38,7 +42,12 @@ WITH new_organization AS (
         NULL,
         FALSE,
         NULL,
-        $minimum_archiving_period
+        $minimum_archiving_period,
+        CASE WHEN $tos_per_locale_urls::JSON IS NULL
+            THEN NULL::TIMESTAMPTZ
+            ELSE $created_on
+            END,
+        $tos_per_locale_urls
     )
     -- If the organization exists but hasn't been bootstrapped yet, we can
     -- simply overwrite it.
@@ -50,7 +59,9 @@ WITH new_organization AS (
             _created_on = EXCLUDED._created_on,
             is_expired = EXCLUDED.is_expired,
             _expired_on = EXCLUDED._expired_on,
-            minimum_archiving_period = EXCLUDED.minimum_archiving_period
+            minimum_archiving_period = EXCLUDED.minimum_archiving_period,
+            tos_updated_on = EXCLUDED.tos_updated_on,
+            tos_per_locale_urls = EXCLUDED.tos_per_locale_urls
         WHERE organization.root_verify_key IS NULL
     RETURNING _id
 ),
@@ -81,6 +92,7 @@ async def organization_create(
     active_users_limit: ActiveUsersLimit,
     user_profile_outsider_allowed: bool,
     minimum_archiving_period: int,
+    tos_per_locale_urls: dict[TosLocale, TosUrl] | None,
     bootstrap_token: BootstrapToken | None,
 ) -> int | OrganizationCreateBadOutcome:
     organization_internal_id = await conn.fetchval(
@@ -93,6 +105,7 @@ async def organization_create(
             user_profile_outsider_allowed=user_profile_outsider_allowed,
             created_on=now,
             minimum_archiving_period=minimum_archiving_period,
+            tos_per_locale_urls=tos_per_locale_urls,
         )
     )
     match organization_internal_id:

@@ -62,6 +62,7 @@ pub enum ClientEvent {
     // Error from server & server-provided data
     ExpiredOrganization,
     RevokedSelfUser,
+    MustAcceptTos,
     TooMuchDriftWithServerClock {
         server_timestamp: DateTime,
         client_timestamp: DateTime,
@@ -111,6 +112,7 @@ pub(crate) struct OnEventCallbackPlugged {
     _invitation_changed: EventBusConnectionLifetime<libparsec_client::EventInvitationChanged>,
     _expired_organization: EventBusConnectionLifetime<libparsec_client::EventExpiredOrganization>,
     _revoked_self_user: EventBusConnectionLifetime<libparsec_client::EventRevokedSelfUser>,
+    _must_accept_tos: EventBusConnectionLifetime<libparsec_client::EventMustAcceptTos>,
     _too_much_drift_with_server_clock:
         EventBusConnectionLifetime<libparsec_client::EventTooMuchDriftWithServerClock>,
     _incompatible_server: EventBusConnectionLifetime<libparsec_client::EventIncompatibleServer>,
@@ -305,6 +307,12 @@ impl OnEventCallbackPlugged {
                 (on_event_callback)(handle, ClientEvent::RevokedSelfUser);
             })
         };
+        let must_accept_tos = {
+            let on_event_callback = on_event_callback.clone();
+            event_bus.connect(move |_: &libparsec_client::EventMustAcceptTos| {
+                (on_event_callback)(handle, ClientEvent::MustAcceptTos);
+            })
+        };
         let too_much_drift_with_server_clock = {
             let on_event_callback = on_event_callback.clone();
             event_bus.connect(
@@ -371,6 +379,7 @@ impl OnEventCallbackPlugged {
             _too_much_drift_with_server_clock: too_much_drift_with_server_clock,
             _expired_organization: expired_organization,
             _revoked_self_user: revoked_self_user,
+            _must_accept_tos: must_accept_tos,
             _incompatible_server: incompatible_server,
             // _invalid_keys_bundle: invalid_keys_bundle,
             // _invalid_certificate: invalid_certificate,

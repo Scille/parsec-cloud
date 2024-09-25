@@ -94,6 +94,7 @@ from parsec._parsec_pyi.protocol import (
     anonymous_cmds,
     authenticated_cmds,
     invited_cmds,
+    tos_cmds,
 )
 from parsec._parsec_pyi.time import DateTime
 
@@ -184,6 +185,7 @@ __all__ = [
     # Protocol Cmd
     "authenticated_cmds",
     "anonymous_cmds",
+    "tos_cmds",
     "invited_cmds",
     "ActiveUsersLimit",
     # Testbed

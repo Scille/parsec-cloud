@@ -32,14 +32,18 @@ from parsec.components.organization import (
     OrganizationDump,
     OrganizationDumpTopics,
     OrganizationGetBadOutcome,
+    OrganizationGetTosBadOutcome,
     OrganizationStats,
     OrganizationStatsAsUserBadOutcome,
     OrganizationStatsBadOutcome,
     OrganizationStatsProfileDetailItem,
     OrganizationUpdateBadOutcome,
+    TermsOfService,
+    TosLocale,
+    TosUrl,
     organization_bootstrap_validate,
 )
-from parsec.events import EventOrganizationExpired
+from parsec.events import EventOrganizationExpired, EventOrganizationTosUpdated
 from parsec.types import Unset, UnsetType
 
 
@@ -63,6 +67,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
+        tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -81,6 +86,15 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         if minimum_archiving_period is Unset:
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
         assert isinstance(minimum_archiving_period, int)
+        if tos is Unset:
+            if self._config.organization_initial_tos is None:
+                cooked_tos = None
+            else:
+                cooked_tos = TermsOfService(
+                    updated_on=now, per_locale_urls=self._config.organization_initial_tos
+                )
+        else:
+            cooked_tos = TermsOfService(updated_on=now, per_locale_urls=tos)
 
         self._data.organizations[id] = MemoryOrganization(
             organization_id=id,
@@ -89,6 +103,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             active_users_limit=active_users_limit,
             minimum_archiving_period=minimum_archiving_period,
             created_on=now,
+            tos=cooked_tos,
         )
 
         return bootstrap_token
@@ -124,6 +139,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             sequester_authority_certificate=org.sequester_authority_certificate,
             sequester_authority_verify_key_der=sequester_authority_verify_key_der,
             sequester_services_certificates=sequester_services_certificates,
+            tos=org.tos,
         )
 
     @override
@@ -310,11 +326,13 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
     @override
     async def update(
         self,
+        now: DateTime,
         id: OrganizationID,
         is_expired: Literal[UnsetType.Unset] | bool = Unset,
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
+        tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         try:
             org = self._data.organizations[id]
@@ -329,11 +347,34 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             org.user_profile_outsider_allowed = user_profile_outsider_allowed
         if minimum_archiving_period is not Unset:
             org.minimum_archiving_period = minimum_archiving_period
+        if tos is not Unset:
+            if tos is None:
+                org.tos = None
+            else:
+                org.tos = TermsOfService(updated_on=now, per_locale_urls=tos)
 
         # TODO: the event is triggered even if the orga was already expired, is this okay ?
         if org.is_expired:
             await self._event_bus.send(EventOrganizationExpired(organization_id=id))
 
+        if tos is not Unset:
+            await self._event_bus.send(EventOrganizationTosUpdated(organization_id=id))
+
+    @override
+    async def get_tos(
+        self, id: OrganizationID
+    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
+        try:
+            org = self._data.organizations[id]
+        except KeyError:
+            return OrganizationGetTosBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if org.tos is None:
+            return None
+
+        return org.tos
+
+    @override
     async def test_dump_organizations(
         self, skip_templates: bool = True
     ) -> dict[OrganizationID, OrganizationDump]:
@@ -341,6 +382,7 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
         for org in self._data.organizations.values():
             if org.organization_id.str.endswith("Template") and skip_templates:
                 continue
+
             org.active_users_limit
             items[org.organization_id] = OrganizationDump(
                 organization_id=org.organization_id,
@@ -350,9 +392,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
                 active_users_limit=org.active_users_limit,
                 user_profile_outsider_allowed=org.user_profile_outsider_allowed,
                 minimum_archiving_period=org.minimum_archiving_period,
+                tos=org.tos,
             )
         return items
 
+    @override
     async def test_dump_topics(self, id: OrganizationID) -> OrganizationDumpTopics:
         try:
             org = self._data.organizations[id]
@@ -370,9 +414,11 @@ class MemoryOrganizationComponent(BaseOrganizationComponent):
             shamir_recovery=org.per_topic_last_timestamp.get("shamir_recovery"),
         )
 
+    @override
     async def test_drop_organization(self, id: OrganizationID) -> None:
         self._data.organizations.pop(id, None)
 
+    @override
     async def test_duplicate_organization(
         self, source_id: OrganizationID, target_id: OrganizationID
     ) -> None:

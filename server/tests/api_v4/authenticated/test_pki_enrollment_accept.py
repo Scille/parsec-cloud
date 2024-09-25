@@ -138,7 +138,9 @@ async def test_authenticated_pki_enrollment_accept_active_users_limit_reached(
     enrollment_id: EnrollmentID,
 ) -> None:
     outcome = await backend.organization.update(
-        id=coolorg.organization_id, active_users_limit=ActiveUsersLimit.limited_to(3)
+        now=DateTime.now(),
+        id=coolorg.organization_id,
+        active_users_limit=ActiveUsersLimit.limited_to(3),
     )
     assert outcome is None
     rep = await coolorg.alice.pki_enrollment_accept(

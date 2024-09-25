@@ -12,6 +12,7 @@ use crate::{
 };
 use libparsec_platform_async::stream::StreamExt;
 use libparsec_protocol::authenticated_cmds::latest as authenticated_cmds;
+use libparsec_protocol::tos_cmds::latest as tos_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -23,12 +24,14 @@ mod disconnect_proxy;
 
 #[parsec_test(testbed = "minimal")]
 async fn rpc_ok_mocked(env: &TestbedEnv) {
-    rpc_ok(env, true).await
+    rpc_ok(env, true).await;
+    rpc_ok_tos_family(env, true).await;
 }
 
 #[parsec_test(testbed = "minimal", with_server)]
 async fn rpc_ok_with_server(env: &TestbedEnv) {
-    rpc_ok(env, false).await
+    rpc_ok(env, false).await;
+    rpc_ok_tos_family(env, false).await;
 }
 
 async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
@@ -39,6 +42,7 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
     if mocked {
         test_register_low_level_send_hook(&env.discriminant_dir, |request_builder| async {
             let request = request_builder.build().unwrap();
+            p_assert_eq!(request.url().path(), "/authenticated/OfflineOrg");
             let headers = request.headers();
             println!("headers: {:?}", headers);
             p_assert_eq!(
@@ -83,6 +87,47 @@ async fn rpc_ok(env: &TestbedEnv, mocked: bool) {
             pong: "foo".to_owned()
         }
     );
+}
+
+async fn rpc_ok_tos_family(env: &TestbedEnv, mocked: bool) {
+    let alice = env.local_device("alice@dev1");
+    let cmds = AuthenticatedCmds::new(&env.discriminant_dir, alice.clone(), ProxyConfig::default())
+        .unwrap();
+
+    if mocked {
+        test_register_low_level_send_hook(&env.discriminant_dir, |request_builder| async {
+            let request = request_builder.build().unwrap();
+            p_assert_eq!(request.url().path(), "/authenticated/OfflineOrg/tos");
+            let headers = request.headers();
+            println!("headers: {:?}", headers);
+            p_assert_eq!(
+                headers.get("Content-Type"),
+                Some(&HeaderValue::from_static("application/msgpack"))
+            );
+            // Cannot check `User-Agent` here given reqwest adds it in a later step
+            // assert!(headers.get("User-Agent").unwrap().to_str().unwrap().starts_with("Parsec-Client/"));
+            assert!(headers
+                .get("Authorization")
+                .unwrap()
+                .as_bytes()
+                .starts_with(b"Bearer PARSEC-SIGN-ED25519."));
+
+            let body = request.body().unwrap().as_bytes().unwrap();
+            let request = tos_cmds::AnyCmdReq::load(body).unwrap();
+            p_assert_matches!(request, tos_cmds::AnyCmdReq::TosGet(tos_cmds::tos_get::Req));
+
+            Ok(ResponseMock::Mocked((
+                StatusCode::OK,
+                HeaderMap::new(),
+                tos_cmds::tos_get::Rep::NoTos.dump().unwrap().into(),
+            )))
+        });
+    }
+
+    // Good request
+
+    let rep = cmds.send(tos_cmds::tos_get::Req).await;
+    p_assert_matches!(rep.unwrap(), tos_cmds::tos_get::Rep::NoTos);
 }
 
 #[parsec_test(testbed = "minimal")]

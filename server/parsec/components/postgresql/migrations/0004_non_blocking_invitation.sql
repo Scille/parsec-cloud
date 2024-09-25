@@ -1,5 +1,8 @@
 -- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+-------------------------------------------------------
+--  Migration
+-------------------------------------------------------
 
 CREATE TYPE cancelled_greeting_attempt_reason AS ENUM (
     'MANUALLY_CANCELLED',

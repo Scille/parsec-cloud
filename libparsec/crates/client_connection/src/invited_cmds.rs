@@ -21,7 +21,7 @@ use crate::{
 
 const API_LATEST_MAJOR_VERSION: u32 = API_LATEST_VERSION.version;
 
-/// Factory that send commands in a invited context.
+/// Send commands in an invited context.
 #[derive(Debug)]
 pub struct InvitedCmds {
     /// HTTP Client that contain the basic configuration to communicate with the server.
@@ -122,7 +122,7 @@ impl InvitedCmds {
                 resp.headers(),
             )),
             460 => Err(ConnectionError::ExpiredOrganization),
-            // No 461&462: no user here
+            // No 461/462/463: no user here
             // No 498: invitation token cannot expire like an authentication token
 
             // Other HTTP codes

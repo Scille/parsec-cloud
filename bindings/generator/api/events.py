@@ -76,6 +76,9 @@ class ClientEvent(Variant):
     class RevokedSelfUser:
         pass
 
+    class MustAcceptTos:
+        pass
+
     class IncompatibleServer:
         detail: str
 

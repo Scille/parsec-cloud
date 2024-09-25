@@ -438,6 +438,22 @@ class EventOrganizationExpired(BaseModel):
     organization_id: OrganizationIDField
 
 
+class EventOrganizationTosUpdated(BaseModel):
+    """
+    The Terms Of Services have been updated for a given organization, hence
+    its users must accept the new TOS before they can access the server.
+
+    This event is only used internally and never broadcasted to users.
+
+    It is used to update the auth system's cache.
+    """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
+    type: Literal["ORGANIZATION_TOS_UPDATED"] = "ORGANIZATION_TOS_UPDATED"
+    event_id: UUID = Field(default_factory=uuid4)
+    organization_id: OrganizationIDField
+
+
 class EventUserRevokedOrFrozen(BaseModel):
     """
     This event is only used internally and never broadcasted to users.
@@ -495,6 +511,7 @@ type Event = (
     | EventRealmCertificate
     | EventOrganizationConfig
     | EventOrganizationExpired
+    | EventOrganizationTosUpdated
     | EventUserRevokedOrFrozen
     | EventUserUnfrozen
     | EventUserUpdated

@@ -19,10 +19,11 @@ from parsec._parsec import (
     VerifyKey,
     VlobID,
     anonymous_cmds,
+    tos_cmds,
 )
 from parsec.api import api
 from parsec.ballpark import TimestampOutOfBallpark, timestamps_in_the_ballpark
-from parsec.client_context import AnonymousClientContext
+from parsec.client_context import AnonymousClientContext, AuthenticatedClientContext
 from parsec.config import BackendConfig
 from parsec.types import BadOutcomeEnum, Unset, UnsetType
 from parsec.webhooks import WebhooksComponent
@@ -45,6 +46,17 @@ class OrganizationStats:
     users_per_profile_detail: tuple[OrganizationStatsProfileDetailItem, ...]
 
 
+type TosLocale = str
+type TosUrl = str
+
+
+@dataclass(slots=True, frozen=True)
+class TermsOfService:
+    updated_on: DateTime
+    # e.g. {"en_US": "https://example.com/tos_en.html", "fr_FR": "https://example.com/tos_fr.html"}
+    per_locale_urls: dict[TosLocale, TosUrl]
+
+
 @dataclass(slots=True)
 class OrganizationDump:
     organization_id: OrganizationID
@@ -54,6 +66,7 @@ class OrganizationDump:
     active_users_limit: ActiveUsersLimit
     user_profile_outsider_allowed: bool
     minimum_archiving_period: int
+    tos: TermsOfService | None
 
 
 class OrganizationBootstrapValidateBadOutcome(BadOutcomeEnum):
@@ -167,6 +180,7 @@ class Organization:
     sequester_authority_certificate: bytes | None
     sequester_authority_verify_key_der: SequesterVerifyKeyDer | None
     sequester_services_certificates: tuple[bytes, ...] | None
+    tos: TermsOfService | None
 
     @property
     def is_bootstrapped(self) -> bool:
@@ -190,6 +204,11 @@ class OrganizationBootstrapStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     ORGANIZATION_ALREADY_BOOTSTRAPPED = auto()
     INVALID_BOOTSTRAP_TOKEN = auto()
+
+
+class OrganizationGetTosBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
 
 
 class OrganizationStatsAsUserBadOutcome(BadOutcomeEnum):
@@ -235,6 +254,7 @@ class BaseOrganizationComponent:
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
+        tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
@@ -283,6 +303,7 @@ class BaseOrganizationComponent:
 
     async def update(
         self,
+        now: DateTime,
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
@@ -291,7 +312,13 @@ class BaseOrganizationComponent:
         active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
         user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
         minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
+        tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
+        raise NotImplementedError
+
+    async def get_tos(
+        self, id: OrganizationID
+    ) -> TermsOfService | None | OrganizationGetTosBadOutcome:
         raise NotImplementedError
 
     async def test_dump_organizations(
@@ -366,4 +393,23 @@ class BaseOrganizationComponent:
                 client_ctx.organization_not_found_abort()
 
             case OrganizationBootstrapStoreBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+
+    @api
+    async def api_tos_get(
+        self, client_ctx: AuthenticatedClientContext, req: tos_cmds.latest.tos_get.Req
+    ) -> tos_cmds.latest.tos_get.Rep:
+        outcome = await self.get_tos(
+            id=client_ctx.organization_id,
+        )
+        match outcome:
+            case None:
+                return tos_cmds.latest.tos_get.RepNoTos()
+            case TermsOfService() as tos:
+                return tos_cmds.latest.tos_get.RepOk(
+                    per_locale_urls=tos.per_locale_urls, updated_on=tos.updated_on
+                )
+            case OrganizationGetTosBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case OrganizationGetTosBadOutcome.ORGANIZATION_EXPIRED:
                 client_ctx.organization_expired_abort()

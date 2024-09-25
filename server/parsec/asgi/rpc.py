@@ -33,6 +33,7 @@ from parsec._parsec import (
     anonymous_cmds,
     authenticated_cmds,
     invited_cmds,
+    tos_cmds,
 )
 from parsec.backend import Backend
 from parsec.client_context import (
@@ -117,6 +118,11 @@ INVITED_CMDS_LOAD_FN = {
 ANONYMOUS_CMDS_LOAD_FN = {
     int(v_version[1:]): getattr(anonymous_cmds, v_version).AnyCmdReq.load
     for v_version in dir(anonymous_cmds)
+    if v_version.startswith("v")
+}
+TOS_CMDS_LOAD_FN = {
+    int(v_version[1:]): getattr(tos_cmds, v_version).AnyCmdReq.load
+    for v_version in dir(tos_cmds)
     if v_version.startswith("v")
 }
 
@@ -240,6 +246,7 @@ def settle_compatible_versions(
 # - 460: Organization is expired
 # - 461: User is revoked
 # - 462: User is frozen
+# - 463: User must accept the TOS
 # - 498: Authentication token expired
 
 
@@ -254,6 +261,7 @@ class CustomHttpStatus(Enum):
     OrganizationExpired = 460
     UserRevoked = 461
     UserFrozen = 462
+    UserMustAcceptTos = 463
     TokenExpired = 498
 
 
@@ -628,6 +636,11 @@ async def authenticated_api(raw_organization_id: str, request: Request) -> Respo
                 CustomHttpStatus.UserFrozen,
                 api_version=parsed.settled_api_version,
             )
+        case AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS:
+            _handshake_abort(
+                CustomHttpStatus.UserMustAcceptTos,
+                api_version=parsed.settled_api_version,
+            )
 
     # Handshake is done
 
@@ -706,6 +719,11 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
         case AuthAuthenticatedAuthBadOutcome.USER_FROZEN:
             _handshake_abort(
                 CustomHttpStatus.UserFrozen,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS:
+            _handshake_abort(
+                CustomHttpStatus.UserMustAcceptTos,
                 api_version=parsed.settled_api_version,
             )
 
@@ -905,3 +923,88 @@ class StreamingResponseMiddleware(StreamingResponse):
                         api_version=self.settled_api_version,
                         **self.headers,
                     )
+
+
+@rpc_router.post("/authenticated/{raw_organization_id}/tos")
+async def tos_api(raw_organization_id: str, request: Request) -> Response:
+    backend: Backend = request.app.state.backend
+
+    parsed = _parse_auth_headers_or_abort(
+        headers=request.headers,
+        raw_organization_id=raw_organization_id,
+        with_authenticated_headers=True,
+        with_invited_headers=False,
+        with_sse_headers=False,
+        expected_accept_type=None,
+        expected_content_type=CONTENT_TYPE_MSGPACK,
+    )
+    assert parsed.authenticated_token is not None
+
+    body: bytes = await _rpc_get_body_with_limit_check(request)
+    outcome = await backend.auth.authenticated_auth(
+        now=DateTime.now(),
+        organization_id=parsed.organization_id,
+        token=parsed.authenticated_token,
+        tos_acceptance_required=False,
+    )
+    match outcome:
+        case AuthenticatedAuthInfo() as auth_info:
+            pass
+        case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_EXPIRED:
+            _handshake_abort(
+                CustomHttpStatus.OrganizationExpired, api_version=parsed.settled_api_version
+            )
+        case AuthAuthenticatedAuthBadOutcome.ORGANIZATION_NOT_FOUND:
+            _handshake_abort(
+                CustomHttpStatus.OrganizationNotFound,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.TOKEN_TOO_OLD:
+            _handshake_abort(
+                CustomHttpStatus.TokenExpired,
+                api_version=parsed.settled_api_version,
+            )
+        case (
+            AuthAuthenticatedAuthBadOutcome.DEVICE_NOT_FOUND
+            | AuthAuthenticatedAuthBadOutcome.INVALID_SIGNATURE
+        ):
+            _handshake_abort(
+                CustomHttpStatus.BadAuthenticationInfo,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_REVOKED:
+            _handshake_abort(
+                CustomHttpStatus.UserRevoked,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_FROZEN:
+            _handshake_abort(
+                CustomHttpStatus.UserFrozen,
+                api_version=parsed.settled_api_version,
+            )
+        case AuthAuthenticatedAuthBadOutcome.USER_MUST_ACCEPT_TOS:
+            # We passed the `tos_acceptance_required=False` flag, so this
+            # outcome should not happen.
+            assert False, "Code should be unreachable!"
+
+    # Handshake is done
+
+    client_ctx = AuthenticatedClientContext(
+        client_api_version=parsed.client_api_version,
+        settled_api_version=parsed.settled_api_version,
+        organization_id=auth_info.organization_id,
+        organization_internal_id=auth_info.organization_internal_id,
+        user_id=auth_info.user_id,
+        device_id=auth_info.device_id,
+        device_internal_id=auth_info.device_internal_id,
+        device_verify_key=auth_info.device_verify_key,
+    )
+
+    try:
+        req = TOS_CMDS_LOAD_FN[parsed.settled_api_version.version](body)
+    except ValueError:
+        _handshake_abort_bad_content(api_version=parsed.settled_api_version)
+
+    rep = await run_request(backend, client_ctx, req)
+
+    return _rpc_rep(rep, parsed.settled_api_version)

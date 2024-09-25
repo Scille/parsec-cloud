@@ -241,6 +241,11 @@ impl_events!(
     RevokedSelfUser,
     /// This event is fired by the connection monitor.
     ///
+    /// The server has informed us that the authenticated user has not accepted the
+    /// Terms of Service (TOS) yet.
+    MustAcceptTos,
+    /// This event is fired by the connection monitor.
+    ///
     /// A connection has been made between the client and the server, but they cannot
     /// settle on a common API to communicate.
     IncompatibleServer(IncompatibleServerReason),

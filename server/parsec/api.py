@@ -58,7 +58,7 @@ def api(fn: ApiFnWithSelf) -> ApiFnWithSelf:  # pyright: ignore[reportMissingTyp
     assert types["req"].__name__ == "Req"
     assert types["return"].__name__ == "Rep"
 
-    if m_family == "authenticated_cmds":
+    if m_family in ("authenticated_cmds", "tos_cmds"):
         expected_type_name = "AuthenticatedClientContext"
     elif m_family == "invited_cmds":
         expected_type_name = "InvitedClientContext"

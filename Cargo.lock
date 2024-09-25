@@ -3017,6 +3017,7 @@ version = "3.0.3-a.0+dev"
 dependencies = [
  "chrono",
  "futures",
+ "glob",
  "lazy_static",
  "libparsec_crypto",
  "libparsec_protocol",

@@ -27,3 +27,4 @@ use libparsec_types;
 parsec_protocol_cmds_family!("schema/invited_cmds");
 parsec_protocol_cmds_family!("schema/authenticated_cmds");
 parsec_protocol_cmds_family!("schema/anonymous_cmds");
+parsec_protocol_cmds_family!("schema/tos_cmds");
