@@ -5,8 +5,8 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    manage_require_greater_timestamp, store::CertifStoreError, CertificateBasedActionOutcome,
-    CertificateOps, GreaterTimestampOffset, InvalidCertificateError, InvalidKeysBundleError,
+    greater_timestamp, store::CertifStoreError, CertificateBasedActionOutcome, CertificateOps,
+    GreaterTimestampOffset, InvalidCertificateError, InvalidKeysBundleError,
 };
 use crate::EventTooMuchDriftWithServerClock;
 
@@ -76,7 +76,7 @@ pub(super) async fn revoke_user(
             DoServerCommandOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
-                timestamp = manage_require_greater_timestamp(
+                timestamp = greater_timestamp(
                     &ops.device.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,

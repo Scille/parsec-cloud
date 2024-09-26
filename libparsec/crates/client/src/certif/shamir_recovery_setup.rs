@@ -27,8 +27,7 @@ use crate::{
 };
 
 use super::{
-    encrypt::CertifEncryptForUserError, manage_require_greater_timestamp, CertifStoreError,
-    GreaterTimestampOffset,
+    encrypt::CertifEncryptForUserError, greater_timestamp, CertifStoreError, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -149,7 +148,7 @@ pub(super) async fn shamir_setup_create(
             ShamirInternalsOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
-                timestamp = manage_require_greater_timestamp(
+                timestamp = greater_timestamp(
                     &certificate_ops.device.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,

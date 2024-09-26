@@ -10,8 +10,7 @@ use libparsec_types::prelude::*;
 
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::{
-    manage_require_greater_timestamp, EventBus, EventTooMuchDriftWithServerClock,
-    GreaterTimestampOffset,
+    greater_timestamp, EventBus, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
 };
 
 /*
@@ -1145,7 +1144,7 @@ impl UserGreetInProgress4Ctx {
                     Rep::RequireGreaterTimestamp {
                         strictly_greater_than,
                     } => {
-                        timestamp = manage_require_greater_timestamp(
+                        timestamp = greater_timestamp(
                             &self.device.time_provider,
                             GreaterTimestampOffset::User,
                             strictly_greater_than,
@@ -1296,7 +1295,7 @@ impl DeviceGreetInProgress4Ctx {
                     Rep::RequireGreaterTimestamp {
                         strictly_greater_than,
                     } => {
-                        timestamp = manage_require_greater_timestamp(
+                        timestamp = greater_timestamp(
                             &self.device.time_provider,
                             GreaterTimestampOffset::User,
                             strictly_greater_than,

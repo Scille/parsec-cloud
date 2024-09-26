@@ -6,7 +6,7 @@ use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use super::{
-    manage_require_greater_timestamp, store::CertifStoreError, CertifPollServerError,
+    greater_timestamp, store::CertifStoreError, CertifPollServerError,
     CertificateBasedActionOutcome, CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
     InvalidKeysBundleError,
 };
@@ -112,7 +112,7 @@ pub(super) async fn share_realm(
             DoServerCommandOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
-                timestamp = manage_require_greater_timestamp(
+                timestamp = greater_timestamp(
                     &ops.device.time_provider,
                     GreaterTimestampOffset::Realm,
                     strictly_greater_than,
