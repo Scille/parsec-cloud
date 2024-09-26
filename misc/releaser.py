@@ -739,7 +739,7 @@ def build_main(args: argparse.Namespace) -> None:
         tag = "nightly"
     else:
         if args.current:
-            release_version = current_version
+            release_version = current_version.evolve(local=None)
             same_version = True
         elif not args.version:
             raise SystemExit("version is required for build command")
