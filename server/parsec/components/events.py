@@ -317,7 +317,7 @@ class BaseEventsComponent:
         last_event_id: UUID | None,
         cancel_scope: anyio.CancelScope,
     ) -> (
-        tuple[EventOrganizationConfig, ClientBroadcastableEventStream]
+        tuple[EventOrganizationConfig, ClientBroadcastableEventStream, RegisteredClient]
         | SseAPiEventsListenBadOutcome
     ):
         # To register the client for events, we must first know which realm it is part of
@@ -409,7 +409,7 @@ class BaseEventsComponent:
                 # Cannot find the last event referred by the ID, just consider it is too old
                 channel_sender.send_nowait(None)
 
-        return initial_organization_config_event, channel_receiver
+        return initial_organization_config_event, channel_receiver, registered
 
     async def _get_registration_info_for_user(
         self, organization_id: OrganizationID, user_id: UserID
@@ -428,7 +428,14 @@ class BaseEventsComponent:
                 client_ctx=client_ctx, last_event_id=last_event_id, cancel_scope=cancel_scope
             )
             try:
-                yield outcome
+                match outcome:
+                    case (initial_organization_config_event, channel_receiver, registered_client):
+                        # Make sure to close the sender when leaving this scope
+                        # This way, the receiver gets notified with an `anyio.EndOfStream`
+                        with registered_client.channel_sender:
+                            yield (initial_organization_config_event, channel_receiver)
+                    case SseAPiEventsListenBadOutcome() as error:
+                        yield error
             finally:
                 if not isinstance(outcome, SseAPiEventsListenBadOutcome):
                     # It's vital to unregister the client here given the memory location of the

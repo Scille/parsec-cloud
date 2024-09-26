@@ -2,19 +2,21 @@
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Annotated,
     Any,
     AsyncGenerator,
+    AsyncIterator,
     Mapping,
     NoReturn,
     Sequence,
 )
 from uuid import UUID
 
-import anyio
+import anyio.abc
 from fastapi import APIRouter, HTTPException, Request, Response
 from fastapi.datastructures import Headers
 from fastapi.responses import StreamingResponse
@@ -735,6 +737,11 @@ async def authenticated_events_api(raw_organization_id: str, request: Request) -
     # TODO: ensure server doesn't drop this SSE long-polling query due to inactivity timeout
 
 
+type ApiEventListenOutcome = (
+    tuple[EventOrganizationConfig, ClientBroadcastableEventStream] | SseAPiEventsListenBadOutcome
+)
+
+
 class StreamingResponseMiddleware(StreamingResponse):
     """
     StreamingResponse is subclassed to have better control over the stream
@@ -791,7 +798,9 @@ class StreamingResponseMiddleware(StreamingResponse):
             with anyio.move_on_after(self.backend.config.sse_keepalive) as scope:
                 try:
                     next_event = await self.additional_events_receiver.receive()
-                except StopAsyncIteration:
+                # The `EndOfStream` exception is raised when event sender is closed,
+                # typically when the client gets frozen or revoked.
+                except anyio.EndOfStream:
                     return
 
             if scope.cancel_called:
@@ -837,6 +846,28 @@ class StreamingResponseMiddleware(StreamingResponse):
         else:
             self.client_ctx.logger.info("SSE session end")
 
+    @asynccontextmanager
+    async def listen_events_context(self) -> AsyncIterator[ApiEventListenOutcome]:
+        # This task is responsible for registering the client to the SSE stream and unregistering it
+        # when it finishes. It can either get cancelled internally (e.g. when the client gets frozen
+        # or revoked) or externally by the task group below (e.g. when the client gets disconnected).
+        async def listen_events(task_status: anyio.abc.TaskStatus[ApiEventListenOutcome]) -> None:
+            async with self.backend.events.sse_api_events_listen(
+                client_ctx=self.client_ctx, last_event_id=self.last_event_id
+            ) as outcome:
+                task_status.started(outcome)
+                await anyio.sleep_forever()
+
+        # Create a task group so that we can run the `sse_api_events_listen` context manager
+        # in parallel with the main task managing the SSE stream. It's important to run it
+        # in a dedicated task so that its cancellation (typically when the client gets frozen
+        # or revoked) doesn't affect the main task. This is especially important since the
+        # the starlette `StreamingResponse` doesn't use a try-finally block to ensure that
+        # the `last_body=True` event is sent.
+        async with anyio.create_task_group() as tg:
+            yield await tg.start(listen_events)
+            tg.cancel_scope.cancel()
+
     async def _run_session(self, scope, receive, send) -> None:
         """
         This method is called by the ASGI server to handle the response.
@@ -844,9 +875,7 @@ class StreamingResponseMiddleware(StreamingResponse):
         It lives as long as events are being produced, which is the right place
         to put the `sse_api_events_listen` context manager.
         """
-        async with self.backend.events.sse_api_events_listen(
-            client_ctx=self.client_ctx, last_event_id=self.last_event_id
-        ) as outcome:
+        async with self.listen_events_context() as outcome:
             match outcome:
                 case tuple() as item:
                     self.initial_organization_config_event, self.additional_events_receiver = item
