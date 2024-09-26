@@ -1,0 +1,1 @@
+Fix the access to the Windows mountpoints after a hard shutdown.
