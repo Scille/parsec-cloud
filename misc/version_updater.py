@@ -352,11 +352,23 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / "docs/adminguide/installation.rst": {
         Tool.Parsec: [
             ReplaceRegex(
-                r"Parsec CLI v.* <https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux_x86_64>",
-                "Parsec CLI v{version} <https://github.com/Scille/parsec-cloud/releases/download/v{version}/parsec-cli_{version}_linux_x86_64>",
+                r".. _Parsec CLI v.*: https://github.com/Scille/parsec-cloud/releases/download/v.*/parsec-cli_.*_linux_x86_64",
+                ".. _Parsec CLI v{version}: https://github.com/Scille/parsec-cloud/releases/download/v{version}/parsec-cli_{version}_linux_x86_64",
+            ),
+            ReplaceRegex(
+                r"`Parsec CLI v.*`_",
+                "`Parsec CLI v{version}`_",
             ),
             ReplaceRegex(r"parsec-cli_.*_linux_x86_64", "parsec-cli_{version}_linux_x86_64"),
             ReplaceRegex(r"parsec-cli .*", "parsec-cli {version}"),
+        ]
+    },
+    ROOT_DIR / "docs/locale/fr/LC_MESSAGES/adminguide/installation.po": {
+        Tool.Parsec: [
+            ReplaceRegex(
+                r"`Parsec CLI v.*`_",
+                "`Parsec CLI v{version}`_",
+            ),
         ]
     },
     ROOT_DIR / "docs/conf.py": {

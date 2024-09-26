@@ -38,33 +38,31 @@ msgstr ""
 "Parsec est également disponible en tant qu'interface en ligne de commande "
 "(CLI) pour Linux. C'est un binaire autonome fourni dans nos versions GitHub."
 
-#: ../../adminguide/installation.rst:12
+#: ../../adminguide/installation.rst:14
 msgid "Download the CLI by following this link:"
 msgstr "Téléchargez la CLI en suivant ce lien :"
 
-#: ../../adminguide/installation.rst:14
-msgid ""
-"`Parsec CLI v3.0.2-a.0+dev <https://github.com/Scille/parsec-cloud/releases/"
-"download/v3.0.2-a.0+dev/parsec-cli_3.0.2-a.0+dev_linux_x86_64>`_."
-msgstr ""
-
 #: ../../adminguide/installation.rst:16
+msgid "`Parsec CLI v3.0.2-a.0+dev`_."
+msgstr "`Parsec CLI v3.0.2-a.0+dev`_."
+
+#: ../../adminguide/installation.rst:18
 msgid "Make the file executable"
 msgstr "Rendre le fichier exécutable"
 
-#: ../../adminguide/installation.rst:18
+#: ../../adminguide/installation.rst:20
 msgid "Right-click/Properties/Allow executing file as program"
 msgstr ""
 "Clic droit/Propriétés/Autoriser l'exécution du fichier en tant que programme"
 
-#: ../../adminguide/installation.rst:19
+#: ../../adminguide/installation.rst:21
 msgid "Or use the `chmod` command:"
 msgstr "Ou utilisez la commande `chmod` :"
 
-#: ../../adminguide/installation.rst:25
+#: ../../adminguide/installation.rst:27
 msgid "Verify the installation by running the following command:"
 msgstr "Vérifiez l'installation en exécutant la commande suivante :"
 
-#: ../../adminguide/installation.rst:31
+#: ../../adminguide/installation.rst:33
 msgid "The CLI should output its version:"
 msgstr "La CLI devrait afficher sa version :"
