@@ -78,7 +78,7 @@ pub(super) async fn revoke_user(
                 // returning an error
                 timestamp = manage_require_greater_timestamp(
                     &ops.device.time_provider,
-                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    GreaterTimestampOffset::User,
                     strictly_greater_than,
                 );
             }

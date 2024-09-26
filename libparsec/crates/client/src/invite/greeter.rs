@@ -1147,7 +1147,7 @@ impl UserGreetInProgress4Ctx {
                     } => {
                         timestamp = manage_require_greater_timestamp(
                             &self.device.time_provider,
-                            GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                            GreaterTimestampOffset::User,
                             strictly_greater_than,
                         );
                         continue;
@@ -1298,7 +1298,7 @@ impl DeviceGreetInProgress4Ctx {
                     } => {
                         timestamp = manage_require_greater_timestamp(
                             &self.device.time_provider,
-                            GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                            GreaterTimestampOffset::User,
                             strictly_greater_than,
                         );
                         continue;
