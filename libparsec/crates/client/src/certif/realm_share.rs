@@ -114,7 +114,7 @@ pub(super) async fn share_realm(
                 // returning an error
                 timestamp = manage_require_greater_timestamp(
                     &ops.device.time_provider,
-                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    GreaterTimestampOffset::Realm,
                     strictly_greater_than,
                 );
             }

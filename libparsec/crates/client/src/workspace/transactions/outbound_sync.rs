@@ -474,7 +474,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
                     let  timestamp = manage_require_greater_timestamp(
                         &ops.device.time_provider,
-                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
                     );
                     to_upload.update_timestamp(timestamp);
@@ -552,7 +552,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
                     let timestamp = manage_require_greater_timestamp(
                         &ops.device.time_provider,
-                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
                     );
                     to_upload.update_timestamp(timestamp);

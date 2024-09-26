@@ -77,30 +77,38 @@ use crate::{event_bus::EventBus, ClientConfig};
 pub const MANIFEST_STAMP_AHEAD_US: i64 = 100_000;
 
 /// This value is used to increment the timestamp provided by the backend
-/// when a certificate restamping is required. This value should be kept big
+/// when a realm certificate restamping is required. This value should be kept big
+/// compared to the manifest stamp ahead value, but less than USER_CERTIFICATE_STAMP_AHEAD_US
+///  so the certificate updates have priority over manifest updates.
+///  # microseconds, or 0.25 seconds
+pub const REALM_CERTIFICATE_STAMP_AHEAD_US: i64 = 250_000;
+
+/// This value is used to increment the timestamp provided by the backend
+/// when a user or device certificate restamping is required. This value should be kept big
 /// compared to the manifest stamp ahead value, so the certificate updates have
 /// priority over manifest updates.
 ///  # microseconds, or 0.5 seconds
-pub const ROLE_CERTIFICATE_STAMP_AHEAD_US: i64 = 500_000;
+pub const USER_CERTIFICATE_STAMP_AHEAD_US: i64 = 500_000;
 
 /// Archiving doesn't have to use a value as large 0.5 seconds
 /// # microseconds, or 1 milliseconds
+/// TODO: not used yet, see #6092
 pub const ARCHIVING_CERTIFICATE_STAMP_AHEAD_US: i64 = 1_000;
 
 pub enum GreaterTimestampOffset {
-    ManifestStampAheadUs,
-    RoleCertificateStampAheadUs,
-    ArchivingCertificateStampAheadUs,
+    Manifest,
+    User,
+    Realm,
+    Archive,
 }
 
 impl From<GreaterTimestampOffset> for i64 {
     fn from(value: GreaterTimestampOffset) -> Self {
         match value {
-            GreaterTimestampOffset::ManifestStampAheadUs => MANIFEST_STAMP_AHEAD_US,
-            GreaterTimestampOffset::RoleCertificateStampAheadUs => ROLE_CERTIFICATE_STAMP_AHEAD_US,
-            GreaterTimestampOffset::ArchivingCertificateStampAheadUs => {
-                ARCHIVING_CERTIFICATE_STAMP_AHEAD_US
-            }
+            GreaterTimestampOffset::Manifest => MANIFEST_STAMP_AHEAD_US,
+            GreaterTimestampOffset::User => USER_CERTIFICATE_STAMP_AHEAD_US,
+            GreaterTimestampOffset::Archive => ARCHIVING_CERTIFICATE_STAMP_AHEAD_US,
+            GreaterTimestampOffset::Realm => REALM_CERTIFICATE_STAMP_AHEAD_US,
         }
     }
 }

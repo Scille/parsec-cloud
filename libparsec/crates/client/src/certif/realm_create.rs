@@ -117,7 +117,7 @@ async fn create_realm_idempotent(
             } => {
                 timestamp = manage_require_greater_timestamp(
                     &ops.device.time_provider,
-                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    GreaterTimestampOffset::Realm,
                     strictly_greater_than,
                 );
                 continue;

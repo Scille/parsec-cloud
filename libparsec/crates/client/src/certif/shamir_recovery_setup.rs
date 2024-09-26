@@ -151,7 +151,7 @@ pub(super) async fn shamir_setup_create(
                 // returning an error
                 timestamp = manage_require_greater_timestamp(
                     &certificate_ops.device.time_provider,
-                    GreaterTimestampOffset::RoleCertificateStampAheadUs,
+                    GreaterTimestampOffset::User,
                     strictly_greater_than,
                 );
             }

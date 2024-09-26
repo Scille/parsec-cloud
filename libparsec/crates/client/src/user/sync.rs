@@ -136,7 +136,7 @@ async fn upload_manifest(
                 } => {
                     timestamp = manage_require_greater_timestamp(
                         &ops.device.time_provider,
-                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
                     );
                     continue;
@@ -207,7 +207,7 @@ async fn upload_manifest(
                 } => {
                     timestamp = manage_require_greater_timestamp(
                         &ops.device.time_provider,
-                        GreaterTimestampOffset::ManifestStampAheadUs,
+                        GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
                     );
                     continue;
