@@ -39,9 +39,10 @@
           class="element-details-progress-container"
           v-show="state === FileOperationState.OperationProgress"
         >
-          <ion-progress-bar
+          <ms-progress
             class="progress-bar"
-            :value="getProgress() / 100"
+            :progress="getProgress()"
+            :appearance="MsProgressAppearance.Line"
           />
           <ion-icon
             class="cancel-icon"
@@ -105,7 +106,7 @@
 
 <script setup lang="ts">
 import { shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip, Translatable, Copy } from 'megashark-lib';
+import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance, Translatable, Copy } from 'megashark-lib';
 import { getWorkspaceName } from '@/parsec';
 import {
   CopyData,
@@ -115,7 +116,7 @@ import {
   OperationProgressStateData,
   StateData,
 } from '@/services/fileOperationManager';
-import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { closeCircle, checkmarkCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 
