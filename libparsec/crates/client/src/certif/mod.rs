@@ -95,10 +95,23 @@ pub const USER_CERTIFICATE_STAMP_AHEAD_US: i64 = 500_000;
 /// TODO: not used yet, see #6092
 pub const ARCHIVING_CERTIFICATE_STAMP_AHEAD_US: i64 = 1_000;
 
+/// GreaterTimestampOffset represent the kind of certificate
+/// that was sent to the server. It is used to give different priority
+/// depending on the kind a certificate.
+///
+/// Note: it's counterintuitive but a greater offset means a greater priority.
+/// If the offset is small there is a greater chance that something else was acknowledged
+/// by the server before the new request was sent.
+/// For example, if a server answers with requireGreaterTimestamp(T0) to client A,
+/// then client B sends a new certificate at T0+x, and the server accepts it.
+/// When client A will answer if the offset is smaller or equal to x,
+/// the corresponding certificate will be refused, whereas if it's greater it will be accepted.
 pub enum GreaterTimestampOffset {
     Manifest,
+    /// User and device certificates
     User,
     Realm,
+    /// TODO: not used yet, see #6092
     Archive,
 }
 
@@ -113,12 +126,12 @@ impl From<GreaterTimestampOffset> for i64 {
     }
 }
 
-/// Return the timestamp to be used when the server requires a greater timestamp
+/// Return the timestamp to be used when the server requires a greater timestamp.
 ///
 /// The timestamp to be used will be whichever is greater between:
 /// - now (obtained from `time_provider`)
 /// - `strictly_greater_than` (expected by the server) + `offset` (depending on certificate type)
-pub(crate) fn manage_require_greater_timestamp(
+pub(crate) fn greater_timestamp(
     time_provider: &TimeProvider,
     offset: GreaterTimestampOffset,
     strictly_greater_than: DateTime,

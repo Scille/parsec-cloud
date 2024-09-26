@@ -17,7 +17,7 @@ use crate::workspace::store::{
     ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
 };
 use crate::{
-    manage_require_greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
+    greater_timestamp, EncrytionUsage, EventWorkspaceOpsOutboundSyncAborted,
     EventWorkspaceOpsOutboundSyncDone, EventWorkspaceOpsOutboundSyncProgress,
     EventWorkspaceOpsOutboundSyncStarted, GreaterTimestampOffset,
 };
@@ -472,7 +472,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_upload)),
                 Rep::VlobAlreadyExists => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
-                    let  timestamp = manage_require_greater_timestamp(
+                    let  timestamp = greater_timestamp(
                         &ops.device.time_provider,
                         GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
@@ -550,7 +550,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 Rep::Ok => Ok(UploadManifestOutcome::Success(to_upload)),
                 Rep::BadVlobVersion => Ok(UploadManifestOutcome::VersionConflict),
                 Rep::RequireGreaterTimestamp { strictly_greater_than } => {
-                    let timestamp = manage_require_greater_timestamp(
+                    let timestamp = greater_timestamp(
                         &ops.device.time_provider,
                         GreaterTimestampOffset::Manifest,
                         strictly_greater_than,

@@ -12,7 +12,7 @@ use crate::{
         CertifPollServerError, CertifValidateManifestError, InvalidCertificateError,
         InvalidManifestError,
     },
-    manage_require_greater_timestamp, EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
+    greater_timestamp, EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -134,7 +134,7 @@ async fn upload_manifest(
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
-                    timestamp = manage_require_greater_timestamp(
+                    timestamp = greater_timestamp(
                         &ops.device.time_provider,
                         GreaterTimestampOffset::Manifest,
                         strictly_greater_than,
@@ -205,7 +205,7 @@ async fn upload_manifest(
                 Rep::RequireGreaterTimestamp {
                     strictly_greater_than,
                 } => {
-                    timestamp = manage_require_greater_timestamp(
+                    timestamp = greater_timestamp(
                         &ops.device.time_provider,
                         GreaterTimestampOffset::Manifest,
                         strictly_greater_than,

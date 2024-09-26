@@ -15,7 +15,7 @@ use crate::{
         realm_keys_bundle::{self, GenerateNextKeyBundleForRealmError},
         CertifPollServerError,
     },
-    manage_require_greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
+    greater_timestamp, EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
     InvalidKeysBundleError,
 };
 
@@ -128,7 +128,7 @@ pub(super) async fn rotate_realm_key_idempotent(
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {
-                timestamp = manage_require_greater_timestamp(
+                timestamp = greater_timestamp(
                     &ops.device.time_provider,
                     GreaterTimestampOffset::Realm,
                     strictly_greater_than,

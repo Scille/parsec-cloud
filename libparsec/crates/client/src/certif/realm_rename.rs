@@ -11,7 +11,7 @@ use super::{
     UpTo,
 };
 use crate::{
-    certif::CertifPollServerError, manage_require_greater_timestamp, EncrytionUsage,
+    certif::CertifPollServerError, greater_timestamp, EncrytionUsage,
     EventTooMuchDriftWithServerClock, GreaterTimestampOffset,
 };
 
@@ -160,7 +160,7 @@ async fn rename_realm_internal(
             Rep::RequireGreaterTimestamp {
                 strictly_greater_than,
             } => {
-                timestamp = manage_require_greater_timestamp(
+                timestamp = greater_timestamp(
                     &ops.device.time_provider,
                     GreaterTimestampOffset::Realm,
                     strictly_greater_than,
