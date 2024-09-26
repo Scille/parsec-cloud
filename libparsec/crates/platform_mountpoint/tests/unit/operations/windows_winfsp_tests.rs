@@ -1,7 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-#![cfg(target_os = "windows")]
-
 use std::{path::PathBuf, process::Command, sync::Arc};
 
 use libparsec_client::{Client, WorkspaceOps};

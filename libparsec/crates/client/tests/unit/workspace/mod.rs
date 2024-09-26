@@ -1,5 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+#[cfg(unix)]
 use proptest_state_machine::ReferenceStateMachine;
 
 mod base;
@@ -12,7 +13,6 @@ mod fd_read;
 mod fd_write;
 mod file_operations;
 mod file_operations_stateful;
-mod file_transactions_stateful;
 mod folder_transactions;
 mod inbound_sync_file;
 mod inbound_sync_folder;
@@ -32,6 +32,10 @@ mod retrieve_path_from_id;
 mod stat_entry;
 mod utils;
 
+#[cfg(unix)]
+mod file_transactions_stateful;
+
+#[cfg(unix)]
 pub trait AsyncStateMachineTest {
     /// The concrete state, that is the system under test (SUT).
     type SystemUnderTest;
