@@ -577,11 +577,7 @@ def inspect_tag(tag: str, yes: bool, gpg_sign: bool) -> None:
 def create_bump_commit_to_dev_version(
     version: Version, license_eol_date: datetime, gpg_sign: bool, same_version: bool
 ) -> None:
-    dev_version = version.evolve(local="dev")
-    if dev_version.pre is None:
-        dev_version.pre = ("a", 0)
-    else:
-        dev_version.pre = (dev_version.pre[0], dev_version.pre[1] + 1)
+    dev_version = generate_next_dev_version(version)
 
     updated_files: set[Path] = set()
     updated_files |= update_license_file(dev_version, license_eol_date, same_version)
@@ -594,6 +590,31 @@ def create_bump_commit_to_dev_version(
         files_to_commit=updated_files,
         gpg_sign=gpg_sign,
     )
+
+def generate_next_dev_version(version: Version) -> Version:
+    """
+    Generate the next development version based on the provided version.
+
+    If the version is a pre-release, the next version will be the same with the pre-release number increased.
+    Otherwise, its patch will be increased and the pre-release will be set to `a0`.
+
+    In all cases the local part will be set to `dev`.
+    """
+    next = version.evolve(local="dev")
+    if next.pre is None:
+        next.patch += 1
+        next.pre = ("a", 0)
+    else:
+        next.pre = (next.pre[0], next.pre[1] + 1)
+    return next
+
+
+assert generate_next_dev_version(Version(1, 2, 3)) == Version(1, 2, 4, prerelease="a0", local="dev")
+assert generate_next_dev_version(Version(1, 0, 0)) == Version(1, 0, 1, prerelease="a0", local="dev")
+# Should only increase the pre-release number if set in the version
+assert generate_next_dev_version(Version(1, 2, 3, prerelease="a0")) == Version(
+    1, 2, 3, prerelease="a1", local="dev"
+)
 
 
 def push_release(
