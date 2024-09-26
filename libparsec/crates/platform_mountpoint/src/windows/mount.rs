@@ -161,29 +161,32 @@ fn find_suitable_mountpoint_dir(
 
         // For WinFSP, mounting target must NOT exists
         match mountpoint_path.try_exists() {
-            // The mountpoint doesn't exist, so we can use it !
-            Ok(false) => (),
             // The mountpoint already exists, so we must find another one :/
             // Note we don't try to reuse empty directory (like it is done with FUSE), this
             // is because for this we would have to first remove the empty directory which
             // doesn't detect if the directory is a WinFSP mountpoint on an empty workspace !
             Ok(true) => continue,
-            // An error might be caused by a previous mount that remained listed in the
-            // directory (due to bug or crash), in such case removing the faulty entry
-            // is enough to fix the issue.
-            //
-            // Note there is other unrelated reasons that can cause an error here (e.g.
-            // permission issues in a parent folder), in this case the remove should also fail.
-            Err(_) => {
-                match std::fs::remove_file(&mountpoint_path) {
-                    Ok(()) => (),
-                    Err(err) if err.kind() == std::io::ErrorKind::NotFound => (),
-                    // Nothing we can do to fix this path :/
-                    Err(_) => continue,
-                }
-            }
+            // We can't even know if that mountpoint path exists
+            // This might be due to a permission error, or something else.
+            // In any case, there's not much we can do here, better skip to the next name.
+            Err(_) => continue,
+            // The mountpoint doesn't exist, so we can use it !
+            Ok(false) => (),
         }
 
+        // Artifacts from previous run can remain listed in the directory
+        // (even though `mountpoint_path.try_exists()`) returns `Ok(false)`
+        // In this case, `std::fs::remove_dir()` still works and fixes the issue
+        match std::fs::remove_dir(&mountpoint_path) {
+            // The artifact has been successfully removed
+            Ok(()) => (),
+            // There was not artefact in the first place, it's fine
+            Err(err) if err.kind() == std::io::ErrorKind::NotFound => (),
+            // Nothing we can do to fix this path :/
+            Err(_) => continue,
+        }
+
+        // Now the mountpoint path should be non-existent and properly cleaned up
         return Ok(mountpoint_path);
     }
 
