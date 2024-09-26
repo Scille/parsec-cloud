@@ -1,0 +1,2 @@
+Make sure than when the server asks the client for a greater timestamp,
+the client offsets the received timestamp.
