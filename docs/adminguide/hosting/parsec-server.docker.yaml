@@ -38,7 +38,7 @@ services:
       - parsec-smtp
       - parsec-s3
       - parsec-postgres
-    image: ghcr.io/scille/parsec-cloud/parsec-server:3.0.1-rc.1+dev
+    image: ghcr.io/scille/parsec-cloud/parsec-server:3.0.1
     container_name: parsec-server
     env_file:
       - parsec.env
