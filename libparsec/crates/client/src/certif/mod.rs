@@ -113,9 +113,11 @@ impl From<GreaterTimestampOffset> for i64 {
     }
 }
 
-/// ops to have the time provider
-/// offset depending on the type of certificate
-/// strictly_greater_than, the time expected by the server
+/// Return the timestamp to be used when the server requires a greater timestamp
+///
+/// The timestamp to be used will be whichever is greater between:
+/// - now (obtained from `time_provider`)
+/// - `strictly_greater_than` (expected by the server) + `offset` (depending on certificate type)
 pub(crate) fn manage_require_greater_timestamp(
     time_provider: &TimeProvider,
     offset: GreaterTimestampOffset,
