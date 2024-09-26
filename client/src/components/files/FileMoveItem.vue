@@ -39,9 +39,10 @@
           class="element-details-progress-container"
           v-show="state === FileOperationState.OperationProgress"
         >
-          <ion-progress-bar
+          <ms-progress
             class="progress-bar"
-            :value="getProgress() / 100"
+            :progress="getProgress()"
+            :appearance="MsProgressAppearance.Line"
           />
           <ion-button
             fill="clear"
@@ -112,10 +113,10 @@
 
 <script setup lang="ts">
 import { shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip, Move } from 'megashark-lib';
+import { MsImage, MsInformationTooltip, Move, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { Path, EntryName, getWorkspaceName } from '@/parsec';
 import { MoveData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
-import { IonIcon, IonItem, IonLabel, IonProgressBar, IonText, IonButton } from '@ionic/vue';
+import { IonIcon, IonItem, IonLabel, IonText, IonButton } from '@ionic/vue';
 import { checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
