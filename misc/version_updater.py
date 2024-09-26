@@ -55,6 +55,9 @@ def only_major_version(template: str, separator: str = ".") -> Callable[[str], s
 
 
 POETRY_GA_VERSION = ReplaceRegex(r"poetry-version: [0-9.]+", "poetry-version: {version}")
+PYTHON_GA_VERSION = ReplaceRegex(
+    r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
+)
 NODE_GA_VERSION = ReplaceRegex(r"node-version: [0-9.]+", "node-version: {version}")
 WASM_PACK_GA_VERSION = ReplaceRegex(r"wasm-pack-version: [0-9.]+", "wasm-pack-version: {version}")
 PYTHON_DOCKER_VERSION = ReplaceRegex(r"python:\d.\d+", hide_patch_version("python:{version}"))
@@ -201,6 +204,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
             ReplaceRegex(r"default: .* # __VERSION__", "default: {version} # __VERSION__")
         ]
     },
+    ROOT_DIR / ".github/workflows/_releaser_nightly_build.yml": {Tool.Python: [PYTHON_GA_VERSION]},
     ROOT_DIR / ".github/workflows/ci-docs.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
     },
@@ -224,18 +228,10 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Testbed: [TESTBED_VERSION],
     },
     ROOT_DIR / ".github/workflows/ci.yml": {
-        Tool.Python: [
-            ReplaceRegex(
-                r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
-            )
-        ],
+        Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/_parse_version.yml": {
-        Tool.Python: [
-            ReplaceRegex(
-                r"python-version: [0-9.]+", hide_patch_version("python-version: {version}")
-            )
-        ],
+        Tool.Python: [PYTHON_GA_VERSION],
     },
     ROOT_DIR / ".github/workflows/codeql.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
