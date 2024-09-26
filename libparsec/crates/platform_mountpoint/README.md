@@ -4,6 +4,21 @@ As it name suggest, this crate implement a filesystem mountpoint to expose Parse
 
 The implementation uses [FUSE](https://github.com/libfuse/libfuse/) on Linux and [WinFPS](https://winfsp.dev/) on Windows.
 
+## Interactive testing
+
+The quickest way to test the mountpoint is to use the `minimal` example:
+
+```shell
+RUST_LOG=libparsec_platform_mountpoint=DEBUG cargo run -p libparsec_platform_mountpoint --example minimal .
+```
+
+This mount a workspace in the current directory. The workspace is based on the
+`minimal_client_ready` testbed template.
+
+Also note the `RUST_LOG` environ variable to enable logs on each mountpoint access.
+
+With this configuration, everything is kept in-memory so don't store too much !
+
 ## Implementation details
 
 File system are historically designed to be fully implemented locally, and hence
