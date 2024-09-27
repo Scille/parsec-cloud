@@ -216,7 +216,6 @@ parts:
     prime:
       - bin/desktop-launch-wrapper
       - bin/desktop-launch
-      - bin/snap_migrate_devices_from_snap_user_data
       - flavor-select
     override-build: |
       cd gtk
@@ -224,12 +223,10 @@ parts:
 
       cat > command.sh << EOF
       #!/bin/bash -e
-      "\$SNAP/bin/snap_migrate_devices_from_snap_user_data"
       exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" "\$@" --no-sandbox
       EOF
 
       mkdir -p "$CRAFT_PART_INSTALL"/bin
       install -v --mode=555 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
       install -v --mode=555 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
-      install -v --mode=555 ${SNAPCRAFT_PROJECT_DIR}/client/electron/scripts/snap_migrate_devices_from_snap_user_data.sh "$CRAFT_PART_INSTALL"/bin/snap_migrate_devices_from_snap_user_data
       install -v --mode=444 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
