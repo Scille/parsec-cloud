@@ -175,12 +175,18 @@ fn find_suitable_mountpoint_dir(
         }
 
         // Artifacts from previous run can remain listed in the directory
-        // (even though `mountpoint_path.try_exists()`) returns `Ok(false)`
-        // In this case, `std::fs::remove_dir()` still works and fixes the issue
+        // (even though `mountpoint_path.try_exists()`) returns `Ok(false)`.
+        // In this case, `std::fs::remove_dir()` still works and fixes the issue.
+        // Note checking the target existence and doing this remove are obviously not
+        // one atomic operation, hence a concurrent file creation may mess this up.
+        // This is considered "fine enough" though:
+        // - This scenario is highly unlikely.
+        // - Concurrent creation of a file or a non-empty directory will cause `remove_dir` to fail.
+        //   So we only overwrite empty directory which shouldn't be a big deal.
         match std::fs::remove_dir(&mountpoint_path) {
             // The artifact has been successfully removed
             Ok(()) => (),
-            // There was not artefact in the first place, it's fine
+            // There was no artefact in the first place, it's fine
             Err(err) if err.kind() == std::io::ErrorKind::NotFound => (),
             // Nothing we can do to fix this path :/
             Err(_) => continue,
