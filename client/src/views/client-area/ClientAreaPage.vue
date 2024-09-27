@@ -193,9 +193,6 @@ onMounted(async () => {
         }
       }
     }
-    if (query.page) {
-      currentPage.value = query.page as ClientAreaPages;
-    }
     if (billingSystem === BillingSystem.CustomOrder || billingSystem === BillingSystem.ExperimentalCandidate) {
       currentPage.value = ClientAreaPages.Contracts;
       const statusResp = await BmsAccessInstance.get().getCustomOrderStatus(currentOrganization.value);
@@ -206,6 +203,9 @@ onMounted(async () => {
       }
     } else {
       currentPage.value = ClientAreaPages.Dashboard;
+    }
+    if (query.page) {
+      currentPage.value = query.page as ClientAreaPages;
     }
     querying.value = false;
   }

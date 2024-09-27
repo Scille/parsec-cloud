@@ -27,7 +27,7 @@ async function mockRoute(
         status: options.errors.status ?? 400,
         json: {
           type: 'error',
-          errors: [{ code: 'error', attr: options.errors.attribute ?? 'attr', detail: 'Default error' }],
+          errors: [{ code: options.errors.code ?? 'error', attr: options.errors.attribute ?? 'attr', detail: 'Default error' }],
         },
       });
       return true;
@@ -63,6 +63,7 @@ async function mockRoute(
 interface MockMethodOptions {
   timeout?: boolean;
   errors?: {
+    code?: string;
     attribute?: string;
     status?: number;
   };
@@ -455,6 +456,14 @@ async function mockDeletePaymentMethod(page: Page, options?: MockRouteOptions): 
   );
 }
 
+async function mockUpdateEmailSendCode(page: Page, options?: MockRouteOptions): Promise<void> {
+  await mockRoute(page, '**/email_validation/send_code', options, async (route) => {
+    await route.fulfill({
+      status: 200,
+    });
+  });
+}
+
 async function mockUpdateEmail(page: Page, options?: MockRouteOptions): Promise<void> {
   await mockRoute(page, `**/users/${DEFAULT_USER_INFORMATION.id}/update_email`, options, async (route) => {
     const data = await route.request().postDataJSON();
@@ -611,4 +620,5 @@ export const MockBms = {
   mockChangePassword,
   mockCustomOrderStatus,
   mockCustomOrderDetails,
+  mockUpdateEmailSendCode,
 };

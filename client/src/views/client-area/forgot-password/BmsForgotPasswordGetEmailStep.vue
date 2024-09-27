@@ -52,7 +52,7 @@ import { MsInput, Translatable, Validity, MsSpinner, I18n } from 'megashark-lib'
 import { emailValidator } from '@/common/validators';
 import { warning, arrowBack } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
-import { BmsApi } from '@/services/bms';
+import { BmsApi, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
 
 const emits = defineEmits<{
@@ -79,7 +79,7 @@ async function submit(): Promise<boolean> {
   querying.value = true;
   const response = await BmsApi.changePassword({
     email: email.value.toLowerCase(),
-    lang: longLocaleCodeToShort(I18n.getLocale()),
+    lang: longLocaleCodeToShort(I18n.getLocale()) as BmsLang,
   });
 
   if (response.isError) {

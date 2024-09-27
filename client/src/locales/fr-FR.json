@@ -1349,16 +1349,28 @@
                     "nextButton": "Confirmer"
                 },
                 "authentication": {
-                    "title": "Modifier votre email",
+                    "emailTitle": "Modification de votre adresse email",
+                    "passwordTitle": "Saisir votre mot de passe",
+                    "validateTitle": "Validation de l'adresse email",
+                    "emailSubtitle": "Si vous modifiez votre adresse email, n'oubliez pas que vous devrez vous connecter avec votre nouvelle adresse.",
+                    "validateSubtitle": "Vous avez reçu un code de vérification sur votre nouvelle adresse email.",
                     "email": "Email",
                     "newEmail": "Nouvel email",
                     "password": "Mot de passe",
+                    "resend": "Vous n'avez pas reçu de code ?",
                     "confirmPassword": "Confirmation de mot de passe",
-                    "wrongPassword": "Le mot de passe est incorrect.",
+                    "errors": {
+                        "wrongPassword": "Le mot de passe est incorrect.",
+                        "invalidCode": "Le code est incorrect.",
+                        "tooManyTries": "Trop d'essais.",
+                        "emailAlreadyUsed": "Cet email est déjà utilisé.",
+                        "resendFailed": "Impossible d'envoyer un autre email."
+                    },
                     "noEmptyFields": "Aucun champ ne doit être vide.",
                     "newEmailMustBeDifferent": "Le nouvel email doit être différent de l'actuel.",
                     "success": "L'adresse email a bien été mise à jour.",
-                    "nextButton": "Continuer"
+                    "continue": "Continuer",
+                    "validate": "Valider et mettre à jour"
                 },
                 "security": {
                     "passwordStep": {

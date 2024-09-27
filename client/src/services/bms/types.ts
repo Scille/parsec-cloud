@@ -3,6 +3,8 @@
 import { OrganizationID } from '@/parsec';
 import { DateTime } from 'luxon';
 
+export type BmsLang = 'en' | 'fr';
+
 interface BmsError {
   code: string;
   attr: string;
@@ -275,12 +277,18 @@ interface UpdatePersonalInformationQueryData extends UserQueryData {
 interface UpdateEmailQueryData extends UserQueryData {
   email: string;
   password: string;
-  lang: string;
+  code: string;
+  lang: BmsLang;
+}
+
+interface UpdateEmailSendCodeQueryData {
+  email: string;
+  lang: BmsLang;
 }
 
 interface ChangePasswordQueryData {
   email: string;
-  lang: string;
+  lang: BmsLang;
 }
 
 interface UpdateAuthenticationQueryData extends UserQueryData {
@@ -345,6 +353,7 @@ export {
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
+  UpdateEmailSendCodeQueryData,
   UpdatePersonalInformationQueryData,
   UserQueryData,
 };
