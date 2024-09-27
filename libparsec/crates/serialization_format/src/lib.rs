@@ -40,11 +40,21 @@ fn content_from_file(path: &PathBuf) -> String {
 }
 
 fn retrieve_protocol_family_json_cmds(path: &Path) -> (String, Vec<protocol::JsonCmd>) {
-    let family_name = path
-        .file_name()
-        .and_then(|os_str| os_str.to_str())
-        .expect("Invalid path, cannot determine protocol family name")
-        .to_owned();
+    let family_name = {
+        let mut file_name = path
+            .file_name()
+            .and_then(|os_str| os_str.to_str())
+            .expect("Invalid path, cannot determine protocol family name")
+            .to_owned();
+
+        const FAMILY_SUFFIX: &str = "_cmds";
+        assert!(
+            file_name.ends_with(FAMILY_SUFFIX),
+            "Family directory must have the `_cmds` suffix"
+        );
+        file_name.truncate(file_name.len() - FAMILY_SUFFIX.len());
+        file_name
+    };
 
     let dir = std::fs::read_dir(path).expect("Cannot read directory");
 
@@ -83,7 +93,7 @@ pub fn parsec_protocol_cmds_family(path: TokenStream) -> TokenStream {
     let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
     TokenStream::from(protocol::generate_protocol_cmds_family(
         json_cmds,
-        &family_name,
+        family_name,
     ))
 }
 
@@ -97,7 +107,7 @@ pub fn python_bindings_parsec_protocol_cmds_family(path: TokenStream) -> TokenSt
     let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
     TokenStream::from(protocol::python_bindings::generate_protocol_cmds_family(
         json_cmds,
-        &family_name,
+        family_name,
     ))
 }
 
@@ -110,7 +120,7 @@ pub fn generate_protocol_cmds_family_from_contents(json_contents: TokenStream) -
         // Consider empty line as a separator between json files
         content.split("\n\n").map(String::from).collect()
     };
-    let family_name = "protocol";
+    let family_name = "family".to_string();
     let mut json_cmds = vec![];
     for json_without_outer_struct in json_contents {
         // Hack around the fact Miniserde only supports struct as root ;-)
@@ -164,7 +174,7 @@ pub fn protocol_cmds_tests(path: TokenStream) -> TokenStream {
     let path = path_from_str(&path);
     let (family_name, json_cmds) = retrieve_protocol_family_json_cmds(&path);
     TokenStream::from(
-        protocol::cmds_tests_generator::generate_protocol_cmds_tests(json_cmds, &family_name),
+        protocol::cmds_tests_generator::generate_protocol_cmds_tests(json_cmds, family_name),
     )
 }
 

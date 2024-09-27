@@ -27,7 +27,10 @@ fn parse_api_version(raw: &str) -> Result<(u32, u32), &'static str> {
     }
 }
 
-pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
+pub(crate) fn generate_protocol_cmds_family(
+    cmds: Vec<JsonCmd>,
+    family_name: String,
+) -> TokenStream {
     quote_cmds_family(&GenCmdsFamily::new(
         cmds,
         family_name,
@@ -193,7 +196,7 @@ enum ReuseSchemaStrategy {
 }
 
 impl GenCmdsFamily {
-    fn new(cmds: Vec<JsonCmd>, family_name: &str, reuse_schemas: ReuseSchemaStrategy) -> Self {
+    fn new(cmds: Vec<JsonCmd>, family_name: String, reuse_schemas: ReuseSchemaStrategy) -> Self {
         let mut gen_versions: HashMap<u32, Vec<GenCmd>> = HashMap::new();
         let mut version_cmd_couples: HashSet<(u32, String)> = HashSet::new();
 
@@ -423,7 +426,7 @@ impl GenCmdsFamily {
         }
 
         Self {
-            name: family_name.to_owned(),
+            name: family_name,
             versions: gen_versions,
         }
     }
@@ -434,7 +437,7 @@ impl GenCmdsFamily {
 //
 
 fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
-    let family_name = format_ident!("{}", &family.name);
+    let family_mod_name = format_ident!("{}_cmds", &family.name);
     let mut latest_cmds_mod_name = None;
 
     let versioned_cmds: Vec<_> = family
@@ -442,7 +445,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
         .iter()
         .sorted_by_key(|(v, _)| *v)
         .map(|(version, cmds)| {
-            let (mod_name, code) = quote_versioned_cmds(*version, cmds);
+            let (mod_name, code) = quote_versioned_cmds(&family.name, *version, cmds);
             latest_cmds_mod_name.replace(mod_name);
             code
         })
@@ -451,7 +454,7 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     let latest_cmds_mod_name = latest_cmds_mod_name.expect("at least one version exists");
 
     quote! {
-        pub mod #family_name {
+        pub mod #family_mod_name {
             use super::libparsec_types; // Allow to mock types in tests
 
             // Define `UnknownStatus` here instead of where is it actually used (i.e.
@@ -472,10 +475,12 @@ fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
     }
 }
 
-fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
+fn quote_versioned_cmds(family: &str, version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     let versioned_cmds_mod = format_ident!("v{version}");
-    let (any_cmd_req_variants, cmd_structs): (Vec<TokenStream>, Vec<TokenStream>) =
-        cmds.iter().map(|cmd| quote_cmd(version, cmd)).unzip();
+    let (any_cmd_req_variants, cmd_structs): (Vec<TokenStream>, Vec<TokenStream>) = cmds
+        .iter()
+        .map(|cmd| quote_cmd(family, version, cmd))
+        .unzip();
 
     let code = quote! {
         pub mod #versioned_cmds_mod {
@@ -501,13 +506,16 @@ fn quote_versioned_cmds(version: u32, cmds: &[GenCmd]) -> (Ident, TokenStream) {
     (versioned_cmds_mod, code)
 }
 
-fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
+fn quote_cmd(family: &str, cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
     let pascal_case_name = &snake_to_pascal_case(&cmd.cmd);
     let snake_case_name = &cmd.cmd;
 
     let variant_name = format_ident!("{}", pascal_case_name);
     let module_name = format_ident!("{}", snake_case_name);
     let command_name = snake_case_name;
+
+    // `authenticated` -> `Authenticated`
+    let family_enum_variant = format_ident!("{}{}", family[..1].to_uppercase(), family[1..]);
 
     let module = match &cmd.spec {
         GenCmdSpec::ReusedFromVersion { version } => {
@@ -518,6 +526,7 @@ fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     impl super::libparsec_types::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
+                        const FAMILY: super::libparsec_types::ProtocolFamily = super::libparsec_types::ProtocolFamily::#family_enum_variant;
 
                         fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             self.dump()
@@ -567,6 +576,7 @@ fn quote_cmd(cmd_version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
 
                     impl libparsec_types::ProtocolRequest<#cmd_version> for Req {
                         type Response = Rep;
+                        const FAMILY: super::libparsec_types::ProtocolFamily = super::libparsec_types::ProtocolFamily::#family_enum_variant;
 
                         fn api_dump(&self) -> Result<Vec<u8>, ::rmp_serde::encode::Error> {
                             self.dump()

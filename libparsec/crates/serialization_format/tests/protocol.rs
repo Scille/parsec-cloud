@@ -50,40 +50,40 @@ fn simple() {
     // Check v1/v2/v3 use the same structure (this won't compile if not)
 
     assert_eq!(
-        protocol::v1::ping::Req {
+        family_cmds::v1::ping::Req {
             ping: "foo".to_owned()
         },
-        protocol::v2::ping::Req {
+        family_cmds::v2::ping::Req {
             ping: "foo".to_owned()
         }
     );
     assert_eq!(
-        protocol::v1::ping::Req {
+        family_cmds::v1::ping::Req {
             ping: "foo".to_owned()
         },
-        protocol::v3::ping::Req {
+        family_cmds::v3::ping::Req {
             ping: "foo".to_owned()
         }
     );
 
     // Check round-trip serialize/deserialize
 
-    let req = protocol::v2::ping::Req {
+    let req = family_cmds::v2::ping::Req {
         ping: "foo".to_owned(),
     };
     let dumped = req.dump().unwrap();
     assert_eq!(
-        protocol::v2::AnyCmdReq::load(&dumped).unwrap(),
-        protocol::v2::AnyCmdReq::Ping(req)
+        family_cmds::v2::AnyCmdReq::load(&dumped).unwrap(),
+        family_cmds::v2::AnyCmdReq::Ping(req)
     );
 
-    let rep = protocol::v2::ping::Rep::Ok {
+    let rep = family_cmds::v2::ping::Rep::Ok {
         pong: "foo".to_owned(),
     };
     let dumped = rep.dump().unwrap();
     assert_eq!(
-        protocol::v2::ping::Rep::load(&dumped).unwrap(),
-        protocol::v2::ping::Rep::Ok {
+        family_cmds::v2::ping::Rep::load(&dumped).unwrap(),
+        family_cmds::v2::ping::Rep::Ok {
             pong: "foo".to_owned()
         }
     );
@@ -121,17 +121,17 @@ fn complex_type() {
 
     // Check round-trip serialize/deserialize
 
-    let req = protocol::v1::ping::Req {
+    let req = family_cmds::v1::ping::Req {
         ping: HashMap::from([(1, (libparsec_types::DeviceID("alice@pc1".to_owned()), true))]),
     };
     let dumped = req.dump().unwrap();
     assert_eq!(
-        protocol::v1::AnyCmdReq::load(&dumped).unwrap(),
-        protocol::v1::AnyCmdReq::Ping(req)
+        family_cmds::v1::AnyCmdReq::load(&dumped).unwrap(),
+        family_cmds::v1::AnyCmdReq::Ping(req)
     );
-    let rep = protocol::v1::ping::Rep::Ok { pong: Some(1) };
+    let rep = family_cmds::v1::ping::Rep::Ok { pong: Some(1) };
     let dumped = rep.dump().unwrap();
-    assert_eq!(protocol::v1::ping::Rep::load(&dumped).unwrap(), rep,);
+    assert_eq!(family_cmds::v1::ping::Rep::load(&dumped).unwrap(), rep,);
 }
 
 #[test]
@@ -189,25 +189,25 @@ fn unknown_rep_status() {
         ]"#
     );
 
-    let unknown_status = protocol::v1::ping2::Rep::Dummy {
+    let unknown_status = family_cmds::v1::ping2::Rep::Dummy {
         pong: "foo".to_owned(),
     }
     .dump()
     .unwrap();
-    let known_status_but_bad_content = protocol::v1::ping2::Rep::Ok {
+    let known_status_but_bad_content = family_cmds::v1::ping2::Rep::Ok {
         dummy: "foo".to_owned(),
     }
     .dump()
     .unwrap();
 
     assert_eq!(
-        protocol::v1::ping::Rep::load(&unknown_status).unwrap(),
-        protocol::v1::ping::Rep::UnknownStatus {
+        family_cmds::v1::ping::Rep::load(&unknown_status).unwrap(),
+        family_cmds::v1::ping::Rep::UnknownStatus {
             unknown_status: "dummy".to_owned(),
             reason: None
         }
     );
-    assert!(protocol::v1::ping::Rep::load(&known_status_but_bad_content).is_err());
+    assert!(family_cmds::v1::ping::Rep::load(&known_status_but_bad_content).is_err());
 }
 
 #[test]
@@ -263,14 +263,14 @@ fn introduce_in_field() {
 
     // Test Req
 
-    let v1 = protocol::v1::ping::Req {};
-    let v2_with = protocol::v2::ping::Req {
+    let v1 = family_cmds::v1::ping::Req {};
+    let v2_with = family_cmds::v2::ping::Req {
         ping: libparsec_types::Maybe::Present("foo".to_owned()),
     };
-    let v2_without = protocol::v2::ping::Req {
+    let v2_without = family_cmds::v2::ping::Req {
         ping: libparsec_types::Maybe::Absent,
     };
-    let v3 = protocol::v3::ping::Req {
+    let v3 = family_cmds::v3::ping::Req {
         ping: "foo".to_owned(),
     };
 
@@ -278,37 +278,40 @@ fn introduce_in_field() {
     let v2_with_dumped = v2_with.dump().unwrap();
     // Field is optional in v2...
     assert_eq!(
-        protocol::v2::AnyCmdReq::load(&v1_dumped).unwrap(),
-        protocol::v2::AnyCmdReq::Ping(v2_without)
+        family_cmds::v2::AnyCmdReq::load(&v1_dumped).unwrap(),
+        family_cmds::v2::AnyCmdReq::Ping(v2_without)
     );
     // ...and becomes required in v3
-    assert!(protocol::v3::AnyCmdReq::load(&v1_dumped).is_err());
+    assert!(family_cmds::v3::AnyCmdReq::load(&v1_dumped).is_err());
     assert_eq!(
-        protocol::v3::AnyCmdReq::load(&v2_with_dumped).unwrap(),
-        protocol::v3::AnyCmdReq::Ping(v3)
+        family_cmds::v3::AnyCmdReq::load(&v2_with_dumped).unwrap(),
+        family_cmds::v3::AnyCmdReq::Ping(v3)
     );
 
     // Test Rep
 
-    let v1 = protocol::v1::ping2::Rep::Ok {};
-    let v2_with = protocol::v2::ping2::Rep::Ok {
+    let v1 = family_cmds::v1::ping2::Rep::Ok {};
+    let v2_with = family_cmds::v2::ping2::Rep::Ok {
         pong: libparsec_types::Maybe::Present(true),
     };
-    let v2_without = protocol::v2::ping2::Rep::Ok {
+    let v2_without = family_cmds::v2::ping2::Rep::Ok {
         pong: libparsec_types::Maybe::Absent,
     };
-    let v3 = protocol::v3::ping2::Rep::Ok { pong: true };
+    let v3 = family_cmds::v3::ping2::Rep::Ok { pong: true };
 
     let v1_dumped = v1.dump().unwrap();
     let v2_with_dumped = v2_with.dump().unwrap();
     // Field is optional in v2...
     assert_eq!(
-        protocol::v2::ping2::Rep::load(&v1_dumped).unwrap(),
+        family_cmds::v2::ping2::Rep::load(&v1_dumped).unwrap(),
         v2_without
     );
     // ...and becomes required in v3
-    assert!(protocol::v3::ping2::Rep::load(&v1_dumped).is_err());
-    assert_eq!(protocol::v3::ping2::Rep::load(&v2_with_dumped).unwrap(), v3);
+    assert!(family_cmds::v3::ping2::Rep::load(&v1_dumped).is_err());
+    assert_eq!(
+        family_cmds::v3::ping2::Rep::load(&v2_with_dumped).unwrap(),
+        v3
+    );
 }
 
 #[test]
@@ -363,14 +366,14 @@ fn nested_type() {
 
     // Check round-trip serialize/deserialize
 
-    let req = protocol::v1::ping::Req {
-        e: protocol::v1::ping::EnumNestedType::E1 { f: 42 },
-        s: protocol::v1::ping::StructNestedType { f: 42 },
+    let req = family_cmds::v1::ping::Req {
+        e: family_cmds::v1::ping::EnumNestedType::E1 { f: 42 },
+        s: family_cmds::v1::ping::StructNestedType { f: 42 },
     };
     let dumped = req.dump().unwrap();
     assert_eq!(
-        protocol::v1::AnyCmdReq::load(&dumped).unwrap(),
-        protocol::v1::AnyCmdReq::Ping(req)
+        family_cmds::v1::AnyCmdReq::load(&dumped).unwrap(),
+        family_cmds::v1::AnyCmdReq::Ping(req)
     );
 }
 
@@ -432,20 +435,20 @@ fn rep_unit() {
 
     // Check round-trip serialize/deserialize
 
-    let nested_enum = protocol::v1::ping::EnumNestedType::E2 {};
-    let nested_struct = protocol::v1::ping::StructNestedType { f: 42 };
-    let ok_enum = protocol::v1::ping::Rep::OkEnum(nested_enum);
-    let ok_struct = protocol::v1::ping::Rep::OkStruct(nested_struct);
+    let nested_enum = family_cmds::v1::ping::EnumNestedType::E2 {};
+    let nested_struct = family_cmds::v1::ping::StructNestedType { f: 42 };
+    let ok_enum = family_cmds::v1::ping::Rep::OkEnum(nested_enum);
+    let ok_struct = family_cmds::v1::ping::Rep::OkStruct(nested_struct);
 
     let ok_enum_dump = ok_enum.dump().unwrap();
     let ok_struct_dump = ok_struct.dump().unwrap();
 
     assert_eq!(
-        protocol::v1::ping::Rep::load(&ok_enum_dump).unwrap(),
+        family_cmds::v1::ping::Rep::load(&ok_enum_dump).unwrap(),
         ok_enum
     );
     assert_eq!(
-        protocol::v1::ping::Rep::load(&ok_struct_dump).unwrap(),
+        family_cmds::v1::ping::Rep::load(&ok_struct_dump).unwrap(),
         ok_struct
     );
 }
