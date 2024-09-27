@@ -7,7 +7,10 @@ use quote::{format_ident, quote};
 use super::*;
 use crate::utils::snake_to_pascal_case;
 
-pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
+pub(crate) fn generate_protocol_cmds_family(
+    cmds: Vec<JsonCmd>,
+    family_name: String,
+) -> TokenStream {
     quote_cmds_family(&GenCmdsFamily::new(
         cmds,
         family_name,
@@ -16,9 +19,9 @@ pub(crate) fn generate_protocol_cmds_family(cmds: Vec<JsonCmd>, family_name: &st
 }
 
 fn quote_cmds_family(family: &GenCmdsFamily) -> TokenStream {
-    let populate_mod_fn_name = format_ident!("{}_populate_mod", family.name);
-    let family_mod_name = format_ident!("{}", &family.name);
-    let family_mod_name_as_str = &family.name;
+    let populate_mod_fn_name = format_ident!("{}_cmds_populate_mod", family.name);
+    let family_mod_name_as_str = &format!("{}_cmds", &family.name);
+    let family_mod_name = format_ident!("{}", family_mod_name_as_str);
 
     let (versioned_cmds_populates, versioned_cmds_items): (Vec<TokenStream>, Vec<TokenStream>) =
         family
@@ -61,10 +64,10 @@ fn quote_versioned_cmds(
     version: u32,
     cmds: &[GenCmd],
 ) -> (TokenStream, TokenStream) {
-    let family_mod_name = format_ident!("{}", &family.name);
+    let family_mod_name = format_ident!("{}_cmds", &family.name);
     let versioned_cmds_mod_name_as_str = &format!("v{version}");
     let versioned_cmds_mod_name = format_ident!("{}", versioned_cmds_mod_name_as_str);
-    let py_module_path_as_str = &format!("parsec._parsec.{}.v{}", family.name, version);
+    let py_module_path_as_str = &format!("parsec._parsec.{}_cmds.v{}", family.name, version);
     let protocol_versioned_cmds_path =
         quote! { libparsec_protocol::#family_mod_name::#versioned_cmds_mod_name };
 
@@ -120,7 +123,7 @@ fn quote_versioned_cmds(
 }
 
 fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream, TokenStream) {
-    let family_name = format_ident!("{}", family.name);
+    let family_name = format_ident!("{}_cmds", family.name);
     let version_name = format_ident!("v{}", version);
     let cmd_mod_name_as_str = &cmd.cmd;
     let cmd_mod_name = format_ident!("{}", cmd_mod_name_as_str);
@@ -152,8 +155,10 @@ fn quote_cmd(family: &GenCmdsFamily, version: u32, cmd: &GenCmd) -> (TokenStream
             reps,
             nested_types,
         } => {
-            let py_module_path_as_str =
-                &format!("parsec._parsec.{}.v{}.{}", family.name, version, cmd.cmd);
+            let py_module_path_as_str = &format!(
+                "parsec._parsec.{}_cmds.v{}.{}",
+                family.name, version, cmd.cmd
+            );
             let mut nested_types_names = vec![];
             let mut nested_types_impl_codes = vec![];
             for nested_type in nested_types {

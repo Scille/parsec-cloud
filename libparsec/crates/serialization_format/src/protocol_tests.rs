@@ -6,9 +6,9 @@ use quote::{format_ident, quote};
 use super::*;
 
 /// See [crate::generate_protocol_cmds_family_from_contents]
-pub(crate) fn generate_protocol_cmds_tests(cmds: Vec<JsonCmd>, family_name: &str) -> TokenStream {
+pub(crate) fn generate_protocol_cmds_tests(cmds: Vec<JsonCmd>, family_name: String) -> TokenStream {
     let family = &GenCmdsFamily::new(cmds, family_name, ReuseSchemaStrategy::Never);
-    let family_name = format_ident!("{}", &family.name);
+    let family_mod_name = format_ident!("{}_cmds", &family.name);
     let versioned_cmds = family
         .versions
         .iter()
@@ -16,7 +16,7 @@ pub(crate) fn generate_protocol_cmds_tests(cmds: Vec<JsonCmd>, family_name: &str
         .map(|(version, cmds)| quote_versioned_cmds_test(*version, family, cmds));
 
     quote! {
-        pub mod #family_name {
+        pub mod #family_mod_name {
             #(#versioned_cmds)*
         }
     }
@@ -24,7 +24,7 @@ pub(crate) fn generate_protocol_cmds_tests(cmds: Vec<JsonCmd>, family_name: &str
 
 fn quote_versioned_cmds_test(version: u32, family: &GenCmdsFamily, cmds: &[GenCmd]) -> TokenStream {
     let mod_version = format_ident!("v{version}");
-    let family_name = format_ident!("{}", &family.name);
+    let family_mod_name = format_ident!("{}_cmds", &family.name);
     let cmd_tests = cmds.iter().map(|cmd| quote_cmd_tests(version, cmd));
 
     quote! {
@@ -34,7 +34,7 @@ fn quote_versioned_cmds_test(version: u32, family: &GenCmdsFamily, cmds: &[GenCm
         // cmd module multiple times (i.e. not `use` it but actually compiling it),
         // each time with a parent module defining a different version of the cmd family
         pub mod #mod_version {
-            use libparsec_protocol::#family_name::#mod_version as #family_name;
+            use libparsec_protocol::#family_mod_name::#mod_version as #family_mod_name;
             use libparsec_tests_fixtures::prelude::*;
 
             #(#cmd_tests)*

@@ -11,8 +11,14 @@ pub type Integer = i64;
 #[derive(serde::Deserialize, serde::Serialize, Clone, Debug, PartialEq, Eq)]
 pub struct DeviceID(pub String);
 
+#[allow(unused)]
+pub enum ProtocolFamily {
+    Family,
+}
+
 #[allow(dead_code)]
 pub trait ProtocolRequest<const V: u32> {
+    const FAMILY: ProtocolFamily;
     type Response: for<'de> Deserialize<'de>;
 
     fn api_dump(&self) -> Result<Vec<u8>, rmp_serde::encode::Error>;

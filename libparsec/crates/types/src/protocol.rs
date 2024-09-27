@@ -113,8 +113,22 @@ impl TryFrom<&str> for ApiVersion {
  * ProtocolRequest
  */
 
+#[derive(Debug, Clone, Copy)]
+pub enum ProtocolFamily {
+    /// Family used for all requests done by a device.
+    Authenticated,
+    /// Special case for requests done by a device before it has accept the server's
+    /// Terms Of Service (TOS).
+    Tos,
+    /// Family used for requests done without device (typically organization bootstrap).
+    Anonymous,
+    /// Family used by an invitation claimer in order to obtain a device.
+    Invited,
+}
+
 pub trait ProtocolRequest<const V: u32> {
     const API_MAJOR_VERSION: u32 = V;
+    const FAMILY: ProtocolFamily;
     type Response: for<'de> Deserialize<'de> + std::fmt::Debug;
 
     fn api_dump(&self) -> Result<Vec<u8>, ProtocolEncodeError>;
