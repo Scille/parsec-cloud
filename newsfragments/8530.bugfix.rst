@@ -1,0 +1,1 @@
+Snap: Remove script that migrate device location to ``$HOME/.config/parsec..``
