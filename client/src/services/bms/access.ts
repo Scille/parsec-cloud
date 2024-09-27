@@ -5,6 +5,7 @@ import {
   AuthenticationToken,
   BmsAddress,
   BmsError,
+  BmsLang,
   BmsOrganization,
   BmsResponse,
   DataType,
@@ -122,7 +123,18 @@ class BmsAccess {
     return response;
   }
 
-  async updateEmail(email: string, password: string, lang: string): Promise<BmsResponse> {
+  async updateEmailSendCode(email: string, lang: BmsLang): Promise<BmsResponse> {
+    assertLoggedIn(this.tokens);
+    assertLoggedIn(this.customerInformation);
+    await this.ensureFreshToken();
+    const response = await BmsApi.updateEmailSendCode(this.tokens.access, {
+      email: email,
+      lang: lang,
+    });
+    return response;
+  }
+
+  async updateEmail(email: string, password: string, code: string, lang: BmsLang): Promise<BmsResponse> {
     assertLoggedIn(this.tokens);
     assertLoggedIn(this.customerInformation);
     await this.ensureFreshToken();
@@ -130,6 +142,7 @@ class BmsAccess {
       userId: this.customerInformation.id,
       email,
       password,
+      code: code,
       lang,
     });
 

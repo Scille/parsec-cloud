@@ -166,6 +166,7 @@ msTest('Update personal information timeout', async ({ clientArea }) => {
 });
 
 msTest('Update email', async ({ clientArea }) => {
+  await MockBms.mockUpdateEmailSendCode(clientArea);
   await MockBms.mockUpdateEmail(clientArea);
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(1).locator('.ms-summary-card').nth(0);
@@ -176,26 +177,52 @@ msTest('Update email', async ({ clientArea }) => {
   await expect(modal).toBeVisible();
   const okButton = modal.locator('#next-button');
   await expect(okButton).toBeTrulyDisabled();
-  await expect(modal.locator('.ms-modal-header__title-container')).toHaveText('Change your email');
+  const title = modal.locator('.ms-modal-header__title-container');
+  const subtitle = modal.locator('.ms-modal-header__text');
   const inputs = modal.locator('ion-input');
+  await expect(title).toHaveText('Change your email');
+  await expect(subtitle).toHaveText('If you update your email address, keep in mind that you will have to log in with this new address.');
   await expect(inputs.nth(0).locator('input')).toHaveValue('');
-  await expect(inputs.nth(1).locator('input')).toHaveValue('');
   await fillIonInput(inputs.nth(0), 'gregory.house@hospital.pu');
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+
+  await expect(title).toHaveText('Enter your password');
+  await expect(subtitle).toBeHidden();
+  await expect(inputs.nth(1).locator('input')).toHaveValue('');
   await expect(okButton).toBeTrulyDisabled();
   await fillIonInput(inputs.nth(1), 'Hydrocodone/paracetamol');
   await expect(okButton).toBeTrulyEnabled();
   await okButton.click();
+
+  const codeInputs = modal.locator('.code-input-list').locator('ion-input');
+  await expect(title).toHaveText('Validate your new email');
+  await expect(subtitle).toHaveText('You should have received a code on your new email address.');
+  await expect(okButton).toBeTrulyDisabled();
+  let i = 1;
+  for (const codeInput of await codeInputs.all()) {
+    await fillIonInput(codeInput, i.toString());
+    i++;
+  }
+  await expect(okButton).toBeTrulyEnabled();
+  await okButton.click();
+
   await expect(modal).toBeHidden();
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText('gregory.house@hospital.pu');
+  await expect(clientArea).toShowToast('Email has been updated.', 'Success');
 });
 
 for (const params of [
-  { status: 400, expectedMsg: 'Wrong email address format.' },
-  { status: 403, expectedMsg: 'The password is wrong.' },
-  { status: 401, expectedMsg: 'An unexpected error occurred. Please try again.' },
+  { status: 400, code: 'EMAIL_ALREADY_VALIDATED', expectedMsg: 'This email is already used.' },
+  { status: 400, code: 'EMAIL_VALIDATION_CODE_TRIES_EXCEEDED', expectedMsg: 'Too many tries.' },
+  { status: 400, code: 'EMAIL_VALIDATION_INVALID_CODE', expectedMsg: 'The code is invalid.' },
+  { status: 400, code: 'error', expectedMsg: 'An unexpected error occurred. Please try again.' },
+  { status: 403, code: 'error', expectedMsg: 'The password is incorrect.' },
+  { status: 401, code: 'error', expectedMsg: 'An unexpected error occurred. Please try again.' },
 ])
-  msTest(`Update email fail (status: ${params.status})`, async ({ clientArea }) => {
-    await MockBms.mockUpdateEmail(clientArea, { POST: { errors: { status: params.status } } });
+  msTest(`Update email fail (status: ${params.status} ${params.code})`, async ({ clientArea }) => {
+    await MockBms.mockUpdateEmailSendCode(clientArea);
+    await MockBms.mockUpdateEmail(clientArea, { POST: { errors: { status: params.status, code: params.code } } });
     await goToPersonalPage(clientArea);
     const dataContainer = clientArea
       .locator('.personal-data-page')
@@ -208,30 +235,69 @@ for (const params of [
     await expect(modal).toBeHidden();
     await dataContainer.locator('.update-button').click();
     await expect(modal).toBeVisible();
+
+    const okButton = modal.locator('#next-button');
+    await expect(okButton).toBeTrulyDisabled();
+    const title = modal.locator('.ms-modal-header__title-container');
+    const subtitle = modal.locator('.ms-modal-header__text');
     const inputs = modal.locator('ion-input');
+    await expect(title).toHaveText('Change your email');
+    await expect(subtitle).toHaveText('If you update your email address, keep in mind that you will have to log in with this new address.');
+    await expect(inputs.nth(0).locator('input')).toHaveValue('');
     await fillIonInput(inputs.nth(0), 'gregory.house@hospital.pu');
+    await expect(okButton).toBeTrulyEnabled();
+    await okButton.click();
+
+    await expect(title).toHaveText('Enter your password');
+    await expect(subtitle).toBeHidden();
+    await expect(inputs.nth(1).locator('input')).toHaveValue('');
+    await expect(okButton).toBeTrulyDisabled();
     await fillIonInput(inputs.nth(1), 'Hydrocodone/paracetamol');
-    await modal.locator('#next-button').click();
-    await expect(modal.locator('.ms-error')).toHaveText(params.expectedMsg);
-    await modal.locator('.closeBtn').click();
-    await expect(modal).toBeHidden();
-    await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(DEFAULT_USER_INFORMATION.email);
+    await expect(okButton).toBeTrulyEnabled();
+    await okButton.click();
+
+    const codeInputs = modal.locator('.code-input-list').locator('ion-input');
+    await expect(title).toHaveText('Validate your new email');
+    await expect(subtitle).toHaveText('You should have received a code on your new email address.');
+    await expect(okButton).toBeTrulyDisabled();
+    let i = 1;
+    for (const codeInput of await codeInputs.all()) {
+      await fillIonInput(codeInput, i.toString());
+      i++;
+    }
+    await expect(okButton).toBeTrulyEnabled();
+    await okButton.click();
+
+    const error = modal.locator('.change-password-error');
+    await expect(error).toBeVisible();
+    await expect(error).toHaveText(params.expectedMsg);
+    await expect(modal).toBeVisible();
   });
 
 msTest('Update email timeout', async ({ clientArea }) => {
+  await MockBms.mockUpdateEmailSendCode(clientArea);
   await MockBms.mockUpdateEmail(clientArea, { POST: { timeout: true } });
   await goToPersonalPage(clientArea);
   const dataContainer = clientArea.locator('.personal-data-content').nth(1).locator('.ms-summary-card').nth(0);
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(DEFAULT_USER_INFORMATION.email);
   const modal = clientArea.locator('.authentication-modal');
-  await expect(modal).toBeHidden();
   await dataContainer.locator('.update-button').click();
-  await expect(modal).toBeVisible();
+  const okButton = modal.locator('#next-button');
   const inputs = modal.locator('ion-input');
+  await expect(inputs.nth(0).locator('input')).toHaveValue('');
   await fillIonInput(inputs.nth(0), 'gregory.house@hospital.pu');
+  await okButton.click();
+  await expect(inputs.nth(1).locator('input')).toHaveValue('');
   await fillIonInput(inputs.nth(1), 'Hydrocodone/paracetamol');
-  await modal.locator('#next-button').click();
-  await expect(modal.locator('.ms-error')).toHaveText('An unexpected error occurred. Please try again.');
+  await okButton.click();
+  const codeInputs = modal.locator('.code-input-list').locator('ion-input');
+  let i = 1;
+  for (const codeInput of await codeInputs.all()) {
+    await fillIonInput(codeInput, i.toString());
+    i++;
+  }
+  await okButton.click();
+  await expect(modal.locator('.change-password-error')).toHaveText('An unexpected error occurred. Please try again.');
   await modal.locator('.closeBtn').click();
   await expect(modal).toBeHidden();
   await expect(dataContainer.locator('.ms-summary-card-item__text')).toHaveText(DEFAULT_USER_INFORMATION.email);

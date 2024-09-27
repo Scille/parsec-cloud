@@ -1349,16 +1349,28 @@
                     "nextButton": "Confirm"
                 },
                 "authentication": {
-                    "title": "Change your email",
+                    "emailTitle": "Change your email",
+                    "passwordTitle": "Enter your password",
+                    "validateTitle": "Validate your new email",
+                    "emailSubtitle": "If you update your email address, keep in mind that you will have to log in with this new address.",
+                    "validateSubtitle": "You should have received a code on your new email address.",
                     "email": "Email",
                     "newEmail": "New email",
                     "password": "Password",
+                    "resend": "You didn't receive a code?",
                     "confirmPassword": "Confirm password",
-                    "wrongPassword": "The password is wrong.",
+                    "errors": {
+                        "wrongPassword": "The password is incorrect.",
+                        "invalidCode": "The code is invalid.",
+                        "tooManyTries": "Too many tries.",
+                        "emailAlreadyUsed": "This email is already used.",
+                        "resendFailed": "Failed to send another email."
+                    },
                     "noEmptyFields": "No field can be empty.",
                     "newEmailMustBeDifferent": "The new email must be different from the current one.",
                     "success": "Email has been updated.",
-                    "nextButton": "Confirm"
+                    "continue": "Continue",
+                    "validate": "Validate and update"
                 },
                 "security": {
                     "passwordStep": {

@@ -20,6 +20,7 @@ import {
   UpdateAuthenticationQueryData,
   UpdateBillingDetailsQueryData,
   UpdateEmailQueryData,
+  UpdateEmailSendCodeQueryData,
   UpdatePersonalInformationQueryData,
 } from '@/services/bms/types';
 import { Env } from '@/services/environment';
@@ -124,6 +125,18 @@ async function getPersonalInformation(token: AuthenticationToken): Promise<BmsRe
 async function updatePersonalInformation(token: AuthenticationToken, data: UpdatePersonalInformationQueryData): Promise<BmsResponse> {
   return await wrapQuery(async () => {
     const axiosResponse = await http.getInstance().patch(`/users/${data.userId}`, data, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return {
+      status: axiosResponse.status,
+      isError: false,
+    };
+  });
+}
+
+async function updateEmailSendCode(token: AuthenticationToken, data: UpdateEmailSendCodeQueryData): Promise<BmsResponse> {
+  return await wrapQuery(async () => {
+    const axiosResponse = await http.getInstance().post('/email_validation/send_code', data, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return {
@@ -662,4 +675,5 @@ export const BmsApi = {
   getCustomOrderDetails,
   unsubscribeOrganization,
   subscribeOrganization,
+  updateEmailSendCode,
 };

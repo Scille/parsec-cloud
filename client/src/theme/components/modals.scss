@@ -275,3 +275,7 @@
 .role-assignment-modal::part(content) {
   max-width: var(--parsec-modal-width-sm);
 }
+
+.authentication-modal::part(content) {
+  max-width: var(--parsec-modal-width-sm);
+}

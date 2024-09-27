@@ -3,31 +3,68 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="`${translationPrefix}.title`"
+      :title="labels.title"
+      :subtitle="labels.subtitle"
       :close-button="{ visible: true }"
       :confirm-button="{
-        label: `${translationPrefix}.nextButton`,
-        disabled: !isFormValid(),
+        label: labels.button,
+        disabled: !canProgress || querying,
         onClick: submit,
       }"
     >
       <div class="modal-container">
-        <ms-input
-          type="email"
-          v-model="newEmailRef"
-          @change="error = ''"
-          @on-enter-keyup="submit"
-          :label="`${translationPrefix}.newEmail`"
-          :validator="newEmailValidator"
-          ref="newEmailInput"
-        />
-        <ms-password-input
-          v-model="passwordRef"
-          @change="error = ''"
-          @on-enter-keyup="submit"
-          :label="`${translationPrefix}.password`"
-        />
+        <div
+          class="email-container"
+          v-show="step === Steps.NewEmail"
+        >
+          <ms-input
+            type="email"
+            v-model="newEmailRef"
+            @change="error = ''"
+            @on-enter-keyup="submit"
+            :label="`${translationPrefix}.newEmail`"
+            :validator="newEmailValidator"
+            ref="newEmailInput"
+          />
+        </div>
+        <div
+          class="password-container"
+          v-show="step === Steps.Password"
+        >
+          <ms-password-input
+            v-model="passwordRef"
+            @change="error = ''"
+            @on-enter-keyup="submit"
+            :label="`${translationPrefix}.password`"
+            ref="passwordInput"
+          />
+        </div>
+        <div
+          class="code-container"
+          v-show="step === Steps.Code"
+        >
+          <ms-code-validation-input
+            :code-length="6"
+            @code-complete="onCodeComplete"
+            ref="codeValidationInput"
+          />
+          <div class="bottomtext">
+            <ion-text
+              button
+              @click="resendCode"
+              :disabled="resendDisabled"
+              class="send-code subtitles-sm"
+            >
+              {{ $msTranslate(`${translationPrefix}.resend`) }}
+            </ion-text>
+            <ion-icon
+              :icon="checkmark"
+              v-show="resendDisabled && resendOk"
+            />
+          </div>
+        </div>
         <ms-report-text
+          class="change-password-error"
           :theme="MsReportTheme.Error"
           v-if="error"
         >
@@ -39,10 +76,23 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsInput, MsModalResult, MsPasswordInput, I18n, MsReportTheme, MsReportText, Validity, IValidator } from 'megashark-lib';
-import { IonPage, modalController } from '@ionic/vue';
-import { onMounted, ref } from 'vue';
-import { BmsAccessInstance } from '@/services/bms';
+import {
+  MsModal,
+  MsInput,
+  MsModalResult,
+  MsPasswordInput,
+  I18n,
+  MsReportTheme,
+  MsReportText,
+  Validity,
+  IValidator,
+  asyncComputed,
+  MsCodeValidationInput,
+} from 'megashark-lib';
+import { IonPage, modalController, IonText, IonIcon } from '@ionic/vue';
+import { checkmark } from 'ionicons/icons';
+import { onMounted, Ref, ref } from 'vue';
+import { BmsAccessInstance, BmsLang } from '@/services/bms';
 import { longLocaleCodeToShort } from '@/services/translation';
 import { emailValidator } from '@/common/validators';
 
@@ -50,11 +100,41 @@ const props = defineProps<{
   email: string;
 }>();
 
+enum Steps {
+  NewEmail = 'new-email',
+  Password = 'password',
+  Code = 'code',
+}
+
+const step = ref(Steps.NewEmail);
 const translationPrefix = 'clientArea.personalDataPage.modals.authentication';
 const newEmailRef = ref('');
 const passwordRef = ref('');
 const error = ref('');
 const newEmailInput = ref();
+const passwordInput = ref();
+const resendDisabled = ref(false);
+const resendOk = ref(false);
+const validationCode: Ref<Array<string>> = ref([]);
+const querying = ref(false);
+const isInit = ref(false);
+const labels = ref({ title: '', subtitle: '', button: '' });
+const codeSent = ref(false);
+const codeValidationInput = ref();
+
+const canProgress = asyncComputed(async () => {
+  if (!isInit.value) {
+    return false;
+  }
+  switch (step.value) {
+    case Steps.NewEmail:
+      return newEmailInput.value.validity === Validity.Valid;
+    case Steps.Password:
+      return passwordRef.value.length > 0;
+    case Steps.Code:
+      return validationCode.value.length > 0;
+  }
+});
 
 const newEmailValidator: IValidator = async function (value: string) {
   const result = await emailValidator(value);
@@ -65,32 +145,117 @@ const newEmailValidator: IValidator = async function (value: string) {
 };
 
 onMounted(async () => {
-  await newEmailInput.value.setFocus();
+  await switchStep(Steps.NewEmail);
+  isInit.value = true;
 });
 
 async function submit(): Promise<boolean> {
-  if (!isFormValid()) {
-    return false;
-  }
-  const response = await BmsAccessInstance.get().updateEmail(newEmailRef.value, passwordRef.value, longLocaleCodeToShort(I18n.getLocale()));
-
-  if (response.isError) {
-    error.value = 'globalErrors.unexpected';
-    switch (response.status) {
-      case 400:
-        error.value = 'validators.userInfo.email';
-        break;
-      case 403:
-        error.value = `${translationPrefix}.wrongPassword`;
-        break;
+  querying.value = true;
+  if (step.value === Steps.NewEmail) {
+    await switchStep(Steps.Password);
+  } else if (step.value === Steps.Password) {
+    if (!codeSent.value) {
+      const response = await BmsAccessInstance.get().updateEmailSendCode(
+        newEmailRef.value,
+        longLocaleCodeToShort(I18n.getLocale()) as BmsLang,
+      );
+      if (response.isError) {
+        error.value = 'globalErrors.unexpected';
+      } else {
+        codeSent.value = true;
+      }
     }
-    return false;
+    if (codeSent.value) {
+      await switchStep(Steps.Code);
+    }
+  } else if (step.value === Steps.Code) {
+    const response = await BmsAccessInstance.get().updateEmail(
+      newEmailRef.value,
+      passwordRef.value,
+      validationCode.value.join(''),
+      longLocaleCodeToShort(I18n.getLocale()) as BmsLang,
+    );
+    if (response.isError) {
+      error.value = 'globalErrors.unexpected';
+      switch (response.status) {
+        case 400:
+          if (response.errors && response.errors.length) {
+            switch (response.errors[0].code) {
+              case 'EMAIL_ALREADY_VALIDATED':
+                error.value = `${translationPrefix}.errors.emailAlreadyUsed`;
+                break;
+              case 'EMAIL_VALIDATION_CODE_TRIES_EXCEEDED':
+                error.value = `${translationPrefix}.errors.tooManyTries`;
+                break;
+              case 'EMAIL_VALIDATION_INVALID_CODE':
+                error.value = `${translationPrefix}.errors.invalidCode`;
+                break;
+            }
+          }
+          break;
+        case 403:
+          error.value = `${translationPrefix}.errors.wrongPassword`;
+          switchStep(Steps.Password);
+          break;
+        default:
+          error.value = 'globalErrors.unexpected';
+      }
+    } else {
+      await modalController.dismiss(null, MsModalResult.Confirm);
+    }
   }
-  return await modalController.dismiss(null, MsModalResult.Confirm);
+  querying.value = false;
+  return true;
 }
 
-function isFormValid(): boolean {
-  return !!passwordRef.value && newEmailInput.value.validity === Validity.Valid && newEmailRef.value !== props.email;
+async function switchStep(newStep: Steps): Promise<void> {
+  step.value = newStep;
+  switch (newStep) {
+    case Steps.NewEmail:
+      await newEmailInput.value.setFocus();
+      labels.value = {
+        title: `${translationPrefix}.emailTitle`,
+        subtitle: `${translationPrefix}.emailSubtitle`,
+        button: `${translationPrefix}.continue`,
+      };
+      break;
+    case Steps.Password:
+      await passwordInput.value.setFocus();
+      labels.value = {
+        title: `${translationPrefix}.passwordTitle`,
+        subtitle: '',
+        button: `${translationPrefix}.continue`,
+      };
+      break;
+    case Steps.Code:
+      // Set focus doesn't work, no idea why,
+      // keeping it anyway in case it's fixed in megashark-lib
+      await codeValidationInput.value.setFocus();
+      labels.value = {
+        title: `${translationPrefix}.validateTitle`,
+        subtitle: `${translationPrefix}.validateSubtitle`,
+        button: `${translationPrefix}.validate`,
+      };
+      break;
+  }
+}
+
+async function resendCode(): Promise<void> {
+  resendDisabled.value = true;
+
+  const response = await BmsAccessInstance.get().updateEmailSendCode(newEmailRef.value, longLocaleCodeToShort(I18n.getLocale()) as BmsLang);
+  if (response.isError) {
+    error.value = `${translationPrefix}.errors.resendFailed`;
+  }
+  resendOk.value = !response.isError;
+
+  setTimeout(() => {
+    resendDisabled.value = false;
+  }, 5000);
+}
+
+async function onCodeComplete(code: Array<string>): Promise<void> {
+  validationCode.value = code;
 }
 </script>
 
@@ -99,5 +264,22 @@ function isFormValid(): boolean {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+
+  .send-code {
+    margin-left: auto;
+    color: var(--parsec-color-light-secondary-text);
+    border-radius: var(--parsec-radius-6);
+    padding: 0.125rem 0.5rem;
+
+    &:hover {
+      cursor: pointer;
+      background: var(--parsec-color-light-secondary-premiere);
+    }
+
+    &[disabled='true'] {
+      pointer-events: none;
+      color: var(--parsec-color-light-secondary-light);
+    }
+  }
 }
 </style>
