@@ -1,1 +1,0 @@
-Fixed a performance issue when leaving the file import menu open

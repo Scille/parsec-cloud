@@ -1,1 +1,0 @@
-Update hosting guide (previously administration guide) for version 3
