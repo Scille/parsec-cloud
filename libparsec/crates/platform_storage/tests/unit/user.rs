@@ -201,3 +201,24 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
 
     // TODO: remove user manifest's vlob from the database, this shouldn't cause any issue
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[parsec_test]
+async fn start_with_on_disk_db(tmp_path: TmpPath, alice: &Device) {
+    // Start when the db file does not exist
+    let storage = UserStorage::start(&tmp_path, &alice.local_device())
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+
+    // Check the db files have been created
+    assert!(tmp_path
+        .join("de10a11cec0010000000000000000000/user_data-v1.sqlite")
+        .exists());
+
+    // Start when the db file already exists
+    let storage = UserStorage::start(&tmp_path, &alice.local_device())
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+}
