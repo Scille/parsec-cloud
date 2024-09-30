@@ -6,8 +6,8 @@
 
 use libparsec_platform_async::stream::{StreamExt, TryStreamExt};
 use sqlx::{
-    sqlite::{SqliteAutoVacuum, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
-    ConnectOptions, Connection, Executor, Row, SqliteConnection,
+    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
+    ConnectOptions, Connection, Row, SqliteConnection,
 };
 use std::path::Path;
 
@@ -23,6 +23,36 @@ use crate::workspace::{
 use super::model::{
     get_workspace_cache_storage_db_relative_path, get_workspace_storage_db_relative_path,
 };
+
+async fn create_connection(db_path: &Path) -> anyhow::Result<SqliteConnection> {
+    // Create parent directories if needed
+    if let Some(parent) = db_path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+
+    // Create connection
+    let mut conn = SqliteConnectOptions::new()
+        .filename(db_path)
+        .create_if_missing(true)
+        .journal_mode(SqliteJournalMode::Wal)
+        .synchronous(SqliteSynchronous::Normal)
+        .connect()
+        .await?;
+
+    // Manage auto-vacuum
+    const FULL: u8 = 1;
+    let auto_vacuum = sqlx::query("PRAGMA auto_vacuum")
+        .fetch_one(&mut conn)
+        .await?
+        .try_get::<u8, _>(0)?;
+    if auto_vacuum != FULL {
+        sqlx::query("PRAGMA auto_vacuum = FULL")
+            .execute(&mut conn)
+            .await?;
+        sqlx::query("VACUUM").execute(&mut conn).await?;
+    }
+    Ok(conn)
+}
 
 #[derive(Debug)]
 pub(crate) struct PlatformWorkspaceStorage {
@@ -64,22 +94,7 @@ impl PlatformWorkspaceStorage {
             // In-memory database for testing
             Some(conn) => conn,
             // Actual production code: open the connection on disk
-            None => {
-                if let Some(parent) = db_path.parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-
-                let mut conn = SqliteConnectOptions::new()
-                    .filename(&db_path)
-                    .create_if_missing(true)
-                    .journal_mode(SqliteJournalMode::Wal)
-                    .synchronous(SqliteSynchronous::Normal)
-                    .auto_vacuum(SqliteAutoVacuum::Full)
-                    .connect()
-                    .await?;
-                conn.execute("VACUUM;").await?;
-                conn
-            }
+            None => create_connection(&db_path).await?,
         };
 
         // 1bis) Open the cache database
@@ -103,22 +118,7 @@ impl PlatformWorkspaceStorage {
             // In-memory database for testing
             Some(cache_conn) => cache_conn,
             // Actual production code: open the connection on disk
-            None => {
-                if let Some(parent) = cache_db_path.parent() {
-                    let _ = std::fs::create_dir_all(parent);
-                }
-
-                let mut conn = SqliteConnectOptions::new()
-                    .filename(&cache_db_path)
-                    .create_if_missing(true)
-                    .journal_mode(SqliteJournalMode::Wal)
-                    .synchronous(SqliteSynchronous::Normal)
-                    .auto_vacuum(SqliteAutoVacuum::Full)
-                    .connect()
-                    .await?;
-                conn.execute("VACUUM;").await?;
-                conn
-            }
+            None => create_connection(&cache_db_path).await?,
         };
 
         // 2) Initialize the database (if needed)
