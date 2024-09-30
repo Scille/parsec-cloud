@@ -158,5 +158,5 @@ Install an older version of Parsec
 
 If you need to access older versions, they are available on `GitHub`_.
 
-.. _Download Parsec: https://parsec.cloud/en/get-parsec
+.. _Download Parsec: https://parsec.cloud/demarrer-parsec/
 .. _GitHub: https://github.com/Scille/parsec/releases/latest
