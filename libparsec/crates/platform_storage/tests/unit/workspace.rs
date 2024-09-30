@@ -1070,6 +1070,28 @@ async fn bad_start(tmp_path: TmpPath, alice: &Device) {
     // TODO: remove workspace manifest's vlob from the database, this shouldn't cause any issue
 }
 
+#[cfg(not(target_arch = "wasm32"))]
+#[parsec_test]
+async fn start_with_on_disk_db(tmp_path: TmpPath, alice: &Device) {
+    let realm_id = VlobID::from_hex("aa0000000000000000000000000000ff").unwrap();
+
+    // Start when the db file does not exist
+    let storage = WorkspaceStorage::start(&tmp_path, &alice.local_device(), realm_id, u64::MAX)
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+
+    // Check the db files have been created
+    assert!(tmp_path.join("de10a11cec0010000000000000000000/aa0000000000000000000000000000ff/workspace_data-v1.sqlite").exists());
+    assert!(tmp_path.join("de10a11cec0010000000000000000000/aa0000000000000000000000000000ff/workspace_cache-v1.sqlite").exists());
+
+    // Start when the db file already exists
+    let storage = WorkspaceStorage::start(&tmp_path, &alice.local_device(), realm_id, u64::MAX)
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+}
+
 async fn start_workspace(env: &TestbedEnv) -> WorkspaceStorage {
     let realm_id = VlobID::from_hex("aa0000000000000000000000000000ee").unwrap();
     let alice = env.local_device("alice@dev1");

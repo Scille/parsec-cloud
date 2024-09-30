@@ -1362,3 +1362,24 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
     )
     .await;
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+#[parsec_test]
+async fn start_with_on_disk_db(tmp_path: TmpPath, alice: &Device) {
+    // Start when the db file does not exist
+    let storage = CertificatesStorage::start(&tmp_path, &alice.local_device())
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+
+    // Check the db files have been created
+    assert!(tmp_path
+        .join("de10a11cec0010000000000000000000/certificates-v1.sqlite")
+        .exists());
+
+    // Start when the db file already exists
+    let storage = CertificatesStorage::start(&tmp_path, &alice.local_device())
+        .await
+        .unwrap();
+    storage.stop().await.unwrap();
+}
