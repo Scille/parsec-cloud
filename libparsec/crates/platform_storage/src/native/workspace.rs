@@ -9,7 +9,7 @@ use sqlx::{
     sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
     ConnectOptions, Connection, Row, SqliteConnection,
 };
-use std::path::Path;
+use std::{ops::DerefMut, path::Path};
 
 use libparsec_types::prelude::*;
 
@@ -286,16 +286,7 @@ impl PlatformWorkspaceStorage {
         let mut transaction = self.cache_conn.begin().await?;
 
         db_insert_block(&mut *transaction, block_id, encrypted, now).await?;
-        let nb_blocks = db_get_blocks_count(&mut *transaction).await?;
-
-        let extra_blocks = nb_blocks.saturating_sub(self.cache_max_blocks);
-
-        // Cleanup is needed
-        if extra_blocks > 0 {
-            // Remove the extra block plus 10% of the cache size, i.e 100 blocks
-            let to_remove = extra_blocks + self.cache_max_blocks / 10;
-            db_cleanup_blocks(&mut *transaction, to_remove).await?;
-        }
+        may_cleanup_blocks(&mut transaction, self.cache_max_blocks).await?;
 
         transaction.commit().await?;
         Ok(())
@@ -316,6 +307,7 @@ impl PlatformWorkspaceStorage {
             None => return Ok(()),
         };
         db_insert_block(&mut *cache_transaction, chunk_id.into(), &encrypted, now).await?;
+        may_cleanup_blocks(&mut cache_transaction, self.cache_max_blocks).await?;
         db_remove_chunk(&mut *transaction, chunk_id).await?;
 
         cache_transaction.commit().await?;
@@ -857,6 +849,24 @@ async fn db_insert_block(
     .bind(accessed_on.as_timestamp_micros())
     .execute(executor)
     .await?;
+
+    Ok(())
+}
+
+async fn may_cleanup_blocks(
+    executor: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    max_blocks: u64,
+) -> anyhow::Result<()> {
+    let nb_blocks = db_get_blocks_count(executor.deref_mut()).await?;
+
+    let extra_blocks = nb_blocks.saturating_sub(max_blocks);
+
+    // Cleanup is needed
+    if extra_blocks > 0 {
+        // Remove the extra block plus 10% of the cache size, i.e 100 blocks
+        let to_remove = extra_blocks + max_blocks / 10;
+        db_cleanup_blocks(executor.deref_mut(), to_remove).await?;
+    }
 
     Ok(())
 }
