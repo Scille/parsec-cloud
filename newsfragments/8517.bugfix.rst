@@ -1,0 +1,1 @@
+Fix a bug causing the size limit on the workspace cache database to be ignored.
