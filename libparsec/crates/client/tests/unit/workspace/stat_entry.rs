@@ -4,7 +4,7 @@ use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
 use super::utils::workspace_ops_factory;
-use crate::workspace::{store::PathConfinementPoint, EntryStat, WorkspaceOps};
+use crate::workspace::{store::PathConfinementPoint, EntryStat, OpenOptions, WorkspaceOps};
 
 #[parsec_test(testbed = "minimal_client_ready", with_server)]
 async fn stat_entry(#[values(true, false)] local_cache: bool, env: &TestbedEnv) {
@@ -545,4 +545,71 @@ async fn stat_entry_on_confined_entry(
             true
         }
     );
+}
+
+#[parsec_test(testbed = "minimal_client_ready")]
+async fn stat_entry_on_under_modification_file(
+    #[values("truncate_on_open", "append_data", "truncate_data")] kind: &str,
+    env: &TestbedEnv,
+) {
+    let wksp1_id: VlobID = *env.template.get_stuff("wksp1_id");
+    let wksp1_bar_txt_id: VlobID = *env.template.get_stuff("wksp1_bar_txt_id");
+
+    let alice = env.local_device("alice@dev1");
+    let ops = workspace_ops_factory(&env.discriminant_dir, &alice, wksp1_id.to_owned()).await;
+
+    let mut open_options = OpenOptions {
+        read: false,
+        write: true,
+        truncate: false,
+        create: false,
+        create_new: false,
+    };
+    let path: FsPath = "/bar.txt".parse().unwrap();
+
+    alice
+        .time_provider
+        .mock_time_frozen("2020-01-01T00:00:00Z".parse().unwrap());
+
+    let expected_size = match kind {
+        "truncate_on_open" => {
+            open_options.truncate = true;
+            ops.open_file(path.clone(), open_options).await.unwrap();
+            0
+        }
+        "append_data" => {
+            let fd = ops.open_file(path.clone(), open_options).await.unwrap();
+            ops.fd_write(fd, 5, b"12345678901234567890").await.unwrap();
+            25
+        }
+        "truncate_data" => {
+            let fd = ops.open_file(path.clone(), open_options).await.unwrap();
+            ops.fd_resize(fd, 5, true).await.unwrap();
+            5
+        }
+        unknown => panic!("Unknown kind {}", unknown),
+    };
+
+    alice.time_provider.unmock_time();
+
+    // The file is still opened and no flush has occured yet !
+
+    let stat = ops.stat_entry(&path).await.unwrap();
+
+    let expected_stat = EntryStat::File {
+        confinement_point: None,
+        id: wksp1_bar_txt_id,
+        parent: wksp1_id,
+        created: "2000-01-07T00:00:00Z".parse().unwrap(),
+        updated: "2020-01-01T00:00:00Z".parse().unwrap(),
+        base_version: 1,
+        is_placeholder: false,
+        need_sync: true,
+        size: expected_size,
+    };
+
+    p_assert_eq!(stat, expected_stat);
+
+    let stat = ops.stat_entry_by_id(wksp1_bar_txt_id).await.unwrap();
+    p_assert_eq!(stat, expected_stat);
 }

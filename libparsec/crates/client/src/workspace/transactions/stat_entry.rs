@@ -146,17 +146,36 @@ pub(crate) async fn stat_entry_by_id(
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
         },
-        ArcLocalChildManifest::File(manifest) => EntryStat::File {
-            confinement_point: confinement_point.into(),
-            id: manifest.base.id,
-            parent: manifest.parent,
-            created: manifest.base.created,
-            updated: manifest.updated,
-            base_version: manifest.base.version,
-            is_placeholder: manifest.base.version == 0,
-            need_sync: manifest.need_sync,
-            size: manifest.size,
-        },
+        ArcLocalChildManifest::File(manifest) => {
+            // If the file may be currently opened with un-flushed modifications.
+            // In this case we cannot just use data from the store (i.e. returning the
+            // manifest from the last flush) given FUSE relies on those data during
+            // read to determine if it can solely uses its Kernel-level cache (e.g. create
+            // a file, write into it and read it right away may return an empty buffer).
+            let manifest = 'manifest_resolved: {
+                let opened_file = {
+                    let opened_files = ops.opened_files.lock().expect("Mutex is poisoned");
+                    match opened_files.opened_files.get(&manifest.base.id) {
+                        Some(opened_file) => opened_file.to_owned(),
+                        None => break 'manifest_resolved manifest,
+                    }
+                };
+                let opened_file = opened_file.lock().await;
+                opened_file.manifest.clone()
+            };
+
+            EntryStat::File {
+                confinement_point: confinement_point.into(),
+                id: manifest.base.id,
+                parent: manifest.parent,
+                created: manifest.base.created,
+                updated: manifest.updated,
+                base_version: manifest.base.version,
+                is_placeholder: manifest.base.version == 0,
+                need_sync: manifest.need_sync,
+                size: manifest.size,
+            }
+        }
     };
 
     Ok(info)
@@ -198,17 +217,36 @@ pub(crate) async fn stat_entry(
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
         },
-        ArcLocalChildManifest::File(manifest) => EntryStat::File {
-            confinement_point: confinement_point.into(),
-            id: manifest.base.id,
-            parent: manifest.parent,
-            created: manifest.base.created,
-            updated: manifest.updated,
-            base_version: manifest.base.version,
-            is_placeholder: manifest.base.version == 0,
-            need_sync: manifest.need_sync,
-            size: manifest.size,
-        },
+        ArcLocalChildManifest::File(manifest) => {
+            // If the file may be currently opened with un-flushed modifications.
+            // In this case we cannot just use data from the store (i.e. returning the
+            // manifest from the last flush) given FUSE relies on those data during
+            // read to determine if it can solely uses its Kernel-level cache (e.g. create
+            // a file, write into it and read it right away may return an empty buffer).
+            let manifest = 'manifest_resolved: {
+                let opened_file = {
+                    let opened_files = ops.opened_files.lock().expect("Mutex is poisoned");
+                    match opened_files.opened_files.get(&manifest.base.id) {
+                        Some(opened_file) => opened_file.to_owned(),
+                        None => break 'manifest_resolved manifest,
+                    }
+                };
+                let opened_file = opened_file.lock().await;
+                opened_file.manifest.clone()
+            };
+
+            EntryStat::File {
+                confinement_point: confinement_point.into(),
+                id: manifest.base.id,
+                parent: manifest.parent,
+                created: manifest.base.created,
+                updated: manifest.updated,
+                base_version: manifest.base.version,
+                is_placeholder: manifest.base.version == 0,
+                need_sync: manifest.need_sync,
+                size: manifest.size,
+            }
+        }
     };
     Ok(info)
 }
