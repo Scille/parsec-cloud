@@ -40,7 +40,7 @@ from parsec.components.organization import (
     TosUrl,
 )
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
-from parsec.events import DateTimeField, OrganizationIDField
+from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
 from parsec.types import Unset, UnsetType
 
@@ -79,7 +79,7 @@ class CreateOrganizationIn(BaseModel):
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
-    active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
+    active_users_limit: ActiveUsersLimitField | Literal[UnsetType.Unset] = Unset
     minimum_archiving_period: int | Literal[UnsetType.Unset] = Unset
     tos: dict[TosLocale, TosUrl] | Literal[UnsetType.Unset] = Unset
 
@@ -242,7 +242,7 @@ class PatchOrganizationIn(BaseModel):
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
     user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
-    active_users_limit: ActiveUsersLimit | Literal[UnsetType.Unset] = Unset
+    active_users_limit: ActiveUsersLimitField | Literal[UnsetType.Unset] = Unset
     minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset
     tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] | None = Unset
 
@@ -469,7 +469,7 @@ class UserFreezeIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
     frozen: bool
     user_email: str | None = None
-    user_id: UserID | None = None
+    user_id: UserIDField | None = None
 
     @field_validator("user_id", mode="plain")
     @classmethod
