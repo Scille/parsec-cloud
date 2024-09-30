@@ -1,1 +1,0 @@
-Added the option to go back to server type selection after choosing an option when creating an organization

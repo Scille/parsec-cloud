@@ -1,1 +1,0 @@
-Fixed an error that could cause logging out to fail

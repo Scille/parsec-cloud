@@ -1,1 +1,0 @@
-Fix potential file corruption on linux when using an application with a complex file saving strategy, such as LibreOffice.
