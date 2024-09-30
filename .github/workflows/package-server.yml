@@ -76,7 +76,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -136,7 +136,7 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
+      - uses: taiki-e/install-action@9bef7e9c3d7c7aa986ef19933b0722880ae377e0 # pin v2.44.13
         with:
           tool: syft@0.84.0
 
