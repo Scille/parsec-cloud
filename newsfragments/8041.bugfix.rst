@@ -1,2 +1,0 @@
-Fix CLI where possible identical short device ID can be displayed in command ``device list``.
-Now the size of the short ID depends on the actual devices ID and not the device list size.

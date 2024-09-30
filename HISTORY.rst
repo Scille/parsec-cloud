@@ -5,6 +5,75 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.2 (2024-10-01)
+--------------------------
+
+Features
+~~~~~~~~
+
+* Added a button in the advanced settings to open the configuration folder
+  (`#8455 <https://github.com/Scille/parsec-cloud/issues/8455>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fix incorrect error message at the end of the device creation process on the
+  greeting client side.
+  (`#8573 <https://github.com/Scille/parsec-cloud/issues/8573>`__)
+
+* Fix a bug causing the size limit on the workspace cache database to be
+  ignored.
+  (`#8517 <https://github.com/Scille/parsec-cloud/issues/8517>`__)
+
+* Make sure than when the server asks for a strictly greater timestamp, the
+  client offsets the timestamp sent by the server.
+  (`#8270 <https://github.com/Scille/parsec-cloud/issues/8270>`__)
+
+* Fix CLI where possible identical short device ID can be displayed in command
+  ``device list``. Now the size of the short ID depends on the actual devices ID
+  and not the device list size.
+  (`#8041 <https://github.com/Scille/parsec-cloud/issues/8041>`__)
+
+* Fix the access to the Windows mountpoints after a hard shutdown.
+  (`#8362 <https://github.com/Scille/parsec-cloud/issues/8362>`__)
+
+* Fixed an error that could cause logging out to fail
+  (`#8366 <https://github.com/Scille/parsec-cloud/issues/8366>`__)
+
+* Enable auto-vacuum for the local sqlite databases.
+  (`#8516 <https://github.com/Scille/parsec-cloud/issues/8516>`__)
+
+* Snap: Remove script that migrate device location to ``$HOME/.config/parsec..``
+  (`#8530 <https://github.com/Scille/parsec-cloud/issues/8530>`__)
+
+* Fix potential file corruption on linux when using an application with a
+  complex file saving strategy, such as LibreOffice.
+  (`#8521 <https://github.com/Scille/parsec-cloud/issues/8521>`__)
+
+* Fixed a performance issue when leaving the file import menu open
+  (`#8468 <https://github.com/Scille/parsec-cloud/issues/8468>`__)
+
+
+Improved Documentation
+~~~~~~~~~~~~~~~~~~~~~~
+
+* Update hosting guide (previously administration guide) for version 3
+  (`#7844 <https://github.com/Scille/parsec-cloud/issues/7844>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Removed join date option from user sort
+  (`#8332 <https://github.com/Scille/parsec-cloud/issues/8332>`__)
+
+* Added the option to go back to server type selection after choosing an option
+  when creating an organization
+  (`#8129 <https://github.com/Scille/parsec-cloud/issues/8129>`__)
+
+
+
 Parsec v3.0.1 (2024-09-26)
 --------------------------
 
