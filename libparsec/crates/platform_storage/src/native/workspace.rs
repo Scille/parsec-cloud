@@ -6,8 +6,8 @@
 
 use libparsec_platform_async::stream::{StreamExt, TryStreamExt};
 use sqlx::{
-    sqlite::{SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
-    ConnectOptions, Connection, Row, SqliteConnection,
+    sqlite::{SqliteAutoVacuum, SqliteConnectOptions, SqliteJournalMode, SqliteSynchronous},
+    ConnectOptions, Connection, Executor, Row, SqliteConnection,
 };
 use std::path::Path;
 
@@ -69,13 +69,16 @@ impl PlatformWorkspaceStorage {
                     let _ = std::fs::create_dir_all(parent);
                 }
 
-                SqliteConnectOptions::new()
+                let mut conn = SqliteConnectOptions::new()
                     .filename(&db_path)
                     .create_if_missing(true)
                     .journal_mode(SqliteJournalMode::Wal)
                     .synchronous(SqliteSynchronous::Normal)
+                    .auto_vacuum(SqliteAutoVacuum::Full)
                     .connect()
-                    .await?
+                    .await?;
+                conn.execute("VACUUM;").await?;
+                conn
             }
         };
 
@@ -105,13 +108,16 @@ impl PlatformWorkspaceStorage {
                     let _ = std::fs::create_dir_all(parent);
                 }
 
-                SqliteConnectOptions::new()
+                let mut conn = SqliteConnectOptions::new()
                     .filename(&cache_db_path)
                     .create_if_missing(true)
                     .journal_mode(SqliteJournalMode::Wal)
                     .synchronous(SqliteSynchronous::Normal)
+                    .auto_vacuum(SqliteAutoVacuum::Full)
                     .connect()
-                    .await?
+                    .await?;
+                conn.execute("VACUUM;").await?;
+                conn
             }
         };
 
