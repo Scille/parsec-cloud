@@ -48,7 +48,7 @@ jobs:
     # 20.04 is required to install PostgreSQL 12
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
         timeout-minutes: 5
 
       - name: Retrieve runner specs

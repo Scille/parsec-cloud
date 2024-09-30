@@ -35,7 +35,7 @@ jobs:
       web: ${{ steps.need-check.outputs.web }}
       docs: ${{ steps.need-check.outputs.docs }}
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
         timeout-minutes: 5
 
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36  # pin v3.0.2
@@ -129,7 +129,7 @@ jobs:
     # Just a fail-safe timeout, see the fine grain per-task timeout instead
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
         timeout-minutes: 5
 
       - name: Ensure the PR head ref is not a perennial branch
@@ -154,7 +154,7 @@ jobs:
               - newsfragments/**
 
       - name: Install python
-        uses: actions/setup-python@70dcb22d269dc9546a5d97f4b11548f130526421  # pin v5.2.0
+        uses: actions/setup-python@e9675cc634901ff55d92c575ecd6945e65464b00  # pin v5.2.0
         id: setup-python
         with:
           python-version: 3.12
@@ -191,7 +191,7 @@ jobs:
           diff --unified .pre-commit-config.yaml $TEMP_FILE || true
           echo "path=$TEMP_FILE" >> $GITHUB_OUTPUT
 
-      - uses: taiki-e/install-action@7348990d6a11d92f3e482c9b1bb48cf31ab7f658 # pin v2.44.7
+      - uses: taiki-e/install-action@9bef7e9c3d7c7aa986ef19933b0722880ae377e0 # pin v2.44.13
         with:
           tool: taplo-cli@0.9.3
 

@@ -25,11 +25,11 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # pin v4.1.7
+      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
         timeout-minutes: 5
 
       - name: Install python
-        uses: actions/setup-python@29a37be0a3d3e8bf5bc1eb19cd0502922f5b312a  # pin v5.2.0
+        uses: actions/setup-python@e9675cc634901ff55d92c575ecd6945e65464b00  # pin v5.2.0
         id: setup-python
         with:
           python-version: 3.12
