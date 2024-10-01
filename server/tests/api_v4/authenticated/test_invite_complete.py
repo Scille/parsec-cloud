@@ -1,11 +1,29 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 
-from parsec._parsec import InvitationToken, authenticated_cmds
-from tests.common import CoolorgRpcClients, HttpCommonErrorsTester
+from parsec._parsec import InvitationToken, UserProfile, authenticated_cmds
+from tests.common import (
+    Backend,
+    CoolorgRpcClients,
+    HttpCommonErrorsTester,
+    bob_becomes_admin_and_changes_alice,
+)
 
 
 async def test_authenticated_invite_complete_ok(coolorg: CoolorgRpcClients) -> None:
+    rep = await coolorg.alice.invite_complete(coolorg.invited_zack.token)
+    assert rep == authenticated_cmds.v4.invite_complete.RepOk()
+
+    rep = await coolorg.alice.invite_complete(coolorg.invited_alice_dev3.token)
+    assert rep == authenticated_cmds.v4.invite_complete.RepOk()
+
+
+async def test_authenticated_invite_complete_ok_for_non_admin_users(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    await bob_becomes_admin_and_changes_alice(
+        coolorg, backend, new_alice_profile=UserProfile.STANDARD
+    )
     rep = await coolorg.alice.invite_complete(coolorg.invited_alice_dev3.token)
     assert rep == authenticated_cmds.v4.invite_complete.RepOk()
 
