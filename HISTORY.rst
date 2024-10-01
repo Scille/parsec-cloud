@@ -5,8 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.0.2-rc.1 (2024-09-30)
--------------------------------
+Parsec v3.0.2 (2024-10-01)
+--------------------------
 
 Features
 ~~~~~~~~
@@ -17,6 +17,10 @@ Features
 
 Bugfixes
 ~~~~~~~~
+
+* Fix incorrect error message at the end of the device creation process on the
+  greeting client side.
+  (`#8573 <https://github.com/Scille/parsec-cloud/issues/8573>`__)
 
 * Fix a bug causing the size limit on the workspace cache database to be
   ignored.
