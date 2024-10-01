@@ -1733,8 +1733,6 @@ class PGInviteComponent(BaseInviteComponent):
                 return InviteCompleteBadOutcome.AUTHOR_NOT_FOUND
             case CheckDeviceBadOutcome.USER_REVOKED:
                 return InviteCompleteBadOutcome.AUTHOR_REVOKED
-        if current_profile != UserProfile.ADMIN:
-            return InviteCompleteBadOutcome.AUTHOR_NOT_ALLOWED
 
         invitation_info = await self.lock_invitation(conn, organization_id, token)
         if invitation_info is None:

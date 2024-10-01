@@ -468,7 +468,7 @@ impl BaseGreetInitialCtx {
                 Rep::InvitationCompleted => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::GreeterNotAllowed),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -1233,7 +1233,7 @@ impl UserGreetInProgress4Ctx {
                 Rep::InvitationAlreadyCompleted => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::GreeterNotAllowed),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
@@ -1380,7 +1380,7 @@ impl DeviceGreetInProgress4Ctx {
                 Rep::InvitationAlreadyCompleted => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationCancelled => Err(GreetInProgressError::AlreadyDeleted),
                 Rep::InvitationNotFound => Err(GreetInProgressError::NotFound),
-                Rep::AuthorNotAllowed => Err(GreetInProgressError::UserCreateNotAllowed),
+                Rep::AuthorNotAllowed => Err(GreetInProgressError::GreeterNotAllowed),
                 bad_rep @ Rep::UnknownStatus { .. } => {
                     Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
                 }
