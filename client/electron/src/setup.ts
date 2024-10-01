@@ -131,8 +131,8 @@ export class ElectronCapacitorApp {
       });
 
       // Check periodically if an update is available
-      setInterval(() => {
-        this.updater.checkForUpdates();
+      setInterval(async () => {
+        await this.updater.checkForUpdates();
       }, CHECK_UPDATE_INTERVAL);
     } else if (!electronIsDev) {
       console.warn("We are in a production build but the updater isn't available.");

@@ -31,7 +31,10 @@ function initSentry(): void {
   }
   if (sentry_dsn) {
     console.log('Configuring Sentry...');
-    Sentry.init({ dsn: sentry_dsn });
+    Sentry.init({
+      dsn: sentry_dsn,
+      integrations: [Sentry.captureConsoleIntegration({ levels: ['warn', 'error', 'assert'] })],
+    });
   } else {
     console.log('Sentry not configured ("SENTRY_DSN_GUI_ELECTRON" env variable was not set).');
   }
