@@ -248,3 +248,11 @@ pub fn is_keyring_available() -> bool {
     #[cfg(not(target_arch = "wasm32"))]
     native::is_keyring_available()
 }
+
+#[derive(Debug, thiserror::Error)]
+pub enum ArchiveDeviceError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub use platform::archive_device;

@@ -42,6 +42,10 @@ pub async fn change_authentication(
     todo!()
 }
 
+pub async fn archive_device(_device_path: &Path) -> Result<(), crate::ArchiveDeviceError> {
+    todo!()
+}
+
 /*
  * Recovery
  */

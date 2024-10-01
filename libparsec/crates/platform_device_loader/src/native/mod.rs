@@ -473,6 +473,30 @@ pub async fn change_authentication(
     Ok(available_device)
 }
 
+pub const ARCHIVE_DEVICE_EXT: &str = "archived";
+
+/// Archive a device identified by its path.
+pub async fn archive_device(device_path: &Path) -> Result<(), crate::ArchiveDeviceError> {
+    let archive_device_path = if let Some(current_file_extension) = device_path.extension() {
+        // Add ARCHIVE_DEVICE_EXT to the current file extension resulting in extension `.{current}.{ARCHIVE_DEVICE_EXT}`.
+        let mut ext = current_file_extension.to_owned();
+        ext.extend([".".as_ref(), ARCHIVE_DEVICE_EXT.as_ref()]);
+        device_path.with_extension(ext)
+    } else {
+        device_path.with_extension(ARCHIVE_DEVICE_EXT)
+    };
+
+    log::debug!(
+        "Archiving device {} to {}",
+        device_path.display(),
+        archive_device_path.display()
+    );
+
+    tokio::fs::rename(device_path, archive_device_path)
+        .await
+        .map_err(|e| crate::ArchiveDeviceError::Internal(e.into()))
+}
+
 /*
  * Recovery
  */

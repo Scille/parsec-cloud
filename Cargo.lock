@@ -2234,6 +2234,7 @@ dependencies = [
  "libparsec_types",
  "log",
  "serde_json",
+ "tokio",
  "uuid",
  "web-sys",
  "zeroize",
