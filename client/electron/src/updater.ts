@@ -448,27 +448,38 @@ export default class AppUpdater {
   }
 
   async checkForUpdates(): Promise<UpdateAvailable | undefined> {
-    if (!this.canCheckForUpdates()) {
-      return;
-    }
-    this.state = UpdaterState.CheckingForUpdate as UpdaterState;
     try {
-      await this.updater.checkForUpdates();
-    } catch (error) {
-      this.lastError = error;
-      this.state = UpdaterState.Idle;
-    }
-    if (this.state === UpdaterState.UpdateAvailable) {
-      return { version: this.lastUpdateInfo!.version };
+      if (!this.canCheckForUpdates()) {
+        return;
+      }
+      this.state = UpdaterState.CheckingForUpdate as UpdaterState;
+      try {
+        await this.updater.checkForUpdates();
+      } catch (error) {
+        this.lastError = error;
+        this.state = UpdaterState.Idle;
+      }
+      if (this.state === UpdaterState.UpdateAvailable) {
+        return { version: this.lastUpdateInfo!.version };
+      }
+    } catch (error: any) {
+      console.error('Could not check for updates', error);
+      return;
     }
   }
 
-  quitAndInstall(): void {
-    if (!this.isUpdateDownloaded()) {
-      console.log('quitAndInstall() called when update has not been downloaded.');
-      return;
+  quitAndInstall(): boolean {
+    try {
+      if (!this.isUpdateDownloaded()) {
+        console.log('quitAndInstall() called when update has not been downloaded.');
+        return;
+      }
+      this.updater.quitAndInstall();
+      return true;
+    } catch (error: any) {
+      console.error('Could not install update', error);
+      return false;
     }
-    this.updater.quitAndInstall();
   }
 
   isUpdateDownloaded(): boolean {
