@@ -3,7 +3,10 @@
 <template>
   <div
     class="card"
-    :class="{ 'workspace-hovered': isHovered || menuOpened }"
+    :class="{
+      'workspace-hovered': isHovered || menuOpened,
+      'workspace-large': UserProfile.Outsider
+    }"
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
@@ -126,6 +129,10 @@ async function onOptionsClick(event: Event): Promise<void> {
 
   &:hover {
     background-color: var(--parsec-color-light-primary-30);
+  }
+
+  .workspace-large {
+    padding-bottom: 2rem;
   }
 }
 
