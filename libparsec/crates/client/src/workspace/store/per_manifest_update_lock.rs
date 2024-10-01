@@ -48,28 +48,25 @@ pub(super) enum ManifestUpdateLockTakeOutcome {
 #[derive(Debug)] // Note this should not be made `Clone` !
 pub(super) struct ManifestUpdateLockGuard {
     entry_id: VlobID,
-    #[allow(unused)]
     is_released: bool,
 }
 
-// TODO: Lock is useful to detect misuse of the guard, but it is also very
-// annoying given it is triggered any time another error in the tests makes
-// us skip the release part. Worst, in this case the only outputted error
-// is the panic message, which is not very helpful.
-
-// impl Drop for ManifestUpdateLockGuard {
-//     fn drop(&mut self) {
-//         if !self.is_released {
-
-//             panic!("Manifest `{}` guard dropped without being released !", self.entry_id);
-//         }
-//         assert!(
-//             self.is_released,
-//             "Manifest `{}` guard dropped without being released !",
-//             self.entry_id,
-//         );
-//     }
-// }
+// We use this drop to detect misuse of the guard (i.e. not releasing it properly).
+//
+// Note we only log an error instead of panicking, this is because this
+// "drop without release" check will be triggered any time another error in the
+// tests makes us skip the release part. Worst, in this case the only outputted
+// error is this panic message instead of the original error :/
+impl Drop for ManifestUpdateLockGuard {
+    fn drop(&mut self) {
+        if !self.is_released {
+            log::error!(
+                "Manifest `{}` guard dropped without being released !",
+                self.entry_id
+            );
+        }
+    }
+}
 
 impl PerManifestUpdateLock {
     pub(super) fn new() -> Self {
