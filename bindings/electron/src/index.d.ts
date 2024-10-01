@@ -293,6 +293,15 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitNoLimit
 
 
+// ArchiveDeviceError
+export interface ArchiveDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type ArchiveDeviceError =
+  | ArchiveDeviceErrorInternal
+
+
 // BootstrapOrganizationError
 export interface BootstrapOrganizationErrorAlreadyUsedToken {
     tag: "AlreadyUsedToken"
@@ -2029,6 +2038,9 @@ export type WorkspaceWatchError =
   | WorkspaceWatchErrorStopped
 
 
+export function archiveDevice(
+    device_path: string
+): Promise<Result<null, ArchiveDeviceError>>
 export function bootstrapOrganization(
     config: ClientConfig,
     on_event_callback: (handle: number, event: ClientEvent) => void,

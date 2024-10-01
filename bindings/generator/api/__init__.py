@@ -6,6 +6,7 @@ from .cancel import *
 from .client import *
 from .common import *
 from .config import *
+from .device import *
 from .events import *
 from .invite import *
 from .path import *
