@@ -6,6 +6,7 @@ mod addr;
 mod cancel;
 mod client;
 mod config;
+mod device;
 mod events;
 mod handle;
 mod invite;
@@ -19,11 +20,15 @@ pub use addr::*;
 pub use cancel::*;
 pub use client::*;
 pub use config::*;
+pub use device::{archive_device, list_available_devices, ArchiveDeviceError};
 pub use events::*;
 pub use handle::Handle;
 pub use invite::*;
 pub use libparsec_client_connection::*;
-pub use libparsec_platform_device_loader::*;
+pub use libparsec_platform_device_loader::{
+    get_default_key_file, is_keyring_available, load_device, load_recovery_device, save_device,
+    save_recovery_device, LoadDeviceError,
+};
 pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
 pub use path::*;
@@ -43,10 +48,6 @@ pub mod internal {
         UserGreetInProgress2Ctx, UserGreetInProgress3Ctx, UserGreetInProgress4Ctx,
         UserGreetInitialCtx, UserOrDeviceClaimInitialCtx,
     };
-}
-
-pub async fn list_available_devices(config_dir: &std::path::Path) -> Vec<AvailableDevice> {
-    libparsec_platform_device_loader::list_available_devices(config_dir).await
 }
 
 #[cfg(feature = "cli-tests")]

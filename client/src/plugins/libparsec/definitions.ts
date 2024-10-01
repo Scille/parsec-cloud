@@ -294,6 +294,18 @@ export type ActiveUsersLimit =
   | ActiveUsersLimitLimitedTo
   | ActiveUsersLimitNoLimit
 
+// ArchiveDeviceError
+export enum ArchiveDeviceErrorTag {
+    Internal = 'ArchiveDeviceErrorInternal',
+}
+
+export interface ArchiveDeviceErrorInternal {
+    tag: ArchiveDeviceErrorTag.Internal
+    error: string
+}
+export type ArchiveDeviceError =
+  | ArchiveDeviceErrorInternal
+
 // BootstrapOrganizationError
 export enum BootstrapOrganizationErrorTag {
     AlreadyUsedToken = 'BootstrapOrganizationErrorAlreadyUsedToken',
@@ -2433,6 +2445,9 @@ export type WorkspaceWatchError =
   | WorkspaceWatchErrorStopped
 
 export interface LibParsecPlugin {
+    archiveDevice(
+        device_path: Path
+    ): Promise<Result<null, ArchiveDeviceError>>
     bootstrapOrganization(
         config: ClientConfig,
         on_event_callback: (handle: number, event: ClientEvent) => void,

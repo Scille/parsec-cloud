@@ -8,18 +8,14 @@ from .addr import (
 )
 from .common import (
     DateTime,
-    DeviceID,
     DeviceLabel,
     Enum,
     EnumItemUnit,
     ErrorVariant,
     Handle,
     HumanHandle,
+    InvitationStatus,
     InvitationToken,
-    OrganizationID,
-    Password,
-    Path,
-    Ref,
     Result,
     SASCode,
     SequesterVerifyKeyDer,
@@ -27,9 +23,9 @@ from .common import (
     UserID,
     UserProfile,
     Variant,
-    InvitationStatus,
 )
 from .config import ClientConfig
+from .device import AvailableDevice, DeviceSaveStrategy
 from .events import OnClientEventCallback
 
 
@@ -42,41 +38,6 @@ async def claimer_greeter_abort_operation(
     handle: Handle,
 ) -> Result[None, ClaimerGreeterAbortOperationError]:
     raise NotImplementedError
-
-
-class DeviceFileType(Enum):
-    Keyring = EnumItemUnit
-    Password = EnumItemUnit
-    Recovery = EnumItemUnit
-    Smartcard = EnumItemUnit
-
-
-class AvailableDevice(Structure):
-    key_file_path: Path
-    created_on: DateTime
-    protected_on: DateTime
-    server_url: str
-    organization_id: OrganizationID
-    user_id: UserID
-    device_id: DeviceID
-    human_handle: HumanHandle
-    device_label: DeviceLabel
-    ty: DeviceFileType
-
-
-async def list_available_devices(path: Ref[Path]) -> list[AvailableDevice]:
-    raise NotImplementedError
-
-
-class DeviceSaveStrategy(Variant):
-    class Keyring:
-        pass
-
-    class Password:
-        password: Password
-
-    class Smartcard:
-        pass
 
 
 #
