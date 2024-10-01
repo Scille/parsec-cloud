@@ -209,8 +209,15 @@ pub async fn open_file_by_id(
 
     let cursor_insertion_outcome = loop {
         let outcome = ops.store.for_update_file(entry_id, false).await;
+        // /!\ From now on, `outcome` may contain a file updater requiring manual
+        //     close if we encounter an error !
+
         let mut opened_files_guard = ops.opened_files.lock().expect("Mutex is poisoned");
         if !opened_files_guard.new_open_allowed {
+            // File updater must be manually closed before returning error
+            if let Ok((updater, _)) = outcome {
+                updater.close(&ops.store);
+            }
             return Err(WorkspaceOpenFileError::Stopped);
         }
 
