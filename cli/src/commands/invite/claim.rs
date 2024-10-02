@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{path::PathBuf, sync::Arc};
 
 use libparsec::{
     internal::{
@@ -22,14 +22,30 @@ pub struct Args {
     /// Read the password from stdin instead of a TTY.
     #[arg(long, default_value_t)]
     password_stdin: bool,
+    /// Use keyring to store the password for the device.
+    #[arg(long, default_value_t, conflicts_with = "password_stdin")]
+    use_keyring: bool,
+}
+
+enum SaveMode {
+    Password { read_from_stdin: bool },
+    Keyring,
 }
 
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
         addr,
         password_stdin,
+        use_keyring,
     } = args;
     log::trace!("Claiming invitation (addr={})", addr);
+    let save_mode = if use_keyring {
+        SaveMode::Keyring
+    } else {
+        SaveMode::Password {
+            read_from_stdin: password_stdin,
+        }
+    };
     let ctx = step0(addr).await?;
 
     match ctx {
@@ -38,14 +54,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             let ctx = step2_user(ctx).await?;
             let ctx = step3_user(ctx).await?;
             let ctx = step4_user(ctx).await?;
-            save_user(ctx, password_stdin).await
+            save_user(ctx, save_mode).await
         }
         UserOrDeviceClaimInitialCtx::Device(ctx) => {
             let ctx = step1_device(ctx).await?;
             let ctx = step2_device(ctx).await?;
             let ctx = step3_device(ctx).await?;
             let ctx = step4_device(ctx).await?;
-            save_device(ctx, password_stdin).await
+            save_device(ctx, save_mode).await
         }
     }
 }
@@ -186,20 +202,33 @@ async fn step4_device(ctx: DeviceClaimInProgress3Ctx) -> anyhow::Result<DeviceCl
     Ok(ctx)
 }
 
-async fn save_user(ctx: UserClaimFinalizeCtx, password_stdin: bool) -> anyhow::Result<()> {
-    let password = choose_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter password for the new device:",
+fn get_access_strategy(
+    key_file: PathBuf,
+    save_mode: SaveMode,
+) -> anyhow::Result<DeviceAccessStrategy> {
+    match save_mode {
+        SaveMode::Password { read_from_stdin } => {
+            let password = choose_password(if read_from_stdin {
+                ReadPasswordFrom::Stdin
+            } else {
+                ReadPasswordFrom::Tty {
+                    prompt: "Enter password for the new device:",
+                }
+            })?;
+            Ok(DeviceAccessStrategy::Password { key_file, password })
         }
-    })?;
+        SaveMode::Keyring => Ok(DeviceAccessStrategy::Keyring { key_file }),
+    }
+}
+
+async fn save_user(ctx: UserClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let key_file_str = key_file.display();
+    let access = get_access_strategy(key_file, save_mode)?;
 
-    println!("Saving device at: {YELLOW}{key_file_str}{RESET}");
-
-    let access = DeviceAccessStrategy::Password { key_file, password };
+    println!(
+        "Saving device at: {YELLOW}{}{RESET}",
+        access.key_file().display()
+    );
 
     ctx.save_local_device(&access).await?;
 
@@ -208,20 +237,14 @@ async fn save_user(ctx: UserClaimFinalizeCtx, password_stdin: bool) -> anyhow::R
     Ok(())
 }
 
-async fn save_device(ctx: DeviceClaimFinalizeCtx, password_stdin: bool) -> anyhow::Result<()> {
-    let password = choose_password(if password_stdin {
-        ReadPasswordFrom::Stdin
-    } else {
-        ReadPasswordFrom::Tty {
-            prompt: "Enter password for the new device:",
-        }
-    })?;
+async fn save_device(ctx: DeviceClaimFinalizeCtx, save_mode: SaveMode) -> anyhow::Result<()> {
     let key_file = ctx.get_default_key_file();
-    let key_file_str = key_file.display();
+    let access = get_access_strategy(key_file, save_mode)?;
 
-    println!("Saving device at: {YELLOW}{key_file_str}{RESET}");
-
-    let access = DeviceAccessStrategy::Password { key_file, password };
+    println!(
+        "Saving device at: {YELLOW}{}{RESET}",
+        access.key_file().display()
+    );
 
     ctx.save_local_device(&access).await?;
 
