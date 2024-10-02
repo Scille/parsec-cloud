@@ -57,6 +57,8 @@ impl Mountpoint {
                 fuser::MountOption::Async,
                 #[cfg(not(skip_fuse_atime_option))]
                 fuser::MountOption::Atime,
+                #[cfg(skip_fuse_atime_option)]
+                fuser::MountOption::NoAtime,
                 fuser::MountOption::Exec,
                 fuser::MountOption::RW,
                 fuser::MountOption::NoDev,
