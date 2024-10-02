@@ -3,6 +3,7 @@
 use std::{
     ffi::OsStr,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 
 use libparsec_client::workspace::{
@@ -216,8 +217,94 @@ impl fuser::Filesystem for Filesystem {
         // see https://libfuse.github.io/doxygen/structfuse__conn__info.html
         config: &mut fuser::KernelConfig,
     ) -> Result<(), libc::c_int> {
-        // Try to enable readdirplus optimisation, if it's not possible we fallback on regular readdir
-        let _ = config.add_capabilities(fuser::consts::FUSE_DO_READDIRPLUS);
+        // See libfuse & Linux documentation for a description of the capabilities.
+        // See:
+        // - https://github.com/torvalds/linux/blob/e32cde8d2bd7d251a8f9b434143977ddf13dcec6/include/uapi/linux/fuse.h#L376-L428
+        // - https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L158
+
+        // Here the general idea is to follow libfuse3's default configuration on what
+        //    should be enabled.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/lib/fuse_lowlevel.c#L2087-L2108
+
+        // Note Fuser already set the following capabilities:
+        // - On Linux: FUSE_ASYNC_READ | FUSE_BIG_WRITES | FUSE_MAX_PAGES
+        // - On macOS: FUSE_ASYNC_READ | FUSE_CASE_INSENSITIVE | FUSE_VOL_RENAME | FUSE_XTIMES | FUSE_MAX_PAGES
+
+        // `FUSE_POSIX_LOCKS` (remote locking support) is not enabled since we don't
+        // implement `getlk()` & `setlk()` handlers.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L179
+
+        // `FUSE_FLOCK_LOCKS` is not enabled since we don't implement `flock()` handler.
+        // Instead we rely on in-kernel POSIX lock emulation.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L246
+
+        // `FUSE_ASYNC_DIO` is not enabled since we don't do direct I/O.
+        // See:
+        // - https://www.kernel.org/doc/html/latest/filesystems/fuse-io.html
+        // - https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L322
+
+        // Do not send separate SETATTR request before open(O_TRUNC).
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L188
+        config
+            .add_capabilities(fuser::consts::FUSE_ATOMIC_O_TRUNC)
+            .expect("Capability available");
+
+        // Support IOCTL on directories.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L253
+        config
+            .add_capabilities(fuser::consts::FUSE_IOCTL_DIR)
+            .expect("Capability available");
+
+        // Tell FUSE the data may change without going through the filesystem, hence attributes
+        // validity should be checked on each access (leading to `getattr()` on timeout).
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L275
+        config
+            .add_capabilities(fuser::consts::FUSE_AUTO_INVAL_DATA)
+            .expect("Capability available");
+
+        // Enable `readdirplus` support (readdir + lookup in one a single go).
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L283
+        config
+            .add_capabilities(fuser::consts::FUSE_DO_READDIRPLUS)
+            .expect("Capability available");
+
+        // Adaptative readdirplus optimization support: still use readdir when lookup is
+        // has already been done by the previous readdirplus.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L311
+        config
+            .add_capabilities(fuser::consts::FUSE_READDIRPLUS_AUTO)
+            .expect("Capability available");
+
+        // Fuser doesn't provided splice config on macOS
+        #[cfg(not(target_os = "macos"))]
+        {
+            // TODO: `FUSE_SPLICE_READ` seems to require `write_buf()` to be implemented, which is
+            //       not even exposed in fuser !
+            // Allow splice operations (see `man 2 splice`, basically kernel space page-based operations)
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L216
+            config
+                .add_capabilities(fuser::consts::FUSE_SPLICE_WRITE)
+                .expect("Capability available");
+            config
+                .add_capabilities(fuser::consts::FUSE_SPLICE_MOVE)
+                .expect("Capability available");
+            config
+                .add_capabilities(fuser::consts::FUSE_SPLICE_READ)
+                .expect("Capability available");
+        }
+
+        // Allow parallel lookups and readdir on any given folder (default is serialized).
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L354
+        config
+            .add_capabilities(fuser::consts::FUSE_PARALLEL_DIROPS)
+            .expect("Capability available");
+
+        // Inform the Kernel about the granularity of the timestamps supported by our filesystem.
+        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L609-L622
+        config
+            .set_time_granularity(Duration::from_micros(1))
+            .expect("Valid granularity");
+
         Ok(())
     }
 
