@@ -219,7 +219,17 @@ import {
   selectFolder,
   EntryModel,
 } from '@/components/files';
-import { Path, entryStat, WorkspaceCreateFolderErrorTag, listWorkspaces, WorkspaceID, WorkspaceRole, FsPath, EntryStat } from '@/parsec';
+import {
+  Path,
+  entryStat,
+  WorkspaceCreateFolderErrorTag,
+  listWorkspaces,
+  WorkspaceID,
+  WorkspaceRole,
+  FsPath,
+  EntryStat,
+  WorkspaceStatFolderChildrenErrorTag,
+} from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import {
@@ -731,6 +741,13 @@ async function listFolder(): Promise<void> {
     folders.value.sort(sortProperty.value, sortAsc.value);
     files.value.sort(sortProperty.value, sortAsc.value);
   } else {
+    // This happens when the handle becomes invalid (if we're logging out for example) and the app tries to refresh at the same
+    // time. Logging out while importing files is a good example of that: logging out will cancel the imports which will trigger
+    // a refresh.
+    if (result.error.tag === WorkspaceStatFolderChildrenErrorTag.Internal && result.error.error === 'Invalid Handle') {
+      console.log('Skipping entry stat error because of invalid handle');
+      return;
+    }
     informationManager.present(
       new Information({
         message: {
