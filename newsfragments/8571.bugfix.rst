@@ -1,0 +1,1 @@
+Fixed a navigation loop when clicking the Back button after opening a workspace link
