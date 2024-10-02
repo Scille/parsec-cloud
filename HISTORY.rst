@@ -5,6 +5,29 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.3 (2024-10-03)
+--------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix link to download parsec client in invitation email
+  (`#8599 <https://github.com/Scille/parsec-cloud/issues/8599>`__)
+
+* Fixed unhandled error when creating a new organization on SAAS
+  (`#8588 <https://github.com/Scille/parsec-cloud/issues/8588>`__)
+
+* Fixed customer area not showing a newly created organization
+  (`#8578 <https://github.com/Scille/parsec-cloud/issues/8578>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added raw invitation URL in the invitation email
+  (`#8367 <https://github.com/Scille/parsec-cloud/issues/8367>`__)
+
+
 Parsec v3.0.2 (2024-10-01)
 --------------------------
 
