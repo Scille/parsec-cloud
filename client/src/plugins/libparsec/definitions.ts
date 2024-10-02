@@ -1205,6 +1205,12 @@ export type EntryStat =
   | EntryStatFile
   | EntryStatFolder
 
+// ExportRecoveryDeviceError
+export enum ExportRecoveryDeviceErrorTag {
+}
+
+export type ExportRecoveryDeviceError =
+
 // GreetInProgressError
 export enum GreetInProgressErrorTag {
     ActiveUsersLimitReached = 'GreetInProgressErrorActiveUsersLimitReached',
@@ -1313,6 +1319,12 @@ export type GreetInProgressError =
   | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
+
+// ImportRecoveryDeviceError
+export enum ImportRecoveryDeviceErrorTag {
+}
+
+export type ImportRecoveryDeviceError =
 
 // InviteListItem
 export enum InviteListItemTag {
@@ -2590,6 +2602,10 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
+    exportRecoveryDevice(
+        clientHandle: Handle,
+        access_strategy: DeviceAccessStrategy
+    ): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
     fdClose(
         workspace: Handle,
         fd: FileDescriptor
@@ -2687,6 +2703,12 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+    importRecoveryDevice(
+        recovery_device: Uint8Array,
+        passphrase: string,
+        device_label: DeviceLabel,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
     isKeyringAvailable(
     ): Promise<boolean>
     listAvailableDevices(

@@ -4576,6 +4576,20 @@ fn variant_entry_stat_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// ExportRecoveryDeviceError
+
+#[allow(dead_code)]
+fn variant_export_recovery_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ExportRecoveryDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {}
+    Ok(js_obj)
+}
+
 // GreetInProgressError
 
 #[allow(dead_code)]
@@ -4722,6 +4736,20 @@ fn variant_greet_in_progress_error_rs_to_js<'a>(
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
+    Ok(js_obj)
+}
+
+// ImportRecoveryDeviceError
+
+#[allow(dead_code)]
+fn variant_import_recovery_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::ImportRecoveryDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {}
     Ok(js_obj)
 }
 
@@ -9257,6 +9285,75 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// export_recovery_device
+fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let clientHandle = {
+        let js_val = cx.argument::<JsNumber>(0)?;
+        {
+            let v = js_val.value(&mut cx);
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                cx.throw_type_error("Not an u32 number")?
+            }
+            let v = v as u32;
+            v
+        }
+    };
+    let access_strategy = {
+        let js_val = cx.argument::<JsObject>(1)?;
+        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::export_recovery_device(clientHandle, access_strategy).await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = {
+                            let (x0, x1) = ok;
+                            let js_array = JsArray::new(&mut cx, 2);
+                            let js_value = JsString::try_new(&mut cx, x0).or_throw(&mut cx)?;
+                            js_array.set(&mut cx, 0, js_value)?;
+                            let js_value = {
+                                let mut js_buff = JsArrayBuffer::new(&mut cx, x1.len())?;
+                                let js_buff_slice = js_buff.as_mut_slice(&mut cx);
+                                for (i, c) in x1.iter().enumerate() {
+                                    js_buff_slice[i] = *c;
+                                }
+                                js_buff
+                            };
+                            js_array.set(&mut cx, 1, js_value)?;
+                            js_array
+                        };
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_export_recovery_device_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
 // fd_close
 fn fd_close(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -10676,6 +10773,75 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
                         let js_tag = JsBoolean::new(&mut cx, false);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_err = variant_greet_in_progress_error_rs_to_js(&mut cx, err)?;
+                        js_obj.set(&mut cx, "error", js_err)?;
+                        js_obj
+                    }
+                };
+                Ok(js_ret)
+            });
+        });
+
+    Ok(promise)
+}
+
+// import_recovery_device
+fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let recovery_device = {
+        let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
+        js_val.as_slice(&mut cx).to_vec()
+    };
+    let passphrase = {
+        let js_val = cx.argument::<JsString>(1)?;
+        js_val.value(&mut cx)
+    };
+    let device_label = {
+        let js_val = cx.argument::<JsString>(2)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let save_strategy = {
+        let js_val = cx.argument::<JsObject>(3)?;
+        variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
+    };
+    let channel = cx.channel();
+    let (deferred, promise) = cx.promise();
+
+    // TODO: Promises are not cancellable in Javascript by default, should we add a custom cancel method ?
+    let _handle = crate::TOKIO_RUNTIME
+        .lock()
+        .expect("Mutex is poisoned")
+        .spawn(async move {
+            let ret = libparsec::import_recovery_device(
+                recovery_device,
+                passphrase,
+                device_label,
+                save_strategy,
+            )
+            .await;
+
+            deferred.settle_with(&channel, move |mut cx| {
+                let js_ret = match ret {
+                    Ok(ok) => {
+                        let js_obj = JsObject::new(&mut cx);
+                        let js_tag = JsBoolean::new(&mut cx, true);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_value = struct_available_device_rs_to_js(&mut cx, ok)?;
+                        js_obj.set(&mut cx, "value", js_value)?;
+                        js_obj
+                    }
+                    Err(err) => {
+                        let js_obj = cx.empty_object();
+                        let js_tag = JsBoolean::new(&mut cx, false);
+                        js_obj.set(&mut cx, "ok", js_tag)?;
+                        let js_err = variant_import_recovery_device_error_rs_to_js(&mut cx, err)?;
                         js_obj.set(&mut cx, "error", js_err)?;
                         js_obj
                     }
@@ -12840,6 +13006,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("clientStartWorkspace", client_start_workspace)?;
     cx.export_function("clientStop", client_stop)?;
+    cx.export_function("exportRecoveryDevice", export_recovery_device)?;
     cx.export_function("fdClose", fd_close)?;
     cx.export_function("fdFlush", fd_flush)?;
     cx.export_function("fdRead", fd_read)?;
@@ -12902,6 +13069,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
         "greeterUserInitialDoWaitPeer",
         greeter_user_initial_do_wait_peer,
     )?;
+    cx.export_function("importRecoveryDevice", import_recovery_device)?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
