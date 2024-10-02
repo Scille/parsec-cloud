@@ -1,0 +1,1 @@
+Allow creating devices using the keyring in the CLI.
