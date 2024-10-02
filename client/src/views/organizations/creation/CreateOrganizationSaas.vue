@@ -220,6 +220,10 @@ async function onCreateClicked(): Promise<void> {
       currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'IncorrectDataType' } };
       await onCreationError(startTime);
       return;
+    } else if (!response.isError && !response.data.bootstrapLink) {
+      window.electronAPI.log('error', 'Server did not provide a bootstrap link');
+      currentError.value = { key: 'CreateOrganization.errors.generic', data: { reason: 'MissingBootstrapLink' } };
+      return;
     } else {
       bootstrapLink = response.data.bootstrapLink;
     }

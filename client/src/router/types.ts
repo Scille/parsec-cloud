@@ -45,7 +45,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: `/${Routes.ClientArea}`,
     name: Routes.ClientArea,
-    component: () => import('@/views/client-area/ClientAreaPage.vue'),
+    component: () => import('@/views/client-area/ClientAreaLayout.vue'),
   },
   {
     // ConnectedLayout ensure that every children components are provided

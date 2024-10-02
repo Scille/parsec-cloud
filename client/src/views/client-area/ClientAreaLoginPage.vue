@@ -22,7 +22,7 @@
 <script setup lang="ts">
 import BmsLogin from '@/views/client-area/BmsLogin.vue';
 import BmsForgotPassword from '@/views/client-area/forgot-password/BmsForgotPassword.vue';
-import { AuthenticationToken, PersonalInformationResultData } from '@/services/bms';
+import { AuthenticationToken, BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
 import { onMounted, ref } from 'vue';
 import { navigateTo, Routes } from '@/router';
 
@@ -46,7 +46,8 @@ async function switchSection(newSection: Sections): Promise<void> {
 }
 
 async function goToClientArea(): Promise<void> {
-  await navigateTo(Routes.ClientArea, { replace: true });
+  BmsAccessInstance.get().reloadKey += 1;
+  await navigateTo(Routes.ClientArea, { replace: true, skipHandle: true });
 }
 
 function getCurrentSectionClass(): string {
