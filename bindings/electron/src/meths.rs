@@ -1325,6 +1325,25 @@ fn struct_human_handle_rs_to_js<'a>(
     Ok(js_obj)
 }
 
+// LocalDevice
+
+#[allow(dead_code)]
+fn struct_local_device_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    obj: Handle<'a, JsObject>,
+) -> NeonResult<libparsec::LocalDevice> {
+    Ok(libparsec::LocalDevice {})
+}
+
+#[allow(dead_code)]
+fn struct_local_device_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::LocalDevice,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    Ok(js_obj)
+}
+
 // NewInvitationInfo
 
 #[allow(dead_code)]
@@ -4974,6 +4993,39 @@ fn variant_list_invitations_error_rs_to_js<'a>(
         }
         libparsec::ListInvitationsError::Offline { .. } => {
             let js_tag = JsString::try_new(cx, "ListInvitationsErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// LoadRecoverDeviceError
+
+#[allow(dead_code)]
+fn variant_load_recover_device_error_rs_to_js<'a>(
+    cx: &mut impl Context<'a>,
+    rs_obj: libparsec::LoadRecoverDeviceError,
+) -> NeonResult<Handle<'a, JsObject>> {
+    let js_obj = cx.empty_object();
+    let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
+    js_obj.set(cx, "error", js_display)?;
+    match rs_obj {
+        libparsec::LoadRecoverDeviceError::DecryptionFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "LoadRecoverDeviceErrorDecryptionFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidData { .. } => {
+            let js_tag = JsString::try_new(cx, "LoadRecoverDeviceErrorInvalidData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidPassphrase { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "LoadRecoverDeviceErrorInvalidPassphrase").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidPath { .. } => {
+            let js_tag = JsString::try_new(cx, "LoadRecoverDeviceErrorInvalidPath").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }
@@ -10738,6 +10790,54 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     Ok(promise)
 }
 
+// load_recovery_device
+fn load_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
+    crate::init_sentry();
+    let key_file = {
+        let js_val = cx.argument::<JsString>(0)?;
+        {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let passphrase = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
+    let ret = libparsec::load_recovery_device(key_file, passphrase);
+    let js_ret = match ret {
+        Ok(ok) => {
+            let js_obj = JsObject::new(&mut cx);
+            let js_tag = JsBoolean::new(&mut cx, true);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_value = struct_local_device_rs_to_js(&mut cx, ok)?;
+            js_obj.set(&mut cx, "value", js_value)?;
+            js_obj
+        }
+        Err(err) => {
+            let js_obj = cx.empty_object();
+            let js_tag = JsBoolean::new(&mut cx, false);
+            js_obj.set(&mut cx, "ok", js_tag)?;
+            let js_err = variant_load_recover_device_error_rs_to_js(&mut cx, err)?;
+            js_obj.set(&mut cx, "error", js_err)?;
+            js_obj
+        }
+    };
+    let (deferred, promise) = cx.promise();
+    deferred.resolve(&mut cx, js_ret);
+    Ok(promise)
+}
+
 // mountpoint_to_os_path
 fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
@@ -12904,6 +13004,7 @@ pub fn register_meths(cx: &mut ModuleContext) -> NeonResult<()> {
     )?;
     cx.export_function("isKeyringAvailable", is_keyring_available)?;
     cx.export_function("listAvailableDevices", list_available_devices)?;
+    cx.export_function("loadRecoveryDevice", load_recovery_device)?;
     cx.export_function("mountpointToOsPath", mountpoint_to_os_path)?;
     cx.export_function("mountpointUnmount", mountpoint_unmount)?;
     cx.export_function("newCanceller", new_canceller)?;

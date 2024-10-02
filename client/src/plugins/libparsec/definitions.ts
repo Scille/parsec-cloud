@@ -77,7 +77,12 @@ export type ParsecPkiEnrollmentAddr = string
 export type ParsecWorkspacePathAddr = string
 export type Password = string
 export type Path = string
+export type PrivateKey = string
 export type SASCode = string
+export type SecretKey = string
+export type SecretKeyPassphrase = string
+export type SigningKey = string
+export type TimeProvider = string
 export type UserID = string
 export type VlobID = string
 export type SequesterVerifyKeyDer = Uint8Array
@@ -179,6 +184,9 @@ export interface DeviceInfo {
 export interface HumanHandle {
     email: string
     label: string
+}
+
+export interface LocalDevice {
 }
 
 export interface NewInvitationInfo {
@@ -1356,6 +1364,36 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
+
+// LoadRecoverDeviceError
+export enum LoadRecoverDeviceErrorTag {
+    DecryptionFailed = 'LoadRecoverDeviceErrorDecryptionFailed',
+    InvalidData = 'LoadRecoverDeviceErrorInvalidData',
+    InvalidPassphrase = 'LoadRecoverDeviceErrorInvalidPassphrase',
+    InvalidPath = 'LoadRecoverDeviceErrorInvalidPath',
+}
+
+export interface LoadRecoverDeviceErrorDecryptionFailed {
+    tag: LoadRecoverDeviceErrorTag.DecryptionFailed
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidData {
+    tag: LoadRecoverDeviceErrorTag.InvalidData
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidPassphrase {
+    tag: LoadRecoverDeviceErrorTag.InvalidPassphrase
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidPath {
+    tag: LoadRecoverDeviceErrorTag.InvalidPath
+    error: string
+}
+export type LoadRecoverDeviceError =
+  | LoadRecoverDeviceErrorDecryptionFailed
+  | LoadRecoverDeviceErrorInvalidData
+  | LoadRecoverDeviceErrorInvalidPassphrase
+  | LoadRecoverDeviceErrorInvalidPath
 
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
@@ -2692,6 +2730,10 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
+    loadRecoveryDevice(
+        key_file: Path,
+        passphrase: SecretKeyPassphrase
+    ): Promise<Result<LocalDevice, LoadRecoverDeviceError>>
     mountpointToOsPath(
         mountpoint: Handle,
         parsec_path: FsPath

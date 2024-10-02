@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from typing import Any, ClassVar, Generic, TypeVar
-
 #
 # Meta-types
 #
@@ -187,6 +186,26 @@ class DateTime(F64BasedType):
 
 
 class Password(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+
+
+class SigningKey(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+
+
+class PrivateKey(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+
+
+class SecretKey(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+
+
+class SecretKeyPassphrase(StrBasedType):
+    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+
+
+class TimeProvider(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
 
 

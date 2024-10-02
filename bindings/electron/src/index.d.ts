@@ -168,6 +168,10 @@ export interface HumanHandle {
 }
 
 
+export interface LocalDevice {
+}
+
+
 export interface NewInvitationInfo {
     addr: string
     token: string
@@ -1155,6 +1159,30 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
+
+
+// LoadRecoverDeviceError
+export interface LoadRecoverDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface LoadRecoverDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export type LoadRecoverDeviceError =
+  | LoadRecoverDeviceErrorDecryptionFailed
+  | LoadRecoverDeviceErrorInvalidData
+  | LoadRecoverDeviceErrorInvalidPassphrase
+  | LoadRecoverDeviceErrorInvalidPath
 
 
 // MountpointMountStrategy
@@ -2288,6 +2316,10 @@ export function isKeyringAvailable(
 export function listAvailableDevices(
     path: string
 ): Promise<Array<AvailableDevice>>
+export function loadRecoveryDevice(
+    key_file: string,
+    passphrase: string
+): Promise<Result<LocalDevice, LoadRecoverDeviceError>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string

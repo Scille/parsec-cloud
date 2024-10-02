@@ -1418,6 +1418,19 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
     Ok(js_obj)
 }
 
+// LocalDevice
+
+#[allow(dead_code)]
+fn struct_local_device_js_to_rs(obj: JsValue) -> Result<libparsec::LocalDevice, JsValue> {
+    Ok(libparsec::LocalDevice {})
+}
+
+#[allow(dead_code)]
+fn struct_local_device_rs_to_js(rs_obj: libparsec::LocalDevice) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    Ok(js_obj)
+}
+
 // NewInvitationInfo
 
 #[allow(dead_code)]
@@ -5523,6 +5536,48 @@ fn variant_list_invitations_error_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ListInvitationsErrorOffline".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
+// LoadRecoverDeviceError
+
+#[allow(dead_code)]
+fn variant_load_recover_device_error_rs_to_js(
+    rs_obj: libparsec::LoadRecoverDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::LoadRecoverDeviceError::DecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"LoadRecoverDeviceErrorDecryptionFailed".into(),
+            )?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"LoadRecoverDeviceErrorInvalidData".into(),
+            )?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidPassphrase { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"LoadRecoverDeviceErrorInvalidPassphrase".into(),
+            )?;
+        }
+        libparsec::LoadRecoverDeviceError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"LoadRecoverDeviceErrorInvalidPath".into(),
             )?;
         }
     }
@@ -9685,6 +9740,40 @@ pub fn listAvailableDevices(path: String) -> Promise {
                 js_array.set(i as u32, js_elem);
             }
             js_array.into()
+        })
+    })
+}
+
+// load_recovery_device
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn loadRecoveryDevice(key_file: String, passphrase: String) -> Promise {
+    future_to_promise(async move {
+        let key_file = {
+            let custom_from_rs_string =
+                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+            custom_from_rs_string(key_file).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let passphrase = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
+            custom_from_rs_string(passphrase).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::load_recovery_device(key_file, passphrase);
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_local_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_load_recover_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
         })
     })
 }
