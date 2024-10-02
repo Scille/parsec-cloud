@@ -1,10 +1,7 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ion-page
-    id="page"
-    :key="BmsAccessInstance.get().reloadKey"
-  >
+  <ion-page id="page">
     <div
       class="resize-divider"
       ref="divider"
@@ -167,7 +164,7 @@ onMounted(async () => {
   if (!BmsAccessInstance.get().isLoggedIn()) {
     loggedIn.value = await BmsAccessInstance.get().tryAutoLogin();
     if (!loggedIn.value) {
-      await navigateTo(Routes.ClientAreaLogin);
+      await navigateTo(Routes.ClientAreaLogin, { skipHandle: true });
       querying.value = false;
       return;
     }
@@ -207,8 +204,8 @@ onMounted(async () => {
     if (query.page) {
       currentPage.value = query.page as ClientAreaPages;
     }
-    querying.value = false;
   }
+  querying.value = false;
 
   setToastOffset(computedWidth.value);
   if (divider.value) {
