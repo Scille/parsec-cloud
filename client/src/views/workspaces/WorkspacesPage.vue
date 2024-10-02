@@ -380,7 +380,7 @@ async function handleFileLink(fileLink: ParsecWorkspacePathAddr): Promise<boolea
     path = await Path.parent(path);
   }
 
-  await navigateToWorkspace(workspace.handle, path, selectFile);
+  await navigateToWorkspace(workspace.handle, path, selectFile, true);
   return true;
 }
 
