@@ -163,6 +163,67 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(modal).toBeHidden();
 });
 
+for (const testInfo of [
+  {
+    expectedMessage: 'This organization name is not available, please choose another one.',
+    status: 500,
+    code: 'parsec_bad_status',
+  },
+  {
+    expectedMessage: 'Failed to create the organization (reason: Unknown).',
+    status: 500,
+    code: 'unknown',
+  },
+  {
+    expectedMessage: 'Failed to contact server. Please make sure you are online.',
+    status: 0,
+  },
+])
+  msTest(`Org creation error (${testInfo.status} - ${testInfo.code})`, async ({ home }) => {
+    const modal = await openCreateOrganizationModal(home);
+
+    await MockBms.mockLogin(home);
+    await MockBms.mockUserRoute(home);
+
+    const routeOptions: any = {};
+
+    if (testInfo.status === 0) {
+      routeOptions.timeout = true;
+    } else {
+      routeOptions.errors = {
+        code: testInfo.code,
+        status: testInfo.status,
+      };
+    }
+    await MockBms.mockCreateOrganization(home, BOOTSTRAP_ADDR, { POST: routeOptions });
+
+    const bmsContainer = modal.locator('.saas-login');
+    const bmsNext = bmsContainer.locator('.saas-login-button').locator('.saas-login-button__item').nth(1);
+    await fillIonInput(bmsContainer.locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.email);
+    await fillIonInput(bmsContainer.locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+    await bmsNext.click();
+
+    const orgNameContainer = modal.locator('.organization-name-page');
+    const orgNameNext = modal.locator('.organization-name-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(orgNameContainer.locator('ion-input'), DEFAULT_ORGANIZATION_INFORMATION.name);
+    await orgNameNext.click();
+
+    const authContainer = modal.locator('.authentication-page');
+    const authNext = modal.locator('.authentication-page-footer').locator('ion-button').nth(1);
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
+    await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(1), DEFAULT_USER_INFORMATION.password);
+    await authNext.click();
+
+    const summaryContainer = modal.locator('.summary-page');
+    const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+    await summaryNext.click();
+
+    await home.waitForTimeout(1000);
+
+    await expect(summaryContainer.locator('.login-button-error')).toBeVisible();
+    await expect(summaryContainer.locator('.login-button-error')).toHaveText(testInfo.expectedMessage);
+  });
+
 msTest('Go through saas org creation process from bootstrap link', async ({ home }) => {
   await home.locator('#create-organization-button').click();
   await home.locator('.popover-viewport').getByRole('listitem').nth(1).click();
