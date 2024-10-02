@@ -17,7 +17,12 @@ regex = { workspace = true }
 winfsp_wrs = { workspace = true }
 
 [target.'cfg(target_family = "unix")'.dependencies]
-fuser = { workspace = true, features = ["libfuse", "abi-7-21"] }
+# ABI 7.31 has been introduced in Linux 5.2 (2019-06-08), should be old enough
+# to be supported everywhere.
+# See:
+# - https://github.com/torvalds/linux/blob/e32cde8d2bd7d251a8f9b434143977ddf13dcec6/include/uapi/linux/fuse.h#L234-L258
+# - https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_lowlevel.h#L16-L18
+fuser = { workspace = true, features = ["libfuse", "abi-7-31"] }
 libc = { workspace = true }
 
 [dependencies]
