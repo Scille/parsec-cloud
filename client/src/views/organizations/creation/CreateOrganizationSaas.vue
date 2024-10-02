@@ -69,7 +69,14 @@
 </template>
 
 <script setup lang="ts">
-import { AuthenticationToken, BillingSystem, BmsApi, DataType, PersonalInformationResultData } from '@/services/bms';
+import {
+  AuthenticationToken,
+  BillingSystem,
+  BmsApi,
+  CONNECTION_ERROR_STATUS,
+  DataType,
+  PersonalInformationResultData,
+} from '@/services/bms';
 import { ServerType } from '@/services/parsecServers';
 import { IonPage } from '@ionic/vue';
 import { isProxy, onMounted, ref, toRaw } from 'vue';
@@ -210,10 +217,17 @@ async function onCreateClicked(): Promise<void> {
       // TODO: Change this error handling with the real backend response
       if (response.errors && response.errors.some((error) => error.code === 'parsec_bad_status')) {
         currentError.value = 'CreateOrganization.errors.alreadyExists';
-        await onCreationError(startTime);
-        return;
+      } else if (response.status === CONNECTION_ERROR_STATUS) {
+        currentError.value = 'CreateOrganization.errors.offline';
+      } else {
+        window.electronAPI.log('error', `Failed to create Saas organization, unhandled error ${response.errors}`);
+        currentError.value = {
+          key: 'CreateOrganization.errors.generic',
+          data: { reason: 'Unknown' },
+        };
       }
-      step.value = Steps.Summary;
+      await onCreationError(startTime);
+      return;
     } else if (!response.data || response.data.type !== DataType.CreateOrganization) {
       // Should not happen
       console.log('Incorrect response data type');

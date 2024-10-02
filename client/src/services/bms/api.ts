@@ -27,6 +27,8 @@ import axios, { AxiosError, AxiosInstance, AxiosResponse, isAxiosError } from 'a
 import { DateTime } from 'luxon';
 import { decodeToken } from 'megashark-lib';
 
+export const CONNECTION_ERROR_STATUS = 0;
+
 class HTTPRequest {
   private _instance: AxiosInstance;
 
@@ -34,7 +36,7 @@ class HTTPRequest {
     console.log(`Using ${Env.getBmsUrl()} as Parsec BMS`);
     this._instance = axios.create({
       baseURL: Env.getBmsUrl(),
-      timeout: 3000,
+      timeout: 15000,
     });
   }
 
@@ -66,7 +68,7 @@ async function wrapQuery(queryFunc: () => Promise<BmsResponse>): Promise<BmsResp
         };
       } else {
         return {
-          status: 0,
+          status: CONNECTION_ERROR_STATUS,
           isError: true,
         };
       }
