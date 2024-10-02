@@ -128,7 +128,8 @@ pub async fn bootstrap_organization(
         device_label,
         sequester_authority_verify_key,
     )
-    .await?;
+    .await
+    .inspect_err(|e| log::error!("Failed to bootstrap organization: {e}"))?;
 
     let access = {
         let key_file = libparsec_platform_device_loader::get_default_key_file(
@@ -141,6 +142,7 @@ pub async fn bootstrap_organization(
     let available_device = finalize_ctx
         .save_local_device(&access)
         .await
+        .inspect_err(|e| log::error!("Error while saving device: {e}"))
         .map_err(BootstrapOrganizationError::SaveDeviceError)?;
 
     Ok(available_device)
