@@ -5230,6 +5230,19 @@ fn variant_entry_stat_rs_to_js(rs_obj: libparsec::EntryStat) -> Result<JsValue, 
     Ok(js_obj)
 }
 
+// ExportRecoveryDeviceError
+
+#[allow(dead_code)]
+fn variant_export_recovery_device_error_rs_to_js(
+    rs_obj: libparsec::ExportRecoveryDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {}
+    Ok(js_obj)
+}
+
 // GreetInProgressError
 
 #[allow(dead_code)]
@@ -5414,6 +5427,19 @@ fn variant_greet_in_progress_error_rs_to_js(
             )?;
         }
     }
+    Ok(js_obj)
+}
+
+// ImportRecoveryDeviceError
+
+#[allow(dead_code)]
+fn variant_import_recovery_device_error_rs_to_js(
+    rs_obj: libparsec::ImportRecoveryDeviceError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {}
     Ok(js_obj)
 }
 
@@ -9261,6 +9287,42 @@ pub fn clientStop(client: u32) -> Promise {
     })
 }
 
+// export_recovery_device
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn exportRecoveryDevice(clientHandle: u32, access_strategy: Object) -> Promise {
+    future_to_promise(async move {
+        let access_strategy = access_strategy.into();
+        let access_strategy = variant_device_access_strategy_js_to_rs(access_strategy)?;
+
+        let ret = libparsec::export_recovery_device(clientHandle, access_strategy).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = x1.into();
+                    js_array.push(&js_value);
+                    let js_value = JsValue::from(Uint8Array::from(x2.as_ref()));
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_export_recovery_device_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // fd_close
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -9910,6 +9972,53 @@ pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
                 let js_err = variant_greet_in_progress_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// import_recovery_device
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn importRecoveryDevice(
+    recovery_device: Uint8Array,
+    passphrase: String,
+    device_label: String,
+    save_strategy: Object,
+) -> Promise {
+    future_to_promise(async move {
+        let recovery_device = recovery_device.to_vec();
+
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let save_strategy = save_strategy.into();
+        let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
+
+        let ret = libparsec::import_recovery_device(
+            recovery_device,
+            passphrase,
+            device_label,
+            save_strategy,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_available_device_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_import_recovery_device_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }

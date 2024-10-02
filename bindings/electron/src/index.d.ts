@@ -1093,6 +1093,10 @@ export type EntryStat =
   | EntryStatFolder
 
 
+// ExportRecoveryDeviceError
+export type ExportRecoveryDeviceError =
+
+
 // GreetInProgressError
 export interface GreetInProgressErrorActiveUsersLimitReached {
     tag: "ActiveUsersLimitReached"
@@ -1182,6 +1186,10 @@ export type GreetInProgressError =
   | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
+
+
+// ImportRecoveryDeviceError
+export type ImportRecoveryDeviceError =
 
 
 // InviteListItem
@@ -2258,6 +2266,10 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function exportRecoveryDevice(
+    clientHandle: number,
+    access_strategy: DeviceAccessStrategy
+): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
 export function fdClose(
     workspace: number,
     fd: number
@@ -2355,6 +2367,12 @@ export function greeterUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+export function importRecoveryDevice(
+    recovery_device: Uint8Array,
+    passphrase: string,
+    device_label: string,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(
