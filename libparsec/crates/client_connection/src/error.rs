@@ -98,46 +98,6 @@ pub enum ConnectionError {
     InvalidSSEEventID(#[from] reqwest::header::InvalidHeaderValue),
 }
 
-// Custom equality to skip comparison of some fields
-impl PartialEq for ConnectionError {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::BadContent, Self::BadContent) => true,
-            (Self::ExpiredOrganization, Self::ExpiredOrganization) => true,
-            // For the moment, InvalidResponseContentError are the same
-            (Self::InvalidResponseContent(..), Self::InvalidResponseContent(..)) => true,
-            // For the moment, InvalidResponseStatus are the same if they have the same status
-            (
-                Self::InvalidResponseStatus(left_status, ..),
-                Self::InvalidResponseStatus(right_status, ..),
-            ) => left_status == right_status,
-            (Self::InvitationAlreadyDeleted, Self::InvitationAlreadyDeleted) => true,
-            (Self::InvitationNotFound, Self::InvitationNotFound) => true,
-            (Self::MissingApiVersion, Self::MissingApiVersion) => true,
-            (Self::MissingSupportedApiVersions, Self::MissingSupportedApiVersions) => true,
-            // For the moment, NoResponseError are the same
-            (Self::NoResponse(..), Self::NoResponse(..)) => true,
-            (Self::RevokedUser, Self::RevokedUser) => true,
-            // For the moment, SerializationError are the same
-            (Self::Serialization(..), Self::Serialization(..)) => true,
-            (
-                Self::UnsupportedApiVersion {
-                    api_version: left_api_version,
-                    ..
-                },
-                Self::UnsupportedApiVersion {
-                    api_version: right_api_version,
-                    ..
-                },
-            ) => left_api_version == right_api_version,
-            (Self::WrongApiVersion(left), Self::WrongApiVersion(right)) => left == right,
-            _ => false,
-        }
-    }
-}
-
-impl Eq for ConnectionError {}
-
 impl From<ProtocolDecodeError> for ConnectionError {
     fn from(e: ProtocolDecodeError) -> Self {
         Self::InvalidResponseContent(e)
