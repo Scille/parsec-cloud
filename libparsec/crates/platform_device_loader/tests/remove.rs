@@ -23,5 +23,5 @@ async fn remove_ok(tmp_path: TmpPath, env: &TestbedEnv) {
     remove_device(&key_file).await.unwrap();
 
     // 3. Check that the device as been removed.
-    assert!(!key_file.exists(), "Device file should have been archived");
+    assert!(!key_file.exists(), "Device file should have been removed");
 }

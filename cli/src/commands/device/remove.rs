@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use libparsec::AvailableDevice;
+use libparsec_client::remove_device;
 
 use crate::utils::*;
 
@@ -17,7 +18,14 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         config_dir.display(),
     );
 
-    let device = load_device_file(&config_dir, device).await?;
+    // FIXME: https://github.com/Scille/parsec-cloud/issues/8604
+    // The client config should be loaded from a config file
+    let config = libparsec_client::ClientConfig::from(libparsec::ClientConfig {
+        config_dir,
+        ..Default::default()
+    });
+
+    let device = load_device_file(&config.config_dir, device).await?;
 
     let short_id = &device.device_id.hex()[..3];
     let AvailableDevice {
@@ -36,7 +44,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     match input.trim() {
         "y" => {
-            std::fs::remove_file(&device.key_file_path)?;
+            remove_device(&config, &device).await?;
             println!("The device has been removed");
         }
         _ => eprintln!("Operation cancelled"),
