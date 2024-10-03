@@ -12,9 +12,6 @@ use libparsec_protocol::invited_cmds::latest as invited_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-// TODO: test handling of different errors
-// This can be easily done with the testbed's send_hook callback
-
 #[parsec_test(testbed = "minimal")]
 async fn ok_mocked(env: &TestbedEnv) {
     ok(env, true).await
@@ -128,8 +125,8 @@ async fn invalid_token(env: &TestbedEnv, mocked: bool) {
 
 // Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
 // only accept a static closure (i.e. `fn`, not `FnMut`).
-macro_rules! register_http_hook {
-    ($test_name: ident, $response_status_code: expr) => {
+macro_rules! register_rpc_http_hook {
+    ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
             let addr = ParsecInvitationAddr::new(
@@ -152,16 +149,97 @@ macro_rules! register_http_hook {
                 },
             );
 
-            let rep = cmds
+            let err = cmds
                 .send(invited_cmds::ping::Req {
                     ping: "foo".to_owned(),
                 })
-                .await;
-            p_assert_eq!(rep.unwrap_err(), ConnectionError::NoResponse(None));
+                .await
+                .unwrap_err();
+            ($assert_err_cb)(err)
         }
     };
 }
-
-register_http_hook!(no_response_http_codes_502, StatusCode::BAD_GATEWAY);
-register_http_hook!(no_response_http_codes_503, StatusCode::SERVICE_UNAVAILABLE);
-register_http_hook!(no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
+register_rpc_http_hook!(
+    rpc_missing_authentication_info_http_codes_401,
+    StatusCode::from_u16(401).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::MissingAuthenticationInfo);
+    }
+);
+register_rpc_http_hook!(
+    rpc_bad_authentication_info_http_codes_403,
+    StatusCode::from_u16(403).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::BadAuthenticationInfo);
+    }
+);
+register_rpc_http_hook!(
+    rpc_organization_not_found_http_codes_404,
+    StatusCode::from_u16(404).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::InvitationNotFound);
+    }
+);
+register_rpc_http_hook!(
+    rpc_bad_accept_type_http_codes_406,
+    StatusCode::from_u16(406).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::BadAcceptType);
+    }
+);
+register_rpc_http_hook!(
+    rpc_invitation_already_used_or_deleted_http_codes_410,
+    StatusCode::from_u16(410).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::InvitationAlreadyUsedOrDeleted);
+    }
+);
+register_rpc_http_hook!(
+    rpc_bad_content_type_http_codes_415,
+    StatusCode::from_u16(415).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::BadContent);
+    }
+);
+register_rpc_http_hook!(
+    rpc_unsupported_api_version_http_codes_422,
+    StatusCode::from_u16(422).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::MissingApiVersion);
+    }
+);
+register_rpc_http_hook!(
+    rpc_expired_organization_http_codes_460,
+    StatusCode::from_u16(460).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::ExpiredOrganization);
+    }
+);
+register_rpc_http_hook!(
+    rpc_invalid_http_status_499,
+    StatusCode::from_u16(499).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::InvalidResponseStatus(status) if status == 499);
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_502,
+    StatusCode::BAD_GATEWAY,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_503,
+    StatusCode::SERVICE_UNAVAILABLE,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_504,
+    StatusCode::GATEWAY_TIMEOUT,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
