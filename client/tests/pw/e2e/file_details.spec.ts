@@ -28,6 +28,15 @@ for (const testData of TEST_DATA) {
     await expect(files.nth(testData.index).locator('.file-lastUpdate')).toHaveText(/^((?:one|\d{1,2}) minutes? ago|< 1 minute)$/);
     expect(connected.locator('.file-context-menu')).toBeHidden();
     expect(connected.locator('.file-details-modal')).toBeHidden();
+
+    const syncElem = files.nth(testData.index).locator('.cloud-overlay');
+    const classes = await syncElem.evaluate((node) => Array.from(node.classList.values()));
+    const isSynced = classes.includes('cloud-overlay-ok');
+
+    if (!isSynced) {
+      await expect(syncElem).toHaveTheClass('cloud-overlay-ko');
+    }
+
     await files.nth(testData.index).hover();
     await files.nth(testData.index).locator('.options-button').click();
     expect(connected.locator('.file-context-menu').getByRole('listitem')).toHaveCount(8);
@@ -36,6 +45,14 @@ for (const testData of TEST_DATA) {
     const modal = connected.locator('.file-details-modal');
     await expect(modal.locator('.ms-modal-header__title ')).toHaveText(new RegExp(`^Details on ${nameMatcher}$`));
     await expect(modal.locator('.file-info-basic__edit')).toHaveText(/^Updated: [A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
+
+    const icon = modal.locator('.cloud-overlay');
+    if (isSynced) {
+      await expect(icon).toHaveTheClass('cloud-overlay-ok');
+    } else {
+      await expect(icon).toHaveTheClass('cloud-overlay-ko');
+    }
+
     const details = modal.locator('.file-info-details-item');
     await expect(details).toHaveCount(testData.isFile ? 3 : 2);
     await expect(details.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');

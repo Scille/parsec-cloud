@@ -15,8 +15,8 @@
           />
           <ion-icon
             class="cloud-overlay"
-            :class="entry.needSync ? 'cloud-overlay-ok' : 'cloud-overlay-ko'"
-            :icon="entry.needSync ? cloudDone : cloudOffline"
+            :class="entry.needSync ? 'cloud-overlay-ko' : 'cloud-overlay-ok'"
+            :icon="entry.needSync ? cloudOffline : cloudDone"
           />
           <div class="file-info-basic">
             <ion-text class="file-info-basic__name title-h4">
