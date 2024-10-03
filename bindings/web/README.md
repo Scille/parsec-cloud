@@ -1,67 +1,50 @@
-<div align="center">
+# libparsec-electron-bindings
 
-  <h1><code>wasm-pack-template</code></h1>
+Remember to have [`wasm-pack`](../../docs/development/README.md#base-requirement) installed !
 
-  <strong>A template for kick starting a Rust and WebAssembly project using <a href="https://github.com/rustwasm/wasm-pack">wasm-pack</a>.</strong>
+## Build
 
-  <p>
-    <a href="https://travis-ci.org/rustwasm/wasm-pack-template"><img src="https://img.shields.io/travis/rustwasm/wasm-pack-template.svg?style=flat-square" alt="Build Status" /></a>
-  </p>
+tl;dr: `../../make.py wr`
 
-  <h3>
-    <a href="https://rustwasm.github.io/docs/wasm-pack/tutorials/npm-browser-packages/index.html">Tutorial</a>
-    <span> | </span>
-    <a href="https://discordapp.com/channels/442252698964721669/443151097398296587">Chat</a>
-  </h3>
+First run (to install dependencies)
 
-  <sub>Built with 🦀🕸 by <a href="https://rustwasm.github.io/">The Rust and WebAssembly Working Group</a></sub>
-</div>
-
-## About
-
-[**📚 Read this template tutorial! 📚**][template-docs]
-
-This template is designed for compiling Rust libraries into WebAssembly and
-publishing the resulting package to NPM.
-
-Be sure to check out [other `wasm-pack` tutorials online][tutorials] for other
-templates and usages of `wasm-pack`.
-
-[tutorials]: https://rustwasm.github.io/docs/wasm-pack/tutorials/index.html
-[template-docs]: https://rustwasm.github.io/docs/wasm-pack/tutorials/npm-browser-packages/index.html
-
-## 🚴 Usage
-
-### 🐑 Use `cargo generate` to Clone this Template
-
-[Learn more about `cargo generate` here.](https://github.com/ashleygwilliams/cargo-generate)
-
-```
-cargo generate --git https://github.com/rustwasm/wasm-pack-template.git --name my-project
-cd my-project
+```shell
+../../make.py wi    # wi is an alias for web-dev-install
 ```
 
-### 🛠️ Build with `wasm-pack build`
+Subsequent runs
 
-```
-wasm-pack build
+```shell
+../../make.py wr    # wr is an alias for web-dev-rebuild
 ```
 
-### 🔬 Test in Headless Browsers with `wasm-pack test`
+Basically `make.py` wraps the following commands:
 
+```shell
+npm install
+# (re)generate index.node
+npm run build:dev
+# Or for release
+npm run build:release
 ```
+
+The internal build command itself relies on [`wasm-pack`](https://github.com/rustwasm/wasm-pack).
+
+## Interactive testing
+
+To easily play with the bindings:
+
+```shell
+python ./scripts/liveplay.py
+```
+
+This starts a server exposing a web page with the bindings, from there you
+can open your browser console and start playing with `libparsec`.
+
+## Testing
+
+There is not much tests for now, but you can use them with:
+
+```shell
 wasm-pack test --headless --firefox
 ```
-
-### 🎁 Publish to NPM with `wasm-pack publish`
-
-```
-wasm-pack publish
-```
-
-## 🔋 Batteries Included
-
-* [`wasm-bindgen`](https://github.com/rustwasm/wasm-bindgen) for communicating
-    between WebAssembly and JavaScript.
-* [`console_error_panic_hook`](https://github.com/rustwasm/console_error_panic_hook)
-    for logging panic messages to the developer console.
