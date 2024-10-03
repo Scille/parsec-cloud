@@ -716,5 +716,5 @@ impl PlatformCertificatesStorage {
 }
 
 #[cfg(test)]
-#[path = "../../tests/unit/native_sqlite_db_creation.rs"]
+#[path = "../../tests/unit/native/sqlite_db_creation.rs"]
 mod test;
