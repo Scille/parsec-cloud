@@ -119,9 +119,12 @@ jobs:
           cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.unsigned{.dmg,.zip}{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
 
-          # EXE
-          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
-          cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
+          # TODO: Currently, Windows electron client is not signed by the CI, thus
+          # it should not be uploaded when creating the draft release.
+          # These artifacts are uploaded manually by someone who is able to sign them.
+          # # EXE
+          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/Parsec_${{ needs.version.outputs.full }}_win_*.unsigned.exe{,.blockmap} release-files
+          # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
 
           # CLI
           cp ${CP_ARGS} artifacts/Linux-X64-cli/parsec-cli_${{ needs.version.outputs.full }}_linux_* release-files
@@ -216,11 +219,11 @@ jobs:
           body: ${{ steps.summary.outputs.output }}
           prerelease: ${{ needs.version.outputs.pre != '' || needs.version.outputs.dev != '' || needs.version.outputs.local != '' }}
           name: ${{ env.NIGHTLY_RELEASE == 'true' && 'Nightly release' || format('Release v{0}', needs.version.outputs.full) }}
+          # release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
           files: |
             release-files/parsec_cloud-${{ needs.version.outputs.pep440 }}-*.whl*
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.AppImage*
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.snap*
-            release-files/Parsec_${{ needs.version.outputs.full }}_win_*.exe*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.zip*
             release-files/parsec-cli_${{ needs.version.outputs.full }}_linux_*
