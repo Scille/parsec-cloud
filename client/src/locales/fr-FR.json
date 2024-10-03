@@ -162,6 +162,14 @@
             "loading": "Chargement...",
             "deviceAlreadyUsed": "Cet appareil est déjà utilisé par une autre application."
         },
+        "expiredDevice": {
+            "questionTitle": "Organisation expirée",
+            "questionMessage": "Cet appareil appartient à une organisation qui est expirée. Souhaitez-vous l'archiver (il ne sera plus visible) ?",
+            "questionYes": "Archiver",
+            "questionNo": "Non, me connecter",
+            "archiveSuccess": "L'appareil a été archivé.",
+            "archiveFailure": "Impossible d'archiver l'appareil."
+        },
         "organizationActionSheet": "Organisation",
         "keyringFailed": "Impossible de se connecter",
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",

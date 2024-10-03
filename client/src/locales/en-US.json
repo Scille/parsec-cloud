@@ -162,6 +162,14 @@
             "loading": "Loading...",
             "deviceAlreadyUsed": "This device is already used by another app."
         },
+        "expiredDevice": {
+            "questionTitle": "Expired organization",
+            "questionMessage": "This device belongs to an expired organization. Do you wish to archive it (it won't be visible anymore)?",
+            "questionYes": "Archive",
+            "questionNo": "No, proceed to login",
+            "archiveSuccess": "The device has been archived.",
+            "archiveFailure": "Failed to archive the device."
+        },
         "organizationActionSheet": "Organization",
         "keyringFailed": "Could not log in",
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",

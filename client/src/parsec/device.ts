@@ -12,7 +12,7 @@ import {
   Result,
   UserID,
 } from '@/parsec/types';
-import { AvailableDevice, libparsec } from '@/plugins/libparsec';
+import { ArchiveDeviceError, AvailableDevice, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
@@ -242,4 +242,8 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
       ],
     };
   }
+}
+
+export async function archiveDevice(device: AvailableDevice): Promise<Result<null, ArchiveDeviceError>> {
+  return await libparsec.archiveDevice(device.keyFilePath);
 }

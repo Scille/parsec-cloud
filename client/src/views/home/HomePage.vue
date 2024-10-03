@@ -32,6 +32,7 @@
                 @join-organization-click="onJoinOrganizationClicked"
                 @join-organization-with-link-click="openJoinByLinkModal"
                 @bootstrap-organization-with-link-click="openCreateOrganizationModal"
+                ref="organizationListRef"
               />
             </template>
             <template v-if="state === HomePageState.CustomerArea">
@@ -70,6 +71,7 @@ import {
 } from '@/common/validators';
 import {
   AccessStrategy,
+  archiveDevice,
   AvailableDevice,
   ClientStartError,
   DeviceAccessStrategy,
@@ -96,10 +98,11 @@ import UserJoinOrganizationModal from '@/views/home/UserJoinOrganizationModal.vu
 import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
-import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser } from 'megashark-lib';
+import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser, askQuestion, Answer } from 'megashark-lib';
 import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
+import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
 
 enum HomePageState {
   OrganizationList = 'organization-list',
@@ -119,6 +122,7 @@ const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
 const loginInProgress = ref(false);
 const queryInProgress = ref(false);
+const organizationListRef = ref();
 
 let hotkeys: HotkeyGroup | null = null;
 
@@ -268,6 +272,35 @@ async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
     const handle = getDeviceHandle(device);
     switchOrganization(handle, false);
   } else {
+    if (isTrialOrganizationDevice(device) && isExpired(getDurationBeforeExpiration(device.createdOn))) {
+      const answer = await askQuestion('HomePage.expiredDevice.questionTitle', 'HomePage.expiredDevice.questionMessage', {
+        yesIsDangerous: true,
+        yesText: 'HomePage.expiredDevice.questionYes',
+        noText: 'HomePage.expiredDevice.questionNo',
+      });
+      if (answer === Answer.Yes) {
+        const result = await archiveDevice(device);
+        if (result.ok) {
+          informationManager.present(
+            new Information({
+              message: 'HomePage.expiredDevice.archiveSuccess',
+              level: InformationLevel.Success,
+            }),
+            PresentationMode.Toast,
+          );
+          await organizationListRef.value.refreshDeviceList();
+          return;
+        } else {
+          informationManager.present(
+            new Information({
+              message: 'HomePage.expiredDevice.archiveFailure',
+              level: InformationLevel.Error,
+            }),
+            PresentationMode.Toast,
+          );
+        }
+      }
+    }
     if (device.ty === DeviceFileType.Keyring) {
       await login(device, AccessStrategy.useKeyring(device));
     } else {
