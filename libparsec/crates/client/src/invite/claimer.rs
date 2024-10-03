@@ -62,7 +62,7 @@ impl From<ConnectionError> for ClaimInProgressError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
-            ConnectionError::InvitationAlreadyDeleted => Self::AlreadyUsed,
+            ConnectionError::InvitationAlreadyUsedOrDeleted => Self::AlreadyUsed,
             ConnectionError::ExpiredOrganization => Self::OrganizationExpired,
             ConnectionError::InvitationNotFound => Self::NotFound,
             err => Self::Internal(err.into()),

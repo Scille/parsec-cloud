@@ -47,10 +47,6 @@ pub enum ConnectionError {
     #[error("Failed to deserialize the response: {0}")]
     InvalidResponseContent(ProtocolDecodeError),
 
-    /// The invitation is already used/deleted
-    #[error("Invalid handshake: Invitation already deleted")]
-    InvitationAlreadyDeleted,
-
     /// We failed to retrieve the invitation
     #[error("Invalid handshake: Invitation not found")]
     InvitationNotFound,
