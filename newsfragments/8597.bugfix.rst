@@ -1,0 +1,1 @@
+Fixed synchronization icon displaying the wrong status in file details dialog
