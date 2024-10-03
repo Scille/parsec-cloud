@@ -53,6 +53,7 @@ export {
   WorkspaceStopErrorTag,
 } from '@/plugins/libparsec';
 export type {
+  ArchiveDeviceError,
   AvailableDevice,
   BootstrapOrganizationError,
   ClaimInProgressError,

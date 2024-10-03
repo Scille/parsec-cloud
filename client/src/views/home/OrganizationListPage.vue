@@ -164,6 +164,10 @@ const emits = defineEmits<{
   (e: 'bootstrapOrganizationWithLinkClick', link: string): void;
 }>();
 
+defineExpose({
+  refreshDeviceList,
+});
+
 enum SortCriteria {
   UserName = 'user_name',
   LastLogin = 'last_login',
