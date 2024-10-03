@@ -336,6 +336,7 @@ libxkbcommon
 libxss
 linkcheck
 linuxsys
+liveplay
 Ljava
 llabel
 localdb
