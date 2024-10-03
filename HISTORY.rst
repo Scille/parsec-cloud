@@ -5,6 +5,24 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.0.3-rc.2 (2024-10-03)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fix link to download parsec client in invitation email
+  (`#8599 <https://github.com/Scille/parsec-cloud/issues/8599>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added raw invitation URL in the invitation email
+  (`#8367 <https://github.com/Scille/parsec-cloud/issues/8367>`__)
+
+
+
 Parsec v3.0.3-rc.1 (2024-10-02)
 -------------------------------
 
