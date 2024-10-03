@@ -116,7 +116,7 @@ impl InvitedCmds {
             403 => Err(ConnectionError::BadAuthenticationInfo),
             404 => Err(ConnectionError::InvitationNotFound),
             406 => Err(ConnectionError::BadAcceptType),
-            410 => Err(ConnectionError::InvitationAlreadyDeleted),
+            410 => Err(ConnectionError::InvitationAlreadyUsedOrDeleted),
             415 => Err(ConnectionError::BadContent),
             422 => Err(crate::error::unsupported_api_version_from_headers(
                 resp.headers(),
