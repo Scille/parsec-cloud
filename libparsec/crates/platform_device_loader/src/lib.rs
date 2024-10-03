@@ -256,3 +256,11 @@ pub enum ArchiveDeviceError {
 }
 
 pub use platform::archive_device;
+
+#[derive(Debug, thiserror::Error)]
+pub enum RemoveDeviceError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+pub use platform::remove_device;

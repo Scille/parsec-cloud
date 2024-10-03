@@ -46,6 +46,10 @@ pub async fn archive_device(_device_path: &Path) -> Result<(), crate::ArchiveDev
     todo!()
 }
 
+pub async fn remove_device(_device_path: &Path) -> Result<(), crate::RemoveDeviceError> {
+    todo!()
+}
+
 /*
  * Recovery
  */

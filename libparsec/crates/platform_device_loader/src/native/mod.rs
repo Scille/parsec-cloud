@@ -497,6 +497,14 @@ pub async fn archive_device(device_path: &Path) -> Result<(), crate::ArchiveDevi
         .map_err(|e| crate::ArchiveDeviceError::Internal(e.into()))
 }
 
+pub async fn remove_device(device_path: &Path) -> Result<(), crate::RemoveDeviceError> {
+    log::debug!("Removing device {}", device_path.display());
+
+    tokio::fs::remove_file(device_path)
+        .await
+        .map_err(|e| crate::RemoveDeviceError::Internal(e.into()))
+}
+
 /*
  * Recovery
  */
