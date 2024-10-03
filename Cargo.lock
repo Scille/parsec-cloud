@@ -3044,6 +3044,7 @@ dependencies = [
  "env_logger",
  "itertools 0.12.1",
  "libparsec",
+ "libparsec_client",
  "libparsec_client_connection",
  "libparsec_platform_ipc",
  "log",
