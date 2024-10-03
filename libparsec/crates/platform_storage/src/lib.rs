@@ -13,6 +13,7 @@ pub(crate) use web as platform;
 pub mod certificates;
 pub mod user;
 pub mod workspace;
+pub use platform::cleanup::remove_device_data;
 
 // Testbed integration is tested in the `libparsec_tests_fixture` crate.
 #[cfg(feature = "test-with-testbed")]

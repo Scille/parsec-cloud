@@ -4,10 +4,12 @@
 mod certif;
 mod client;
 mod config;
+mod device;
 mod event_bus;
 mod invite;
 mod monitors;
 mod user;
+
 // Workspaces can be started & accessed independently of each other, so we expose it directly
 pub mod workspace;
 
@@ -15,5 +17,6 @@ pub mod workspace;
 pub use certif::*;
 pub use client::*;
 pub use config::*;
+pub use device::remove_device;
 pub use event_bus::*;
 pub use invite::*;
