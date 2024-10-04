@@ -35,13 +35,11 @@
 
 <script setup lang="ts">
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { UserProfile, logout as parsecLogout, getConnectionInfo } from '@/parsec';
-import { Routes, getConnectionHandle, navigateTo } from '@/router';
+import { UserProfile, getConnectionInfo } from '@/parsec';
+import { Routes, navigateTo } from '@/router';
 import { EventData, EventDistributor, EventDistributorKey, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
-import useUploadMenu from '@/services/fileUploadMenu';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
-import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, askQuestion, openSpinnerModal } from 'megashark-lib';
+import { Answer, askQuestion } from 'megashark-lib';
 import ProfileHeaderPopover, { ProfilePopoverOption } from '@/views/header/ProfileHeaderPopover.vue';
 import { openSettingsModal } from '@/views/settings';
 import { IonIcon, IonItem, IonText, popoverController } from '@ionic/vue';
@@ -54,7 +52,6 @@ const isPopoverOpen = ref(false);
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
-const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const updateAvailability: Ref<UpdateAvailabilityData> = ref({ updateAvailable: false });
 let eventCbId: null | string = null;
 
@@ -134,21 +131,7 @@ async function openPopover(event: Event): Promise<void> {
     );
 
     if (answer === Answer.Yes) {
-      const handle = getConnectionHandle();
-      if (!handle) {
-        console.error('Already logged out');
-        return;
-      }
-      const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
-      const menuCtrls = useUploadMenu();
-      menuCtrls.hide();
-      await injectionProvider.clean(handle);
-      const result = await parsecLogout();
-      if (!result.ok) {
-        window.electronAPI.log('error', `Error when logging out: ${result.error}`);
-      }
-      await modal.dismiss();
-      await navigateTo(Routes.Home, { replace: true, skipHandle: true });
+      await eventDistributor.dispatchEvent(Events.LogoutRequested);
     }
   } else if (data.option === ProfilePopoverOption.Settings) {
     await openSettingsModal();
