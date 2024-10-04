@@ -41,7 +41,7 @@ async fn workspace_import_file(tmp_path: TmpPath) {
         "import",
         "--device",
         &alice.device_id.hex(),
-        "--workspace-id",
+        "--workspace",
         &wid.hex(),
         &file.to_string_lossy(),
         "/test.txt"
