@@ -12,16 +12,12 @@ crate::clap_parser_with_shared_opts_builder!(
         /// Recovery file
         #[arg(short, long)]
         input: PathBuf,
-        /// Passphrase
-        #[arg(short, long)]
-        passphrase: String,
     }
 );
 
 pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
         input,
-        passphrase,
         config_dir,
         password_stdin,
     } = args;
@@ -31,12 +27,20 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         config_dir.display(),
     );
 
-    let mut handle = start_spinner("Loading recovery device file".into());
+    let device = {
+        let passphrase = read_password(if password_stdin {
+            ReadPasswordFrom::Stdin
+        } else {
+            ReadPasswordFrom::Tty {
+                prompt: "Enter passphrase for the recovery file:",
+            }
+        })?;
+        let mut handle = start_spinner("Loading recovery device file".into());
+        let res = load_recovery_device(&input, passphrase).await?;
 
-    // TODO this is a recovery device: a new local device must be created
-    let device = load_recovery_device(&input, passphrase.into()).await?;
-
-    handle.stop_with_newline();
+        handle.stop_with_newline();
+        res
+    };
 
     let password = choose_password(if password_stdin {
         ReadPasswordFrom::Stdin

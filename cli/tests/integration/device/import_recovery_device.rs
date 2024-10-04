@@ -17,13 +17,11 @@ async fn import_recovery_device(tmp_path: TmpPath) {
         .unwrap();
 
     crate::assert_cmd_success!(
-        with_password = DEFAULT_DEVICE_PASSWORD,
+        with_password = format!("{}\n{DEFAULT_DEVICE_PASSWORD}", *passphrase),
         "device",
         "import-recovery-device",
         "--input",
-        &input.to_string_lossy(),
-        "--passphrase",
-        &passphrase
+        &input.to_string_lossy()
     )
     .stdout(predicates::str::contains("Saved new device"));
 }
