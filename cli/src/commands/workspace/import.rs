@@ -1,16 +1,13 @@
 use std::{path::PathBuf, vec};
 
-use libparsec::{anyhow::Context, FsPath, OpenOptions, VlobID};
+use libparsec::{anyhow::Context, FsPath, OpenOptions};
 use tokio::io::AsyncReadExt;
 
 use crate::utils::load_client;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, workspace]
     pub struct Args {
-        /// Workspace id
-        #[arg(short, long, value_parser = VlobID::from_hex)]
-        workspace_id: VlobID,
         /// Local file to copy
         src: PathBuf,
         /// Workspace destination path
@@ -22,20 +19,20 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let Args {
         src,
         dest,
-        workspace_id,
+        workspace,
         password_stdin,
         device,
         config_dir,
     } = args;
 
     log::trace!(
-        "workspace_import: {src} -> {workspace_id}:{dst}",
+        "workspace_import: {src} -> {workspace}:{dst}",
         src = src.display(),
         dst = dest
     );
 
     let client = load_client(&config_dir, device, password_stdin).await?;
-    let workspace = client.start_workspace(workspace_id).await?;
+    let workspace = client.start_workspace(workspace).await?;
     let fd = workspace
         .open_file(
             dest,
