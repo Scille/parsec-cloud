@@ -583,10 +583,12 @@
             "browse": "Go to location",
             "failedDetails": "Please make sure you are online."
         },
-        "uploadsLeft": "Importing {amount} items",
-        "copiesLeft": "Copying {amount} items",
-        "movesLeft": "Moving {amount} items",
-        "operationsLeft": "{amount} operations left"
+        "uploadsLeft": "{amount} imports pending",
+        "copiesLeft": "{amount} copies pending",
+        "movesLeft": "{amount} moves pending",
+        "itemsDoneAmount": "One more operation done | {amount} more operations done",
+        "itemsErrorAmount": "One more operation cancelled or failed | {amount} more operations cancelled or failed",
+        "operationAmount": "{amount} operations"
     },
     "FileDetails": {
         "title": "Details on {name}",
