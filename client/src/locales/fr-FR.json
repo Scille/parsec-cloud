@@ -573,10 +573,12 @@
             "browse": "Aller à l'emplacement",
             "failedDetails": "Vérifier votre connexion internet"
         },
-        "uploadsLeft": "Importation de {amount} éléments",
-        "copiesLeft": "Copie de {amount} éléments",
-        "movesLeft": "Déplacement de {amount} éléments",
-        "operationsLeft": "{amount} opérations en attente"
+        "uploadsLeft": "{amount} imports en attente",
+        "copiesLeft": "{amount} copies en attente",
+        "movesLeft": "{amount} déplacements en attente",
+        "itemsDoneAmount": "Une autre opération terminée | {amount} autres opérations terminées",
+        "itemsErrorAmount": "Une autre opération annulée ou échouée | {amount} autres opérations annulées ou échouées",
+        "operationAmount": "{amount} opération"
     },
     "FileDetails": {
         "title": "Détails de {name}",

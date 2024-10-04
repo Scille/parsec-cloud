@@ -20,29 +20,22 @@
             })
           }}
         </ion-text>
-        <ion-button
-          class="cancel-button"
-          fill="clear"
-          size="small"
-          @click="$emit('cancel')"
-        >
+        <div class="element-details__action">
+          <ms-spinner />
           <ion-icon
+            class="cancel-button"
+            @click="$emit('cancel')"
             :icon="closeCircle"
-            slot="icon-only"
           />
-        </ion-button>
+        </div>
       </div>
     </ion-item>
-    <ion-progress-bar
-      class="progress-bar"
-      type="indeterminate"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { MsImage, Copy, FileImport, Move } from 'megashark-lib';
-import { IonIcon, IonItem, IonProgressBar, IonText, IonButton } from '@ionic/vue';
+import { MsImage, Copy, ImportMultipleFiles, Move, MsSpinner } from 'megashark-lib';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { closeCircle } from 'ionicons/icons';
 import { FileOperationDataType } from '@/services/fileOperationManager';
 
@@ -68,7 +61,7 @@ function getTextFromType(): string {
     case FileOperationDataType.Move:
       return 'FoldersPage.movesLeft';
     default:
-      return 'FoldersPage.operationsLeft';
+      return 'FoldersPage.operationAmount';
   }
 }
 
@@ -79,27 +72,24 @@ function getImageFromType(): string {
     case FileOperationDataType.Move:
       return Move;
     default:
-      return FileImport;
+      return ImportMultipleFiles;
   }
 }
 </script>
 
 <style scoped lang="scss">
 .element-container {
-  background: var(--parsec-color-light-secondary-background);
-  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-top: 1px solid var(--parsec-color-light-secondary-premiere);
+  border-bottom: 1px solid var(--parsec-color-light-secondary-premiere);
   transition: background 0.2s ease-in-out;
-  border-radius: var(--parsec-radius-8);
   position: relative;
-
-  &:hover {
-    background: var(--parsec-color-light-secondary-premiere);
-  }
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
 .element {
   --background: none;
-  padding: 1rem;
+  padding: 0.75rem 1rem 1rem;
   --inner-padding-end: 0;
 
   .file-icon {
@@ -109,8 +99,9 @@ function getImageFromType(): string {
 
   &-details {
     display: flex;
-    flex-direction: row;
-    position: relative;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
     margin-left: 0.875rem;
 
     &__name {
@@ -118,19 +109,22 @@ function getImageFromType(): string {
       margin-right: auto;
     }
 
-    .progress-bar {
-      --progress-background: var(--parsec-color-light-primary-500);
-      --background: var(--parsec-color-light-secondary-medium);
-      border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
-      position: absolute;
-      bottom: 0;
-      width: 100%;
+    &__action {
+      display: flex;
+      gap: 0.5rem;
     }
   }
 
   .cancel-button {
+    font-size: 1.15rem;
     color: var(--parsec-color-light-secondary-grey);
-    --background-hover: var(--parsec-color-light-secondary-disabled);
+    padding: 0.25rem;
+    border-radius: var(--parsec-radius-4);
+    cursor: pointer;
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-disabled);
+    }
   }
 }
 </style>

@@ -175,6 +175,7 @@ function getFailureReason(): Translatable {
   transition: background 0.2s ease-in-out;
   border-radius: var(--parsec-radius-8);
   position: relative;
+  margin: 0.5rem 0.5rem 0;
 
   &:hover {
     background: var(--parsec-color-light-secondary-premiere);
@@ -183,7 +184,7 @@ function getFailureReason(): Translatable {
 
 .element {
   --background: none;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   --inner-padding-end: 0;
 
   .file-icon {
@@ -256,7 +257,7 @@ function getFailureReason(): Translatable {
 .progress {
   .cancel-icon {
     color: var(--parsec-color-light-secondary-grey);
-    font-size: 1.125rem;
+    font-size: 1.15rem;
     padding: 0.25rem;
     border-radius: var(--parsec-radius-4);
     cursor: pointer;

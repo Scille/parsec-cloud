@@ -176,6 +176,9 @@ defineEmits<{
   transition: background 0.2s ease-in-out;
   border-radius: var(--parsec-radius-8);
   position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+  margin: 0.5rem 0.5rem 0;
 
   &:hover {
     background: var(--parsec-color-light-secondary-medium);
@@ -184,7 +187,7 @@ defineEmits<{
 
 .element {
   --background: none;
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   --inner-padding-end: 0;
 
   .file-icon {
@@ -221,15 +224,6 @@ defineEmits<{
     }
   }
 
-  &-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-500);
-    --background: var(--parsec-color-light-secondary-medium);
-    border-radius: 0 0 var(--parsec-radius-8) var(--parsec-radius-8);
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-  }
-
   .checkmark-icon,
   .arrow-icon,
   .waiting-info,
@@ -248,6 +242,10 @@ defineEmits<{
   .cancel-button {
     color: var(--parsec-color-light-secondary-grey);
     --background-hover: var(--parsec-color-light-secondary-disabled);
+
+    &__icon {
+      font-size: 1.15rem;
+    }
 
     &::part(native) {
       padding: 0.25rem;
@@ -277,12 +275,18 @@ defineEmits<{
 
 .progress {
   .element-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-300);
+    --progress-background: var(--parsec-color-light-primary-500);
+    --background: var(--parsec-color-light-secondary-medium);
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 2px;
   }
 }
 
 .done {
   cursor: pointer;
+
   .hover-state {
     display: none;
   }
@@ -299,7 +303,7 @@ defineEmits<{
   }
 
   .element-progress-bar {
-    --progress-background: var(--parsec-color-light-primary-600);
+    display: none;
   }
 
   .arrow-icon {

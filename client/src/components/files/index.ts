@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import FileAggregateDoneItem from '@/components/files/FileAggregateDoneItem.vue';
+import FileAggregateQueuedItem from '@/components/files/FileAggregateQueuedItem.vue';
 import FileCard from '@/components/files/FileCard.vue';
 import FileCardProcessing from '@/components/files/FileCardProcessing.vue';
 import FileCopyItem from '@/components/files/FileCopyItem.vue';
@@ -11,7 +13,6 @@ import FileListDisplay from '@/components/files/FileListDisplay.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/FileListItemProcessing.vue';
 import FileMoveItem from '@/components/files/FileMoveItem.vue';
-import FileQueuedItem from '@/components/files/FileQueuedItem.vue';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
 
 export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
@@ -19,6 +20,8 @@ export type { EntryModel, FileModel, FileOperationProgress, FolderModel } from '
 export { getFilesFromDrop, selectFolder } from '@/components/files/utils';
 export type { FileImportTuple, FolderSelectionOptions } from '@/components/files/utils';
 export {
+  FileAggregateDoneItem,
+  FileAggregateQueuedItem,
   FileCard,
   FileCardProcessing,
   FileCopyItem,
@@ -30,6 +33,5 @@ export {
   FileListItem,
   FileListItemProcessing,
   FileMoveItem,
-  FileQueuedItem,
   FileUploadItem,
 };
