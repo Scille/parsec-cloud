@@ -1,13 +1,10 @@
-use libparsec::{FsPath, VlobID};
+use libparsec::FsPath;
 
 use crate::utils::load_client;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, workspace]
     pub struct Rm {
-        /// Workspace id
-        #[arg(short, long, value_parser = VlobID::from_hex)]
-        workspace_id: VlobID,
         /// Path to remove
         path: FsPath,
     }
@@ -15,21 +12,17 @@ crate::clap_parser_with_shared_opts_builder!(
 
 pub async fn rm(args: Rm) -> anyhow::Result<()> {
     let Rm {
-        workspace_id,
+        workspace,
         path,
         password_stdin,
         device,
         config_dir,
     } = args;
 
-    log::trace!(
-        "rm: {workspace_id}:{path}",
-        workspace_id = workspace_id,
-        path = path
-    );
+    log::trace!("rm: {workspace}:{path}", workspace = workspace, path = path);
 
     let client = load_client(&config_dir, device, password_stdin).await?;
-    let workspace = client.start_workspace(workspace_id).await?;
+    let workspace = client.start_workspace(workspace).await?;
 
     workspace.remove_entry(path).await?;
 
