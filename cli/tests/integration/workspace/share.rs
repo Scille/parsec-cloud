@@ -42,7 +42,7 @@ async fn share_workspace(tmp_path: TmpPath) {
         &alice.device_id.hex(),
         "--workspace",
         &wid.hex(),
-        "--user-id",
+        "--user",
         &bob.user_id.hex(),
         "--role",
         "contributor"

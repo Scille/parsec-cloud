@@ -1,0 +1,1 @@
+Rename the option ``user-id`` to ``user`` in the CLI command ``workspace share``.
