@@ -131,7 +131,19 @@
           @files-added="startImportFiles"
         />
         <div
-          v-if="folders.entriesCount() + files.entriesCount() + (fileOperationsCurrentDir ? fileOperationsCurrentDir.length : 0) === 0"
+          v-show="querying"
+          class="body-lg"
+        >
+          <div class="no-files-content">
+            <ms-spinner />
+            <ion-text>
+              {{ $msTranslate('FoldersPage.loading') }}
+            </ion-text>
+          </div>
+        </div>
+
+        <div
+          v-if="!querying && itemsToShow === 0"
           class="no-files body-lg"
         >
           <file-drop-zone
@@ -149,7 +161,7 @@
             </div>
           </file-drop-zone>
         </div>
-        <div v-else>
+        <div v-else-if="!querying">
           <div v-if="displayView === DisplayState.List">
             <file-list-display
               :files="files"
@@ -200,6 +212,7 @@ import {
   Translatable,
   Clipboard,
   asyncComputed,
+  MsSpinner,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -311,6 +324,9 @@ const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
+// Init at true to avoid blinking while we're mounting the component
+// but we're not loading the files yet.
+const querying = ref(true);
 
 const fileInputsRef = ref();
 let eventCbId: string | null = null;
@@ -324,6 +340,12 @@ let callbackId: string | null = null;
 
 const ownRole = computed(() => {
   return workspaceInfo.value ? workspaceInfo.value.currentSelfRole : parsec.WorkspaceRole.Reader;
+});
+
+const itemsToShow = computed(() => {
+  return (
+    folders.value.entriesCount() + files.value.entriesCount() + (fileOperationsCurrentDir.value ? fileOperationsCurrentDir.value.length : 0)
+  );
 });
 
 async function defineShortcuts(): Promise<void> {
@@ -702,6 +724,7 @@ async function listFolder(): Promise<void> {
   if (!currentRouteIs(Routes.Documents)) {
     return;
   }
+  querying.value = true;
   const result = await parsec.statFolderChildren(workspaceInfo.value.handle, currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
@@ -761,6 +784,7 @@ async function listFolder(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  querying.value = false;
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {

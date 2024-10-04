@@ -42,7 +42,19 @@
       <!-- workspaces -->
       <div class="workspaces-container scroll">
         <div
-          v-if="filteredWorkspaces.length === 0"
+          v-show="querying"
+          class="body-lg"
+        >
+          <div class="no-workspaces-content">
+            <ms-spinner />
+            <ion-text>
+              {{ $msTranslate('WorkspacesPage.loading') }}
+            </ion-text>
+          </div>
+        </div>
+
+        <div
+          v-if="!querying && filteredWorkspaces.length === 0"
           class="no-workspaces body"
         >
           <div class="no-workspaces-content">
@@ -161,6 +173,7 @@ import {
   MsSorter,
   MsSorterChangeEvent,
   MsSearchInput,
+  MsSpinner,
 } from 'megashark-lib';
 import {
   WORKSPACES_PAGE_DATA_KEY,
@@ -223,6 +236,7 @@ const workspaceList: Ref<Array<WorkspaceInfo>> = ref([]);
 const displayView = ref(DisplayState.Grid);
 const favorites: Ref<WorkspaceID[]> = ref([]);
 const filterWorkspaceName = ref('');
+const querying = ref(true);
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
@@ -396,6 +410,7 @@ async function refreshWorkspacesList(): Promise<void> {
   if (!currentRouteIs(Routes.Workspaces)) {
     return;
   }
+  querying.value = true;
   const result = await parsecListWorkspaces();
   if (result.ok) {
     for (const wk of result.value) {
@@ -424,6 +439,7 @@ async function refreshWorkspacesList(): Promise<void> {
       PresentationMode.Toast,
     );
   }
+  querying.value = false;
 }
 
 const filteredWorkspaces = computed(() => {
