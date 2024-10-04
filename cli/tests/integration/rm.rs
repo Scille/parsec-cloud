@@ -41,7 +41,7 @@ async fn rm_files(tmp_path: TmpPath) {
         "rm",
         "--device",
         &alice.device_id.hex(),
-        "--workspace-id",
+        "--workspace",
         &wid.hex(),
         "/test.txt"
     )
@@ -53,7 +53,7 @@ async fn rm_files(tmp_path: TmpPath) {
         "rm",
         "--device",
         &alice.device_id.hex(),
-        "--workspace-id",
+        "--workspace",
         &wid.hex(),
         "/foo"
     )
