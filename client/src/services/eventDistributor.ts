@@ -19,6 +19,7 @@ enum Events {
   EntryUpdated = 1 << 10,
   EntrySynced = 1 << 11,
   TOSAcceptRequired = 1 << 12,
+  LogoutRequested = 1 << 13,
 }
 
 interface WorkspaceCreatedData {
