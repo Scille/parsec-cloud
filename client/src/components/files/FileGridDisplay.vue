@@ -11,6 +11,7 @@
     <div class="scroll">
       <div class="folders-container-grid">
         <file-card
+          ref="folderItems"
           class="folder-grid-item"
           v-for="folder in folders.getEntries()"
           :key="folder.id"
@@ -23,6 +24,7 @@
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
         />
         <file-card
+          ref="fileItems"
           class="folder-grid-item"
           v-for="file in files.getEntries()"
           :key="file.id"
@@ -63,12 +65,18 @@ const props = defineProps<{
 }>();
 
 const fileDropZoneRef = ref();
+const fileItems = ref();
+const folderItems = ref();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
+
+defineExpose({
+  scrollToSelected,
+});
 
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value.reset();
@@ -77,6 +85,28 @@ function onFilesAdded(imports: FileImportTuple[]): void {
 
 function hasSelected(): boolean {
   return props.files.hasSelected() || props.folders.hasSelected();
+}
+
+async function scrollToSelected(): Promise<void> {
+  let selectedItem: any = undefined;
+
+  for (const item of folderItems.value) {
+    if (item.props.entry.isSelected) {
+      selectedItem = item;
+      break;
+    }
+  }
+  if (!selectedItem) {
+    for (const item of fileItems.value) {
+      if (item.props.entry.isSelected) {
+        selectedItem = item;
+        break;
+      }
+    }
+  }
+  if (selectedItem) {
+    selectedItem.$el.scrollIntoView();
+  }
 }
 </script>
 

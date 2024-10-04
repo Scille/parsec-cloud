@@ -41,6 +41,7 @@
           </ion-list-header>
           <div>
             <file-list-item
+              ref="folderItems"
               v-for="folder in folders.getEntries()"
               :key="folder.id"
               :entry="folder"
@@ -53,6 +54,7 @@
               :is-workspace-reader="ownRole === WorkspaceRole.Reader"
             />
             <file-list-item
+              ref="fileItems"
               v-for="file in files.getEntries()"
               :key="file.id"
               :entry="file"
@@ -101,7 +103,13 @@ const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
 
+defineExpose({
+  scrollToSelected,
+});
+
 const fileDropZoneRef = ref();
+const folderItems = ref();
+const fileItems = ref();
 
 const allSelected = computed(() => {
   const selectedCount = props.files.selectedCount() + props.folders.selectedCount();
@@ -117,6 +125,29 @@ async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value.reset();
   emits('filesAdded', imports);
+}
+
+async function scrollToSelected(): Promise<void> {
+  let selectedItem: any = undefined;
+
+  for (const item of folderItems.value) {
+    console.log(item.props.entry);
+    if (item.props.entry.isSelected) {
+      selectedItem = item;
+      break;
+    }
+  }
+  if (!selectedItem) {
+    for (const item of fileItems.value) {
+      if (item.props.entry.isSelected) {
+        selectedItem = item;
+        break;
+      }
+    }
+  }
+  if (selectedItem) {
+    selectedItem.$el.scrollIntoView();
+  }
 }
 
 async function selectAll(selected: boolean): Promise<void> {
