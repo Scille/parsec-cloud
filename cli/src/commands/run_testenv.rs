@@ -24,9 +24,9 @@ pub struct RunTestenv {
     /// Skip initialization
     #[arg(short, long, default_value_t)]
     empty: bool,
-    /// The organization id to use for the test environment.
+    /// The organization ID to use for the test environment.
     #[arg(default_value_os = "Org")]
-    org_id: libparsec::OrganizationID,
+    organization: libparsec::OrganizationID,
 }
 
 pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
@@ -34,7 +34,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
         main_process_id,
         source_file,
         empty,
-        org_id,
+        organization,
     } = run_testenv;
 
     let tmp_dir = std::env::temp_dir().join(format!("parsec-testenv-{}", &uuid::Uuid::new_v4()));
@@ -57,7 +57,7 @@ pub async fn run_testenv(run_testenv: RunTestenv) -> anyhow::Result<()> {
 
     if !empty {
         let url = url.expect("Mismatch condition in new_environment when starting a new server");
-        let org = initialize_test_organization(ClientConfig::default(), url, org_id).await?;
+        let org = initialize_test_organization(ClientConfig::default(), url, organization).await?;
 
         println!("Alice & Bob devices (password: {YELLOW}{DEFAULT_DEVICE_PASSWORD}{RESET}):");
         println!(
