@@ -207,7 +207,6 @@ fn handle_sse_error(
         | ConnectionError::BadContent
         | ConnectionError::InvalidResponseStatus(_)
         | ConnectionError::InvalidResponseContent(_)
-        | ConnectionError::InvitationAlreadyDeleted
         | ConnectionError::InvitationNotFound
         | ConnectionError::MissingApiVersion
         | ConnectionError::MissingSupportedApiVersions

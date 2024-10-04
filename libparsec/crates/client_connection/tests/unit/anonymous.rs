@@ -12,9 +12,6 @@ use libparsec_protocol::anonymous_cmds::latest as anonymous_cmds;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-// TODO: test handling of different errors
-// This can be easily done with the testbed's send_hook callback
-
 #[parsec_test(testbed = "minimal")]
 async fn ok_mocked(env: &TestbedEnv) {
     ok(env, true).await
@@ -79,8 +76,8 @@ async fn ok(env: &TestbedEnv, mocked: bool) {
 
 // Must use a macro to generate the parametrized tests here given `test_register_low_level_send_hook`
 // only accept a static closure (i.e. `fn`, not `FnMut`).
-macro_rules! register_http_hook {
-    ($test_name: ident, $response_status_code: expr) => {
+macro_rules! register_rpc_http_hook {
+    ($test_name: ident, $response_status_code: expr, $assert_err_cb: expr) => {
         #[parsec_test(testbed = "minimal")]
         async fn $test_name(env: &TestbedEnv) {
             let addr = ParsecAnonymousAddr::ParsecPkiEnrollmentAddr(ParsecPkiEnrollmentAddr::new(
@@ -101,16 +98,76 @@ macro_rules! register_http_hook {
                 },
             );
 
-            let rep = cmds
+            let err = cmds
                 .send(anonymous_cmds::ping::Req {
                     ping: "foo".to_owned(),
                 })
-                .await;
-            p_assert_eq!(rep.unwrap_err(), ConnectionError::NoResponse(None));
+                .await
+                .unwrap_err();
+            ($assert_err_cb)(err)
         }
     };
 }
-
-register_http_hook!(no_response_http_codes_502, StatusCode::BAD_GATEWAY);
-register_http_hook!(no_response_http_codes_503, StatusCode::SERVICE_UNAVAILABLE);
-register_http_hook!(no_response_http_codes_504, StatusCode::GATEWAY_TIMEOUT);
+register_rpc_http_hook!(
+    rpc_organization_not_found_http_codes_404,
+    StatusCode::from_u16(404).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::OrganizationNotFound);
+    }
+);
+register_rpc_http_hook!(
+    rpc_bad_accept_type_http_codes_406,
+    StatusCode::from_u16(406).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::BadAcceptType);
+    }
+);
+register_rpc_http_hook!(
+    rpc_bad_content_type_http_codes_415,
+    StatusCode::from_u16(415).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::BadContent);
+    }
+);
+register_rpc_http_hook!(
+    rpc_unsupported_api_version_http_codes_422,
+    StatusCode::from_u16(422).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::MissingApiVersion);
+    }
+);
+register_rpc_http_hook!(
+    rpc_expired_organization_http_codes_460,
+    StatusCode::from_u16(460).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::ExpiredOrganization);
+    }
+);
+register_rpc_http_hook!(
+    rpc_invalid_http_status_499,
+    StatusCode::from_u16(499).unwrap(),
+    |err| {
+        p_assert_matches!(err, ConnectionError::InvalidResponseStatus(status) if status == 499);
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_502,
+    StatusCode::BAD_GATEWAY,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_503,
+    StatusCode::SERVICE_UNAVAILABLE,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
+register_rpc_http_hook!(
+    rpc_no_response_http_codes_504,
+    StatusCode::GATEWAY_TIMEOUT,
+    |err| {
+        p_assert_matches!(err, ConnectionError::NoResponse(_));
+    }
+);
