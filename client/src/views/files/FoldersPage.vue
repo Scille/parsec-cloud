@@ -160,6 +160,7 @@
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
               :own-role="ownRole"
+              ref="fileDisplay"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -172,6 +173,7 @@
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
               :own-role="ownRole"
+              ref="fileDisplay"
             />
           </div>
         </div>
@@ -251,7 +253,7 @@ import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
 import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
-import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
+import { Ref, computed, inject, onMounted, onUnmounted, ref, nextTick } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
 
 interface FoldersPageSavedData {
@@ -311,6 +313,7 @@ const folders = ref(new EntryCollection<FolderModel>());
 const files = ref(new EntryCollection<FileModel>());
 const displayView = ref(DisplayState.List);
 const workspaceInfo: Ref<parsec.StartedWorkspaceInfo | null> = ref(null);
+const fileDisplay = ref();
 
 const fileInputsRef = ref();
 let eventCbId: string | null = null;
@@ -740,6 +743,10 @@ async function listFolder(): Promise<void> {
     files.value.smartUpdate(newFiles);
     folders.value.sort(sortProperty.value, sortAsc.value);
     files.value.sort(sortProperty.value, sortAsc.value);
+    if (query.selectFile) {
+      await nextTick();
+      await fileDisplay.value.scrollToSelected();
+    }
   } else {
     // This happens when the handle becomes invalid (if we're logging out for example) and the app tries to refresh at the same
     // time. Logging out while importing files is a good example of that: logging out will cancel the imports which will trigger
