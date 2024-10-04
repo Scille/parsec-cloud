@@ -1,0 +1,1 @@
+Make CLI command ``organization create`` directly take the organization ID instead of using the option `--organization-id`

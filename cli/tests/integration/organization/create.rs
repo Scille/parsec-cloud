@@ -13,7 +13,6 @@ async fn create_organization(tmp_path: TmpPath) {
     crate::assert_cmd_success!(
         "organization",
         "create",
-        "--organization-id",
         unique_org_id().as_ref(),
         "--addr",
         &std::env::var(TESTBED_SERVER).unwrap(),
