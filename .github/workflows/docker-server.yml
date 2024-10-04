@@ -44,6 +44,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install python
+        uses: actions/setup-python@e9675cc634901ff55d92c575ecd6945e65464b00  # pin v5.2.0
+        id: setup-python
+        with:
+          python-version: 3.12
+
       - name: Get current version
         id: version
         run: python misc/releaser.py version --uniq-dev | tee -a $GITHUB_OUTPUT
