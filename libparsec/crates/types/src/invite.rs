@@ -108,8 +108,8 @@ impl FromStr for GreeterOrClaimer {
 impl Display for GreeterOrClaimer {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Greeter => write!(f, "GREETER"),
-            Self::Claimer => write!(f, "CLAIMER"),
+            Self::Greeter => write!(f, "greeter"),
+            Self::Claimer => write!(f, "claimer"),
         }
     }
 }
@@ -168,13 +168,13 @@ impl FromStr for CancelledGreetingAttemptReason {
 impl std::fmt::Display for CancelledGreetingAttemptReason {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         match self {
-            Self::ManuallyCancelled => write!(f, "MANUALLY_CANCELLED"),
-            Self::InvalidNonceHash => write!(f, "INVALID_NONCE_HASH"),
-            Self::InvalidSasCode => write!(f, "INVALID_SAS_CODE"),
-            Self::UndecipherablePayload => write!(f, "UNDECIPHERABLE_PAYLOAD"),
-            Self::UndeserializablePayload => write!(f, "UNDESERIALIZABLE_PAYLOAD"),
-            Self::InconsistentPayload => write!(f, "INCONSISTENT_PAYLOAD"),
-            Self::AutomaticallyCancelled => write!(f, "AUTOMATICALLY_CANCELLED"),
+            Self::ManuallyCancelled => write!(f, "manually cancelled"),
+            Self::InvalidNonceHash => write!(f, "invalid nonce hash"),
+            Self::InvalidSasCode => write!(f, "invalid sas code"),
+            Self::UndecipherablePayload => write!(f, "undecipherable payload"),
+            Self::UndeserializablePayload => write!(f, "undeserializable payload"),
+            Self::InconsistentPayload => write!(f, "inconsistent payload"),
+            Self::AutomaticallyCancelled => write!(f, "automatically cancelled"),
         }
     }
 }

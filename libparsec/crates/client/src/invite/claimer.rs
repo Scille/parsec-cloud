@@ -46,7 +46,7 @@ pub enum ClaimInProgressError {
     ActiveUsersLimitReached,
     #[error("The provided user is not allowed to greet this invitation")]
     GreeterNotAllowed,
-    #[error("Greeting attempt cancelled by {origin:?} because {reason:?} on {timestamp}")]
+    #[error("Greeting attempt cancelled by {origin} because of {reason} on {timestamp}")]
     GreetingAttemptCancelled {
         origin: GreeterOrClaimer,
         reason: CancelledGreetingAttemptReason,
