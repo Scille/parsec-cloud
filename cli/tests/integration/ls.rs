@@ -43,7 +43,7 @@ async fn ls_files(tmp_path: TmpPath) {
         "ls",
         "--device",
         &alice.device_id.hex(),
-        "--workspace-id",
+        "--workspace",
         &wid.hex()
     )
     .stdout(predicates::str::contains("test.txt\n").and(predicates::str::contains("foo\n")));
