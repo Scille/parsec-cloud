@@ -5,7 +5,7 @@ import { EventData, EventDistributor, Events } from '@/services/eventDistributor
 import { FileOperationManager } from '@/services/fileOperationManager';
 import { Information, InformationManager } from '@/services/informationManager';
 
-interface Injections {
+export interface Injections {
   fileOperationManager: FileOperationManager;
   eventDistributor: EventDistributor;
   informationManager: InformationManager;
