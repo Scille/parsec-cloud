@@ -49,8 +49,9 @@ pub(super) async fn fetch_remote_child_manifest(
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     vlob_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
-    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
+    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
     certificates_ops
         .validate_child_manifest(
@@ -89,9 +90,10 @@ pub(super) async fn fetch_remote_workspace_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<FolderManifest, FetchRemoteManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
-    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
+    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
     certificates_ops
         .validate_workspace_manifest(
@@ -138,13 +140,14 @@ async fn fetch_vlob(
     cmds: &AuthenticatedCmds,
     realm_id: VlobID,
     vlob_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<VlobData, FetchRemoteManifestError> {
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {
         realm_id,
         vlobs: vec![vlob_id],
-        at: None,
+        at,
     };
 
     let rep = cmds.send(req).await?;
