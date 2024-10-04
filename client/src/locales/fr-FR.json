@@ -365,6 +365,7 @@
         "createWorkspace": "Nouvel espace de travail",
         "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "noWorkspaces": "Vous n'avez pas encore accès à un espace de travail. Les espaces de travail que vous créerez ou qui vous seront partagés s'afficheront ici.",
+        "loading": "Chargement de vos espaces de travail...",
         "noMatchingWorkspaces": "Aucun espace de travail ne correspond à cette recherche.",
         "listError": "Impossible de lister les espaces de travail.",
         "newWorkspaceError": "Impossible de créer le nouvel espace de travail.",
@@ -430,6 +431,7 @@
         "itemCount": "Aucun élément | Un élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
+        "loading": "Chargement du dossier...",
         "listDisplayTitles": {
             "name": "Nom",
             "updatedBy": "Modifié par",

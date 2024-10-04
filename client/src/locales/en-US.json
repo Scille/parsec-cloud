@@ -365,6 +365,7 @@
         "createWorkspace": "New workspace",
         "itemCount": "No items | 1 item | {count} items",
         "noWorkspaces": "You do not have access to any workspace yet. Workspaces that you create or have been shared with you will be listed here.",
+        "loading": "Loading your workspaces...",
         "noMatchingWorkspaces": "No workspace match this search filter.",
         "listError": "Failed to list the workspaces.",
         "newWorkspaceError": "Failed to create a new workspace.",
@@ -430,6 +431,7 @@
         "itemCount": "No items | 1 item | {count} items",
         "itemSelectedCount": "No selected items | 1 selected item | {count} selected items",
         "emptyFolder": "This folder is empty.",
+        "loading": "Loading the folder...",
         "listDisplayTitles": {
             "name": "Name",
             "updatedBy": "Updated By",
