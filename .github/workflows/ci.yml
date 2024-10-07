@@ -47,9 +47,9 @@ jobs:
 
       - name: Determine which workflows need to be run
         id: need-check
+        shell: bash -eux -o pipefail {0}
         run: |
           env | grep NEED_CHECK_
-          set -eux -o pipefail
           for check in $(env | grep -o 'NEED_CHECK_[a-z_]\+' ); do
             env_value=$(eval "echo \${$check}")
             echo "${check#NEED_CHECK_}=$env_value"

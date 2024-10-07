@@ -274,9 +274,8 @@ jobs:
 
       - name: Windows > Install WinFSP
         if: matrix.platform == 'windows'
-        shell: bash
+        shell: bash -eux {0}
         run: |
-          set -eux
           choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
           curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o D:/a/_temp/winfsp-tests.zip
           unzip D:/a/_temp/winfsp-tests.zip -d D:/a/_temp/

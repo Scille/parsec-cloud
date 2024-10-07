@@ -54,6 +54,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Check if `*.po` were modified
+        shell: bash
         run: |
           if git status --porcelain | grep '**.po'; then
             # PO files were modified, the step fail

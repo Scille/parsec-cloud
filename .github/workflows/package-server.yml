@@ -109,9 +109,8 @@ jobs:
 
       - name: Hack the wheel macos version
         if: startsWith(matrix.os, 'macos-')
-        shell: bash
+        shell: bash -eux -o pipefail {0}
         run: |
-          set -eux
           # Old wheel name
           OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
           # Unzip the wheel

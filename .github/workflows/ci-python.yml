@@ -60,8 +60,8 @@ jobs:
         if: (!inputs.style-only)
         # GitHub Actions apt proxy is super unstable
         # see https://github.com/actions/runner-images/issues/7048
+        shell: bash -eux -o pipefail {0}
         run: |
-          set -eux -o pipefail
           COUNTRY=$(curl ipinfo.io | jq -r .country)
           MIRROR_FILE=$(mktemp)
           curl "http://mirrors.ubuntu.com/$COUNTRY.txt" > $MIRROR_FILE
@@ -76,9 +76,8 @@ jobs:
         if: (!inputs.style-only)
         env:
           POSTGRES_APT_KEY_SHA_512: df557805862cd279f40819834af14e1723b18044df9dc22bea710b6980c98cc8ed39e75ed5c9adaa1932992710f1180f0491dc9437bfd485b4aa2b75776407d4  /usr/share/keyrings/postgresql-keyring.gpg
+        shell: bash -ex -o pipefail {0}
         run: |
-          set -x -o pipefail
-
           wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc \
             | sudo gpg --dearmor --output /usr/share/keyrings/postgresql-keyring.gpg
 
@@ -154,9 +153,8 @@ jobs:
         timeout-minutes: 5
 
       - name: Install python deps
-        shell: bash
+        shell: bash -ex {0}
         run: |
-          set -ex
           poetry --directory ./server env info
           if ${{ env.SKIP_EXT_BUILD }}; then export POETRY_LIBPARSEC_BUILD_STRATEGY=no_build; fi
           python make.py python-ci-install
@@ -180,8 +178,8 @@ jobs:
           install-only: true
 
       - name: Check python code style
+        shell: bash -eux {0}
         run: |
-          set -eux
           for step in black ruff pyright ${{ !inputs.style-only && 'sqlfluff' || '' }}; do
             python \
               ${{ steps.pre-commit.outputs.install-path }} \
