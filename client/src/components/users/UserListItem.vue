@@ -15,6 +15,7 @@
     @click="$emit('click', $event, user)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    ref="itemRef"
   >
     <div class="user-selected">
       <!-- eslint-disable vue/no-mutating-props -->
@@ -101,10 +102,11 @@ import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { UserModel } from '@/components/users/types';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+const itemRef = ref();
 
 const props = defineProps<{
   user: UserModel;
@@ -121,7 +123,16 @@ defineExpose({
   isHovered,
 });
 
+onMounted(async () => {
+  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
+});
+
+onBeforeUnmount(async () => {
+  itemRef.value.$el.removeEventListener('contextmenu');
+});
+
 async function onOptionsClick(event: Event): Promise<void> {
+  event.preventDefault();
   menuOpened.value = true;
   emits('menuClick', event, props.user, () => {
     menuOpened.value = false;

@@ -10,6 +10,7 @@
     @dblclick="$emit('click', $event, entry)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    ref="itemRef"
   >
     <file-drop-zone
       :disabled="entry.isFile()"
@@ -69,12 +70,13 @@ import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, Path } from '@/parsec';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref, onBeforeUnmount } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
 
 const currentPath: Ref<FsPath> = ref('/');
+const itemRef = ref();
 
 onMounted(async () => {
   if (props.entry.isFile()) {
@@ -82,6 +84,11 @@ onMounted(async () => {
   } else {
     currentPath.value = props.entry.path;
   }
+  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
+});
+
+onBeforeUnmount(async () => {
+  itemRef.value.$el.removeEventListener('contextmenu');
 });
 
 const props = defineProps<{
@@ -105,6 +112,7 @@ function isFileSynced(): boolean {
 }
 
 async function onOptionsClick(event: Event): Promise<void> {
+  event.preventDefault();
   menuOpened.value = true;
   emits('menuClick', event, props.entry, () => {
     menuOpened.value = false;

@@ -1,0 +1,1 @@
+Added right click to open context menu on users, files and workspaces
