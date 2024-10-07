@@ -21,6 +21,7 @@ from parsec.events import (
     Event,
     EventOrganizationConfig,
     EventOrganizationExpired,
+    EventOrganizationTosUpdated,
     EventRealmCertificate,
     EventUserRevokedOrFrozen,
     EventUserUpdated,
@@ -256,60 +257,72 @@ class BaseEventsComponent:
         # of this component is basically equivalent of the one of the event bus anyway
 
     def _on_event(self, event: Event) -> None:
-        if isinstance(event, EventOrganizationExpired):
-            for registered in self._registered_clients.values():
-                if registered.organization_id == event.organization_id:
-                    registered.cancel_scope.cancel()
-            return
+        match event:
+            # Events to be dispatched to the listening clients
 
-        if isinstance(event, EventUserRevokedOrFrozen):
-            for registered in self._registered_clients.values():
-                if (
-                    registered.organization_id == event.organization_id
-                    and registered.user_id == event.user_id
-                ):
-                    registered.cancel_scope.cancel()
-            return
+            case ClientBroadcastableEvent():
+                # It's likely the latest api is the most used, hence we only dump the
+                # event once for this case
+                apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
 
-        if not isinstance(event, ClientBroadcastableEvent):
-            # The event is only meant for cross-server communicated, skip it
-            return
+                self._last_events_cache.append(event)
+                for registered in self._registered_clients.values():
+                    if not event.is_event_for_client(registered):
+                        if (
+                            isinstance(event, EventRealmCertificate)
+                            and event.organization_id == registered.organization_id
+                            and event.user_id == registered.user_id
+                        ):
+                            # This is a special case: the current certificate is new a sharing
+                            # for our user (hence he doesn't know yet he should be interested
+                            # in this realm !).
+                            registered.realms.add(event.realm_id)
+                        else:
+                            # The event is not meant for this client, skip it
+                            continue
 
-        # It's likely the latest api is the most used, hence we only dump the
-        # event once for this case
-        apiv4_sse_payload = event.dump_as_apiv4_sse_payload()
+                    # The current certificate is a new unsharing for our user. It is then
+                    # last event our user will receive about this realm, hence we update
+                    # the list of realm we are interested about accordingly.
+                    if (
+                        isinstance(event, EventRealmCertificate)
+                        and event.role_removed
+                        and event.user_id == registered.user_id
+                    ):
+                        registered.realms.discard(event.realm_id)
 
-        self._last_events_cache.append(event)
-        for registered in self._registered_clients.values():
-            if not event.is_event_for_client(registered):
-                if (
-                    isinstance(event, EventRealmCertificate)
-                    and event.organization_id == registered.organization_id
-                    and event.user_id == registered.user_id
-                ):
-                    # This is a special case: the current certificate is new a sharing
-                    # for our user (hence he doesn't know yet he should be interested
-                    # in this realm !).
-                    registered.realms.add(event.realm_id)
-                else:
-                    # The event is not meant for this client, skip it
-                    continue
+                    try:
+                        registered.channel_sender.send_nowait((event, apiv4_sse_payload))
+                    except anyio.WouldBlock:
+                        # Client is lagging too much behind, kill it
+                        registered.cancel_scope.cancel()
 
-            # The current certificate is a new unsharing for our user. It is then
-            # last event our user will receive about this realm, hence we update
-            # the list of realm we are interested about accordingly.
-            if (
-                isinstance(event, EventRealmCertificate)
-                and event.role_removed
-                and event.user_id == registered.user_id
-            ):
-                registered.realms.discard(event.realm_id)
+            # Events for cross-server communication requiring disconnection of some listening clients
 
-            try:
-                registered.channel_sender.send_nowait((event, apiv4_sse_payload))
-            except anyio.WouldBlock:
-                # Client is lagging too much behind, kill it
-                registered.cancel_scope.cancel()
+            case EventOrganizationExpired():
+                for registered in self._registered_clients.values():
+                    if registered.organization_id == event.organization_id:
+                        registered.cancel_scope.cancel()
+
+            case EventUserRevokedOrFrozen():
+                for registered in self._registered_clients.values():
+                    if (
+                        registered.organization_id == event.organization_id
+                        and registered.user_id == event.user_id
+                    ):
+                        registered.cancel_scope.cancel()
+
+            case EventOrganizationTosUpdated():
+                # All user in the organization must re-accept the TOS before being
+                # able to use the server again.
+                for registered in self._registered_clients.values():
+                    if registered.organization_id == event.organization_id:
+                        registered.cancel_scope.cancel()
+
+            # Other events for cross-server communication, just ignore them
+
+            case _:
+                pass
 
     async def _register_client(
         self,
