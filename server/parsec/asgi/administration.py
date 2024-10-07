@@ -128,9 +128,12 @@ def log_request[**P, T: BaseModel | Response](
             logger.debug(f"{request.method} {request.url.path} base exception", exc_info=e)
             raise
         if isinstance(result, Response):
+            body = result.body
+            if isinstance(body, memoryview):
+                body = bytes(body)
             debug_extra = {
                 "status_code": result.status_code,
-                "body": result.body.decode("utf-8"),
+                "body": body.decode("utf-8"),
             }
             logger.info_with_debug_extra(
                 f"{request.method} {request.url.path} response", debug_extra=debug_extra
