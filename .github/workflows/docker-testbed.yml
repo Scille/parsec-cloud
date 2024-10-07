@@ -61,6 +61,7 @@ jobs:
 
       - name: Get current version
         id: version
+        shell: bash
         run: python misc/releaser.py version --uniq-dev | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
@@ -89,6 +90,7 @@ jobs:
 
       - name: Start docker test container
         id: test-container
+        shell: bash
         run: |
           (
             echo -n "id=";

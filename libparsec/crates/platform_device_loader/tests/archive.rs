@@ -24,7 +24,7 @@ async fn archive_ok(tmp_path: TmpPath, env: &TestbedEnv) {
 
     // 3. Check that the device as been archived.
     assert!(!key_file.exists(), "Device file should have been archived");
-    let expected_archive_path = key_file.with_extension(format!("device.archived"));
+    let expected_archive_path = key_file.with_extension("device.archived");
     assert!(
         expected_archive_path.exists(),
         "Device file should have been archived at the expected location ({})",

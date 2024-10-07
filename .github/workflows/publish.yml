@@ -62,14 +62,14 @@ jobs:
 
       - name: Get tag version
         id: version
-        run: |
-          set -eux -o pipefail
-          gh release \
-            --repo=${{ github.server_url }}/${{ github.repository }} \
-            download \
-            ${{ env.RELEASE_TAG }} \
-            --pattern=version \
-            --output=- | tee -a $GITHUB_OUTPUT
+        shell: bash -eux -o pipefail {0}
+        run: >-
+          gh release
+          --repo=${{ github.server_url }}/${{ github.repository }}
+          download
+          ${{ env.RELEASE_TAG }}
+          --pattern=version
+          --output=- | tee -a $GITHUB_OUTPUT
         env:
           GH_TOKEN: ${{ github.token }}
         timeout-minutes: 2
@@ -109,8 +109,8 @@ jobs:
 
       - name: Get releases for snapcraft
         id: snapcraft-channels
-        run: |
-          set -o pipefail
+        shell: bash
+        run: >-
           (
             echo -n "channels=";
             python misc/snapcraft_releases.py ${{ inputs.nightly && '--nightly' || '' }} ${{ steps.version.outputs.full }}
@@ -118,6 +118,7 @@ jobs:
         timeout-minutes: 1
 
       - name: Check that snapcraft credential is not empty
+        shell: bash
         run: test $(printenv SNAPCRAFT_STORE_CREDENTIALS | wc -c | tee /dev/stderr) -gt 10
         env:
           SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_CREDENTIALS }}

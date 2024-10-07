@@ -49,13 +49,12 @@ runs:
     - name: Install pre-commit
       id: install-precommit
       if: steps.cache-pre-commit.outputs.cache-hit != 'true'
+      shell: bash -eux {0}
       run: |
-        set -eux
         mkdir -p ${{ inputs.install-dir }}
         curl --proto '=https' --tlsv1.2 -sSL \
           https://github.com/pre-commit/pre-commit/releases/download/v${{ inputs.version }}/pre-commit-${{ inputs.version }}.pyz \
           > ${{ inputs.install-dir }}/pre-commit.pyz
-      shell: bash
 
     - name: Debug installed python package
       run: |
@@ -83,9 +82,8 @@ runs:
 
     - name: Run pre-commit
       if: inputs.install-only != 'true'
+      shell: bash -ex {0}
       run: |
-        # Run pre-commit
-        set -x
         python \
           ${{ inputs.install-dir }}/pre-commit.pyz \
           run \
@@ -98,4 +96,3 @@ runs:
           ${{ inputs.config-file != '' && format('--config {0}', inputs.config-file) || '' }}
           ${{ steps.suggested-run.outputs.args }}
           ${{ inputs.extra-args }}
-      shell: bash

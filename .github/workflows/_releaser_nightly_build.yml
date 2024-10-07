@@ -46,10 +46,12 @@ jobs:
 
       - name: Get commit for nightly tag
         id: commit
+        shell: bash
         run: echo "id=$(git rev-parse HEAD)" | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Parse version
         id: version
+        shell: bash
         run: python misc/releaser.py version | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1

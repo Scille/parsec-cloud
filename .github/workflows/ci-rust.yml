@@ -108,6 +108,7 @@ jobs:
 
       - name: Categorize workspace crates
         id: crates
+        shell: bash
         run: |
           (
             for type in agnostic platform bindings; do
@@ -168,7 +169,8 @@ jobs:
 
       - name: Retrieve clippy args
         id: clippy-args
-        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy")) | first | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
+        shell: bash
+        run: yq -r '"args=" + (.repos | map(.hooks) | flatten | map(select(.id == "clippy"))[0] | .args | join(" "))' .pre-commit-config.yaml | tee -a $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - name: Check rust code format
@@ -178,8 +180,8 @@ jobs:
       - name: SQL lint
         # Cannot use `./misc/lint_sql.py` here since it would require us to install the
         # whole Python server project.
+        shell: bash -eux {0}
         run: |
-          set -eux
           pipx install sqlfluff
           sqlfluff lint --disable-progress-bar --config libparsec/crates/platform_storage/src/native/sql/.sqlfluff  libparsec/crates/platform_storage/src/native/sql/
 
@@ -248,9 +250,8 @@ jobs:
 
       - name: Install winfsp
         if: startsWith(matrix.os, 'windows')
-        shell: bash
+        shell: bash -eux {0}
         run: |
-          set -eux
           choco install winfsp -y --version=${{ env.WINFSP_VERSION }}
           curl -L https://github.com/winfsp/winfsp/releases/download/v2.0/winfsp-tests-${{ env.WINFSP_VERSION }}.zip -o D:/a/_temp/winfsp-tests.zip
           unzip D:/a/_temp/winfsp-tests.zip -d D:/a/_temp/
@@ -267,9 +268,8 @@ jobs:
           tool: nextest@0.9.54
 
       - name: Check rust agnostic codebase
-        shell: bash
+        shell: bash -ex {0}
         run: |
-          set -x
           NON_BINDINGS_CRATES=`python3 misc/libparsec_crates_flags.py agnostic platform`
           cargo check ${{ env.CARGO_CI_FLAGS }} $NON_BINDINGS_CRATES --features use-sodiumoxide
         timeout-minutes: 15 # It can be very slow if cache has missed
@@ -283,9 +283,8 @@ jobs:
         timeout-minutes: 10
 
       - name: Test Rust platform codebase with sodium
-        shell: bash
+        shell: bash -ex -o pipefail {0}
         run: |
-          set -x
           PLATFORM_CRATES=`python3 misc/libparsec_crates_flags.py platform`
           if [[ '${{ matrix.os }}' = macos* ]]; then
             # Mountpoint cannot be tested on macOS because it requires macFUSE installation,
