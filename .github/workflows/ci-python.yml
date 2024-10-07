@@ -123,7 +123,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin v4.0.2
+        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # pin v4.1.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -134,7 +134,7 @@ jobs:
         timeout-minutes: 2
 
       - name: Setup Rust toolchain
-        uses: actions-rust-lang/setup-rust-toolchain@4d1965c9142484e48d40c19de54b5cba84953a06 # pin v1.10.0
+        uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # pin v1.10.1
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # We setup the cache by hand, see below
@@ -202,7 +202,7 @@ jobs:
           (!inputs.style-only)
           && steps.cache-libparsec.outputs.cache-hit != 'true'
           && !contains(github.ref, 'gh-readonly-queue')
-        uses: actions/cache/save@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # pin v4.0.2
+        uses: actions/cache/save@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # pin v4.1.0
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
