@@ -437,7 +437,15 @@ def run_cmd(
                     app_config=app_config,
                 )
             )
-        # Ignore noisy cancellation
+        # Ignore some noisy cancellation
+        # Note that this is no longer necessary with the latest anyio version (version 4.6)
+        # This can be verified using the following protocol:
+        # - Run the parsec server with a postgre database
+        # - Stop the postgre server
+        # - Start the postgre server
+        # - The parsec server should restart automatically
+        # - Stop the parsec server with a KeyboardInterrupt
+        # - Check that the cancelled error does not appear
         except asyncio.CancelledError:
             pass
         finally:
