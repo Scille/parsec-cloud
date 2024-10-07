@@ -55,3 +55,16 @@ export function currentRouteIsOrganizationManagementRoute(): boolean {
 export function currentRouteIsFileRoute(): boolean {
   return currentRouteIsOneOf([Routes.Documents, Routes.Workspaces]);
 }
+
+export function currentRouteIsLoggedRoute(): boolean {
+  return currentRouteIsOneOf([
+    Routes.Workspaces,
+    Routes.Documents,
+    Routes.Users,
+    Routes.Storage,
+    Routes.Organization,
+    Routes.About,
+    Routes.MyProfile,
+    Routes.RecoveryExport,
+  ]);
+}

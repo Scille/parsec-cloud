@@ -125,6 +125,7 @@ import {
   navigateTo,
   routerGoBack,
   watchRoute,
+  currentRouteIsLoggedRoute,
 } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
 import { InformationManager, InformationManagerKey } from '@/services/informationManager';
@@ -160,6 +161,9 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const notificationCenterButton = ref();
 
 const routeWatchCancel = watchRoute(async () => {
+  if (!currentRouteIsLoggedRoute()) {
+    return;
+  }
   const result = await getClientInfo();
   if (result.ok) {
     userInfo.value = result.value;
