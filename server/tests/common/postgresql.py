@@ -127,6 +127,7 @@ _pg_cluster = None
 
 def bootstrap_pg_cluster() -> str:
     global _pg_cluster
+    port = os.environ.get("PG_CLUSTER_PORT", "dynamic")
 
     if _pg_cluster:
         raise RuntimeError("Postgresql cluster already bootstrapped !")
@@ -135,7 +136,7 @@ def bootstrap_pg_cluster() -> str:
     # Make the default superuser name stable.
     _pg_cluster.init(username="postgres")
     _pg_cluster.trust_local_connections()
-    _pg_cluster.start(port="dynamic", server_settings={})
+    _pg_cluster.start(port=port, server_settings={})
 
     def _shutdown_pg_cluster() -> None:
         assert _pg_cluster is not None
