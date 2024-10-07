@@ -141,6 +141,10 @@ impl RateLimiter {
     pub fn set_desired_duration(&mut self, duration: Duration) {
         self.desired_duration = Some(duration);
     }
+
+    pub fn set_attempt(&mut self, attempt: usize) {
+        self.attempt = attempt;
+    }
 }
 
 impl Default for RateLimiter {

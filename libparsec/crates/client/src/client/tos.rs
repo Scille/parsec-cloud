@@ -7,6 +7,7 @@ use libparsec_protocol::tos_cmds;
 use libparsec_types::prelude::*;
 
 use super::Client;
+use crate::event_bus::EventShouldRetryConnectionNow;
 
 #[derive(Debug, thiserror::Error)]
 pub enum ClientGetTosError {
@@ -87,7 +88,14 @@ pub async fn accept_tos(
     let request = tos_cmds::latest::tos_accept::Req { tos_updated_on };
     let rep = client_ops.cmds.send(request).await?;
     match rep {
-        tos_cmds::v4::tos_accept::Rep::Ok => Ok(()),
+        tos_cmds::v4::tos_accept::Rep::Ok => {
+            // If the TOS acception was required, it most likely means the connection
+            // monitor is currently polling the server from time to time in order to
+            // detect when the TOS have been accepted.
+            // So we send a dedicated event to speed up the process.
+            client_ops.event_bus.send(&EventShouldRetryConnectionNow);
+            Ok(())
+        }
         tos_cmds::v4::tos_accept::Rep::TosMismatch => Err(ClientAcceptTosError::TosMismatch),
         tos_cmds::v4::tos_accept::Rep::NoTos => Err(ClientAcceptTosError::NoTos),
         tos_cmds::v4::tos_accept::Rep::UnknownStatus { unknown_status, .. } => {

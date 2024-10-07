@@ -7,7 +7,7 @@ use libparsec_protocol::tos_cmds;
 use libparsec_tests_fixtures::prelude::*;
 
 use super::utils::client_factory;
-use crate::{ClientAcceptTosError, ClientGetTosError, Tos};
+use crate::{ClientAcceptTosError, ClientGetTosError, EventShouldRetryConnectionNow, Tos};
 
 #[parsec_test(testbed = "minimal")]
 async fn get_tos_ok(env: &TestbedEnv) {
@@ -91,8 +91,13 @@ async fn accept_tos_ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
+    let mut spy = client.event_bus.spy.start_expecting();
+
     let outcome = client.accept_tos(tos_updated_on).await;
     p_assert_matches!(outcome, Ok(()));
+
+    spy.wait_and_assert_next(|_: &EventShouldRetryConnectionNow| {})
+        .await;
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -105,10 +110,14 @@ async fn accept_tos_no_tos(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
+    let spy = client.event_bus.spy.start_expecting();
+
     let outcome = client
         .accept_tos("2000-01-01T00:00:00Z".parse().unwrap())
         .await;
     p_assert_matches!(outcome, Err(ClientAcceptTosError::NoTos));
+
+    spy.assert_no_events();
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -123,10 +132,14 @@ async fn accept_tos_tos_mismatch(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
+    let spy = client.event_bus.spy.start_expecting();
+
     let outcome = client
         .accept_tos("2000-01-01T00:00:00Z".parse().unwrap())
         .await;
     p_assert_matches!(outcome, Err(ClientAcceptTosError::TosMismatch));
+
+    spy.assert_no_events();
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -134,8 +147,12 @@ async fn accept_tos_offline(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice).await;
 
+    let spy = client.event_bus.spy.start_expecting();
+
     let outcome = client
         .accept_tos("2000-01-01T00:00:00Z".parse().unwrap())
         .await;
     p_assert_matches!(outcome, Err(ClientAcceptTosError::Offline));
+
+    spy.assert_no_events();
 }
