@@ -59,15 +59,6 @@
 
     <ion-list class="upload-menu-list">
       <template v-if="currentTab === Tabs.InProgress">
-        <component
-          v-for="item in inProgressItems"
-          :is="getFileOperationComponent(item)"
-          :key="item.data.id"
-          :state="item.state"
-          :state-data="item.stateData"
-          :operation-data="item.data"
-          @cancel="cancelOperation"
-        />
         <file-queued-item
           v-if="queuedUploadItems.length > 0"
           :amount="queuedUploadItems.length"
@@ -85,6 +76,15 @@
           :amount="queuedMoveItems.length"
           :type="FileOperationDataType.Move"
           @cancel="cancelQueuedOperations(queuedMoveItems)"
+        />
+        <component
+          v-for="item in inProgressItems"
+          :is="getFileOperationComponent(item)"
+          :key="item.data.id"
+          :state="item.state"
+          :state-data="item.stateData"
+          :operation-data="item.data"
+          @cancel="cancelOperation"
         />
         <div
           class="upload-menu-list__empty"
@@ -467,8 +467,7 @@ async function onFileOperationEvent(
   &-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 1em 0.5rem;
+    padding: 0.5rem 0;
     overflow-y: auto;
     height: 40vh;
     max-height: 25rem;
