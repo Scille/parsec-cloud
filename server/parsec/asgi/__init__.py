@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import anyio
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -109,4 +110,18 @@ async def serve_parsec_asgi_app(
         # (e.g. "GET 88.0.12.52:54160 /foo 1.1 404 823o 12343ms")
     )
     server = uvicorn.Server(config)
-    await server.serve()
+
+    async def server_task(task_status):
+        # Protect server against cancellation
+        with anyio.CancelScope(shield=True):
+            task_status.started()
+            await server.serve()
+        tg.cancel_scope.cancel()
+
+    async with anyio.create_task_group() as tg:
+        await tg.start(server_task)
+        try:
+            await anyio.sleep_forever()
+        finally:
+            # Use should_exit to shutdown the server gracefully
+            server.should_exit = True

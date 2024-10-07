@@ -437,6 +437,9 @@ def run_cmd(
                     app_config=app_config,
                 )
             )
+        # Ignore noisy cancellation
+        except asyncio.CancelledError:
+            pass
         finally:
             click.echo("bye ;-)")
 
