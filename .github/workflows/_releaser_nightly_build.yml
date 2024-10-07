@@ -29,7 +29,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Install python
-        uses: actions/setup-python@e9675cc634901ff55d92c575ecd6945e65464b00  # pin v5.2.0
+        uses: actions/setup-python@19dfb7b659fa9e60c2f89c33335ab5f6f1792b6e  # pin v5.2.0
         id: setup-python
         with:
           python-version: 3.12
