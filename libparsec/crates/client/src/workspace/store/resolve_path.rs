@@ -194,10 +194,10 @@ fn cache_only_path_resolution(
     path_parts: &[EntryName],
     lock_for_update: bool,
 ) -> CacheOnlyPathResolutionOutcome {
-    enum StepKind {
+    enum StepKind<'a> {
         Root,
         Child {
-            manifest: ArcLocalChildManifest,
+            manifest: &'a ArcLocalChildManifest,
             confinement: PathConfinementPoint,
         },
     }
@@ -234,7 +234,7 @@ fn cache_only_path_resolution(
                         confinement,
                     } => {
                         return CacheOnlyPathResolutionOutcome::Done {
-                            manifest,
+                            manifest: manifest.to_owned(),
                             confinement,
                             maybe_update_lock_guard,
                         };
@@ -277,7 +277,7 @@ fn cache_only_path_resolution(
         };
 
         let child_manifest = match cache.manifests.get(&child_id) {
-            Some(manifest) => manifest.to_owned(),
+            Some(manifest) => manifest,
             // Cache miss !
             // `part_index` is not incremented here, so we are going to
             // leave the second loop, populate the cache, loop into first
@@ -677,7 +677,7 @@ fn cache_only_retrieve_path_from_id(
     let root_entry_id = cache.manifests.root_manifest().base.id;
 
     let entry_manifest = match cache.manifests.get(&entry_id) {
-        Some(manifest) => manifest.clone(),
+        Some(manifest) => manifest,
         None => return CacheOnlyRetrievalOutcome::NeedPopulateCache(entry_id),
     };
 
@@ -733,7 +733,11 @@ fn cache_only_retrieve_path_from_id(
 
     // Reverse the parts to get the path
     parts.reverse();
-    CacheOnlyRetrievalOutcome::Done((entry_manifest, FsPath::from_parts(parts), confinement))
+    CacheOnlyRetrievalOutcome::Done((
+        entry_manifest.to_owned(),
+        FsPath::from_parts(parts),
+        confinement,
+    ))
 }
 
 /// Retrieve the path and the confinement point of a given entry ID.
