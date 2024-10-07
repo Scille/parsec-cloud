@@ -103,7 +103,6 @@ def cli_exception_handler(debug: bool) -> Iterator[bool]:
         yield debug
 
     except KeyboardInterrupt:
-        click.echo("bye ;-)")
         raise SystemExit(0)
 
     except Exception as exc:
