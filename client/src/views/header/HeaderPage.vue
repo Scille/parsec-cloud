@@ -112,14 +112,7 @@
 import HeaderBackButton from '@/components/header/HeaderBackButton.vue';
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import InvitationsButton from '@/components/header/InvitationsButton.vue';
-import {
-  ClientInfo,
-  Path,
-  UserProfile,
-  getClientInfo,
-  isMobile,
-  getWorkspaceName,
-} from '@/parsec';
+import { ClientInfo, Path, UserProfile, getClientInfo, isMobile, getWorkspaceName } from '@/parsec';
 import {
   Routes,
   currentRouteIs,
