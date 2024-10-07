@@ -287,3 +287,45 @@ async def test_close_on_user_revoked(coolorg: CoolorgRpcClients, backend: Backen
         # And then the connection is closed
         with pytest.raises(StopAsyncIteration):
             event = await bob_sse.next_event()
+
+
+async def test_close_on_organization_tos_updated(
+    coolorg: CoolorgRpcClients, backend: Backend
+) -> None:
+    async def send_ping(ping: str) -> None:
+        await backend.event_bus.send(
+            EventPinged(
+                organization_id=coolorg.organization_id,
+                ping=ping,
+            )
+        )
+
+    async with coolorg.bob.events_listen() as bob_sse:
+        await send_ping("before-tos-update")
+
+        now = DateTime.now()
+        outcome = await backend.organization.update(
+            now=now, id=coolorg.organization_id, tos={"fr_FR": "https://example.com/tos_fr.html"}
+        )
+        assert outcome is None
+
+        await send_ping("after-tos-update")
+
+        # Bob still receives the ServerConfig event
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventServerConfig(
+                active_users_limit=ActiveUsersLimit.NO_LIMIT,
+                user_profile_outsider_allowed=True,
+            )
+        )
+
+        # And the events sent before the tos-update
+        event = await bob_sse.next_event()
+        assert event == authenticated_cmds.v4.events_listen.RepOk(
+            authenticated_cmds.v4.events_listen.APIEventPinged(ping="before-tos-update")
+        )
+
+        # And then the connection is closed
+        with pytest.raises(StopAsyncIteration):
+            event = await bob_sse.next_event()
