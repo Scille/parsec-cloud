@@ -79,18 +79,23 @@ async def event_bus_factory(pool: AsyncpgPool) -> AsyncIterator[PGEventBus]:
             return
         event_bus._dispatch_incoming_event(event)
 
-    async with pool.acquire() as notification_conn:
-        try:
+    try:
+        async with pool.acquire() as notification_conn:
             async with anyio.create_task_group() as task_group:
                 notification_conn.add_termination_listener(_on_notification_conn_termination)
+
                 await notification_conn.add_listener("app_notification", _on_notification)
-                task_group.start_soon(_pump_events, notification_conn)
-                yield event_bus
+                try:
+                    task_group.start_soon(_pump_events, notification_conn)
+                    yield event_bus
+                finally:
+                    await notification_conn.remove_listener("app_notification", _on_notification)
+
                 task_group.cancel_scope.cancel()
-        finally:
-            await notification_conn.remove_listener("app_notification", _on_notification)
-            if _connection_lost:
-                raise ConnectionError("PostgreSQL notification query has been lost")
+
+    finally:
+        if _connection_lost:
+            raise ConnectionError("PostgreSQL notification query has been lost")
 
 
 _q_get_orga_and_user_infos = Q("""
