@@ -33,12 +33,14 @@
 /// So we choose (for the moment at least !) the pragmatic approach of considering
 /// SSE errors are the only important ones, so that only the connection monitor have
 /// to deal with events.
-use std::{collections::HashMap, ops::ControlFlow, sync::Arc};
+use std::{collections::HashMap, sync::Arc};
 
 use libparsec_client_connection::{
     AuthenticatedCmds, ConnectionError, RateLimiter, SSEResponseOrMissedEvents,
 };
-use libparsec_platform_async::{pretend_future_is_send_on_web, stream::StreamExt};
+use libparsec_platform_async::{
+    channel, pretend_future_is_send_on_web, select2_biased, stream::StreamExt,
+};
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::v4::events_listen::{APIEvent, Rep, Req};
 
@@ -160,33 +162,42 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
     }
 }
 
+enum HandleSseErrorOutcome {
+    MustWaitForOnline,
+    MustWaitForTosAccepted,
+    MustStopMonitor,
+}
+
 fn handle_sse_error(
     state: &mut ConnectionState,
     event_bus: &EventBus,
     err: ConnectionError,
-) -> ControlFlow<()> {
+) -> HandleSseErrorOutcome {
     if &ConnectionState::Online == state {
         event_bus.send(&EventOffline);
         *state = ConnectionState::Offline;
     }
 
     match err {
-        // The only legit error is if we couldn't reach the server...
-        ConnectionError::NoResponse(_) => ControlFlow::Continue(()),
+        // Legit errors...
+
+        // We couldn't reach the server
+        ConnectionError::NoResponse(_) => HandleSseErrorOutcome::MustWaitForOnline,
+        // We must accept the TOS before being able to connect
+        ConnectionError::UserMustAcceptTos => {
+            event_bus.send(&EventMustAcceptTos);
+            HandleSseErrorOutcome::MustWaitForTosAccepted
+        }
 
         // ...otherwise the server rejected us, hence there is no use
         // retrying to connect and we just stop this coroutine
         ConnectionError::ExpiredOrganization => {
             event_bus.send(&EventExpiredOrganization);
-            ControlFlow::Break(())
+            HandleSseErrorOutcome::MustStopMonitor
         }
         ConnectionError::RevokedUser => {
             event_bus.send(&EventRevokedSelfUser);
-            ControlFlow::Break(())
-        }
-        ConnectionError::UserMustAcceptTos => {
-            event_bus.send(&EventMustAcceptTos);
-            ControlFlow::Break(())
+            HandleSseErrorOutcome::MustStopMonitor
         }
         ConnectionError::UnsupportedApiVersion {
             api_version,
@@ -197,7 +208,7 @@ fn handle_sse_error(
                 supported_api_versions,
             });
             event_bus.send(&event);
-            ControlFlow::Break(())
+            HandleSseErrorOutcome::MustStopMonitor
         }
         err @ (ConnectionError::MissingAuthenticationInfo
         | ConnectionError::BadAuthenticationInfo
@@ -219,7 +230,7 @@ fn handle_sse_error(
             let event =
                 EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
             event_bus.send(&event);
-            ControlFlow::Break(())
+            HandleSseErrorOutcome::MustStopMonitor
         }
     }
 }
@@ -233,22 +244,47 @@ enum ConnectionState {
 async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) {
     let mut state = ConnectionState::Offline;
     let mut last_event_id = None;
+    // Backoff is used to wait longer and longer after each failed connection
+    // the server.
     let mut backoff = RateLimiter::new();
+    // This channel is use to reset the backoff system, typically when some outside
+    // event requires to retry the connection right away.
+    let (retry_now_tx, retry_now_rx) = channel::bounded::<()>(1);
+
+    let _event_lifetime = {
+        event_bus.connect(move |_: &EventShouldRetryConnectionNow| {
+            // If the channel already contains something it means we have nothing
+            // to do: the backoff is already planned to be reset on the next wait.
+            let _ = retry_now_tx.send(());
+        })
+    };
 
     // As last monitor to start, we send this event to wake up all the other monitors
     event_bus.send(&EventMissedServerEvents);
 
     loop {
-        backoff.wait().await;
+        // Note we listen on `retry_now_rx`
+        let should_reset_backoff = select2_biased!(
+            _ = backoff.wait() => false,
+            _ = retry_now_rx.recv_async() => true,
+        );
+        if should_reset_backoff {
+            backoff.reset();
+            // Under normal circumstances the backoff first does a wait, then do
+            // the actual attempt.
+            // However here we have reset the backoff, so if we do the actual attempt
+            // without correction, we will have a decorrelation with the wait (e.g. we
+            // will have a 0s wait on the second attempt instead of 1s).
+            backoff.set_attempt(1);
+        }
 
         let mut stream = match cmds.start_sse::<Req>(last_event_id.clone()).await {
             Ok(stream) => stream,
-            Err(err) => {
-                if handle_sse_error(&mut state, &event_bus, err).is_break() {
-                    return;
-                }
-                continue;
-            }
+            Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
+                HandleSseErrorOutcome::MustWaitForOnline
+                | HandleSseErrorOutcome::MustWaitForTosAccepted => continue,
+                HandleSseErrorOutcome::MustStopMonitor => return,
+            },
         };
 
         backoff.reset();
@@ -257,7 +293,7 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
             match res {
                 Ok(event) => {
                     if let Some(retry) = event.retry {
-                        backoff.set_desired_duration(retry)
+                        backoff.set_desired_duration(retry);
                     }
                     if let Some(event_id) = event.id {
                         last_event_id.replace(event_id);
@@ -288,11 +324,11 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                         SSEResponseOrMissedEvents::Empty => (),
                     }
                 }
-                Err(err) => {
-                    if handle_sse_error(&mut state, &event_bus, err).is_break() {
-                        return;
-                    }
-                }
+                Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
+                    HandleSseErrorOutcome::MustWaitForOnline
+                    | HandleSseErrorOutcome::MustWaitForTosAccepted => continue,
+                    HandleSseErrorOutcome::MustStopMonitor => return,
+                },
             }
         }
     }
