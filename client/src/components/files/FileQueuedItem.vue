@@ -20,23 +20,22 @@
             })
           }}
         </ion-text>
-        <ion-icon
-          class="cancel-button"
-          @click="$emit('cancel')"
-          :icon="closeCircle"
-        />
+        <div class="element-details__action">
+          <ms-spinner />
+          <ion-icon
+            class="cancel-button"
+            @click="$emit('cancel')"
+            :icon="closeCircle"
+          />
+        </div>
       </div>
     </ion-item>
-    <ion-progress-bar
-      class="progress-bar"
-      type="indeterminate"
-    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { MsImage, Copy, Move, ImportMultipleFiles } from 'megashark-lib';
-import { IonIcon, IonItem, IonProgressBar, IonText, IonButton } from '@ionic/vue';
+import { MsImage, Copy, Move, ImportMultipleFiles, MsSpinner } from 'megashark-lib';
+import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { closeCircle } from 'ionicons/icons';
 import { FileOperationDataType } from '@/services/fileOperationManager';
 
@@ -109,6 +108,11 @@ function getImageFromType(): string {
       color: var(--parsec-color-light-primary-700);
       margin-right: auto;
     }
+
+    &__action {
+      display: flex;
+      gap: 0.5rem;
+    }
   }
 
   .cancel-button {
@@ -129,7 +133,8 @@ function getImageFromType(): string {
   --background: var(--parsec-color-light-secondary-medium);
   position: absolute;
   bottom: 0;
-  width: 100%;
+  width: calc(100% - 1rem);
   height: 2px;
+  margin: auto;
 }
 </style>

@@ -60,7 +60,6 @@
     <ion-list class="upload-menu-list">
       <template v-if="currentTab === Tabs.InProgress">
         <file-queued-item
-          v-if="queuedUploadItems.length > 0"
           :amount="queuedUploadItems.length"
           :type="FileOperationDataType.Import"
           @cancel="cancelQueuedOperations(queuedUploadItems)"

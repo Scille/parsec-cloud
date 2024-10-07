@@ -118,19 +118,21 @@
         />
       </div>
     </ion-item>
-    <ion-progress-bar
+
+    <ms-progress
       class="element-progress-bar"
-      :value="getProgress()"
+      :progress="getProgress()"
+      :appearance="MsProgressAppearance.Line"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { MsImage, MsInformationTooltip } from 'megashark-lib';
+import { MsImage, MsInformationTooltip, MsProgress, MsProgressAppearance } from 'megashark-lib';
 import { getWorkspaceName } from '@/parsec';
 import { ImportData, FileOperationState, StateData, OperationProgressStateData } from '@/services/fileOperationManager';
-import { IonButton, IonIcon, IonItem, IonLabel, IonText, IonProgressBar } from '@ionic/vue';
+import { IonButton, IonIcon, IonItem, IonLabel, IonText } from '@ionic/vue';
 import { arrowForward, checkmarkCircle, closeCircle } from 'ionicons/icons';
 import { onMounted, ref } from 'vue';
 
@@ -158,7 +160,7 @@ function getProgress(): number {
   if (props.state === FileOperationState.Cancelled || props.state === FileOperationState.FileImported) {
     return 100;
   } else if (props.state === FileOperationState.OperationProgress && props.stateData) {
-    return (props.stateData as OperationProgressStateData).progress / 100;
+    return (props.stateData as OperationProgressStateData).progress;
   }
   return 0;
 }
@@ -279,7 +281,7 @@ defineEmits<{
     position: absolute;
     bottom: 0;
     width: 100%;
-    height: 3px;
+    height: 2px;
   }
 }
 
