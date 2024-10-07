@@ -53,13 +53,13 @@ def get_artifact(
     base_url: str, token: str, version: None | str = None
 ) -> tuple[str, int, str, str, str]:
     url = f"{base_url}/actions/artifacts"
-    artefacts = get(url, token).json()["artifacts"]  # type: ignore
-    for artefact in artefacts:
-        name = artefact["name"]
-        size = artefact["size_in_bytes"]
-        url = artefact["archive_download_url"]
-        timestamp = artefact["updated_at"]
-        head = artefact["workflow_run"]["head_branch"]
+    artifacts = get(url, token).json()["artifacts"]  # type: ignore
+    for artifact in artifacts:
+        name = artifact["name"]
+        size = artifact["size_in_bytes"]
+        url = artifact["archive_download_url"]
+        timestamp = artifact["updated_at"]
+        head = artifact["workflow_run"]["head_branch"]
         if name != ARTIFACT_NAME:
             continue
         if not head.startswith("v"):
@@ -132,6 +132,9 @@ if __name__ == "__main__":
         type=str,
         help="Specify the version of the artifact to sign (e.g., v1.2.3). If not provided, the latest version will be used.",
     )
-    args = parser.parse_args()
-    version = args.version if args.version.startswith("v") else f"v{args.version}"
+    namespace = parser.parse_args()
+    version: str | None = namespace.version
+    # Add `v` if it was omitted
+    if version is not None and version[:1].isdigit():
+        version = f"v{version}"
     main(version)
