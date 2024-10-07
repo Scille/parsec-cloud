@@ -149,7 +149,6 @@ export async function login(
     const connInfo = getConnectionInfo(handle);
     switch (event.tag) {
       case ClientEventTag.Online:
-        console.log('ONLINE EVENT');
         if (connInfo) {
           connInfo.isOnline = true;
         }
@@ -162,11 +161,10 @@ export async function login(
         distributor.dispatchEvent(Events.Offline);
         break;
       case ClientEventTag.MustAcceptTos:
-        console.log('ACCEPT TOS EVENT');
         if (connInfo) {
           connInfo.shouldAcceptTos = true;
         }
-        distributor.dispatchEvent(Events.TOSAcceptRequired);
+        distributor.dispatchEvent(Events.TOSAcceptRequired, undefined, 2000);
         break;
       case ClientEventTag.InvitationChanged:
         distributor.dispatchEvent(Events.InvitationUpdated, {

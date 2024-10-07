@@ -17,15 +17,19 @@ import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
 import { IonContent, IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
-import { inject, onMounted, provide, Ref, ref } from 'vue';
+import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
 import TOSModal from '@/views/organizations/TOSModal.vue';
 import useUploadMenu from '@/services/fileUploadMenu';
 import { MsModalResult, openSpinnerModal } from 'megashark-lib';
+import { DateTime } from 'luxon';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const injections: Ref<Injections | null> = ref(null);
 const initialized = ref(false);
+const modalOpened = ref(false);
 let intervalId: number | null = null;
+let callbackId: string | null = null;
+const lastAccepted: Ref<DateTime | null> = ref(null);
 
 onMounted(async () => {
   const handle = getConnectionHandle();
@@ -43,7 +47,7 @@ onMounted(async () => {
   provide(EventDistributorKey, injections.value.eventDistributor);
   initialized.value = true;
 
-  injections.value.eventDistributor.registerCallback(
+  callbackId = await injections.value.eventDistributor.registerCallback(
     Events.TOSAcceptRequired | Events.LogoutRequested,
     async (event: Events, _data?: EventData) => {
       if (event === Events.LogoutRequested) {
@@ -60,7 +64,20 @@ onMounted(async () => {
   }
 });
 
+onUnmounted(async () => {
+  if (intervalId !== null) {
+    window.clearInterval(intervalId);
+    intervalId = null;
+  }
+  if (injections.value && callbackId !== null) {
+    injections.value.eventDistributor.removeCallback(callbackId);
+  }
+});
+
 async function tryOpeningTOSModal(): Promise<void> {
+  if (modalOpened.value) {
+    return;
+  }
   if ((await modalController.getTop()) || injections.value?.fileOperationManager.hasOperations()) {
     if (intervalId === null) {
       // Try again in 1 minute
@@ -68,8 +85,11 @@ async function tryOpeningTOSModal(): Promise<void> {
         await tryOpeningTOSModal();
       }, 60000);
     }
-  }
-  else {
+  } else {
+    if (intervalId) {
+      window.clearInterval(intervalId);
+      intervalId = null;
+    }
     await showTOSModal();
   }
 }
@@ -103,6 +123,11 @@ async function showTOSModal(): Promise<void> {
     window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
     return;
   }
+  if (result.value.updatedOn === lastAccepted.value) {
+    window.electronAPI.log('warn', 'Already accepted those TOS');
+    return;
+  }
+  modalOpened.value = true;
   const tosModal = await modalController.create({
     component: TOSModal,
     cssClass: 'modal-tos',
@@ -116,6 +141,7 @@ async function showTOSModal(): Promise<void> {
   await tosModal.present();
   const { role } = await tosModal.onDidDismiss();
   await tosModal.dismiss();
+  modalOpened.value = false;
 
   if (role === MsModalResult.Confirm) {
     const acceptResult = await acceptTOS(result.value.updatedOn);
@@ -124,6 +150,7 @@ async function showTOSModal(): Promise<void> {
       if (connInfo) {
         connInfo.shouldAcceptTos = false;
       }
+      lastAccepted.value = result.value.updatedOn;
       injections.value?.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.confirmationMessage',
