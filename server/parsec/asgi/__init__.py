@@ -100,6 +100,9 @@ async def serve_parsec_asgi_app(
         proxy_headers=(proxy_trusted_addresses != []),
         # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
         forwarded_allow_ips=proxy_trusted_addresses,
+        # Disable lifespan events, we don't need them for the moment
+        # and they can cause CancelledError to bubble up in some cases
+        lifespan="off",
         # TODO: configure access log format:
         # Timestamp is added by the log processor configured in `parsec.logging`,
         # here we configure peer address + req line + rep status + rep body size + time
