@@ -1181,6 +1181,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     component: FileContextMenu,
     cssClass: 'file-context-menu',
     event: event,
+    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,

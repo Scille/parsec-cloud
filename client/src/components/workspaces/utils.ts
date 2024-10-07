@@ -121,6 +121,7 @@ export async function openWorkspaceContextMenu(
     component: WorkspaceContextMenu,
     cssClass: fromSidebar ? 'workspace-context-menu workspace-context-menu-sidebar' : 'workspace-context-menu',
     event: event,
+    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,

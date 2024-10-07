@@ -321,6 +321,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     cssClass: 'user-context-menu',
     event: event,
     translucent: true,
+    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
     showBackdrop: false,
     dismissOnSelect: true,
     alignment: 'end',

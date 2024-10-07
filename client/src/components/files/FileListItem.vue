@@ -19,6 +19,7 @@
       @dblclick="$emit('click', $event, entry)"
       @mouseenter="isHovered = true"
       @mouseleave="isHovered = false"
+      ref="itemRef"
     >
       <div class="file-list-item">
         <div class="file-selected">
@@ -108,7 +109,7 @@ import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { FsPath, Path } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { cloudDone, cloudOffline, ellipsisHorizontal } from 'ionicons/icons';
-import { Ref, onMounted, ref } from 'vue';
+import { Ref, onMounted, ref, onBeforeUnmount } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
@@ -132,6 +133,7 @@ defineExpose({
 });
 
 const currentPath: Ref<FsPath> = ref('/');
+const itemRef = ref();
 
 onMounted(async () => {
   if (props.entry.isFile()) {
@@ -139,13 +141,20 @@ onMounted(async () => {
   } else {
     currentPath.value = props.entry.path;
   }
+  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
+});
+
+onBeforeUnmount(async () => {
+  itemRef.value.$el.removeEventListener('contextmenu');
 });
 
 function isFileSynced(): boolean {
   return !props.entry.needSync;
 }
 
-async function onOptionsClick(event: Event): Promise<void> {
+async function onOptionsClick(event: PointerEvent): Promise<void> {
+  event.preventDefault();
+
   menuOpened.value = true;
   emits('menuClick', event, props.entry, () => {
     menuOpened.value = false;

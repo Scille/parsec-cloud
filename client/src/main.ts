@@ -37,6 +37,13 @@ enum AppState {
   Initializing = 'initializing',
 }
 
+function preventRightClick(): void {
+  document.addEventListener('contextmenu', (event) => {
+    event.preventDefault();
+    console.log('Prevent global context menu');
+  });
+}
+
 async function setupApp(): Promise<void> {
   await storageManagerInstance.init();
   const storageManager = storageManagerInstance.get();
@@ -281,6 +288,7 @@ async function setupApp(): Promise<void> {
       if (devMode) {
         Sentry.disable();
       } else {
+        preventRightClick();
         config.enableTelemetry ? Sentry.enable() : Sentry.disable();
       }
     });

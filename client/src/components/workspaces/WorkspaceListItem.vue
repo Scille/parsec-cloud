@@ -9,6 +9,7 @@
     @click="$emit('click', workspace, $event)"
     @mouseenter="isHovered = true"
     @mouseleave="isHovered = false"
+    ref="itemRef"
   >
     <!-- workspace name -->
     <div class="workspace-name">
@@ -112,10 +113,11 @@ import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { UserProfile, WorkspaceInfo } from '@/parsec';
 import { IonButton, IonIcon, IonItem, IonLabel } from '@ionic/vue';
 import { business, cloudDone, cloudOffline, ellipsisHorizontal, star } from 'ionicons/icons';
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
+const itemRef = ref();
 
 const props = defineProps<{
   workspace: WorkspaceInfo;
@@ -130,7 +132,16 @@ const emits = defineEmits<{
   (e: 'shareClick', workspace: WorkspaceInfo, event?: Event): void;
 }>();
 
+onMounted(() => {
+  itemRef.value.$el.addEventListener('contextmenu', onOptionsClick);
+});
+
+onBeforeUnmount(async () => {
+  itemRef.value.$el.removeEventListener('contextmenu');
+});
+
 async function onOptionsClick(event: Event): Promise<void> {
+  event.preventDefault();
   menuOpened.value = true;
   emits('menuClick', props.workspace, event, () => {
     menuOpened.value = false;
