@@ -218,6 +218,15 @@ impl_events!(
     ///
     /// The SSE connection with the server has been lost.
     Offline,
+    /// This event is fired by `Client::accept_tos` when the TOS acceptance has been
+    /// successful (hence it's most likely the server will now accept our next connection
+    /// attempt).
+    ///
+    /// This event is used to signify to the connection monitor that it should try
+    /// to connect to the server without delay. This is needed since, when offline,
+    /// the connection monitor has a backoff mechanism to avoid hammering the server
+    /// with connection attempts.
+    ShouldRetryConnectionNow,
     /// This event is fired by the connection monitor.
     ///
     /// The SSE connection is able to catch up with the event it has missed when
