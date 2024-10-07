@@ -81,7 +81,7 @@
           <!-- user suggestions -->
           <div
             class="user-list-suggestions"
-            v-if="filteredNotSharedUserRoles.length > 0"
+            v-if="(ownRole === WorkspaceRole.Manager || ownRole === WorkspaceRole.Owner) && filteredNotSharedUserRoles.length > 0"
           >
             <ion-text class="user-list__title title-h5">{{ $msTranslate('workspaceRoles.suggestion') }}</ion-text>
             <workspace-user-role
