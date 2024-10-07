@@ -127,14 +127,4 @@ function getImageFromType(): string {
     }
   }
 }
-
-.progress-bar {
-  --progress-background: var(--parsec-color-light-primary-300);
-  --background: var(--parsec-color-light-secondary-medium);
-  position: absolute;
-  bottom: 0;
-  width: calc(100% - 1rem);
-  height: 2px;
-  margin: auto;
-}
 </style>
