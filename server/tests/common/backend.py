@@ -11,7 +11,12 @@ from parsec.asgi import app as asgi_app
 from parsec.backend import Backend, backend_factory
 from parsec.cli.testbed import TestbedBackend, TestbedTemplate
 from parsec.components.memory.organization import MemoryOrganization, OrganizationID
-from parsec.config import BackendConfig, BaseBlockStoreConfig, BaseDatabaseConfig, MockedEmailConfig
+from parsec.config import (
+    BackendConfig,
+    BaseBlockStoreConfig,
+    BaseDatabaseConfig,
+    MockedEmailConfig,
+)
 from tests.common.postgresql import reset_postgresql_testbed
 
 SERVER_DOMAIN = "parsec.invalid"
@@ -33,7 +38,7 @@ def backend_config(
         debug=True,
         db_config=db_config,
         sse_keepalive=30,
-        forward_proto_enforce_https=None,
+        proxy_trusted_addresses=[],
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=blockstore_config,

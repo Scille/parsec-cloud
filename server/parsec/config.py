@@ -177,7 +177,7 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: SmtpEmailConfig | MockedEmailConfig
-    forward_proto_enforce_https: tuple[str, str] | None
+    proxy_trusted_addresses: list[str]
     server_addr: ParsecAddr | None
 
     debug: bool
