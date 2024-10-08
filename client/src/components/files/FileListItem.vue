@@ -154,6 +154,7 @@ function isFileSynced(): boolean {
 
 async function onOptionsClick(event: PointerEvent): Promise<void> {
   event.preventDefault();
+  event.stopPropagation();
 
   menuOpened.value = true;
   emits('menuClick', event, props.entry, () => {

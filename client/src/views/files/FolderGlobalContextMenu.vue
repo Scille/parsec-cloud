@@ -1,0 +1,66 @@
+<!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+
+<template>
+  <ion-content id="file-context-menu">
+    <ion-list class="menu-list">
+      <ion-item-group class="list-group">
+        <ion-item class="list-group-title button-small">
+          <ion-label class="list-group-title__label">
+            {{ $msTranslate('FoldersPage.fileContextMenu.titleManage') }}
+          </ion-label>
+        </ion-item>
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.CreateFolder)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="folderOpen" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.createFolder') }}
+          </ion-label>
+        </ion-item>
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.ImportFiles)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="cloudUpload" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.ImportFile.importFilesAction') }}
+          </ion-label>
+        </ion-item>
+
+        <ion-item
+          button
+          v-if="role !== WorkspaceRole.Reader"
+          @click="onClick(FolderGlobalAction.ImportFolder)"
+          class="ion-no-padding list-group-item"
+        >
+          <ion-icon :icon="cloudUpload" />
+          <ion-label class="body list-group-item__label">
+            {{ $msTranslate('FoldersPage.ImportFile.importFolderAction') }}
+          </ion-label>
+        </ion-item>
+      </ion-item-group>
+    </ion-list>
+  </ion-content>
+</template>
+
+<script setup lang="ts">
+import { WorkspaceRole } from '@/parsec';
+import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
+import { folderOpen, cloudUpload } from 'ionicons/icons';
+import { FolderGlobalAction } from '@/views/files/types';
+
+defineProps<{
+  role: WorkspaceRole;
+}>();
+
+async function onClick(action: FolderGlobalAction): Promise<boolean> {
+  return await popoverController.dismiss({ action: action });
+}
+</script>
+
+<style lang="scss" scoped></style>

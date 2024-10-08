@@ -177,25 +177,15 @@
                   </ion-text>
                 </div>
               </ion-header>
-              <ion-item
-                lines="none"
-                button
+              <sidebar-workspace-item
                 v-for="workspace in favoritesWorkspaces"
                 :key="workspace.id"
-                @click="goToWorkspace(workspace.handle)"
-                :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-                class="sidebar-item menu-default"
-              >
-                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
-                <div
-                  class="workspace-option"
-                  @click.stop="
-                    openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
-                  "
-                >
-                  <ion-icon :icon="ellipsisHorizontal" />
-                </div>
-              </ion-item>
+                :workspace="workspace"
+                @workspace-clicked="goToWorkspace"
+                @context-menu-requested="
+                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                "
+              />
             </ion-list>
 
             <div
@@ -232,25 +222,15 @@
               >
                 {{ $msTranslate('SideMenu.noWorkspace') }}
               </ion-text>
-              <ion-item
-                lines="none"
-                button
+              <sidebar-workspace-item
                 v-for="workspace in nonFavoriteWorkspaces"
+                :workspace="workspace"
                 :key="workspace.id"
-                @click="goToWorkspace(workspace.handle)"
-                :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-                class="sidebar-item menu-default"
-              >
-                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
-                <div
-                  class="workspace-option"
-                  @click.stop="
-                    openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
-                  "
-                >
-                  <ion-icon :icon="ellipsisHorizontal" />
-                </div>
-              </ion-item>
+                @workspace-clicked="goToWorkspace"
+                @context-menu-requested="
+                  openWorkspaceContextMenu($event, workspace, favorites, eventDistributor, informationManager, storageManager, true)
+                "
+              />
             </ion-list>
           </div>
           <!-- manage organization -->
@@ -353,7 +333,6 @@ import {
   currentRouteIs,
   currentRouteIsOrganizationManagementRoute,
   currentRouteIsUserRoute,
-  currentRouteIsWorkspaceRoute,
   navigateTo,
   navigateToWorkspace,
   switchOrganization,
@@ -363,7 +342,7 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
-
+import { SidebarWorkspaceItem } from '@/components/sidebar';
 import {
   GestureDetail,
   IonAvatar,
@@ -386,20 +365,7 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import {
-  add,
-  home,
-  business,
-  chevronBack,
-  ellipsisHorizontal,
-  cog,
-  informationCircle,
-  people,
-  pieChart,
-  star,
-  snow,
-  warning,
-} from 'ionicons/icons';
+import { add, home, business, chevronBack, cog, informationCircle, people, pieChart, star, snow, warning } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
 
@@ -879,32 +845,6 @@ ion-menu {
   border: solid 1px var(--parsec-color-light-primary-800);
   --min-height: 0;
 
-  .workspace-option {
-    color: var(--parsec-color-light-secondary-grey);
-    text-align: right;
-    position: absolute;
-    display: flex;
-    align-items: center;
-    top: 0;
-    right: 1rem;
-    font-size: 1.2rem;
-    padding-top: 0.5rem;
-    opacity: 0;
-
-    &:hover {
-      color: var(--parsec-color-light-primary-30);
-    }
-  }
-
-  &:hover {
-    border: solid 1px var(--parsec-color-light-primary-30-opacity15);
-    cursor: pointer;
-
-    .workspace-option {
-      opacity: 1;
-    }
-  }
-
   &:active,
   &.item-selected {
     --background: var(--parsec-color-light-primary-30-opacity15);
@@ -918,15 +858,6 @@ ion-menu {
   }
 
   & > ion-label {
-    --color: var(--parsec-color-light-primary-100);
-  }
-
-  &-workspace-label {
-    position: relative;
-    margin-right: 1.1rem;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    overflow: hidden;
     --color: var(--parsec-color-light-primary-100);
   }
 }

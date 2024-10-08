@@ -9,7 +9,10 @@
       :show-drop-message="true"
       :is-reader="ownRole === WorkspaceRole.Reader"
     >
-      <div class="scroll">
+      <div
+        class="scroll"
+        ref="containerRef"
+      >
         <ion-list class="list">
           <ion-list-header
             class="folder-list-header"
@@ -84,7 +87,7 @@ import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderMo
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
 import { IonLabel, IonList, IonListHeader } from '@ionic/vue';
-import { computed, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 import { MsCheckbox } from 'megashark-lib';
 
 const props = defineProps<{
@@ -98,10 +101,12 @@ const props = defineProps<{
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
 
 const fileDropZoneRef = ref();
+const containerRef = ref();
 
 const allSelected = computed(() => {
   const selectedCount = props.files.selectedCount() + props.folders.selectedCount();
@@ -110,6 +115,17 @@ const allSelected = computed(() => {
 
 const someSelected = computed(() => {
   return props.files.selectedCount() + props.folders.selectedCount() > 0;
+});
+
+onMounted(async () => {
+  containerRef.value.addEventListener('contextmenu', (event: Event) => {
+    event.preventDefault();
+    emits('globalMenuClick', event);
+  });
+});
+
+onBeforeUnmount(async () => {
+  containerRef.value.removeEventListener('contextmenu');
 });
 
 async function onSelectedChange(_entry: EntryModel, _checked: boolean): Promise<void> {}

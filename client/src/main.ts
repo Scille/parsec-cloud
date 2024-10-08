@@ -41,10 +41,10 @@ function preventRightClick(): void {
   document.addEventListener('contextmenu', async (event) => {
     if (!window.isDev()) {
       event.preventDefault();
-    }
-    const top = await popoverController.getTop();
-    if (top) {
-      await top.dismiss();
+      const top = await popoverController.getTop();
+      if (top) {
+        await top.dismiss();
+      }
     }
   });
 }

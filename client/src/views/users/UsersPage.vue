@@ -324,7 +324,7 @@ async function openUserContextMenu(event: Event, user: UserInfo, onFinished?: ()
     reference: event.type === 'contextmenu' ? 'event' : 'trigger',
     showBackdrop: false,
     dismissOnSelect: true,
-    alignment: 'end',
+    alignment: 'start',
     componentProps: {
       isRevoked: user.isRevoked(),
       clientIsAdmin: isAdmin.value,
