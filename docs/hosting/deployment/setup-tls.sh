@@ -52,7 +52,7 @@ if [ ! -f custom-ca.key ]; then
         -keyout custom-ca.key -out custom-ca.crt
 fi
 
-for service in parsec-{s3,server}; do
+for service in parsec-{s3,server,proxy}; do
     if [ ! -f $service.crt.conf ]; then
         generate_cert_conf $service DNS:$service,DNS:localhost,IP:127.0.0.1
     fi

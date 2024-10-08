@@ -1,4 +1,17 @@
 services:
+  parsec-proxy:
+    depends_on:
+      - parsec-server
+    image: nginx:1.27-alpine
+    container_name: parsec-proxy
+    ports:
+      - 443:443
+      - 80:80
+    volumes:
+      - ./parsec-nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./parsec-proxy.crt:/certs/proxy.crt:ro
+      - ./parsec-proxy.key:/certs/proxy.key:ro
+
   parsec-postgres:
     image: postgres:14.10-alpine
     container_name: parsec-postgres
