@@ -28,14 +28,14 @@
     },
     "workspaceRoles": {
         "updateRejectedReasons": {
-            "outsiderProfile": "Les utilisateurs externes ne peuvent pas changer les rôles",
-            "outsiderLimitedRole": "Les utilisateurs externes ne peuvent être que Lecteur ou Contributeur",
+            "outsiderProfile": "Les membres externes ne peuvent pas changer les rôles",
+            "outsiderLimitedRole": "Les membres externes ne peuvent être que Lecteur ou Contributeur",
             "insufficientRole": "Seuls les Gérants et les Propriétaires peuvent changer les rôles",
             "managerCannotUpdateManagers": "Les Gérants ne peuvent pas changer le rôle d'autres Gérants",
             "managerCannotPromoteToManager": "Les Gérants ne peuvent pas promouvoir au rôle de Gérant",
             "managerCannotPromoteToOwner": "Les Gérants ne peuvent pas promouvoir au rôle de Propriétaire",
-            "sameRole": "Rôle actuel de l'utilisateur",
-            "alreadyNotShared": "Déjà non partagé avec cet utilisateur"
+            "sameRole": "Rôle actuel",
+            "alreadyNotShared": "Déjà non partagé"
         },
         "reader": {
             "label": "Lecteur",
@@ -47,15 +47,15 @@
         },
         "manager": {
             "label": "Gérant",
-            "description": "Peut gérer l'accès des utilisateurs à cet espace de travail."
+            "description": "Peut gérer l'accès des membres à cet espace de travail."
         },
         "owner": {
             "label": "Propriétaire",
-            "description": "Peut gérer l'accès des utilisateurs et rechiffrer l'espace de travail. Peut promouvoir d'autres utilisateurs au rôle de Propriétaire."
+            "description": "Peut gérer l'accès des membres et rechiffrer l'espace de travail. Peut promouvoir d'autres membres au rôle de Propriétaire."
         },
         "none": "Non partagé",
         "members": "Membre ({count}) | Membres ({count})",
-        "suggestion": "Suggestions d'utilisateurs"
+        "suggestion": "Suggestions"
     },
     "link": {
         "invalid": "Le lien fourni n'est pas valide.",
@@ -70,7 +70,7 @@
         "readOnly": "Non lues uniquement",
         "goToWorkspace": "Accéder à l'espace de travail",
         "openImportedMenu": "Ouvrir le menu d'importations",
-        "viewJoinedUsers": "Voir les utilisateurs",
+        "viewJoinedUsers": "Voir les membres",
         "goToDevices": "Accéder à mes appareils",
         "openEnclosingFolder": "Ouvrir le dossier",
         "noNotification": "Vous êtes à jour !",
@@ -87,7 +87,7 @@
         "workspaceAccess": "Vous avez accès à l'espace de travail {workspace}",
         "userJoinWorkspace": "{name} vient de rejoindre l'espace de travail {workspace}",
         "multipleUsersJoinWorkspace": "{count} viennent de rejoindre l'espace de travail {workspace}",
-        "users": "utilisateurs",
+        "users": "membres",
         "userSharedDocument": "{name} a partagé un nouveau document",
         "allImportedElements": "Tous vos fichiers ont été importés",
         "newDeviceAdded": "Un nouvel appareil a été ajouté",
@@ -125,8 +125,8 @@
             "title": "Vos organisations",
             "sortOrderAsc": "Croissant",
             "sortOrderDesc": "Décroissant",
-            "sortByOrganization": "Organisation",
-            "sortByUserName": "Nom d'utilisateur",
+            "sortByOrganization": "Nom de l'organisation",
+            "sortByUserName": "Nom",
             "sortByLastLogin": "Dernière connexion",
             "labelSortBy": "Trier par",
             "search": "Rechercher",
@@ -285,7 +285,7 @@
         "titles": {
             "workspaces": "Mes espaces",
             "about": "À propos",
-            "users": "Utilisateurs",
+            "users": "Membres",
             "organization": {
                 "storage": "Stockage",
                 "information": "Informations"
@@ -312,7 +312,7 @@
         },
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
         "owner": "propriétaire",
-        "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'."
+        "noMatch": "Aucun membre trouvé qui correspond à la recherche '{query}'."
     },
     "SettingsModal": {
         "pageTitle": "Paramètres",
@@ -411,7 +411,7 @@
         "listDisplayTitles": {
             "name": "Nom",
             "role": "Rôle",
-            "sharedWith": "Utilisateurs",
+            "sharedWith": "Membres",
             "lastUpdate": "Dernière modif.",
             "size": "Taille"
         },
@@ -428,7 +428,7 @@
         "createFolder": "Nouveau dossier",
         "copyHere": "Copier ici",
         "import": "Importer",
-        "itemCount": "Aucun élément | Un élément | {count} éléments",
+        "itemCount": "Aucun élément | 1 élément | {count} éléments",
         "itemSelectedCount": "Aucun élément sélectionné | 1 élément sélectionné | {count} éléments sélectionnés",
         "emptyFolder": "Ce dossier est vide.",
         "loading": "Chargement du dossier...",
@@ -598,8 +598,8 @@
             "users": {
                 "revokedUsers": "Révoqué",
                 "activeUsers": "Actif",
-                "title": "Utilisateurs",
-                "seeUsers": "Voir les utilisateurs"
+                "title": "Membres",
+                "seeUsers": "Voir les membres"
             },
             "size": {
                 "metadata": "Métadonnées",
@@ -609,7 +609,7 @@
             },
             "configuration": {
                 "outsidersAllowed": "Profil externe",
-                "userLimit": "Limite d'utilisateurs",
+                "userLimit": "Limite du nombre de membre (hors externes)",
                 "unlimited": "Illimitée",
                 "allowed": "Activé",
                 "forbidden": "Désactivé",
@@ -650,7 +650,7 @@
         "workspaces": "Espaces de travail",
         "favorites": "Favoris",
         "noWorkspace": "Aucun espace de travail",
-        "users": "Utilisateurs",
+        "users": "Membres",
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
@@ -853,7 +853,7 @@
         "instructions": {
             "start": {
                 "first": "Afin d'éviter toute attaque, vous devez être en contact direct avec la personne durant toute la durée du processus d'accueil.",
-                "second": "L'hôte devra se rendre dans Utilisateurs puis Invitation en cours pour commencer le processus.",
+                "second": "L'hôte devra se rendre dans Membres puis Invitation en cours pour commencer le processus.",
                 "greeter": "Vous serez accueilli(e) dans l'organisation {organizationName} par {greeter} <{greeterEmail}>."
             },
             "finish": {
@@ -886,7 +886,7 @@
             "noneCodeSelected": "Si aucun des codes proposés n'était le bon, cela peut indiquer qu'un problème de sécurité est survenu au cours de l'accueil. Veuillez redémarrer le processus.",
             "unexpected": "Une erreur imprévue est survenue (raison: {reason}).",
             "invalidCodeSelected": "Vous n'avez pas sélectionné le bon code. Veuillez redémarrer le processus.",
-            "usersLimitReached": "La limite d'utilisateurs pour cette organisation a été atteinte.",
+            "usersLimitReached": "La limite de membres pour cette organisation a été atteinte.",
             "peerReset": "L'hôte a annulé le processus.",
             "peerResetCode": "L'hôte a annulé le processus ou a sélectionné un code incorrect.",
             "cancelled": "Le processus a été annulé.",
@@ -910,9 +910,9 @@
             "profile": "Profil",
             "joinedOn": "Rejoint le"
         },
-        "inviteUser": "Inviter un utilisateur",
+        "inviteUser": "Inviter un membre",
         "currentUser": "(Vous)",
-        "itemCount": "Aucun utilisateur | Un utilisateur | {count} utilisateurs",
+        "itemCount": "Aucun membre | 1 membre | {count} membres",
         "profile": {
             "admin": {
                 "label": "Administrateur",
@@ -935,14 +935,14 @@
             "email": "Adresse email :",
             "profile": "Choix du profil :"
         },
-        "emptyList": "Aucun utilisateur à afficher.",
-        "noMatch": "Aucun utilisateur ne correspond à vos filtres.",
-        "listUsersFailed": "Impossible d'obtenir la liste des utilisateurs. Veuillez vérifier votre connexion internet.",
-        "userSelectedCount": "Aucun utilisateur sélectionné | Un utilisateur sélectionné | {count} utilisateurs sélectionnés",
+        "emptyList": "Aucun membre à afficher.",
+        "noMatch": "Aucun membre ne correspond à vos filtres.",
+        "listUsersFailed": "Impossible d'obtenir la liste des membres de l'organisation. Veuillez vérifier votre connexion internet.",
+        "userSelectedCount": "Aucun membre sélectionné | Un membre sélectionné | {count} membres sélectionnés",
         "userContextMenu": {
             "titleRemove": "Suppression",
-            "titleDetails": "Détails de l'utilisateur",
-            "actionRevoke": "Révoquer cet utilisateur | Révoquer ces utilisateurs",
+            "titleDetails": "Détails",
+            "actionRevoke": "Révoquer ce membre | Révoquer ces membres",
             "actionDetails": "Voir les détails",
             "titleAssignRoles": "Copie de rôles",
             "actionAssignRoles": "Copier les rôles des espaces de travail à...",
@@ -950,19 +950,19 @@
         },
         "greet": {
             "titles": {
-                "waitForGuest": "Accueillir un nouvel utilisateur",
+                "waitForGuest": "Accueillir un nouveau membre",
                 "provideHostCode": "Partagez votre code",
                 "getGuestCode": "Réception du code de l'invité",
                 "contactDetails": "Coordonnées",
-                "summary": "L'utilisateur a bien été ajouté !"
+                "summary": "Le nouveau membre a bien été ajouté !"
             },
             "subtitles": {
-                "waitForGuest1": "Pour accueillir un nouvel utilisateur, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
+                "waitForGuest1": "Pour accueillir un nouveau membre, vous devez être en contact direct avec la personne pendant la durée du processus d'accueil (environ 2 minutes).",
                 "waitForGuest2": "Il ne faudra pas quitter la session.",
                 "provideHostCode": "Veuillez communiquer le code ci-dessous à l'invité.",
                 "getGuestCode": "Sélectionnez le code que vous donne l'invité.",
                 "getUserInfo": "Patientez le temps que l'invité saisisse ses coordonnées.",
-                "checkUserInfo": "Vous pouvez modifier le nom de l'utilisateur, son appareil et définir son profil."
+                "checkUserInfo": "Vous pouvez modifier son nom, son appareil et définir son profil."
             },
             "steps": {
                 "hostCode": "Code hôte",
@@ -1004,9 +1004,9 @@
             "rejectUser": "Annuler",
             "inviteSuccessMailSent": "Une invitation a été envoyée à {email}.",
             "inviteSuccessNoMail": "L'invitation a été créée mais l'email n'a pas pu être envoyé. Veuillez transmettre le lien d'invitation manuellement.",
-            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par un membre de cette organisation.",
+            "inviteFailedAlreadyMember": "L'email {email} est déjà utilisé par une autre personne dans cette organisation.",
             "inviteFailedOffline": "Impossible de contacter le serveur. Veuillez vérifier votre connexion internet.",
-            "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes à rejoindre l'organisation.",
+            "inviteFailedNotAllowed": "Seuls les administrateurs peuvent inviter de nouvelles personnes.",
             "inviteFailedUnknown": "Une erreur imprévue est survenue (raison : {reason}).",
             "cancelSuccess": "Le lien d'invitation n'est plus valide.",
             "cancelFailed": "Impossible d'annuler l'invitation",
@@ -1027,13 +1027,13 @@
             }
         },
         "CreateUserInvitationModal": {
-            "pageTitle": "Inviter un nouvel utilisateur",
-            "label": "Email de l'utilisateur",
+            "pageTitle": "Inviter un nouveau membre",
+            "label": "Email",
             "placeholder": "jean.martin{'@'}exemple.com",
             "create": "Inviter"
         },
         "UserDetailsModal": {
-            "title": "Détails de l'utilisateur",
+            "title": "Détails",
             "subtitles": {
                 "name": "Nom",
                 "joined": "Rejoint",
@@ -1043,17 +1043,17 @@
             "actions": {
                 "close": "Fermer"
             },
-            "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec cet utilisateur.",
+            "noSharedWorkspaces": "Vous n'avez pas d'espace de travail en commun avec ce membre.",
             "failedToListWorkspaces": "Impossible de lister les espaces de travail."
         },
         "revocation": {
-            "revokeTitle": "Révoquer cet utilisateur ? | Révoquer ces utilisateurs ?",
-            "revokeQuestion": "{user} sera révoqué(e) et ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} utilisateurs seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
+            "revokeTitle": "Révoquer ce membre ? | Révoquer ces membres ?",
+            "revokeQuestion": "{user} sera révoqué(e) et ne pourra plus accéder à l'organisation. Voulez-vous continuer ? | Ces {count} membres seront révoqués. Ils ne pourront plus accéder à l'organisation. Voulez-vous continuer ?",
             "revokeYes": "Révoquer",
             "revokeNo": "Annuler",
-            "revokeFailed": "Impossible de révoquer cet utilisateur. | Impossible de révoquer ces utilisateurs.",
-            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation. | {count} utilisateurs révoqués, ils ne peuvent plus accéder à l'organisation.",
-            "revokeSomeFailed": "Certains utilisateurs n'ont pas pu être révoqués."
+            "revokeFailed": "Impossible de révoquer ce membre. | Impossible de révoquer ces membres.",
+            "revokeSuccess": "{user} a été révoqué(e) et ne peut plus accéder à l'organisation. | {count} membres révoqués, ils ne peuvent plus accéder à l'organisation.",
+            "revokeSomeFailed": "Certains membres n'ont pas pu être révoqués."
         },
         "sort": {
             "byName": "Nom",
@@ -1227,8 +1227,8 @@
     "UserSelect": {
         "defaultLabel": "Choisir une personne",
         "defaultPlaceholder": "Nom ou email de la personne",
-        "noMatch": "Aucun utilisateur trouvé",
-        "queryFailed": "Une erreur empêche de trouver les utilisateurs."
+        "noMatch": "Aucun membre trouvé",
+        "queryFailed": "Une erreur empêche de trouver les membres."
     },
     "clientArea": {
         "app": {
@@ -1406,7 +1406,7 @@
         "statistics": {
             "titles": {
                 "stats": "Statistiques",
-                "users": "Utilisateurs",
+                "users": "Membres",
                 "active": "actifs",
                 "revoked": "révoqués",
                 "storage": "Stockage utilisé"
@@ -1466,10 +1466,10 @@
             "endingDate": "Date de fin",
             "members": {
                 "title": "Licence membre | Licences membres",
-                "admin": "Membre administrateur | Membres administrateur",
+                "admin": "Membre administrateur | Membres administrateurs",
                 "adminDescription": "Tous les accès",
                 "standard": "Membre standard | Membres standards",
-                "standardDescription": "Utilisateur classique",
+                "standardDescription": "Membre classique",
                 "external": "Membre externe | Membres externes",
                 "externalDescription": "Accès limité"
             },
@@ -1501,7 +1501,7 @@
             },
             "stopSubscription": {
                 "title": "Vous souhaitez arrêter votre abonnement ?",
-                "description": "L'organisation deviendra indisponible pour tous les utilisateurs.",
+                "description": "L'organisation deviendra indisponible pour tous les membres.",
                 "button": "Stopper mon abonnement",
                 "questionTitle": "Stopper l'abonnement",
                 "questionMessage": "Souhaitez-vous stopper votre abonnement ?",
@@ -1536,8 +1536,8 @@
             "summary": {
                 "estimatedAmount": "Montant estimé",
                 "withdrawal": "Prélèvement le {date} | Prélèvement aujourd'hui",
-                "withdrawalDescriptionDescription": "Montant estimé selon le nombre d'utilisateurs actifs et le stockage utilisé.",
-                "users": "Utilisateurs actifs",
+                "withdrawalDescriptionDescription": "Montant estimé selon le nombre de membres actifs et le stockage utilisé.",
+                "users": "Membres actifs",
                 "storage": "Stockage utilisé"
             },
             "invoices": {

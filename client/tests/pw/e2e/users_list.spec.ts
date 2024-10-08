@@ -65,8 +65,8 @@ const USERS = [
 msTest('User list default state', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('#button-invite-user')).toBeVisible();
-  await expect(actionBar.locator('#button-invite-user')).toHaveText('Invite a user');
-  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
+  await expect(actionBar.locator('#button-invite-user')).toHaveText('Invite a member');
+  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} members`, { useInnerText: true });
   await expect(usersPage.locator('.user-list-header').locator('ion-checkbox')).toHaveState('unchecked');
   await expect(actionBar.locator('#select-popover-button')).toHaveText('Profile');
   await expect(actionBar.locator('.ms-grid-list-toggle').locator('#grid-view')).not.toHaveDisabledAttribute();
@@ -116,9 +116,9 @@ for (const revokedUser of [false, true]) {
     await item.locator('.options-button').click();
     await expect(usersPage.locator('#user-context-menu')).toBeVisible();
     const menu = usersPage.locator('#user-context-menu');
-    const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
+    const expectedActions = ['Member details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
     if (!revokedUser) {
-      expectedActions.unshift(...['Deletion', 'Revoke this user']);
+      expectedActions.unshift(...['Deletion', 'Revoke this member']);
     }
     await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
   });
@@ -130,7 +130,7 @@ msTest('Revoke one user with context menu', async ({ usersPage }) => {
   await item.locator('.options-button').click();
   await usersPage.locator('#user-context-menu').getByRole('listitem').nth(1).click();
   await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
+    expectedTitleText: 'Revoke this member?',
     // cspell:disable-next-line
     expectedQuestionText: 'This will revoke Jaheira, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
@@ -146,7 +146,7 @@ msTest('Revoke one user with selection', async ({ usersPage }) => {
   await item.locator('ion-checkbox').click();
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-revoke-user').click();
   await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke this user?',
+    expectedTitleText: 'Revoke this member?',
     // cspell:disable-next-line
     expectedQuestionText: 'This will revoke Jaheira, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
@@ -167,13 +167,13 @@ msTest('Revoke two users with selection', async ({ usersPage }) => {
 
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-revoke-user').click();
   await answerQuestion(usersPage, true, {
-    expectedTitleText: 'Revoke these users?',
+    expectedTitleText: 'Revoke these members?',
     expectedQuestionText:
-      'This will revoke these 2 users, preventing them from accessing this organization. Are you sure you want to proceed?',
+      'This will revoke these 2 members, preventing them from accessing this organization. Are you sure you want to proceed?',
     expectedPositiveText: 'Revoke',
     expectedNegativeText: 'Cancel',
   });
-  await expect(usersPage).toShowToast('2 users have been revoked, they can no longer access this organization.', 'Success');
+  await expect(usersPage).toShowToast('2 members have been revoked, they can no longer access this organization.', 'Success');
 });
 
 msTest('Selection in grid mode', async ({ usersPage }) => {
@@ -187,9 +187,9 @@ msTest('Selection in grid mode', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('#button-invite-user')).toBeHidden();
   await expect(actionBar.locator('#button-revoke-user')).toBeVisible();
-  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this user');
+  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this member');
   await expect(actionBar.locator('#button-common-workspaces')).toBeVisible();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('One member selected', { useInnerText: true });
 });
 
 msTest('Test users selection in list mode', async ({ usersPage }) => {
@@ -202,9 +202,9 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
   await expect(actionBar.locator('#button-invite-user')).toBeHidden();
   await expect(actionBar.locator('#button-revoke-user')).toBeVisible();
-  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this user');
+  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke this member');
   await expect(actionBar.locator('#button-common-workspaces')).toBeVisible();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('One member selected', { useInnerText: true });
 
   const headerCheckbox = usersPage.locator('.user-list-header').locator('ion-checkbox');
   // Header checkbox should be indeterminate since not all users are selected
@@ -214,8 +214,8 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
   await expect(item.locator('ion-checkbox')).toHaveState('unchecked');
   // Header checkbox should be unchecked
   await expect(headerCheckbox).toHaveState('unchecked');
-  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
-  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke these users');
+  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} members`, { useInnerText: true });
+  await expect(actionBar.locator('#button-revoke-user')).toHaveText('Revoke these members');
 
   // Select all with header checkbox
   await headerCheckbox.click();
@@ -227,7 +227,7 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
     }
   }
   const expectedSelected = USERS.filter((u) => u.active && u.name !== 'Gordon Freeman');
-  await expect(actionBar.locator('.counter')).toHaveText(`${expectedSelected.length} users selected`, { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText(`${expectedSelected.length} members selected`, { useInnerText: true });
   await expect(headerCheckbox).toHaveState('checked');
   // Unselect one
   await usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3).locator('ion-checkbox').click();
@@ -253,7 +253,7 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
   }
 
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('3 members selected', { useInnerText: true });
   // Check the checkboxes in list mode
   for (const [index, user] of USERS.entries()) {
     // Revoked users do not have a checkbox
@@ -265,7 +265,7 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
 
   // Switch to grid mode
   await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
-  await expect(actionBar.locator('.counter')).toHaveText('3 users selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('3 members selected', { useInnerText: true });
   // Check the checkboxes in grid mode
   for (const [index, user] of USERS.entries()) {
     // Revoked users do not have a checkbox
@@ -277,7 +277,7 @@ msTest('Maintain selection between modes', async ({ usersPage }) => {
   }
   // Uncheck one
   await usersPage.locator('.users-container-grid').locator('.user-card-item').nth(3).locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('2 members selected', { useInnerText: true });
   for (const [index, user] of USERS.entries()) {
     if (user.active && !user.currentUser) {
       const item = usersPage.locator('.users-container-grid').locator('.user-card-item').nth(index);
@@ -357,19 +357,19 @@ msTest('Filter users list', async ({ usersPage }) => {
   await toggleFilter(usersPage, 'Active');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText([]);
   await expect(usersPage.locator('.no-match-result')).toBeVisible();
-  await expect(usersPage.locator('.no-match-result')).toHaveText('No users matching your filters.');
+  await expect(usersPage.locator('.no-match-result')).toHaveText('No members matching your filters.');
 });
 
 msTest('Remove selection on filtering', async ({ usersPage }) => {
   const actionBar = usersPage.locator('#activate-users-ms-action-bar');
-  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} users`, { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText(`${USERS.length} members`, { useInnerText: true });
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(3);
   await item.hover();
   await item.locator('ion-checkbox').click();
-  await expect(actionBar.locator('.counter')).toHaveText('One user selected', { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText('One member selected', { useInnerText: true });
   await toggleFilter(usersPage, 'Standard');
   const expectedUsers = USERS.filter((u) => u.currentUser || u.profile !== 'Standard');
-  await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} users`, { useInnerText: true });
+  await expect(actionBar.locator('.counter')).toHaveText(`${expectedUsers.length} members`, { useInnerText: true });
 });
 
 msTest('User sort popover default state', async ({ usersPage }) => {
@@ -443,7 +443,7 @@ msTest('Sort users list', async ({ usersPage }) => {
   );
 });
 
-msTest('Invite new user', async ({ usersPage }) => {
+msTest('Invite new member', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   // cspell:disable-next-line
   await fillInputModal(usersPage, 'zana@wraeclast');
@@ -451,7 +451,7 @@ msTest('Invite new user', async ({ usersPage }) => {
   await expect(usersPage).toShowToast('An invitation to join the organization has been sent to zana@wraeclast.', 'Success');
 });
 
-msTest('Invite user with already existing email', async ({ usersPage }) => {
+msTest('Invite member with already existing email', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   await fillInputModal(usersPage, 'jaheira@gmail.com');
   await expect(usersPage).toShowToast('The email jaheira@gmail.com is already used by a member of this organization.', 'Error');

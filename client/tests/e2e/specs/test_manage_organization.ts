@@ -16,21 +16,21 @@ describe('Check manage org page', () => {
     cy.get('.organization-card-header').should('not.be.visible');
     cy.get('#manageOrganization').should('not.be.visible');
     cy.get('.sidebar').find('.list-workspaces').should('not.be.visible');
-    cy.get('.sidebar').find('.users').find('ion-item').first().contains('Users');
+    cy.get('.sidebar').find('.users').find('ion-item').first().contains('Members');
     cy.get('.sidebar').find('.users').find('ion-item').first().should('have.class', 'item-selected');
     // cy.get('.sidebar').find('.storage').find('ion-item').first().contains('Storage');
     // cy.get('.sidebar').find('.storage').find('ion-item').first().should('have.class', 'item-not-selected');
     cy.get('.sidebar').find('.organization').find('ion-item').first().contains('Information');
     cy.get('.sidebar').find('.organization').find('ion-item').first().should('have.class', 'item-not-selected');
-    cy.get('.topbar-left').find('.title-h2').contains('Users');
-    cy.get('.toolbar').find('.ms-action-bar-button').contains('Invite a user');
+    cy.get('.topbar-left').find('.title-h2').contains('Members');
+    cy.get('.toolbar').find('.ms-action-bar-button').contains('Invite a member');
   });
 
   it('Switch page', () => {
     cy.get('.sidebar').find('.users').find('ion-item').first().as('usersEl').should('have.class', 'item-selected');
     // cy.get('.sidebar').find('.storage').find('ion-item').first().as('storageEl').should('have.class', 'item-not-selected');
     cy.get('.sidebar').find('.organization').find('ion-item').first().as('orgEl').should('have.class', 'item-not-selected');
-    cy.get('.topbar-left').find('.title-h2').as('title').contains('Users');
+    cy.get('.topbar-left').find('.title-h2').as('title').contains('Members');
 
     // cy.get('@storageEl').click();
     // cy.get('@usersEl').should('have.class', 'item-not-selected');
@@ -59,7 +59,7 @@ describe('Check manage org page', () => {
     cy.get('.org-config').find('.org-info-title').contains('Configuration');
     cy.get('.org-config').find('.org-info-item-title').eq(0).contains('External profile');
     cy.get('.org-config').find('.org-config-list-item__value').eq(0).contains('Enabled');
-    cy.get('.org-config').find('.org-info-item-title').eq(1).contains('User limit');
+    cy.get('.org-config').find('.org-info-item-title').eq(1).contains('Member limit');
     cy.get('.org-config').find('.org-config-list-item__value').eq(1).contains('Unlimited');
     cy.get('.org-config').find('.org-info-item-title').eq(2).contains('Server address');
     cy.get('.org-config').find('.server-address-value__text').contains('parsec3://example.com/MyOrg');
@@ -74,7 +74,7 @@ describe('Check manage org page', () => {
     // cy.get('.org-storage').find('.org-storage-list-item__value').eq(1).contains(/^[\d.]+ [K|M|G|T]?B$/);
 
     // Active users
-    cy.get('.org-user').find('.org-info-title').contains('Users');
+    cy.get('.org-user').find('.org-info-title').contains('Members');
     cy.get('.org-user').find('.user-active-header__title').contains('Active');
     cy.get('.org-user').find('.user-active-header span').contains('5');
 

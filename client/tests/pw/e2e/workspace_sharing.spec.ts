@@ -91,5 +91,5 @@ msTest('Filter users no match', async ({ workspaceSharingModal }) => {
   // cspell:disable-next-line
   await expect(content.locator('.user-list').locator('.content')).toBeHidden();
   await expect(content.locator('.no-match-result')).toBeVisible();
-  await expect(content.locator('.no-match-result')).toHaveText("No user found that matches 'nomatch'.");
+  await expect(content.locator('.no-match-result')).toHaveText("No members found that matches 'nomatch'.");
 });

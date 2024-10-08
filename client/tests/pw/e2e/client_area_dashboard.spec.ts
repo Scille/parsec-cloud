@@ -8,7 +8,7 @@ msTest('Test dashboard', async ({ clientArea }) => {
   const title = clientArea.locator('.header-content').locator('.header-title');
   await expect(title).toHaveText('Dashboard');
   const monthSummaryItems = clientArea.locator('.month-summary').locator('.month-summary-item');
-  await expect(monthSummaryItems.locator('.month-summary-item__title')).toHaveText(['Active users', 'Used storage']);
+  await expect(monthSummaryItems.locator('.month-summary-item__title')).toHaveText(['Active members', 'Used storage']);
   await expect(monthSummaryItems.locator('.month-summary-item__data')).toHaveText(['59', '373 GB']);
 
   const invoiceContainer = clientArea.locator('.invoices-container');
