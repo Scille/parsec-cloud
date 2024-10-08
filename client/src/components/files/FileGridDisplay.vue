@@ -8,7 +8,10 @@
     @files-added="$emit('filesAdded', $event)"
     :is-reader="ownRole === WorkspaceRole.Reader"
   >
-    <div class="scroll">
+    <div
+      class="scroll"
+      ref="containerRef"
+    >
       <div class="folders-container-grid">
         <file-card
           class="folder-grid-item"
@@ -52,7 +55,7 @@ import FileDropZone from '@/components/files/FileDropZone.vue';
 import { EntryCollection, EntryModel, FileOperationProgress, FileModel, FolderModel } from '@/components/files/types';
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath, WorkspaceRole } from '@/parsec';
-import { ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 const props = defineProps<{
   operationsInProgress: Array<FileOperationProgress>;
@@ -63,12 +66,25 @@ const props = defineProps<{
 }>();
 
 const fileDropZoneRef = ref();
+const containerRef = ref();
 
 const emits = defineEmits<{
   (e: 'click', entry: EntryModel, event: Event): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
+  (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
 }>();
+
+onMounted(async () => {
+  containerRef.value.addEventListener('contextmenu', (event: Event) => {
+    event.preventDefault();
+    emits('globalMenuClick', event);
+  });
+});
+
+onBeforeUnmount(async () => {
+  containerRef.value.removeEventListener('contextmenu');
+});
 
 function onFilesAdded(imports: FileImportTuple[]): void {
   fileDropZoneRef.value.reset();

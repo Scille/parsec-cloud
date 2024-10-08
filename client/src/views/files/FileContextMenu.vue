@@ -125,24 +125,11 @@
   </ion-content>
 </template>
 
-<script lang="ts">
-export enum FileAction {
-  Rename,
-  MoveTo,
-  MakeACopy,
-  Delete,
-  Open,
-  ShowHistory,
-  Download,
-  ShowDetails,
-  CopyLink,
-}
-</script>
-
 <script setup lang="ts">
 import { isDesktop, WorkspaceRole } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, download, informationCircle, link, open, pencil, time, trashBin } from 'ionicons/icons';
+import { FileAction } from '@/views/files/types';
 
 defineProps<{
   role: WorkspaceRole;

@@ -171,6 +171,7 @@
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
+              @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
             />
           </div>
@@ -183,6 +184,7 @@
               @click="onEntryClick"
               @menu-click="openEntryContextMenu"
               @files-added="startImportFiles"
+              @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
             />
           </div>
@@ -260,8 +262,7 @@ import {
 } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
-import FileContextMenu, { FileAction } from '@/views/files/FileContextMenu.vue';
-import FileDetailsModal from '@/views/files/FileDetailsModal.vue';
+import { FileDetailsModal, FileContextMenu, FileAction, FolderGlobalContextMenu, FolderGlobalAction } from '@/views/files';
 import { IonContent, IonPage, IonText, modalController, popoverController } from '@ionic/vue';
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
@@ -1176,6 +1177,36 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
   }
 }
 
+async function openGlobalContextMenu(event: Event): Promise<void> {
+  const popover = await popoverController.create({
+    component: FolderGlobalContextMenu,
+    cssClass: 'folder-global-context-menu',
+    event: event,
+    reference: event.type === 'contextmenu' ? 'event' : 'trigger',
+    translucent: true,
+    showBackdrop: false,
+    dismissOnSelect: true,
+    alignment: 'start',
+    componentProps: {
+      role: ownRole.value,
+    },
+  });
+  await popover.present();
+
+  const { data } = await popover.onDidDismiss();
+  if (!data) {
+    return;
+  }
+  switch (data.action) {
+    case FolderGlobalAction.CreateFolder:
+      return await createFolder();
+    case FolderGlobalAction.ImportFiles:
+      return await fileInputsRef.value.importFiles();
+    case FolderGlobalAction.ImportFolder:
+      return await fileInputsRef.value.importFolder();
+  }
+}
+
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
   const popover = await popoverController.create({
     component: FileContextMenu,
@@ -1185,7 +1216,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     translucent: true,
     showBackdrop: false,
     dismissOnSelect: true,
-    alignment: 'end',
+    alignment: 'start',
     componentProps: {
       role: ownRole.value,
     },
