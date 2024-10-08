@@ -163,9 +163,9 @@ fn dispatch_api_event(event: APIEvent, event_bus: &EventBus) {
 }
 
 enum HandleSseErrorOutcome {
-    MustWaitForOnline,
-    MustWaitForTosAccepted,
-    MustStopMonitor,
+    WaitForOnline,
+    WaitForTosAccepted,
+    StopMonitor,
 }
 
 fn handle_sse_error(
@@ -182,22 +182,22 @@ fn handle_sse_error(
         // Legit errors...
 
         // We couldn't reach the server
-        ConnectionError::NoResponse(_) => HandleSseErrorOutcome::MustWaitForOnline,
+        ConnectionError::NoResponse(_) => HandleSseErrorOutcome::WaitForOnline,
         // We must accept the TOS before being able to connect
         ConnectionError::UserMustAcceptTos => {
             event_bus.send(&EventMustAcceptTos);
-            HandleSseErrorOutcome::MustWaitForTosAccepted
+            HandleSseErrorOutcome::WaitForTosAccepted
         }
 
         // ...otherwise the server rejected us, hence there is no use
         // retrying to connect and we just stop this coroutine
         ConnectionError::ExpiredOrganization => {
             event_bus.send(&EventExpiredOrganization);
-            HandleSseErrorOutcome::MustStopMonitor
+            HandleSseErrorOutcome::StopMonitor
         }
         ConnectionError::RevokedUser => {
             event_bus.send(&EventRevokedSelfUser);
-            HandleSseErrorOutcome::MustStopMonitor
+            HandleSseErrorOutcome::StopMonitor
         }
         ConnectionError::UnsupportedApiVersion {
             api_version,
@@ -208,7 +208,7 @@ fn handle_sse_error(
                 supported_api_versions,
             });
             event_bus.send(&event);
-            HandleSseErrorOutcome::MustStopMonitor
+            HandleSseErrorOutcome::StopMonitor
         }
         err @ (ConnectionError::MissingAuthenticationInfo
         | ConnectionError::BadAuthenticationInfo
@@ -230,7 +230,7 @@ fn handle_sse_error(
             let event =
                 EventIncompatibleServer(IncompatibleServerReason::Unexpected(Arc::new(err.into())));
             event_bus.send(&event);
-            HandleSseErrorOutcome::MustStopMonitor
+            HandleSseErrorOutcome::StopMonitor
         }
     }
 }
@@ -281,9 +281,9 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
         let mut stream = match cmds.start_sse::<Req>(last_event_id.clone()).await {
             Ok(stream) => stream,
             Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
-                HandleSseErrorOutcome::MustWaitForOnline
-                | HandleSseErrorOutcome::MustWaitForTosAccepted => continue,
-                HandleSseErrorOutcome::MustStopMonitor => return,
+                HandleSseErrorOutcome::WaitForOnline
+                | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                HandleSseErrorOutcome::StopMonitor => return,
             },
         };
 
@@ -325,9 +325,9 @@ async fn task_future_factory(cmds: Arc<AuthenticatedCmds>, event_bus: EventBus) 
                     }
                 }
                 Err(err) => match handle_sse_error(&mut state, &event_bus, err) {
-                    HandleSseErrorOutcome::MustWaitForOnline
-                    | HandleSseErrorOutcome::MustWaitForTosAccepted => continue,
-                    HandleSseErrorOutcome::MustStopMonitor => return,
+                    HandleSseErrorOutcome::WaitForOnline
+                    | HandleSseErrorOutcome::WaitForTosAccepted => continue,
+                    HandleSseErrorOutcome::StopMonitor => return,
                 },
             }
         }
