@@ -206,12 +206,12 @@
             "privacyPolicyLink": "https://parsec.cloud/en/politique-de-confidentialite/",
             "update": {
                 "title": "New terms of service",
-                "subtitle": "We have updated our terms of service. Please read and accept them to continue. You will automatically be disconnected if you don't accept them.",
+                "subtitle": "We have updated our terms of service. Please read and accept them to continue. You will automatically be disconnected if you refuse them.",
                 "tosButton": "Terms Of Service",
                 "url": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
                 "checkbox": "I have read and accept the terms of service.",
                 "yes": "Accept",
-                "no": "Refuse",
+                "no": "Refuse and log out",
                 "confirmationMessage": "You have accepted the new terms of service.",
                 "acceptError": "An error occured."
             }

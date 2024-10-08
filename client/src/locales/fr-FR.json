@@ -205,13 +205,13 @@
             "privacyPolicy": "Politique de Confidentialité",
             "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/",
             "update": {
-                "title": "Nouvelles conditions générales de vente de d'utilisation",
-                "subtitle": "Nous avons mis à jour les conditions générales d'utilisation. Veuillez les consulter et les accepter pour continuer. Vous serez automatiquement déconnecté si vous ne les acceptez pas.",
-                "tosButton": "Conditions Générales de Vente et d'Utilisation",
+                "title": "Nouvelles conditions générales d'utilisation",
+                "subtitle": "Nous avons mis à jour les conditions générales d'utilisation. Veuillez les consulter et les accepter pour continuer. Vous serez automatiquement déconnecté si vous les refusez.",
+                "tosButton": "Conditions Générales d'Utilisation",
                 "url": "https://my.parsec.cloud/assets/pdf/Parsec-CGVU-fr.pdf",
                 "checkbox": "J'ai lu et j'accepte les conditions générales",
                 "yes": "Accepter",
-                "no": "Refuser",
+                "no": "Refuser et se déconnecter",
                 "confirmationMessage": "Vous avez accepté les nouvelles conditions générales.",
                 "acceptError": "Une erreur est survenue."
             }
