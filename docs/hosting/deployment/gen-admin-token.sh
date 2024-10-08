@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
 ENV_FILE=parsec-admin-token.env
 if [ ! -f $ENV_FILE ]; then

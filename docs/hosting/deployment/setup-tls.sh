@@ -57,11 +57,13 @@ for service in parsec-{s3,server}; do
         generate_cert_conf $service DNS:$service,DNS:localhost,IP:127.0.0.1
     fi
 
-    if [ ! -f $service.key ]; then
+    # Generate key + csr if missing or if the key is older than the conf
+    if [ ! -f $service.key ] || [ $service.key -ot $service.crt.conf ]; then
         generate_certificate_request $service
     fi
 
-    if [ ! -f $service.crt ]; then
+    # Generate crt if missing or if it's older than the csr or the custom CA
+    if [ ! -f $service.crt ] || [ $service.crt -ot $service.csr ] || [ $service.crt -ot custom-ca.key ]; then
         sign_crt_with_ca custom-ca.{crt,key} $service
     fi
 done
