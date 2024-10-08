@@ -53,7 +53,7 @@
         "@types/luxon": "^3.3.4",
         "axios": "^1.7.4",
         "luxon": "^3.4.4",
-        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#07c6e297476cabfa4021ba4610b3e3e9a11e482c",
+        "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#e9a426b8abbb3c0b98790f7461392266e5ee9fcc",
         "qrcode-vue3": "^1.6.8",
         "uuid": "^9.0.1",
         "vue": "^3.3.8",
