@@ -42,7 +42,7 @@
       <!-- workspaces -->
       <div class="workspaces-container scroll">
         <div
-          v-show="querying"
+          v-show="querying && filteredWorkspaces.length === 0"
           class="body-lg"
         >
           <div class="no-workspaces-content">

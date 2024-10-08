@@ -38,9 +38,14 @@ enum AppState {
 }
 
 function preventRightClick(): void {
-  document.addEventListener('contextmenu', (event) => {
-    event.preventDefault();
-    console.log('Prevent global context menu');
+  document.addEventListener('contextmenu', async (event) => {
+    if (!window.isDev()) {
+      event.preventDefault();
+    }
+    const top = await popoverController.getTop();
+    if (top) {
+      await top.dismiss();
+    }
   });
 }
 
@@ -144,6 +149,7 @@ async function setupApp(): Promise<void> {
     }
 
     window.electronAPI.pageIsInitialized();
+    preventRightClick();
   };
 
   // We can start the app with different cases :
@@ -288,7 +294,6 @@ async function setupApp(): Promise<void> {
       if (devMode) {
         Sentry.disable();
       } else {
-        preventRightClick();
         config.enableTelemetry ? Sentry.enable() : Sentry.disable();
       }
     });

@@ -109,7 +109,6 @@ const emits = defineEmits<{
 }>();
 
 onMounted(() => {
-  console.log(itemRef.value);
   itemRef.value.addEventListener('contextmenu', onOptionsClick);
 });
 
