@@ -60,25 +60,11 @@ def app_factory() -> AsgiApp:
 app: AsgiApp = app_factory()
 
 
-# TODO: implement forward_proto_enforce_https
-#     # Do https redirection if incoming request doesn't follow forward proto rules
-#     if backend.config.forward_proto_enforce_https:
-#         header_key, header_expected_value = backend.config.forward_proto_enforce_https
-
-#         @app.before_request
-#         def redirect_unsecure() -> ResponseReturnValue | None:
-#             header_value = request.headers.get(header_key)
-#             # If redirection header match and protocol match, then no need for a redirection.
-#             if header_value is not None and header_value != header_expected_value:
-#                 if request.url.startswith("http://"):
-#                     return quart_redirect(request.url.replace("http://", "https://", 1), code=301)
-#             return None
-
-
 async def serve_parsec_asgi_app(
     app: AsgiApp,
     host: str,
     port: int,
+    proxy_trusted_addresses: list[str],
     ssl_certfile: Path | None = None,
     ssl_keyfile: Path | None = None,
     workers: int | None = None,
@@ -93,6 +79,7 @@ async def serve_parsec_asgi_app(
         v_major, _ = parsec_version.split(".", 1)
         # ex: parsec/3
         server_header = f"parsec/{v_major}"
+
     # Note: Uvicorn comes with default values for incoming data size to
     # avoid DoS abuse, so just trust them on that ;-)
     config = uvicorn.Config(
@@ -106,6 +93,13 @@ async def serve_parsec_asgi_app(
         ssl_keyfile=ssl_keyfile,  # type: ignore
         ssl_certfile=ssl_certfile,
         workers=workers,
+        # Enable/Disable X-Forwarded-Proto, X-Forwarded-For to populate remote address info.
+        # When enabled, is restricted to only trusting connecting IPs in forwarded-allow-ips.
+        # See: https://www.uvicorn.org/settings/#http
+        # Currently uvicorn only supports X-Forwarded-* headers (https://github.com/encode/uvicorn/issues/2237)
+        proxy_headers=(proxy_trusted_addresses != []),
+        # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
+        forwarded_allow_ips=proxy_trusted_addresses,
         # TODO: configure access log format:
         # Timestamp is added by the log processor configured in `parsec.logging`,
         # here we configure peer address + req line + rep status + rep body size + time

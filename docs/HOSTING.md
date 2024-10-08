@@ -2,25 +2,24 @@
 
 # Hosting Server
 
-- [Hosting Server](#hosting-server)
-  - [Requirements](#requirements)
-  - [Hosting](#hosting)
-  - [Installation](#installation)
-  - [Run](#run)
-  - [Settings](#settings)
-    - [Host](#host)
-    - [Port](#port)
-    - [Database URL](#database-url)
-    - [Database connections](#database-connections)
-    - [Blockstore URL](#blockstore-url)
-    - [Administration token](#administration-token)
-    - [SSL](#ssl)
-    - [Logs](#logs)
-    - [Email](#email)
-    - [Webhooks](#webhooks)
-    - [SSE Keepalive](#sse-keepalive)
-    - [Sentry](#sentry)
-    - [Debug](#debug)
+- [Requirements](#requirements)
+- [Hosting](#hosting)
+- [Installation](#installation)
+- [Run](#run)
+- [Settings](#settings)
+  - [Host](#host)
+  - [Port](#port)
+  - [Database URL](#database-url)
+  - [Database connections](#database-connections)
+  - [Blockstore URL](#blockstore-url)
+  - [Administration token](#administration-token)
+  - [SSL](#ssl)
+  - [Logs](#logs)
+  - [Email](#email)
+  - [Webhooks](#webhooks)
+  - [SSE Keepalive](#sse-keepalive)
+  - [Sentry](#sentry)
+  - [Debug](#debug)
 
 ## Requirements
 
@@ -167,15 +166,6 @@ SSL key file. This setting enables serving Parsec over SSL.
 - Environ: ``PARSEC_SSL_CERTFILE``
 
 SSL certificate file. This setting enables serving Parsec over SSL.
-
-- ``--forward-proto-enforce-https``
-- Environ: ``PARSEC_FORWARD_PROTO_ENFORCE_HTTPS``
-
-Enforce HTTPS by redirecting incoming request that do not comply with the provided header.
-This is useful when running Parsec behind a forward proxy handing the SSL layer.
-You should *only* use this setting if you control your proxy or have some other
-guarantee that it sets/strips this header appropriately.
-Typical value for this setting should be `X-Forwarded-Proto:https`.
 
 ### Logs
 

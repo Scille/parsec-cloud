@@ -43,19 +43,6 @@ DEFAULT_PORT = 6777
 DEFAULT_EMAIL_SENDER = "no-reply@parsec.com"
 
 
-def _parse_forward_proto_enforce_https_check_param(
-    raw_param: str | None,
-) -> tuple[str, str] | None:
-    if raw_param is None:
-        return None
-    try:
-        key, value = raw_param.split(":")
-    except ValueError:
-        raise click.BadParameter("Invalid format, should be `<header-name>:<header-value>`")
-    # HTTP header key is case-insensitive unlike the header value
-    return (key.lower(), value)
-
-
 def _parse_organization_initial_tos_url(raw_param: str | None) -> dict[TosLocale, TosUrl] | None:
     if raw_param is None:
         return None
@@ -292,20 +279,15 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     help="Sender address used in sent emails",
 )
 @click.option(
-    "--forward-proto-enforce-https",
-    type=str,
-    show_default=True,
-    default=None,
-    callback=lambda ctx, param, value: _parse_forward_proto_enforce_https_check_param(value),
-    envvar="PARSEC_FORWARD_PROTO_ENFORCE_HTTPS",
+    "--proxy-trusted-addresses",
+    default=["localhost", "127.0.0.1", "::1"],
+    envvar="PARSEC_PROXY_TRUSTED_ADDRESSES",
+    callback=lambda ctx, param, value: [item.strip() for item in str(value).split(",")],
     show_envvar=True,
-    help=(
-        "Enforce HTTPS by redirecting incoming request that do not comply with the provided header."
-        " This is useful when running Parsec behind a forward proxy handing the SSL layer."
-        " You should *only* use this setting if you control your proxy or have some other"
-        " guarantee that it sets/strips this header appropriately."
-        " Typical value for this setting should be `X-Forwarded-Proto:https`."
-    ),
+    help="""\b
+        Comma-separated list of IP Addresses, IP Networks or literals to trust with proxy headers.
+        Set this value to allow the server to use the forwarded headers from those clients.
+        """,
 )
 @click.option(
     "--ssl-keyfile",
@@ -373,7 +355,7 @@ def run_cmd(
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str | None,
-    forward_proto_enforce_https: tuple[str, str] | None,
+    proxy_trusted_addresses: list[str],
     ssl_keyfile: Path | None,
     ssl_certfile: Path | None,
     log_level: LogLevel,
@@ -418,7 +400,7 @@ def run_cmd(
             sse_keepalive=sse_keepalive,
             blockstore_config=blockstore,
             email_config=email_config,
-            forward_proto_enforce_https=forward_proto_enforce_https,
+            proxy_trusted_addresses=proxy_trusted_addresses,
             server_addr=server_addr,
             debug=debug,
             organization_bootstrap_webhook_url=organization_bootstrap_webhook,
@@ -505,6 +487,7 @@ async def _run_backend(
                     port=port,
                     ssl_certfile=ssl_certfile,
                     ssl_keyfile=ssl_keyfile,
+                    proxy_trusted_addresses=app_config.proxy_trusted_addresses,
                 )
                 return
 

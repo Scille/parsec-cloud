@@ -1,0 +1,1 @@
+Add server option ``--proxy-trusted-addresses`` to enable parsing of proxy headers from trusted addresses. By default, the server will trust the proxy headers from localhost.
