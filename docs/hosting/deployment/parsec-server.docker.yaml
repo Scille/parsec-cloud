@@ -6,6 +6,9 @@ services:
       POSTGRES_USER: DB_USER
       POSTGRES_PASSWORD: DB_PASS
       POSTGRES_DB: parsec
+    ports:
+      # Expose PostgreSQL to localhost
+      - 127.0.0.1:5432:5432
     volumes:
       - parsec-db-data:/var/lib/postgresql/data
 
@@ -19,6 +22,8 @@ services:
     ports:
       # Admin console exposed to https://127.0.0.1:9090
       - 127.0.0.1:9090:9090
+      # Expose S3 API to localhost
+      - 127.0.0.1:9000:9000
     volumes:
       - parsec-object-data:/data
       - ./parsec-s3.key:/opts/certs/private.key:ro
