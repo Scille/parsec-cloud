@@ -175,6 +175,8 @@ Create the file ``parsec.env`` with the following content to configure the ``par
     --administration-token TOKEN    Secret token to access the Administration API
                                     [env var: PARSEC_ADMINISTRATION_TOKEN; required]
 
+.. _the-docker-compose-file:
+
 The docker-compose file
 -----------------------
 
@@ -186,22 +188,26 @@ You can use the following `docker-compose`_ file (``parsec-server.docker.yaml``)
 
 It will setup 4 services:
 
-+---------------------+----------------------------+
-| Service name        | Description                |
-+=====================+============================+
-| ``parsec-postgres`` | The PostgreSQL database    |
-+---------------------+----------------------------+
-| ``parsec-s3``       | The Object Storage service |
-+---------------------+----------------------------+
-| ``parsec-smtp``     | A mock SMTP server         |
-+---------------------+----------------------------+
-| ``parsec-server``   | The Parsec server          |
-+---------------------+----------------------------+
++---------------------+-----------------------------------------------------------------------------+
+| Service name        | Description                                                                 |
++=====================+=============================================================================+
+| ``parsec-postgres`` | The PostgreSQL database                                                     |
++---------------------+-----------------------------------------------------------------------------+
+| ``parsec-s3``       | The Object Storage service                                                  |
++---------------------+-----------------------------------------------------------------------------+
+| ``parsec-smtp``     | A mock SMTP server                                                          |
++---------------------+-----------------------------------------------------------------------------+
+| ``parsec-server``   | The Parsec server                                                           |
++---------------------+-----------------------------------------------------------------------------+
+| ``parsec-proxy``    | A Nginx proxy server, used as an example to configure a reverse proxy.      |
+|                     |                                                                             |
+|                     | Learn more about :ref:`using parsec behind a reverse proxy<behind_a_proxy>` |
++---------------------+-----------------------------------------------------------------------------+
 
 Starting the services
 ---------------------
 
-The docker containers can be started as follow:
+The docker containers can be started as follows:
 
 .. code-block:: bash
 
@@ -375,3 +381,48 @@ First, start ``parsec`` with the custom CA:
   parsec
 
 After that go to ``Menu``/``Join an organization`` (or ``CTRL+O``) and paste the link from before (should already be filled in the text field). Follow the instructions to create the first user of the organization.
+
+.. _behind_a_proxy:
+
+Running behind a reverse proxy
+******************************
+
+To run Parsec behind a reverse proxy you will need to add the option ``--proxy-trusted-address`` or set the environment variable ``PARSEC_PROXY_TRUSTED_ADDRESS`` to the address of the reverse proxy (e.g.: ``localhost``).
+
+.. tip::
+
+  You can provide multiple addresses by separating them with a comma.
+
+  Example: Use the option ``--proxy-trusted-address '::1,10.0.0.42'`` will trust the address ``::1`` and ``10.0.0.42``
+
+An example of a reverse proxy configuration for ``nginx`` can be found in :ref:`the docker compose file <the-docker-compose-file>`:
+
+.. literalinclude:: parsec-server.docker.yaml
+  :language: yaml
+  :linenos:
+  :start-at: parsec-proxy
+  :end-before: parsec-postgres
+
+The provided configuration for ``nginx`` is:
+
+.. literalinclude:: parsec-nginx.conf
+  :language: nginx
+  :emphasize-lines: 10,19-22,25,28
+  :linenos:
+
+It configures Nginx to serve the domain ``example.com`` by listening on port 80 and 443, and proxy the requests to the Parsec server.
+
+The important takeaways are:
+
+- Set the headers ``X-Forwarded-For``, ``X-Forwarded-Proto``, ``X-Forwarded-Host`` and ``X-Forwarded-Port``.
+
+  .. note::
+    Currently, Parsec only uses the ``X-Forwarded-For`` and ``X-Forwarded-Proto`` headers.
+    But it better to overwrite all of them to avoid any issue.
+
+- Remove the header ``Forwarded``.
+
+  .. note::
+    The ``Forwarded`` header (`RFC-7239 <https://datatracker.ietf.org/doc/html/rfc7239>`_) is not used by Parsec, but it may be in the future.
+
+- Set the header ``host`` to the accessible address. Here we force the value to be ``example.com``, but you can set it to ``$host`` like for ``X-Forwarded-Host``.
