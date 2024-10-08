@@ -278,7 +278,11 @@
 
 .authentication-modal,
 .modal-tos {
+  .ms-modal-header__title {
+    max-width: none;
+  }
+
   &::part(content) {
-    max-width: var(--parsec-modal-width-sm);
+    max-width: var(--parsec-modal-width-md);
   }
 }
