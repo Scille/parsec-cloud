@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::{hash_map::RandomState, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
 
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
@@ -188,7 +188,7 @@ impl LocalFolderManifest {
         }
         // Make sure no entry_id is duplicated
         assert_eq!(
-            HashSet::<_, RandomState>::from_iter(data.values().filter_map(|v| v.as_ref()))
+            HashSet::<_>::from_iter(data.values().filter_map(|v| v.as_ref()))
                 .intersection(&HashSet::from_iter(self.children.values()))
                 .count(),
             0
@@ -220,13 +220,15 @@ impl LocalFolderManifest {
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> Self {
-        UnconfinedLocalFolderManifest::remove_confinement(self)
-            .apply_confinement(Some((self, timestamp)), prevent_sync_pattern)
+        UnconfinedLocalFolderManifest::remove_confinement(self).apply_confinement(
+            self,
+            prevent_sync_pattern,
+            timestamp,
+        )
     }
 
     pub fn from_remote(remote: FolderManifest, prevent_sync_pattern: &Regex) -> Self {
-        UnconfinedLocalFolderManifest::from_remote(remote)
-            .apply_confinement(None, prevent_sync_pattern)
+        UnconfinedLocalFolderManifest::apply_confinement_from_remote(remote, prevent_sync_pattern)
     }
 
     /// Create a `LocalFolderManifest` from the provided `FolderManifest`, then
@@ -245,8 +247,11 @@ impl LocalFolderManifest {
         local_manifest: &Self,
         timestamp: DateTime,
     ) -> Self {
-        UnconfinedLocalFolderManifest::from_remote(remote)
-            .apply_confinement(Some((local_manifest, timestamp)), prevent_sync_pattern)
+        UnconfinedLocalFolderManifest::from_remote(remote).apply_confinement(
+            local_manifest,
+            prevent_sync_pattern,
+            timestamp,
+        )
     }
 
     pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
@@ -289,16 +294,63 @@ impl UnconfinedLocalFolderManifest {
         }
     }
 
-    pub fn apply_confinement(
-        &self,
-        existing_local_manifest: Option<(&LocalFolderManifest, DateTime)>,
+    pub fn apply_confinement_from_remote(
+        remote: FolderManifest,
         prevent_sync_pattern: &Regex,
     ) -> LocalFolderManifest {
-        // Previous `filter_remote_entries` method
+        // Filter out the base entries that matches the prevent sync pattern
+        let mut new_children = remote.children.clone();
+        let remote_confinement_points: HashSet<_> = remote
+            .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    new_children.remove(name);
+                    Some(*entry_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
 
+        LocalFolderManifest {
+            parent: remote.parent,
+            need_sync: false,
+            updated: remote.updated,
+            children: new_children,
+            local_confinement_points: HashSet::new(),
+            remote_confinement_points,
+            speculative: false,
+            base: remote,
+        }
+    }
+
+    pub fn apply_confinement(
+        &self,
+        existing_local_manifest: &LocalFolderManifest,
+        prevent_sync_pattern: &Regex,
+        timestamp: DateTime,
+    ) -> LocalFolderManifest {
+        // Filter out the base entries that matches the prevent sync pattern
         let mut new_children = self.children.clone();
         let remote_confinement_points: HashSet<_> = self
+            .base
             .children
+            .iter()
+            .filter_map(|(name, entry_id)| {
+                if prevent_sync_pattern.is_match(name.as_ref()) {
+                    if new_children.get(name).is_some_and(|x| x == entry_id) {
+                        new_children.remove(name);
+                    }
+                    Some(*entry_id)
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // List the local-only entries that matches the prevent sync pattern
+        let local_confinement_points: HashSet<_> = new_children
             .iter()
             .filter_map(|(name, entry_id)| {
                 if prevent_sync_pattern.is_match(name.as_ref()) {
@@ -309,10 +361,6 @@ impl UnconfinedLocalFolderManifest {
             })
             .collect();
 
-        if !remote_confinement_points.is_empty() {
-            new_children.retain(|_, entry_id| !remote_confinement_points.contains(entry_id));
-        }
-
         // Create the new manifest
         let mut new_manifest = LocalFolderManifest {
             base: self.base.clone(),
@@ -320,54 +368,44 @@ impl UnconfinedLocalFolderManifest {
             need_sync: self.need_sync,
             updated: self.updated,
             children: new_children,
-            local_confinement_points: HashSet::new(),
+            local_confinement_points,
             remote_confinement_points,
             speculative: self.speculative,
         };
 
-        // No existing local manifest to extract as local context
-        let (other, timestamp) = match existing_local_manifest {
-            None => return new_manifest,
-            Some(x) => x,
-        };
+        // Check whether there are existing local confinement entries to restore
+        if !existing_local_manifest.local_confinement_points.is_empty() {
+            // List the existing local confinement entries to restore
+            let new_entry_ids = HashSet::<_>::from_iter(new_manifest.children.values());
+            let existing_local_confined_entries = existing_local_manifest
+                .children
+                .iter()
+                .filter_map(|(name, entry_id)| {
+                    if !new_entry_ids.contains(entry_id)
+                        && existing_local_manifest
+                            .local_confinement_points
+                            .contains(entry_id)
+                    {
+                        Some((name.clone(), Some(*entry_id)))
+                    } else {
+                        None
+                    }
+                })
+                .collect();
 
-        // Previous `restore_local_confinement_points` method
-
-        // Using `self.remote_confinement_points` is useful to restore entries that were present locally
-        // before applying a new filter that filtered those entries from the remote manifest
-        if other.local_confinement_points.is_empty()
-            && new_manifest.remote_confinement_points.is_empty()
-        {
-            return new_manifest;
+            // Restore existing local confinement entries
+            new_manifest.evolve_children_and_mark_updated(
+                existing_local_confined_entries,
+                prevent_sync_pattern,
+                timestamp,
+            );
         }
-        // Create a set for fast lookup in order to make sure no entry gets duplicated.
-        // This might happen when a synchronized entry is renamed to a confined name locally.
-        let new_entry_ids = HashSet::<_, RandomState>::from_iter(new_manifest.children.values());
-        let previously_local_confinement_points = other
-            .children
-            .iter()
-            .filter_map(|(name, entry_id)| {
-                if !new_entry_ids.contains(entry_id)
-                    && (other.local_confinement_points.contains(entry_id)
-                        || new_manifest.remote_confinement_points.contains(entry_id))
-                {
-                    Some((name.clone(), Some(*entry_id)))
-                } else {
-                    None
-                }
-            })
-            .collect();
 
-        new_manifest.evolve_children_and_mark_updated(
-            previously_local_confinement_points,
-            prevent_sync_pattern,
-            timestamp,
-        );
         new_manifest
     }
 
     pub fn remove_confinement(local_manifest: &LocalFolderManifest) -> Self {
-        // Previous `filter_local_confinement_points method`
+        // Filter out the entries that are present in the local confinement points
 
         let mut new_children = local_manifest.children.clone();
 
@@ -376,11 +414,13 @@ impl UnconfinedLocalFolderManifest {
                 .retain(|_, entry_id| !local_manifest.local_confinement_points.contains(entry_id));
         }
 
-        // Previous `restore_remote_confinement_points` method
-
+        // Restore from base children the entries that are present in the remote confinement points
         if !local_manifest.remote_confinement_points.is_empty() {
+            let existing_entries: HashSet<_> = new_children.values().copied().collect();
             for (name, entry_id) in local_manifest.base.children.iter() {
-                if local_manifest.remote_confinement_points.contains(entry_id) {
+                if local_manifest.remote_confinement_points.contains(entry_id)
+                    && !existing_entries.contains(entry_id)
+                {
                     new_children.insert(name.clone(), *entry_id);
                 }
             }
