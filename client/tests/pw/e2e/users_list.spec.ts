@@ -124,6 +124,24 @@ for (const revokedUser of [false, true]) {
   });
 }
 
+for (const revokedUser of [false, true]) {
+  msTest(`Check user context menu on right click for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
+    const item = usersPage
+      .locator('#users-page-user-list')
+      .getByRole('listitem')
+      .nth(revokedUser ? 2 : 1);
+    await expect(usersPage.locator('#user-context-menu')).toBeHidden();
+    await item.click({ button: 'right' });
+    await expect(usersPage.locator('#user-context-menu')).toBeVisible();
+    const menu = usersPage.locator('#user-context-menu');
+    const expectedActions = ['User details', 'View details', 'Copy roles', 'Copy workspace roles to...'];
+    if (!revokedUser) {
+      expectedActions.unshift(...['Deletion', 'Revoke this user']);
+    }
+    await expect(menu.getByRole('listitem')).toHaveText(expectedActions);
+  });
+}
+
 msTest('Revoke one user with context menu', async ({ usersPage }) => {
   const item = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(1);
   await item.hover();
