@@ -169,6 +169,18 @@ export interface HumanHandle {
 
 
 export interface LocalDevice {
+    organizationAddr: string
+    userId: string
+    deviceId: string
+    deviceLabel: string
+    humanHandle: HumanHandle
+    signingKey: Uint8Array
+    privateKey: Uint8Array
+    initialProfile: UserProfile
+    userRealmId: string
+    userRealmKey: Uint8Array
+    localSymkey: Uint8Array
+    timeProvider: Uint8Array
 }
 
 
@@ -1161,28 +1173,28 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 
-// LoadRecoverDeviceError
-export interface LoadRecoverDeviceErrorDecryptionFailed {
+// LoadRecoveryDeviceError
+export interface LoadRecoveryDeviceErrorDecryptionFailed {
     tag: "DecryptionFailed"
     error: string
 }
-export interface LoadRecoverDeviceErrorInvalidData {
+export interface LoadRecoveryDeviceErrorInvalidData {
     tag: "InvalidData"
     error: string
 }
-export interface LoadRecoverDeviceErrorInvalidPassphrase {
+export interface LoadRecoveryDeviceErrorInvalidPassphrase {
     tag: "InvalidPassphrase"
     error: string
 }
-export interface LoadRecoverDeviceErrorInvalidPath {
+export interface LoadRecoveryDeviceErrorInvalidPath {
     tag: "InvalidPath"
     error: string
 }
-export type LoadRecoverDeviceError =
-  | LoadRecoverDeviceErrorDecryptionFailed
-  | LoadRecoverDeviceErrorInvalidData
-  | LoadRecoverDeviceErrorInvalidPassphrase
-  | LoadRecoverDeviceErrorInvalidPath
+export type LoadRecoveryDeviceError =
+  | LoadRecoveryDeviceErrorDecryptionFailed
+  | LoadRecoveryDeviceErrorInvalidData
+  | LoadRecoveryDeviceErrorInvalidPassphrase
+  | LoadRecoveryDeviceErrorInvalidPath
 
 
 // MountpointMountStrategy
@@ -2318,8 +2330,8 @@ export function listAvailableDevices(
 ): Promise<Array<AvailableDevice>>
 export function loadRecoveryDevice(
     key_file: string,
-    passphrase: string
-): Promise<Result<LocalDevice, LoadRecoverDeviceError>>
+    passphrase: Uint8Array
+): Promise<Result<LocalDevice, LoadRecoveryDeviceError>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string

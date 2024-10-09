@@ -410,7 +410,7 @@ def is_keyring_available() -> bool:
     raise NotImplementedError
 
 
-class LoadRecoverDeviceError(ErrorVariant):
+class LoadRecoveryDeviceError(ErrorVariant):
     class InvalidPath:
         pass
 
@@ -425,21 +425,21 @@ class LoadRecoverDeviceError(ErrorVariant):
 
 
 class LocalDevice(Structure):
-    organization_addr = (ParsecOrganizationAddr,)
-    user_id = (UserID,)
-    device_id = (DeviceID,)
-    device_label = (DeviceLabel,)
-    human_handle = (HumanHandle,)
-    signing_key = (SigningKey,)
-    private_key = (PrivateKey,)
-    initial_profile = (UserProfile,)
-    user_realm_id = (VlobID,)
-    user_realm_key = (SecretKey,)
-    local_symkey = (SecretKey,)
-    time_provider = (TimeProvider,)
+    organization_addr: ParsecOrganizationAddr
+    user_id: UserID
+    device_id: DeviceID
+    device_label: DeviceLabel
+    human_handle: HumanHandle
+    signing_key: SigningKey
+    private_key: PrivateKey
+    initial_profile: UserProfile
+    user_realm_id: VlobID
+    user_realm_key: SecretKey
+    local_symkey: SecretKey
+    time_provider: TimeProvider
 
 
-def load_recovery_device(
+async def load_recovery_device(
     key_file: Path, passphrase: SecretKeyPassphrase
-) -> Result[LocalDevice, LoadRecoverDeviceError]:
+) -> Result[LocalDevice, LoadRecoveryDeviceError]:
     raise NotImplementedError

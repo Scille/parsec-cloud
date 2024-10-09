@@ -290,7 +290,7 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
                 let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -422,10 +422,8 @@ fn struct_available_device_rs_to_js(
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_key_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
+        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
         };
         match custom_to_rs_string(rs_obj.key_file_path) {
             Ok(ok) => ok,
@@ -502,7 +500,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
                 let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -516,7 +514,7 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
             .ok_or_else(|| TypeError::new("Not a string"))
             .and_then(|x| {
                 let custom_from_rs_string =
-                    |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -564,10 +562,8 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
 fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_config_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
+        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
         };
         match custom_to_rs_string(rs_obj.config_dir) {
             Ok(ok) => ok,
@@ -577,10 +573,8 @@ fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsVa
     });
     Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
     let js_data_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-            path.into_os_string()
-                .into_string()
-                .map_err(|_| "Path contains non-utf8 characters")
+        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
         };
         match custom_to_rs_string(rs_obj.data_base_dir) {
             Ok(ok) => ok,
@@ -1422,12 +1416,213 @@ fn struct_human_handle_rs_to_js(rs_obj: libparsec::HumanHandle) -> Result<JsValu
 
 #[allow(dead_code)]
 fn struct_local_device_js_to_rs(obj: JsValue) -> Result<libparsec::LocalDevice, JsValue> {
-    Ok(libparsec::LocalDevice {})
+    let organization_addr = {
+        let js_val = Reflect::get(&obj, &"organizationAddr".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::ParsecOrganizationAddr::from_any(&s).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid ParsecOrganizationAddr"))?
+    };
+    let user_id = {
+        let js_val = Reflect::get(&obj, &"userId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                    libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid UserID"))?
+    };
+    let device_id = {
+        let js_val = Reflect::get(&obj, &"deviceId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::DeviceID, _> {
+                    libparsec::DeviceID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid DeviceID"))?
+    };
+    let device_label = {
+        let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<_, String> {
+                    libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid DeviceLabel"))?
+    };
+    let human_handle = {
+        let js_val = Reflect::get(&obj, &"humanHandle".into())?;
+        struct_human_handle_js_to_rs(js_val)?
+    };
+    let signing_key = {
+        let js_val = Reflect::get(&obj, &"signingKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+            .map_err(|_| TypeError::new("Not a valid SigningKey"))?
+    };
+    let private_key = {
+        let js_val = Reflect::get(&obj, &"privateKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+            .map_err(|_| TypeError::new("Not a valid PrivateKey"))?
+    };
+    let initial_profile = {
+        let js_val = Reflect::get(&obj, &"initialProfile".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_user_profile_js_to_rs(raw_string.as_str())
+        }?
+    };
+    let user_realm_id = {
+        let js_val = Reflect::get(&obj, &"userRealmId".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+    };
+    let user_realm_key = {
+        let js_val = Reflect::get(&obj, &"userRealmKey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+            .map_err(|_| TypeError::new("Not a valid SecretKey"))?
+    };
+    let local_symkey = {
+        let js_val = Reflect::get(&obj, &"localSymkey".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+            .map_err(|_| TypeError::new("Not a valid SecretKey"))?
+    };
+    let time_provider = {
+        let js_val = Reflect::get(&obj, &"timeProvider".into())?;
+        js_val
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))?
+            .to_vec()
+            .map_err(|_| TypeError::new("Not a valid TimeProvider"))?
+    };
+    Ok(libparsec::LocalDevice {
+        organization_addr,
+        user_id,
+        device_id,
+        device_label,
+        human_handle,
+        signing_key,
+        private_key,
+        initial_profile,
+        user_realm_id,
+        user_realm_key,
+        local_symkey,
+        time_provider,
+    })
 }
 
 #[allow(dead_code)]
 fn struct_local_device_rs_to_js(rs_obj: libparsec::LocalDevice) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
+    let js_organization_addr = JsValue::from_str({
+        let custom_to_rs_string =
+            |addr: libparsec::ParsecOrganizationAddr| -> Result<String, &'static str> {
+                Ok(addr.to_url().into())
+            };
+        match custom_to_rs_string(rs_obj.organization_addr) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"organizationAddr".into(), &js_organization_addr)?;
+    let js_user_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userId".into(), &js_user_id)?;
+    let js_device_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::DeviceID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.device_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"deviceId".into(), &js_device_id)?;
+    let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
+    Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
+    let js_human_handle = struct_human_handle_rs_to_js(rs_obj.human_handle)?;
+    Reflect::set(&js_obj, &"humanHandle".into(), &js_human_handle)?;
+    let js_signing_key = JsValue::from(Uint8Array::from(rs_obj.signing_key.as_ref()));
+    Reflect::set(&js_obj, &"signingKey".into(), &js_signing_key)?;
+    let js_private_key = JsValue::from(Uint8Array::from(rs_obj.private_key.as_ref()));
+    Reflect::set(&js_obj, &"privateKey".into(), &js_private_key)?;
+    let js_initial_profile = JsValue::from_str(enum_user_profile_rs_to_js(rs_obj.initial_profile));
+    Reflect::set(&js_obj, &"initialProfile".into(), &js_initial_profile)?;
+    let js_user_realm_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.user_realm_id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"userRealmId".into(), &js_user_realm_id)?;
+    let js_user_realm_key = JsValue::from(Uint8Array::from(rs_obj.user_realm_key.as_ref()));
+    Reflect::set(&js_obj, &"userRealmKey".into(), &js_user_realm_key)?;
+    let js_local_symkey = JsValue::from(Uint8Array::from(rs_obj.local_symkey.as_ref()));
+    Reflect::set(&js_obj, &"localSymkey".into(), &js_local_symkey)?;
+    let js_time_provider = JsValue::from(Uint8Array::from(rs_obj.time_provider.as_ref()));
+    Reflect::set(&js_obj, &"timeProvider".into(), &js_time_provider)?;
     Ok(js_obj)
 }
 
@@ -1708,9 +1903,10 @@ fn struct_started_workspace_info_js_to_rs(
                             .and_then(|s| s.as_string())
                             .ok_or_else(|| TypeError::new("Not a string"))
                             .and_then(|x| {
-                                let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                                    Ok(std::path::PathBuf::from(s))
-                                };
+                                let custom_from_rs_string =
+                                    |s: &String| -> Result<_, &'static str> {
+                                        Ok(std::path::Path::new(s))
+                                    };
                                 custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                             })
                             .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -1762,10 +1958,8 @@ fn struct_started_workspace_info_rs_to_js(
                 let js_value = JsValue::from(x1);
                 js_array.push(&js_value);
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
+                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                     };
                     match custom_to_rs_string(x2) {
                         Ok(ok) => ok,
@@ -4458,9 +4652,8 @@ fn variant_device_access_strategy_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
+                        let custom_from_rs_string =
+                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -4490,9 +4683,8 @@ fn variant_device_access_strategy_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
+                        let custom_from_rs_string =
+                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -4508,9 +4700,8 @@ fn variant_device_access_strategy_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
+                        let custom_from_rs_string =
+                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -4536,10 +4727,8 @@ fn variant_device_access_strategy_rs_to_js(
                 &"DeviceAccessStrategyKeyring".into(),
             )?;
             let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
+                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
@@ -4560,10 +4749,8 @@ fn variant_device_access_strategy_rs_to_js(
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
             let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
+                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
@@ -4580,10 +4767,8 @@ fn variant_device_access_strategy_rs_to_js(
                 &"DeviceAccessStrategySmartcard".into(),
             )?;
             let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
+                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                 };
                 match custom_to_rs_string(key_file) {
                     Ok(ok) => ok,
@@ -5542,42 +5727,42 @@ fn variant_list_invitations_error_rs_to_js(
     Ok(js_obj)
 }
 
-// LoadRecoverDeviceError
+// LoadRecoveryDeviceError
 
 #[allow(dead_code)]
-fn variant_load_recover_device_error_rs_to_js(
-    rs_obj: libparsec::LoadRecoverDeviceError,
+fn variant_load_recovery_device_error_rs_to_js(
+    rs_obj: libparsec::LoadRecoveryDeviceError,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
-        libparsec::LoadRecoverDeviceError::DecryptionFailed { .. } => {
+        libparsec::LoadRecoveryDeviceError::DecryptionFailed { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"LoadRecoverDeviceErrorDecryptionFailed".into(),
+                &"LoadRecoveryDeviceErrorDecryptionFailed".into(),
             )?;
         }
-        libparsec::LoadRecoverDeviceError::InvalidData { .. } => {
+        libparsec::LoadRecoveryDeviceError::InvalidData { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"LoadRecoverDeviceErrorInvalidData".into(),
+                &"LoadRecoveryDeviceErrorInvalidData".into(),
             )?;
         }
-        libparsec::LoadRecoverDeviceError::InvalidPassphrase { .. } => {
+        libparsec::LoadRecoveryDeviceError::InvalidPassphrase { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"LoadRecoverDeviceErrorInvalidPassphrase".into(),
+                &"LoadRecoveryDeviceErrorInvalidPassphrase".into(),
             )?;
         }
-        libparsec::LoadRecoverDeviceError::InvalidPath { .. } => {
+        libparsec::LoadRecoveryDeviceError::InvalidPath { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"LoadRecoverDeviceErrorInvalidPath".into(),
+                &"LoadRecoveryDeviceErrorInvalidPath".into(),
             )?;
         }
     }
@@ -5604,9 +5789,8 @@ fn variant_mountpoint_mount_strategy_js_to_rs(
                     .and_then(|s| s.as_string())
                     .ok_or_else(|| TypeError::new("Not a string"))
                     .and_then(|x| {
-                        let custom_from_rs_string = |s: String| -> Result<_, &'static str> {
-                            Ok(std::path::PathBuf::from(s))
-                        };
+                        let custom_from_rs_string =
+                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
                         custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
@@ -5634,10 +5818,8 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
                 &"MountpointMountStrategyDirectory".into(),
             )?;
             let js_base_dir = JsValue::from_str({
-                let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                    path.into_os_string()
-                        .into_string()
-                        .map_err(|_| "Path contains non-utf8 characters")
+                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                 };
                 match custom_to_rs_string(base_dir) {
                     Ok(ok) => ok,
@@ -9293,10 +9475,8 @@ pub fn getDefaultConfigDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_config_dir();
         Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
+            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
@@ -9314,10 +9494,8 @@ pub fn getDefaultDataBaseDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_data_base_dir();
         Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
+            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
@@ -9335,10 +9513,8 @@ pub fn getDefaultMountpointBaseDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_mountpoint_base_dir();
         Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                path.into_os_string()
-                    .into_string()
-                    .map_err(|_| "Path contains non-utf8 characters")
+            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
             };
             match custom_to_rs_string(ret) {
                 Ok(ok) => ok,
@@ -9727,7 +9903,7 @@ pub fn listAvailableDevices(path: String) -> Promise {
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
@@ -9747,18 +9923,20 @@ pub fn listAvailableDevices(path: String) -> Promise {
 // load_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn loadRecoveryDevice(key_file: String, passphrase: String) -> Promise {
+pub fn loadRecoveryDevice(key_file: String, passphrase: Uint8Array) -> Promise {
     future_to_promise(async move {
         let key_file = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(key_file).map_err(|e| TypeError::new(e.as_ref()))
         }?;
-        let passphrase = {
-            let custom_from_rs_string = |s: String| -> Result<_, String> { Ok(s.into()) };
-            custom_from_rs_string(passphrase).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-        let ret = libparsec::load_recovery_device(key_file, passphrase);
+        let passphrase = passphrase
+            .to_vec()
+            .as_slice()
+            .try_into()
+            .map_err(|_| JsValue::from(TypeError::new("Not a valid SecretKeyPassphrase")))?;
+
+        let ret = libparsec::load_recovery_device(key_file, passphrase).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -9770,7 +9948,7 @@ pub fn loadRecoveryDevice(key_file: String, passphrase: String) -> Promise {
             Err(err) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_load_recover_device_error_rs_to_js(err)?;
+                let js_err = variant_load_recovery_device_error_rs_to_js(err)?;
                 Reflect::set(&js_obj, &"error".into(), &js_err)?;
                 js_obj
             }
@@ -9795,10 +9973,8 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
+                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
@@ -10011,7 +10187,7 @@ pub fn testDropTestbed(path: String) -> Promise {
     future_to_promise(async move {
         let path = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
@@ -10045,7 +10221,7 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
     future_to_promise(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
@@ -10085,7 +10261,7 @@ pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
     future_to_promise(async move {
         let discriminant_dir = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
@@ -10136,10 +10312,8 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
                 let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                        path.into_os_string()
-                            .into_string()
-                            .map_err(|_| "Path contains non-utf8 characters")
+                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                     };
                     match custom_to_rs_string(value) {
                         Ok(ok) => ok,
@@ -10238,7 +10412,7 @@ pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise 
     future_to_promise(async move {
         let config_dir = {
             let custom_from_rs_string =
-                |s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) };
+                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
             custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
@@ -10512,10 +10686,8 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                     let js_value = JsValue::from(x1);
                     js_array.push(&js_value);
                     let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |path: std::path::PathBuf| -> Result<_, _> {
-                            path.into_os_string()
-                                .into_string()
-                                .map_err(|_| "Path contains non-utf8 characters")
+                        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
+                            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
                         };
                         match custom_to_rs_string(x2) {
                             Ok(ok) => ok,

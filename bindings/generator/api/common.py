@@ -189,31 +189,31 @@ class Password(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
 
 
-class SigningKey(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+class SigningKey(BytesBasedType):
+    pass
 
 
-class PrivateKey(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+class PrivateKey(BytesBasedType):
+    pass
 
 
-class SecretKey(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+class SecretKey(BytesBasedType):
+    pass
 
 
-class SecretKeyPassphrase(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+class SecretKeyPassphrase(BytesBasedType):
+    pass
 
 
-class TimeProvider(StrBasedType):
-    custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
+class TimeProvider(BytesBasedType):
+    pass
 
 
 class Path(StrBasedType):
     custom_from_rs_string = (
-        "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
+        "|s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) }"
     )
-    custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> { path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
+    custom_to_rs_string = '|path: &std::path::Path| -> Result<_, _> { path.to_str().ok_or(|_| "Path contains non-utf8 characters") }'
 
 
 class FsPath(StrBasedType):
