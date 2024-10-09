@@ -238,9 +238,12 @@ impl LocalFolderManifest {
     /// The result shouldn't be considered a merge of remote and local, but an intermediate
     /// representation required to do a proper merge.
     ///
-    /// Also note `local_manifest` doesn't need to have it confinement points up-to-date
-    /// with the provided `prevent_sync_pattern`. As a matter of fact, the `timestamp`
-    /// parameter is only used to update
+    /// The produced `LocalFolderManifest` does not have `need_sync` set to true in most cases.
+    /// However, it might happen that the remote manifest references a non-confined id that
+    /// corresponds to an existing locally confined entry. In this specific case, the entry
+    /// keeps its local confined name, which is analogous to the remote entry being deleted.
+    /// This is why the `need_sync` field is set to true in this case, with the `updated` field
+    /// set to the provided `timestamp`.
     pub fn from_remote_with_restored_local_confinement_points(
         remote: FolderManifest,
         prevent_sync_pattern: &Regex,
@@ -294,6 +297,9 @@ impl UnconfinedLocalFolderManifest {
         }
     }
 
+    /// Convert a `FolderManifest` to a `LocalFolderManifest`
+    /// while applying the prevent sync pattern when there are no existing
+    /// local manifest to merge with. Otherwise, use `apply_confinement`.
     pub fn apply_confinement_from_remote(
         remote: FolderManifest,
         prevent_sync_pattern: &Regex,
@@ -325,6 +331,19 @@ impl UnconfinedLocalFolderManifest {
         }
     }
 
+    /// Apply the prevent sync pattern to the current unconfined local manifest
+    /// and restore the existing locally confined entries from the provided manifest.
+    /// This returns a new properly confined local manifest that can be either:
+    /// - used in a merge operation with the existing local manifest
+    /// - stored to the local storage, after applying a new pattern for instance.
+    ///
+    /// The provided timestamp is used to update the `updated` field of the new manifest,
+    /// if a change requiring synchronization is made. That might happen if the provided
+    /// local manifest used a different prevent sync pattern and that some entries ends up
+    /// being longer confined. It might also happen when the provided local manifest
+    /// contains a locally confined entry with the same id as a non-confined entry in the
+    /// current unconfined manifest. In this case, the entry is kept confined, which is
+    /// analogous to the remote entry being deleted.
     pub fn apply_confinement(
         &self,
         existing_local_manifest: &LocalFolderManifest,
@@ -411,6 +430,9 @@ impl UnconfinedLocalFolderManifest {
         new_manifest
     }
 
+    /// Remove the local context and re-apply the remote context from the given
+    /// local manifest in order to create an unconfined local manifest that is
+    /// ready to be converted to a remote manifest and uploaded.
     pub fn remove_confinement(local_manifest: &LocalFolderManifest) -> Self {
         // Filter out the entries that are present in the local confinement points
 
