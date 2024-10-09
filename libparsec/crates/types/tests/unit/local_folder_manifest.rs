@@ -881,7 +881,6 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
     p_assert_eq!(lfm2, lfm);
 }
 
-#[ignore = "TODO: investigate apply_prevent_sync_pattern !"]
 #[test]
 fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_pattern() {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
@@ -927,16 +926,6 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     let new_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
-    // TODO: this test seems to fail because `apply_prevent_sync_pattern` first remove
-    // local confinements points from the local children, then add remote confinement points
-    // there instead.
-    // However in our current case there is no local nor remote confinement points, so those
-    // two steps does nothing...
-    // ...then the next step kicks in and considers any entry in the local children matching
-    // the prevent sync pattern should be part of the remote confinement points (while in
-    // fact those peaceful entries have always been part of the local children, and have never
-    // been considered confined up until this point !).
-
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
     p_assert_eq!(
         lfm.local_confinement_points,
@@ -956,10 +945,11 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
         ])
     );
     p_assert_eq!(lfm.need_sync, true);
-    p_assert_eq!(lfm.updated, t3);
+    // The last update is actually from t2.
+    // The `apply_prevent_sync_pattern` call at t3 merely flagged fileA as confined.
+    p_assert_eq!(lfm.updated, t2);
 }
 
-#[ignore = "TODO: investigate apply_prevent_sync_pattern !"]
 #[test]
 fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_pattern() {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
@@ -1033,7 +1023,9 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
         ),])
     );
     p_assert_eq!(lfm.need_sync, true);
-    p_assert_eq!(lfm.updated, t3);
+    // The last update is actually from t2.
+    // The `apply_prevent_sync_pattern` call at t3 merely filtered `file3.tmp`.
+    p_assert_eq!(lfm.updated, t2);
 }
 
 #[test]
@@ -1249,7 +1241,6 @@ fn apply_prevent_sync_pattern_with_only_confined_remote_children_turning_non_con
 }
 
 #[test]
-#[ignore = "TODO: investigate apply_prevent_sync_pattern !"]
 fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
     let t1 = "2000-01-01T00:00:00Z".parse().unwrap();
     let t2 = "2000-01-02T00:00:00Z".parse().unwrap();
@@ -1321,8 +1312,9 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
     p_assert_eq!(
         lfm.remote_confinement_points,
         HashSet::from_iter([
-            VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+            VlobID::from_hex("F0F3AD570E7D4A7C9C2CCB3DD00414E1").unwrap(),
             VlobID::from_hex("198762BA0C744DC0B45B2B17678C51CE").unwrap(),
+            VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
         ])
     );
     p_assert_eq!(
@@ -1336,8 +1328,8 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
         lfm.children,
         HashMap::from_iter([
             (
-                "file1.png".parse().unwrap(),
-                VlobID::from_hex("3DF3AC53967C43D889860AE2F459F42B").unwrap(),
+                "fileA.mp4".parse().unwrap(),
+                VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
             ),
             (
                 "fileB.tmp".parse().unwrap(),
@@ -1353,17 +1345,12 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
 fn apply_prevent_sync_pattern_on_renamed_entry(
     #[values(
         "no_confinement",
-        // TODO: investigate apply_prevent_sync_pattern !
-        // "remote_name_matching_current_prevent_sync_pattern",
+        "remote_name_matching_current_prevent_sync_pattern",
         "local_name_matching_current_prevent_sync_pattern",
-        // TODO: investigate apply_prevent_sync_pattern !
-        // "remote_and_local_names_matching_current_prevent_sync_pattern",
-        // TODO: investigate apply_prevent_sync_pattern !
-        // "remote_name_matching_future_prevent_sync_pattern",
-        // TODO: investigate apply_prevent_sync_pattern !
-        // "local_name_matching_future_prevent_sync_pattern",
-        // TODO: investigate apply_prevent_sync_pattern !
-        // "remote_and_local_names_matching_future_prevent_sync_pattern"
+        "remote_and_local_names_matching_current_prevent_sync_pattern",
+        "remote_name_matching_future_prevent_sync_pattern",
+        "local_name_matching_future_prevent_sync_pattern",
+        "remote_and_local_names_matching_future_prevent_sync_pattern"
     )]
     kind: &str,
 ) {
@@ -1376,52 +1363,50 @@ fn apply_prevent_sync_pattern_on_renamed_entry(
     let mut expected_local_confinement_points = HashSet::new();
     let mut remote_confinement_points = HashSet::new();
     let mut expected_remote_confinement_points = HashSet::new();
-    let mut expected_updated = t3;
 
-    let (remote_name, local_name): (EntryName, EntryName) = match kind {
+    let (remote_name, local_name, expected_updated): (EntryName, EntryName, DateTime) = match kind {
         "no_confinement" => {
             let remote_name = "file1.txt".parse().unwrap();
             let local_name = "file1-renamed.txt".parse().unwrap();
-            expected_updated = t2; // `apply_prevent_sync_pattern` does no changes
-            (remote_name, local_name)
+            (remote_name, local_name, t2)
         }
         "remote_name_matching_current_prevent_sync_pattern" => {
             let remote_name = "file1.tmp".parse().unwrap();
             let local_name = "file1-renamed.txt".parse().unwrap();
             remote_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t2)
         }
         "local_name_matching_current_prevent_sync_pattern" => {
             let remote_name = "file1.txt".parse().unwrap();
             let local_name = "file1-renamed.tmp".parse().unwrap();
             local_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t3)
         }
         "remote_and_local_names_matching_current_prevent_sync_pattern" => {
             let remote_name = "file1.tmp".parse().unwrap();
             let local_name = "file1-renamed.tmp".parse().unwrap();
             remote_confinement_points.insert(child_id);
             local_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t3)
         }
         "remote_name_matching_future_prevent_sync_pattern" => {
             let remote_name = "file1.tmp~".parse().unwrap();
             let local_name = "file1-renamed.txt".parse().unwrap();
             expected_remote_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t2)
         }
         "local_name_matching_future_prevent_sync_pattern" => {
             let remote_name = "file1.txt".parse().unwrap();
             let local_name = "file1-renamed.tmp~".parse().unwrap();
             expected_local_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t2)
         }
         "remote_and_local_names_matching_future_prevent_sync_pattern" => {
             let remote_name = "file1.tmp~".parse().unwrap();
             let local_name = "file1-renamed.tmp~".parse().unwrap();
             expected_remote_confinement_points.insert(child_id);
             expected_local_confinement_points.insert(child_id);
-            (remote_name, local_name)
+            (remote_name, local_name, t2)
         }
         unknown => panic!("Unknown kind: {}", unknown),
     };
