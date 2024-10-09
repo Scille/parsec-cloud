@@ -267,7 +267,7 @@ pub(super) fn merge_local_folder_manifest(
             },
         children: _,
         parent: local_parent,
-        need_sync: local_need_sync,
+        need_sync: _,
         speculative: local_speculative,
         // Ignored, that field is merged in `from_remote_with_local_context`
         remote_confinement_points: _,
@@ -318,7 +318,7 @@ pub(super) fn merge_local_folder_manifest(
     let remote = &merge_in_progress.base;
 
     // 4) Shortcut in case only the remote has changed
-    if !local_need_sync {
+    if !local.need_sync {
         // Note a weird corner case here:
         // If the prevent sync pattern has changed but the local manifest hasn't had
         // time to be updated yet, then it's possible to end up with
@@ -374,7 +374,7 @@ pub(super) fn merge_local_folder_manifest(
 
         *merged_speculative = false;
         *merged_parent = *local_parent;
-        *merged_need_sync = *local_need_sync;
+        *merged_need_sync = local.need_sync;
         *merged_updated = local.updated;
         local.children.clone_into(merged_children);
 
