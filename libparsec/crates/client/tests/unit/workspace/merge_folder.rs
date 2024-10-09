@@ -592,12 +592,8 @@ async fn local_and_remote_changes(
         // space, otherwise some test names becomes similar in `cargo nextest`
         // given a test name is limited in size.
 
-        // "outdated_psp_and_only_updated_field_modified_in_remote",
         "outdated_psp_local_child_becomes_non_confined",
-        // TODO: this test fails by having need_sync == true and children empty
-        // (while there is no local change, and the new local children should
-        // contains the remote children since nothing is confined anymore)
-        // "outdated_psp_remote_child_becomes_non_confined",
+        "outdated_psp_remote_child_becomes_non_confined",
         "outdated_psp_local_child_matches_new_pattern",
         "outdated_psp_remote_child_matches_new_pattern",
         "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name",
