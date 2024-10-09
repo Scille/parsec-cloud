@@ -30,8 +30,8 @@ export async function getTOS(): Promise<Result<Tos, ClientGetTosError>> {
       ok: true,
       value: {
         perLocaleUrls: new Map<string, string>([
-          ['en-US', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ'],
-          ['fr-FR', 'https://www.youtube.com/watch?v=hEmODTcKJmE'],
+          ['en-US', 'https://parsec.cloud/en/404'],
+          ['fr-FR', 'https://parsec.cloud/404'],
         ]),
         updatedOn: DateTime.now(),
       },
