@@ -568,10 +568,7 @@ async fn local_and_remote_changes(
         "added_remote_confined_child_and_unrelated_local_changes",
         "existing_remote_confined_child_then_unrelated_remote_changes",
         "confined_child_added_in_both_with_same_name",
-        // TODO: this test fails by considering the old name of the entry
-        // should be present in `local.children` (what is expected is the
-        // entry should be seen as removed from local's point of view)
-        // "child_renamed_in_remote_becomes_confined",
+        "child_renamed_in_remote_becomes_confined",
         "child_renamed_in_both_becomes_confined",
         // TODO: this test fails by having need_sync == true and no local
         // confinement points, while it local children contains an entry
@@ -580,15 +577,11 @@ async fn local_and_remote_changes(
         "child_renamed_in_local_becomes_confined_and_removed_in_remote",
         "child_renamed_in_remote_becomes_confined_and_removed_in_local",
         "child_renamed_in_local_becomes_confined_and_renamed_in_remote",
-        // TODO: this test fails by having need_sync == false, while also
-        // keeping the local changes...
-        // "child_renamed_in_remote_becomes_confined_and_renamed_in_local",
+        "child_renamed_in_remote_becomes_confined_and_renamed_in_local",
         "confined_child_renamed_in_remote_still_confined",
         "confined_child_renamed_in_remote_becomes_non_confined",
         "confined_child_renamed_in_both_becomes_non_confined",
-        // TODO: this test fails by having need_sync == false, while also
-        // keeping the local changes...
-        // "remote_confined_child_renamed_in_local_becomes_non_confined",
+        "remote_confined_child_renamed_in_local_becomes_non_confined",
         "remote_confined_child_renamed_in_local_stays_confined",
         "remote_confined_child_removed_in_remote",
         "children_modified_in_both_with_confined_entries_and_remote_from_ourself",
@@ -609,9 +602,7 @@ async fn local_and_remote_changes(
         // contains the remote children since nothing is confined anymore)
         // "outdated_psp_remote_child_becomes_non_confined",
         "outdated_psp_local_child_matches_new_pattern",
-        // TODO: this test fails by considering the remote confined entry to be
-        // local (so present in local children and in local confined entries)
-        // "outdated_psp_remote_child_matches_new_pattern",
+        "outdated_psp_remote_child_matches_new_pattern",
         "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name",
         "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename",
         "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name",
