@@ -258,7 +258,7 @@ impl LocalFolderManifest {
     }
 
     pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
-        UnconfinedLocalFolderManifest::remove_confinement(self).to_remote(author, timestamp)
+        UnconfinedLocalFolderManifest::remove_confinement(self).into_remote(author, timestamp)
     }
 }
 
@@ -284,7 +284,7 @@ impl UnconfinedLocalFolderManifest {
         }
     }
 
-    pub fn to_remote(&self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
+    pub fn into_remote(self, author: DeviceID, timestamp: DateTime) -> FolderManifest {
         FolderManifest {
             author,
             timestamp,
@@ -293,7 +293,7 @@ impl UnconfinedLocalFolderManifest {
             created: self.base.created,
             parent: self.parent,
             updated: self.updated,
-            children: self.children.clone(),
+            children: self.children,
         }
     }
 
@@ -345,13 +345,13 @@ impl UnconfinedLocalFolderManifest {
     /// current unconfined manifest. In this case, the entry is kept confined, which is
     /// analogous to the remote entry being deleted.
     pub fn apply_confinement(
-        &self,
+        self,
         existing_local_manifest: &LocalFolderManifest,
         prevent_sync_pattern: &Regex,
         timestamp: DateTime,
     ) -> LocalFolderManifest {
         // Filter out the base entries that matches the prevent sync pattern
-        let mut new_children = self.children.clone();
+        let mut new_children = self.children;
         let remote_confinement_points: HashSet<_> = self
             .base
             .children
@@ -382,7 +382,7 @@ impl UnconfinedLocalFolderManifest {
 
         // Create the new manifest
         let mut new_manifest = LocalFolderManifest {
-            base: self.base.clone(),
+            base: self.base,
             parent: self.parent,
             need_sync: self.need_sync,
             updated: self.updated,
