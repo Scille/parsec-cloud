@@ -249,10 +249,10 @@ pub(super) fn merge_local_folder_manifest(
     let LocalFolderManifest {
         base:
             FolderManifest {
-                id: local_base_id,
-                version: local_base_version,
-                children: local_base_children,
-                parent: local_base_parent,
+                id: _,
+                version: _,
+                children: _,
+                parent: _,
                 // Ignored, we don't merge data that change on each sync
                 author: _,
                 // `created` should never change, so in theory we should have
@@ -266,7 +266,7 @@ pub(super) fn merge_local_folder_manifest(
                 updated: _,
             },
         children: _,
-        parent: local_parent,
+        parent: _,
         need_sync: _,
         speculative: local_speculative,
         // Ignored, that field is merged in `from_remote_with_local_context`
@@ -278,10 +278,10 @@ pub(super) fn merge_local_folder_manifest(
     } = local;
 
     // 0) Sanity checks, caller is responsible to handle them properly !
-    debug_assert_eq!(local_base_id, &remote.id);
+    debug_assert_eq!(local.base.id, remote.id);
 
     // 1) Shortcut in case the remote is outdated
-    if remote.version <= *local_base_version {
+    if remote.version <= local.base.version {
         return MergeLocalFolderManifestOutcome::NoChange;
     }
 
@@ -373,7 +373,7 @@ pub(super) fn merge_local_folder_manifest(
         } = &mut merge_in_progress;
 
         *merged_speculative = false;
-        *merged_parent = *local_parent;
+        *merged_parent = local.parent;
         *merged_need_sync = local.need_sync;
         *merged_updated = local.updated;
         local.children.clone_into(merged_children);
@@ -385,7 +385,7 @@ pub(super) fn merge_local_folder_manifest(
 
     // Solve the folder conflict
     let merged_children = merge_children(
-        local_base_children,
+        &local.base.children,
         &local.children,
         // Why not using `remote.children` here ?
         // This is to handle the confinement points: given `merge_children` has no
@@ -398,7 +398,7 @@ pub(super) fn merge_local_folder_manifest(
         // entries are also present with same ID&name in `local_children`).
         &merge_in_progress.children,
     );
-    let merged_parent = merge_parent(*local_base_parent, *local_parent, remote.parent);
+    let merged_parent = merge_parent(local.base.parent, local.parent, remote.parent);
 
     // Children merge can end up with nothing to sync.
     //
