@@ -198,7 +198,7 @@
         "keyringChoice": "Authentification du système",
         "passwordChoice": "Mot de passe",
         "acceptTOS": {
-            "label": "En utilisant le serveur Parsec, j'accepte les",
+            "label": "En utilisant le Parsec, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
             "tosLink": "https://parsec.cloud/wp-content/uploads/2024/09/CGVU-Parsec.pdf",
             "and": "et la ",

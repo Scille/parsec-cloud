@@ -53,6 +53,7 @@
       @update-organization-name-clicked="onUpdateOrganizationNameClicked"
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
+      :show-tos="true"
     />
     <organization-creation-page
       :class="step === Steps.Creation ? 'active' : ''"

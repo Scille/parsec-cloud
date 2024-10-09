@@ -9,6 +9,7 @@
       @go-back-requested="$emit('backRequested')"
       @close-requested="$emit('closeRequested')"
       :hide-previous="bootstrapLink !== undefined"
+      :require-tos="true"
     />
     <organization-authentication-page
       v-show="step === Steps.Authentication"
