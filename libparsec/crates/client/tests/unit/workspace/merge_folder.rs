@@ -203,12 +203,8 @@ async fn remote_only_change(
         "confined_entry_removed",
         "new_confined_entry_added",
         "non_confined_entry_renamed_into_confined",
-        // TODO: This test currently fail due to `LocalFolderManifest::restore_local_confinement_points`
-        // (used in `LocalFolderManifest::apply_prevent_sync_pattern` to ensure `local` uses
-        // the expected prevent sync pattern) restoring the remote confinement points as
-        // local confinement points...
-        // "outdated_prevent_sync_pattern_non_confined_becomes_confined",
-        "outdated_prevent_sync_pattern_confined_becomes_non_confined",
+        "outdated_prevent_sync_pattern_non_confined_becomes_confined",
+        "outdated_prevent_sync_pattern_confined_becomes_non_confined"
     )]
     kind: &str,
     env: &TestbedEnv,
