@@ -418,8 +418,9 @@ pub(super) fn merge_local_folder_manifest(
     // /!\ Extra attention should be paid here if we want to add new fields
     // /!\ with their own sync logic, as this optimization may shadow them!
 
-    let merge_need_sync =
-        merged_children != merge_in_progress.children || merged_parent != remote.parent;
+    let merge_need_sync = merge_in_progress.need_sync
+        || merged_children != merge_in_progress.children
+        || merged_parent != remote.parent;
     let merge_updated = if merge_need_sync {
         timestamp
     } else {

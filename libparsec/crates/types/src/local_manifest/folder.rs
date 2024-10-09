@@ -375,23 +375,30 @@ impl UnconfinedLocalFolderManifest {
 
         // Check whether there are existing local confinement entries to restore
         if !existing_local_manifest.local_confinement_points.is_empty() {
-            // List the existing local confinement entries to restore
-            let new_entry_ids = HashSet::<_>::from_iter(new_manifest.children.values());
-            let existing_local_confined_entries = existing_local_manifest
-                .children
-                .iter()
-                .filter_map(|(name, entry_id)| {
-                    if !new_entry_ids.contains(entry_id)
-                        && existing_local_manifest
-                            .local_confinement_points
-                            .contains(entry_id)
-                    {
-                        Some((name.clone(), Some(*entry_id)))
-                    } else {
-                        None
+            // Reverse lookup for new entry ids
+            let new_entry_ids = HashMap::<_, _>::from_iter(
+                new_manifest
+                    .children
+                    .iter()
+                    .map(|(name, entry_id)| (entry_id, name)),
+            );
+
+            // Build a map of changes to apply
+            let mut existing_local_confined_entries: HashMap<_, _> = HashMap::new();
+            for (name, entry_id) in existing_local_manifest.children.iter() {
+                if existing_local_manifest
+                    .local_confinement_points
+                    .contains(entry_id)
+                {
+                    // Insert the locally confined entry in the new manifest
+                    existing_local_confined_entries.insert(name.clone(), Some(*entry_id));
+
+                    // Perform a rename if the entry id is already present in the new manifest
+                    if let Some(&previous_name) = new_entry_ids.get(entry_id) {
+                        existing_local_confined_entries.insert(previous_name.clone(), None);
                     }
-                })
-                .collect();
+                }
+            }
 
             // Restore existing local confinement entries
             new_manifest.evolve_children_and_mark_updated(

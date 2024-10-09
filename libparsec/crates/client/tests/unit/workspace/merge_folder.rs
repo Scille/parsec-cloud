@@ -570,10 +570,7 @@ async fn local_and_remote_changes(
         "confined_child_added_in_both_with_same_name",
         "child_renamed_in_remote_becomes_confined",
         "child_renamed_in_both_becomes_confined",
-        // TODO: this test fails by having need_sync == true and no local
-        // confinement points, while it local children contains an entry
-        // with a name matching the prevent sync pattern.
-        // "child_already_renamed_into_confined_in_local",
+        "child_already_renamed_into_confined_in_local",
         "child_renamed_in_local_becomes_confined_and_removed_in_remote",
         "child_renamed_in_remote_becomes_confined_and_removed_in_local",
         "child_renamed_in_local_becomes_confined_and_renamed_in_remote",
@@ -1642,8 +1639,10 @@ async fn local_and_remote_changes(
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
-            expected.need_sync = false;
-            expected.updated = remote.updated;
+            // We expect a need sync, because the renaming to a confined name
+            // is analogous to a removal, and this removal should be synced
+            expected.need_sync = true;
+            expected.updated = merge_timestamp;
         }
         "child_renamed_in_local_becomes_confined_and_removed_in_remote" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -1700,12 +1699,14 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-            // The merge simply side with remote, so nothing is confined anymore !
+            // Renaming to a confined name is analogous to a removal, and removal
+            // get priority over rename, so the remote rename is ignored.
             expected
                 .children
-                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-            expected.need_sync = false;
-            expected.updated = remote.updated;
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = true;
+            expected.updated = merge_timestamp;
         }
         "child_renamed_in_remote_becomes_confined_and_renamed_in_local" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -2111,12 +2112,18 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-            // The merge simply side with remote rename, so nothing is confined anymore !
+            // Having child id as a confined entry means that it cannot appear
+            // remotely (unless it has a confined name on the remote as well)
+            // Here the remote tries to rename to a non-confined name, which
+            // the local client cannot allow. Therefore, we keep our confined name
+            // and mark the manifest as needing sync for future removal of the
+            // remote entry.
             expected
                 .children
-                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-            expected.need_sync = false;
-            expected.updated = remote.updated;
+                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
+            expected.need_sync = true;
+            expected.updated = merge_timestamp;
         }
         "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
