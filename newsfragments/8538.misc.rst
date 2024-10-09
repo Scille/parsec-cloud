@@ -1,1 +1,0 @@
-Hide the suggested users when sharing a workspace with a role that cannot share the workspace

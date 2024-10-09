@@ -1,1 +1,0 @@
-Added the ability to archive a device from an expired trial organization
