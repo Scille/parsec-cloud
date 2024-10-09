@@ -209,11 +209,16 @@ class TimeProvider(BytesBasedType):
     pass
 
 
-class Path(StrBasedType):
-    custom_from_rs_string = (
-        "|s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) }"
-    )
-    custom_to_rs_string = '|path: &std::path::Path| -> Result<_, _> { path.to_str().ok_or(|_| "Path contains non-utf8 characters") }'
+class Path(BytesBasedType):
+    custom_from_rs_bytes = '| p: &[u8]| -> Result<_, &str> {Ok(std::path::Path::new(std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters")))}'
+    custom_to_rs_bytes = "| path: &Path |-> Result<Vec<u8>, & str> { Ok(path.to_path_buf() )}"
+
+
+# class Path(StrBasedType):
+#     custom_from_rs_string = (
+#         "|s: String| -> Result<_, &'static str> { Ok(std::path::Path::new(&s)) }"
+#     )
+#     custom_to_rs_string = ("|path: std::path::PathBuf| -> Result<_, &'static str> { Ok(path.to_path_buf() )}")
 
 
 class FsPath(StrBasedType):

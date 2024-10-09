@@ -284,14 +284,15 @@ fn struct_available_device_js_to_rs(obj: JsValue) -> Result<libparsec::Available
     let key_file_path = {
         let js_val = Reflect::get(&obj, &"keyFilePath".into())?;
         js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                    Ok(std::path::Path::new(
+                        std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                    ))
+                };
+                custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -421,16 +422,14 @@ fn struct_available_device_rs_to_js(
     rs_obj: libparsec::AvailableDevice,
 ) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_key_file_path = JsValue::from_str({
-        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.key_file_path) {
+    let js_key_file_path = JsValue::from(Uint8Array::from({
+        let custom_to_rs_bytes = |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+        match custom_to_rs_bytes(rs_obj.key_file_path) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
-    });
+    }));
     Reflect::set(&js_obj, &"keyFilePath".into(), &js_key_file_path)?;
     let js_created_on = {
         let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
@@ -494,28 +493,30 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
     let config_dir = {
         let js_val = Reflect::get(&obj, &"configDir".into())?;
         js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                    Ok(std::path::Path::new(
+                        std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                    ))
+                };
+                custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
     let data_base_dir = {
         let js_val = Reflect::get(&obj, &"dataBaseDir".into())?;
         js_val
-            .dyn_into::<JsString>()
-            .ok()
-            .and_then(|s| s.as_string())
-            .ok_or_else(|| TypeError::new("Not a string"))
+            .dyn_into::<Uint8Array>()
+            .map_err(|_| TypeError::new("Not a Uint8Array"))
             .and_then(|x| {
-                let custom_from_rs_string =
-                    |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                    Ok(std::path::Path::new(
+                        std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                    ))
+                };
+                custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
             })
             .map_err(|_| TypeError::new("Not a valid Path"))?
     };
@@ -561,27 +562,23 @@ fn struct_client_config_js_to_rs(obj: JsValue) -> Result<libparsec::ClientConfig
 #[allow(dead_code)]
 fn struct_client_config_rs_to_js(rs_obj: libparsec::ClientConfig) -> Result<JsValue, JsValue> {
     let js_obj = Object::new().into();
-    let js_config_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.config_dir) {
+    let js_config_dir = JsValue::from(Uint8Array::from({
+        let custom_to_rs_bytes = |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+        match custom_to_rs_bytes(rs_obj.config_dir) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
-    });
+    }));
     Reflect::set(&js_obj, &"configDir".into(), &js_config_dir)?;
-    let js_data_base_dir = JsValue::from_str({
-        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-        };
-        match custom_to_rs_string(rs_obj.data_base_dir) {
+    let js_data_base_dir = JsValue::from(Uint8Array::from({
+        let custom_to_rs_bytes = |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+        match custom_to_rs_bytes(rs_obj.data_base_dir) {
             Ok(ok) => ok,
             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
         }
         .as_ref()
-    });
+    }));
     Reflect::set(&js_obj, &"dataBaseDir".into(), &js_data_base_dir)?;
     let js_mountpoint_mount_strategy =
         variant_mountpoint_mount_strategy_rs_to_js(rs_obj.mountpoint_mount_strategy)?;
@@ -1898,16 +1895,17 @@ fn struct_started_workspace_info_js_to_rs(
                     {
                         let js_x2 = Reflect::get_u32(&x, 2)?;
                         js_x2
-                            .dyn_into::<JsString>()
-                            .ok()
-                            .and_then(|s| s.as_string())
-                            .ok_or_else(|| TypeError::new("Not a string"))
+                            .dyn_into::<Uint8Array>()
+                            .map_err(|_| TypeError::new("Not a Uint8Array"))
                             .and_then(|x| {
-                                let custom_from_rs_string =
-                                    |s: &String| -> Result<_, &'static str> {
-                                        Ok(std::path::Path::new(s))
-                                    };
-                                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                                let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                                    Ok(std::path::Path::new(
+                                        std::str::from_utf8(&p)
+                                            .map_err(|_| "Path contains non-utf8 characters"),
+                                    ))
+                                };
+                                custom_from_rs_bytes(&x.to_vec())
+                                    .map_err(|e| TypeError::new(e.as_ref()))
                             })
                             .map_err(|_| TypeError::new("Not a valid Path"))?
                     },
@@ -1957,16 +1955,15 @@ fn struct_started_workspace_info_rs_to_js(
                 let js_array = Array::new_with_length(2);
                 let js_value = JsValue::from(x1);
                 js_array.push(&js_value);
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(x2) {
+                let js_value = JsValue::from(Uint8Array::from({
+                    let custom_to_rs_bytes =
+                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                    match custom_to_rs_bytes(x2) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                     }
                     .as_ref()
-                });
+                }));
                 js_array.push(&js_value);
                 js_array.into()
             };
@@ -4647,14 +4644,16 @@ fn variant_device_access_strategy_js_to_rs(
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .dyn_into::<Uint8Array>()
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                            Ok(std::path::Path::new(
+                                std::str::from_utf8(&p)
+                                    .map_err(|_| "Path contains non-utf8 characters"),
+                            ))
+                        };
+                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -4678,14 +4677,16 @@ fn variant_device_access_strategy_js_to_rs(
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .dyn_into::<Uint8Array>()
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                            Ok(std::path::Path::new(
+                                std::str::from_utf8(&p)
+                                    .map_err(|_| "Path contains non-utf8 characters"),
+                            ))
+                        };
+                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -4695,14 +4696,16 @@ fn variant_device_access_strategy_js_to_rs(
             let key_file = {
                 let js_val = Reflect::get(&obj, &"keyFile".into())?;
                 js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .dyn_into::<Uint8Array>()
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                            Ok(std::path::Path::new(
+                                std::str::from_utf8(&p)
+                                    .map_err(|_| "Path contains non-utf8 characters"),
+                            ))
+                        };
+                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -4726,16 +4729,15 @@ fn variant_device_access_strategy_rs_to_js(
                 &"tag".into(),
                 &"DeviceAccessStrategyKeyring".into(),
             )?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                match custom_to_rs_bytes(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
-            });
+            }));
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Password {
@@ -4748,16 +4750,15 @@ fn variant_device_access_strategy_rs_to_js(
             )?;
             let js_password = JsValue::from_str(password.as_ref());
             Reflect::set(&js_obj, &"password".into(), &js_password)?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                match custom_to_rs_bytes(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
-            });
+            }));
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
         libparsec::DeviceAccessStrategy::Smartcard { key_file, .. } => {
@@ -4766,16 +4767,15 @@ fn variant_device_access_strategy_rs_to_js(
                 &"tag".into(),
                 &"DeviceAccessStrategySmartcard".into(),
             )?;
-            let js_key_file = JsValue::from_str({
-                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(key_file) {
+            let js_key_file = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                match custom_to_rs_bytes(key_file) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
-            });
+            }));
             Reflect::set(&js_obj, &"keyFile".into(), &js_key_file)?;
         }
     }
@@ -5784,14 +5784,16 @@ fn variant_mountpoint_mount_strategy_js_to_rs(
             let base_dir = {
                 let js_val = Reflect::get(&obj, &"baseDir".into())?;
                 js_val
-                    .dyn_into::<JsString>()
-                    .ok()
-                    .and_then(|s| s.as_string())
-                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .dyn_into::<Uint8Array>()
+                    .map_err(|_| TypeError::new("Not a Uint8Array"))
                     .and_then(|x| {
-                        let custom_from_rs_string =
-                            |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                        let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                            Ok(std::path::Path::new(
+                                std::str::from_utf8(&p)
+                                    .map_err(|_| "Path contains non-utf8 characters"),
+                            ))
+                        };
+                        custom_from_rs_bytes(&x.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
                     })
                     .map_err(|_| TypeError::new("Not a valid Path"))?
             };
@@ -5817,16 +5819,15 @@ fn variant_mountpoint_mount_strategy_rs_to_js(
                 &"tag".into(),
                 &"MountpointMountStrategyDirectory".into(),
             )?;
-            let js_base_dir = JsValue::from_str({
-                let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                    path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                };
-                match custom_to_rs_string(base_dir) {
+            let js_base_dir = JsValue::from(Uint8Array::from({
+                let custom_to_rs_bytes =
+                    |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                match custom_to_rs_bytes(base_dir) {
                     Ok(ok) => ok,
                     Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                 }
                 .as_ref()
-            });
+            }));
             Reflect::set(&js_obj, &"baseDir".into(), &js_base_dir)?;
         }
         libparsec::MountpointMountStrategy::Disabled => {
@@ -9474,16 +9475,15 @@ pub fn fdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
 pub fn getDefaultConfigDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_config_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
+        Ok(JsValue::from(Uint8Array::from({
+            let custom_to_rs_bytes =
+                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+            match custom_to_rs_bytes(ret) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
             }
             .as_ref()
-        }))
+        })))
     })
 }
 
@@ -9493,16 +9493,15 @@ pub fn getDefaultConfigDir() -> Promise {
 pub fn getDefaultDataBaseDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_data_base_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
+        Ok(JsValue::from(Uint8Array::from({
+            let custom_to_rs_bytes =
+                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+            match custom_to_rs_bytes(ret) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
             }
             .as_ref()
-        }))
+        })))
     })
 }
 
@@ -9512,16 +9511,15 @@ pub fn getDefaultDataBaseDir() -> Promise {
 pub fn getDefaultMountpointBaseDir() -> Promise {
     future_to_promise(async move {
         let ret = libparsec::get_default_mountpoint_base_dir();
-        Ok(JsValue::from_str({
-            let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-            };
-            match custom_to_rs_string(ret) {
+        Ok(JsValue::from(Uint8Array::from({
+            let custom_to_rs_bytes =
+                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+            match custom_to_rs_bytes(ret) {
                 Ok(ok) => ok,
                 Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
             }
             .as_ref()
-        }))
+        })))
     })
 }
 
@@ -9899,12 +9897,15 @@ pub fn isKeyringAvailable() -> Promise {
 // list_available_devices
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn listAvailableDevices(path: String) -> Promise {
+pub fn listAvailableDevices(path: Uint8Array) -> Promise {
     future_to_promise(async move {
         let path = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&path.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::list_available_devices(&path).await;
@@ -9923,12 +9924,15 @@ pub fn listAvailableDevices(path: String) -> Promise {
 // load_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn loadRecoveryDevice(key_file: String, passphrase: Uint8Array) -> Promise {
+pub fn loadRecoveryDevice(key_file: Uint8Array, passphrase: Uint8Array) -> Promise {
     future_to_promise(async move {
         let key_file = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(key_file).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&key_file.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let passphrase = passphrase
             .to_vec()
@@ -9972,16 +9976,15 @@ pub fn mountpointToOsPath(mountpoint: u32, parsec_path: String) -> Promise {
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(value) {
+                let js_value = JsValue::from(Uint8Array::from({
+                    let custom_to_rs_bytes =
+                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                    match custom_to_rs_bytes(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                     }
                     .as_ref()
-                });
+                }));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -10183,12 +10186,15 @@ pub fn pathSplit(path: String) -> Promise {
 // test_drop_testbed
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn testDropTestbed(path: String) -> Promise {
+pub fn testDropTestbed(path: Uint8Array) -> Promise {
     future_to_promise(async move {
         let path = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&path.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let ret = libparsec::test_drop_testbed(&path).await;
@@ -10217,12 +10223,15 @@ pub fn testDropTestbed(path: String) -> Promise {
 // test_get_testbed_bootstrap_organization_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Promise {
+pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: Uint8Array) -> Promise {
     future_to_promise(async move {
         let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&discriminant_dir.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::test_get_testbed_bootstrap_organization_addr(&discriminant_dir);
         Ok(match ret {
@@ -10257,12 +10266,15 @@ pub fn testGetTestbedBootstrapOrganizationAddr(discriminant_dir: String) -> Prom
 // test_get_testbed_organization_id
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn testGetTestbedOrganizationId(discriminant_dir: String) -> Promise {
+pub fn testGetTestbedOrganizationId(discriminant_dir: Uint8Array) -> Promise {
     future_to_promise(async move {
         let discriminant_dir = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(discriminant_dir).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&discriminant_dir.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::test_get_testbed_organization_id(&discriminant_dir);
         Ok(match ret {
@@ -10311,16 +10323,15 @@ pub fn testNewTestbed(template: String, test_server: Option<String>) -> Promise 
             Ok(value) => {
                 let js_obj = Object::new().into();
                 Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from_str({
-                    let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                        path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                    };
-                    match custom_to_rs_string(value) {
+                let js_value = JsValue::from(Uint8Array::from({
+                    let custom_to_rs_bytes =
+                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                    match custom_to_rs_bytes(value) {
                         Ok(ok) => ok,
                         Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                     }
                     .as_ref()
-                });
+                }));
                 Reflect::set(&js_obj, &"value".into(), &js_value)?;
                 js_obj
             }
@@ -10408,12 +10419,15 @@ pub fn validatePath(raw: String) -> Promise {
 // wait_for_device_available
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn waitForDeviceAvailable(config_dir: String, device_id: String) -> Promise {
+pub fn waitForDeviceAvailable(config_dir: Uint8Array, device_id: String) -> Promise {
     future_to_promise(async move {
         let config_dir = {
-            let custom_from_rs_string =
-                |s: &String| -> Result<_, &'static str> { Ok(std::path::Path::new(s)) };
-            custom_from_rs_string(config_dir).map_err(|e| TypeError::new(e.as_ref()))
+            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
+                Ok(std::path::Path::new(
+                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
+                ))
+            };
+            custom_from_rs_bytes(&config_dir.to_vec()).map_err(|e| TypeError::new(e.as_ref()))
         }?;
 
         let device_id = {
@@ -10685,16 +10699,15 @@ pub fn workspaceMount(workspace: u32) -> Promise {
                     let js_array = Array::new_with_length(2);
                     let js_value = JsValue::from(x1);
                     js_array.push(&js_value);
-                    let js_value = JsValue::from_str({
-                        let custom_to_rs_string = |path: &std::path::Path| -> Result<_, _> {
-                            path.to_str().ok_or(|_| "Path contains non-utf8 characters")
-                        };
-                        match custom_to_rs_string(x2) {
+                    let js_value = JsValue::from(Uint8Array::from({
+                        let custom_to_rs_bytes =
+                            |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
+                        match custom_to_rs_bytes(x2) {
                             Ok(ok) => ok,
                             Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
                         }
                         .as_ref()
-                    });
+                    }));
                     js_array.push(&js_value);
                     js_array.into()
                 };
