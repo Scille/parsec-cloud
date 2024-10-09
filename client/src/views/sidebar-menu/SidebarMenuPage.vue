@@ -184,9 +184,9 @@
                 :key="workspace.id"
                 @click="goToWorkspace(workspace.handle)"
                 :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-                class="sidebar-item menu-default"
+                class="sidebar-item"
               >
-                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
+                <ion-label class="sidebar-item-workspace-label menu-link">{{ workspace.currentName }}</ion-label>
                 <div
                   class="workspace-option"
                   @click.stop="
@@ -239,9 +239,9 @@
                 :key="workspace.id"
                 @click="goToWorkspace(workspace.handle)"
                 :class="currentRouteIsWorkspaceRoute(workspace.handle) ? 'item-selected' : 'item-not-selected'"
-                class="sidebar-item menu-default"
+                class="sidebar-item"
               >
-                <ion-label class="sidebar-item-workspace-label">{{ workspace.currentName }}</ion-label>
+                <ion-label class="sidebar-item-workspace-label menu-link">{{ workspace.currentName }}</ion-label>
                 <div
                   class="workspace-option"
                   @click.stop="
@@ -885,10 +885,8 @@ ion-menu {
     position: absolute;
     display: flex;
     align-items: center;
-    top: 0;
     right: 1rem;
     font-size: 1.2rem;
-    padding-top: 0.5rem;
     opacity: 0;
 
     &:hover {
