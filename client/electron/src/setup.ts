@@ -201,7 +201,9 @@ export class ElectronCapacitorApp {
   }
 
   addAuthorizedURL(url: string): void {
-    ALLOWED_URL_LIST.push(url);
+    if (!ALLOWED_URL_LIST.includes(url)) {
+      ALLOWED_URL_LIST.push(url);
+    }
   }
 
   updateConfig(newConfig: object): void {
