@@ -2,6 +2,7 @@
 
 mod addr;
 mod fetch;
+mod history;
 mod merge;
 mod store;
 mod transactions;
@@ -18,6 +19,11 @@ use libparsec_types::prelude::*;
 
 use crate::{certif::CertificateOps, event_bus::EventBus, ClientConfig};
 pub use addr::{WorkspaceDecryptPathAddrError, WorkspaceGeneratePathAddrError};
+pub use history::{
+    WorkspaceHistoryFolderReader, WorkspaceHistoryFolderReaderStatEntryError,
+    WorkspaceHistoryFolderReaderStatNextOutcome, WorkspaceHistoryOpenFolderReaderError,
+    WorkspaceHistoryOps, WorkspaceHistoryStatEntryError, WorkspaceHistoryStatFolderChildrenError,
+};
 use store::WorkspaceStore;
 use transactions::RemoveEntryExpect;
 pub use transactions::{
@@ -118,6 +124,7 @@ pub struct WorkspaceOps {
     /// This contains the workspaces info that can change by uploading new
     /// certificates, and hence can be updated at any time.
     workspace_external_info: Mutex<WorkspaceExternalInfo>,
+    pub history: Arc<WorkspaceHistoryOps>,
 }
 
 impl std::panic::UnwindSafe for WorkspaceOps {}
@@ -169,6 +176,13 @@ impl WorkspaceOps {
         )
         .await?;
 
+        let history = Arc::new(WorkspaceHistoryOps::new(
+            config.clone(),
+            cmds.clone(),
+            certificates_ops.clone(),
+            realm_id,
+        ));
+
         Ok(Self {
             config,
             device,
@@ -185,6 +199,7 @@ impl WorkspaceOps {
                 file_descriptors: HashMap::new(),
                 opened_files: HashMap::new(),
             }),
+            history,
         })
     }
 
