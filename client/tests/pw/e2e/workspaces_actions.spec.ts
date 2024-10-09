@@ -70,6 +70,38 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     }
   });
 
+  msTest(`Checks workspace context menu with right click ${mode}`, async ({ connected }) => {
+    await expect(connected.locator('.workspace-context-menu')).toBeHidden();
+
+    if (mode === 'grid') {
+      const wk = connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1);
+      await wk.click({ button: 'right' });
+    } else if (mode === 'list') {
+      await toggleViewMode(connected);
+      const wk = connected.locator('.workspaces-container').locator('.workspace-list-item').nth(1);
+      await wk.click({ button: 'right' });
+    } else {
+      const wk = connected.locator('.sidebar').locator('.list-workspaces').getByRole('listitem').nth(1);
+      await wk.click({ button: 'right' });
+    }
+
+    const contextMenu = connected.locator('.workspace-context-menu');
+    await expect(contextMenu).toBeVisible();
+    await expect(contextMenu.getByRole('group')).toHaveCount(MENU.length);
+    for (const [index, group] of MENU.entries()) {
+      await expect(contextMenu.getByRole('group').nth(index).getByRole('listitem').nth(0)).toHaveText(group.title);
+      for (const [actionIndex, action] of group.actions.entries()) {
+        await expect(
+          contextMenu
+            .getByRole('group')
+            .nth(index)
+            .getByRole('listitem')
+            .nth(actionIndex + 1),
+        ).toHaveText(action);
+      }
+    }
+  });
+
   msTest(`Navigate into a workspace ${mode}`, async ({ connected }) => {
     if (mode === 'grid') {
       await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(1).click();

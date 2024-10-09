@@ -63,6 +63,46 @@ for (const gridMode of [false, true]) {
     ]);
   });
 
+  msTest(`Document popover on right click in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    if (!gridMode) {
+      const entry = documents.locator('.folder-container').locator('.file-list-item').nth(2);
+      await entry.click({ button: 'right' });
+    } else {
+      await toggleViewMode(documents);
+      const entry = documents.locator('.folder-container').locator('.file-card-item').nth(2);
+      await entry.click({ button: 'right' });
+    }
+    await expect(documents.locator('.file-context-menu')).toBeVisible();
+    const popover = documents.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(2);
+    await expect(popover.getByRole('listitem')).toHaveCount(8);
+    await expect(popover.getByRole('listitem')).toHaveText([
+      'Manage file',
+      'Rename',
+      'Move to',
+      'Make a copy',
+      'Delete',
+      'Details',
+      'Collaboration',
+      'Copy link',
+    ]);
+  });
+
+  msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    await expect(documents.locator('.folder-global-context-menu')).toBeHidden();
+
+    if (gridMode) {
+      await toggleViewMode(documents);
+    }
+    await documents.locator('.folder-container').click({ button: 'right' });
+    await expect(documents.locator('.folder-global-context-menu')).toBeVisible();
+    const popover = documents.locator('.folder-global-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(1);
+    await expect(popover.getByRole('listitem')).toHaveCount(3);
+    await expect(popover.getByRole('listitem')).toHaveText(['New folder', 'Import files', 'Import a folder']);
+  });
+
   msTest(`Get document link in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents, context }) => {
     if (gridMode) {
       await toggleViewMode(documents);
