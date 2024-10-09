@@ -89,7 +89,7 @@ pub async fn accept_tos(
     let rep = client_ops.cmds.send(request).await?;
     match rep {
         tos_cmds::v4::tos_accept::Rep::Ok => {
-            // If the TOS acception was required, it most likely means the connection
+            // If TOS acceptance was required, it most likely means the connection
             // monitor is currently polling the server from time to time in order to
             // detect when the TOS have been accepted.
             // So we send a dedicated event to speed up the process.
