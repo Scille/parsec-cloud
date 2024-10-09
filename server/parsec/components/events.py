@@ -313,8 +313,8 @@ class BaseEventsComponent:
                         registered.cancel_scope.cancel()
 
             case EventOrganizationTosUpdated():
-                # All user in the organization must re-accept the TOS before being
-                # able to use the server again.
+                # All users in the organization must re-accept the TOS before being
+                # able to communicate with the server again.
                 for registered in self._registered_clients.values():
                     if registered.organization_id == event.organization_id:
                         registered.cancel_scope.cancel()
