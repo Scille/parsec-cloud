@@ -265,7 +265,7 @@ pub(super) fn merge_local_folder_manifest(
                 // Ignored, we don't merge data that change on each sync
                 updated: _,
             },
-        children: local_children,
+        children: _,
         parent: local_parent,
         need_sync: local_need_sync,
         speculative: local_speculative,
@@ -386,7 +386,7 @@ pub(super) fn merge_local_folder_manifest(
     // Solve the folder conflict
     let merged_children = merge_children(
         local_base_children,
-        local_children,
+        &local.children,
         // Why not using `remote.children` here ?
         // This is to handle the confinement points: given `merge_children` has no
         // concept of confinement points, it will see as conflict any confined entry
