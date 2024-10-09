@@ -599,14 +599,10 @@ async fn local_and_remote_changes(
         "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name",
         "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename",
         "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name",
-        // TODO: this test fails by having the confined remote child name ending
-        // up in the local children
-        // "outdated_psp_remote_child_becomes_non_confined_with_remote_from_ourself",
-        // "outdated_psp_local_child_becomes_non_confined_with_remote_from_ourself",
+        "outdated_psp_remote_child_becomes_non_confined_with_remote_from_ourself",
+        "outdated_psp_local_child_becomes_non_confined_with_remote_from_ourself",
         "outdated_psp_remote_child_becomes_confined_with_remote_from_ourself",
-        // TODO: this test fails by having need_sync == true (while the only
-        // local change is confined, and hence no synchronization is needed)
-        // "outdated_psp_local_child_becomes_confined_with_remote_from_ourself",
+        "outdated_psp_local_child_becomes_confined_with_remote_from_ourself",
     )]
     kind: &str,
     env: &TestbedEnv,
@@ -2169,16 +2165,26 @@ async fn local_and_remote_changes(
             remote
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-           remote.author = local_author;
+            remote.author = local_author;
 
+            // Since `tmp~` is no longer a prevent sync pattern, `child.tmp~` is now
+            // considered a regular local file
             // Given the remote is from ourself, the merge considers we already know
-            // about it and hence acknowledges it and preserve the local children
-            // (and hence the entry is considered removed in local).
+            // about it and hence acknowledges it and preserve the local children.
+            // Hence the entry is considered renamed from `child-remote-rename.txt`
+            // to `child.tmp~` locally.
+            // This somehow swaps temporality (since the `child.tmp~` name was older
+            // than the `child-remote-rename.txt` name), but this is acceptable given
+            // that this should simply not happen: how have we been able to rename
+            // a previously confined entry to a non-confined name?
             expected.base.author = local_author;
             expected
                 .base
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp~".parse().unwrap(), child_id);
         }
         "outdated_psp_local_child_becomes_non_confined_with_remote_from_ourself" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -2232,6 +2238,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            local.need_sync = false;
             // ...the remote hasn't anything important to merge, but this should
             // refresh the confinement in local with the new prevent sync pattern.
            remote.author = local_author;
