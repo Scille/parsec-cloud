@@ -16,6 +16,38 @@
       @field-update="onFieldUpdated"
     />
 
+    <div
+      class="tos-checkbox"
+      v-if="requireTos"
+    >
+      <ms-checkbox
+        @change="onFieldUpdated"
+        v-model="tosAccepted"
+        label-placement="end"
+      >
+        <ion-text class="body-sm item-radio__text ion-text-wrap">
+          {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
+          <a
+            class="link"
+            target="_blank"
+            @click="$event.stopPropagation()"
+            :href="$msTranslate('CreateOrganization.acceptTOS.tosLink')"
+          >
+            {{ $msTranslate('CreateOrganization.acceptTOS.tos') }}
+          </a>
+          {{ $msTranslate('CreateOrganization.acceptTOS.and') }}
+          <a
+            class="link"
+            target="_blank"
+            @click="$event.stopPropagation()"
+            :href="$msTranslate('CreateOrganization.acceptTOS.privacyPolicyLink')"
+          >
+            {{ $msTranslate('CreateOrganization.acceptTOS.privacyPolicy') }}
+          </a>
+        </ion-text>
+      </ms-checkbox>
+    </div>
+
     <ion-footer class="user-information-page-footer">
       <ion-buttons
         slot="primary"
@@ -57,16 +89,18 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonButton, IonButtons, IonFooter, IonIcon } from '@ionic/vue';
+import { IonPage, IonButton, IonButtons, IonFooter, IonIcon, IonText } from '@ionic/vue';
 import { onMounted, ref } from 'vue';
 import { chevronForward, chevronBack } from 'ionicons/icons';
+import { MsCheckbox } from 'megashark-lib';
 import UserInformation from '@/components/users/UserInformation.vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
 
-defineProps<{
+const props = defineProps<{
   name?: string;
   email?: string;
   hidePrevious?: boolean;
+  requireTos?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -77,6 +111,7 @@ const emits = defineEmits<{
 
 const userInformationRef = ref();
 const valid = ref(false);
+const tosAccepted = ref(false);
 
 onMounted(async () => {
   await onFieldUpdated();
@@ -96,7 +131,19 @@ async function onFieldUpdated(): Promise<void> {
   } else {
     valid.value = false;
   }
+  if (props.requireTos) {
+    valid.value = valid.value && tosAccepted.value;
+  }
 }
 </script>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.tos-checkbox {
+  padding-top: 1em;
+  color: var(--parsec-color-light-secondary-soft-text);
+
+  a {
+    color: var(--parsec-color-light-primary-500);
+  }
+}
+</style>

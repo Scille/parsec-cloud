@@ -129,6 +129,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
   await expect(summaryNext).not.toHaveDisabledAttribute();
+  await expect(summaryContainer.locator('.tos')).toHaveText('By using Parsec, I accept the Terms and Conditions and Privacy Policy');
 
   await cancelAndResume(home, summaryContainer);
 

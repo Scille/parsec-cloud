@@ -121,6 +121,33 @@
         </div>
       </ion-item>
     </ion-list>
+
+    <div
+      class="tos"
+      v-show="showTos"
+    >
+      <ion-text class="body-sm item-radio__text ion-text-wrap">
+        {{ $msTranslate('CreateOrganization.acceptTOS.label') }}
+        <a
+          class="link"
+          target="_blank"
+          @click="$event.stopPropagation()"
+          :href="$msTranslate('CreateOrganization.acceptTOS.tosLink')"
+        >
+          {{ $msTranslate('CreateOrganization.acceptTOS.tos') }}
+        </a>
+        {{ $msTranslate('CreateOrganization.acceptTOS.and') }}
+        <a
+          class="link"
+          target="_blank"
+          @click="$event.stopPropagation()"
+          :href="$msTranslate('CreateOrganization.acceptTOS.privacyPolicyLink')"
+        >
+          {{ $msTranslate('CreateOrganization.acceptTOS.privacyPolicy') }}
+        </a>
+      </ion-text>
+    </div>
+
     <!-- error -->
     <ion-text
       class="form-error body login-button-error"
@@ -190,6 +217,7 @@ defineProps<{
   canEditName?: boolean;
   canEditSaveStrategy?: boolean;
   error?: Translatable;
+  showTos?: boolean;
 }>();
 
 defineEmits<{
@@ -257,5 +285,10 @@ defineEmits<{
     height: --webkit-fill-available;
     margin-left: auto;
   }
+}
+
+.tos {
+  padding: 1.5rem 0 0 0.75rem;
+  color: var(--parsec-color-light-secondary-soft-text);
 }
 </style>
