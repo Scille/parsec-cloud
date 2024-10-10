@@ -18,8 +18,10 @@ import { Information, InformationLevel, InformationManager, PresentationMode } f
 import { StorageManager } from '@/services/storageManager';
 import WorkspaceContextMenu, { WorkspaceAction } from '@/views/workspaces/WorkspaceContextMenu.vue';
 import WorkspaceSharingModal from '@/views/workspaces/WorkspaceSharingModal.vue';
+import WorkspaceHistoryModal from '@/views/workspaces/WorkspaceHistoryModal.vue';
 import { modalController, popoverController } from '@ionic/vue';
 import { Clipboard, DisplayState, Translatable, getTextFromUser } from 'megashark-lib';
+import { navigateTo, Routes } from '@/router';
 
 export const WORKSPACES_PAGE_DATA_KEY = 'WorkspacesPage';
 
@@ -152,6 +154,9 @@ export async function openWorkspaceContextMenu(
       case WorkspaceAction.Favorite:
         await toggleFavorite(workspace, favorites, eventDistributor, storageManager);
         break;
+      case WorkspaceAction.ShowHistory:
+        await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } })
+        break;
       default:
         console.warn('No WorkspaceAction match found');
     }
@@ -259,6 +264,18 @@ async function copyLinkToClipboard(workspace: WorkspaceInfo, informationManager:
     );
   }
 }
+
+// async function openWorkspaceHistoryModal(workspace: WorkspaceInfo): Promise<void> {
+//   const modal = await modalController.create({
+//     component: WorkspaceHistoryModal,
+//     componentProps: {
+//       workspace: workspace,
+//     },
+//     cssClass: 'workspace-history-modal',
+//   });
+//   await modal.present();
+//   await modal.onWillDismiss();
+// }
 
 /**
  *

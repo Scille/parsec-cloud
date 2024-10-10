@@ -53,7 +53,7 @@ export function currentRouteIsOrganizationManagementRoute(): boolean {
 }
 
 export function currentRouteIsFileRoute(): boolean {
-  return currentRouteIsOneOf([Routes.Documents, Routes.Workspaces]);
+  return currentRouteIsOneOf([Routes.Documents, Routes.Workspaces, Routes.History]);
 }
 
 export function currentRouteIsLoggedRoute(): boolean {
@@ -66,5 +66,6 @@ export function currentRouteIsLoggedRoute(): boolean {
     Routes.About,
     Routes.MyProfile,
     Routes.RecoveryExport,
+    Routes.History,
   ]);
 }

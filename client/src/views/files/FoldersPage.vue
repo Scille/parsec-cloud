@@ -173,6 +173,7 @@
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
+              @drop-as-reader="onDropAsReader"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -186,6 +187,7 @@
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
+              @drop-as-reader="onDropAsReader"
             />
           </div>
         </div>
@@ -1258,6 +1260,16 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   if (onFinished) {
     onFinished();
   }
+}
+
+async function onDropAsReader(): Promise<void> {
+  await informationManager.present(
+    new Information({
+      message: 'FoldersPage.ImportFile.noDropForReader',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
 }
 </script>
 

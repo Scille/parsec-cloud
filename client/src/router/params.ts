@@ -17,7 +17,7 @@ export function getWorkspaceHandle(): WorkspaceHandle | undefined {
   const router = getRouter();
   const currentRoute = router.currentRoute.value;
 
-  if (currentRoute && currentRoute.name === Routes.Documents && currentRoute.query && 'workspaceHandle' in currentRoute.query) {
+  if (currentRoute && currentRoute.query && 'workspaceHandle' in currentRoute.query) {
     return parseInt(currentRoute.query.workspaceHandle as string) as WorkspaceHandle;
   }
   return undefined;
