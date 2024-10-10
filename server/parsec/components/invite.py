@@ -83,6 +83,7 @@ def generate_invite_email(
     greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
+    raw_invitation_url: str,
     server_url: str,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
@@ -92,6 +93,7 @@ def generate_invite_email(
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
+        raw_invitation_url=raw_invitation_url,
         server_url=server_url,
     )
     text = get_template("invitation_mail.txt").render(
@@ -535,12 +537,15 @@ class BaseInviteComponent:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        invitation_url = ParsecInvitationAddr.build(
+        invitation_addr = ParsecInvitationAddr.build(
             server_addr=self._config.server_addr,
             organization_id=organization_id,
             invitation_type=InvitationType.USER,
             token=token,
-        ).to_http_redirection_url()
+        )
+
+        invitation_url = invitation_addr.to_http_redirection_url()
+        raw_invitation_url = invitation_addr.to_url()
 
         message = generate_invite_email(
             from_addr=self._config.email_config.sender,
@@ -549,6 +554,7 @@ class BaseInviteComponent:
             reply_to=greeter_human_handle.email,
             organization_id=organization_id,
             invitation_url=invitation_url,
+            raw_invitation_url=raw_invitation_url,
             server_url=self._config.server_addr.to_http_url(),
         )
 
@@ -568,12 +574,15 @@ class BaseInviteComponent:
         if not self._config.server_addr:
             return SendEmailBadOutcome.BAD_SMTP_CONFIG
 
-        invitation_url = ParsecInvitationAddr.build(
+        invitation_addr = ParsecInvitationAddr.build(
             server_addr=self._config.server_addr,
             organization_id=organization_id,
             invitation_type=InvitationType.DEVICE,
             token=token,
-        ).to_http_redirection_url()
+        )
+
+        invitation_url = invitation_addr.to_http_redirection_url()
+        raw_invitation_url = invitation_addr.to_url()
 
         message = generate_invite_email(
             from_addr=self._config.email_config.sender,
@@ -582,6 +591,7 @@ class BaseInviteComponent:
             reply_to=None,
             organization_id=organization_id,
             invitation_url=invitation_url,
+            raw_invitation_url=raw_invitation_url,
             server_url=self._config.server_addr.to_http_url(),
         )
 
