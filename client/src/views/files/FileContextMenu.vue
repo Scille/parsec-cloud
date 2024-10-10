@@ -72,7 +72,7 @@
           button
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="!multipleFiles && false"
+          v-show="!multipleFiles && role !== WorkspaceRole.Reader"
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">

@@ -13,10 +13,20 @@ import FileListDisplay from '@/components/files/FileListDisplay.vue';
 import FileListItem from '@/components/files/FileListItem.vue';
 import FileListItemProcessing from '@/components/files/FileListItemProcessing.vue';
 import FileMoveItem from '@/components/files/FileMoveItem.vue';
+import FileRestoreItem from '@/components/files/FileRestoreItem.vue';
 import FileUploadItem from '@/components/files/FileUploadItem.vue';
+import HistoryFileListItem from '@/components/files/HistoryFileListItem.vue';
 
-export { EntryCollection, ImportType, SortProperty } from '@/components/files/types';
-export type { EntryModel, FileModel, FileOperationProgress, FolderModel } from '@/components/files/types';
+export { EntryCollection, ImportType, SortProperty, WorkspaceHistoryEntryCollection } from '@/components/files/types';
+export type {
+  EntryModel,
+  FileModel,
+  FileOperationProgress,
+  FolderModel,
+  WorkspaceHistoryEntryModel,
+  WorkspaceHistoryFileModel,
+  WorkspaceHistoryFolderModel,
+} from '@/components/files/types';
 export { getFilesFromDrop, selectFolder } from '@/components/files/utils';
 export type { FileImportTuple, FolderSelectionOptions } from '@/components/files/utils';
 export {
@@ -33,5 +43,7 @@ export {
   FileListItem,
   FileListItemProcessing,
   FileMoveItem,
+  FileRestoreItem,
   FileUploadItem,
+  HistoryFileListItem,
 };

@@ -154,6 +154,14 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
     const result = await libparsec.workspaceInfo(workspaceHandle);
     if (result.ok) {
       (result.value as StartedWorkspaceInfo).handle = workspaceHandle;
+      const createdResult = await libparsec.workspaceHistoryGetWorkspaceManifestV1Timestamp(workspaceHandle);
+      if (createdResult.ok && createdResult.value) {
+        try {
+          (result.value as StartedWorkspaceInfo).created = DateTime.fromSeconds(createdResult.value as any as number);
+        } catch (error: any) {
+          console.error(error);
+        }
+      }
     }
     return result as Result<StartedWorkspaceInfo, WorkspaceInfoError>;
   } else {
@@ -168,6 +176,7 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
             currentSelfRole: WorkspaceRole.Owner,
             mountpoints: [[1, '/home/a']],
             handle: workspaceHandle,
+            created: DateTime.now().minus({ days: 8 }),
           },
         };
       case 2:
@@ -180,6 +189,7 @@ export async function getWorkspaceInfo(workspaceHandle: WorkspaceHandle): Promis
             currentSelfRole: WorkspaceRole.Manager,
             mountpoints: [[1, '/home/b']],
             handle: workspaceHandle,
+            created: DateTime.now().minus({ days: 12 }),
           },
         };
       case 3:

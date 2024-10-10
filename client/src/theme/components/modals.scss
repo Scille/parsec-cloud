@@ -296,3 +296,9 @@
     padding-top: 1.5rem;
   }
 }
+
+.workspace-history-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-lg);
+  }
+}

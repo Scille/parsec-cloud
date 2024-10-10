@@ -3,7 +3,10 @@
 <template>
   <ion-page>
     <ion-header id="connected-header">
-      <ion-toolbar class="topbar">
+      <ion-toolbar
+        class="topbar"
+        :class="currentRouteIs(Routes.History) ? 'topbar-history' : ''"
+      >
         <!-- icon visible when menu is hidden -->
         <ion-buttons slot="start">
           <ion-button
@@ -59,7 +62,10 @@
           slot="primary"
           class="topbar-right"
         >
-          <div class="topbar-right-button">
+          <div
+            class="topbar-right-button"
+            v-if="!currentRouteIs(Routes.History)"
+          >
             <invitations-button />
 
             <ion-button
@@ -277,6 +283,8 @@ function getTitleForRoute(): Translatable {
       return 'HeaderPage.titles.myProfile';
     case Routes.RecoveryExport:
       return 'HeaderPage.titles.recoveryExport';
+    case Routes.History:
+      return 'HeaderPage.titles.history';
     case null:
       return '';
   }
@@ -308,6 +316,14 @@ async function openNotificationCenter(event: Event): Promise<void> {
   --background: var(--parsec-color-light-secondary-white);
   display: flex;
   padding: 1.5rem 2em 1rem;
+
+  &-history {
+    --background: var(--parsec-color-light-secondary-inversed-contrast);
+
+    .topbar-left {
+      min-height: 2.25rem;
+    }
+  }
 }
 
 .topbar-right {
@@ -392,6 +408,7 @@ async function openNotificationCenter(event: Event): Promise<void> {
       display: flex;
       justify-content: start;
       align-items: center;
+      margin-inline: 1.5rem;
     }
 
     .align-center {

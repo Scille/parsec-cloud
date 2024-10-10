@@ -54,10 +54,12 @@ const props = withDefaults(
     pathNodes: RouterPathNode[];
     itemsBeforeCollapse?: number;
     itemsAfterCollapse?: number;
+    maxShown?: number;
   }>(),
   {
     itemsBeforeCollapse: 2,
     itemsAfterCollapse: 2,
+    maxShown: 4,
   },
 );
 
@@ -68,11 +70,11 @@ const emits = defineEmits<{
 // Using a computed to reset maxBreadcrumbs value automatically
 const fullPath = computed(() => {
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
-  maxBreadcrumbs.value = 4;
+  maxBreadcrumbs.value = props.maxShown;
   return props.pathNodes;
 });
 
-const maxBreadcrumbs: Ref<number | undefined> = ref(4);
+const maxBreadcrumbs: Ref<number | undefined> = ref(props.maxShown);
 let ignoreNextEvent = false;
 
 function expandCollapsed(): void {

@@ -8,6 +8,7 @@
       @files-added="$emit('filesAdded', $event)"
       :show-drop-message="true"
       :is-reader="ownRole === WorkspaceRole.Reader"
+      @drop-as-reader="$emit('dropAsReader')"
     >
       <div
         class="scroll"
@@ -54,6 +55,7 @@
               @selected-change="onSelectedChange"
               @files-added="onFilesAdded"
               :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+              @drop-as-reader="$emit('dropAsReader')"
             />
             <file-list-item
               v-for="file in files.getEntries()"
@@ -65,6 +67,7 @@
               @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
               @selected-change="onSelectedChange"
               @files-added="onFilesAdded"
+              @drop-as-reader="$emit('dropAsReader')"
             />
             <file-list-item-processing
               v-for="op in operationsInProgress"
@@ -103,6 +106,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 const fileDropZoneRef = ref();

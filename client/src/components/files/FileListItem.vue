@@ -2,11 +2,12 @@
 
 <template>
   <file-drop-zone
-    :disabled="entry.isFile()"
+    :disabled="disableDrop || entry.isFile()"
     :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
     :is-reader="isWorkspaceReader"
     class="drop-zone-item"
+    @drop-as-reader="$emit('dropAsReader')"
   >
     <ion-item
       button
@@ -118,6 +119,7 @@ const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
+  disableDrop?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -125,6 +127,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'selectedChange', entry: EntryModel, checked: boolean): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 defineExpose({

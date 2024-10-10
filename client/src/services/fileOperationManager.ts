@@ -5,10 +5,12 @@ import {
   EntryTree,
   FileDescriptor,
   FsPath,
+  HistoryEntryTree,
   Path,
   WorkspaceCreateFolderErrorTag,
   WorkspaceFdWriteErrorTag,
   WorkspaceHandle,
+  WorkspaceHistoryEntryStatFile,
   WorkspaceID,
   WorkspaceMoveEntryErrorTag,
   WorkspaceOpenFileErrorTag,
@@ -16,14 +18,19 @@ import {
   createFolder,
   deleteFile,
   entryStat,
+  entryStatAt,
   listTree,
+  listTreeAt,
   moveEntry,
   openFile,
+  openFileAt,
   readFile,
+  readHistoryFile,
   resizeFile,
   writeFile,
 } from '@/parsec';
 import { wait } from '@/parsec/internals';
+import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
 
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
@@ -49,6 +56,10 @@ enum FileOperationState {
   FolderCreated,
   EntryMoved,
   EntryCopied,
+  RestoreAdded,
+  RestoreStarted,
+  RestoreFailed,
+  EntryRestored,
 }
 
 export interface OperationProgressStateData {
@@ -83,13 +94,27 @@ export interface CopyFailedStateData {
   error: CopyFailedError;
 }
 
+export enum RestoreFailedError {
+  MaxRecursionReached = 'max-recursion-reached',
+  MaxFilesReached = 'max-files-reached',
+  SourceDoesNotExist = 'source-does-not-exist',
+  OneFailed = 'one-failed',
+}
+
+export interface RestoreFailedStateData {
+  error: RestoreFailedError;
+  path: FsPath;
+  workspaceHandle: WorkspaceHandle;
+}
+
 export type StateData =
   | OperationProgressStateData
   | CreateFailedStateData
   | WriteErrorStateData
   | FolderCreatedStateData
   | MoveFailedStateData
-  | CopyFailedStateData;
+  | CopyFailedStateData
+  | RestoreFailedStateData;
 
 type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
 type FileOperationID = string;
@@ -99,6 +124,7 @@ export enum FileOperationDataType {
   Import,
   Copy,
   Move,
+  Restore,
 }
 
 interface IFileOperationDataType {
@@ -168,6 +194,21 @@ class MoveData extends FileOperationData {
   }
 }
 
+class RestoreData extends FileOperationData {
+  path: FsPath;
+  dateTime: DateTime;
+
+  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime) {
+    super(workspaceHandle, workspaceId);
+    this.path = path;
+    this.dateTime = dateTime;
+  }
+
+  getDataType(): FileOperationDataType {
+    return FileOperationDataType.Restore;
+  }
+}
+
 class FileOperationManager {
   private fileOperationData: Array<FileOperationData>;
   private callbacks: Array<[string, FileOperationCallback]>;
@@ -224,6 +265,15 @@ class FileOperationManager {
     }
     const newData = new CopyData(workspaceHandle, workspaceId, srcPath, dstPath);
     await this.sendState(FileOperationState.CopyAdded, newData);
+    this.fileOperationData.unshift(newData);
+  }
+
+  async restoreEntry(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
+    const newData = new RestoreData(workspaceHandle, workspaceId, path, dateTime);
+    await this.sendState(FileOperationState.RestoreAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -454,6 +504,159 @@ class FileOperationManager {
     }
   }
 
+  private async doRestore(data: RestoreData): Promise<void> {
+    await this.sendState(FileOperationState.RestoreStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    let tree: HistoryEntryTree;
+
+    const statResult = await entryStatAt(data.workspaceHandle, data.path, data.dateTime);
+    if (!statResult.ok) {
+      await this.sendState(FileOperationState.RestoreFailed, data, {
+        path: data.path,
+        workspaceHandle: data.workspaceHandle,
+        error: RestoreFailedError.SourceDoesNotExist,
+      });
+      return;
+    }
+    if (statResult.value.isFile()) {
+      tree = {
+        totalSize: (statResult.value as WorkspaceHistoryEntryStatFile).size,
+        entries: [statResult.value as WorkspaceHistoryEntryStatFile],
+        maxRecursionReached: false,
+        maxFilesReached: false,
+      };
+    } else {
+      tree = await listTreeAt(data.workspaceHandle, data.path, data.dateTime);
+    }
+
+    // If we reach max recursion or max files, it's better to simply give up right at the start rather than
+    // trying to copy incomplete data
+    if (tree.maxRecursionReached) {
+      await this.sendState(FileOperationState.RestoreFailed, data, {
+        path: data.path,
+        workspaceHandle: data.workspaceHandle,
+        error: RestoreFailedError.MaxRecursionReached,
+      });
+      return;
+    } else if (tree.maxFilesReached) {
+      await this.sendState(FileOperationState.RestoreFailed, data, {
+        path: data.path,
+        workspaceHandle: data.workspaceHandle,
+        error: RestoreFailedError.MaxFilesReached,
+      });
+      return;
+    }
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    let totalSizeRestored = 0;
+
+    for (const entry of tree.entries) {
+      const dstPath = entry.path;
+      const dstDir = await Path.parent(dstPath);
+      if (dstDir !== '/') {
+        const result = await createFolder(data.workspaceHandle, dstDir);
+        if (result.ok) {
+          await this.sendState(FileOperationState.FolderCreated, undefined, { path: dstDir, workspaceHandle: data.workspaceHandle });
+        } else if (!result.ok && result.error.tag !== WorkspaceCreateFolderErrorTag.EntryExists) {
+          // No need to go further if the folder creation failed
+          continue;
+        }
+      }
+      let fdR: FileDescriptor | null = null;
+      let fdW: FileDescriptor | null = null;
+      let restored = false;
+      let cancelled = false;
+      try {
+        // Open the source
+        const openReadResult = await openFileAt(data.workspaceHandle, entry.path, data.dateTime);
+        if (!openReadResult.ok) {
+          continue;
+        }
+        fdR = openReadResult.value;
+        // Try to open the destination
+        const openWriteResult = await openFile(data.workspaceHandle, dstPath, { write: true, truncate: true, create: true });
+        // No luck, cancel the copy
+        if (!openWriteResult.ok) {
+          throw Error('Failed to open destination');
+        }
+        fdW = openWriteResult.value;
+
+        // Resize the destination
+        await resizeFile(data.workspaceHandle, fdW, entry.size);
+
+        let loop = true;
+        let offset = 0;
+        const READ_CHUNK_SIZE = 1_000_000;
+        while (loop) {
+          // Check if the copy has been cancelled
+          let shouldCancel = false;
+          const index = this.cancelList.findIndex((item) => item === data.id);
+
+          if (index !== -1) {
+            // Remove from cancel list
+            this.cancelList.splice(index, 1);
+            shouldCancel = true;
+          }
+          if (shouldCancel) {
+            cancelled = true;
+            throw Error('cancelled');
+          }
+
+          // Read the source
+          const readResult = await readHistoryFile(data.workspaceHandle, fdR, offset, READ_CHUNK_SIZE);
+
+          // Failed to read, cancel the copy
+          if (!readResult.ok) {
+            throw Error('Failed to read the source');
+          }
+          const chunk = readResult.value;
+          const writeResult = await writeFile(data.workspaceHandle, fdW, offset, new Uint8Array(chunk));
+
+          // Failed to write, or not everything's been written
+          if (!writeResult.ok || writeResult.value < chunk.byteLength) {
+            throw Error('Failed to write the destination');
+          }
+          // Smaller that what we asked for, we're at the end of the file
+          if (chunk.byteLength < READ_CHUNK_SIZE) {
+            loop = false;
+          } else {
+            // Otherwise, move the offset and keep going
+            offset += chunk.byteLength;
+          }
+          totalSizeRestored += chunk.byteLength;
+          await this.sendState(FileOperationState.OperationProgress, data, { progress: (totalSizeRestored / tree.totalSize) * 100 });
+        }
+        restored = true;
+      } catch (e: any) {
+        console.warn(`Failed to restore file: ${e}`);
+      } finally {
+        if (fdR !== null) {
+          await closeFile(data.workspaceHandle, fdR);
+        }
+        if (fdW !== null) {
+          await closeFile(data.workspaceHandle, fdW);
+        }
+        if (cancelled) {
+          await deleteFile(data.workspaceHandle, dstPath);
+          await this.sendState(FileOperationState.Cancelled, data);
+          // eslint-disable-next-line no-unsafe-finally
+          return;
+        }
+        if (!restored) {
+          await this.sendState(FileOperationState.RestoreFailed, data, {
+            path: data.path,
+            workspaceHandle: data.workspaceHandle,
+            error: RestoreFailedError.OneFailed,
+          });
+          // eslint-disable-next-line no-unsafe-finally
+          return;
+        }
+      }
+    }
+    await this.sendState(FileOperationState.EntryRestored, data);
+  }
+
   private async doImport(data: ImportData): Promise<void> {
     await this.sendState(FileOperationState.ImportStarted, data);
     const reader = data.file.stream().getReader();
@@ -603,6 +806,8 @@ class FileOperationManager {
           job = this.doMove(elem as MoveData);
         } else if (elem.getDataType() === FileOperationDataType.Copy) {
           job = this.doCopy(elem as CopyData);
+        } else if (elem.getDataType() === FileOperationDataType.Restore) {
+          job = this.doRestore(elem as RestoreData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;
@@ -625,4 +830,4 @@ class FileOperationManager {
   }
 }
 
-export { CopyData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData };
+export { CopyData, FileOperationData, FileOperationManager, FileOperationState, ImportData, MoveData, RestoreData };
