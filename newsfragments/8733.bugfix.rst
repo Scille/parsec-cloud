@@ -1,1 +1,0 @@
-Fixed logout and go home buttons not appearing in customer area
