@@ -150,7 +150,14 @@
 
 <script setup lang="ts">
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
-import { FileAggregateDoneItem, FileAggregateQueuedItem, FileCopyItem, FileMoveItem, FileUploadItem } from '@/components/files';
+import {
+  FileAggregateDoneItem,
+  FileAggregateQueuedItem,
+  FileCopyItem,
+  FileMoveItem,
+  FileUploadItem,
+  FileRestoreItem,
+} from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
 import {
@@ -186,13 +193,20 @@ const inProgressItems = ref<Array<OperationItem>>([]);
 const queuedCopyItems = ref<Array<OperationItem>>([]);
 const queuedMoveItems = ref<Array<OperationItem>>([]);
 const queuedUploadItems = ref<Array<OperationItem>>([]);
+const queuedRestoreItems = ref<Array<OperationItem>>([]);
 const doneItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const errorItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
 const doneItemsCount = ref<number>(0);
 const errorItemsCount = ref<number>(0);
 
 const inProgressAndQueuedLength = computed(() => {
-  return inProgressItems.value.length + queuedUploadItems.value.length + queuedCopyItems.value.length + queuedMoveItems.value.length;
+  return (
+    inProgressItems.value.length +
+    queuedUploadItems.value.length +
+    queuedCopyItems.value.length +
+    queuedMoveItems.value.length +
+    queuedRestoreItems.value.length
+  );
 });
 
 let dbId: string;
@@ -231,6 +245,8 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
       return FileCopyItem;
     case FileOperationDataType.Move:
       return FileMoveItem;
+    case FileOperationDataType.Restore:
+      return FileRestoreItem;
   }
 }
 
@@ -263,6 +279,13 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
             inProgressItems.value.push(item);
           }
           break;
+        case FileOperationDataType.Restore:
+          index = queuedRestoreItems.value.findIndex((op) => op.data.id === data.id);
+          if (queuedRestoreItems.value[index]) {
+            const item = queuedRestoreItems.value.splice(index, 1)[0];
+            inProgressItems.value.push(item);
+          }
+          break;
       }
     }
   }
@@ -282,6 +305,8 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
       case FileOperationDataType.Move:
         currentOperationArray = queuedMoveItems.value;
         break;
+      case FileOperationDataType.Restore:
+        currentOperationArray = queuedRestoreItems.value;
     }
     index = currentOperationArray.findIndex((op) => op.data.id === data.id);
   }
@@ -291,7 +316,14 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
   if (operation) {
     operation.state = state;
     operation.stateData = stateData;
-    if ([FileOperationState.FileImported, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(state)) {
+    if (
+      [
+        FileOperationState.FileImported,
+        FileOperationState.EntryMoved,
+        FileOperationState.EntryCopied,
+        FileOperationState.EntryRestored,
+      ].includes(state)
+    ) {
       operation.finishedDate = DateTime.now();
       doneItems.value.push(operation);
       doneItemsCount.value += 1;
@@ -302,6 +334,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.MoveFailed,
         FileOperationState.CopyFailed,
         FileOperationState.Cancelled,
+        FileOperationState.RestoreFailed,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -384,17 +417,27 @@ async function onFileOperationEvent(
       });
       scrollToTop();
       break;
+    case FileOperationState.RestoreAdded:
+      queuedRestoreItems.value.push({
+        data: fileOperationData as FileOperationData,
+        state: state,
+        stateData: stateData,
+      });
+      scrollToTop();
+      break;
     case FileOperationState.OperationProgress:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.FileImported:
     case FileOperationState.EntryMoved:
     case FileOperationState.EntryCopied:
+    case FileOperationState.EntryRestored:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
     case FileOperationState.CopyFailed:
+    case FileOperationState.RestoreFailed:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.Cancelled:

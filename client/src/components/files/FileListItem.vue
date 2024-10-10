@@ -2,11 +2,12 @@
 
 <template>
   <file-drop-zone
-    :disabled="entry.isFile()"
+    :disabled="disableDrop || entry.isFile()"
     :current-path="currentPath"
     @files-added="$emit('filesAdded', $event)"
     :is-reader="isWorkspaceReader"
     class="drop-zone-item"
+    @drop-as-reader="$emit('dropAsReader')"
   >
     <ion-item
       button
@@ -62,7 +63,9 @@
         </div>
 
         <!-- last update -->
-        <div class="file-lastUpdate">
+        <div
+          class="file-lastUpdate"
+        >
           <ion-label class="label-last-update cell">
             {{ $msTranslate(formatTimeSince(entry.updated, '--', 'short')) }}
           </ion-label>
@@ -82,7 +85,7 @@
         <div class="file-options ion-item-child-clickable">
           <ion-button
             fill="clear"
-            v-show="isHovered || menuOpened"
+            v-show="(isHovered || menuOpened)"
             class="options-button"
             @click.stop="onOptionsClick($event)"
             @dblclick.stop
@@ -118,6 +121,7 @@ const props = defineProps<{
   entry: EntryModel;
   showCheckbox: boolean;
   isWorkspaceReader?: boolean;
+  disableDrop?: boolean;
 }>();
 
 const emits = defineEmits<{
@@ -125,6 +129,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'selectedChange', entry: EntryModel, checked: boolean): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 defineExpose({

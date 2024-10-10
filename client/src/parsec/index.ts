@@ -7,6 +7,7 @@ export * from '@/parsec/environment';
 export * from '@/parsec/file';
 export * from '@/parsec/greet_device';
 export * from '@/parsec/greet_user';
+export * from '@/parsec/history';
 export * from '@/parsec/invitation';
 export * from '@/parsec/login';
 export * from '@/parsec/organization';

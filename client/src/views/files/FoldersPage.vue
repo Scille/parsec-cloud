@@ -173,6 +173,7 @@
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
+              @drop-as-reader="onDropAsReader"
             />
           </div>
           <div v-if="displayView === DisplayState.Grid">
@@ -186,6 +187,7 @@
               @files-added="startImportFiles"
               @global-menu-click="openGlobalContextMenu"
               :own-role="ownRole"
+              @drop-as-reader="onDropAsReader"
             />
           </div>
         </div>
@@ -1141,7 +1143,12 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1) {
     return;
   }
-  console.log('Show history', entries[0]);
+  if (!workspaceInfo.value) {
+    window.electronAPI.log('error', 'No workspace info when trying to navigate to history');
+    return;
+  }
+
+  await navigateTo(Routes.History, { query: { documentPath: entries[0].path, workspaceHandle: workspaceInfo.value.handle } });
 }
 
 async function openEntries(entries: EntryModel[]): Promise<void> {
@@ -1258,6 +1265,16 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
   if (onFinished) {
     onFinished();
   }
+}
+
+async function onDropAsReader(): Promise<void> {
+  await informationManager.present(
+    new Information({
+      message: 'FoldersPage.ImportFile.noDropForReader',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Toast,
+  );
 }
 </script>
 

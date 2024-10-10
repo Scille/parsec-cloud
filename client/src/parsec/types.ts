@@ -43,6 +43,12 @@ export {
   WorkspaceFdCloseErrorTag,
   WorkspaceFdReadErrorTag,
   WorkspaceFdWriteErrorTag,
+  WorkspaceHistoryEntryStatTag,
+  WorkspaceHistoryFdCloseErrorTag,
+  WorkspaceHistoryFdReadErrorTag,
+  WorkspaceHistoryOpenFileErrorTag,
+  WorkspaceHistoryStatEntryErrorTag,
+  WorkspaceHistoryStatFolderChildrenErrorTag,
   WorkspaceInfoErrorTag,
   WorkspaceMountErrorTag,
   WorkspaceMoveEntryErrorTag,
@@ -142,6 +148,11 @@ export type {
   WorkspaceFdResizeError,
   WorkspaceFdWriteError,
   WorkspaceGeneratePathAddrError,
+  WorkspaceHistoryFdCloseError,
+  WorkspaceHistoryFdReadError,
+  WorkspaceHistoryOpenFileError,
+  WorkspaceHistoryStatEntryError,
+  WorkspaceHistoryStatFolderChildrenError,
   VlobID as WorkspaceID,
   WorkspaceInfoError,
   WorkspaceMountError,
@@ -166,6 +177,8 @@ import type {
   ParsecOrganizationAddr,
   StartedWorkspaceInfo as ParsecStartedWorkspaceInfo,
   UserInfo as ParsecUserInfo,
+  WorkspaceHistoryEntryStatFile as ParsecWorkspaceHistoryEntryStatFile,
+  WorkspaceHistoryEntryStatFolder as ParsecWorkspaceHistoryEntryStatFolder,
   WorkspaceInfo as ParsecWorkspaceInfo,
   Path,
   UserID,
@@ -204,6 +217,22 @@ interface EntryStatFile extends ParsecEntryStatFile {
   name: EntryName;
 }
 
+type EntryStat = EntryStatFile | EntryStatFolder;
+
+interface WorkspaceHistoryEntryStatFile extends ParsecWorkspaceHistoryEntryStatFile {
+  isFile: () => boolean;
+  path: FsPath;
+  name: EntryName;
+}
+
+interface WorkspaceHistoryEntryStatFolder extends ParsecWorkspaceHistoryEntryStatFolder {
+  isFile: () => boolean;
+  path: FsPath;
+  name: EntryName;
+}
+
+type WorkspaceHistoryEntryStat = WorkspaceHistoryEntryStatFile | WorkspaceHistoryEntryStatFolder;
+
 interface OpenOptions {
   read?: boolean;
   write?: boolean;
@@ -212,8 +241,6 @@ interface OpenOptions {
   create?: boolean;
   createNew?: boolean;
 }
-
-type EntryStat = EntryStatFile | EntryStatFolder;
 
 enum GetWorkspaceNameErrorTag {
   NotFound = 'NotFound',
@@ -241,6 +268,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
   sharing: Array<[UserTuple, WorkspaceRole | null]>;
   size: number;
   lastUpdated: DateTime;
+  created?: DateTime;
   availableOffline: boolean;
   handle: WorkspaceHandle;
   mountpoints: [MountpointHandle, SystemPath][];
@@ -248,6 +276,7 @@ interface WorkspaceInfo extends ParsecWorkspaceInfo {
 
 interface StartedWorkspaceInfo extends ParsecStartedWorkspaceInfo {
   handle: WorkspaceHandle;
+  created?: DateTime;
 }
 
 enum OrganizationInfoErrorTag {
@@ -307,6 +336,9 @@ export {
   UserInfo,
   UserTuple,
   WorkspaceHandle,
+  WorkspaceHistoryEntryStat,
+  WorkspaceHistoryEntryStatFile,
+  WorkspaceHistoryEntryStatFolder,
   WorkspaceInfo,
   WorkspaceName,
   WorkspaceRole,
