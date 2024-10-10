@@ -275,13 +275,8 @@ fn struct_available_device_js_to_rs<'a>(
     let key_file_path = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "keyFilePath")?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match js_val.as_slice(cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -401,14 +396,7 @@ fn struct_available_device_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_key_file_path = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(rs_obj.key_file_path) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { rs_obj.key_file_path };
         let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -480,13 +468,8 @@ fn struct_client_config_js_to_rs<'a>(
     let config_dir = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "configDir")?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match js_val.as_slice(cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -497,13 +480,8 @@ fn struct_client_config_js_to_rs<'a>(
     let data_base_dir = {
         let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "dataBaseDir")?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(cx)) {
+            match js_val.as_slice(cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -551,14 +529,7 @@ fn struct_client_config_rs_to_js<'a>(
 ) -> NeonResult<Handle<'a, JsObject>> {
     let js_obj = cx.empty_object();
     let js_config_dir = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(rs_obj.config_dir) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { rs_obj.config_dir };
         let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -568,14 +539,7 @@ fn struct_client_config_rs_to_js<'a>(
     };
     js_obj.set(cx, "configDir", js_config_dir)?;
     let js_data_base_dir = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(rs_obj.data_base_dir) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { rs_obj.data_base_dir };
         let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -1863,14 +1827,8 @@ fn struct_started_workspace_info_js_to_rs<'a>(
                     {
                         let js_item: Handle<JsTypedArray<u8>> = js_item.get(cx, 1)?;
                         {
-                            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                                Ok(std::path::Path::new(
-                                    std::str::from_utf8(&p)
-                                        .map_err(|_| "Path contains non-utf8 characters"),
-                                ))
-                            };
                             #[allow(clippy::unnecessary_mut_passed)]
-                            match custom_from_rs_bytes(js_item.as_slice(cx)) {
+                            match js_item.as_slice(cx).try_into() {
                                 Ok(val) => val,
                                 // err can't infer type in some case, because of the previous `try_into`
                                 #[allow(clippy::useless_format)]
@@ -1925,14 +1883,7 @@ fn struct_started_workspace_info_rs_to_js<'a>(
                 let js_value = JsNumber::new(cx, x0 as f64);
                 js_array.set(cx, 0, js_value)?;
                 let js_value = {
-                    let rs_buff = {
-                        let custom_to_rs_bytes =
-                            |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-                        match custom_to_rs_bytes(x1) {
-                            Ok(ok) => ok,
-                            Err(err) => return cx.throw_type_error(err),
-                        }
-                    };
+                    let rs_buff = { x1 };
                     let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                     let js_buff_slice = js_buff.as_mut_slice(cx);
                     for (i, c) in rs_buff.iter().enumerate() {
@@ -4312,14 +4263,8 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             let key_file = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "keyFile")?;
                 {
-                    let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                        Ok(std::path::Path::new(
-                            std::str::from_utf8(&p)
-                                .map_err(|_| "Path contains non-utf8 characters"),
-                        ))
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -4343,14 +4288,8 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             let key_file = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "keyFile")?;
                 {
-                    let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                        Ok(std::path::Path::new(
-                            std::str::from_utf8(&p)
-                                .map_err(|_| "Path contains non-utf8 characters"),
-                        ))
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -4364,14 +4303,8 @@ fn variant_device_access_strategy_js_to_rs<'a>(
             let key_file = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "keyFile")?;
                 {
-                    let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                        Ok(std::path::Path::new(
-                            std::str::from_utf8(&p)
-                                .map_err(|_| "Path contains non-utf8 characters"),
-                        ))
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -4396,14 +4329,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "DeviceAccessStrategyKeyring").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_key_file = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-                    match custom_to_rs_bytes(key_file) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
+                let rs_buff = { key_file };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
                 for (i, c) in rs_buff.iter().enumerate() {
@@ -4421,14 +4347,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             let js_password = JsString::try_new(cx, password).or_throw(cx)?;
             js_obj.set(cx, "password", js_password)?;
             let js_key_file = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-                    match custom_to_rs_bytes(key_file) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
+                let rs_buff = { key_file };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
                 for (i, c) in rs_buff.iter().enumerate() {
@@ -4442,14 +4361,7 @@ fn variant_device_access_strategy_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "DeviceAccessStrategySmartcard").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_key_file = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-                    match custom_to_rs_bytes(key_file) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
+                let rs_buff = { key_file };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
                 for (i, c) in rs_buff.iter().enumerate() {
@@ -5363,14 +5275,8 @@ fn variant_mountpoint_mount_strategy_js_to_rs<'a>(
             let base_dir = {
                 let js_val: Handle<JsTypedArray<u8>> = obj.get(cx, "baseDir")?;
                 {
-                    let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                        Ok(std::path::Path::new(
-                            std::str::from_utf8(&p)
-                                .map_err(|_| "Path contains non-utf8 characters"),
-                        ))
-                    };
                     #[allow(clippy::unnecessary_mut_passed)]
-                    match custom_from_rs_bytes(js_val.as_slice(cx)) {
+                    match js_val.as_slice(cx).try_into() {
                         Ok(val) => val,
                         // err can't infer type in some case, because of the previous `try_into`
                         #[allow(clippy::useless_format)]
@@ -5397,14 +5303,7 @@ fn variant_mountpoint_mount_strategy_rs_to_js<'a>(
             let js_tag = JsString::try_new(cx, "MountpointMountStrategyDirectory").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_base_dir = {
-                let rs_buff = {
-                    let custom_to_rs_bytes =
-                        |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-                    match custom_to_rs_bytes(base_dir) {
-                        Ok(ok) => ok,
-                        Err(err) => return cx.throw_type_error(err),
-                    }
-                };
+                let rs_buff = { base_dir };
                 let mut js_buff = JsArrayBuffer::new(cx, rs_buff.len())?;
                 let js_buff_slice = js_buff.as_mut_slice(cx);
                 for (i, c) in rs_buff.iter().enumerate() {
@@ -10195,14 +10094,7 @@ fn get_default_config_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let ret = libparsec::get_default_config_dir();
     let js_ret = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(ret) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { ret };
         let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(&mut cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -10220,14 +10112,7 @@ fn get_default_data_base_dir(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
     let ret = libparsec::get_default_data_base_dir();
     let js_ret = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(ret) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { ret };
         let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(&mut cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -10245,14 +10130,7 @@ fn get_default_mountpoint_base_dir(mut cx: FunctionContext) -> JsResult<JsPromis
     crate::init_sentry();
     let ret = libparsec::get_default_mountpoint_base_dir();
     let js_ret = {
-        let rs_buff = {
-            let custom_to_rs_bytes =
-                |path: &Path| -> Result<Vec<u8>, &str> { Ok(path.to_path_buf()) };
-            match custom_to_rs_bytes(ret) {
-                Ok(ok) => ok,
-                Err(err) => return cx.throw_type_error(err),
-            }
-        };
+        let rs_buff = { ret };
         let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
         let js_buff_slice = js_buff.as_mut_slice(&mut cx);
         for (i, c) in rs_buff.iter().enumerate() {
@@ -11096,13 +10974,8 @@ fn list_available_devices(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -11143,13 +11016,8 @@ fn load_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let key_file = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -11248,15 +11116,7 @@ fn mountpoint_to_os_path(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let rs_buff = {
-                                let custom_to_rs_bytes = |path: &Path| -> Result<Vec<u8>, &str> {
-                                    Ok(path.to_path_buf())
-                                };
-                                match custom_to_rs_bytes(ok) {
-                                    Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
-                                }
-                            };
+                            let rs_buff = { ok };
                             let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                             let js_buff_slice = js_buff.as_mut_slice(&mut cx);
                             for (i, c) in rs_buff.iter().enumerate() {
@@ -11543,13 +11403,8 @@ fn test_drop_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let path = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -11603,13 +11458,8 @@ fn test_get_testbed_bootstrap_organization_addr(mut cx: FunctionContext) -> JsRe
     let discriminant_dir = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -11658,13 +11508,8 @@ fn test_get_testbed_organization_id(mut cx: FunctionContext) -> JsResult<JsPromi
     let discriminant_dir = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -11740,15 +11585,7 @@ fn test_new_testbed(mut cx: FunctionContext) -> JsResult<JsPromise> {
                         let js_tag = JsBoolean::new(&mut cx, true);
                         js_obj.set(&mut cx, "ok", js_tag)?;
                         let js_value = {
-                            let rs_buff = {
-                                let custom_to_rs_bytes = |path: &Path| -> Result<Vec<u8>, &str> {
-                                    Ok(path.to_path_buf())
-                                };
-                                match custom_to_rs_bytes(ok) {
-                                    Ok(ok) => ok,
-                                    Err(err) => return cx.throw_type_error(err),
-                                }
-                            };
+                            let rs_buff = { ok };
                             let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                             let js_buff_slice = js_buff.as_mut_slice(&mut cx);
                             for (i, c) in rs_buff.iter().enumerate() {
@@ -11879,13 +11716,8 @@ fn wait_for_device_available(mut cx: FunctionContext) -> JsResult<JsPromise> {
     let config_dir = {
         let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
         {
-            let custom_from_rs_bytes = |p: &[u8]| -> Result<_, &str> {
-                Ok(std::path::Path::new(
-                    std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters"),
-                ))
-            };
             #[allow(clippy::unnecessary_mut_passed)]
-            match custom_from_rs_bytes(js_val.as_slice(&mut cx)) {
+            match js_val.as_slice(&mut cx).try_into() {
                 Ok(val) => val,
                 // err can't infer type in some case, because of the previous `try_into`
                 #[allow(clippy::useless_format)]
@@ -12390,16 +12222,7 @@ fn workspace_mount(mut cx: FunctionContext) -> JsResult<JsPromise> {
                             let js_value = JsNumber::new(&mut cx, x0 as f64);
                             js_array.set(&mut cx, 0, js_value)?;
                             let js_value = {
-                                let rs_buff = {
-                                    let custom_to_rs_bytes =
-                                        |path: &Path| -> Result<Vec<u8>, &str> {
-                                            Ok(path.to_path_buf())
-                                        };
-                                    match custom_to_rs_bytes(x1) {
-                                        Ok(ok) => ok,
-                                        Err(err) => return cx.throw_type_error(err),
-                                    }
-                                };
+                                let rs_buff = { x1 };
                                 let mut js_buff = JsArrayBuffer::new(&mut cx, rs_buff.len())?;
                                 let js_buff_slice = js_buff.as_mut_slice(&mut cx);
                                 for (i, c) in rs_buff.iter().enumerate() {

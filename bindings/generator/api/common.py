@@ -210,8 +210,9 @@ class TimeProvider(BytesBasedType):
 
 
 class Path(BytesBasedType):
-    custom_from_rs_bytes = '| p: &[u8]| -> Result<_, &str> {Ok(std::path::Path::new(std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters")))}'
-    custom_to_rs_bytes = "| path: &Path |-> Result<Vec<u8>, & str> { Ok(path.to_path_buf() )}"
+    pass
+    # custom_from_rs_bytes = '| p: &[u8]| -> Result<_, &std::path::Path> {std::path::Path::new(std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters")?)}'
+    # custom_to_rs_bytes = '| path: &std::path::Path |-> Result<Vec<u8>, & str> { Ok(path.to_str().ok_or("Path contains non-utf8 characters")?.bytes().collect() )}'
 
 
 # class Path(StrBasedType):
