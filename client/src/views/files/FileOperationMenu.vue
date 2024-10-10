@@ -41,7 +41,7 @@
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.lastUploaded') }}</ion-text>
-          <span class="text-counter">{{ doneItems.length() > 99 ? '+99' : doneItems.length() }}</span>
+          <span class="text-counter">{{ doneItemsCount > 99 ? '+99' : doneItemsCount }}</span>
         </div>
       </ion-item>
 
@@ -52,13 +52,31 @@
       >
         <div class="item-container">
           <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.failed') }}</ion-text>
-          <span class="text-counter">{{ errorItems.length() > 99 ? '+99' : errorItems.length() }}</span>
+          <span class="text-counter">{{ errorItemsCount > 99 ? '+99' : errorItemsCount }}</span>
         </div>
       </ion-item>
     </ion-list>
 
     <ion-list class="upload-menu-list">
       <template v-if="currentTab === Tabs.InProgress">
+        <file-aggregate-queued-item
+          v-if="queuedUploadItems.length > 0"
+          :amount="queuedUploadItems.length"
+          :type="FileOperationDataType.Import"
+          @cancel="cancelQueuedOperations(queuedUploadItems)"
+        />
+        <file-aggregate-queued-item
+          v-if="queuedCopyItems.length > 0"
+          :amount="queuedCopyItems.length"
+          :type="FileOperationDataType.Copy"
+          @cancel="cancelQueuedOperations(queuedCopyItems)"
+        />
+        <file-aggregate-queued-item
+          v-if="queuedMoveItems.length > 0"
+          :amount="queuedMoveItems.length"
+          :type="FileOperationDataType.Move"
+          @cancel="cancelQueuedOperations(queuedMoveItems)"
+        />
         <component
           v-for="item in inProgressItems"
           :is="getFileOperationComponent(item)"
@@ -67,24 +85,6 @@
           :state-data="item.stateData"
           :operation-data="item.data"
           @cancel="cancelOperation"
-        />
-        <file-queued-item
-          v-if="queuedUploadItems.length > 0"
-          :amount="queuedUploadItems.length"
-          :type="FileOperationDataType.Import"
-          @cancel="cancelQueuedOperations(queuedUploadItems)"
-        />
-        <file-queued-item
-          v-if="queuedCopyItems.length > 0"
-          :amount="queuedCopyItems.length"
-          :type="FileOperationDataType.Copy"
-          @cancel="cancelQueuedOperations(queuedCopyItems)"
-        />
-        <file-queued-item
-          v-if="queuedMoveItems.length > 0"
-          :amount="queuedMoveItems.length"
-          :type="FileOperationDataType.Move"
-          @cancel="cancelQueuedOperations(queuedMoveItems)"
         />
         <div
           class="upload-menu-list__empty"
@@ -106,9 +106,13 @@
           :operation-data="item.data"
           @click="onOperationFinishedClick"
         />
+        <file-aggregate-done-item
+          v-if="doneItemsCount > MAX_DONE_ERROR_ITEMS"
+          :amount="doneItemsCount - MAX_DONE_ERROR_ITEMS"
+        />
         <div
           class="upload-menu-list__empty"
-          v-if="doneItems.length() === 0"
+          v-if="doneItemsCount === 0"
         >
           <ms-image :image="NoImportDone" />
           <ion-text class="body-lg">
@@ -125,9 +129,14 @@
           :state-data="item.stateData"
           :operation-data="item.data"
         />
+        <file-aggregate-done-item
+          v-if="errorItemsCount > MAX_DONE_ERROR_ITEMS"
+          :amount="errorItemsCount - MAX_DONE_ERROR_ITEMS"
+          :is-error="true"
+        />
         <div
           class="upload-menu-list__empty"
-          v-if="errorItems.length() === 0"
+          v-if="errorItemsCount === 0"
         >
           <ms-image :image="NoImportError" />
           <ion-text class="body-lg">
@@ -141,7 +150,7 @@
 
 <script setup lang="ts">
 import { MsImage, NoImportDone, NoImportError, NoImportInProgress } from 'megashark-lib';
-import { FileUploadItem, FileCopyItem, FileMoveItem, FileQueuedItem } from '@/components/files';
+import { FileAggregateDoneItem, FileAggregateQueuedItem, FileCopyItem, FileMoveItem, FileUploadItem } from '@/components/files';
 import { navigateToWorkspace } from '@/router';
 import useUploadMenu from '@/services/fileUploadMenu';
 import {
@@ -155,7 +164,7 @@ import {
 } from '@/services/fileOperationManager';
 import { IonIcon, IonItem, IonList, IonText } from '@ionic/vue';
 import { chevronDown, close } from 'ionicons/icons';
-import { Ref, inject, onMounted, onUnmounted, computed, ref } from 'vue';
+import { inject, onMounted, onUnmounted, computed, ref } from 'vue';
 import type { Component } from 'vue';
 import { DateTime } from 'luxon';
 import { FIFO } from '@/common/queue';
@@ -167,16 +176,24 @@ interface OperationItem {
   finishedDate?: DateTime;
 }
 
+const MAX_DONE_ERROR_ITEMS: number = 10;
+
 const menu = useUploadMenu();
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
-const errorHappenedInUpload: Ref<boolean> = ref(false);
-const inProgressItems: Ref<Array<OperationItem>> = ref([]);
-const queuedCopyItems: Ref<Array<OperationItem>> = ref([]);
-const queuedMoveItems: Ref<Array<OperationItem>> = ref([]);
-const queuedUploadItems: Ref<Array<OperationItem>> = ref([]);
-const doneItems = ref(new FIFO<OperationItem>(10));
-const errorItems = ref(new FIFO<OperationItem>(10));
+const errorHappenedInUpload = ref<boolean>(false);
+const inProgressItems = ref<Array<OperationItem>>([]);
+const queuedCopyItems = ref<Array<OperationItem>>([]);
+const queuedMoveItems = ref<Array<OperationItem>>([]);
+const queuedUploadItems = ref<Array<OperationItem>>([]);
+const doneItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
+const errorItems = ref(new FIFO<OperationItem>(MAX_DONE_ERROR_ITEMS));
+const doneItemsCount = ref<number>(0);
+const errorItemsCount = ref<number>(0);
+
+const inProgressAndQueuedLength = computed(() => {
+  return inProgressItems.value.length + queuedUploadItems.value.length + queuedCopyItems.value.length + queuedMoveItems.value.length;
+});
 
 let dbId: string;
 const isFileOperationManagerActive = ref(false);
@@ -204,10 +221,6 @@ onMounted(async () => {
 
 onUnmounted(async () => {
   await fileOperationManager.removeCallback(dbId);
-});
-
-const inProgressAndQueuedLength = computed(() => {
-  return inProgressItems.value.length + queuedUploadItems.value.length + queuedCopyItems.value.length + queuedMoveItems.value.length;
 });
 
 function getFileOperationComponent(item: OperationItem): Component | undefined {
@@ -281,6 +294,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
     if ([FileOperationState.FileImported, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(state)) {
       operation.finishedDate = DateTime.now();
       doneItems.value.push(operation);
+      doneItemsCount.value += 1;
       currentOperationArray.splice(index, 1);
     } else if (
       [
@@ -292,6 +306,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
     ) {
       operation.finishedDate = DateTime.now();
       errorItems.value.push(operation);
+      errorItemsCount.value += 1;
       currentOperationArray.splice(index, 1);
       errorHappenedInUpload.value = true;
     }
@@ -467,8 +482,7 @@ async function onFileOperationEvent(
   &-list {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
-    padding: 1em 0.5rem;
+    padding: 0.5rem 0;
     overflow-y: auto;
     height: 40vh;
     max-height: 25rem;
