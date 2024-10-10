@@ -5,6 +5,90 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.1.0-rc.0 (2024-10-10)
+-------------------------------
+
+Features
+~~~~~~~~
+
+* Allow creating devices using the keyring in the CLI.
+  (`#8554 <https://github.com/Scille/parsec-cloud/issues/8554>`__)
+
+* Added the ability to archive a device from an expired trial organization
+  (`#8593 <https://github.com/Scille/parsec-cloud/issues/8593>`__)
+
+* Remove passphrase from CLI options of ``device import-recovery-device``, it is
+  now read from the standard input like the password.
+  (`#8567 <https://github.com/Scille/parsec-cloud/issues/8567>`__)
+
+* Make CLI command ``organization create`` directly take the organization ID
+  instead of using the option `--organization-id`
+  (`#8620 <https://github.com/Scille/parsec-cloud/issues/8620>`__)
+
+* Rename the option ``workspace-id`` to ``workspace`` in the CLI command
+  ``workspace import``.
+  (`#8622 <https://github.com/Scille/parsec-cloud/issues/8622>`__)
+
+* Rename the option ``user-id`` to ``user`` in the CLI command ``workspace
+  share``.
+  (`#8628 <https://github.com/Scille/parsec-cloud/issues/8628>`__)
+
+* Rename the option ``workspace-id`` to ``workspace`` in the CLI command ``ls``.
+  (`#8629 <https://github.com/Scille/parsec-cloud/issues/8629>`__)
+
+* Rename the option ``workspace-id`` to ``workspace`` in the CLI command ``rm``.
+  (`#8630 <https://github.com/Scille/parsec-cloud/issues/8630>`__)
+
+* On the CLI when removing a device (``device remove``), it will now also remove
+  its associated data (workspaces, certificates, etc).
+  (`#8601 <https://github.com/Scille/parsec-cloud/issues/8601>`__)
+
+* Terms of Services (ToS) can now be defined in the server. Users are requested
+  to accept them on first connection and whenever they are updated.
+  (`#7633 <https://github.com/Scille/parsec-cloud/issues/7633>`__)
+
+* Add server option ``--proxy-trusted-addresses`` to enable parsing of proxy
+  headers from trusted addresses. By default, the server will trust the proxy
+  headers from localhost.
+  (`#8626 <https://github.com/Scille/parsec-cloud/issues/8626>`__)
+
+* Added right click to open context menu on users, files and workspaces
+  (`#8645 <https://github.com/Scille/parsec-cloud/issues/8645>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a navigation loop when clicking the Back button after opening a
+  workspace link
+  (`#8571 <https://github.com/Scille/parsec-cloud/issues/8571>`__)
+
+* Fixed incorrect toast sometimes displayed when logging out while importing
+  files
+  (`#8584 <https://github.com/Scille/parsec-cloud/issues/8584>`__)
+
+* Fixed synchronization icon displaying the wrong status in file details dialog
+  (`#8597 <https://github.com/Scille/parsec-cloud/issues/8597>`__)
+
+* Fixed mocked values being sometimes displayed when logging out
+  (`#8652 <https://github.com/Scille/parsec-cloud/issues/8652>`__)
+
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Hide the suggested users when sharing a workspace with a role that cannot
+  share the workspace
+  (`#8538 <https://github.com/Scille/parsec-cloud/issues/8538>`__)
+
+* Document running the server behind a reverse proxy
+  (`#8427 <https://github.com/Scille/parsec-cloud/issues/8427>`__)
+
+* Remind the users of the Terms of Service when creating a new organization
+  (`#8681 <https://github.com/Scille/parsec-cloud/issues/8681>`__)
+
+
+
 Parsec v3.0.3 (2024-10-03)
 --------------------------
 
