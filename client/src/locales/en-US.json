@@ -303,7 +303,8 @@
                 "information": "Information"
             },
             "myProfile": "My profile",
-            "recoveryExport": "Recovery files"
+            "recoveryExport": "Recovery files",
+            "history": "History"
         },
         "previous": "Go back",
         "invitations": {
@@ -584,6 +585,13 @@
             "failed": "failed",
             "browse": "Go to location",
             "failedDetails": "Please make sure you are online."
+        },
+        "RestoreFile": {
+            "restore": "Restoration of {name}",
+            "waiting": "waiting",
+            "cancelled": "cancelled",
+            "failed": "failed",
+            "failedDetails": "Could not restore this file."
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",
@@ -1634,5 +1642,18 @@
                 "download": "Download"
             }
         }
+    },
+    "workspaceHistory": {
+        "actions": {
+            "restore": "Restore",
+            "cancel": "Cancel"
+        },
+        "restoreConfirmTitle": "Restore files",
+        "restoreConfirmQuestion": "This will restore one file or folder. It will overwrite your current files if present. Are you sure? | This will restore multiple files or folders. It will overwrite your current files if present. Are you sure?",
+        "empty": "No files or folders at this date.",
+        "error": "Failed to list history.",
+        "loading": "Loading...",
+        "workspace": "Workspace:",
+        "date": "Preview date:"
     }
 }

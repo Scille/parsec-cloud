@@ -39,8 +39,8 @@ for (const testData of TEST_DATA) {
 
     await files.nth(testData.index).hover();
     await files.nth(testData.index).locator('.options-button').click();
-    expect(connected.locator('.file-context-menu').getByRole('listitem')).toHaveCount(8);
-    await connected.locator('.file-context-menu').getByRole('listitem').nth(5).click();
+    expect(connected.locator('.file-context-menu').getByRole('listitem')).toHaveCount(9);
+    await connected.locator('.file-context-menu').getByRole('listitem').nth(6).click();
     await expect(connected.locator('.file-details-modal')).toBeVisible();
     const modal = connected.locator('.file-details-modal');
     await expect(modal.locator('.ms-modal-header__title ')).toHaveText(new RegExp(`^Details on ${nameMatcher}$`));
@@ -118,8 +118,8 @@ msTest('Show file details in grid mode', async ({ connected }) => {
   expect(connected.locator('.file-details-modal')).toBeHidden();
   await files.nth(3).hover();
   await files.nth(3).locator('.card-option').click();
-  expect(connected.locator('.file-context-menu').getByRole('listitem')).toHaveCount(8);
-  await connected.locator('.file-context-menu').getByRole('listitem').nth(5).click();
+  expect(connected.locator('.file-context-menu').getByRole('listitem')).toHaveCount(9);
+  await connected.locator('.file-context-menu').getByRole('listitem').nth(6).click();
   await expect(connected.locator('.file-details-modal')).toBeVisible();
   const modal = connected.locator('.file-details-modal');
   await expect(modal.locator('.ms-modal-header__title ')).toHaveText(/^Details on File_[a-z0-9._]+$/);

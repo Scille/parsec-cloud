@@ -37,7 +37,7 @@ async function openContextMenu(page: Page, mode: Mode): Promise<void> {
 const MENU = [
   {
     title: 'Manage workspace',
-    actions: ['Rename'],
+    actions: ['Rename', 'History'],
   },
   {
     title: 'Collaboration',
@@ -148,7 +148,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
   msTest(`Toggle workspace favorite ${mode}`, async ({ connected }) => {
     await openContextMenu(connected, mode as Mode);
     const popover = connected.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(6).click();
+    await popover.getByRole('listitem').nth(7).click();
     let wk;
     if (await isInGridMode(connected)) {
       wk = connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(0);
@@ -164,7 +164,7 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     await expect(connected.locator('.workspace-sharing-modal')).toBeHidden();
     await openContextMenu(connected, mode as Mode);
     const popover = connected.locator('.workspace-context-menu');
-    await popover.getByRole('listitem').nth(4).click();
+    await popover.getByRole('listitem').nth(5).click();
     await expect(connected.locator('.workspace-sharing-modal')).toBeVisible();
     await expect(connected.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('Share this workspace');
   });

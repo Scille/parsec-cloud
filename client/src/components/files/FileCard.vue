@@ -17,6 +17,7 @@
       :current-path="currentPath"
       @files-added="$emit('filesAdded', $event)"
       :is-reader="isWorkspaceReader"
+      @drop-as-reader="$emit('dropAsReader')"
     >
       <div class="card-checkbox">
         <!-- eslint-disable vue/no-mutating-props -->
@@ -101,6 +102,7 @@ const emits = defineEmits<{
   (e: 'click', event: Event, entry: EntryModel): void;
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 defineExpose({
