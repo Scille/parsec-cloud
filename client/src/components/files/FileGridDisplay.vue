@@ -7,6 +7,7 @@
     :show-drop-message="true"
     @files-added="$emit('filesAdded', $event)"
     :is-reader="ownRole === WorkspaceRole.Reader"
+    @drop-as-reader="$emit('dropAsReader')"
   >
     <div
       class="scroll"
@@ -24,6 +25,7 @@
           @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
           @files-added="onFilesAdded"
           :is-workspace-reader="ownRole === WorkspaceRole.Reader"
+          @drop-as-reader="$emit('dropAsReader')"
         />
         <file-card
           class="folder-grid-item"
@@ -35,6 +37,7 @@
           @click="$emit('click', file, $event)"
           @menu-click="(event, entry, onFinished) => $emit('menuClick', event, entry, onFinished)"
           @files-added="onFilesAdded"
+          @drop-as-reader="$emit('dropAsReader')"
         />
 
         <file-card-processing
@@ -73,6 +76,7 @@ const emits = defineEmits<{
   (e: 'menuClick', event: Event, entry: EntryModel, onFinished: () => void): void;
   (e: 'globalMenuClick', event: Event): void;
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 onMounted(async () => {

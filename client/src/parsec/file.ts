@@ -171,6 +171,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
 export async function statFolderChildren(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
+  atDateTime?: DateTime,
 ): Promise<Result<Array<EntryStat>, WorkspaceStatFolderChildrenError>> {
   if (!needsMocks()) {
     const watchResult = await libparsec.workspaceWatchEntryOneshot(workspaceHandle, path);
@@ -214,7 +215,7 @@ export async function statFolderChildren(
 
   const FILE_PREFIX = 'File_';
   const FOLDER_PREFIX = 'Dir_';
-  const fileCount = 2;
+  const fileCount = 3;
   const folderCount = 2;
 
   function generateEntryName(prefix: string = '', addExtension = false): string {

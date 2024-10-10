@@ -279,3 +279,9 @@
 .authentication-modal::part(content) {
   max-width: var(--parsec-modal-width-sm);
 }
+
+.workspace-history-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-lg);
+  }
+}

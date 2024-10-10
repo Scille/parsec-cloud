@@ -20,6 +20,7 @@ export enum Routes {
   Loading = 'loading',
   ClientAreaLogin = 'clientLogin',
   ClientArea = 'clientArea',
+  History = 'history',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -112,6 +113,11 @@ const routes: Array<RouteRecordRaw> = [
                 name: Routes.RecoveryExport,
                 component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
               },
+              {
+                path: `/:handle(\\d+)/${Routes.History}`,
+                name: Routes.History,
+                component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
+              }
             ],
           },
         ],
