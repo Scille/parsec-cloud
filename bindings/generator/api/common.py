@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from typing import Any, ClassVar, Generic, TypeVar
-
 #
 # Meta-types
 #
@@ -190,11 +189,37 @@ class Password(StrBasedType):
     custom_from_rs_string = "|s: String| -> Result<_, String> { Ok(s.into()) }"
 
 
-class Path(StrBasedType):
-    custom_from_rs_string = (
-        "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
-    )
-    custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> { path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
+class SigningKey(BytesBasedType):
+    pass
+
+
+class PrivateKey(BytesBasedType):
+    pass
+
+
+class SecretKey(BytesBasedType):
+    pass
+
+
+class SecretKeyPassphrase(BytesBasedType):
+    pass
+
+
+class TimeProvider(BytesBasedType):
+    pass
+
+
+class Path(BytesBasedType):
+    pass
+    # custom_from_rs_bytes = '| p: &[u8]| -> Result<_, &std::path::Path> {std::path::Path::new(std::str::from_utf8(&p).map_err(|_| "Path contains non-utf8 characters")?)}'
+    # custom_to_rs_bytes = '| path: &std::path::Path |-> Result<Vec<u8>, & str> { Ok(path.to_str().ok_or("Path contains non-utf8 characters")?.bytes().collect() )}'
+
+
+# class Path(StrBasedType):
+#     custom_from_rs_string = (
+#         "|s: String| -> Result<_, &'static str> { Ok(std::path::Path::new(&s)) }"
+#     )
+#     custom_to_rs_string = ("|path: std::path::PathBuf| -> Result<_, &'static str> { Ok(path.to_path_buf() )}")
 
 
 class FsPath(StrBasedType):

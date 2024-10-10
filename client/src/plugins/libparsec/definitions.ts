@@ -76,11 +76,16 @@ export type ParsecOrganizationBootstrapAddr = string
 export type ParsecPkiEnrollmentAddr = string
 export type ParsecWorkspacePathAddr = string
 export type Password = string
-export type Path = string
 export type SASCode = string
 export type UserID = string
 export type VlobID = string
+export type Path = Uint8Array
+export type PrivateKey = Uint8Array
+export type SecretKey = Uint8Array
+export type SecretKeyPassphrase = Uint8Array
 export type SequesterVerifyKeyDer = Uint8Array
+export type SigningKey = Uint8Array
+export type TimeProvider = Uint8Array
 export type I32 = number
 export type CacheSize = number
 export type FileDescriptor = number
@@ -179,6 +184,21 @@ export interface DeviceInfo {
 export interface HumanHandle {
     email: string
     label: string
+}
+
+export interface LocalDevice {
+    organizationAddr: ParsecOrganizationAddr
+    userId: UserID
+    deviceId: DeviceID
+    deviceLabel: DeviceLabel
+    humanHandle: HumanHandle
+    signingKey: SigningKey
+    privateKey: PrivateKey
+    initialProfile: UserProfile
+    userRealmId: VlobID
+    userRealmKey: SecretKey
+    localSymkey: SecretKey
+    timeProvider: TimeProvider
 }
 
 export interface NewInvitationInfo {
@@ -1432,6 +1452,36 @@ export interface ListInvitationsErrorOffline {
 export type ListInvitationsError =
   | ListInvitationsErrorInternal
   | ListInvitationsErrorOffline
+
+// LoadRecoveryDeviceError
+export enum LoadRecoveryDeviceErrorTag {
+    DecryptionFailed = 'LoadRecoveryDeviceErrorDecryptionFailed',
+    InvalidData = 'LoadRecoveryDeviceErrorInvalidData',
+    InvalidPassphrase = 'LoadRecoveryDeviceErrorInvalidPassphrase',
+    InvalidPath = 'LoadRecoveryDeviceErrorInvalidPath',
+}
+
+export interface LoadRecoveryDeviceErrorDecryptionFailed {
+    tag: LoadRecoveryDeviceErrorTag.DecryptionFailed
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidData {
+    tag: LoadRecoveryDeviceErrorTag.InvalidData
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidPassphrase {
+    tag: LoadRecoveryDeviceErrorTag.InvalidPassphrase
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidPath {
+    tag: LoadRecoveryDeviceErrorTag.InvalidPath
+    error: string
+}
+export type LoadRecoveryDeviceError =
+  | LoadRecoveryDeviceErrorDecryptionFailed
+  | LoadRecoveryDeviceErrorInvalidData
+  | LoadRecoveryDeviceErrorInvalidPassphrase
+  | LoadRecoveryDeviceErrorInvalidPath
 
 // MountpointMountStrategy
 export enum MountpointMountStrategyTag {
@@ -2778,6 +2828,10 @@ export interface LibParsecPlugin {
     listAvailableDevices(
         path: Path
     ): Promise<Array<AvailableDevice>>
+    loadRecoveryDevice(
+        key_file: Path,
+        passphrase: SecretKeyPassphrase
+    ): Promise<Result<LocalDevice, LoadRecoveryDeviceError>>
     mountpointToOsPath(
         mountpoint: Handle,
         parsec_path: FsPath

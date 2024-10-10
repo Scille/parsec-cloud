@@ -67,7 +67,7 @@ export enum UserProfile {
 
 
 export interface AvailableDevice {
-    keyFilePath: string
+    keyFilePath: Uint8Array
     createdOn: number
     protectedOn: number
     serverUrl: string
@@ -81,8 +81,8 @@ export interface AvailableDevice {
 
 
 export interface ClientConfig {
-    configDir: string
-    dataBaseDir: string
+    configDir: Uint8Array
+    dataBaseDir: Uint8Array
     mountpointMountStrategy: MountpointMountStrategy
     workspaceStorageCacheSize: WorkspaceStorageCacheSize
     withMonitors: boolean
@@ -168,6 +168,22 @@ export interface HumanHandle {
 }
 
 
+export interface LocalDevice {
+    organizationAddr: string
+    userId: string
+    deviceId: string
+    deviceLabel: string
+    humanHandle: HumanHandle
+    signingKey: Uint8Array
+    privateKey: Uint8Array
+    initialProfile: UserProfile
+    userRealmId: string
+    userRealmKey: Uint8Array
+    localSymkey: Uint8Array
+    timeProvider: Uint8Array
+}
+
+
 export interface NewInvitationInfo {
     addr: string
     token: string
@@ -195,7 +211,7 @@ export interface StartedWorkspaceInfo {
     id: string
     currentName: string
     currentSelfRole: RealmRole
-    mountpoints: Array<[number, string]>
+    mountpoints: Array<[number, Uint8Array]>
 }
 
 
@@ -1030,16 +1046,16 @@ export type ClientStopError =
 // DeviceAccessStrategy
 export interface DeviceAccessStrategyKeyring {
     tag: "Keyring"
-    key_file: string
+    key_file: Uint8Array
 }
 export interface DeviceAccessStrategyPassword {
     tag: "Password"
     password: string
-    key_file: string
+    key_file: Uint8Array
 }
 export interface DeviceAccessStrategySmartcard {
     tag: "Smartcard"
-    key_file: string
+    key_file: Uint8Array
 }
 export type DeviceAccessStrategy =
   | DeviceAccessStrategyKeyring
@@ -1219,10 +1235,34 @@ export type ListInvitationsError =
   | ListInvitationsErrorOffline
 
 
+// LoadRecoveryDeviceError
+export interface LoadRecoveryDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface LoadRecoveryDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export type LoadRecoveryDeviceError =
+  | LoadRecoveryDeviceErrorDecryptionFailed
+  | LoadRecoveryDeviceErrorInvalidData
+  | LoadRecoveryDeviceErrorInvalidPassphrase
+  | LoadRecoveryDeviceErrorInvalidPath
+
+
 // MountpointMountStrategy
 export interface MountpointMountStrategyDirectory {
     tag: "Directory"
-    base_dir: string
+    base_dir: Uint8Array
 }
 export interface MountpointMountStrategyDisabled {
     tag: "Disabled"
@@ -2296,11 +2336,11 @@ export function fdWriteStartEof(
     data: Uint8Array
 ): Promise<Result<number, WorkspaceFdWriteError>>
 export function getDefaultConfigDir(
-): Promise<string>
+): Promise<Uint8Array>
 export function getDefaultDataBaseDir(
-): Promise<string>
+): Promise<Uint8Array>
 export function getDefaultMountpointBaseDir(
-): Promise<string>
+): Promise<Uint8Array>
 export function getPlatform(
 ): Promise<Platform>
 export function greeterDeviceInProgress1DoWaitPeerTrust(
@@ -2358,12 +2398,16 @@ export function greeterUserInitialDoWaitPeer(
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(
-    path: string
+    path: Uint8Array
 ): Promise<Array<AvailableDevice>>
+export function loadRecoveryDevice(
+    key_file: Uint8Array,
+    passphrase: Uint8Array
+): Promise<Result<LocalDevice, LoadRecoveryDeviceError>>
 export function mountpointToOsPath(
     mountpoint: number,
     parsec_path: string
-): Promise<Result<string, MountpointToOsPathError>>
+): Promise<Result<Uint8Array, MountpointToOsPathError>>
 export function mountpointUnmount(
     mountpoint: number
 ): Promise<Result<null, MountpointUnmountError>>
@@ -2389,18 +2433,18 @@ export function pathSplit(
     path: string
 ): Promise<Array<string>>
 export function testDropTestbed(
-    path: string
+    path: Uint8Array
 ): Promise<Result<null, TestbedError>>
 export function testGetTestbedBootstrapOrganizationAddr(
-    discriminant_dir: string
+    discriminant_dir: Uint8Array
 ): Promise<Result<string | null, TestbedError>>
 export function testGetTestbedOrganizationId(
-    discriminant_dir: string
+    discriminant_dir: Uint8Array
 ): Promise<Result<string | null, TestbedError>>
 export function testNewTestbed(
     template: string,
     test_server: string | null
-): Promise<Result<string, TestbedError>>
+): Promise<Result<Uint8Array, TestbedError>>
 export function validateDeviceLabel(
     raw: string
 ): Promise<boolean>
@@ -2423,7 +2467,7 @@ export function validatePath(
     raw: string
 ): Promise<boolean>
 export function waitForDeviceAvailable(
-    config_dir: string,
+    config_dir: Uint8Array,
     device_id: string
 ): Promise<Result<null, WaitForDeviceAvailableError>>
 export function workspaceCreateFile(
@@ -2451,7 +2495,7 @@ export function workspaceInfo(
 ): Promise<Result<StartedWorkspaceInfo, WorkspaceInfoError>>
 export function workspaceMount(
     workspace: number
-): Promise<Result<[number, string], WorkspaceMountError>>
+): Promise<Result<[number, Uint8Array], WorkspaceMountError>>
 export function workspaceMoveEntry(
     workspace: number,
     src: string,
