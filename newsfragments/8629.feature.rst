@@ -1,1 +1,0 @@
-Rename the option ``workspace-id`` to ``workspace`` in the CLI command ``ls``.

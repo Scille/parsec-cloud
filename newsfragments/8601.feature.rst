@@ -1,1 +1,0 @@
-On the CLI when removing a device (``device remove``), it will now also remove its associated data (workspaces, certificates, etc).

@@ -2,7 +2,7 @@
 
 const { GitHubPublisher } = require('electron-publish/out/gitHubPublisher');
 
-const VERSION = '3.0.4-a.0+dev';
+const VERSION = '3.1.1-a.0+dev';
 
 class CustomGitHubPublisher extends GitHubPublisher {
   /**

@@ -1,1 +1,0 @@
-Terms of Services (ToS) can now be defined in the server. Users are requested to accept them on first connection and whenever they are updated.

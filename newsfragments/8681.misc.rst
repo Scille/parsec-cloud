@@ -1,1 +1,0 @@
-Remind the users of the Terms of Service when creating a new organization

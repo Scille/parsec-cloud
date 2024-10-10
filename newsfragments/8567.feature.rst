@@ -1,1 +1,0 @@
-Remove passphrase from CLI options of ``device import-recovery-device``, it is now read from the standard input like the password.

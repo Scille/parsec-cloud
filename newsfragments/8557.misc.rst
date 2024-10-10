@@ -1,1 +1,0 @@
-Added an indication of the number of operations done and failed in the file operation menu

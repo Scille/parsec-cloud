@@ -1,1 +1,0 @@
-Document running the server behind a reverse proxy
