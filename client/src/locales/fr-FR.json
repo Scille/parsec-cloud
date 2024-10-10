@@ -301,7 +301,8 @@
                 "information": "Informations"
             },
             "myProfile": "Mon profil",
-            "recoveryExport": "Fichiers de récupération"
+            "recoveryExport": "Fichiers de récupération",
+            "history": "Historique"
         },
         "previous": "Précédent",
         "invitations": {
@@ -581,7 +582,14 @@
             "cancelled": "annulé",
             "failed": "échoué",
             "browse": "Aller à l'emplacement",
-            "failedDetails": "Vérifier votre connexion internet"
+            "failedDetails": "Vérifier votre connexion internet."
+        },
+        "RestoreFile": {
+            "restore": "Restauration de {name}",
+            "waiting": "en attente",
+            "cancelled": "annulé",
+            "failed": "échoué",
+            "failedDetails": "Impossible de restaurer ce fichier."
         },
         "uploadsLeft": "{amount} imports en attente",
         "copiesLeft": "{amount} copies en attente",
@@ -1627,5 +1635,18 @@
                 "download": "Télécharger"
             }
         }
+    },
+    "workspaceHistory": {
+        "actions": {
+            "restore": "Restaurer",
+            "cancel": "Annuler"
+        },
+        "restoreConfirmTitle": "Restaurer des fichiers",
+        "restoreConfirmQuestion": "Vous allez restaurer un fichier ou dossier. Vos fichiers existants seront remplacés. Voulez-vous continuer ? | Vous allez restaurer plusieurs fichiers ou dossiers. Vos fichiers existants seront remplacés. Voulez-vous continuer ?",
+        "empty": "Aucun fichier ou dossier à cette date.",
+        "error": "Impossible d'afficher la liste des éléments",
+        "loading": "Chargement...",
+        "workspace": "Espace de travail :",
+        "date": "Date de prévisualisation :"
     }
 }

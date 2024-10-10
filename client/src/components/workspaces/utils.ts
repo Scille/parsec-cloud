@@ -13,6 +13,7 @@ import {
   getPathLink as parsecGetPathLink,
   renameWorkspace as parsecRenameWorkspace,
 } from '@/parsec';
+import { Routes, navigateTo } from '@/router';
 import { EventDistributor, Events } from '@/services/eventDistributor';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { StorageManager } from '@/services/storageManager';
@@ -151,6 +152,9 @@ export async function openWorkspaceContextMenu(
         break;
       case WorkspaceAction.Favorite:
         await toggleFavorite(workspace, favorites, eventDistributor, storageManager);
+        break;
+      case WorkspaceAction.ShowHistory:
+        await navigateTo(Routes.History, { query: { documentPath: '/', workspaceHandle: workspace.handle } });
         break;
       default:
         console.warn('No WorkspaceAction match found');
