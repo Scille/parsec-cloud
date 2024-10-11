@@ -27,7 +27,7 @@ const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const injections: Ref<Injections | null> = ref(null);
 const initialized = ref(false);
 const modalOpened = ref(false);
-let intervalId: number | null = null;
+let timeoutId: number | null = null;
 let callbackId: string | null = null;
 const lastAccepted: Ref<DateTime | null> = ref(null);
 
@@ -65,9 +65,9 @@ onMounted(async () => {
 });
 
 onUnmounted(async () => {
-  if (intervalId !== null) {
-    window.clearInterval(intervalId);
-    intervalId = null;
+  if (timeoutId !== null) {
+    window.clearTimeout(timeoutId);
+    timeoutId = null;
   }
   if (injections.value && callbackId !== null) {
     injections.value.eventDistributor.removeCallback(callbackId);
@@ -79,16 +79,17 @@ async function tryOpeningTOSModal(): Promise<void> {
     return;
   }
   if ((await modalController.getTop()) || injections.value?.fileOperationManager.hasOperations()) {
-    if (intervalId === null) {
-      // Try again in 1 minute
-      intervalId = window.setInterval(async () => {
-        await tryOpeningTOSModal();
-      }, 60000);
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
     }
+    // Try again in 10 seconds
+    timeoutId = window.setTimeout(async () => {
+      await tryOpeningTOSModal();
+    }, 10000);
   } else {
-    if (intervalId) {
-      window.clearInterval(intervalId);
-      intervalId = null;
+    if (timeoutId) {
+      window.clearInterval(timeoutId);
+      timeoutId = null;
     }
     await showTOSModal();
   }
@@ -123,7 +124,7 @@ async function showTOSModal(): Promise<void> {
     window.electronAPI.log('warn', 'Received empty Terms of Service dictionary');
     return;
   }
-  if (result.value.updatedOn === lastAccepted.value) {
+  if (result.value.updatedOn.toMillis() === lastAccepted.value?.toMillis()) {
     window.electronAPI.log('warn', 'Already accepted those TOS');
     return;
   }
@@ -141,7 +142,6 @@ async function showTOSModal(): Promise<void> {
   await tosModal.present();
   const { role } = await tosModal.onDidDismiss();
   await tosModal.dismiss();
-  modalOpened.value = false;
 
   if (role === MsModalResult.Confirm) {
     const acceptResult = await acceptTOS(result.value.updatedOn);
@@ -158,11 +158,12 @@ async function showTOSModal(): Promise<void> {
         }),
         PresentationMode.Toast,
       );
+      modalOpened.value = false;
       // Early return here. If the user didn't accept the TOS or the acception fails,
       // we will log them out.
       return;
     } else {
-      window.electronAPI.log('error', `Error when accepting the TOS: ${acceptResult.error}`);
+      window.electronAPI.log('error', `Error when accepting the TOS: ${acceptResult.error.tag} ${acceptResult.error.error}`);
       injections.value?.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.acceptError',
@@ -172,6 +173,7 @@ async function showTOSModal(): Promise<void> {
       );
     }
   }
+  modalOpened.value = false;
   await logout();
 }
 </script>

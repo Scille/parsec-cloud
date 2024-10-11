@@ -45,7 +45,7 @@ onMounted(async () => {
 });
 
 onBeforeUnmount(async () => {
-  itemRef.value.removeEventListener('contextmenu');
+  itemRef.value.$el.removeEventListener('contextmenu');
 });
 </script>
 
