@@ -280,13 +280,13 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
 )
 @click.option(
     "--proxy-trusted-addresses",
-    default=["localhost", "127.0.0.1", "::1"],
     envvar="PARSEC_PROXY_TRUSTED_ADDRESSES",
-    callback=lambda ctx, param, value: [item.strip() for item in str(value).split(",")],
+    type=str,
     show_envvar=True,
     help="""\b
         Comma-separated list of IP Addresses, IP Networks or literals to trust with proxy headers.
-        Set this value to allow the server to use the forwarded headers from those clients.
+        Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
+        environment variable is used, defaulting to trusting only localhost if absent.
         """,
 )
 @click.option(
@@ -355,7 +355,7 @@ def run_cmd(
     email_use_ssl: bool,
     email_use_tls: bool,
     email_sender: str | None,
-    proxy_trusted_addresses: list[str],
+    proxy_trusted_addresses: str | None,
     ssl_keyfile: Path | None,
     ssl_certfile: Path | None,
     log_level: LogLevel,

@@ -38,7 +38,7 @@ def backend_config(
         debug=True,
         db_config=db_config,
         sse_keepalive=30,
-        proxy_trusted_addresses=[],
+        proxy_trusted_addresses=None,
         server_addr=ParsecAddr(hostname=SERVER_DOMAIN, port=None, use_ssl=True),
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=blockstore_config,

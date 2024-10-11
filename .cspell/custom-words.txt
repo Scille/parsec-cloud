@@ -214,6 +214,7 @@ gsettings
 gtod
 guce
 guci
+gunicorn
 hashdigest
 hasnt
 hatin'
