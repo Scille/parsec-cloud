@@ -475,6 +475,10 @@ async fn remote_only_change(
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
         }
         // The local manifest has it confinement points build with an outdated prevent
@@ -2037,8 +2041,6 @@ async fn local_and_remote_changes(
         "outdated_psp_remote_child_matches_new_pattern" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
-            // At this point, the prevent sync pattern is not `.tmp`, so `child.tmp`
-            // is just a non confined regular file.
             local
                 .base
                 .children
@@ -2054,6 +2056,11 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected.children.insert(
+                "child.tmp".parse().unwrap(),
+                child_id,
+            );
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
             expected.updated = remote.updated;
@@ -2151,15 +2158,15 @@ async fn local_and_remote_changes(
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
 
-            // Surprisingly, the local file gets removed although it would have
-            // been possible to keep it given the id had both a confined name locally
-            // and remotely. This is just a side-effect of the prevent sync pattern
-            // being outdated: it is similar to performing the merge with the old
-            // pattern, and then applying the new one.
             expected
                 .base
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
+            expected.children.insert(
+                "child-local-rename.tmp".parse().unwrap(),
+                child_id,
+            );
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
             expected.updated = remote.updated;
@@ -2256,14 +2263,14 @@ async fn local_and_remote_changes(
             remote.children.insert("child.tmp".parse().unwrap(), child_id);
             remote.author = local_author;
 
-            // Here `child.tmp` is removed, which is probably a bug to fix
-            // TODO: add a test for applying a prevent sync pattern to a synchronized
-            // entry containing a `.tmp` suffix.
+
             expected.base.author = local_author;
             expected
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected.children.insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = true;
             expected.updated = merge_timestamp;
