@@ -65,7 +65,7 @@ async def serve_parsec_asgi_app(
     app: AsgiApp,
     host: str,
     port: int,
-    proxy_trusted_addresses: list[str],
+    proxy_trusted_addresses: str | None,
     ssl_certfile: Path | None = None,
     ssl_keyfile: Path | None = None,
     workers: int | None = None,
@@ -98,8 +98,11 @@ async def serve_parsec_asgi_app(
         # When enabled, is restricted to only trusting connecting IPs in forwarded-allow-ips.
         # See: https://www.uvicorn.org/settings/#http
         # Currently uvicorn only supports X-Forwarded-* headers (https://github.com/encode/uvicorn/issues/2237)
-        proxy_headers=(proxy_trusted_addresses != []),
+        # TODO: expose this setting to the user so it can be disabled.
+        proxy_headers=True,
         # Comma separated list of IP Addresses, IP Networks, or literals (e.g. UNIX Socket path) to trust with proxy headers
+        # Use "*" to trust all proxies. If not provided, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS`
+        # environment variable is used, defaulting to trusting only localhost if absent.
         forwarded_allow_ips=proxy_trusted_addresses,
         # Disable lifespan events, we don't need them for the moment
         # and they can cause CancelledError to bubble up in some cases
