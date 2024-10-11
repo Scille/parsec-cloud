@@ -89,6 +89,31 @@ for (const gridMode of [false, true]) {
     ]);
   });
 
+  msTest(`Document popover on right click on multiple files in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
+    await expect(documents.locator('.file-context-menu')).toBeHidden();
+    let entries: Locator;
+
+    if (!gridMode) {
+      entries = documents.locator('.folder-container').locator('.file-list-item');
+    } else {
+      await toggleViewMode(documents);
+      entries = documents.locator('.folder-container').locator('.file-card-item');
+    }
+
+    for (const entry of await entries.all()) {
+      await entry.hover();
+      await entry.locator('ion-checkbox').click();
+      await expect(entry.locator('ion-checkbox')).toHaveState('checked');
+    }
+    await entries.nth(2).click({ button: 'right' });
+
+    await expect(documents.locator('.file-context-menu')).toBeVisible();
+    const popover = documents.locator('.file-context-menu');
+    await expect(popover.getByRole('group')).toHaveCount(1);
+    await expect(popover.getByRole('listitem')).toHaveCount(4);
+    await expect(popover.getByRole('listitem')).toHaveText(['Manage file', 'Move to', 'Make a copy', 'Delete']);
+  });
+
   msTest(`Popover with right click on empty space in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {
     await expect(documents.locator('.folder-global-context-menu')).toBeHidden();
 
