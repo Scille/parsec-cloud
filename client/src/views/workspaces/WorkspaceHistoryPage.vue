@@ -14,7 +14,10 @@
         </div>
 
         <div>
-          <ion-datetime-button datetime="datetime"></ion-datetime-button>
+          <ion-datetime-button
+            datetime="datetime"
+            :disabled="querying"
+          />
           <ion-modal :keep-contents-mounted="true">
             <ion-datetime
               id="datetime"
@@ -28,7 +31,10 @@
       </div>
 
       <div class="folder-container scroll">
-        <div class="navigation">
+        <div
+          class="navigation"
+          v-if="!resultFromSearch"
+        >
           <ion-buttons>
             <ion-button
               fill="clear"
@@ -59,13 +65,20 @@
             :max-shown="2"
           />
         </div>
+        <div
+          v-else="resultFromSearch"
+        >
+          Search
+        </div>
         <div>
           <ms-search-input
             @change="onSearchChanged"
             :debounce="1000"
+            :disabled="querying"
           />
           <ion-button
-            :disabled="!someSelected"
+            :disabled="!someSelected || querying"
+            @click="onRestoreClicked"
           >
             Restaurer
           </ion-button>
@@ -146,18 +159,33 @@ import {
   IonListHeader,
   IonContent,
 } from '@ionic/vue';
-import { computed, onMounted, ref, Ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
 import { FsPath, Path, statFolderChildren, getWorkspaceInfo, StartedWorkspaceInfo } from '@/parsec';
-import { MsModal, MsCheckbox } from 'megashark-lib';
+import { MsModal, MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { EntryCollection, EntryModel } from '@/components/files';
 import { chevronBack, chevronForward } from 'ionicons/icons';
 import { getFileIcon } from '@/common/file';
-import { Folder, MsImage, MsSearchInput } from 'megashark-lib';
 import { FileListItem } from '@/components/files';
 import { currentRouteIs, getDocumentPath, getWorkspaceHandle, Routes } from '@/router';
+import {
+  OperationProgressStateData,
+  FolderCreatedStateData,
+  ImportData,
+  MoveData,
+  FileOperationData,
+  FileOperationManager,
+  FileOperationManagerKey,
+  FileOperationState,
+  StateData,
+  FileOperationDataType,
+  CopyData,
+} from '@/services/fileOperationManager';
+import { wait } from '@/parsec/internals';
+
+const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
 
 // Replace this with the real workspace creation date when available
 const _MOCK_WORKSPACE_CREATION_DATE = DateTime.fromISO('2024-04-07T12:00:00');
@@ -171,6 +199,8 @@ const currentPath: Ref<FsPath> = ref('/');
 const headerPath: Ref<RouterPathNode[]> = ref([]);
 const entries: Ref<EntryCollection<EntryModel>> = ref(new EntryCollection<EntryModel>());
 const querying = ref(false);
+let timeoutId: number | null = null;
+const resultFromSearch = ref(false);
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -195,11 +225,19 @@ onMounted(async () => {
   await listFolder();
 });
 
+onBeforeUnmount(async () => {
+  if (timeoutId !== null) {
+    window.clearTimeout(timeoutId);
+    timeoutId = null;
+  }
+});
+
 async function onDateTimeChange(event: DatetimeCustomEvent): Promise<void> {
   if (!event.detail.value) {
     return;
   }
   selectedDateTime.value = DateTime.fromISO(event.detail.value as string);
+  await listFolder();
 }
 
 async function listFolder(): Promise<void> {
@@ -209,6 +247,10 @@ async function listFolder(): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
+
+  querying.value = true;
+
+  await wait(1000);
 
   const workspaceHandle = workspaceInfo.value.handle;
   const components = await Path.parse(currentPath.value);
@@ -245,6 +287,8 @@ async function listFolder(): Promise<void> {
     });
     id += 1;
   }
+
+  querying.value = false;
 }
 
 async function forward(): Promise<void> {
@@ -292,12 +336,46 @@ async function onEntryClicked(entry: EntryModel): Promise<void> {
 }
 
 async function onSearchChanged(value: string): Promise<void> {
-  console.log(value);
+  // If querying, delay
+  if (querying.value) {
+    // Clearing the previous timeout
+    if (timeoutId !== null) {
+      window.clearTimeout(timeoutId);
+    }
+    // Add a timeout with the new value
+    window.setTimeout(async () => {
+      await onSearchChanged(value);
+    }, 500);
+    return;
+  }
+
   if (!value) {
     await listFolder();
+    resultFromSearch.value = false;
   } else {
-
+    await listFolder();
+    resultFromSearch.value = true;
   }
+}
+
+async function onRestoreClicked(): Promise<void> {
+  const selectedEntries = entries.value.getSelectedEntries();
+
+  if (selectedEntries.length === 0 || !workspaceInfo.value) {
+    return;
+  }
+  const answer = await askQuestion(
+    'Restore',
+    `Restore ${selectedEntries.length} files, they will overwrite your current file, are you sure?`,
+    { yesText: 'Restore', noText: 'Cancel', yesIsDangerous: true }
+  );
+  if (answer === Answer.No) {
+    return;
+  }
+  for (const entry of selectedEntries) {
+    await fileOperationManager.restoreEntry(workspaceInfo.value.handle, workspaceInfo.value.id, entry.path, selectedDateTime.value);
+  }
+  entries.value.selectAll(false);
 }
 
 </script>

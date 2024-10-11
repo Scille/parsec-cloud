@@ -77,6 +77,11 @@ const routes: Array<RouteRecordRaw> = [
                     name: Routes.Documents,
                     component: () => import('@/views/files/FoldersPage.vue'),
                   },
+                  {
+                    path: `/:handle(\\d+)/${Routes.History}`,
+                    name: Routes.History,
+                    component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
+                  }
                 ],
               },
               {
@@ -113,11 +118,6 @@ const routes: Array<RouteRecordRaw> = [
                 name: Routes.RecoveryExport,
                 component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
               },
-              {
-                path: `/:handle(\\d+)/${Routes.History}`,
-                name: Routes.History,
-                component: () => import('@/views/workspaces/WorkspaceHistoryPage.vue'),
-              }
             ],
           },
         ],

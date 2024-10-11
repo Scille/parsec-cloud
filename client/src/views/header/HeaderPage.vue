@@ -276,6 +276,8 @@ function getTitleForRoute(): Translatable {
       return 'HeaderPage.titles.myProfile';
     case Routes.RecoveryExport:
       return 'HeaderPage.titles.recoveryExport';
+    case Routes.History:
+      return 'History';
     case null:
       return '';
   }
