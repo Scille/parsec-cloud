@@ -1208,6 +1208,8 @@ async function openGlobalContextMenu(event: Event): Promise<void> {
 }
 
 async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?: () => void): Promise<void> {
+  const selectedEntries = getSelectedEntries();
+
   const popover = await popoverController.create({
     component: FileContextMenu,
     cssClass: 'file-context-menu',
@@ -1219,6 +1221,7 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
     alignment: 'start',
     componentProps: {
       role: ownRole.value,
+      multipleFiles: selectedEntries.length > 1 && selectedEntries.includes(entry),
     },
   });
   await popover.present();
@@ -1246,7 +1249,11 @@ async function openEntryContextMenu(event: Event, entry: EntryModel, onFinished?
 
   const fn = actions.get(data.action);
   if (fn) {
-    await fn([entry]);
+    if (!selectedEntries.includes(entry)) {
+      await fn([entry]);
+    } else {
+      await fn(selectedEntries);
+    }
   }
   if (onFinished) {
     onFinished();

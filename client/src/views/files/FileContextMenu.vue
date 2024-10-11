@@ -11,7 +11,7 @@
         </ion-item>
         <ion-item
           button
-          v-if="role !== WorkspaceRole.Reader"
+          v-if="!multipleFiles && role !== WorkspaceRole.Reader"
           @click="onClick(FileAction.Rename)"
           class="ion-no-padding list-group-item"
         >
@@ -58,7 +58,7 @@
 
         <ion-item
           button
-          v-show="isDesktop()"
+          v-show="!multipleFiles && isDesktop()"
           @click="onClick(FileAction.Open)"
           class="ion-no-padding list-group-item"
         >
@@ -72,7 +72,7 @@
           button
           @click="onClick(FileAction.ShowHistory)"
           class="ion-no-padding list-group-item"
-          v-show="false"
+          v-show="!multipleFiles && false"
         >
           <ion-icon :icon="time" />
           <ion-label class="body list-group-item__label">
@@ -82,7 +82,7 @@
 
         <ion-item
           button
-          v-if="!isDesktop()"
+          v-if="!multipleFiles && !isDesktop()"
           @click="onClick(FileAction.Download)"
           class="ion-no-padding list-group-item"
           v-show="false"
@@ -95,6 +95,7 @@
 
         <ion-item
           button
+          v-show="!multipleFiles"
           @click="onClick(FileAction.ShowDetails)"
           class="ion-no-padding list-group-item"
         >
@@ -104,7 +105,10 @@
           </ion-label>
         </ion-item>
       </ion-item-group>
-      <ion-item-group class="list-group">
+      <ion-item-group
+        class="list-group"
+        v-show="!multipleFiles"
+      >
         <ion-item class="list-group-title button-small">
           <ion-label class="list-group-title__label">
             {{ $msTranslate('FoldersPage.fileContextMenu.titleCollaboration') }}
@@ -112,6 +116,7 @@
         </ion-item>
         <ion-item
           button
+          v-show="!multipleFiles"
           @click="onClick(FileAction.CopyLink)"
           class="ion-no-padding list-group-item"
         >
@@ -133,6 +138,7 @@ import { FileAction } from '@/views/files/types';
 
 defineProps<{
   role: WorkspaceRole;
+  multipleFiles?: boolean;
 }>();
 
 async function onClick(action: FileAction): Promise<boolean> {
