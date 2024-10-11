@@ -177,7 +177,7 @@ class BackendConfig:
     blockstore_config: BaseBlockStoreConfig
 
     email_config: SmtpEmailConfig | MockedEmailConfig
-    proxy_trusted_addresses: list[str]
+    proxy_trusted_addresses: str | None
     server_addr: ParsecAddr | None
 
     debug: bool

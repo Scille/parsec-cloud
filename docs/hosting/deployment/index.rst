@@ -389,6 +389,8 @@ Running behind a reverse proxy
 
 To run Parsec behind a reverse proxy you will need to add the option ``--proxy-trusted-address`` or set the environment variable ``PARSEC_PROXY_TRUSTED_ADDRESS`` to the address of the reverse proxy (e.g.: ``localhost``).
 
+If this option is not set, the gunicorn/uvicorn `FORWARDED_ALLOW_IPS` environment variable is used, defaulting to trusting only localhost if absent.
+
 .. tip::
 
   You can provide multiple addresses by separating them with a comma.

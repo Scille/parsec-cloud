@@ -240,7 +240,7 @@ async def testbed_backend_factory(
         debug=True,
         db_config=db_config,
         sse_keepalive=30,
-        proxy_trusted_addresses=[],
+        proxy_trusted_addresses=None,
         server_addr=server_addr,
         email_config=MockedEmailConfig("no-reply@parsec.com", tmpdir),
         blockstore_config=blockstore_config,
@@ -344,7 +344,10 @@ def testbed_cmd(
                 app.state.testbed = testbed
                 app.state.backend = testbed.backend
                 await serve_parsec_asgi_app(
-                    host=host, port=port, app=app, proxy_trusted_addresses=[]
+                    host=host,
+                    port=port,
+                    app=app,
+                    proxy_trusted_addresses=None,
                 )
 
                 click.echo("bye ;-)")
