@@ -5,6 +5,18 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.1.0-rc.1 (2024-10-11)
+-------------------------------
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added an indication of the number of operations done and failed in the file
+  operation menu
+  (`#8557 <https://github.com/Scille/parsec-cloud/issues/8557>`__)
+
+
+
 Parsec v3.1.0-rc.0 (2024-10-10)
 -------------------------------
 
