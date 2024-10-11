@@ -309,6 +309,15 @@ pub(super) fn merge_local_folder_manifest(
 
     // Both the remote and the local have changed
 
+    // The following case was present in the original v2 code.
+    // TODO: investigate why it's not present anymore and check whether
+    // it is still relevant.
+    // ```python
+    // # All the local changes have been successfully uploaded
+    // if local_manifest.match_remote(remote_manifest):
+    //     return local_from_remote
+    // ```
+
     // 4) The remote changes are ours (our current local changes occurs while
     // we were uploading previous local changes that became the remote changes),
     // simply acknowledge the remote changes and keep our local changes
