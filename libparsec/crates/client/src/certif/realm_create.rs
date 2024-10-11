@@ -16,6 +16,8 @@ pub enum CertifEnsureRealmCreatedError {
     Offline,
     #[error("Component has stopped")]
     Stopped,
+    #[error("Author not allowed")]
+    AuthorNotAllowed,
     // Note `InvalidManifest` here, this is because we self-repair in case of invalid
     // user manifest (given otherwise the client would be stuck for good !)
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
@@ -120,6 +122,8 @@ async fn create_realm_idempotent(
                 );
                 continue;
             }
+            // A concurrent operation must has modified our profile to OUTSIDER
+            Rep::AuthorNotAllowed => Err(CertifEnsureRealmCreatedError::AuthorNotAllowed),
             Rep::TimestampOutOfBallpark {
                 server_timestamp,
                 ballpark_client_early_offset,

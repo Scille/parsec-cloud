@@ -25,7 +25,7 @@ from tests.common import (
     bob_becomes_admin_and_changes_alice,
     generate_realm_role_certificate,
 )
-from tests.common.data import wksp1_alice_gives_role
+from tests.common.data import alice_gives_profile, wksp1_alice_gives_role
 
 
 @pytest.mark.parametrize(
@@ -51,6 +51,9 @@ async def test_authenticated_user_revoke_ok(
             pass
 
         case "revoked_is_part_of_one_realm_with_vlobs":
+            await alice_gives_profile(
+                coolorg, backend, coolorg.mallory.user_id, UserProfile.STANDARD
+            )
             realm_id = VlobID.new()
             certif = generate_realm_role_certificate(
                 coolorg,
@@ -82,6 +85,9 @@ async def test_authenticated_user_revoke_ok(
             assert outcome is None
 
         case "revoked_is_part_of_one_realm_without_vlobs":
+            await alice_gives_profile(
+                coolorg, backend, coolorg.mallory.user_id, UserProfile.STANDARD
+            )
             realm_id = VlobID.new()
             certif = generate_realm_role_certificate(
                 coolorg,
@@ -100,6 +106,9 @@ async def test_authenticated_user_revoke_ok(
             assert isinstance(outcome, RealmRoleCertificate)
 
         case "revoked_is_part_of_multiple_realms_with_vlobs":
+            await alice_gives_profile(
+                coolorg, backend, coolorg.mallory.user_id, UserProfile.STANDARD
+            )
             for _ in range(3):
                 realm_id = VlobID.new()
                 certif = generate_realm_role_certificate(
@@ -132,6 +141,9 @@ async def test_authenticated_user_revoke_ok(
                 assert outcome is None
 
         case "revoked_is_part_of_multiple_realms_without_vlobs":
+            await alice_gives_profile(
+                coolorg, backend, coolorg.mallory.user_id, UserProfile.STANDARD
+            )
             for _ in range(3):
                 realm_id = VlobID.new()
                 certif = generate_realm_role_certificate(

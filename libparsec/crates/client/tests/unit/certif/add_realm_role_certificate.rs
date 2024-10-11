@@ -343,28 +343,44 @@ async fn can_unshare_with_revoked(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
+#[case(UserProfile::Admin)]
 #[case(UserProfile::Standard)]
 #[case(UserProfile::Outsider)]
-async fn not_admin(#[case] profile: UserProfile, env: &TestbedEnv) {
+async fn create_with_profile(#[case] profile: UserProfile, env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob").with_initial_profile(profile);
-        builder.new_user_realm("bob");
+        builder.with_check_consistency_disabled(|builder| {
+            builder.new_realm("bob");
+        })
     })
     .await;
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let switch = ops
+    let outcome = ops
         .add_certificates_batch(
             &env.get_common_certificates_signed(),
             &[],
             &[],
             &env.get_realms_certificates_signed(),
         )
-        .await
-        .unwrap();
+        .await;
 
-    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch);
+    match profile {
+        UserProfile::Admin | UserProfile::Standard => {
+            p_assert_matches!(outcome, Ok(MaybeRedactedSwitch::NoSwitch));
+        }
+        UserProfile::Outsider => {
+            p_assert_matches!(
+                outcome,
+                Err(CertifAddCertificatesBatchError::InvalidCertificate(boxed))
+                if matches!(
+                    *boxed,
+                    InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { .. }
+                )
+            )
+        }
+    }
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -555,7 +571,9 @@ async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &Tes
             .new_realm("alice")
             .then_do_initial_key_rotation()
             .map(|e| e.realm);
-        builder.share_realm(realm_id, "bob", Some(role));
+        builder.with_check_consistency_disabled(|builder| {
+            builder.share_realm(realm_id, "bob", Some(role));
+        })
     })
     .await;
     let alice = env.local_device("alice@dev1");
@@ -579,6 +597,43 @@ async fn share_realm_privileges_with_outsider(#[case] role: RealmRole, env: &Tes
             InvalidCertificateError::RealmOutsiderCannotBeOwnerOrManager { .. }
         )
     )
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn user_becoming_outsider_can_still_share(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder
+            .new_user("bob")
+            .with_initial_profile(UserProfile::Admin);
+        builder.new_user("mallory");
+        let realm_id = builder
+            .new_realm("alice")
+            .then_do_initial_key_rotation()
+            .map(|e| e.realm);
+        builder.share_realm(realm_id, "bob", RealmRole::Owner);
+        // Alice becomes an Outsider, but is still Owner of the realm !
+        builder.update_user_profile("alice", UserProfile::Outsider);
+
+        // So she can still share...
+        builder.share_realm(realm_id, "mallory", RealmRole::Owner);
+        // ...and unshare
+        builder.share_realm(realm_id, "bob", None);
+    })
+    .await;
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let switch = ops
+        .add_certificates_batch(
+            &env.get_common_certificates_signed(),
+            &[],
+            &[],
+            &env.get_realms_certificates_signed(),
+        )
+        .await
+        .unwrap();
+
+    p_assert_matches!(switch, MaybeRedactedSwitch::NoSwitch)
 }
 
 #[parsec_test(testbed = "minimal")]

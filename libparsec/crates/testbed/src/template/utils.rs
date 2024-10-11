@@ -4,7 +4,10 @@ use libparsec_types::prelude::*;
 
 use crate::TestbedEventNewDevice;
 
-use super::{TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewUser};
+use super::{
+    TestbedEvent, TestbedEventBootstrapOrganization, TestbedEventNewUser,
+    TestbedEventUpdateUserProfile,
+};
 
 pub(super) fn user_id_from_device_id(events: &[TestbedEvent], device: DeviceID) -> UserID {
     events
@@ -327,4 +330,33 @@ pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
         .rev()
         .find(|e| matches!(e, TestbedEvent::NewRealm(x) if x.realm_id == realm))
         .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
+}
+
+pub(super) fn get_user_current_profile(events: &'_ [TestbedEvent], user: UserID) -> UserProfile {
+    for event in events.iter().rev() {
+        match event {
+            TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                first_user_id: candidate,
+                ..
+            }) if *candidate == user => {
+                return UserProfile::Admin;
+            }
+            TestbedEvent::NewUser(TestbedEventNewUser {
+                user_id: candidate,
+                initial_profile,
+                ..
+            }) if *candidate == user => {
+                return *initial_profile;
+            }
+            TestbedEvent::UpdateUserProfile(TestbedEventUpdateUserProfile {
+                user: candidate,
+                profile,
+                ..
+            }) if *candidate == user => {
+                return *profile;
+            }
+            _ => (),
+        }
+    }
+    panic!("User {} doesn't exist", user);
 }
