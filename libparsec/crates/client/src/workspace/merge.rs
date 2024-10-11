@@ -309,6 +309,19 @@ pub(super) fn merge_local_folder_manifest(
 
     // Both the remote and the local have changed
 
+    // The following case was present in the original v2 code.
+    // ```python
+    // # All the local changes have been successfully uploaded
+    // if local_manifest.match_remote(remote_manifest):
+    //     return local_from_remote
+    // ```
+    // TODO: Add something similar to avoid returning a `need_sync` manifest
+    // when the remote manifest already matches the local one. In practice,
+    // this could happen if the connection is lost after the local changes
+    // have been uploaded but before the request returns, meaning that the
+    // local manifest could not be updated to acknowledge the upload.
+    // See https://github.com/Scille/parsec-cloud/issues/8750
+
     // 4) The remote changes are ours (our current local changes occurs while
     // we were uploading previous local changes that became the remote changes),
     // simply acknowledge the remote changes and keep our local changes
