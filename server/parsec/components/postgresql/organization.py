@@ -141,6 +141,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             )
         if minimum_archiving_period is Unset:
             minimum_archiving_period = self._config.organization_initial_minimum_archiving_period
+        optional_tos = self._config.organization_initial_tos if tos is Unset else tos
 
         outcome = await organization_create(
             conn,
@@ -149,7 +150,7 @@ class PGOrganizationComponent(BaseOrganizationComponent):
             active_users_limit,
             user_profile_outsider_allowed,
             minimum_archiving_period,
-            None if tos is Unset else tos,
+            optional_tos,
             bootstrap_token,
         )
         match outcome:
