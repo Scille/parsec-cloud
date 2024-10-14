@@ -24,7 +24,7 @@ import { MsModalResult, openSpinnerModal } from 'megashark-lib';
 import { DateTime } from 'luxon';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
-const injections: Ref<Injections | null> = ref(null);
+let injections: Injections;
 const initialized = ref(false);
 const modalOpened = ref(false);
 let timeoutId: number | null = null;
@@ -40,14 +40,13 @@ onMounted(async () => {
   if (needsMocks() && !injectionProvider.hasInjections(handle)) {
     injectionProvider.createNewInjections(handle, new EventDistributor());
   }
-  injections.value = injectionProvider.getInjections(handle);
+  injections = injectionProvider.getInjections(handle);
   // Provide the injections to children
-  provide(FileOperationManagerKey, injections.value.fileOperationManager);
-  provide(InformationManagerKey, injections.value.informationManager);
-  provide(EventDistributorKey, injections.value.eventDistributor);
-  initialized.value = true;
+  provide(FileOperationManagerKey, injections.fileOperationManager);
+  provide(InformationManagerKey, injections.informationManager);
+  provide(EventDistributorKey, injections.eventDistributor);
 
-  callbackId = await injections.value.eventDistributor.registerCallback(
+  callbackId = await injections.eventDistributor.registerCallback(
     Events.TOSAcceptRequired | Events.LogoutRequested,
     async (event: Events, _data?: EventData) => {
       if (event === Events.LogoutRequested) {
@@ -57,6 +56,8 @@ onMounted(async () => {
       }
     },
   );
+
+  initialized.value = true;
 
   const connInfo = getConnectionInfo();
   if (connInfo && connInfo.shouldAcceptTos) {
@@ -69,8 +70,8 @@ onUnmounted(async () => {
     window.clearTimeout(timeoutId);
     timeoutId = null;
   }
-  if (injections.value && callbackId !== null) {
-    injections.value.eventDistributor.removeCallback(callbackId);
+  if (injections && callbackId !== null) {
+    injections.eventDistributor.removeCallback(callbackId);
   }
 });
 
@@ -78,7 +79,7 @@ async function tryOpeningTOSModal(): Promise<void> {
   if (modalOpened.value) {
     return;
   }
-  if ((await modalController.getTop()) || injections.value?.fileOperationManager.hasOperations()) {
+  if ((await modalController.getTop()) || injections.fileOperationManager.hasOperations()) {
     if (timeoutId !== null) {
       window.clearTimeout(timeoutId);
     }
@@ -151,7 +152,7 @@ async function showTOSModal(): Promise<void> {
         connInfo.shouldAcceptTos = false;
       }
       lastAccepted.value = result.value.updatedOn;
-      injections.value?.informationManager.present(
+      injections.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.confirmationMessage',
           level: InformationLevel.Info,
@@ -164,7 +165,7 @@ async function showTOSModal(): Promise<void> {
       return;
     } else {
       window.electronAPI.log('error', `Error when accepting the TOS: ${acceptResult.error.tag} ${acceptResult.error.error}`);
-      injections.value?.informationManager.present(
+      injections.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.acceptError',
           level: InformationLevel.Info,
