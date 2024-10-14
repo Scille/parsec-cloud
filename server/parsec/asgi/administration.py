@@ -11,7 +11,6 @@ from typing import (
     Any,
     Awaitable,
     Callable,
-    Literal,
     cast,
 )
 
@@ -78,14 +77,14 @@ class CreateOrganizationIn(BaseModel):
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
-    active_users_limit: ActiveUsersLimitField | Literal[UnsetType.Unset] = Unset
-    minimum_archiving_period: int | Literal[UnsetType.Unset] = Unset
-    tos: dict[TosLocale, TosUrl] | Literal[UnsetType.Unset] = Unset
+    user_profile_outsider_allowed: bool | UnsetType = Unset
+    active_users_limit: ActiveUsersLimitField | UnsetType = Unset
+    minimum_archiving_period: int | UnsetType = Unset
+    tos: dict[TosLocale, TosUrl] | UnsetType = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[UnsetType.Unset]:
+    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | UnsetType:
         match v:
             case ActiveUsersLimit():
                 return v
@@ -240,18 +239,18 @@ class PatchOrganizationOut(BaseModel):
 
 class PatchOrganizationIn(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
-    is_expired: bool | Literal[UnsetType.Unset] = Unset
+    is_expired: bool | UnsetType = Unset
     # /!\ Missing field and field set to `None` does not mean the same thing:
     # - missing field: ask the server to use its default value for this field
     # - field set to `None`: `None` is a valid value to use for this field
-    user_profile_outsider_allowed: bool | Literal[UnsetType.Unset] = Unset
-    active_users_limit: ActiveUsersLimitField | Literal[UnsetType.Unset] = Unset
-    minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset
-    tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] | None = Unset
+    user_profile_outsider_allowed: bool | UnsetType = Unset
+    active_users_limit: ActiveUsersLimitField | UnsetType = Unset
+    minimum_archiving_period: UnsetType | int = Unset
+    tos: UnsetType | dict[TosLocale, TosUrl] | None = Unset
 
     @field_validator("active_users_limit", mode="plain")
     @classmethod
-    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | Literal[UnsetType.Unset]:
+    def validate_active_users_limit(cls, v: Any) -> ActiveUsersLimit | UnsetType:
         match v:
             case ActiveUsersLimit():
                 return v

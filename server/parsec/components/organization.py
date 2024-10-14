@@ -3,7 +3,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import auto
-from typing import Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -251,10 +250,10 @@ class BaseOrganizationComponent:
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
-        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
-        tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] = Unset,
+        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: UnsetType | bool = Unset,
+        minimum_archiving_period: UnsetType | int = Unset,
+        tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         raise NotImplementedError
@@ -307,12 +306,12 @@ class BaseOrganizationComponent:
         id: OrganizationID,
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
-        is_expired: Literal[UnsetType.Unset] | bool = Unset,
+        is_expired: UnsetType | bool = Unset,
         # `None` stands for "no limit"
-        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
-        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
-        tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
+        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: UnsetType | bool = Unset,
+        minimum_archiving_period: UnsetType | int = Unset,
+        tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         raise NotImplementedError
 

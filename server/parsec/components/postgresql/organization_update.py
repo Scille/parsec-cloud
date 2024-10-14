@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from functools import lru_cache
-from typing import Literal
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -62,11 +61,11 @@ async def organization_update(
     conn: AsyncpgConnection,
     now: DateTime,
     id: OrganizationID,
-    is_expired: Literal[UnsetType.Unset] | bool = Unset,
-    active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
-    user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
-    minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
-    tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
+    is_expired: UnsetType | bool = Unset,
+    active_users_limit: UnsetType | ActiveUsersLimit = Unset,
+    user_profile_outsider_allowed: UnsetType | bool = Unset,
+    minimum_archiving_period: UnsetType | int = Unset,
+    tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
 ) -> None | OrganizationUpdateBadOutcome:
     with_is_expired = is_expired is not Unset
     with_active_users_limit = active_users_limit is not Unset
