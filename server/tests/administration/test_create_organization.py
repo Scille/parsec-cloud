@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from typing import Any, NotRequired, TypedDict
+from typing import Any, Iterator, NotRequired, TypedDict
 from unittest.mock import ANY
 
 import httpx
@@ -13,7 +13,12 @@ from parsec._parsec import (
     OrganizationID,
     ParsecOrganizationBootstrapAddr,
 )
-from parsec.components.organization import OrganizationDump, TermsOfService
+from parsec.components.organization import (
+    OrganizationDump,
+    TermsOfService,
+    Unset,
+    UnsetType,
+)
 from tests.common import Backend, MinimalorgRpcClients
 
 
@@ -78,6 +83,26 @@ async def test_bad_method(
 class CreateOrganizationParams(TypedDict):
     active_user_limit: NotRequired[int | None]
     user_profile_outsider_allowed: NotRequired[bool]
+    tos: NotRequired[dict[str, str]]
+    minimum_archiving_period: NotRequired[int]
+
+
+@pytest.fixture(params=("default", "custom"))
+def organization_initial_params(backend: Backend, request) -> Iterator[None]:
+    match request.param:
+        case "default":
+            pass
+        case "custom":
+            backend.config.organization_initial_active_users_limit = ActiveUsersLimit.limited_to(10)
+            backend.config.organization_initial_user_profile_outsider_allowed = False
+            backend.config.organization_initial_minimum_archiving_period = 1000
+            backend.config.organization_initial_tos = {
+                "fr_FR": "https://parsec.invalid/tos_fr.pdf",
+                "en_US": "https://parsec.invalid/tos_en.pdf",
+            }
+        case unknown:
+            assert False, unknown
+    yield
 
 
 @pytest.mark.parametrize(
@@ -101,6 +126,7 @@ async def test_ok(
     backend: Backend,
     cleanup_organizations: None,
     args: CreateOrganizationParams,
+    organization_initial_params: None,
 ) -> None:
     url = "http://parsec.invalid/administration/organizations"
     org_id = OrganizationID("MyNewOrg")
@@ -117,14 +143,34 @@ async def test_ok(
     assert body == {"bootstrap_url": ANY}
     bootstrap_token = ParsecOrganizationBootstrapAddr.from_url(body["bootstrap_url"]).token
 
-    expected_active_users_limit = ActiveUsersLimit.from_maybe_int(
-        args.get("active_users_limit", None)
-    )
-    expected_user_profile_outsider_allowed = args.get("user_profile_outsider_allowed", True)
-    expected_minimum_archiving_period = args.get("minimum_archiving_period", 2592000)
-    match args.get("tos", None):
+    # Expected active_users_limit
+    match args.get("active_users_limit", Unset):
+        case UnsetType.Unset:
+            expected_active_users_limit = backend.config.organization_initial_active_users_limit
         case None:
-            expected_tos = None
+            expected_active_users_limit = ActiveUsersLimit.NO_LIMIT
+        case active_user_limit:
+            expected_active_users_limit = ActiveUsersLimit.limited_to(active_user_limit)
+
+    # Expected user_profile_outsider_allowed
+    expected_user_profile_outsider_allowed = args.get(
+        "user_profile_outsider_allowed",
+        backend.config.organization_initial_user_profile_outsider_allowed,
+    )
+
+    # Expected minimum_archiving_period
+    expected_minimum_archiving_period = args.get(
+        "minimum_archiving_period", backend.config.organization_initial_minimum_archiving_period
+    )
+
+    # Expected tos
+    match args.get("tos", UnsetType.Unset):
+        case UnsetType.Unset:
+            match backend.config.organization_initial_tos:
+                case None:
+                    expected_tos = None
+                case tos:
+                    expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
         case tos:
             expected_tos = TermsOfService(updated_on=ANY, per_locale_urls=tos)
 
