@@ -19,7 +19,7 @@ use crate::{
         borrow_from_handle, filter_close_handles, register_handle_with_init, take_and_close_handle,
         FilterCloseHandle, Handle, HandleItem,
     },
-    ClientConfig, ClientEvent, DeviceSaveStrategy, OnEventCallbackPlugged,
+    ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
 
 fn borrow_client(client: Handle) -> anyhow::Result<Arc<libparsec_client::Client>> {
