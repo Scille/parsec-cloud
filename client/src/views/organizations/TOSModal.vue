@@ -82,14 +82,15 @@ function getLinkForLocale(): string {
     }
   }
 
+  const link = links.values().next().value;
   window.electronAPI.log(
     'info',
     `No terms of service link was found matching the locale \
 '${currentLocale}' in ${JSON.stringify(props.tosLinks.entries())}, \
-using '${links.values().next().value}'`,
+using '${link}'`,
   );
   // Still not found, worst cast scenario, return the first value
-  return links.values().next().value;
+  return link;
 }
 
 onMounted(async () => {
