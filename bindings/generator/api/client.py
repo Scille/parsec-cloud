@@ -26,7 +26,7 @@ from .common import (
     RealmRole,
     Ref,
 )
-from .invite import DeviceSaveStrategy
+from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 from .events import OnClientEventCallback
 
@@ -445,4 +445,27 @@ async def client_share_workspace(
 
 
 def is_keyring_available() -> bool:
+    raise NotImplementedError
+
+
+class ImportRecoveryDeviceError(ErrorVariant):
+    pass
+
+
+class ExportRecoveryDeviceError(ErrorVariant):
+    pass
+
+
+async def import_recovery_device(
+    recovery_device: bytes,
+    passphrase: str,
+    device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ImportRecoveryDeviceError]:
+    raise NotImplementedError
+
+
+async def export_recovery_device(
+    client_handle: Handle, access_strategy: DeviceAccessStrategy
+) -> Result[tuple[str, bytes], ExportRecoveryDeviceError]:
     raise NotImplementedError

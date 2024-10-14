@@ -1,7 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 from typing import Any, ClassVar, Generic, TypeVar
-
 #
 # Meta-types
 #
@@ -194,7 +193,7 @@ class Path(StrBasedType):
     custom_from_rs_string = (
         "|s: String| -> Result<_, &'static str> { Ok(std::path::PathBuf::from(s)) }"
     )
-    custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> { path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
+    custom_to_rs_string = '|path: std::path::PathBuf| -> Result<_, _> {path.into_os_string().into_string().map_err(|_| "Path contains non-utf8 characters") }'
 
 
 class FsPath(StrBasedType):
