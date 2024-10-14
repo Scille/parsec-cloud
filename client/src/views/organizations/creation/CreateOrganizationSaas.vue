@@ -221,7 +221,7 @@ async function onCreateClicked(): Promise<void> {
       } else if (response.status === CONNECTION_ERROR_STATUS) {
         currentError.value = 'CreateOrganization.errors.offline';
       } else {
-        window.electronAPI.log('error', `Failed to create Saas organization, unhandled error ${response.errors}`);
+        window.electronAPI.log('error', `Failed to create Saas organization, unhandled error ${JSON.stringify(response.errors)}`);
         currentError.value = {
           key: 'CreateOrganization.errors.generic',
           data: { reason: 'Unknown' },

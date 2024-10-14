@@ -173,7 +173,7 @@ export async function login(
         });
         break;
       case ClientEventTag.IncompatibleServer:
-        window.electronAPI.log('warn', `IncompatibleServerEvent: ${event.detail}`);
+        window.electronAPI.log('warn', `IncompatibleServerEvent: ${JSON.stringify(event)}`);
         distributor.dispatchEvent(Events.IncompatibleServer, { reason: event.detail });
         break;
       case ClientEventTag.RevokedSelfUser:
