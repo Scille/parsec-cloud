@@ -76,7 +76,7 @@ jobs:
     name: "${{ matrix.name }}: 📦 Packaging (build Wheel)"
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -98,7 +98,7 @@ jobs:
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
       - name: Build wheel
-        uses: pypa/cibuildwheel@f1859528322d7b29d4493ee241a167807661dfb4  # pin v2.21.2
+        uses: pypa/cibuildwheel@7940a4c0e76eb2030e473a5f864f291f63ee879b  # pin v2.21.3
         with:
           package-dir: server
           output-dir: dist
@@ -135,14 +135,14 @@ jobs:
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
       # Install syft
-      - uses: taiki-e/install-action@b1acf153d459cd533e9e0d25a07042be1dd2ed71 # pin v2.44.25
+      - uses: taiki-e/install-action@42f4ec8e42bf7fe4dadd39bfc534566095a8edff # pin v2.44.35
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=dist/Parsec-SBOM-Wheel-${{ matrix.platform }}.spdx.json .
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-wheel
           path: |

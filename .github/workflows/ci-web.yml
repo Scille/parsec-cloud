@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -93,7 +93,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # pin v4.1.0
+        uses: actions/cache/restore@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -111,7 +111,7 @@ jobs:
         timeout-minutes: 5
 
       - name: Retrieve Rust cache
-        uses: Swatinem/rust-cache@23bce251a8cd2ffc3c1075eaa2367cf899916d84 # pin v2.7.3
+        uses: Swatinem/rust-cache@82a92a6e8fbeee089604da2575dc567ae9ddeaab # pin v2.7.5
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
         with:
           # Cache is limited to 10Go (and cache is ~700mo per platform !). On top of that.
@@ -123,7 +123,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@b1acf153d459cd533e9e0d25a07042be1dd2ed71 # pin v2.44.25
+      - uses: taiki-e/install-action@42f4ec8e42bf7fe4dadd39bfc534566095a8edff # pin v2.44.35
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
@@ -135,7 +135,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@2cdf405574d6ef1f33a1d12acccd3ae82f47b3f2 # pin v4.1.0
+        uses: actions/cache/save@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -179,7 +179,7 @@ jobs:
 
       - name: Archive test results
         if: failure()
-        uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+        uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: playwright-artifacts
           path: client/test-results/

@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -94,7 +94,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@b1acf153d459cd533e9e0d25a07042be1dd2ed71 # pin v2.44.25
+      - uses: taiki-e/install-action@42f4ec8e42bf7fe4dadd39bfc534566095a8edff # pin v2.44.35
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -111,7 +111,7 @@ jobs:
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=client/dist/Parsec-SBOM-Web.spdx.json .
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: webapp
           path: client/dist/
@@ -123,7 +123,7 @@ jobs:
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -195,14 +195,14 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@b1acf153d459cd533e9e0d25a07042be1dd2ed71 # pin v2.44.25
+      - uses: taiki-e/install-action@42f4ec8e42bf7fe4dadd39bfc534566095a8edff # pin v2.44.35
         with:
           tool: syft@0.84.0
 
       - name: Generate SBOM
         run: syft packages --config=.syft.yaml --output=spdx-json=Parsec-SBOM-Electron-linux-snap.spdx.json .
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: linux-snap-${{ runner.arch }}-electron
           path: |
@@ -244,7 +244,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -349,7 +349,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@b1acf153d459cd533e9e0d25a07042be1dd2ed71 # pin v2.44.25
+      - uses: taiki-e/install-action@42f4ec8e42bf7fe4dadd39bfc534566095a8edff # pin v2.44.35
         with:
           tool: syft@0.84.0
 
@@ -385,7 +385,7 @@ jobs:
           grep -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
         working-directory: client/electron/dist
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron
           path: |
@@ -396,7 +396,7 @@ jobs:
           if-no-files-found: error
         timeout-minutes: 10
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         if: matrix.platform == 'windows'
         with:
           name: ${{ matrix.artifact_tag }}-${{ runner.arch }}-electron-pre-built

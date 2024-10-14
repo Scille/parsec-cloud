@@ -56,7 +56,7 @@ jobs:
     name: 📦 Packaging CLI for linux 🐧
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@d632683dd7b4114ad314bca15554477dd762a938 # pin v4.2.0
+      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -104,7 +104,7 @@ jobs:
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
         timeout-minutes: 1
 
-      - uses: actions/upload-artifact@50769540e7f4bd5e21e526ee35c689e35e0d6874 # pin v4.4.0
+      - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
           name: ${{ runner.os }}-${{ runner.arch }}-cli
           path: |
