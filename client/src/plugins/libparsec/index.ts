@@ -35,9 +35,9 @@ class ParsecProxy {
         const resultError = result as { ok: boolean; error: { tag: string; error: string } };
         // electronAPI is not available right at the start
         if (window.electronAPI && window.electronAPI.log) {
-          window.electronAPI.log('debug', `Error when calling ${name}: ${resultError.error.tag} (${resultError.error.error})`);
+          window.electronAPI.log('debug', `Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
         } else {
-          console.warn(`Error when calling ${name}: ${resultError.error.tag} (${resultError.error.error})`);
+          console.warn(`Error when calling ${name}: ${JSON.stringify(resultError.error)}`);
         }
       }
       return result;

@@ -84,7 +84,9 @@ function getLinkForLocale(): string {
 
   window.electronAPI.log(
     'info',
-    `No terms of service link was found matching the locale '${currentLocale}', using '${links.values().next().value}'`,
+    `No terms of service link was found matching the locale \
+'${currentLocale}' in ${JSON.stringify(props.tosLinks.entries())}, \
+using '${links.values().next().value}'`,
   );
   // Still not found, worst cast scenario, return the first value
   return links.values().next().value;

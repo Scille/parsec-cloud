@@ -109,7 +109,7 @@ async function logout(): Promise<void> {
   await injectionProvider.clean(handle);
   const logoutResult = await parsecLogout();
   if (!logoutResult.ok) {
-    window.electronAPI.log('error', `Error when logging out: ${logoutResult.error}`);
+    window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
   }
   await modal.dismiss();
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });
@@ -164,7 +164,7 @@ async function showTOSModal(): Promise<void> {
       // we will log them out.
       return;
     } else {
-      window.electronAPI.log('error', `Error when accepting the TOS: ${acceptResult.error.tag} ${acceptResult.error.error}`);
+      window.electronAPI.log('error', `Error when accepting the TOS: ${JSON.stringify(acceptResult.error)}`);
       injections.informationManager.present(
         new Information({
           message: 'CreateOrganization.acceptTOS.update.acceptError',

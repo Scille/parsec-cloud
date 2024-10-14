@@ -5,7 +5,6 @@ import { CapElectronEventEmitter, CapacitorSplashScreen, setupCapacitorElectronP
 import chokidar from 'chokidar';
 import type { MenuItemConstructorOptions } from 'electron';
 import { BrowserWindow, Menu, MenuItem, Tray, app, nativeImage, session, shell } from 'electron';
-import type { Logger } from 'electron-log';
 import log from 'electron-log/main';
 import electronServe from 'electron-serve';
 import windowStateKeeper from 'electron-window-state';
@@ -79,7 +78,6 @@ export class ElectronCapacitorApp {
   public macOSForceQuit: boolean = false;
   private APP_GUID = '2f56a772-db54-4a32-b264-28c42970f684';
   private winRegistry: WinRegistry | null = null;
-  private logger: Logger;
   updater?: AppUpdater;
 
   constructor(capacitorFileConfig: CapacitorElectronConfig, appMenuBarMenuTemplate?: (MenuItemConstructorOptions | MenuItem)[]) {
@@ -100,14 +98,13 @@ export class ElectronCapacitorApp {
     ];
 
     log.initialize();
-    this.logger = require('electron-log/node');
     Object.assign(console, log.functions);
     if (!electronIsDev) {
-      this.logger.transports.file.level = 'warn';
-      this.logger.transports.console.level = 'warn';
+      log.transports.file.level = 'warn';
+      log.transports.console.level = 'warn';
     } else {
-      this.logger.transports.file.level = 'debug';
-      this.logger.transports.console.level = 'debug';
+      log.transports.file.level = 'debug';
+      log.transports.console.level = 'debug';
     }
 
     if (appMenuBarMenuTemplate) {
@@ -161,19 +158,19 @@ export class ElectronCapacitorApp {
   log(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
     switch (level) {
       case 'debug': {
-        console.debug(message);
+        log.debug(message);
         break;
       }
       case 'info': {
-        console.info(message);
+        log.info(message);
         break;
       }
       case 'warn': {
-        console.warn(message);
+        log.warn(message);
         break;
       }
       case 'error': {
-        console.error(message);
+        log.error(message);
         break;
       }
     }
@@ -498,9 +495,9 @@ export class ElectronCapacitorApp {
             this.sendEvent(WindowToPageChannel.OpenLink, arg);
             break;
           } else if (arg === '--log-debug') {
-            this.logger.transports.file.level = 'debug';
-            this.logger.transports.console.level = 'debug';
-            this.logger.debug('Setting log level to DEBUG');
+            log.transports.file.level = 'debug';
+            log.transports.console.level = 'debug';
+            log.debug('Setting log level to DEBUG');
           }
         }
       }, 400);
