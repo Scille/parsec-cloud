@@ -1,7 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-from typing import Literal, override
+from typing import override
 
 from parsec._parsec import (
     ActiveUsersLimit,
@@ -126,10 +126,10 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         # `None` is a valid value for some of those params, hence it cannot be used
         # as "param not set" marker and we use a custom `Unset` singleton instead.
         # `None` stands for "no limit"
-        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
+        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: UnsetType | bool = Unset,
         minimum_archiving_period: UnsetType | int = Unset,
-        tos: Literal[UnsetType.Unset] | dict[TosLocale, TosUrl] = Unset,
+        tos: UnsetType | dict[TosLocale, TosUrl] = Unset,
         force_bootstrap_token: BootstrapToken | None = None,
     ) -> BootstrapToken | OrganizationCreateBadOutcome:
         bootstrap_token = force_bootstrap_token or BootstrapToken.new()
@@ -317,11 +317,11 @@ class PGOrganizationComponent(BaseOrganizationComponent):
         conn: AsyncpgConnection,
         now: DateTime,
         id: OrganizationID,
-        is_expired: Literal[UnsetType.Unset] | bool = Unset,
-        active_users_limit: Literal[UnsetType.Unset] | ActiveUsersLimit = Unset,
-        user_profile_outsider_allowed: Literal[UnsetType.Unset] | bool = Unset,
-        minimum_archiving_period: Literal[UnsetType.Unset] | int = Unset,
-        tos: Literal[UnsetType.Unset] | None | dict[TosLocale, TosUrl] = Unset,
+        is_expired: UnsetType | bool = Unset,
+        active_users_limit: UnsetType | ActiveUsersLimit = Unset,
+        user_profile_outsider_allowed: UnsetType | bool = Unset,
+        minimum_archiving_period: UnsetType | int = Unset,
+        tos: UnsetType | None | dict[TosLocale, TosUrl] = Unset,
     ) -> None | OrganizationUpdateBadOutcome:
         return await organization_update(
             self.event_bus,
