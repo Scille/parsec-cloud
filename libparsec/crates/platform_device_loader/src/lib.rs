@@ -264,3 +264,25 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
+pub enum ImportRecoveryDeviceError {}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ExportRecoveryDeviceError {}
+
+#[allow(unused_variables)] // TODO remove
+pub async fn inner_import_recovery_device(
+    recovery_device: Vec<u8>,
+    passphrase: String,
+    device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+    todo!()
+}
+
+#[allow(unused_variables)] // TODO remove
+pub async fn inner_export_recovery_device(
+    client_handle: Handle,
+    access_strategy: DeviceAccessStrategy,
+) -> Result<(String, Vec<u8>), ExportRecoveryDeviceError> {
+    todo!()
+}

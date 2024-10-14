@@ -123,6 +123,9 @@ pub type IndexInt = u64;
 // pub type IndexInt = std::num::NonZeroU64;
 // pub type IndexOffsetInt = u64;
 
+/// Used to identify client handle
+pub type Handle = u32;
+
 pub mod prelude {
     pub use super::*;
     pub use anyhow::Context;

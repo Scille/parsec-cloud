@@ -183,9 +183,26 @@ impl DeviceFileType {
     }
 }
 
+#[derive(Debug, Clone)]
+pub enum DeviceSaveStrategy {
+    Keyring,
+    Password { password: Password },
+    Smartcard,
+}
+
+impl DeviceSaveStrategy {
+    pub fn into_access(self, key_file: PathBuf) -> DeviceAccessStrategy {
+        match self {
+            DeviceSaveStrategy::Keyring => DeviceAccessStrategy::Keyring { key_file },
+            DeviceSaveStrategy::Password { password } => {
+                DeviceAccessStrategy::Password { key_file, password }
+            }
+            DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
+        }
+    }
+}
+
 /// Represent how to load/save a device file
-/// Note this is only for regular device given recovery device has dedicated
-/// import/export functions.
 #[derive(Debug, Clone, PartialEq)]
 pub enum DeviceAccessStrategy {
     Keyring {
