@@ -251,7 +251,6 @@
     <div class="bottom-section">
       <div
         class="bottom-section-buttons bottom-section-buttons-home custom-button custom-button-fill"
-        v-show="showMenu"
         @click="goToHome"
       >
         <ion-icon
@@ -269,7 +268,6 @@
       <!-- button: logout -->
       <div
         class="bottom-section-buttons bottom-section-buttons-logout custom-button custom-button-fill"
-        v-show="showMenu"
         @click="logout"
       >
         <ion-icon
