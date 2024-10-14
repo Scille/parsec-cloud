@@ -147,7 +147,7 @@ import {
   IonToolbar,
   popoverController,
 } from '@ionic/vue';
-import { home, menu, notifications, search } from 'ionicons/icons';
+import { home, menu, notifications, search, time } from 'ionicons/icons';
 import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
@@ -192,6 +192,24 @@ async function updateRoute(): Promise<void> {
         name: Routes.Workspaces,
         params: {},
       },
+    ];
+  } else if (currentRouteIs(Routes.History)) {
+    const workspaceHandle = getWorkspaceHandle();
+    if (workspaceHandle) {
+      workspaceName.value = await getWorkspaceName(workspaceHandle);
+    }
+    fullPath.value = [
+      {
+        id: 0,
+        title: 'History',
+        icon: time,
+        name: Routes.History,
+      },
+      {
+        id: 0,
+        title: workspaceName.value,
+        name: Routes.Documents,
+      }
     ];
   } else if (currentRouteIs(Routes.Documents)) {
     const workspaceHandle = getWorkspaceHandle();
@@ -276,8 +294,6 @@ function getTitleForRoute(): Translatable {
       return 'HeaderPage.titles.myProfile';
     case Routes.RecoveryExport:
       return 'HeaderPage.titles.recoveryExport';
-    case Routes.History:
-      return 'History';
     case null:
       return '';
   }
