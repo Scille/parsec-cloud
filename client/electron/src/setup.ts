@@ -100,8 +100,8 @@ export class ElectronCapacitorApp {
     log.initialize();
     Object.assign(console, log.functions);
     if (!electronIsDev) {
-      log.transports.file.level = 'warn';
-      log.transports.console.level = 'warn';
+      log.transports.file.level = 'info';
+      log.transports.console.level = 'info';
     } else {
       log.transports.file.level = 'debug';
       log.transports.console.level = 'debug';
@@ -156,23 +156,9 @@ export class ElectronCapacitorApp {
   }
 
   log(level: 'debug' | 'info' | 'warn' | 'error', message: string): void {
-    switch (level) {
-      case 'debug': {
-        log.debug(message);
-        break;
-      }
-      case 'info': {
-        log.info(message);
-        break;
-      }
-      case 'warn': {
-        log.warn(message);
-        break;
-      }
-      case 'error': {
-        log.error(message);
-        break;
-      }
+    log[level](message);
+    if (electronIsDev) {
+      this.sendEvent(WindowToPageChannel.PrintToConsole, level, message);
     }
   }
 

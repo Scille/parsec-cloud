@@ -37,6 +37,8 @@ enum AppState {
   Initializing = 'initializing',
 }
 
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
 function preventRightClick(): void {
   document.addEventListener('contextmenu', async (event) => {
     if (!window.isDev()) {
@@ -74,6 +76,10 @@ async function setupApp(): Promise<void> {
     },
   });
   await megasharkPlugin.init();
+
+  if (!isElectron()) {
+    setupMockElectronAPI();
+  }
 
   const app = createApp(App)
     .use(IonicVue, {
@@ -165,10 +171,7 @@ async function setupApp(): Promise<void> {
     const msg = `\`TESTBED_SERVER\` environ variable detected, creating a new coolorg testbed organization with server ${
       import.meta.env.PARSEC_APP_TESTBED_SERVER
     }`;
-    console.log(msg);
-    if (isElectron()) {
-      (window as any).electronAPI.log('debug', msg);
-    }
+    (window as any).electronAPI.log('debug', msg);
 
     // Dev mode, provide a default testbed
     const configResult = await libparsec.testNewTestbed('coolorg', import.meta.env.PARSEC_APP_TESTBED_SERVER);
@@ -206,9 +209,9 @@ async function setupApp(): Promise<void> {
       window.electronAPI.sendMountpointFolder(mountpoint);
     }
 
-    window.electronAPI.log('debug', `BMS Url: ${Env.getBmsUrl()}`);
-    window.electronAPI.log('debug', `Parsec Sign Url: ${Env.getSignUrl()}`);
-    window.electronAPI.log('debug', `Stripe API Key: ${Env.getStripeApiKey().key}`);
+    window.electronAPI.log('info', `BMS Url: ${Env.getBmsUrl()}`);
+    window.electronAPI.log('info', `Parsec Sign Url: ${Env.getSignUrl()}`);
+    window.electronAPI.log('info', `Stripe API Key: ${Env.getStripeApiKey().key}`);
 
     let isQuitDialogOpen = false;
 
@@ -297,56 +300,50 @@ async function setupApp(): Promise<void> {
         config.enableTelemetry ? Sentry.enable() : Sentry.disable();
       }
     });
-  } else {
-    window.electronAPI = {
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      sendConfig: (_config: Config): void => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      closeApp: (): void => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      openFile: (_path: string): void => {
-        console.log('Not available.');
-      },
-      // eslint-disable-next-line @typescript-eslint/no-empty-function
-      sendMountpointFolder: (_path: string): void => {
-        console.log('Not available.');
-      },
-      getUpdateAvailability: (): void => {
-        if (needsMocks()) {
-          injectionProvider.distributeEventToAll(Events.UpdateAvailability, { updateAvailable: true, version: '3.1.0' });
-          injectionProvider.notifyAll(
-            new Information({
-              message: '',
-              level: InformationLevel.Info,
-              unique: true,
-              data: { type: InformationDataType.NewVersionAvailable, newVersion: '3.1.0' },
-            }),
-            PresentationMode.Notification,
-          );
-        }
-      },
-      updateApp: (): void => {
-        console.log('Not available.');
-      },
-      prepareUpdate: (): void => {
-        console.log('Not available');
-      },
-      log: (level: 'debug' | 'info' | 'warn' | 'error', message: string): void => {
-        console.log(`[MOCKED-ELECTRON-LOG] ${level}: ${message}`);
-      },
-      pageIsInitialized: (): void => {
-        window.isDev = (): boolean => needsMocks();
-      },
-      openConfigDir: (): void => {
-        console.log('Not available');
-      },
-      authorizeURL: (url: string): void => {
-        console.log(`Dummy Authorize URL ${url}`);
-      },
-    };
+    window.electronAPI.receive('parsec-print-to-console', async (level: LogLevel, message: string) => {
+      console[level](message);
+    });
   }
+}
+
+function setupMockElectronAPI(): void {
+  window.electronAPI = {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    sendConfig: (_config: Config): void => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    closeApp: (): void => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    receive: (_channel: string, _f: (...args: any[]) => Promise<void>): void => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    openFile: (_path: string): void => {
+      console.log('OpenFile: Not available.');
+    },
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    sendMountpointFolder: (_path: string): void => {
+      console.log('SetMountpointFolder: Not available.');
+    },
+    getUpdateAvailability: (): void => {
+      console.log('GetUpdateAvailability: Not available.');
+    },
+    updateApp: (): void => {
+      console.log('UpdateApp: Not available.');
+    },
+    prepareUpdate: (): void => {
+      console.log('PrepareUpdate: Not available');
+    },
+    log: (level: LogLevel, message: string): void => {
+      console[level](`[MOCKED-ELECTRON-LOG] ${message}`);
+    },
+    pageIsInitialized: (): void => {
+      window.isDev = (): boolean => needsMocks();
+    },
+    openConfigDir: (): void => {
+      console.log('OpenConfigDir: Not available');
+    },
+    authorizeURL: (_url: string): void => {
+      console.log('AuthorizeURL: NotAvailable');
+    },
+  };
 }
 
 async function cleanBeforeQuitting(injectionProvider: InjectionProvider): Promise<void> {
@@ -458,7 +455,7 @@ declare global {
       getUpdateAvailability: () => void;
       updateApp: () => void;
       prepareUpdate: () => void;
-      log: (level: 'debug' | 'info' | 'warn' | 'error', message: string) => void;
+      log: (level: LogLevel, message: string) => void;
       pageIsInitialized: () => void;
       openConfigDir: () => void;
       authorizeURL: (url: string) => void;
