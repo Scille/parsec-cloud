@@ -5,6 +5,17 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.1.0-rc.2 (2024-10-14)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Fixed logout and go home buttons not appearing in customer area
+  (`#8733 <https://github.com/Scille/parsec-cloud/issues/8733>`__)
+
+
+
 Parsec v3.1.0-rc.1 (2024-10-11)
 -------------------------------
 
