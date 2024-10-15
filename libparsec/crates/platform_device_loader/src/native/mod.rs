@@ -12,9 +12,10 @@ use zeroize::Zeroize;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
-    SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
-    ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
+    ChangeAuthentificationError, ExportRecoveryDeviceError, LoadDeviceError,
+    LoadRecoveryDeviceError, SaveDeviceError, SaveRecoveryDeviceError,
+    ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM,
+    DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -579,6 +580,49 @@ pub async fn save_recovery_device(
         .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
 
     Ok(passphrase)
+}
+
+/// create a new recovery device from provided local device
+/// returns the passphrase associated with the key that
+/// encrypted device data and dumped recovery device data
+pub async fn export_recovery_device(
+    device: &LocalDevice,
+) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+    let created_on = device.now();
+    let server_url = {
+        ParsecAddr::new(
+            device.organization_addr.hostname().to_owned(),
+            Some(device.organization_addr.port()),
+            device.organization_addr.use_ssl(),
+        )
+        .to_http_url(None)
+        .to_string()
+    };
+
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let ciphertext = {
+        let mut cleartext = device.dump();
+        let ciphertext = key.encrypt(&cleartext);
+        cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
+        ciphertext.into()
+    };
+
+    let file_content = DeviceFile::Recovery(DeviceFileRecovery {
+        created_on,
+        // Note recovery device is not supposed to change its protection
+        protected_on: created_on,
+        server_url,
+        organization_id: device.organization_id().to_owned(),
+        user_id: device.user_id,
+        device_id: device.device_id,
+        human_handle: device.human_handle.to_owned(),
+        device_label: device.device_label.to_owned(),
+        ciphertext,
+    })
+    .dump();
+
+    Ok((passphrase, file_content))
 }
 
 pub fn is_keyring_available() -> bool {

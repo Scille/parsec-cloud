@@ -410,7 +410,11 @@ class ImportRecoveryDeviceError(ErrorVariant):
 
 
 class ExportRecoveryDeviceError(ErrorVariant):
-    pass
+    class Internal:
+        pass
+
+    class LoadDeviceError:
+        pass
 
 
 async def import_recovery_device(
@@ -423,6 +427,6 @@ async def import_recovery_device(
 
 
 async def export_recovery_device(
-    client_handle: Handle, access_strategy: DeviceAccessStrategy
+    client_handle: Handle,
 ) -> Result[tuple[str, bytes], ExportRecoveryDeviceError]:
     raise NotImplementedError

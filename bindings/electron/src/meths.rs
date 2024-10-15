@@ -4586,7 +4586,17 @@ fn variant_export_recovery_device_error_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
-    match rs_obj {}
+    match rs_obj {
+        libparsec::ExportRecoveryDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::LoadDeviceError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ExportRecoveryDeviceErrorLoadDeviceError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -9288,7 +9298,7 @@ fn client_stop(mut cx: FunctionContext) -> JsResult<JsPromise> {
 // export_recovery_device
 fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
-    let clientHandle = {
+    let client_handle = {
         let js_val = cx.argument::<JsNumber>(0)?;
         {
             let v = js_val.value(&mut cx);
@@ -9299,10 +9309,6 @@ fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v
         }
     };
-    let access_strategy = {
-        let js_val = cx.argument::<JsObject>(1)?;
-        variant_device_access_strategy_js_to_rs(&mut cx, js_val)?
-    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -9311,7 +9317,7 @@ fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::export_recovery_device(clientHandle, access_strategy).await;
+            let ret = libparsec::export_recovery_device(client_handle).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {

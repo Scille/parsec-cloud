@@ -40,6 +40,7 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_device_loader::ExportRecoveryDeviceError;
 use libparsec_types::prelude::*;
 
 // Re-exposed for public API
@@ -520,6 +521,12 @@ impl Client {
         threshold: u8,
     ) -> Result<(), ClientShamirError> {
         shamir_setup_create::shamir_setup_create(self, share_recipients, threshold).await
+    }
+
+    pub async fn export_recovery_device(
+        &self,
+    ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+        libparsec_platform_device_loader::inner_export_recovery_device(&self.device).await
     }
 }
 

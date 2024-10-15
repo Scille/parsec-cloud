@@ -1207,9 +1207,21 @@ export type EntryStat =
 
 // ExportRecoveryDeviceError
 export enum ExportRecoveryDeviceErrorTag {
+    Internal = 'ExportRecoveryDeviceErrorInternal',
+    LoadDeviceError = 'ExportRecoveryDeviceErrorLoadDeviceError',
 }
 
+export interface ExportRecoveryDeviceErrorInternal {
+    tag: ExportRecoveryDeviceErrorTag.Internal
+    error: string
+}
+export interface ExportRecoveryDeviceErrorLoadDeviceError {
+    tag: ExportRecoveryDeviceErrorTag.LoadDeviceError
+    error: string
+}
 export type ExportRecoveryDeviceError =
+  | ExportRecoveryDeviceErrorInternal
+  | ExportRecoveryDeviceErrorLoadDeviceError
 
 // GreetInProgressError
 export enum GreetInProgressErrorTag {
@@ -2603,8 +2615,7 @@ export interface LibParsecPlugin {
         client: Handle
     ): Promise<Result<null, ClientStopError>>
     exportRecoveryDevice(
-        clientHandle: Handle,
-        access_strategy: DeviceAccessStrategy
+        client_handle: Handle
     ): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
     fdClose(
         workspace: Handle,
