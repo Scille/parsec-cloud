@@ -404,7 +404,8 @@ new_blocks AS (
         author,
         size,
         created_on,
-        deleted_on
+        deleted_on,
+        key_index
     )
     SELECT
         (select * from new_organization_ids),
@@ -419,7 +420,8 @@ new_blocks AS (
         ),
         size,
         created_on,
-        deleted_on
+        deleted_on,
+        key_index
     FROM block
     WHERE organization = { q_organization_internal_id("$source_id") }
     RETURNING _id
