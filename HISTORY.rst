@@ -5,31 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.1.0-rc.2 (2024-10-14)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Fixed logout and go home buttons not appearing in customer area
-  (`#8733 <https://github.com/Scille/parsec-cloud/issues/8733>`__)
-
-
-
-Parsec v3.1.0-rc.1 (2024-10-11)
--------------------------------
-
-Miscellaneous internal changes
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-* Added an indication of the number of operations done and failed in the file
-  operation menu
-  (`#8557 <https://github.com/Scille/parsec-cloud/issues/8557>`__)
-
-
-
-Parsec v3.1.0-rc.0 (2024-10-10)
--------------------------------
+Parsec v3.1.0 (2024-10-15)
+--------------------------
 
 Features
 ~~~~~~~~
@@ -96,6 +73,9 @@ Bugfixes
 * Fixed mocked values being sometimes displayed when logging out
   (`#8652 <https://github.com/Scille/parsec-cloud/issues/8652>`__)
 
+* Fixed logout and go home buttons not appearing in customer area
+  (`#8733 <https://github.com/Scille/parsec-cloud/issues/8733>`__)
+
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -109,6 +89,10 @@ Miscellaneous internal changes
 
 * Remind the users of the Terms of Service when creating a new organization
   (`#8681 <https://github.com/Scille/parsec-cloud/issues/8681>`__)
+
+* Added an indication of the number of operations done and failed in the file
+  operation menu
+  (`#8557 <https://github.com/Scille/parsec-cloud/issues/8557>`__)
 
 
 
