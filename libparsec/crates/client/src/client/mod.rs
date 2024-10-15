@@ -44,6 +44,7 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_device_loader::ExportRecoveryDeviceError;
 use libparsec_types::prelude::*;
 
 // Re-exposed for public API
@@ -532,6 +533,12 @@ impl Client {
 
     pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
         tos::accept_tos(self, tos_updated_on).await
+    }
+    
+    pub async fn export_recovery_device(
+        &self,
+    ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+        libparsec_platform_device_loader::inner_export_recovery_device(&self.device).await
     }
 }
 
