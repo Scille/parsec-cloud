@@ -267,22 +267,25 @@ pub use platform::remove_device;
 pub enum ImportRecoveryDeviceError {}
 
 #[derive(Debug, thiserror::Error)]
-pub enum ExportRecoveryDeviceError {}
+pub enum ExportRecoveryDeviceError {
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error(transparent)]
+    LoadDeviceError(#[from] LoadDeviceError),
+}
 
 #[allow(unused_variables)] // TODO remove
 pub async fn inner_import_recovery_device(
     recovery_device: Vec<u8>,
-    passphrase: String,
+    passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
     todo!()
 }
 
-#[allow(unused_variables)] // TODO remove
 pub async fn inner_export_recovery_device(
-    client_handle: Handle,
-    access_strategy: DeviceAccessStrategy,
-) -> Result<(String, Vec<u8>), ExportRecoveryDeviceError> {
-    todo!()
+    device: &LocalDevice,
+) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+    platform::export_recovery_device(device).await
 }

@@ -5379,7 +5379,22 @@ fn variant_export_recovery_device_error_rs_to_js(
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {}
+    match rs_obj {
+        libparsec::ExportRecoveryDeviceError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorInternal".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::LoadDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorLoadDeviceError".into(),
+            )?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -9458,12 +9473,9 @@ pub fn clientStop(client: u32) -> Promise {
 // export_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn exportRecoveryDevice(client_handle: u32, access_strategy: Object) -> Promise {
+pub fn exportRecoveryDevice(client_handle: u32) -> Promise {
     future_to_promise(async move {
-        let access_strategy = access_strategy.into();
-        let access_strategy = variant_device_access_strategy_js_to_rs(access_strategy)?;
-
-        let ret = libparsec::export_recovery_device(client_handle, access_strategy).await;
+        let ret = libparsec::export_recovery_device(client_handle).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

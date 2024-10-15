@@ -1105,7 +1105,17 @@ export type EntryStat =
 
 
 // ExportRecoveryDeviceError
+export interface ExportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorLoadDeviceError {
+    tag: "LoadDeviceError"
+    error: string
+}
 export type ExportRecoveryDeviceError =
+  | ExportRecoveryDeviceErrorInternal
+  | ExportRecoveryDeviceErrorLoadDeviceError
 
 
 // GreetInProgressError
@@ -2292,8 +2302,7 @@ export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
 export function exportRecoveryDevice(
-    client_handle: number,
-    access_strategy: DeviceAccessStrategy
+    client_handle: number
 ): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
 export function getDefaultConfigDir(
 ): Promise<string>
