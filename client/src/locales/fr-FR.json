@@ -767,19 +767,19 @@
             "forgottenPassword": "Mot de passe oublié",
             "recoveryFile": "Fichier de récupération",
             "recoveryKey": "Clé secrète",
-            "setNewPassword": "Définissez un nouveau mot de passe",
-            "passwordChanged": "Le mot de passe a bien été modifié"
+            "setNewPassword": "Choisissez votre méthode d'authentification",
+            "passwordChanged": "L'authentification a bien été modifiée"
         },
         "subtitles": {
             "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre mot de passe.",
             "password": "Mot de passe",
-            "passwordModified": "Vous pouvez vous connecter avec votre nouveau mot de passe.",
+            "passwordModified": "Vous pouvez vous connecter avec votre nouvelle authentification.",
             "noFileSelected": "Aucun fichier sélectionné"
         },
         "actions": {
             "browse": "Parcourir",
             "next": "Suivant",
-            "validatePassword": "Valider mon mot de passe",
+            "validatePassword": "Confirmer",
             "goBackToLogin": "Revenir à la connexion"
         },
         "errors": {
@@ -788,7 +788,8 @@
             "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
             "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
             "internalErrorMessage": "Une erreur est survenue"
-        }
+        },
+        "secretKeyPlaceholder": "FH3H-N3DW-RUOO-A6Q7-.."
     },
     "ExportRecoveryDevicePage": {
         "titles": {
@@ -814,7 +815,7 @@
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
-            "recoveryFile": "Parsec_Fichier_Récupération_{org}.data",
+            "recoveryFile": "Parsec_Fichier_Récupération_{org}.psrk",
             "recoveryKey": "Parsec_Code_Récupération_{org}.txt"
         }
     },

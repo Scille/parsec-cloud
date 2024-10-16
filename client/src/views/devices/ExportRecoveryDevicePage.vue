@@ -98,6 +98,11 @@
                   {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keyExplanation') }}
                 </ion-text>
               </div>
+              <!-- Used to trigger the download -->
+              <a
+                ref="downloadLink"
+                v-show="false"
+              />
               <div
                 class="file-item__downloaded body"
                 v-show="recoveryKeyDownloaded"
@@ -125,15 +130,11 @@
               </div>
             </div>
           </div>
-          <a
-            ref="downloadLink"
-            v-show="false"
-          />
           <div v-show="recoveryKeyDownloaded && recoveryFileDownloaded">
             <ion-button
               class="return-btn button-outline"
               fill="outline"
-              @click="routerGoBack()"
+              @click="goToDevicesPage"
               id="back-to-devices-button"
             >
               <ion-icon
@@ -150,11 +151,11 @@
 </template>
 
 <script setup lang="ts">
-import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
+import { exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
-import { routerGoBack } from '@/router';
+import { navigateTo, routerGoBack, Routes } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { MsInformativeText, Translatable, I18n, getPasswordFromUser } from 'megashark-lib';
+import { MsInformativeText, I18n } from 'megashark-lib';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
@@ -166,7 +167,7 @@ enum ExportDevicePageState {
 
 const state = ref(ExportDevicePageState.Start);
 let code = '';
-let file = '';
+let content = new Uint8Array();
 const downloadLink = ref();
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
@@ -179,19 +180,11 @@ onMounted(async (): Promise<void> => {
 });
 
 async function exportDevice(): Promise<void> {
-  const password = await getPasswordFromUser({
-    title: 'PasswordInputModal.passwordNeeded',
-    subtitle: { key: 'PasswordInputModal.enterPassword', data: { org: orgId.value } },
-    inputLabel: 'PasswordInputModal.password',
-    okButtonText: 'PasswordInputModal.validate',
-  });
-  if (!password) {
-    return;
-  }
-  const result = await exportRecoveryDevice(password);
+  const result = await exportRecoveryDevice();
+  console.log(result);
   if (!result.ok) {
-    const notificationMsg =
-      result.error.tag === RecoveryDeviceErrorTag.Invalid ? 'PasswordInputModal.invalid' : 'PasswordInputModal.otherError';
+    console.log(result.error);
+    const notificationMsg = 'PasswordInputModal.otherError';
     // toast atm but to be changed
     informationManager.present(
       new Information({
@@ -202,13 +195,22 @@ async function exportDevice(): Promise<void> {
     );
     return;
   }
-  code = result.value.code;
-  file = result.value.file;
+  code = result.value[0];
+  content = result.value[1];
   state.value = ExportDevicePageState.Download;
 }
 
 async function downloadRecoveryKey(): Promise<void> {
-  fileDownload(code, { key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } });
+  const blob = new Blob([code], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+
+  downloadLink.value.setAttribute('href', url);
+  downloadLink.value.setAttribute(
+    'download',
+    I18n.translate({ key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } }),
+  );
+  downloadLink.value.click();
+
   setTimeout(() => {
     recoveryKeyDownloaded.value = true;
     informationManager.present(
@@ -222,7 +224,16 @@ async function downloadRecoveryKey(): Promise<void> {
 }
 
 async function downloadRecoveryFile(): Promise<void> {
-  fileDownload(file, { key: 'ExportRecoveryDevicePage.filenames.recoveryFile', data: { org: orgId.value } });
+  const blob = new Blob([content], { type: 'application/octet-stream' });
+  const url = window.URL.createObjectURL(blob);
+
+  downloadLink.value.setAttribute('href', url);
+  downloadLink.value.setAttribute(
+    'download',
+    I18n.translate({ key: 'ExportRecoveryDevicePage.filenames.recoveryFile', data: { org: orgId.value } }),
+  );
+  downloadLink.value.click();
+
   setTimeout(() => {
     recoveryFileDownloaded.value = true;
     informationManager.present(
@@ -235,10 +246,8 @@ async function downloadRecoveryFile(): Promise<void> {
   }, 500);
 }
 
-async function fileDownload(data: string, fileName: Translatable): Promise<void> {
-  downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8, ${encodeURIComponent(data)}`);
-  downloadLink.value.setAttribute('download', I18n.translate(fileName));
-  downloadLink.value.click();
+async function goToDevicesPage(): Promise<void> {
+  await navigateTo(Routes.MyProfile, { replace: true });
 }
 </script>
 
