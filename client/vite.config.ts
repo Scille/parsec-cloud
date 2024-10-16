@@ -54,6 +54,10 @@ if (process.env.SENTRY_AUTH_TOKEN) {
     org: 'scille',
     project: 'parsec3-frontend',
     authToken: process.env.SENTRY_AUTH_TOKEN,
+    release: {
+      // Distribution identifier for this release, e.g.: web, native
+      dist: process.env.SENTRY_DIST,
+    },
   });
   plugins.push(sentryPlugin);
 } else {

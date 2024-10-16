@@ -106,6 +106,7 @@ jobs:
         run: npm run web:release
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DIST: web
         working-directory: client
 
       - name: Generate SBOM
@@ -169,6 +170,7 @@ jobs:
         run:
           (
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}";
+            echo "SENTRY_DIST=snapcraft-linux";
             echo "VITE_MODE=${{ steps.version.outputs.type }}";
           ) | tee snapcraft.env
         shell: bash
@@ -311,6 +313,7 @@ jobs:
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DIST: ${{ matrix.platform }}
         working-directory: client
         timeout-minutes: 5
 
