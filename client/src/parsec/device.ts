@@ -8,6 +8,7 @@ import {
   ClientListUserDevicesErrorTag,
   DeviceFileType,
   DeviceInfo,
+  DeviceSaveStrategy,
   OwnDeviceInfo,
   Result,
   UserID,
@@ -57,12 +58,8 @@ export interface RecoveryImportKeyError {
 
 export type RecoveryImportError = RecoveryImportInternalError | RecoveryImportFileError | RecoveryImportKeyError;
 
-export async function exportRecoveryDevice(_password: string): Promise<Result<RecoveryDeviceData, WrongAuthenticationError>> {
+export async function exportRecoveryDevice(): Promise<Result<RecoveryDeviceData, WrongAuthenticationError>> {
   const handle = getParsecHandle();
-
-  if (_password !== 'P@ssw0rd.') {
-    return { ok: false, error: { tag: RecoveryDeviceErrorTag.Invalid } };
-  }
 
   if (handle !== null && !needsMocks()) {
     return {
@@ -120,8 +117,10 @@ export async function importRecoveryDevice(
   }
 }
 
-export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Promise<Result<AvailableDevice, RecoveryImportError>> {
-  // const _saveStrategy: DeviceSaveStrategyPassword = { tag: DeviceSaveStrategyTag.Password, password: password };
+export async function saveDevice(
+  deviceInfo: DeviceInfo,
+  _saveStrategy: DeviceSaveStrategy,
+): Promise<Result<AvailableDevice, RecoveryImportError>> {
   return {
     ok: true,
     value: {

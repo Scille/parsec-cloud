@@ -45,7 +45,7 @@
     </div>
 
     <!-- restore password card -->
-    <div v-show="false">
+    <div>
       <!-- files not downloaded -->
       <div
         class="restore-password"
