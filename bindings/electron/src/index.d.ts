@@ -1199,7 +1199,32 @@ export type GreetInProgressError =
 
 
 // ImportRecoveryDeviceError
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorSaveDeviceError {
+    tag: "SaveDeviceError"
+    error: string
+}
 export type ImportRecoveryDeviceError =
+  | ImportRecoveryDeviceErrorDecryptionFailed
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorSaveDeviceError
 
 
 // InviteListItem
@@ -2277,7 +2302,8 @@ export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
 export function exportRecoveryDevice(
-    client_handle: number
+    client_handle: number,
+    device_label: string
 ): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
 export function fdClose(
     workspace: number,
@@ -2377,6 +2403,7 @@ export function greeterUserInitialDoWaitPeer(
     handle: number
 ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
 export function importRecoveryDevice(
+    config: ClientConfig,
     recovery_device: Uint8Array,
     passphrase: string,
     device_label: string,

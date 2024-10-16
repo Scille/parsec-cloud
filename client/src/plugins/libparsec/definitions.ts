@@ -1410,9 +1410,39 @@ export type GreetInProgressError =
 
 // ImportRecoveryDeviceError
 export enum ImportRecoveryDeviceErrorTag {
+    DecryptionFailed = 'ImportRecoveryDeviceErrorDecryptionFailed',
+    InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
+    InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
+    InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    SaveDeviceError = 'ImportRecoveryDeviceErrorSaveDeviceError',
 }
 
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: ImportRecoveryDeviceErrorTag.DecryptionFailed
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: ImportRecoveryDeviceErrorTag.InvalidData
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPassphrase
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPath
+    error: string
+}
+export interface ImportRecoveryDeviceErrorSaveDeviceError {
+    tag: ImportRecoveryDeviceErrorTag.SaveDeviceError
+    error: string
+}
 export type ImportRecoveryDeviceError =
+  | ImportRecoveryDeviceErrorDecryptionFailed
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorSaveDeviceError
 
 // InviteListItem
 export enum InviteListItemTag {
@@ -2701,7 +2731,8 @@ export interface LibParsecPlugin {
         client: Handle
     ): Promise<Result<null, ClientStopError>>
     exportRecoveryDevice(
-        client_handle: Handle
+        client_handle: Handle,
+        device_label: DeviceLabel
     ): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
     fdClose(
         workspace: Handle,
@@ -2801,6 +2832,7 @@ export interface LibParsecPlugin {
         handle: Handle
     ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
     importRecoveryDevice(
+        config: ClientConfig,
         recovery_device: Uint8Array,
         passphrase: string,
         device_label: DeviceLabel,
