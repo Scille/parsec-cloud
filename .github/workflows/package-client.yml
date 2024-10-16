@@ -318,6 +318,8 @@ jobs:
 
       - name: Build client for electron
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client
         timeout-minutes: 5
 
