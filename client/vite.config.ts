@@ -40,7 +40,7 @@ if (process.env.PLATFORM !== undefined) {
   }
 } else {
   // Ain't nobody got time to set environ variable !
-  console.log('PLATFORM environ variable not set, defaulting to `web`');
+  console.warn('PLATFORM environ variable not set, defaulting to `web`');
   platform = 'web';
 }
 
@@ -50,15 +50,15 @@ if (platform === 'web') {
   plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
 }
 
-if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
+if (process.env.SENTRY_AUTH_TOKEN) {
   const sentryPlugin = sentryVitePlugin({
     org: 'scille',
     project: 'parsec3-frontend',
-    authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
   });
   plugins.push(sentryPlugin);
 } else {
-  console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
+  console.warn('SENTRY_AUTH_TOKEN is not set');
 }
 
 // 3) Finally configure Vite
