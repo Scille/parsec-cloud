@@ -319,7 +319,7 @@ def enable_sentry_logging(dsn: str, environment: str) -> None:
     sentry_sdk.init(
         dsn=dsn,
         environment=environment,
-        release=__version__,
+        release="parsec@" + __version__,
         integrations=[
             # Note that Sentry automatically enables some integrations, like:
             # AsyncPGIntegration (https://docs.sentry.io/platforms/python/integrations/asyncpg/)
