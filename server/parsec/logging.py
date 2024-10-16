@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import platform
 import sys
 from datetime import datetime, timezone
 from typing import Any, Callable, MutableMapping, TextIO, Union, cast
@@ -320,6 +321,7 @@ def enable_sentry_logging(dsn: str, environment: str) -> None:
         dsn=dsn,
         environment=environment,
         release="parsec@" + __version__,
+        dist=platform.system(),
         integrations=[
             # Note that Sentry automatically enables some integrations, like:
             # AsyncPGIntegration (https://docs.sentry.io/platforms/python/integrations/asyncpg/)
