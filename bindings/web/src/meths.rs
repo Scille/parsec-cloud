@@ -5594,7 +5594,43 @@ fn variant_import_recovery_device_error_rs_to_js(
     let js_obj = Object::new().into();
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
-    match rs_obj {}
+    match rs_obj {
+        libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorDecryptionFailed".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidData".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidPassphrase".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidPath".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::SaveDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorSaveDeviceError".into(),
+            )?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -9473,9 +9509,15 @@ pub fn clientStop(client: u32) -> Promise {
 // export_recovery_device
 #[allow(non_snake_case)]
 #[wasm_bindgen]
-pub fn exportRecoveryDevice(client_handle: u32) -> Promise {
+pub fn exportRecoveryDevice(client_handle: u32, device_label: String) -> Promise {
     future_to_promise(async move {
-        let ret = libparsec::export_recovery_device(client_handle).await;
+        let device_label = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(device_label).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret = libparsec::export_recovery_device(client_handle, device_label).await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();
@@ -9931,12 +9973,16 @@ pub fn greeterUserInitialDoWaitPeer(canceller: u32, handle: u32) -> Promise {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 pub fn importRecoveryDevice(
+    config: Object,
     recovery_device: Uint8Array,
     passphrase: String,
     device_label: String,
     save_strategy: Object,
 ) -> Promise {
     future_to_promise(async move {
+        let config = config.into();
+        let config = struct_client_config_js_to_rs(config)?;
+
         let recovery_device = recovery_device.to_vec();
 
         let device_label = {
@@ -9949,6 +9995,7 @@ pub fn importRecoveryDevice(
         let save_strategy = variant_device_save_strategy_js_to_rs(save_strategy)?;
 
         let ret = libparsec::import_recovery_device(
+            config,
             recovery_device,
             passphrase,
             device_label,

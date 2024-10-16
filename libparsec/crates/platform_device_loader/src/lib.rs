@@ -264,7 +264,20 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
-pub enum ImportRecoveryDeviceError {}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ImportRecoveryDeviceError {
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("Passphrase format is invalid")]
+    InvalidPassphrase,
+    #[error("Failed to decrypt file content")]
+    DecryptionFailed,
+    #[error(transparent)]
+    SaveDeviceError(#[from] SaveDeviceError),
+}
 
 #[derive(Debug, thiserror::Error)]
 pub enum ExportRecoveryDeviceError {
@@ -274,18 +287,26 @@ pub enum ExportRecoveryDeviceError {
     LoadDeviceError(#[from] LoadDeviceError),
 }
 
-#[allow(unused_variables)] // TODO remove
 pub async fn inner_import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
+    key_file: PathBuf,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    todo!()
+    platform::import_recovery_device(
+        recovery_device,
+        passphrase,
+        device_label,
+        save_strategy,
+        key_file,
+    )
+    .await
 }
 
 pub async fn inner_export_recovery_device(
     device: &LocalDevice,
+    device_label: DeviceLabel,
 ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
-    platform::export_recovery_device(device).await
+    platform::export_recovery_device(device, device_label).await
 }

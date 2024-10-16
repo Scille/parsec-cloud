@@ -5075,7 +5075,33 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
     let js_obj = cx.empty_object();
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
-    match rs_obj {}
+    match rs_obj {
+        libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorDecryptionFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidData").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPassphrase").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::SaveDeviceError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorSaveDeviceError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+    }
     Ok(js_obj)
 }
 
@@ -9821,6 +9847,18 @@ fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
             v
         }
     };
+    let device_label = {
+        let js_val = cx.argument::<JsString>(1)?;
+        {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
+            };
+            match custom_from_rs_string(js_val.value(&mut cx)) {
+                Ok(val) => val,
+                Err(err) => return cx.throw_type_error(err),
+            }
+        }
+    };
     let channel = cx.channel();
     let (deferred, promise) = cx.promise();
 
@@ -9829,7 +9867,7 @@ fn export_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .lock()
         .expect("Mutex is poisoned")
         .spawn(async move {
-            let ret = libparsec::export_recovery_device(client_handle).await;
+            let ret = libparsec::export_recovery_device(client_handle, device_label).await;
 
             deferred.settle_with(&channel, move |mut cx| {
                 let js_ret = match ret {
@@ -10753,16 +10791,20 @@ fn greeter_user_initial_do_wait_peer(mut cx: FunctionContext) -> JsResult<JsProm
 // import_recovery_device
 fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
     crate::init_sentry();
+    let config = {
+        let js_val = cx.argument::<JsObject>(0)?;
+        struct_client_config_js_to_rs(&mut cx, js_val)?
+    };
     let recovery_device = {
-        let js_val = cx.argument::<JsTypedArray<u8>>(0)?;
+        let js_val = cx.argument::<JsTypedArray<u8>>(1)?;
         js_val.as_slice(&mut cx).to_vec()
     };
     let passphrase = {
-        let js_val = cx.argument::<JsString>(1)?;
+        let js_val = cx.argument::<JsString>(2)?;
         js_val.value(&mut cx)
     };
     let device_label = {
-        let js_val = cx.argument::<JsString>(2)?;
+        let js_val = cx.argument::<JsString>(3)?;
         {
             let custom_from_rs_string = |s: String| -> Result<_, String> {
                 libparsec::DeviceLabel::try_from(s.as_str()).map_err(|e| e.to_string())
@@ -10774,7 +10816,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
         }
     };
     let save_strategy = {
-        let js_val = cx.argument::<JsObject>(3)?;
+        let js_val = cx.argument::<JsObject>(4)?;
         variant_device_save_strategy_js_to_rs(&mut cx, js_val)?
     };
     let channel = cx.channel();
@@ -10786,6 +10828,7 @@ fn import_recovery_device(mut cx: FunctionContext) -> JsResult<JsPromise> {
         .expect("Mutex is poisoned")
         .spawn(async move {
             let ret = libparsec::import_recovery_device(
+                config,
                 recovery_device,
                 passphrase,
                 device_label,

@@ -449,7 +449,20 @@ def is_keyring_available() -> bool:
 
 
 class ImportRecoveryDeviceError(ErrorVariant):
-    pass
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class InvalidPassphrase:
+        pass
+
+    class DecryptionFailed:
+        pass
+
+    class SaveDeviceError:
+        pass
 
 
 class ExportRecoveryDeviceError(ErrorVariant):
@@ -461,6 +474,7 @@ class ExportRecoveryDeviceError(ErrorVariant):
 
 
 async def import_recovery_device(
+    config: ClientConfig,
     recovery_device: bytes,
     passphrase: str,
     device_label: DeviceLabel,
@@ -471,5 +485,6 @@ async def import_recovery_device(
 
 async def export_recovery_device(
     client_handle: Handle,
+    device_label: DeviceLabel,
 ) -> Result[tuple[str, bytes], ExportRecoveryDeviceError]:
     raise NotImplementedError
