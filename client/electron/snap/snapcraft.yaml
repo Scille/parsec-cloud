@@ -115,7 +115,7 @@ parts:
     build-environment:
       - VITE_MODE: development
     override-build: |
-      set -x
+      set -eux
 
       set -a
       source $SNAPCRAFT_PROJECT_DIR/snapcraft.env
@@ -146,8 +146,9 @@ parts:
       # Compile typescript
       npx tsc
 
-      if [ "${SENTRY_AUTH_TOKEN}" != "__TOKEN__" ]; then
-        npm run sentry:sourcemaps
+      if [ "${SENTRY_AUTH_TOKEN:=}" != "__TOKEN__" ] && [ -n "${SENTRY_AUTH_TOKEN:=}" ]; then
+        npm exec sentry-cli -- sourcemaps inject --release $SENTRY_RELEASE ./build
+        npm exec sentry-cli -- sourcemaps upload --release $SENTRY_RELEASE --dist $SENTRY_DIST ./build
       else
         echo "SENTRY_AUTH_TOKEN is not set, skipping source maps upload." >&2
       fi

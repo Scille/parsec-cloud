@@ -55,6 +55,8 @@ if (process.env.SENTRY_AUTH_TOKEN) {
     project: 'parsec3-frontend',
     authToken: process.env.SENTRY_AUTH_TOKEN,
     release: {
+      // The name of the release, e.g: parsec@3.0.0
+      name: process.env.SENTRY_RELEASE,
       // Distribution identifier for this release, e.g.: web, native
       dist: process.env.SENTRY_DIST,
     },

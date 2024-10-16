@@ -86,6 +86,14 @@ jobs:
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
+      - name: Load version config
+        id: version
+        shell: bash
+        run: |
+          cat version.patch/version.ini > "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
+
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
@@ -106,6 +114,7 @@ jobs:
         run: npm run web:release
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
           SENTRY_DIST: web
         working-directory: client
 
@@ -170,7 +179,10 @@ jobs:
         run:
           (
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}";
+            echo "SENTRY_RELEASE=parsec@${{ steps.version.outputs.full }}";
             echo "SENTRY_DIST=snapcraft-linux";
+            echo "SENTRY_ORG=scille";
+            echo "SENTRY_PROJECT=parsec3-frontend";
             echo "VITE_MODE=${{ steps.version.outputs.type }}";
           ) | tee snapcraft.env
         shell: bash
@@ -314,6 +326,7 @@ jobs:
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_DIST: ${{ matrix.platform }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
         working-directory: client
         timeout-minutes: 5
 
@@ -338,9 +351,16 @@ jobs:
         timeout-minutes: 5
 
       - name: Upload client electron sourcemaps
-        run: npm run sentry:sourcemaps
+        run: |
+          npm exec sentry-cli -- sourcemaps inject --release $SENTRY_RELEASE ./build
+          npm exec sentry-cli -- sourcemaps upload --release $SENTRY_RELEASE --dist $SENTRY_DIST ./build
+        shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DIST: ${{ matrix.platform }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
+          SENTRY_ORG: scille
+          SENTRY_PROJECT: parsec3-frontend
         working-directory: client/electron
         timeout-minutes: 1
 
@@ -353,7 +373,7 @@ jobs:
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}.spdx.json .
 
       - name: Debug dist folder
-        if: runner.debug || false
+        if: runner.debug
         run: ls client/electron/dist
 
       - name: Build info
