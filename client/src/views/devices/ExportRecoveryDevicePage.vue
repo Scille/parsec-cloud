@@ -154,7 +154,7 @@ import { RecoveryDeviceErrorTag, exportRecoveryDevice } from '@/parsec';
 import { getClientInfo } from '@/parsec/login';
 import { routerGoBack } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
-import { MsInformativeText, Translatable, I18n, getPasswordFromUser } from 'megashark-lib';
+import { MsInformativeText, Translatable, I18n } from 'megashark-lib';
 import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
@@ -179,16 +179,7 @@ onMounted(async (): Promise<void> => {
 });
 
 async function exportDevice(): Promise<void> {
-  const password = await getPasswordFromUser({
-    title: 'PasswordInputModal.passwordNeeded',
-    subtitle: { key: 'PasswordInputModal.enterPassword', data: { org: orgId.value } },
-    inputLabel: 'PasswordInputModal.password',
-    okButtonText: 'PasswordInputModal.validate',
-  });
-  if (!password) {
-    return;
-  }
-  const result = await exportRecoveryDevice(password);
+  const result = await exportRecoveryDevice();
   if (!result.ok) {
     const notificationMsg =
       result.error.tag === RecoveryDeviceErrorTag.Invalid ? 'PasswordInputModal.invalid' : 'PasswordInputModal.otherError';
@@ -236,7 +227,7 @@ async function downloadRecoveryFile(): Promise<void> {
 }
 
 async function fileDownload(data: string, fileName: Translatable): Promise<void> {
-  downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8, ${encodeURIComponent(data)}`);
+  downloadLink.value.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(data)}`);
   downloadLink.value.setAttribute('download', I18n.translate(fileName));
   downloadLink.value.click();
 }

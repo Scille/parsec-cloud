@@ -75,7 +75,7 @@
               <ms-input
                 class="recovery-list-item__input"
                 id="secret-key-input"
-                :placeholder="secretKeyPlaceholder"
+                placeholder="ImportRecoveryDevicePage.secretKeyPlaceholder"
                 v-model="secretKey"
                 @change="checkSecretKeyValidity()"
               />
@@ -100,9 +100,9 @@
       </ion-card-content>
     </ion-card>
   </div>
-  <!-- step 2: new password -->
+  <!-- step 2: new authentication -->
   <div
-    v-else-if="state === ImportDevicePageState.Password"
+    v-else-if="state === ImportDevicePageState.Authentication"
     class="recovery-content password-input"
   >
     <div class="recovery-header">
@@ -111,18 +111,14 @@
       </ion-title>
     </div>
     <ion-card class="recovery-card">
-      <ms-choose-password-input
-        :password-label="'ImportRecoveryDevicePage.titles.setNewPassword'"
-        @on-enter-keyup="createNewDevice()"
-        ref="choosePasswordInput"
-      />
+      <choose-authentication ref="chooseAuthRef" />
       <ion-button
         id="validate-password-btn"
         class="validate-button"
         :disabled="!changeButtonIsEnabled"
         @click="createNewDevice()"
       >
-        {{ $msTranslate('ImportRecoveryDevicePage.actions.validatePassword') }}
+        {{ $msTranslate('ImportRecoveryDevicePage.actions.validateAuth') }}
       </ion-button>
     </ion-card>
   </div>
@@ -141,7 +137,7 @@
       </ms-informative-text>
       <ion-button
         class="success-card__button"
-        @click="onLoginClick()"
+        @click="onLoginClick"
       >
         {{ $msTranslate('ImportRecoveryDevicePage.actions.goBackToLogin') }}
       </ion-button>
@@ -151,33 +147,38 @@
 
 <script setup lang="ts">
 import { secretKeyValidator } from '@/common/validators';
-import { MsChoosePasswordInput, MsInformativeText, MsReportText, MsReportTheme, MsInput, asyncComputed, Validity } from 'megashark-lib';
+import { MsInformativeText, MsReportText, MsReportTheme, MsInput, asyncComputed, Validity } from 'megashark-lib';
+import ChooseAuthentication from '@/components/devices/ChooseAuthentication.vue';
 import OrganizationCard from '@/components/organizations/OrganizationCard.vue';
 import { AvailableDevice, DeviceInfo, RecoveryImportErrorTag, SecretKey, deleteDevice, importRecoveryDevice, saveDevice } from '@/parsec';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonButton, IonCard, IonCardContent, IonCardTitle, IonIcon, IonTitle } from '@ionic/vue';
 import { checkmarkCircle } from 'ionicons/icons';
 import { Ref, inject, onMounted, ref } from 'vue';
+import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 
 enum ImportDevicePageState {
   Start = 'start',
-  Password = 'password',
+  Authentication = 'password',
   Done = 'done',
 }
 
 const state = ref(ImportDevicePageState.Start);
-const choosePasswordInput: Ref<typeof MsChoosePasswordInput | null> = ref(null);
+const chooseAuthRef = ref();
 const hiddenInput = ref();
 const secretKey: Ref<SecretKey> = ref('');
-// cspell:disable-next-line
-const secretKeyPlaceholder = 'FH3H-N3DW-RUOO-A6Q7-...';
-const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
-  return choosePasswordInput.value && (await choosePasswordInput.value.areFieldsCorrect());
-});
 const recoveryFile: Ref<File | null> = ref(null);
 const newDeviceInfo: Ref<DeviceInfo | null> = ref(null);
 const isSecretKeyValid = ref(false);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
+const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
+const informationManager: InformationManager = injectionProvider.getDefault().informationManager;
+
+const changeButtonIsEnabled = asyncComputed(async (): Promise<boolean> => {
+  if (!chooseAuthRef.value) {
+    return false;
+  }
+  return await chooseAuthRef.value.areFieldsCorrect();
+});
 
 const emits = defineEmits<{
   (e: 'organizationSelected', device: AvailableDevice): void;
@@ -212,7 +213,7 @@ async function goToPasswordChange(): Promise<void> {
   const result = await importRecoveryDevice(props.device.deviceLabel, recoveryFile.value, secretKey.value);
   if (result.ok) {
     newDeviceInfo.value = result.value;
-    state.value = ImportDevicePageState.Password;
+    state.value = ImportDevicePageState.Authentication;
   } else {
     const notificationInfo = { message: '', level: InformationLevel.Error };
 
@@ -233,7 +234,7 @@ async function goToPasswordChange(): Promise<void> {
 
 async function createNewDevice(): Promise<void> {
   // Check matching and valid passwords
-  if (!choosePasswordInput.value || !(await choosePasswordInput.value.areFieldsCorrect())) {
+  if (!(await chooseAuthRef.value.areFieldsCorrect())) {
     informationManager.present(
       new Information({
         message: 'ImportRecoveryDevicePage.errors.passwordErrorMessage',
@@ -255,7 +256,7 @@ async function createNewDevice(): Promise<void> {
     return;
   }
   // Save new device with password
-  if (!(await saveDevice(newDeviceInfo.value, 'newPassword')).ok) {
+  if (!(await saveDevice(newDeviceInfo.value, chooseAuthRef.value.getSaveStrategy())).ok) {
     informationManager.present(
       new Information({
         message: 'ImportRecoveryDevicePage.errors.saveDeviceErrorMessage',
@@ -278,14 +279,15 @@ async function onLoginClick(): Promise<void> {
 
 <style lang="scss" scoped>
 .recovery-content {
-  height: 100%;
-  width: 60vw;
+  height: auto;
+  width: 100%;
   max-width: var(--parsec-max-forgotten-pwd-width);
   display: flex;
   margin: 0 auto;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
+  box-shadow: none;
 }
 
 .recovery-header {
