@@ -173,7 +173,13 @@
             "archiveFailure": "Impossible d'archiver l'appareil."
         },
         "organizationActionSheet": "Organisation",
-        "keyringFailed": "Impossible de se connecter",
+        "loginErrors": {
+            "keyringFailed": "Impossible de se connecter",
+            "keyringFailedTitle": "Impossible de se connecter",
+            "keyringFailedQuestion": "La connexion à cet appareil en utilisant l'authentification du système a échoué. Souhaitez-vous utiliser un appareil de récupération ?",
+            "keyringFailedUsedRecovery": "Utiliser un appareil de récupération",
+            "keyringFailedAbort": "Non"
+        },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
         "noDevices": {
             "titleCreateOrga": "Vous débutez sur Parsec ?",
@@ -702,16 +708,16 @@
         "joinedOn": "Rejoint :",
         "now": "À l'instant",
         "restorePassword": {
-            "title": "Fichiers de récupération de mot de passe",
+            "title": "Fichiers de récupération d'authentification'",
             "done": {
-                "subtitle": "Vous avez créé et sauvegardé les fichiers de récupération de mot de passe.",
+                "subtitle": "Vous avez créé et sauvegardé les fichiers de récupération d'authentification'.",
                 "label": "Fichiers déjà téléchargés",
                 "button": "Re-télécharger les fichiers"
             },
             "notDone": {
                 "label": "Action requise",
                 "subtitle": "Parsec ne garde pas votre mot de passe.",
-                "subtitle2": "Ces fichiers vous permettent de réinitialiser votre mot de passe sur un appareil en cas d'oubli.",
+                "subtitle2": "Ces fichiers vous permettent de réinitialiser votre authentification sur un appareil en cas d'oubli.",
                 "button": "Créer des fichiers de récupération"
             }
         },
@@ -807,20 +813,20 @@
             "forgottenPassword": "Mot de passe oublié",
             "recoveryFile": "Fichier de récupération",
             "recoveryKey": "Clé secrète",
-            "setNewPassword": "Définissez un nouveau mot de passe",
-            "passwordChanged": "Le mot de passe a bien été modifié"
+            "setNewPassword": "Choisissez votre méthode d'authentification",
+            "passwordChanged": "L'authentification a bien été modifiée"
         },
         "subtitles": {
-            "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre mot de passe.",
+            "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre authentification.",
             "password": "Mot de passe",
-            "passwordModified": "Vous pouvez vous connecter avec votre nouveau mot de passe.",
+            "passwordModified": "Vous pouvez vous connecter avec votre nouvelle authentification.",
             "noFileSelected": "Aucun fichier sélectionné"
         },
         "actions": {
             "browse": "Parcourir",
             "next": "Suivant",
-            "validatePassword": "Valider mon mot de passe",
-            "goBackToLogin": "Revenir à la connexion"
+            "validateAuth": "Confirmer",
+            "login": "Se connecter"
         },
         "errors": {
             "fileErrorMessage": "Le fichier de récupération est invalide.",
@@ -828,7 +834,8 @@
             "passwordErrorMessage": "Les mots de passe ne correspondent pas ou ne sont pas assez forts.",
             "saveDeviceErrorMessage": "Une erreur est survenue, la récupération d'appareil a échoué.",
             "internalErrorMessage": "Une erreur est survenue"
-        }
+        },
+        "secretKeyPlaceholder": "FH3H-N3DW-ABED-A6Q7-.."
     },
     "ExportRecoveryDevicePage": {
         "titles": {
@@ -854,8 +861,11 @@
             "keyDownloadOk": "La clé secrète a bien été téléchargée"
         },
         "filenames": {
-            "recoveryFile": "Parsec_Fichier_Récupération_{org}.data",
+            "recoveryFile": "Parsec_Fichier_Récupération_{org}.psrk",
             "recoveryKey": "Parsec_Code_Récupération_{org}.txt"
+        },
+        "errors": {
+            "exportFailed": "Impossible de créer un appareil de récupération."
         }
     },
     "SasCodeChoice": {

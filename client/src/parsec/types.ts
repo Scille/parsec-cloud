@@ -9,6 +9,7 @@ export {
   ClientChangeAuthenticationErrorTag,
   ClientCreateWorkspaceErrorTag,
   ClientEventTag,
+  ClientExportRecoveryDeviceErrorTag,
   ClientInfoErrorTag,
   ClientListUserDevicesErrorTag,
   ClientListUsersErrorTag,
@@ -29,6 +30,7 @@ export {
   DeviceSaveStrategyTag,
   EntryStatTag as FileType,
   GreetInProgressErrorTag,
+  ImportRecoveryDeviceErrorTag,
   InvitationEmailSentStatus,
   InvitationStatus,
   ListInvitationsErrorTag,
@@ -74,6 +76,7 @@ export type {
   ClientEvent,
   ClientEventInvitationChanged,
   ClientEventPing,
+  ClientExportRecoveryDeviceError,
   ClientGetTosError,
   ClientInfo,
   ClientInfoError,
@@ -111,6 +114,7 @@ export type {
   FileDescriptor,
   VlobID as FileID,
   GreetInProgressError,
+  ImportRecoveryDeviceError,
   InvitationToken,
   ListInvitationsError,
   MountpointToOsPathError,
@@ -204,6 +208,7 @@ interface UserInfo extends ParsecUserInfo {
 
 interface OwnDeviceInfo extends DeviceInfo {
   isCurrent: boolean;
+  isRecovery: boolean;
 }
 
 interface EntryStatFolder extends ParsecEntryStatFolder {

@@ -7,17 +7,20 @@ import { fillIonInput } from '@tests/pw/helpers/utils';
 msTest('Check devices list', async ({ myProfilePage }) => {
   await expect(myProfilePage.locator('#add-device-button')).toHaveText('Add');
   const devices = myProfilePage.locator('#devices-list').getByRole('listitem');
-  await expect(devices.locator('.device-name')).toHaveText(['Web', 'Web', 'Recovery Device']);
-  await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today', 'Joined: Today']);
+  await expect(devices.locator('.device-name')).toHaveText([/^device\d$/, /^device\d$/]);
+  await expect(devices.locator('.join-date')).toHaveText(['Joined: Today', 'Joined: Today']);
   await expect(devices.nth(0).locator('.badge')).toBeVisible();
   await expect(devices.nth(1).locator('.badge')).toBeHidden();
-  await expect(devices.nth(2).locator('.badge')).toBeHidden();
 });
 
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
-  // Currently the restore-password section is hidden
   const restorePassword = myProfilePage.locator('.restore-password');
-  await expect(restorePassword).toBeHidden();
+  await expect(restorePassword).toBeVisible();
+  await expect(restorePassword.locator('.restore-password-header__title')).toHaveText('Authentication recovery files');
+  await expect(restorePassword.locator('.restore-password-subtitles')).toHaveText(
+    'Authentication recovery files have been created and downloaded.',
+  );
+  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Re-download recovery files');
 });
 
 msTest('Open authentication section', async ({ myProfilePage }) => {
