@@ -40,7 +40,7 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_device_loader::ExportRecoveryDeviceError;
+use libparsec_platform_device_loader::{ExportRecoveryDeviceError, ImportRecoveryDeviceError};
 use libparsec_types::prelude::*;
 
 // Re-exposed for public API
@@ -525,8 +525,27 @@ impl Client {
 
     pub async fn export_recovery_device(
         &self,
+        device_label: DeviceLabel,
     ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
-        libparsec_platform_device_loader::inner_export_recovery_device(&self.device).await
+        libparsec_platform_device_loader::inner_export_recovery_device(&self.device, device_label)
+            .await
+    }
+
+    pub async fn import_recovery_device(
+        &self,
+        recovery_device: Vec<u8>,
+        passphrase: SecretKeyPassphrase,
+        device_label: DeviceLabel,
+        save_strategy: DeviceSaveStrategy,
+    ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+        libparsec_platform_device_loader::inner_import_recovery_device(
+            recovery_device,
+            passphrase,
+            device_label,
+            save_strategy,
+            self.config.config_dir.clone(),
+        )
+        .await
     }
 }
 

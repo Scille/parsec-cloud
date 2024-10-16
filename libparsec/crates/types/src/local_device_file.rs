@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use libparsec_crypto::Password;
 use libparsec_serialization_format::parsec_data;
 
-use crate as libparsec_types;
+use crate::{self as libparsec_types};
 use crate::{
     impl_transparent_data_format_conversion, DateTime, DeviceID, DeviceLabel, HumanHandle,
     OrganizationID, UserID,

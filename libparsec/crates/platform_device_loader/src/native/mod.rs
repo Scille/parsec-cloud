@@ -12,8 +12,8 @@ use zeroize::Zeroize;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, ExportRecoveryDeviceError, LoadDeviceError,
-    LoadRecoveryDeviceError, SaveDeviceError, SaveRecoveryDeviceError,
+    ChangeAuthentificationError, ExportRecoveryDeviceError, ImportRecoveryDeviceError,
+    LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError, SaveRecoveryDeviceError,
     ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM,
     DEVICE_FILE_EXT,
 };
@@ -587,6 +587,7 @@ pub async fn save_recovery_device(
 /// encrypted device data and dumped recovery device data
 pub async fn export_recovery_device(
     device: &LocalDevice,
+    device_label: DeviceLabel,
 ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
     let created_on = device.now();
     let server_url = {
@@ -601,8 +602,19 @@ pub async fn export_recovery_device(
 
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
+    let recovery_device = LocalDevice::generate_new_device(
+        device.organization_addr.clone(),
+        device.initial_profile,
+        device.human_handle.clone(),
+        device_label,
+        Some(device.user_id),
+        None,
+        None,
+        None,
+        None,
+    );
     let ciphertext = {
-        let mut cleartext = device.dump();
+        let mut cleartext = recovery_device.dump();
         let ciphertext = key.encrypt(&cleartext);
         cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
         ciphertext.into()
@@ -613,16 +625,58 @@ pub async fn export_recovery_device(
         // Note recovery device is not supposed to change its protection
         protected_on: created_on,
         server_url,
-        organization_id: device.organization_id().to_owned(),
-        user_id: device.user_id,
-        device_id: device.device_id,
-        human_handle: device.human_handle.to_owned(),
-        device_label: device.device_label.to_owned(),
+        organization_id: recovery_device.organization_id().to_owned(),
+        user_id: recovery_device.user_id,
+        device_id: recovery_device.device_id,
+        human_handle: recovery_device.human_handle.to_owned(),
+        device_label: recovery_device.device_label.to_owned(),
         ciphertext,
     })
     .dump();
 
     Ok((passphrase, file_content))
+}
+
+pub async fn import_recovery_device(
+    recovery_device: Vec<u8>,
+    passphrase: SecretKeyPassphrase,
+    device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+    key_file: PathBuf,
+) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+    let key = SecretKey::from_recovery_passphrase(passphrase)
+        .map_err(|_| ImportRecoveryDeviceError::InvalidPassphrase)?;
+
+    // Regular load
+    let device_file =
+        DeviceFile::load(&recovery_device).map_err(|_| ImportRecoveryDeviceError::InvalidData)?;
+
+    let recovery_device = match device_file {
+        DeviceFile::Recovery(x) => {
+            let mut cleartext = key
+                .decrypt(&x.ciphertext)
+                .map_err(|_| ImportRecoveryDeviceError::DecryptionFailed)?;
+            let device = LocalDevice::load(&cleartext)
+                .map_err(|_| ImportRecoveryDeviceError::InvalidData)?;
+            cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
+            device
+        }
+        // We are not expecting other type of device file
+        _ => return Err(ImportRecoveryDeviceError::InvalidData),
+    };
+    let device = LocalDevice::generate_new_device(
+        recovery_device.organization_addr,
+        recovery_device.initial_profile,
+        recovery_device.human_handle.clone(),
+        device_label,
+        Some(recovery_device.user_id),
+        None,
+        None,
+        None,
+        None,
+    );
+
+    Ok(save_device(&save_strategy.into_access(key_file), &device, device.now()).await?)
 }
 
 pub fn is_keyring_available() -> bool {
