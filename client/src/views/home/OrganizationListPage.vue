@@ -282,7 +282,7 @@ onUnmounted(async () => {
 
 async function refreshDeviceList(): Promise<void> {
   querying.value = true;
-  deviceList.value = await listAvailableDevices();
+  deviceList.value = await listAvailableDevices(false);
   querying.value = false;
 }
 
