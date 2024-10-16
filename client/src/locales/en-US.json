@@ -767,20 +767,20 @@
             "forgottenPassword": "Forgotten password",
             "recoveryFile": "Recovery file",
             "recoveryKey": "Secret key",
-            "setNewPassword": "Choose a new password",
-            "passwordChanged": "Password was successfully changed!"
+            "setNewPassword": "Choose a new authentication",
+            "passwordChanged": "Authentication was successfully updated!"
         },
         "subtitles": {
             "recoveryFilesMustExistWarning": "You must have created recovery files in order to reset your password.",
             "password": "Password",
-            "passwordModified": "You can now login with your new password.",
+            "passwordModified": "You can now login with your new authentication.",
             "noFileSelected": "No file selected"
         },
         "actions": {
             "browse": "Browse",
             "next": "Next",
-            "validatePassword": "Validate password",
-            "goBackToLogin": "Go back to login"
+            "validateAuth": "Confirm",
+            "login": "Login"
         },
         "errors": {
             "fileErrorMessage": "Invalid recovery file.",
@@ -788,7 +788,8 @@
             "passwordErrorMessage": "Passwords do not match or are not strong enough.",
             "saveDeviceErrorMessage": "An error has occurred, the device recovery failed.",
             "internalErrorMessage": "An error has occurred"
-        }
+        },
+        "secretKeyPlaceholder": "FH3H-N3DW-RUOO-A6Q7-..."
     },
     "ExportRecoveryDevicePage": {
         "titles": {
@@ -814,8 +815,11 @@
             "keyDownloadOk": "The secret key was successfully downloaded"
         },
         "filenames": {
-            "recoveryFile": "Parsec_Recovery_File_{org}.data",
+            "recoveryFile": "Parsec_Recovery_File_{org}.psrk",
             "recoveryKey": "Parsec_Recovery_Code_{org}.txt"
+        },
+        "errors": {
+            "exportFailed": "Failed to create a recovery device."
         }
     },
     "SasCodeChoice": {

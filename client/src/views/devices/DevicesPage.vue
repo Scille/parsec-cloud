@@ -33,6 +33,7 @@
             v-for="device in devices"
             :key="device.id"
             class="device-list-item ion-no-padding"
+            v-show="!device.isRecovery"
           >
             <device-card
               :label="device.deviceLabel"
@@ -45,11 +46,11 @@
     </div>
 
     <!-- restore password card -->
-    <div v-show="false">
+    <div>
       <!-- files not downloaded -->
       <div
         class="restore-password"
-        v-if="!passwordSaved"
+        v-if="!hasRecoveryDevice"
       >
         <ion-label class="body-sm danger">
           {{ $msTranslate('DevicesPage.restorePassword.notDone.label') }}
@@ -64,10 +65,7 @@
           </h3>
         </div>
         <div class="restore-password-subtitles">
-          <ion-text
-            class="body"
-            :show="passwordSaved"
-          >
+          <ion-text class="body">
             {{ $msTranslate('DevicesPage.restorePassword.notDone.subtitle') }}
           </ion-text>
           <ion-text class="body">
@@ -130,20 +128,33 @@
 <script setup lang="ts">
 import { MsImage, MsModalResult, PasswordLock } from 'megashark-lib';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
-import { OwnDeviceInfo, hasRecoveryDevice, listOwnDevices } from '@/parsec';
-import { Routes, navigateTo } from '@/router';
+import { OwnDeviceInfo, listOwnDevices } from '@/parsec';
+import { Routes, navigateTo, watchRoute, getCurrentRouteName } from '@/router';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import GreetDeviceModal from '@/views/devices/GreetDeviceModal.vue';
 import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonText, modalController } from '@ionic/vue';
 import { add, download, sparkles } from 'ionicons/icons';
-import { Ref, inject, onMounted, ref } from 'vue';
+import { Ref, inject, onMounted, ref, computed, onUnmounted } from 'vue';
 
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const devices: Ref<OwnDeviceInfo[]> = ref([]);
-const passwordSaved = ref(false);
+const hasRecoveryDevice = computed(() => {
+  return devices.value.find((device) => device.isRecovery) !== undefined;
+});
+
+const routeWatchCancel = watchRoute(async () => {
+  if (getCurrentRouteName() !== Routes.MyProfile) {
+    return;
+  }
+  await refreshDevicesList();
+});
 
 onMounted(async () => {
   await refreshDevicesList();
+});
+
+onUnmounted(async () => {
+  routeWatchCancel();
 });
 
 async function goToExportRecoveryDevice(): Promise<void> {
@@ -154,9 +165,6 @@ async function refreshDevicesList(): Promise<void> {
   const result = await listOwnDevices();
   if (result.ok) {
     devices.value = result.value;
-    if (await hasRecoveryDevice()) {
-      passwordSaved.value = true;
-    }
   } else {
     informationManager.present(
       new Information({
@@ -211,6 +219,8 @@ async function onAddDeviceClick(): Promise<void> {
 
 .devices-content {
   margin-top: 2rem;
+  max-height: 16em;
+  overflow-y: auto;
 
   .devices-list {
     margin: 0;
