@@ -167,12 +167,12 @@
                 lines="none"
                 class="list-workspaces-header menu-default"
               >
-                <div class="list-workspaces-header-title">
+                <div class="list-workspaces-header-favorites">
                   <ion-icon
-                    class="list-workspaces-header-title__icon"
+                    class="list-workspaces-header-favorites__icon"
                     :icon="star"
                   />
-                  <ion-text class="list-workspaces-header-title__text">
+                  <ion-text class="list-workspaces-header-favorites__text">
                     {{ $msTranslate('SideMenu.favorites') }}
                   </ion-text>
                 </div>
@@ -199,7 +199,10 @@
                 lines="none"
                 class="list-workspaces-header menu-default"
               >
-                <div class="list-workspaces-header-title">
+                <div
+                  class="list-workspaces-header-title"
+                  @click="navigateTo(Routes.Workspaces)"
+                >
                   <ion-icon
                     class="list-workspaces-header-title__icon"
                     :icon="business"
@@ -785,7 +788,8 @@ ion-menu {
     position: relative;
     overflow: visible;
 
-    &-title {
+    &-title,
+    &-favorites {
       color: var(--parsec-color-light-secondary-inversed-contrast);
       opacity: 0.6;
       display: flex;
@@ -801,6 +805,10 @@ ion-menu {
         margin-right: 0.5rem;
         position: relative;
       }
+    }
+
+    &-title {
+      cursor: pointer;
     }
 
     &__button {

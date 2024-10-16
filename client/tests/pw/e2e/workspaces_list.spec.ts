@@ -197,3 +197,25 @@ for (const gridMode of [false, true]) {
     await expect(connected.locator('.no-workspaces').locator('ion-text')).toHaveText('No workspace match this search filter.');
   });
 }
+
+msTest('Back from files with back button', async ({ connected }) => {
+  await connected.locator('.workspaces-grid-item').nth(0).click();
+  await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText(
+    'The Copper Coronet',
+  );
+  await connected.locator('.topbar-left').locator('.back-button').click();
+  await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
+    'My workspaces',
+  );
+});
+
+msTest('Back from files with side menu', async ({ connected }) => {
+  await connected.locator('.workspaces-grid-item').nth(0).click();
+  await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText(
+    'The Copper Coronet',
+  );
+  await connected.locator('.sidebar').locator('.sidebar-content').locator('.list-workspaces-header-title').click();
+  await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
+    'My workspaces',
+  );
+});
