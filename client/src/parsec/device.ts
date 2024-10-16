@@ -1,14 +1,19 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { needsMocks } from '@/parsec/environment';
+import { getClientConfig } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
+  ClientExportRecoveryDeviceError,
   ClientListUserDevicesError,
   ClientListUserDevicesErrorTag,
   DeviceFileType,
   DeviceInfo,
   DevicePurpose,
+  DeviceSaveStrategy,
+  ImportRecoveryDeviceError,
+  ImportRecoveryDeviceErrorTag,
   OwnDeviceInfo,
   Result,
   UserID,
@@ -18,113 +23,52 @@ import { DateTime } from 'luxon';
 
 const RECOVERY_DEVICE_PREFIX = 'recovery';
 
-export type SecretKey = string;
-
-export interface RecoveryDeviceData {
-  code: string;
-  file: string;
+function generateRecoveryDeviceLabel(): string {
+  return `${RECOVERY_DEVICE_PREFIX}_${DateTime.utc().toMillis()}`;
 }
 
-export enum RecoveryDeviceErrorTag {
-  Internal = 'internal',
-  Invalid = 'invalid',
-}
-
-export enum RecoveryImportErrorTag {
-  Internal = 'internal',
-  KeyError = 'keyError',
-  RecoveryFileError = 'recoveryFileError',
-}
-
-export interface RecoveryDeviceError {
-  tag: RecoveryDeviceErrorTag.Internal;
-}
-
-export interface WrongAuthenticationError {
-  tag: RecoveryDeviceErrorTag.Invalid;
-}
-
-export interface RecoveryImportInternalError {
-  tag: RecoveryImportErrorTag.Internal;
-}
-
-export interface RecoveryImportFileError {
-  tag: RecoveryImportErrorTag.RecoveryFileError;
-}
-
-export interface RecoveryImportKeyError {
-  tag: RecoveryImportErrorTag.KeyError;
-}
-
-export type RecoveryImportError = RecoveryImportInternalError | RecoveryImportFileError | RecoveryImportKeyError;
-
-export async function exportRecoveryDevice(_password: string): Promise<Result<RecoveryDeviceData, WrongAuthenticationError>> {
+export async function exportRecoveryDevice(): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>> {
   const handle = getParsecHandle();
 
-  if (_password !== 'P@ssw0rd.') {
-    return { ok: false, error: { tag: RecoveryDeviceErrorTag.Invalid } };
-  }
-
   if (handle !== null && !needsMocks()) {
-    return {
-      ok: true,
-      value: {
-        code: 'ABCDEF',
-        file: 'Q2lnYXJlQU1vdXN0YWNoZQ==',
-      },
-    };
+    return await libparsec.clientExportRecoveryDevice(handle, generateRecoveryDeviceLabel());
   } else {
     return {
       ok: true,
-      value: {
-        code: 'ABCDEF',
-        file: 'Q2lnYXJlQU1vdXN0YWNoZQ==',
-      },
+      value: ['ABCDEF', new Uint8Array([0x6d, 0x65, 0x6f, 0x77])],
     };
   }
+}
+
+function areArraysEqual(a: Uint8Array, b: Uint8Array): boolean {
+  return a.every((val, index) => {
+    return val === b[index];
+  });
 }
 
 export async function importRecoveryDevice(
   deviceLabel: string,
-  file: File,
-  _passphrase: string,
-): Promise<Result<DeviceInfo, RecoveryImportError>> {
-  const handle = getParsecHandle();
+  recoveryData: Uint8Array,
+  passphrase: string,
+  saveStrategy: DeviceSaveStrategy,
+): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>> {
+  if (!needsMocks()) {
+    const result = await libparsec.importRecoveryDevice(getClientConfig(), recoveryData, passphrase, deviceLabel, saveStrategy);
+    if (result.ok) {
+      result.value.createdOn = DateTime.fromSeconds(result.value.createdOn as any as number);
+      result.value.protectedOn = DateTime.fromSeconds(result.value.protectedOn as any as number);
+    }
+    return result;
+  }
 
   // cspell:disable-next-line
-  if (_passphrase !== 'ABCD-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOP') {
-    return { ok: false, error: { tag: RecoveryImportErrorTag.KeyError } };
+  if (passphrase !== 'ABCD-EFGH-IJKL-MNOP-QRST-UVWX-YZ12-3456-7890-ABCD-EFGH-IJKL-MNOP') {
+    return { ok: false, error: { tag: ImportRecoveryDeviceErrorTag.InvalidPassphrase, error: 'Wrong passphrase' } };
   }
-  if (!file.name.endsWith('.psrk')) {
-    return { ok: false, error: { tag: RecoveryImportErrorTag.RecoveryFileError } };
+  if (areArraysEqual(recoveryData, new Uint8Array([78, 79, 80, 10]))) {
+    return { ok: false, error: { tag: ImportRecoveryDeviceErrorTag.InvalidData, error: 'Wrong data' } };
   }
-  if (handle !== null && !needsMocks()) {
-    return {
-      ok: true,
-      value: {
-        id: 'fake_id',
-        deviceLabel: deviceLabel,
-        purpose: DevicePurpose.Standard,
-        createdOn: DateTime.now(),
-        createdBy: null,
-      },
-    };
-  } else {
-    return {
-      ok: true,
-      value: {
-        id: 'fake_id',
-        deviceLabel: deviceLabel,
-        purpose: DevicePurpose.Standard,
-        createdOn: DateTime.now(),
-        createdBy: null,
-      },
-    };
-  }
-}
 
-export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Promise<Result<AvailableDevice, RecoveryImportError>> {
-  // const _saveStrategy: DeviceSaveStrategyPassword = { tag: DeviceSaveStrategyTag.Password, password: password };
   return {
     ok: true,
     value: {
@@ -134,27 +78,15 @@ export async function saveDevice(deviceInfo: DeviceInfo, _password: string): Pro
       protectedOn: DateTime.utc(),
       organizationId: 'dummy_org',
       userId: 'dummy_user_id',
-      deviceId: deviceInfo.id,
+      deviceId: 'device_id',
       humanHandle: {
         email: 'dummy_email@email.dum',
         label: 'dummy_label',
       },
-      deviceLabel: deviceInfo.deviceLabel,
+      deviceLabel: deviceLabel,
       ty: DeviceFileType.Password,
     },
   };
-}
-
-export async function deleteDevice(_device: AvailableDevice): Promise<Result<boolean>> {
-  return { ok: true, value: true };
-}
-
-export async function hasRecoveryDevice(): Promise<boolean> {
-  const result = await listOwnDevices();
-  if (!result.ok) {
-    return false;
-  }
-  return result.value.some((deviceInfo: OwnDeviceInfo) => deviceInfo.id.startsWith(RECOVERY_DEVICE_PREFIX));
 }
 
 export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, ClientListUserDevicesError>> {
@@ -168,6 +100,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
       if (result.ok) {
         result.value.map((device) => {
           (device as OwnDeviceInfo).isCurrent = device.id === clientResult.value.deviceId;
+          (device as OwnDeviceInfo).isRecovery = device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX);
           return device;
         });
       }
@@ -181,32 +114,17 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
   } else {
     return {
       ok: true,
-      value: [
-        {
-          id: 'device1',
-          deviceLabel: 'Web',
-          purpose: DevicePurpose.Standard,
+      value: [1, 2, 3].map((n) => {
+        return {
+          id: `device${n}`,
+          deviceLabel: n === 3 ? `${RECOVERY_DEVICE_PREFIX}_device${n}` : `device${n}`,
           createdOn: DateTime.now(),
           createdBy: 'some_device',
-          isCurrent: true,
-        },
-        {
-          id: 'device2',
-          deviceLabel: 'Web',
-          purpose: DevicePurpose.Standard,
-          createdOn: DateTime.now(),
-          createdBy: 'device1',
-          isCurrent: false,
-        },
-        {
-          id: `${RECOVERY_DEVICE_PREFIX}_device`,
-          deviceLabel: 'Recovery Device',
-          purpose: DevicePurpose.PassphraseRecovery,
-          createdOn: DateTime.now(),
-          createdBy: 'device1',
-          isCurrent: false,
-        },
-      ],
+          isCurrent: n === 1,
+          isRecovery: n === 3,
+          purpose: n === 3 ? DevicePurpose.PassphraseRecovery : DevicePurpose.Standard,
+        };
+      }),
     };
   }
 }
@@ -222,7 +140,7 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
         return item;
       });
     }
-    return result as any as Promise<Result<Array<DeviceInfo>, ClientListUserDevicesError>>;
+    return result;
   } else {
     return {
       ok: true,

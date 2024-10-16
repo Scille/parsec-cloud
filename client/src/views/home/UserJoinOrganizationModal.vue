@@ -389,7 +389,7 @@ async function nextStep(): Promise<void> {
     }
   } else if (pageStep.value === UserJoinOrganizationStep.GetUserInfo) {
     waitingForHost.value = true;
-    const deviceName = await getDefaultDeviceName();
+    const deviceName = getDefaultDeviceName();
     const result = await claimer.value.doClaim(deviceName, userInfoPage.value.fullName, userInfoPage.value.email);
     if (!result.ok) {
       await showErrorAndRestart('JoinOrganization.errors.sendUserInfoFailed');

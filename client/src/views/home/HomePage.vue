@@ -74,6 +74,7 @@ import {
   archiveDevice,
   AvailableDevice,
   ClientStartError,
+  ClientStartErrorTag,
   DeviceAccessStrategy,
   DeviceFileType,
   getDeviceHandle,
@@ -318,13 +319,25 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
     await nextTick();
     loginPageRef.value.setLoginError(error);
   } else if (device.ty === DeviceFileType.Keyring) {
-    informationManager.present(
-      new Information({
-        message: 'HomePage.keyringFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+    if (error.tag === ClientStartErrorTag.LoadDeviceDecryptionFailed) {
+      const answer = await askQuestion('HomePage.loginErrors.keyringFailedTitle', 'HomePage.loginErrors.keyringFailedQuestion', {
+        yesIsDangerous: false,
+        yesText: 'HomePage.loginErrors.keyringFailedUsedRecovery',
+        noText: 'HomePage.loginErrors.keyringFailedAbort',
+      });
+      if (answer === Answer.Yes) {
+        selectedDevice.value = device;
+        state.value = HomePageState.ForgottenPassword;
+      }
+    } else {
+      informationManager.present(
+        new Information({
+          message: 'HomePage.loginErrors.keyringFailed',
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    }
   } else {
     window.electronAPI.log('error', `Unhandled device authentication type ${device.ty}`);
   }
