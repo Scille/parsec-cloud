@@ -269,7 +269,7 @@ function getNextButtonText(): string {
   if (pageStep.value === DeviceJoinOrganizationStep.Information) {
     return 'ClaimDeviceModal.buttons.understand';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Authentication) {
-    return 'ClaimDeviceModal.buttons.password';
+    return 'ClaimDeviceModal.buttons.confirm';
   } else if (pageStep.value === DeviceJoinOrganizationStep.Finish) {
     return 'ClaimDeviceModal.buttons.login';
   }

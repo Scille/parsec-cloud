@@ -1130,7 +1130,7 @@
         },
         "buttons": {
             "understand": "I understand!",
-            "password": "Confirm password",
+            "confirm": "Confirm",
             "login": "Log in"
         },
         "currentDevice": "Current device",

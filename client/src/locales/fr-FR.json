@@ -1130,7 +1130,7 @@
         },
         "buttons": {
             "understand": "J'ai compris !",
-            "password": "Valider mon mot de passe",
+            "confirm": "Confirmer",
             "login": "Se connecter"
         },
         "currentDevice": "Cet appareil",
