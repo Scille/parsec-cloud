@@ -31,12 +31,11 @@ if (process.env.PARSEC_APP_TEST_MODE || process.env.APP_TEST_MODE) {
 
 if (process.env.PLATFORM !== undefined) {
   console.log(`PLATFORM environ set to \`${process.env.PLATFORM}\``);
-  if (process.env.PLATFORM === 'web') {
-    platform = 'web';
-  } else if (process.env.PLATFORM === 'native') {
-    platform = 'native';
+  const VALID_PLATFORMS = ['web', 'native'];
+  if (VALID_PLATFORMS.includes(process.env.PLATFORM)) {
+    platform = process.env.PLATFORM;
   } else {
-    throw new Error('Invalid value for PLATFORM environ variable, accepted values: `web`/`native`');
+    throw new Error(`Invalid value for PLATFORM environ variable, accepted values: ${VALID_PLATFORMS.join(', ')}`);
   }
 } else {
   // Ain't nobody got time to set environ variable !
