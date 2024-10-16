@@ -113,11 +113,13 @@ parts:
     build-attributes:
       - enable-patchelf
     build-environment:
-      - # Define a placeholder for the token, it will be replaced by the CI/CD pipeline.
-        SENTRY_AUTH_TOKEN: __TOKEN__
       - VITE_MODE: development
     override-build: |
       set -x
+
+      set -a
+      source $SNAPCRAFT_PROJECT_DIR/snapcraft.env
+      set +a
 
       # Debug software versions
       node --version

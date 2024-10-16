@@ -165,22 +165,13 @@ jobs:
           sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
         working-directory: client/electron
 
-      # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
-      - name: Patch vite config for snap build
-        run: >-
-          sed -i
-          -e s'/if (process.env.SENTRY_AUTH_TOKEN)/if (true)/'
-          -e s';authToken: process.env.SENTRY_AUTH_TOKEN;authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
-          vite.config.ts
-        working-directory: client
-
-      - name: Patch snapcraft file for sentry auth token and vite mode
-        run: >-
-          sed -i
-          -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
-          -e s'/VITE_MODE: development/VITE_MODE: ${{ steps.version.outputs.type }}/'
-          snap/snapcraft.yaml
-        working-directory: client/electron
+      - name: Create env file for snapcraft
+        run:
+          (
+            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}";
+            echo "VITE_MODE=${{ steps.version.outputs.type }}";
+          ) | tee snapcraft.env
+        shell: bash
 
       - name: Build snap
         run: |
