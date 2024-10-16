@@ -345,8 +345,6 @@ jobs:
           ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' || '' }}
           ${{ matrix.platform == 'linux' && 'appimage' || '' }}
           ${{ inputs.nightly_build && '--nightly' || '' }}
-        env:
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
         timeout-minutes: 5
 
