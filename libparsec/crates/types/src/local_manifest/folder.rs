@@ -333,9 +333,8 @@ impl UnconfinedLocalFolderManifest {
 
     /// Apply the prevent sync pattern to the current unconfined local manifest
     /// and restore the existing locally confined entries from the provided manifest.
-    /// This returns a new properly confined local manifest that can be either:
-    /// - used in a merge operation with the existing local manifest
-    /// - stored to the local storage, after applying a new pattern for instance.
+    /// This returns a new properly confined local manifest that can be stored to the
+    /// local storage.
     ///
     /// The provided timestamp is used to update the `updated` field of the new manifest,
     /// if a change requiring synchronization is made. That might happen if the provided
@@ -392,10 +391,21 @@ impl UnconfinedLocalFolderManifest {
             speculative: self.speculative,
         };
 
-        // Check whether there are existing local confinement entries to restore
-        if !existing_local_manifest.local_confinement_points.is_empty() {
+        // Check whether there are existing local entries to restore, either because:
+        // - 1: They were confined entries, in which case they appear in the local confinement points
+        //      of the existing local manifest. Note that may or maybe not be confined in the new
+        //      manifest depending on the prevent sync pattern, but we have to restore them anyway.
+        //      We should also be careful to not duplicate the entry ID and perform a rename
+        //      if the entry ID is already present in the new manifest.
+        // - 2: They weren't confined entries, but have been filtered out due to them being present
+        //      in the remote confinement points of the new manifest. Note that we don't want to restore
+        //      them if they don't match the prevent sync pattern, in order to avoid having a local
+        //      non-confined entry with the same id as a remote confined entry.
+        if !existing_local_manifest.local_confinement_points.is_empty()
+            || !new_manifest.remote_confinement_points.is_empty()
+        {
             // Reverse lookup for new entry ids
-            let new_entry_ids = HashMap::<_, _>::from_iter(
+            let mut new_entry_ids = HashMap::<_, _>::from_iter(
                 new_manifest
                     .children
                     .iter()
@@ -405,17 +415,28 @@ impl UnconfinedLocalFolderManifest {
             // Build a map of changes to apply
             let mut existing_local_confined_entries: HashMap<_, _> = HashMap::new();
             for (name, entry_id) in existing_local_manifest.children.iter() {
+                // Case 1
                 if existing_local_manifest
                     .local_confinement_points
                     .contains(entry_id)
                 {
-                    // Insert the locally confined entry in the new manifest
-                    existing_local_confined_entries.insert(name.clone(), Some(*entry_id));
-
                     // Perform a rename if the entry id is already present in the new manifest
                     if let Some(&previous_name) = new_entry_ids.get(entry_id) {
                         existing_local_confined_entries.insert(previous_name.clone(), None);
                     }
+
+                    // Insert the locally confined entry in the new manifest
+                    existing_local_confined_entries.insert(name.clone(), Some(*entry_id));
+                    new_entry_ids.insert(entry_id, name);
+                }
+
+                // Case 2
+                if !new_entry_ids.contains_key(entry_id)
+                    && new_manifest.remote_confinement_points.contains(entry_id)
+                    && prevent_sync_pattern.is_match(name.as_ref())
+                {
+                    existing_local_confined_entries.insert(name.clone(), Some(*entry_id));
+                    new_entry_ids.insert(entry_id, name);
                 }
             }
 

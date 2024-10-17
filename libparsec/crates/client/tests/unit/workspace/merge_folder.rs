@@ -475,6 +475,10 @@ async fn remote_only_change(
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected
+                .children
+                .insert("child.tmp".parse().unwrap(), child_id);
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
         }
         // The local manifest has it confinement points build with an outdated prevent
@@ -1541,6 +1545,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), local_child_id);
+            local.local_confinement_points.insert(local_child_id);
             remote
                 .children
                 .insert("child.tmp".parse().unwrap(), remote_child_id);
@@ -1589,6 +1594,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
             remote
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
@@ -1642,6 +1648,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
 
             expected
                 .children
@@ -1679,6 +1686,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
             remote
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
@@ -1714,12 +1722,11 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
-            // The merge prioritize rename over remove, so the local changes
-            // are conserved (given the remote confined entry is seen as a
-            // removal from local point of view).
-            expected
-                .children
-                .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            // Here the file is removed locally. This is good, because this id is
+            // now remotely confined, so it would be weird to keep using it locally
+            // under a non-confined name.
+            expected.need_sync = false;
+            expected.updated = remote.updated;
             expected.remote_confinement_points.insert(child_id);
         }
         "confined_child_renamed_in_remote_still_confined" => {
@@ -1832,6 +1839,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            local.local_confinement_points.insert(child_id);
             local.remote_confinement_points.insert(child_id);
             remote
                 .children
@@ -1879,6 +1887,8 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("initial_confined.tmp".parse().unwrap(), initial_confined_child_id);
+            local.remote_confinement_points.insert(initial_confined_child_id);
+
             local
                 .children
                 .insert("initial.txt".parse().unwrap(), initial_child_id);
@@ -1888,14 +1898,15 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("new_local_confined.tmp".parse().unwrap(), new_local_confined_child_id);
+            local.local_confinement_points.insert(new_local_confined_child_id);
             local
                 .children
                 .insert("new_shared.txt".parse().unwrap(), new_shared_child_id);
             local
                 .children
                 .insert("new_shared_confined.tmp".parse().unwrap(), new_shared_confined_child_id);
-            local.remote_confinement_points.insert(initial_confined_child_id);
-            local.local_confinement_points.insert(new_local_confined_child_id);
+            local.local_confinement_points.insert(new_shared_confined_child_id);
+
             remote
                 .children
                 .insert("initial.txt".parse().unwrap(), initial_child_id);
@@ -2007,23 +2018,29 @@ async fn local_and_remote_changes(
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
             // At this point, the prevent sync pattern is not `.tmp`, so `child.tmp`
-            // is just a non confined regular file.
+            // is just a non-confined un-synced regular file.
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            local.need_sync = true;
 
             expected
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
-            expected.need_sync = false;
-            expected.updated = remote.updated;
+
+            // There is no need to sync at this point.
+            // However, the manifest was already marked as need-sync, and the merging
+            // also detected a change due to the prevent sync pattern not being up-to-date.
+            // It is similar to those situations where a file is added then removed, and
+            // the prevent_sync_pattern stays to true. In any case, uploading a non-changing
+            // manifest is not a big deal if it only happens in rare cases.
+            expected.need_sync = true;
+            expected.updated = merge_timestamp;
         }
         "outdated_psp_remote_child_matches_new_pattern" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
-            // At this point, the prevent sync pattern is not `.tmp`, so `child.tmp`
-            // is just a non confined regular file.
             local
                 .base
                 .children
@@ -2039,6 +2056,11 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected.children.insert(
+                "child.tmp".parse().unwrap(),
+                child_id,
+            );
+            expected.local_confinement_points.insert(child_id);
             expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
             expected.updated = remote.updated;
@@ -2046,7 +2068,7 @@ async fn local_and_remote_changes(
         "outdated_psp_remote_confined_entry_local_rename_then_remote_also_rename_with_confined_name" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
-            // The entry is initially confined...
+            // The entry is initially remotely confined...
             local
                 .base
                 .children
@@ -2061,18 +2083,21 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child-local-rename.txt".parse().unwrap(), child_id);
+            local.need_sync = true;
             remote
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
 
+            // Here the file is removed locally. This is good, because this id is
+            // now remotely confined, so it would be weird to keep using it locally
+            // under a non-confined name.
             expected
                 .base
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
-            expected
-                .children
-                .insert("child-local-rename.txt".parse().unwrap(), child_id);
             expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
         }
         "outdated_psp_remote_confined_entry_local_rename_with_confined_name_then_remote_also_rename" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -2092,26 +2117,23 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            local.need_sync = true;
             remote
                 .children
                 .insert("child-remote-rename.txt".parse().unwrap(), child_id);
 
             expected
-                .base
-                .children
-                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
-            // Having child id as a confined entry means that it cannot appear
-            // remotely (unless it has a confined name on the remote as well)
-            // Here the remote tries to rename to a non-confined name, which
-            // the local client cannot allow. Therefore, we keep our confined name
-            // and mark the manifest as needing sync for future removal of the
-            // remote entry.
+            .base
+            .children
+            .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            // Here the file is renamed to the remote name, which is consistent
+            // with the typical merge priority (the remote rename wins over the
+            // local rename).
             expected
                 .children
-                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
-            expected.local_confinement_points.insert(child_id);
-            expected.need_sync = true;
-            expected.updated = merge_timestamp;
+                .insert("child-remote-rename.txt".parse().unwrap(), child_id);
+            expected.need_sync = false;
+            expected.updated = remote.updated;
         }
         "outdated_psp_remote_confined_entry_rename_in_both_with_confined_name" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
@@ -2131,6 +2153,7 @@ async fn local_and_remote_changes(
             local
                 .children
                 .insert("child-local-rename.tmp".parse().unwrap(), child_id);
+            local.need_sync = true;
             remote
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
@@ -2139,11 +2162,12 @@ async fn local_and_remote_changes(
                 .base
                 .children
                 .insert("child-remote-rename.tmp".parse().unwrap(), child_id);
-            expected
-                .children
-                .insert("child-local-rename.tmp".parse().unwrap(), child_id);
-            expected.remote_confinement_points.insert(child_id);
+            expected.children.insert(
+                "child-local-rename.tmp".parse().unwrap(),
+                child_id,
+            );
             expected.local_confinement_points.insert(child_id);
+            expected.remote_confinement_points.insert(child_id);
             expected.need_sync = false;
             expected.updated = remote.updated;
         }
@@ -2230,26 +2254,26 @@ async fn local_and_remote_changes(
         "outdated_psp_local_child_becomes_confined_with_remote_from_ourself" => {
             let child_id = VlobID::from_hex("a1d7229d7e44418a8a4e4fd821003fd3").unwrap();
 
-            // The entry is initially not confined...
+            // A `child.tmp` entry is added and initially not confined
             local
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
-            local.need_sync = false;
-            // ...the remote hasn't anything important to merge, but this should
-            // refresh the confinement in local with the new prevent sync pattern.
-           remote.author = local_author;
+            local.need_sync = true;
+            // A corresponding remote manifest is produced and acknowledged by the server
+            remote.children.insert("child.tmp".parse().unwrap(), child_id);
+            remote.author = local_author;
 
-            // Given the remote is from ourself, the merge considers we already know
-            // about it and hence acknowledges it and preserve the local children.
-            // However the new prevent sync pattern means the local child is now
-            // confined and there is nothing to synchronize.
+
             expected.base.author = local_author;
             expected
+                .base
                 .children
                 .insert("child.tmp".parse().unwrap(), child_id);
+            expected.children.insert("child.tmp".parse().unwrap(), child_id);
             expected.local_confinement_points.insert(child_id);
-            expected.need_sync = false;
-            expected.updated = remote.updated;
+            expected.remote_confinement_points.insert(child_id);
+            expected.need_sync = true;
+            expected.updated = merge_timestamp;
         }
         unknown => panic!("Unknown kind: {}", unknown),
     }
