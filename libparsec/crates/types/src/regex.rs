@@ -94,6 +94,11 @@ impl Regex {
     pub const fn empty() -> Self {
         Self(Vec::new())
     }
+
+    /// Create a regex that will match anything
+    pub fn all() -> Self {
+        Self(vec![regex::Regex::new(".*").expect("valid regex")])
+    }
 }
 
 /// Parse a glob pattern like `*.rs` and convert it to an regex.
