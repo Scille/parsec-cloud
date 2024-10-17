@@ -5380,6 +5380,34 @@ fn variant_export_recovery_device_error_rs_to_js(
     let js_display = &rs_obj.to_string();
     Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
     match rs_obj {
+        libparsec::ExportRecoveryDeviceError::CertifDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorCertifDeviceError".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::ConnectionError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorConnectionError".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::DataError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorDataError".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::GetCertificateError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorGetCertificateError".into(),
+            )?;
+        }
         libparsec::ExportRecoveryDeviceError::Internal { .. } => {
             Reflect::set(
                 &js_obj,
@@ -5387,11 +5415,86 @@ fn variant_export_recovery_device_error_rs_to_js(
                 &"ExportRecoveryDeviceErrorInternal".into(),
             )?;
         }
-        libparsec::ExportRecoveryDeviceError::LoadDeviceError { .. } => {
+        libparsec::ExportRecoveryDeviceError::InvalidCertificate { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
-                &"ExportRecoveryDeviceErrorLoadDeviceError".into(),
+                &"ExportRecoveryDeviceErrorInvalidCertificate".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::Offline { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorOffline".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::PlatformExportRecoveryDeviceError { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::Stopped { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorStopped".into(),
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorTimestampOutOfBallpark".into(),
+            )?;
+            let js_server_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"serverTimestamp".into(), &js_server_timestamp)?;
+            let js_client_timestamp = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"clientTimestamp".into(), &js_client_timestamp)?;
+            let js_ballpark_client_early_offset = ballpark_client_early_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientEarlyOffset".into(),
+                &js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = ballpark_client_late_offset.into();
+            Reflect::set(
+                &js_obj,
+                &"ballparkClientLateOffset".into(),
+                &js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::UserRevoked { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ExportRecoveryDeviceErrorUserRevoked".into(),
             )?;
         }
     }

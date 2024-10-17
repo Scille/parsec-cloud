@@ -41,10 +41,14 @@ use crate::{
         start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
     user::UserOps,
+    CertifDeviceError, CertificateBasedActionOutcome, InvalidCertificateError,
 };
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
-use libparsec_platform_device_loader::{ExportRecoveryDeviceError, ImportRecoveryDeviceError};
+use libparsec_platform_device_loader::{
+    ImportRecoveryDeviceError, PlatformExportRecoveryDeviceError,
+};
+use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps};
 use libparsec_types::prelude::*;
 
 // Re-exposed for public API
@@ -534,13 +538,50 @@ impl Client {
     pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
         tos::accept_tos(self, tos_updated_on).await
     }
-    
+
     pub async fn export_recovery_device(
         &self,
         device_label: DeviceLabel,
     ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
-        libparsec_platform_device_loader::inner_export_recovery_device(&self.device, device_label)
+        let (passphrase, data, recovery_device) =
+            libparsec_platform_device_loader::inner_export_recovery_device(
+                &self.device,
+                device_label,
+            )
+            .await?;
+
+        // save recovery device
+        let outcome = self
+            .certificates_ops
+            .create_new_device(recovery_device, self.device.clone())
+            .await?;
+
+        let latest_known_timestamps = match outcome {
+            CertificateBasedActionOutcome::LocalIdempotent => return Ok((passphrase, data)), // not sure how it could happen though
+            CertificateBasedActionOutcome::Uploaded {
+                certificate_timestamp,
+            }
+            | CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp,
+            } => PerTopicLastTimestamps::new_for_common_and_shamir(
+                certificate_timestamp,
+                certificate_timestamp,
+            ),
+        };
+        self.certificates_ops
+            .poll_server_for_new_certificates(Some(&latest_known_timestamps))
             .await
+            .map_err(|e| match e {
+                CertifPollServerError::Stopped => ExportRecoveryDeviceError::Stopped,
+                CertifPollServerError::Offline => ExportRecoveryDeviceError::Offline,
+                CertifPollServerError::InvalidCertificate(err) => {
+                    ExportRecoveryDeviceError::InvalidCertificate(err)
+                }
+                CertifPollServerError::Internal(err) => err
+                    .context("Cannot poll server for new certificates")
+                    .into(),
+            })?;
+        Ok((passphrase, data))
     }
 
     pub async fn import_recovery_device(
@@ -559,6 +600,41 @@ impl Client {
         )
         .await
     }
+}
+
+#[derive(Debug, thiserror::Error)]
+
+pub enum ExportRecoveryDeviceError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("User {0} is revoked")]
+    UserRevoked(UserID),
+
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    TimestampOutOfBallpark {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    DataError(#[from] libparsec_types::DataError),
+    // #[error(transparent)]
+    // EncryptionError(#[from] CertifEncryptForUserError),
+    #[error(transparent)]
+    GetCertificateError(#[from] GetCertificateError),
+    #[error(transparent)]
+    CertifDeviceError(#[from] CertifDeviceError),
+    #[error(transparent)]
+    PlatformExportRecoveryDeviceError(#[from] PlatformExportRecoveryDeviceError),
+    #[error(transparent)]
+    ConnectionError(#[from] ConnectionError),
 }
 
 #[cfg(test)]
