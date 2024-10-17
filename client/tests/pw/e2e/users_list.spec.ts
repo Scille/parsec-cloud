@@ -74,9 +74,9 @@ msTest('User list default state', async ({ usersPage }) => {
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(USERS.length);
 });
 
-for (const [index, user] of USERS.entries()) {
-  msTest(`Check user list item of ${user.name}`, async ({ usersPage }) => {
-    const usersList = usersPage.locator('#users-page-user-list');
+msTest('Check user list items', async ({ usersPage }) => {
+  const usersList = usersPage.locator('#users-page-user-list');
+  for (const [index, user] of USERS.entries()) {
     const item = usersList.getByRole('listitem').nth(index);
     await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
     await expect(item.locator('.user-profile')).toHaveText(user.profile);
@@ -85,13 +85,14 @@ for (const [index, user] of USERS.entries()) {
     if (!user.active) {
       await expect(item).toHaveTheClass('revoked');
     }
-  });
-}
+  }
+});
 
-for (const [index, user] of USERS.entries()) {
-  msTest(`Check user grid item of ${user.name}`, async ({ usersPage }) => {
-    await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
-    const usersGrid = usersPage.locator('.users-container-grid');
+msTest('Check user grid items', async ({ usersPage }) => {
+  await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+  const usersGrid = usersPage.locator('.users-container-grid');
+
+  for (const [index, user] of USERS.entries()) {
     const card = usersGrid.locator('.user-card-item').nth(index);
     await expect(card.locator('.user-card-info').locator('.user-card-info__name').locator('span').nth(0)).toHaveText(user.name);
     await expect(card.locator('.user-card-info').locator('.user-card-info__email')).toHaveText(user.email);
@@ -102,8 +103,8 @@ for (const [index, user] of USERS.entries()) {
       await expect(card.locator('.user-revoked')).toBeVisible();
       await expect(card).toHaveTheClass('revoked');
     }
-  });
-}
+  }
+});
 
 for (const revokedUser of [false, true]) {
   msTest(`Check user context menu for ${revokedUser ? 'revoked' : 'active'} user`, async ({ usersPage }) => {
