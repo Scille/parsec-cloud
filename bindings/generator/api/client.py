@@ -469,8 +469,38 @@ class ExportRecoveryDeviceError(ErrorVariant):
     class Internal:
         pass
 
-    class LoadDeviceError:
+    class Stopped:
         pass
+
+    class Offline:
+        pass
+
+    class UserRevoked(UserID):
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class DataError:
+        pass
+
+    class GetCertificateError:
+        pass
+
+    class CertifDeviceError:
+        pass
+
+    class PlatformExportRecoveryDeviceError:
+        pass
+
+    class ConnectionError:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
 
 
 async def import_recovery_device(
