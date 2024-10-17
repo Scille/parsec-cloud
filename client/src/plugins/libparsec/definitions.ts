@@ -1207,21 +1207,79 @@ export type EntryStat =
 
 // ExportRecoveryDeviceError
 export enum ExportRecoveryDeviceErrorTag {
+    CertifDeviceError = 'ExportRecoveryDeviceErrorCertifDeviceError',
+    ConnectionError = 'ExportRecoveryDeviceErrorConnectionError',
+    DataError = 'ExportRecoveryDeviceErrorDataError',
+    GetCertificateError = 'ExportRecoveryDeviceErrorGetCertificateError',
     Internal = 'ExportRecoveryDeviceErrorInternal',
-    LoadDeviceError = 'ExportRecoveryDeviceErrorLoadDeviceError',
+    InvalidCertificate = 'ExportRecoveryDeviceErrorInvalidCertificate',
+    Offline = 'ExportRecoveryDeviceErrorOffline',
+    PlatformExportRecoveryDeviceError = 'ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError',
+    Stopped = 'ExportRecoveryDeviceErrorStopped',
+    TimestampOutOfBallpark = 'ExportRecoveryDeviceErrorTimestampOutOfBallpark',
+    UserRevoked = 'ExportRecoveryDeviceErrorUserRevoked',
 }
 
+export interface ExportRecoveryDeviceErrorCertifDeviceError {
+    tag: ExportRecoveryDeviceErrorTag.CertifDeviceError
+    error: string
+}
+export interface ExportRecoveryDeviceErrorConnectionError {
+    tag: ExportRecoveryDeviceErrorTag.ConnectionError
+    error: string
+}
+export interface ExportRecoveryDeviceErrorDataError {
+    tag: ExportRecoveryDeviceErrorTag.DataError
+    error: string
+}
+export interface ExportRecoveryDeviceErrorGetCertificateError {
+    tag: ExportRecoveryDeviceErrorTag.GetCertificateError
+    error: string
+}
 export interface ExportRecoveryDeviceErrorInternal {
     tag: ExportRecoveryDeviceErrorTag.Internal
     error: string
 }
-export interface ExportRecoveryDeviceErrorLoadDeviceError {
-    tag: ExportRecoveryDeviceErrorTag.LoadDeviceError
+export interface ExportRecoveryDeviceErrorInvalidCertificate {
+    tag: ExportRecoveryDeviceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ExportRecoveryDeviceErrorOffline {
+    tag: ExportRecoveryDeviceErrorTag.Offline
+    error: string
+}
+export interface ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError {
+    tag: ExportRecoveryDeviceErrorTag.PlatformExportRecoveryDeviceError
+    error: string
+}
+export interface ExportRecoveryDeviceErrorStopped {
+    tag: ExportRecoveryDeviceErrorTag.Stopped
+    error: string
+}
+export interface ExportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: ExportRecoveryDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ExportRecoveryDeviceErrorUserRevoked {
+    tag: ExportRecoveryDeviceErrorTag.UserRevoked
     error: string
 }
 export type ExportRecoveryDeviceError =
+  | ExportRecoveryDeviceErrorCertifDeviceError
+  | ExportRecoveryDeviceErrorConnectionError
+  | ExportRecoveryDeviceErrorDataError
+  | ExportRecoveryDeviceErrorGetCertificateError
   | ExportRecoveryDeviceErrorInternal
-  | ExportRecoveryDeviceErrorLoadDeviceError
+  | ExportRecoveryDeviceErrorInvalidCertificate
+  | ExportRecoveryDeviceErrorOffline
+  | ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError
+  | ExportRecoveryDeviceErrorStopped
+  | ExportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ExportRecoveryDeviceErrorUserRevoked
 
 // GreetInProgressError
 export enum GreetInProgressErrorTag {

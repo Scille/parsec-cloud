@@ -12,10 +12,10 @@ use zeroize::Zeroize;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, ExportRecoveryDeviceError, ImportRecoveryDeviceError,
-    LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError, SaveRecoveryDeviceError,
-    ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM,
-    DEVICE_FILE_EXT,
+    ChangeAuthentificationError, ImportRecoveryDeviceError, LoadDeviceError,
+    LoadRecoveryDeviceError, PlatformExportRecoveryDeviceError, SaveDeviceError,
+    SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
+    ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -588,7 +588,7 @@ pub async fn save_recovery_device(
 pub async fn export_recovery_device(
     device: &LocalDevice,
     device_label: DeviceLabel,
-) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+) -> Result<(SecretKeyPassphrase, Vec<u8>, LocalDevice), PlatformExportRecoveryDeviceError> {
     let created_on = device.now();
     let server_url = {
         ParsecAddr::new(
@@ -634,7 +634,7 @@ pub async fn export_recovery_device(
     })
     .dump();
 
-    Ok((passphrase, file_content))
+    Ok((passphrase, file_content, recovery_device))
 }
 
 pub async fn import_recovery_device(

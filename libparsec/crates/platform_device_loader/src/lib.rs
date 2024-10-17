@@ -264,7 +264,7 @@ pub enum ImportRecoveryDeviceError {
 }
 
 #[derive(Debug, thiserror::Error)]
-pub enum ExportRecoveryDeviceError {
+pub enum PlatformExportRecoveryDeviceError {
     #[error(transparent)]
     Internal(#[from] anyhow::Error),
     #[error(transparent)]
@@ -288,9 +288,10 @@ pub async fn inner_import_recovery_device(
     .await
 }
 
+/// returns (secret key passphrase, recovery device encrypted data, recovery device)
 pub async fn inner_export_recovery_device(
     device: &LocalDevice,
     device_label: DeviceLabel,
-) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+) -> Result<(SecretKeyPassphrase, Vec<u8>, LocalDevice), PlatformExportRecoveryDeviceError> {
     platform::export_recovery_device(device, device_label).await
 }

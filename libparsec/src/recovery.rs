@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(unused_variables)] // TODO remove
 
-use libparsec_platform_device_loader::{ExportRecoveryDeviceError, ImportRecoveryDeviceError};
+pub use libparsec_client::ExportRecoveryDeviceError;
+use libparsec_platform_device_loader::ImportRecoveryDeviceError;
 use libparsec_types::DeviceSaveStrategy;
 use libparsec_types::{AvailableDevice, DeviceLabel};
 

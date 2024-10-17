@@ -10,10 +10,9 @@ use libparsec_protocol::authenticated_cmds::{
     },
 };
 use libparsec_types::{
-    anyhow, shamir_make_shares, thiserror, Bytes, CertificateSignerOwned, DateTime,
-    DeviceCertificate, DeviceID, DeviceLabel, InvitationToken, LocalDevice, MaybeRedacted,
-    SecretKey, ShamirRecoveryBriefCertificate, ShamirRecoverySecret,
-    ShamirRecoveryShareCertificate, ShamirRecoveryShareData, SigningKeyAlgorithm, UserID,
+    anyhow, shamir_make_shares, thiserror, Bytes, DateTime, DeviceID, DeviceLabel, InvitationToken,
+    LocalDevice, SecretKey, ShamirRecoveryBriefCertificate, ShamirRecoverySecret,
+    ShamirRecoveryShareCertificate, ShamirRecoveryShareData, UserID,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -27,7 +26,8 @@ use crate::{
 };
 
 use super::{
-    encrypt::CertifEncryptForUserError, greater_timestamp, CertifStoreError, GreaterTimestampOffset,
+    device::generate_new_device, encrypt::CertifEncryptForUserError, greater_timestamp,
+    CertifStoreError, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -308,7 +308,7 @@ async fn shamir_internals(
     };
 
     let (device_certificate, redacted_device_certificate) =
-        create_new_device(recovery_device, certificate_ops.device.clone(), timestamp);
+        generate_new_device(recovery_device, certificate_ops.device.clone(), timestamp);
     match certificate_ops
         .cmds
         .send(device_create::Req {
@@ -429,30 +429,4 @@ async fn get_latest_shamir_setup_for_author(
             )
         })
         .await??)
-}
-
-fn create_new_device(
-    new_device: LocalDevice,
-    author: Arc<LocalDevice>,
-    now: DateTime,
-) -> (Bytes, Bytes) {
-    let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
-        timestamp: now,
-        user_id: new_device.user_id,
-        device_id: new_device.device_id,
-        device_label: MaybeRedacted::Real(new_device.device_label.clone()),
-        verify_key: new_device.verify_key(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
-    };
-
-    let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
-
-    let redacted_device_cert = device_cert.into_redacted();
-
-    let redacted_device_certificate = redacted_device_cert
-        .dump_and_sign(&author.signing_key)
-        .into();
-
-    (device_certificate, redacted_device_certificate)
 }

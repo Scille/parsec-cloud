@@ -4587,13 +4587,97 @@ fn variant_export_recovery_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
+        libparsec::ExportRecoveryDeviceError::CertifDeviceError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ExportRecoveryDeviceErrorCertifDeviceError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::ConnectionError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ExportRecoveryDeviceErrorConnectionError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::DataError { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ExportRecoveryDeviceErrorDataError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::GetCertificateError { .. } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorGetCertificateError")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ExportRecoveryDeviceError::Internal { .. } => {
             let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorInternal").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ExportRecoveryDeviceError::LoadDeviceError { .. } => {
+        libparsec::ExportRecoveryDeviceError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::PlatformExportRecoveryDeviceError { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError",
+            )
+            .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ExportRecoveryDeviceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ExportRecoveryDeviceErrorTimestampOutOfBallpark")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ExportRecoveryDeviceError::UserRevoked { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ExportRecoveryDeviceErrorLoadDeviceError").or_throw(cx)?;
+                JsString::try_new(cx, "ExportRecoveryDeviceErrorUserRevoked").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

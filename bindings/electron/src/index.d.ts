@@ -1032,17 +1032,66 @@ export type EntryStat =
 
 
 // ExportRecoveryDeviceError
+export interface ExportRecoveryDeviceErrorCertifDeviceError {
+    tag: "CertifDeviceError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorConnectionError {
+    tag: "ConnectionError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorDataError {
+    tag: "DataError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorGetCertificateError {
+    tag: "GetCertificateError"
+    error: string
+}
 export interface ExportRecoveryDeviceErrorInternal {
     tag: "Internal"
     error: string
 }
-export interface ExportRecoveryDeviceErrorLoadDeviceError {
-    tag: "LoadDeviceError"
+export interface ExportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError {
+    tag: "PlatformExportRecoveryDeviceError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ExportRecoveryDeviceErrorUserRevoked {
+    tag: "UserRevoked"
     error: string
 }
 export type ExportRecoveryDeviceError =
+  | ExportRecoveryDeviceErrorCertifDeviceError
+  | ExportRecoveryDeviceErrorConnectionError
+  | ExportRecoveryDeviceErrorDataError
+  | ExportRecoveryDeviceErrorGetCertificateError
   | ExportRecoveryDeviceErrorInternal
-  | ExportRecoveryDeviceErrorLoadDeviceError
+  | ExportRecoveryDeviceErrorInvalidCertificate
+  | ExportRecoveryDeviceErrorOffline
+  | ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError
+  | ExportRecoveryDeviceErrorStopped
+  | ExportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ExportRecoveryDeviceErrorUserRevoked
 
 
 // GreetInProgressError
