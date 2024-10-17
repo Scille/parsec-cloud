@@ -57,7 +57,7 @@ parts:
     build-attributes:
       - enable-patchelf
     override-build: |
-      set -x
+      set -eux -o pipefail
 
       # Set system alias for python
       update-alternatives --install /usr/local/bin/python python $(which python3) 100
@@ -75,6 +75,21 @@ parts:
       cd bindings/electron
       npm clean-install
       npm run build:release
+
+      set -a
+      source $SNAPCRAFT_PROJECT_DIR/snapcraft.env
+      set +a
+
+      if [ "${SENTRY_AUTH_TOKEN:=}" != "__TOKEN__" ] && [ -n "${SENTRY_AUTH_TOKEN:=}" ]; then
+        # Install sentry-cli
+        curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION=$SENTRY_CLI_VERSION sh
+
+        # Upload debug info
+        SENTRY_PROJECT=$SENTRY_LIBPARSEC_PROJECT sentry-cli debug-files check dist/libparsec/index.node
+        SENTRY_PROJECT=$SENTRY_LIBPARSEC_PROJECT sentry-cli debug-files upload --include-sources dist/libparsec/index.node
+      else
+        echo "SENTRY_AUTH_TOKEN is not set, skipping source maps upload." >&2
+      fi
 
       cp -va dist/libparsec/index.node "$CRAFT_PART_INSTALL/libparsec.node"
       cp -va dist/libparsec/index.d.ts "$CRAFT_PART_INSTALL/libparsec.d.ts"
@@ -147,8 +162,8 @@ parts:
       npx tsc
 
       if [ "${SENTRY_AUTH_TOKEN:=}" != "__TOKEN__" ] && [ -n "${SENTRY_AUTH_TOKEN:=}" ]; then
-        npm exec sentry-cli -- sourcemaps inject --release $SENTRY_RELEASE ./build
-        npm exec sentry-cli -- sourcemaps upload --release $SENTRY_RELEASE --dist $SENTRY_DIST ./build
+        SENTRY_PROJECT=$SENTRY_CLIENT_PROJECT npm exec sentry-cli -- sourcemaps inject --release $SENTRY_RELEASE ./build
+        SENTRY_PROJECT=$SENTRY_CLIENT_PROJECT npm exec sentry-cli -- sourcemaps upload --release $SENTRY_RELEASE --dist $SENTRY_DIST ./build
       else
         echo "SENTRY_AUTH_TOKEN is not set, skipping source maps upload." >&2
       fi

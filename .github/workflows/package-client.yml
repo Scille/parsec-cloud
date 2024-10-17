@@ -50,6 +50,7 @@ env:
   node-version: 18.12.0
   wasm-pack-version: 0.12.1
   WINFSP_VERSION: 2.0.23075
+  sentry-cli-version: 2.37.0
 
 permissions:
   contents: read
@@ -106,6 +107,9 @@ jobs:
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
+      # TODO: wasm-pack do provide debug info by default
+      # https://github.com/rustwasm/wasm-pack/issues/1351
+      # https://docs.sentry.io/platforms/native/data-management/debug-files/file-formats/#wasm
       - name: Build web bindings
         run: npm run build:release
         working-directory: bindings/web
@@ -178,11 +182,13 @@ jobs:
       - name: Create env file for snapcraft
         run:
           (
+            echo "SENTRY_CLI_VERSION=${{ env.sentry-cli-version }}";
             echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}";
             echo "SENTRY_RELEASE=parsec@${{ steps.version.outputs.full }}";
             echo "SENTRY_DIST=snapcraft-linux";
             echo "SENTRY_ORG=scille";
-            echo "SENTRY_PROJECT=parsec3-frontend";
+            echo "SENTRY_CLIENT_PROJECT=parsec3-frontend";
+            echo "SENTRY_LIBPARSEC_PROJECT=parsec3-libparsec";
             echo "VITE_MODE=${{ steps.version.outputs.type }}";
           ) | tee snapcraft.env
         shell: bash
@@ -259,6 +265,10 @@ jobs:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
+      - uses: ./.github/actions/setup-sentry-cli
+        with:
+          sentry-version: ${{ env.sentry-cli-version }}
+
       - name: Download version.patch artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
         with:
@@ -320,6 +330,17 @@ jobs:
         working-directory: bindings/electron
         # MacOS is really slow when build rust
         timeout-minutes: 30
+
+      - name: Upload debug info to sentry
+        shell: bash
+        run: |
+          sentry-cli debug-files check dist/libparsec/index.node
+          sentry-cli debug-files upload --include-sources dist/libparsec/index.node
+        working-directory: bindings/electron
+        env:
+          SENTRY_ORG: scille
+          SENTRY_PROJECT: parsec3-libparsec
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
       - name: Build client for electron
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
