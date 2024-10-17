@@ -36,7 +36,7 @@
           </i18n-t>
         </ion-text>
       </ion-header>
-      <div v-if="currentPage === 1">
+      <div v-if="currentPage === Steps.SelectUser">
         <user-select
           :exclude-users="[sourceUser, currentUser]"
           v-model="targetUser"
@@ -45,14 +45,14 @@
 
       <div
         class="modal-content"
-        v-show="currentPage === 2 && targetUser"
+        v-show="currentPage === Steps.Processing && targetUser"
       >
         <ms-spinner title="UsersPage.assignRoles.processing" />
       </div>
 
       <div
         class="modal-content"
-        v-if="currentPage === 3 && targetUser"
+        v-if="currentPage === Steps.Summary && targetUser"
       >
         <div class="chosen-users">
           <user-avatar-name
@@ -71,7 +71,7 @@
             />
             <ion-icon
               :icon="pencil"
-              @click="currentPage = 1"
+              @click="currentPage = Steps.SelectUser"
             />
           </div>
         </div>
@@ -125,6 +125,7 @@
         <ion-buttons
           slot="primary"
           class="modal-footer-buttons"
+          v-show="currentPage !== Steps.Processing"
         >
           <ion-button
             fill="clear"
@@ -173,6 +174,13 @@ import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { wait } from '@/parsec/internals';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 
+enum Steps {
+  SelectUser,
+  Processing,
+  Summary,
+  End,
+}
+
 interface WorkspaceRoleUpdate {
   workspace: WorkspaceInfo;
   oldRole: WorkspaceRole | null;
@@ -181,7 +189,7 @@ interface WorkspaceRoleUpdate {
 }
 
 const targetUser: Ref<UserInfo | undefined> = ref();
-const currentPage: Ref<1 | 2 | 3 | 4> = ref(1);
+const currentPage: Ref<Steps> = ref(Steps.SelectUser);
 const roleUpdates: Ref<WorkspaceRoleUpdate[]> = ref([]);
 const finished = ref(false);
 
@@ -253,7 +261,7 @@ async function findWorkspaces(): Promise<void> {
   if (elapsed < 1000) {
     await wait(1000 - elapsed);
   }
-  currentPage.value = 3;
+  currentPage.value = Steps.Summary;
 }
 
 async function assignNewRoles(): Promise<void> {
@@ -271,7 +279,6 @@ async function assignNewRoles(): Promise<void> {
     }
   }
   if (failures === 0) {
-    // currentPage.value = 4;
     props.informationManager.present(
       new Information({
         message: {
@@ -303,10 +310,10 @@ async function assignNewRoles(): Promise<void> {
 }
 
 async function nextStep(): Promise<void> {
-  if (currentPage.value === 1) {
-    currentPage.value = 2;
+  if (currentPage.value === Steps.SelectUser) {
+    currentPage.value = Steps.Processing;
     await findWorkspaces();
-  } else if (currentPage.value === 3) {
+  } else if (currentPage.value === Steps.Summary) {
     if (roleUpdates.value.length === 0 || finished.value) {
       await modalController.dismiss(null, MsModalResult.Confirm);
     } else {
@@ -321,13 +328,10 @@ async function cancel(): Promise<void> {
 
 function getNextButtonText(): string {
   switch (currentPage.value) {
-    case 1: {
+    case Steps.SelectUser: {
       return 'UsersPage.assignRoles.select';
     }
-    case 2: {
-      return 'UsersPage.assignRoles.okButton';
-    }
-    case 3: {
+    case Steps.Summary: {
       if (roleUpdates.value.length === 0 || finished.value) {
         return 'UsersPage.assignRoles.close';
       } else {

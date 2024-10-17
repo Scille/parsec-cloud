@@ -10,6 +10,7 @@
       @change="onInput"
       :model-value="selectedUser ? `${selectedUser.humanHandle.label} (${selectedUser.humanHandle.email})` : undefined"
       :disabled="querying"
+      :debounce="800"
     />
     <ion-text
       class="body form-helperText"
@@ -26,7 +27,6 @@ import { onMounted, Ref, ref } from 'vue';
 import { MsInput, MsModalResult, Translatable } from 'megashark-lib';
 import { listUsers, UserInfo } from '@/parsec';
 import UserSelectDropdown from '@/components/users/UserSelectDropdown.vue';
-import { wait } from '@/parsec/internals';
 
 const props = defineProps<{
   label?: Translatable;
@@ -53,6 +53,10 @@ async function queryMatchingUsers(search: string): Promise<void> {
 
   const result = await listUsers(true, search);
 
+  if (result.ok && props.excludeUsers) {
+    result.value = result.value.filter((user) => props.excludeUsers?.find((item) => item.id === user.id) === undefined);
+  }
+
   if (!result.ok || result.value.length === 0) {
     querying.value = false;
     if (!result.ok) {
@@ -61,10 +65,6 @@ async function queryMatchingUsers(search: string): Promise<void> {
       errorMessage.value = 'UserSelect.noMatch';
     }
     return;
-  }
-
-  if (props.excludeUsers) {
-    result.value = result.value.filter((user) => props.excludeUsers?.find((item) => item.id === user.id) === undefined);
   }
 
   const popover = await popoverController.create({
@@ -95,11 +95,13 @@ async function onInput(value: string): Promise<void> {
     emits('update:modelValue', undefined);
     return;
   }
+  if (!value) {
+    return;
+  }
   queryCount += 1;
   const backup = queryCount;
   errorMessage.value = '';
 
-  await wait(500);
   if (queryCount !== backup || querying.value) {
     return;
   }
