@@ -71,6 +71,7 @@ TESTBED_VERSION = ReplaceRegex(
     r"ghcr.io/scille/parsec-cloud/parsec-testbed-server:[^\s]+",
     "ghcr.io/scille/parsec-cloud/parsec-testbed-server:{version}",
 )
+SENTRY_CLI_GA_VERSION = ReplaceRegex("sentry-cli-version: [0-9.]+", "sentry-cli-version: {version}")
 
 
 @enum.unique
@@ -87,6 +88,7 @@ class Tool(enum.Enum):
     WinFSP = "winfsp"
     Testbed = "testbed"
     PreCommit = "pre-commit"
+    SentryCLI = "sentry-cli"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
         updated: set[Path] = set()
@@ -190,7 +192,12 @@ def get_tools_version() -> dict[Tool, str]:
 
 
 def get_tool_version(tool: Tool) -> str:
-    return get_tools_version()[tool]
+    try:
+        return get_tools_version()[tool]
+    except KeyError as ke:
+        raise ValueError(
+            f"Tool {tool.value} not found in the versions file {VERSIONS_FILE}"
+        ) from ke
 
 
 def set_tool_version(tool: Tool, version: str) -> None:
@@ -250,6 +257,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         Tool.Node: [NODE_GA_VERSION],
         Tool.WasmPack: [WASM_PACK_GA_VERSION],
         Tool.WinFSP: [CI_WINFSP_VERSION],
+        Tool.SentryCLI: [SENTRY_CLI_GA_VERSION],
     },
     ROOT_DIR / "bindings/electron/package.json": {
         Tool.License: [JSON_LICENSE_FIELD],
@@ -386,18 +394,7 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ]
     },
     ROOT_DIR / "misc/versions.toml": {
-        Tool.Rust: [ReplaceRegex(r'rust = "[0-9.]+"', 'rust = "{version}"')],
-        Tool.Python: [ReplaceRegex(r'python = "[0-9.]+"', 'python = "{version}"')],
-        Tool.Poetry: [ReplaceRegex(r'poetry = "[0-9.]+"', 'poetry = "{version}"')],
-        Tool.Node: [ReplaceRegex(r'node = "[0-9.]+"', 'node = "{version}"')],
-        Tool.WasmPack: [ReplaceRegex(r'wasm-pack = "[0-9.]+"', 'wasm-pack = "{version}"')],
-        Tool.Nextest: [ReplaceRegex(r'nextest = "[0-9.]+"', 'nextest = "{version}"')],
-        Tool.Parsec: [ReplaceRegex(r'parsec = "[0-9.]+.*"', 'parsec = "{version}"')],
-        Tool.License: [ReplaceRegex(r'license = "[^\"]*"', 'license = "{version}"')],
-        Tool.PostgreSQL: [ReplaceRegex(r'postgres = "[0-9.]+"', 'postgres = "{version}"')],
-        Tool.WinFSP: [ReplaceRegex(r'winfsp = "[0-9.]+"', 'winfsp = "{version}"')],
-        Tool.Testbed: [ReplaceRegex(r'testbed = "[0-9.]+.*"', 'testbed = "{version}"')],
-        Tool.PreCommit: [ReplaceRegex(r'pre-commit = "[0-9.]+"', 'pre-commit = "{version}"')],
+        k: [ReplaceRegex(rf'{k.value} = ".*"', f'{k.value} = "{{version}}"')] for k in Tool
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
