@@ -287,14 +287,14 @@ impl_events!(
     ///
     /// `ServerConfigNotified` correspond to the SSE event that is always send by the
     /// server when connecting to it. `ServerConfigChanged` is the higher level event
-    /// that detect an actual change in the server configuration (e.g. in case of
+    /// that detects an actual change in the server configuration (e.g. in case of
     /// disconnection we can have multiple `ServerConfigNotified`, but no
     /// `ServerConfigChanged`).
     ServerConfigNotified {
         active_users_limit: ActiveUsersLimit,
         user_profile_outsider_allowed: bool,
     },
-    /// This event is fired by the connection monitor.
+    /// This event is fired by the server config monitor.
     ///
     /// `ServerConfigChanged` doesn't provide the actual config, use
     /// `Client::get_server_config` to get it instead.
@@ -314,6 +314,12 @@ impl_events!(
     /// `NewCertificates` is the higher level event that occurs once the new
     /// certificates has been integrated in the local storage and, hence, are visible
     /// for all practical purpose.
+    ///
+    /// Note this event will be fired (i.e. the server pushes it to us)  even if the
+    /// new certificates comes from our client.
+    /// This is because the certificates can only be integrated in the local storage in
+    /// strict chronological order, which is only possible by first polling the server for
+    /// new certificates to make sure we are not missing a concurrently added certificate.
     CertificatesUpdated { last_timestamps: PerTopicLastTimestamps },
     /// This event is fired by the certificate ops when new certificates has been
     /// integrated into the local storage.
@@ -349,6 +355,9 @@ impl_events!(
     ///
     /// The invitation status has changed on server side (e.g. a claimer is online,
     /// an invitation has been deleted etc.).
+    ///
+    /// Note this event will be fired (i.e. the server pushes it to us) even if
+    /// we are at the origin of the change (e.g. we cancelled the invitation).
     InvitationChanged {
         status: InvitationStatus,
         token: InvitationToken,
@@ -358,6 +367,11 @@ impl_events!(
     ///
     /// The PKI enrollments have changed on server side (e.g. a new enrollment
     /// is available).
+    ///
+    /// Notes:
+    /// - This event will be fired (i.e. the server pushes it to us) even if
+    ///   we are at the origin of the change (e.g. we accepted/rejected the enrollment).
+    /// - This event is received by all users with ADMIN profile.
     PkiEnrollmentUpdated,
 
     // ***********************************************************************
@@ -370,6 +384,11 @@ impl_events!(
     ///
     /// This event is used by the workspaces inbound sync monitor (and the user
     /// sync monitor) to be notified an inbound sync operation is needed.
+    ///
+    /// Note this event WILL NOT by fired if the vlob create/update comes from our
+    /// client. This is because a vlob (unlike certificates) can be directly
+    /// integrated in the local storage without the need for other knowledge from
+    /// the server (i.e. vlobs can be considered isolated from each others).
     RealmVlobUpdated {
         author: DeviceID,
         blob: Option<Bytes>,

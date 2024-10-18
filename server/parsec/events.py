@@ -160,8 +160,10 @@ class EventInvitation(BaseModel, ClientBroadcastableEvent):
 
     This event is used in two way:
 
-    - Broadcasted to the invitation greeter to notify him the claimer is connected
-      to the server (and hence he can start the greeting procedure).
+    - Keep a list of all claimers connected across all Parsec server instances, which
+      is useful to display the invitations ready to be greeted.
+    - Broadcasted to the invitation greeter to notify him the invitation status has
+      changed (e.g. invitation has been cancelled, claimer is now connected to the server).
     """
 
     model_config = ConfigDict(arbitrary_types_allowed=True, strict=True)
