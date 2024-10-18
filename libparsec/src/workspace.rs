@@ -741,13 +741,16 @@ pub async fn workspace_open_file_and_get_id(
     workspace.open_file_and_get_id(path, mode).await
 }
 
-pub async fn fd_close(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdCloseError> {
+pub async fn workspace_fd_close(
+    workspace: Handle,
+    fd: FileDescriptor,
+) -> Result<(), WorkspaceFdCloseError> {
     let workspace = borrow_workspace(workspace)?;
 
     workspace.fd_close(fd).await
 }
 
-pub async fn fd_stat(
+pub async fn workspace_fd_stat(
     workspace: Handle,
     fd: FileDescriptor,
 ) -> Result<FileStat, WorkspaceFdStatError> {
@@ -756,13 +759,16 @@ pub async fn fd_stat(
     workspace.fd_stat(fd).await
 }
 
-pub async fn fd_flush(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdFlushError> {
+pub async fn workspace_fd_flush(
+    workspace: Handle,
+    fd: FileDescriptor,
+) -> Result<(), WorkspaceFdFlushError> {
     let workspace = borrow_workspace(workspace)?;
 
     workspace.fd_flush(fd).await
 }
 
-pub async fn fd_read(
+pub async fn workspace_fd_read(
     workspace: Handle,
     fd: FileDescriptor,
     offset: u64,
@@ -775,7 +781,7 @@ pub async fn fd_read(
     Ok(buf)
 }
 
-pub async fn fd_resize(
+pub async fn workspace_fd_resize(
     workspace: Handle,
     fd: FileDescriptor,
     length: u64,
@@ -786,7 +792,7 @@ pub async fn fd_resize(
     workspace.fd_resize(fd, length, truncate_only).await
 }
 
-pub async fn fd_write(
+pub async fn workspace_fd_write(
     workspace: Handle,
     fd: FileDescriptor,
     offset: u64,
@@ -797,7 +803,7 @@ pub async fn fd_write(
     workspace.fd_write(fd, offset, data).await
 }
 
-pub async fn fd_write_constrained_io(
+pub async fn workspace_fd_write_constrained_io(
     workspace: Handle,
     fd: FileDescriptor,
     offset: u64,
@@ -808,7 +814,7 @@ pub async fn fd_write_constrained_io(
     workspace.fd_write_constrained_io(fd, offset, data).await
 }
 
-pub async fn fd_write_start_eof(
+pub async fn workspace_fd_write_start_eof(
     workspace: Handle,
     fd: FileDescriptor,
     data: &[u8],

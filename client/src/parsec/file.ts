@@ -248,7 +248,7 @@ export async function openFile(
 
 export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescriptor): Promise<Result<null, WorkspaceFdCloseError>> {
   if (!needsMocks()) {
-    return await libparsec.fdClose(workspaceHandle, fd);
+    return await libparsec.workspaceFdClose(workspaceHandle, fd);
   } else {
     return { ok: true, value: null };
   }
@@ -260,7 +260,7 @@ export async function resizeFile(
   length: number,
 ): Promise<Result<null, WorkspaceFdResizeError>> {
   if (workspaceHandle && !needsMocks()) {
-    return await libparsec.fdResize(workspaceHandle, fd, length, true);
+    return await libparsec.workspaceFdResize(workspaceHandle, fd, length, true);
   } else {
     return { ok: true, value: null };
   }
@@ -273,7 +273,7 @@ export async function writeFile(
   data: Uint8Array,
 ): Promise<Result<number, WorkspaceFdWriteError>> {
   if (!needsMocks()) {
-    return await libparsec.fdWrite(workspaceHandle, fd, offset, data);
+    return await libparsec.workspaceFdWrite(workspaceHandle, fd, offset, data);
   } else {
     await wait(100);
     return { ok: true, value: data.length };
@@ -287,7 +287,7 @@ export async function readFile(
   size: number,
 ): Promise<Result<ArrayBuffer, WorkspaceFdReadError>> {
   if (!needsMocks()) {
-    return await libparsec.fdRead(workspaceHandle, fd, offset, size);
+    return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
   } else {
     await wait(100);
     return { ok: true, value: new Uint8Array([77, 97, 120, 32, 105, 115, 32, 115, 101, 120, 121]) };
