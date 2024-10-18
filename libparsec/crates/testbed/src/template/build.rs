@@ -180,6 +180,10 @@ impl TestbedTemplateBuilderCounters {
         self.current_timestamp += Duration::try_days(1).expect("Invalid duration");
         self.current_timestamp
     }
+    pub fn set_current_timestamp(&mut self, timestamp: DateTime) {
+        assert!(timestamp > self.current_timestamp);
+        self.current_timestamp = timestamp;
+    }
     pub fn current_timestamp(&self) -> DateTime {
         self.current_timestamp
     }
