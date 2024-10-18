@@ -3,11 +3,12 @@
 use std::sync::Arc;
 
 pub use libparsec_client::workspace::{
-    EntryStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError, WorkspaceCreateFolderError,
-    WorkspaceDecryptPathAddrError, WorkspaceFdCloseError, WorkspaceFdFlushError,
-    WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdWriteError,
-    WorkspaceGeneratePathAddrError, WorkspaceMoveEntryError, WorkspaceOpenFileError,
-    WorkspaceRemoveEntryError, WorkspaceStatEntryError, WorkspaceStatFolderChildrenError,
+    EntryStat, FileStat, MoveEntryMode, OpenOptions, WorkspaceCreateFileError,
+    WorkspaceCreateFolderError, WorkspaceDecryptPathAddrError, WorkspaceFdCloseError,
+    WorkspaceFdFlushError, WorkspaceFdReadError, WorkspaceFdResizeError, WorkspaceFdStatError,
+    WorkspaceFdWriteError, WorkspaceGeneratePathAddrError, WorkspaceMoveEntryError,
+    WorkspaceOpenFileError, WorkspaceRemoveEntryError, WorkspaceStatEntryError,
+    WorkspaceStatFolderChildrenError,
 };
 use libparsec_client::{
     EventWorkspaceOpsInboundSyncDone, EventWorkspaceOpsOutboundSyncNeeded,
@@ -593,6 +594,17 @@ pub async fn workspace_stat_entry_by_id(
     workspace.stat_entry_by_id(entry_id).await
 }
 
+pub async fn workspace_stat_entry_by_id_ignore_confinement_point(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result<EntryStat, WorkspaceStatEntryError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .stat_entry_by_id_ignore_confinement_point(entry_id)
+        .await
+}
+
 pub async fn workspace_stat_folder_children(
     workspace: Handle,
     path: &FsPath,
@@ -620,6 +632,20 @@ pub async fn workspace_move_entry(
     let workspace = borrow_workspace(workspace)?;
 
     workspace.move_entry(src, dst, mode).await
+}
+
+pub async fn workspace_rename_entry_by_id(
+    workspace: Handle,
+    src_parent_id: VlobID,
+    src_name: EntryName,
+    dst_name: EntryName,
+    mode: MoveEntryMode,
+) -> Result<(), WorkspaceMoveEntryError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace
+        .rename_entry_by_id(src_parent_id, src_name, dst_name, mode)
+        .await
 }
 
 pub async fn workspace_create_folder(
@@ -695,10 +721,39 @@ pub async fn workspace_open_file(
     workspace.open_file(path, mode).await
 }
 
+pub async fn workspace_open_file_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+    mode: OpenOptions,
+) -> Result<FileDescriptor, WorkspaceOpenFileError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.open_file_by_id(entry_id, mode).await
+}
+
+pub async fn workspace_open_file_and_get_id(
+    workspace: Handle,
+    path: FsPath,
+    mode: OpenOptions,
+) -> Result<(FileDescriptor, VlobID), WorkspaceOpenFileError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.open_file_and_get_id(path, mode).await
+}
+
 pub async fn fd_close(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdCloseError> {
     let workspace = borrow_workspace(workspace)?;
 
     workspace.fd_close(fd).await
+}
+
+pub async fn fd_stat(
+    workspace: Handle,
+    fd: FileDescriptor,
+) -> Result<FileStat, WorkspaceFdStatError> {
+    let workspace = borrow_workspace(workspace)?;
+
+    workspace.fd_stat(fd).await
 }
 
 pub async fn fd_flush(workspace: Handle, fd: FileDescriptor) -> Result<(), WorkspaceFdFlushError> {
