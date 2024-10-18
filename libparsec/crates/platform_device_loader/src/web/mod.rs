@@ -1,15 +1,12 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    path::{Path, PathBuf},
-    sync::Arc,
-};
+use std::{path::Path, sync::Arc};
 
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, ImportRecoveryDeviceError, LoadDeviceError,
-    LoadRecoveryDeviceError, PlatformExportRecoveryDeviceError, SaveDeviceError,
+    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError,
+    PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError,
 };
 
@@ -75,8 +72,6 @@ pub async fn import_recovery_device(
     _recovery_device: Vec<u8>,
     _passphrase: SecretKeyPassphrase,
     _device_label: DeviceLabel,
-    _save_strategy: DeviceSaveStrategy,
-    _key_file: PathBuf,
-) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
     todo!()
 }

@@ -406,20 +406,44 @@ def is_keyring_available() -> bool:
 
 
 class ImportRecoveryDeviceError(ErrorVariant):
-    class InvalidPath:
+    class Internal:
         pass
 
-    class InvalidData:
+    class Stopped:
         pass
 
-    class InvalidPassphrase:
+    class Offline:
         pass
 
-    class DecryptionFailed:
+    class UserRevoked(UserID):
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class DataError:
+        pass
+
+    class GetCertificateError:
+        pass
+
+    class CertifDeviceError:
+        pass
+
+    class PlatformImportRecoveryDeviceError:
+        pass
+
+    class ConnectionError:
         pass
 
     class SaveDeviceError:
         pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
 
 
 class ExportRecoveryDeviceError(ErrorVariant):

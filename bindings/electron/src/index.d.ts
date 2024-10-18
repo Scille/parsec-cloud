@@ -1186,32 +1186,71 @@ export type GreetInProgressError =
 
 
 // ImportRecoveryDeviceError
-export interface ImportRecoveryDeviceErrorDecryptionFailed {
-    tag: "DecryptionFailed"
+export interface ImportRecoveryDeviceErrorCertifDeviceError {
+    tag: "CertifDeviceError"
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidData {
-    tag: "InvalidData"
+export interface ImportRecoveryDeviceErrorConnectionError {
+    tag: "ConnectionError"
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidPassphrase {
-    tag: "InvalidPassphrase"
+export interface ImportRecoveryDeviceErrorDataError {
+    tag: "DataError"
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidPath {
-    tag: "InvalidPath"
+export interface ImportRecoveryDeviceErrorGetCertificateError {
+    tag: "GetCertificateError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError {
+    tag: "PlatformImportRecoveryDeviceError"
     error: string
 }
 export interface ImportRecoveryDeviceErrorSaveDeviceError {
     tag: "SaveDeviceError"
     error: string
 }
+export interface ImportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ImportRecoveryDeviceErrorUserRevoked {
+    tag: "UserRevoked"
+    error: string
+}
 export type ImportRecoveryDeviceError =
-  | ImportRecoveryDeviceErrorDecryptionFailed
-  | ImportRecoveryDeviceErrorInvalidData
-  | ImportRecoveryDeviceErrorInvalidPassphrase
-  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorCertifDeviceError
+  | ImportRecoveryDeviceErrorConnectionError
+  | ImportRecoveryDeviceErrorDataError
+  | ImportRecoveryDeviceErrorGetCertificateError
+  | ImportRecoveryDeviceErrorInternal
+  | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError
   | ImportRecoveryDeviceErrorSaveDeviceError
+  | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ImportRecoveryDeviceErrorUserRevoked
 
 
 // InviteListItem
