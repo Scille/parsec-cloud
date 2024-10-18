@@ -264,7 +264,7 @@ pub(super) fn get_stuff<T>(
     });
     value_any.downcast_ref::<T>().unwrap_or_else(|| {
         panic!(
-            "Key `{}` is among the stuff, but you got it type wrong :'( (caller: {})",
+            "Key `{}` is among the stuff, but you got its type wrong :'( (caller: {})",
             key, caller
         );
     })
@@ -310,6 +310,11 @@ impl TestbedTemplateBuilder {
         obj: &(impl std::any::Any + Clone + Send + Sync),
     ) {
         let boxed = Box::new(obj.to_owned());
+        assert!(
+            self.stuff.iter().all(|(k, _)| *k != key),
+            "Key `{}` is already part of stuff",
+            key
+        );
         // It's no big deal to leak the data here: the template is kept until the end
         // of the program anyway (and the amount of leak is negligeable).
         // On the other hand it allows to provide the stuff as `&'static Foo` which
