@@ -538,7 +538,9 @@ class WorkspaceFdCloseError(ErrorVariant):
         pass
 
 
-async def fd_close(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdCloseError]:
+async def workspace_fd_close(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[None, WorkspaceFdCloseError]:
     raise NotImplementedError
 
 
@@ -560,7 +562,9 @@ class FileStat(Structure):
     size: SizeInt
 
 
-async def fd_stat(workspace: Handle, fd: FileDescriptor) -> Result[FileStat, WorkspaceFdStatError]:
+async def workspace_fd_stat(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[FileStat, WorkspaceFdStatError]:
     raise NotImplementedError
 
 
@@ -578,7 +582,9 @@ class WorkspaceFdFlushError(ErrorVariant):
         pass
 
 
-async def fd_flush(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdFlushError]:
+async def workspace_fd_flush(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[None, WorkspaceFdFlushError]:
     raise NotImplementedError
 
 
@@ -611,7 +617,7 @@ class WorkspaceFdReadError(ErrorVariant):
         pass
 
 
-async def fd_read(
+async def workspace_fd_read(
     workspace: Handle, fd: FileDescriptor, offset: U64, size: U64
 ) -> Result[bytes, WorkspaceFdReadError]:
     raise NotImplementedError
@@ -628,7 +634,7 @@ class WorkspaceFdResizeError(ErrorVariant):
         pass
 
 
-async def fd_resize(
+async def workspace_fd_resize(
     workspace: Handle, fd: FileDescriptor, length: U64, truncate_only: bool
 ) -> Result[None, WorkspaceFdResizeError]:
     raise NotImplementedError
@@ -645,19 +651,19 @@ class WorkspaceFdWriteError(ErrorVariant):
         pass
 
 
-async def fd_write(
+async def workspace_fd_write(
     workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError
 
 
-async def fd_write_constrained_io(
+async def workspace_fd_write_constrained_io(
     workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError
 
 
-async def fd_write_start_eof(
+async def workspace_fd_write_start_eof(
     workspace: Handle,
     fd: FileDescriptor,
     data: Ref[bytes],
