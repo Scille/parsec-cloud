@@ -12,7 +12,7 @@ use zeroize::Zeroize;
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, ImportRecoveryDeviceError, LoadDeviceError,
+    get_default_key_file, ChangeAuthentificationError, ImportRecoveryDeviceError, LoadDeviceError,
     LoadRecoveryDeviceError, PlatformExportRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
     ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
@@ -642,7 +642,7 @@ pub async fn import_recovery_device(
     passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
-    key_file: PathBuf,
+    config_dir: PathBuf,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
     let key = SecretKey::from_recovery_passphrase(passphrase)
         .map_err(|_| ImportRecoveryDeviceError::InvalidPassphrase)?;
@@ -676,7 +676,12 @@ pub async fn import_recovery_device(
         None,
     );
 
-    Ok(save_device(&save_strategy.into_access(key_file), &device, device.now()).await?)
+    let access = {
+        let key_file = get_default_key_file(&config_dir, &device.device_id);
+        save_strategy.into_access(key_file)
+    };
+
+    Ok(save_device(&access, &device, device.now()).await?)
 }
 
 pub fn is_keyring_available() -> bool {

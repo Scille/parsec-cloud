@@ -276,14 +276,14 @@ pub async fn inner_import_recovery_device(
     passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
-    key_file: PathBuf,
+    config_dir: PathBuf,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
     platform::import_recovery_device(
         recovery_device,
         passphrase,
         device_label,
         save_strategy,
-        key_file,
+        config_dir,
     )
     .await
 }
