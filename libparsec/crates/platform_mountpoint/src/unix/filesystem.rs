@@ -642,7 +642,7 @@ impl fuser::Filesystem for Filesystem {
     ) {
         log::debug!(
             "[FUSE] rename(src_parent: {:#x?}, src_name: {:?}, dst_parent: {:#x?}, \\
-            std_name: {:?}, flags: {})",
+            dst_name: {:?}, flags: {})",
             src_parent,
             src_name,
             dst_parent,
