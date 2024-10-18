@@ -286,6 +286,7 @@ pub(super) async fn populate_cache_from_local_storage_or_server(
         &store.certificates_ops,
         store.realm_id,
         entry_id,
+        None,
     )
     .await;
     let manifest = match outcome {
