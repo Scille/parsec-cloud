@@ -19,6 +19,9 @@ pub struct FileStat {
 pub enum WorkspaceFdStatError {
     #[error("File descriptor not found")]
     BadFileDescriptor,
+    // Internal used in main `libparsec` crate to handle bad workspace handle.
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
 }
 
 pub async fn fd_stat(

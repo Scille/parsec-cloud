@@ -1364,6 +1364,146 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
     Ok(js_obj)
 }
 
+// FileStat
+
+#[allow(dead_code)]
+fn struct_file_stat_js_to_rs(obj: JsValue) -> Result<libparsec::FileStat, JsValue> {
+    let id = {
+        let js_val = Reflect::get(&obj, &"id".into())?;
+        js_val
+            .dyn_into::<JsString>()
+            .ok()
+            .and_then(|s| s.as_string())
+            .ok_or_else(|| TypeError::new("Not a string"))
+            .and_then(|x| {
+                let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                    libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                };
+                custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+            })
+            .map_err(|_| TypeError::new("Not a valid VlobID"))?
+    };
+    let created = {
+        let js_val = Reflect::get(&obj, &"created".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let updated = {
+        let js_val = Reflect::get(&obj, &"updated".into())?;
+        {
+            let v = js_val.dyn_into::<Number>()?.value_of();
+            let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                    .map_err(|_| "Out-of-bound datetime")
+            };
+            let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+            v
+        }
+    };
+    let base_version = {
+        let js_val = Reflect::get(&obj, &"baseVersion".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u32 number")));
+            }
+            v as u32
+        }
+    };
+    let is_placeholder = {
+        let js_val = Reflect::get(&obj, &"isPlaceholder".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let need_sync = {
+        let js_val = Reflect::get(&obj, &"needSync".into())?;
+        js_val
+            .dyn_into::<Boolean>()
+            .map_err(|_| TypeError::new("Not a boolean"))?
+            .value_of()
+    };
+    let size = {
+        let js_val = Reflect::get(&obj, &"size".into())?;
+        {
+            let v = js_val
+                .dyn_into::<Number>()
+                .map_err(|_| TypeError::new("Not a number"))?
+                .value_of();
+            if v < (u64::MIN as f64) || (u64::MAX as f64) < v {
+                return Err(JsValue::from(TypeError::new("Not an u64 number")));
+            }
+            v as u64
+        }
+    };
+    Ok(libparsec::FileStat {
+        id,
+        created,
+        updated,
+        base_version,
+        is_placeholder,
+        need_sync,
+        size,
+    })
+}
+
+#[allow(dead_code)]
+fn struct_file_stat_rs_to_js(rs_obj: libparsec::FileStat) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_id = JsValue::from_str({
+        let custom_to_rs_string =
+            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+        match custom_to_rs_string(rs_obj.id) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        }
+        .as_ref()
+    });
+    Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_created = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.created) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"created".into(), &js_created)?;
+    let js_updated = {
+        let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+            Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+        };
+        let v = match custom_to_rs_f64(rs_obj.updated) {
+            Ok(ok) => ok,
+            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+        };
+        JsValue::from(v)
+    };
+    Reflect::set(&js_obj, &"updated".into(), &js_updated)?;
+    let js_base_version = JsValue::from(rs_obj.base_version);
+    Reflect::set(&js_obj, &"baseVersion".into(), &js_base_version)?;
+    let js_is_placeholder = rs_obj.is_placeholder.into();
+    Reflect::set(&js_obj, &"isPlaceholder".into(), &js_is_placeholder)?;
+    let js_need_sync = rs_obj.need_sync.into();
+    Reflect::set(&js_obj, &"needSync".into(), &js_need_sync)?;
+    let js_size = JsValue::from(rs_obj.size);
+    Reflect::set(&js_obj, &"size".into(), &js_size)?;
+    Ok(js_obj)
+}
+
 // HumanHandle
 
 #[allow(dead_code)]
@@ -7179,6 +7319,34 @@ fn variant_workspace_fd_resize_error_rs_to_js(
     Ok(js_obj)
 }
 
+// WorkspaceFdStatError
+
+#[allow(dead_code)]
+fn variant_workspace_fd_stat_error_rs_to_js(
+    rs_obj: libparsec::WorkspaceFdStatError,
+) -> Result<JsValue, JsValue> {
+    let js_obj = Object::new().into();
+    let js_display = &rs_obj.to_string();
+    Reflect::set(&js_obj, &"error".into(), &js_display.into())?;
+    match rs_obj {
+        libparsec::WorkspaceFdStatError::BadFileDescriptor { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdStatErrorBadFileDescriptor".into(),
+            )?;
+        }
+        libparsec::WorkspaceFdStatError::Internal { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"WorkspaceFdStatErrorInternal".into(),
+            )?;
+        }
+    }
+    Ok(js_obj)
+}
+
 // WorkspaceFdWriteError
 
 #[allow(dead_code)]
@@ -9261,238 +9429,6 @@ pub fn clientStop(client: u32) -> Promise {
     })
 }
 
-// fd_close
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdClose(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::fd_close(workspace, fd).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_close_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_flush
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdFlush(workspace: u32, fd: u32) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::fd_flush(workspace, fd).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_flush_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_read
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::fd_read(workspace, fd, offset, size).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_read_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_resize
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdResize(workspace: u32, fd: u32, length: u64, truncate_only: bool) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let ret = libparsec::fd_resize(workspace, fd, length, truncate_only).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = {
-                    let _ = value;
-                    JsValue::null()
-                };
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_resize_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_write
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let data = data.to_vec();
-
-        let ret = libparsec::fd_write(workspace, fd, offset, &data.to_vec()).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_write_constrained_io
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdWriteConstrainedIo(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let data = data.to_vec();
-
-        let ret = libparsec::fd_write_constrained_io(workspace, fd, offset, &data.to_vec()).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
-// fd_write_start_eof
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-pub fn fdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
-    future_to_promise(async move {
-        let fd = {
-            let custom_from_rs_u32 =
-                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
-            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
-        }?;
-
-        let data = data.to_vec();
-
-        let ret = libparsec::fd_write_start_eof(workspace, fd, &data.to_vec()).await;
-        Ok(match ret {
-            Ok(value) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
-                let js_value = JsValue::from(value);
-                Reflect::set(&js_obj, &"value".into(), &js_value)?;
-                js_obj
-            }
-            Err(err) => {
-                let js_obj = Object::new().into();
-                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
-                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
-                Reflect::set(&js_obj, &"error".into(), &js_err)?;
-                js_obj
-            }
-        })
-    })
-}
-
 // get_default_config_dir
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10602,6 +10538,276 @@ pub fn workspaceDecryptPathAddr(workspace: u32, link: String) -> Promise {
     })
 }
 
+// workspace_fd_close
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdClose(workspace: u32, fd: u32) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_fd_close(workspace, fd).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_close_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_flush
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdFlush(workspace: u32, fd: u32) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_fd_flush(workspace, fd).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_flush_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_read
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdRead(workspace: u32, fd: u32, offset: u64, size: u64) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_fd_read(workspace, fd, offset, size).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(Uint8Array::from(value.as_ref()));
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_read_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_resize
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdResize(workspace: u32, fd: u32, length: u64, truncate_only: bool) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_fd_resize(workspace, fd, length, truncate_only).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_resize_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_stat
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdStat(workspace: u32, fd: u32) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let ret = libparsec::workspace_fd_stat(workspace, fd).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = struct_file_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_stat_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_write
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdWrite(workspace: u32, fd: u32, offset: u64, data: Uint8Array) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let data = data.to_vec();
+
+        let ret = libparsec::workspace_fd_write(workspace, fd, offset, &data.to_vec()).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_write_constrained_io
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdWriteConstrainedIo(
+    workspace: u32,
+    fd: u32,
+    offset: u64,
+    data: Uint8Array,
+) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let data = data.to_vec();
+
+        let ret =
+            libparsec::workspace_fd_write_constrained_io(workspace, fd, offset, &data.to_vec())
+                .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_fd_write_start_eof
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceFdWriteStartEof(workspace: u32, fd: u32, data: Uint8Array) -> Promise {
+    future_to_promise(async move {
+        let fd = {
+            let custom_from_rs_u32 =
+                |raw: u32| -> Result<_, String> { Ok(libparsec::FileDescriptor(raw)) };
+            custom_from_rs_u32(fd).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+
+        let data = data.to_vec();
+
+        let ret = libparsec::workspace_fd_write_start_eof(workspace, fd, &data.to_vec()).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = JsValue::from(value);
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_fd_write_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // workspace_generate_path_addr
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10798,6 +11004,106 @@ pub fn workspaceOpenFile(workspace: u32, path: String, mode: Object) -> Promise 
     })
 }
 
+// workspace_open_file_and_get_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceOpenFileAndGetId(workspace: u32, path: String, mode: Object) -> Promise {
+    future_to_promise(async move {
+        let path = {
+            let custom_from_rs_string = |s: String| -> Result<_, String> {
+                s.parse::<libparsec::FsPath>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(path).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let mode = mode.into();
+        let mode = struct_open_options_js_to_rs(mode)?;
+
+        let ret = libparsec::workspace_open_file_and_get_id(workspace, path, mode).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let (x1, x2) = value;
+                    let js_array = Array::new_with_length(2);
+                    let js_value = {
+                        let custom_to_rs_u32 =
+                            |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
+                        let v = match custom_to_rs_u32(x1) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        };
+                        JsValue::from(v)
+                    };
+                    js_array.push(&js_value);
+                    let js_value = JsValue::from_str({
+                        let custom_to_rs_string =
+                            |x: libparsec::VlobID| -> Result<String, &'static str> { Ok(x.hex()) };
+                        match custom_to_rs_string(x2) {
+                            Ok(ok) => ok,
+                            Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                        }
+                        .as_ref()
+                    });
+                    js_array.push(&js_value);
+                    js_array.into()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_open_file_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceOpenFileById(workspace: u32, entry_id: String, mode: Object) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let mode = mode.into();
+        let mode = struct_open_options_js_to_rs(mode)?;
+
+        let ret = libparsec::workspace_open_file_by_id(workspace, entry_id, mode).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let custom_to_rs_u32 =
+                        |fd: libparsec::FileDescriptor| -> Result<_, &'static str> { Ok(fd.0) };
+                    let v = match custom_to_rs_u32(value) {
+                        Ok(ok) => ok,
+                        Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                    };
+                    JsValue::from(v)
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_open_file_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // workspace_remove_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10934,6 +11240,68 @@ pub fn workspaceRemoveFolderAll(workspace: u32, path: String) -> Promise {
     })
 }
 
+// workspace_rename_entry_by_id
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceRenameEntryById(
+    workspace: u32,
+    src_parent_id: String,
+    src_name: String,
+    dst_name: String,
+    mode: Object,
+) -> Promise {
+    future_to_promise(async move {
+        let src_parent_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(src_parent_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let src_name = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(src_name).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let dst_name = {
+            let custom_from_rs_string = |s: String| -> Result<_, _> {
+                s.parse::<libparsec::EntryName>().map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(dst_name).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let mode = mode.into();
+        let mode = variant_move_entry_mode_js_to_rs(mode)?;
+
+        let ret = libparsec::workspace_rename_entry_by_id(
+            workspace,
+            src_parent_id,
+            src_name,
+            dst_name,
+            mode,
+        )
+        .await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = {
+                    let _ = value;
+                    JsValue::null()
+                };
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_move_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
 // workspace_stat_entry
 #[allow(non_snake_case)]
 #[wasm_bindgen]
@@ -10978,6 +11346,39 @@ pub fn workspaceStatEntryById(workspace: u32, entry_id: String) -> Promise {
             custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
         }?;
         let ret = libparsec::workspace_stat_entry_by_id(workspace, entry_id).await;
+        Ok(match ret {
+            Ok(value) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &true.into())?;
+                let js_value = variant_entry_stat_rs_to_js(value)?;
+                Reflect::set(&js_obj, &"value".into(), &js_value)?;
+                js_obj
+            }
+            Err(err) => {
+                let js_obj = Object::new().into();
+                Reflect::set(&js_obj, &"ok".into(), &false.into())?;
+                let js_err = variant_workspace_stat_entry_error_rs_to_js(err)?;
+                Reflect::set(&js_obj, &"error".into(), &js_err)?;
+                js_obj
+            }
+        })
+    })
+}
+
+// workspace_stat_entry_by_id_ignore_confinement_point
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+pub fn workspaceStatEntryByIdIgnoreConfinementPoint(workspace: u32, entry_id: String) -> Promise {
+    future_to_promise(async move {
+        let entry_id = {
+            let custom_from_rs_string = |s: String| -> Result<libparsec::VlobID, _> {
+                libparsec::VlobID::from_hex(s.as_str()).map_err(|e| e.to_string())
+            };
+            custom_from_rs_string(entry_id).map_err(|e| TypeError::new(e.as_ref()))
+        }?;
+        let ret =
+            libparsec::workspace_stat_entry_by_id_ignore_confinement_point(workspace, entry_id)
+                .await;
         Ok(match ret {
             Ok(value) => {
                 let js_obj = Object::new().into();

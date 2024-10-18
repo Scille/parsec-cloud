@@ -335,6 +335,13 @@ async def workspace_stat_entry(
     raise NotImplementedError
 
 
+async def workspace_stat_entry_by_id_ignore_confinement_point(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result[EntryStat, WorkspaceStatEntryError]:
+    raise NotImplementedError
+
+
 async def workspace_stat_entry_by_id(
     workspace: Handle,
     entry_id: VlobID,
@@ -395,6 +402,16 @@ async def workspace_move_entry(
     workspace: Handle,
     src: FsPath,
     dst: FsPath,
+    mode: MoveEntryMode,
+) -> Result[None, WorkspaceMoveEntryError]:
+    raise NotImplementedError
+
+
+async def workspace_rename_entry_by_id(
+    workspace: Handle,
+    src_parent_id: VlobID,
+    src_name: EntryName,
+    dst_name: EntryName,
     mode: MoveEntryMode,
 ) -> Result[None, WorkspaceMoveEntryError]:
     raise NotImplementedError
@@ -496,6 +513,20 @@ async def workspace_open_file(
     raise NotImplementedError
 
 
+async def workspace_open_file_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+    mode: OpenOptions,
+) -> Result[FileDescriptor, WorkspaceOpenFileError]:
+    raise NotImplementedError
+
+
+async def workspace_open_file_and_get_id(
+    workspace: Handle, path: FsPath, mode: OpenOptions
+) -> Result[tuple[FileDescriptor, VlobID], WorkspaceOpenFileError]:
+    raise NotImplementedError
+
+
 class WorkspaceFdCloseError(ErrorVariant):
     class Stopped:
         pass
@@ -507,7 +538,33 @@ class WorkspaceFdCloseError(ErrorVariant):
         pass
 
 
-async def fd_close(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdCloseError]:
+async def workspace_fd_close(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[None, WorkspaceFdCloseError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdStatError(ErrorVariant):
+    class BadFileDescriptor:
+        pass
+
+    class Internal:
+        pass
+
+
+class FileStat(Structure):
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    base_version: VersionInt
+    is_placeholder: bool
+    need_sync: bool
+    size: SizeInt
+
+
+async def workspace_fd_stat(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[FileStat, WorkspaceFdStatError]:
     raise NotImplementedError
 
 
@@ -525,7 +582,9 @@ class WorkspaceFdFlushError(ErrorVariant):
         pass
 
 
-async def fd_flush(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdFlushError]:
+async def workspace_fd_flush(
+    workspace: Handle, fd: FileDescriptor
+) -> Result[None, WorkspaceFdFlushError]:
     raise NotImplementedError
 
 
@@ -558,7 +617,7 @@ class WorkspaceFdReadError(ErrorVariant):
         pass
 
 
-async def fd_read(
+async def workspace_fd_read(
     workspace: Handle, fd: FileDescriptor, offset: U64, size: U64
 ) -> Result[bytes, WorkspaceFdReadError]:
     raise NotImplementedError
@@ -575,7 +634,7 @@ class WorkspaceFdResizeError(ErrorVariant):
         pass
 
 
-async def fd_resize(
+async def workspace_fd_resize(
     workspace: Handle, fd: FileDescriptor, length: U64, truncate_only: bool
 ) -> Result[None, WorkspaceFdResizeError]:
     raise NotImplementedError
@@ -592,19 +651,19 @@ class WorkspaceFdWriteError(ErrorVariant):
         pass
 
 
-async def fd_write(
+async def workspace_fd_write(
     workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError
 
 
-async def fd_write_constrained_io(
+async def workspace_fd_write_constrained_io(
     workspace: Handle, fd: FileDescriptor, offset: U64, data: Ref[bytes]
 ) -> Result[U64, WorkspaceFdWriteError]:
     raise NotImplementedError
 
 
-async def fd_write_start_eof(
+async def workspace_fd_write_start_eof(
     workspace: Handle,
     fd: FileDescriptor,
     data: Ref[bytes],
