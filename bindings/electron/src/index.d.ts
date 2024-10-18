@@ -162,6 +162,17 @@ export interface DeviceInfo {
 }
 
 
+export interface FileStat {
+    id: string
+    created: number
+    updated: number
+    baseVersion: number
+    isPlaceholder: boolean
+    needSync: boolean
+    size: number
+}
+
+
 export interface HumanHandle {
     email: string
     label: string
@@ -1664,6 +1675,20 @@ export type WorkspaceFdResizeError =
   | WorkspaceFdResizeErrorNotInWriteMode
 
 
+// WorkspaceFdStatError
+export interface WorkspaceFdStatErrorBadFileDescriptor {
+    tag: "BadFileDescriptor"
+    error: string
+}
+export interface WorkspaceFdStatErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export type WorkspaceFdStatError =
+  | WorkspaceFdStatErrorBadFileDescriptor
+  | WorkspaceFdStatErrorInternal
+
+
 // WorkspaceFdWriteError
 export interface WorkspaceFdWriteErrorBadFileDescriptor {
     tag: "BadFileDescriptor"
@@ -2258,43 +2283,6 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
-export function fdClose(
-    workspace: number,
-    fd: number
-): Promise<Result<null, WorkspaceFdCloseError>>
-export function fdFlush(
-    workspace: number,
-    fd: number
-): Promise<Result<null, WorkspaceFdFlushError>>
-export function fdRead(
-    workspace: number,
-    fd: number,
-    offset: number,
-    size: number
-): Promise<Result<Uint8Array, WorkspaceFdReadError>>
-export function fdResize(
-    workspace: number,
-    fd: number,
-    length: number,
-    truncate_only: boolean
-): Promise<Result<null, WorkspaceFdResizeError>>
-export function fdWrite(
-    workspace: number,
-    fd: number,
-    offset: number,
-    data: Uint8Array
-): Promise<Result<number, WorkspaceFdWriteError>>
-export function fdWriteConstrainedIo(
-    workspace: number,
-    fd: number,
-    offset: number,
-    data: Uint8Array
-): Promise<Result<number, WorkspaceFdWriteError>>
-export function fdWriteStartEof(
-    workspace: number,
-    fd: number,
-    data: Uint8Array
-): Promise<Result<number, WorkspaceFdWriteError>>
 export function getDefaultConfigDir(
 ): Promise<string>
 export function getDefaultDataBaseDir(
@@ -2442,6 +2430,47 @@ export function workspaceDecryptPathAddr(
     workspace: number,
     link: string
 ): Promise<Result<string, WorkspaceDecryptPathAddrError>>
+export function workspaceFdClose(
+    workspace: number,
+    fd: number
+): Promise<Result<null, WorkspaceFdCloseError>>
+export function workspaceFdFlush(
+    workspace: number,
+    fd: number
+): Promise<Result<null, WorkspaceFdFlushError>>
+export function workspaceFdRead(
+    workspace: number,
+    fd: number,
+    offset: number,
+    size: number
+): Promise<Result<Uint8Array, WorkspaceFdReadError>>
+export function workspaceFdResize(
+    workspace: number,
+    fd: number,
+    length: number,
+    truncate_only: boolean
+): Promise<Result<null, WorkspaceFdResizeError>>
+export function workspaceFdStat(
+    workspace: number,
+    fd: number
+): Promise<Result<FileStat, WorkspaceFdStatError>>
+export function workspaceFdWrite(
+    workspace: number,
+    fd: number,
+    offset: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
+export function workspaceFdWriteConstrainedIo(
+    workspace: number,
+    fd: number,
+    offset: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
+export function workspaceFdWriteStartEof(
+    workspace: number,
+    fd: number,
+    data: Uint8Array
+): Promise<Result<number, WorkspaceFdWriteError>>
 export function workspaceGeneratePathAddr(
     workspace: number,
     path: string
@@ -2463,6 +2492,16 @@ export function workspaceOpenFile(
     path: string,
     mode: OpenOptions
 ): Promise<Result<number, WorkspaceOpenFileError>>
+export function workspaceOpenFileAndGetId(
+    workspace: number,
+    path: string,
+    mode: OpenOptions
+): Promise<Result<[number, string], WorkspaceOpenFileError>>
+export function workspaceOpenFileById(
+    workspace: number,
+    entry_id: string,
+    mode: OpenOptions
+): Promise<Result<number, WorkspaceOpenFileError>>
 export function workspaceRemoveEntry(
     workspace: number,
     path: string
@@ -2479,11 +2518,22 @@ export function workspaceRemoveFolderAll(
     workspace: number,
     path: string
 ): Promise<Result<null, WorkspaceRemoveEntryError>>
+export function workspaceRenameEntryById(
+    workspace: number,
+    src_parent_id: string,
+    src_name: string,
+    dst_name: string,
+    mode: MoveEntryMode
+): Promise<Result<null, WorkspaceMoveEntryError>>
 export function workspaceStatEntry(
     workspace: number,
     path: string
 ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
 export function workspaceStatEntryById(
+    workspace: number,
+    entry_id: string
+): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+export function workspaceStatEntryByIdIgnoreConfinementPoint(
     workspace: number,
     entry_id: string
 ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
