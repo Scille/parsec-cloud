@@ -335,6 +335,13 @@ async def workspace_stat_entry(
     raise NotImplementedError
 
 
+async def workspace_stat_entry_by_id_ignore_confinement_point(
+    workspace: Handle,
+    entry_id: VlobID,
+) -> Result[EntryStat, WorkspaceStatEntryError]:
+    raise NotImplementedError
+
+
 async def workspace_stat_entry_by_id(
     workspace: Handle,
     entry_id: VlobID,
@@ -395,6 +402,16 @@ async def workspace_move_entry(
     workspace: Handle,
     src: FsPath,
     dst: FsPath,
+    mode: MoveEntryMode,
+) -> Result[None, WorkspaceMoveEntryError]:
+    raise NotImplementedError
+
+
+async def workspace_rename_entry_by_id(
+    workspace: Handle,
+    src_parent_id: VlobID,
+    src_name: EntryName,
+    dst_name: EntryName,
     mode: MoveEntryMode,
 ) -> Result[None, WorkspaceMoveEntryError]:
     raise NotImplementedError
@@ -496,6 +513,20 @@ async def workspace_open_file(
     raise NotImplementedError
 
 
+async def workspace_open_file_by_id(
+    workspace: Handle,
+    entry_id: VlobID,
+    mode: OpenOptions,
+) -> Result[FileDescriptor, WorkspaceOpenFileError]:
+    raise NotImplementedError
+
+
+async def workspace_open_file_and_get_id(
+    workspace: Handle, path: FsPath, mode: OpenOptions
+) -> Result[tuple[FileDescriptor, VlobID], WorkspaceOpenFileError]:
+    raise NotImplementedError
+
+
 class WorkspaceFdCloseError(ErrorVariant):
     class Stopped:
         pass
@@ -508,6 +539,28 @@ class WorkspaceFdCloseError(ErrorVariant):
 
 
 async def fd_close(workspace: Handle, fd: FileDescriptor) -> Result[None, WorkspaceFdCloseError]:
+    raise NotImplementedError
+
+
+class WorkspaceFdStatError(ErrorVariant):
+    class BadFileDescriptor:
+        pass
+
+    class Internal:
+        pass
+
+
+class FileStat(Structure):
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    base_version: VersionInt
+    is_placeholder: bool
+    need_sync: bool
+    size: SizeInt
+
+
+async def fd_stat(workspace: Handle, fd: FileDescriptor) -> Result[FileStat, WorkspaceFdStatError]:
     raise NotImplementedError
 
 
