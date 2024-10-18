@@ -49,8 +49,9 @@ pub(super) async fn fetch_remote_child_manifest(
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
     vlob_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<ChildManifest, FetchRemoteManifestError> {
-    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
+    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
     certificates_ops
         .validate_child_manifest(
@@ -84,14 +85,14 @@ pub(super) async fn fetch_remote_child_manifest(
         })
 }
 
-#[allow(unused)]
 pub(super) async fn fetch_remote_workspace_manifest(
     cmds: &AuthenticatedCmds,
     certificates_ops: &CertificateOps,
     realm_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<FolderManifest, FetchRemoteManifestError> {
     let vlob_id = realm_id; // Remember: workspace manifest's ID *is* the realm ID !
-    let data = fetch_vlob(cmds, realm_id, vlob_id).await?;
+    let data = fetch_vlob(cmds, realm_id, vlob_id, at).await?;
 
     certificates_ops
         .validate_workspace_manifest(
@@ -138,13 +139,14 @@ async fn fetch_vlob(
     cmds: &AuthenticatedCmds,
     realm_id: VlobID,
     vlob_id: VlobID,
+    at: Option<DateTime>,
 ) -> Result<VlobData, FetchRemoteManifestError> {
     use authenticated_cmds::latest::vlob_read_batch::{Rep, Req};
 
     let req = Req {
         realm_id,
         vlobs: vec![vlob_id],
-        at: None,
+        at,
     };
 
     let rep = cmds.send(req).await?;
@@ -271,4 +273,140 @@ pub(super) async fn fetch_block(
         .into();
 
     Ok(data)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum FetchVersionsRemoteManifestError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("The manifest's realm doesn't exist on the server")]
+    RealmNotFound,
+    #[error("Not allowed to access this realm")]
+    NoRealmAccess,
+    #[error(transparent)]
+    InvalidKeysBundle(#[from] Box<InvalidKeysBundleError>),
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    InvalidManifest(#[from] Box<InvalidManifestError>),
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for FetchVersionsRemoteManifestError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub(super) async fn fetch_versions_remote_workspace_manifest(
+    cmds: &AuthenticatedCmds,
+    certificates_ops: &CertificateOps,
+    realm_id: VlobID,
+    versions: &[VersionInt],
+) -> Result<Vec<FolderManifest>, FetchVersionsRemoteManifestError> {
+    let VlobVersionsData {
+        needed_common_certificate_timestamp,
+        needed_realm_certificate_timestamp,
+        items,
+    } = fetch_versions_vlob(
+        cmds,
+        realm_id,
+        versions.iter().map(|version| (realm_id, *version)),
+    )
+    .await?;
+
+    let mut manifests = Vec::with_capacity(items.len());
+    for (_, key_index, expected_author, expected_version, expected_timestamp, blob) in items {
+        let manifest = certificates_ops
+            .validate_workspace_manifest(
+                needed_realm_certificate_timestamp,
+                needed_common_certificate_timestamp,
+                realm_id,
+                key_index,
+                expected_author,
+                expected_version,
+                expected_timestamp,
+                &blob,
+            )
+            .await
+            .map_err(|err| match err {
+                CertifValidateManifestError::Offline => FetchVersionsRemoteManifestError::Offline,
+                CertifValidateManifestError::Stopped => FetchVersionsRemoteManifestError::Stopped,
+                CertifValidateManifestError::NotAllowed => {
+                    FetchVersionsRemoteManifestError::NoRealmAccess
+                }
+                CertifValidateManifestError::InvalidManifest(err) => {
+                    FetchVersionsRemoteManifestError::InvalidManifest(err)
+                }
+                CertifValidateManifestError::InvalidCertificate(err) => {
+                    FetchVersionsRemoteManifestError::InvalidCertificate(err)
+                }
+                CertifValidateManifestError::InvalidKeysBundle(err) => {
+                    FetchVersionsRemoteManifestError::InvalidKeysBundle(err)
+                }
+                CertifValidateManifestError::Internal(err) => {
+                    err.context("Cannot validate vlob").into()
+                }
+            })?;
+        manifests.push(manifest);
+    }
+
+    Ok(manifests)
+}
+
+struct VlobVersionsData {
+    needed_common_certificate_timestamp: DateTime,
+    needed_realm_certificate_timestamp: DateTime,
+    /// Taken verbatim from `vlob_read_batch`'s server response.
+    ///
+    /// Fields are: vlob ID, key index, author, version, created on, blob
+    ///
+    /// Not it would be tempting to introduce a dedicated type to improve readability
+    /// here, but this is not worth it since this type is private and only used in a
+    /// single place to split code into two functions (so no matter what we will have
+    /// a loop dealing with this tuple type).
+    items: Vec<(VlobID, IndexInt, DeviceID, VersionInt, DateTime, Bytes)>,
+}
+
+async fn fetch_versions_vlob(
+    cmds: &AuthenticatedCmds,
+    realm_id: VlobID,
+    items: impl Iterator<Item = (VlobID, VersionInt)>,
+) -> Result<VlobVersionsData, FetchVersionsRemoteManifestError> {
+    use authenticated_cmds::latest::vlob_read_versions::{Rep, Req};
+
+    let req = Req {
+        realm_id,
+        items: items.collect(),
+    };
+
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok { needed_common_certificate_timestamp, needed_realm_certificate_timestamp, items } => {
+            Ok(VlobVersionsData {
+                needed_common_certificate_timestamp,
+                needed_realm_certificate_timestamp,
+                items,
+            })
+        },
+        // Expected errors
+        Rep::AuthorNotAllowed => Err(FetchVersionsRemoteManifestError::NoRealmAccess),
+        Rep::RealmNotFound => Err(FetchVersionsRemoteManifestError::RealmNotFound),
+        // Unexpected errors :(
+        rep @ (
+            // One item is too many ???? Really ????
+            Rep::TooManyElements |
+            // Don't know what to do with this status :/
+            Rep::UnknownStatus { .. }
+        ) => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        },
+    }
 }
