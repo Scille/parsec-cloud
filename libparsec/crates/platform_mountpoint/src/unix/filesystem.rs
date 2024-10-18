@@ -649,6 +649,14 @@ impl fuser::Filesystem for Filesystem {
             dst_name,
             flags,
         );
+        // macFUSE seems to provide empty filenames when doing a rename ops
+        // If that happen we return external device error to force the OS to do a copy then delete ops
+        #[cfg(target_os = "macos")]
+        if src_name.is_empty() || dst_name.is_empty() {
+            reply.error(libc::EXDEV);
+            return;
+        }
+
         let reply = reply_on_drop_guard!(reply, fuser::ReplyEmpty);
 
         // Flags only contain RENAME_EXCHANGE or RENAME_NOREPLACE
