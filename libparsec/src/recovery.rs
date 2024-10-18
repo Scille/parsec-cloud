@@ -17,14 +17,16 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    libparsec_platform_device_loader::inner_import_recovery_device(
+    let device = libparsec_platform_device_loader::inner_import_recovery_device(
         recovery_device,
         passphrase.into(),
         device_label,
         save_strategy,
         config.config_dir,
     )
-    .await
+    .await?;
+
+    Ok(device)
 }
 
 pub async fn export_recovery_device(
