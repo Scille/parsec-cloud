@@ -4,3 +4,4 @@ pub(crate) mod coolorg;
 pub(crate) mod empty;
 pub(crate) mod minimal;
 pub(crate) mod minimal_client_ready;
+pub(crate) mod workspace_history;

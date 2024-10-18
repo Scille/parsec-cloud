@@ -6,6 +6,8 @@ mod error;
 mod invited_cmds;
 #[cfg(feature = "test-with-testbed")]
 mod testbed;
+#[cfg(feature = "test-with-testbed")]
+mod testbed_send_hook_helpers;
 
 pub use anonymous_cmds::AnonymousCmds;
 pub use authenticated_cmds::{
