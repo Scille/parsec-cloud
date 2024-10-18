@@ -539,7 +539,7 @@ impl Client {
     pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
         tos::accept_tos(self, tos_updated_on).await
     }
-    
+
     pub async fn export_recovery_device(
         &self,
         device_label: DeviceLabel,
