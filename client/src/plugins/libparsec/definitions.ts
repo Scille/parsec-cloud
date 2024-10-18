@@ -1478,39 +1478,85 @@ export type GreetInProgressError =
 
 // ImportRecoveryDeviceError
 export enum ImportRecoveryDeviceErrorTag {
-    DecryptionFailed = 'ImportRecoveryDeviceErrorDecryptionFailed',
-    InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
-    InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
-    InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    CertifDeviceError = 'ImportRecoveryDeviceErrorCertifDeviceError',
+    ConnectionError = 'ImportRecoveryDeviceErrorConnectionError',
+    DataError = 'ImportRecoveryDeviceErrorDataError',
+    GetCertificateError = 'ImportRecoveryDeviceErrorGetCertificateError',
+    Internal = 'ImportRecoveryDeviceErrorInternal',
+    InvalidCertificate = 'ImportRecoveryDeviceErrorInvalidCertificate',
+    Offline = 'ImportRecoveryDeviceErrorOffline',
+    PlatformImportRecoveryDeviceError = 'ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError',
     SaveDeviceError = 'ImportRecoveryDeviceErrorSaveDeviceError',
+    Stopped = 'ImportRecoveryDeviceErrorStopped',
+    TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
+    UserRevoked = 'ImportRecoveryDeviceErrorUserRevoked',
 }
 
-export interface ImportRecoveryDeviceErrorDecryptionFailed {
-    tag: ImportRecoveryDeviceErrorTag.DecryptionFailed
+export interface ImportRecoveryDeviceErrorCertifDeviceError {
+    tag: ImportRecoveryDeviceErrorTag.CertifDeviceError
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidData {
-    tag: ImportRecoveryDeviceErrorTag.InvalidData
+export interface ImportRecoveryDeviceErrorConnectionError {
+    tag: ImportRecoveryDeviceErrorTag.ConnectionError
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidPassphrase {
-    tag: ImportRecoveryDeviceErrorTag.InvalidPassphrase
+export interface ImportRecoveryDeviceErrorDataError {
+    tag: ImportRecoveryDeviceErrorTag.DataError
     error: string
 }
-export interface ImportRecoveryDeviceErrorInvalidPath {
-    tag: ImportRecoveryDeviceErrorTag.InvalidPath
+export interface ImportRecoveryDeviceErrorGetCertificateError {
+    tag: ImportRecoveryDeviceErrorTag.GetCertificateError
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInternal {
+    tag: ImportRecoveryDeviceErrorTag.Internal
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidCertificate {
+    tag: ImportRecoveryDeviceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: ImportRecoveryDeviceErrorTag.Offline
+    error: string
+}
+export interface ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError {
+    tag: ImportRecoveryDeviceErrorTag.PlatformImportRecoveryDeviceError
     error: string
 }
 export interface ImportRecoveryDeviceErrorSaveDeviceError {
     tag: ImportRecoveryDeviceErrorTag.SaveDeviceError
     error: string
 }
+export interface ImportRecoveryDeviceErrorStopped {
+    tag: ImportRecoveryDeviceErrorTag.Stopped
+    error: string
+}
+export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: ImportRecoveryDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export interface ImportRecoveryDeviceErrorUserRevoked {
+    tag: ImportRecoveryDeviceErrorTag.UserRevoked
+    error: string
+}
 export type ImportRecoveryDeviceError =
-  | ImportRecoveryDeviceErrorDecryptionFailed
-  | ImportRecoveryDeviceErrorInvalidData
-  | ImportRecoveryDeviceErrorInvalidPassphrase
-  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorCertifDeviceError
+  | ImportRecoveryDeviceErrorConnectionError
+  | ImportRecoveryDeviceErrorDataError
+  | ImportRecoveryDeviceErrorGetCertificateError
+  | ImportRecoveryDeviceErrorInternal
+  | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError
   | ImportRecoveryDeviceErrorSaveDeviceError
+  | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ImportRecoveryDeviceErrorUserRevoked
 
 // InviteListItem
 export enum InviteListItemTag {

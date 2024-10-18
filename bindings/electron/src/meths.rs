@@ -5160,29 +5160,102 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
     let js_display = JsString::try_new(cx, &rs_obj.to_string()).or_throw(cx)?;
     js_obj.set(cx, "error", js_display)?;
     match rs_obj {
-        libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
+        libparsec::ImportRecoveryDeviceError::CertifDeviceError { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ImportRecoveryDeviceErrorDecryptionFailed").or_throw(cx)?;
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorCertifDeviceError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
+        libparsec::ImportRecoveryDeviceError::ConnectionError { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidData").or_throw(cx)?;
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorConnectionError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
+        libparsec::ImportRecoveryDeviceError::DataError { .. } => {
             let js_tag =
-                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPassphrase").or_throw(cx)?;
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorDataError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
-            let js_tag =
-                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
+        libparsec::ImportRecoveryDeviceError::GetCertificateError { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorGetCertificateError")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::Internal { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorInternal").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidCertificate { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidCertificate")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::PlatformImportRecoveryDeviceError { .. } => {
+            let js_tag = JsString::try_new(
+                cx,
+                "ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError",
+            )
+            .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::SaveDeviceError { .. } => {
             let js_tag =
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorSaveDeviceError").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::Stopped { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorStopped").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorTimestampOutOfBallpark")
+                .or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_server_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(server_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "serverTimestamp", js_server_timestamp)?;
+            let js_client_timestamp = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(client_timestamp) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "clientTimestamp", js_client_timestamp)?;
+            let js_ballpark_client_early_offset = JsNumber::new(cx, ballpark_client_early_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientEarlyOffset",
+                js_ballpark_client_early_offset,
+            )?;
+            let js_ballpark_client_late_offset = JsNumber::new(cx, ballpark_client_late_offset);
+            js_obj.set(
+                cx,
+                "ballparkClientLateOffset",
+                js_ballpark_client_late_offset,
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::UserRevoked { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorUserRevoked").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
     }

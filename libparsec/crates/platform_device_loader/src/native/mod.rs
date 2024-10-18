@@ -12,8 +12,8 @@ use zeroize::Zeroize;
 use libparsec_types::prelude::*;
 
 use crate::{
-    get_default_key_file, ChangeAuthentificationError, ImportRecoveryDeviceError, LoadDeviceError,
-    LoadRecoveryDeviceError, PlatformExportRecoveryDeviceError, SaveDeviceError,
+    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError,
+    PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
     ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
 };
@@ -669,35 +669,35 @@ pub async fn export_recovery_device(
     Ok((passphrase, file_content, recovery_device))
 }
 
+/// returns (recovery device, new device)
+/// Does not save the device
 pub async fn import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
-    save_strategy: DeviceSaveStrategy,
-    config_dir: PathBuf,
-) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
     let key = SecretKey::from_recovery_passphrase(passphrase)
-        .map_err(|_| ImportRecoveryDeviceError::InvalidPassphrase)?;
+        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidPassphrase)?;
 
     // Regular load
-    let device_file =
-        DeviceFile::load(&recovery_device).map_err(|_| ImportRecoveryDeviceError::InvalidData)?;
+    let device_file = DeviceFile::load(&recovery_device)
+        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
 
     let recovery_device = match device_file {
         DeviceFile::Recovery(x) => {
             let mut cleartext = key
                 .decrypt(&x.ciphertext)
-                .map_err(|_| ImportRecoveryDeviceError::DecryptionFailed)?;
+                .map_err(|_| PlatformImportRecoveryDeviceError::DecryptionFailed)?;
             let device = LocalDevice::load(&cleartext)
-                .map_err(|_| ImportRecoveryDeviceError::InvalidData)?;
+                .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
             cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
             device
         }
         // We are not expecting other type of device file
-        _ => return Err(ImportRecoveryDeviceError::InvalidData),
+        _ => return Err(PlatformImportRecoveryDeviceError::InvalidData),
     };
     let device = LocalDevice::generate_new_device(
-        recovery_device.organization_addr,
+        recovery_device.organization_addr.clone(),
         recovery_device.initial_profile,
         recovery_device.human_handle.clone(),
         device_label,
@@ -708,12 +708,7 @@ pub async fn import_recovery_device(
         None,
     );
 
-    let access = {
-        let key_file = get_default_key_file(&config_dir, &device.device_id);
-        save_strategy.into_access(key_file)
-    };
-
-    Ok(save_device(&access, &device, device.now()).await?)
+    Ok((recovery_device, device))
 }
 
 pub fn is_keyring_available() -> bool {

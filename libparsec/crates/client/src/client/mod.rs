@@ -46,7 +46,8 @@ use crate::{
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_device_loader::{
-    ImportRecoveryDeviceError, PlatformExportRecoveryDeviceError,
+    save_device, PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError,
+    SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps};
 use libparsec_types::prelude::*;
@@ -584,21 +585,46 @@ impl Client {
         Ok((passphrase, data))
     }
 
-    pub async fn import_recovery_device(
+    pub async fn create_device_from_recovery(
         &self,
-        recovery_device: Vec<u8>,
-        passphrase: SecretKeyPassphrase,
-        device_label: DeviceLabel,
-        save_strategy: DeviceSaveStrategy,
+        new_device: LocalDevice,
+        access: DeviceAccessStrategy,
     ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-        libparsec_platform_device_loader::inner_import_recovery_device(
-            recovery_device,
-            passphrase,
-            device_label,
-            save_strategy,
-            self.config.config_dir.clone(),
-        )
-        .await
+        // save recovery device
+        let saved_device = save_device(&self.config.config_dir, &access, &new_device).await?;
+
+        let outcome = self
+            .certificates_ops
+            .create_new_device(new_device, self.device.clone())
+            .await?;
+
+        let latest_known_timestamps = match outcome {
+            CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
+            CertificateBasedActionOutcome::Uploaded {
+                certificate_timestamp,
+            }
+            | CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp,
+            } => PerTopicLastTimestamps::new_for_common_and_shamir(
+                certificate_timestamp,
+                certificate_timestamp,
+            ),
+        };
+        self.certificates_ops
+            .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+            .await
+            .map_err(|e| match e {
+                CertifPollServerError::Stopped => ImportRecoveryDeviceError::Stopped,
+                CertifPollServerError::Offline => ImportRecoveryDeviceError::Offline,
+                CertifPollServerError::InvalidCertificate(err) => {
+                    ImportRecoveryDeviceError::InvalidCertificate(err)
+                }
+                CertifPollServerError::Internal(err) => err
+                    .context("Cannot poll server for new certificates")
+                    .into(),
+            })?;
+
+        Ok(saved_device)
     }
 }
 
@@ -635,6 +661,43 @@ pub enum ExportRecoveryDeviceError {
     PlatformExportRecoveryDeviceError(#[from] PlatformExportRecoveryDeviceError),
     #[error(transparent)]
     ConnectionError(#[from] ConnectionError),
+}
+
+#[derive(Debug, thiserror::Error)]
+
+pub enum ImportRecoveryDeviceError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("User {0} is revoked")]
+    UserRevoked(UserID),
+
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    TimestampOutOfBallpark {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    DataError(#[from] libparsec_types::DataError),
+    // #[error(transparent)]
+    // EncryptionError(#[from] CertifEncryptForUserError),
+    #[error(transparent)]
+    GetCertificateError(#[from] GetCertificateError),
+    #[error(transparent)]
+    CertifDeviceError(#[from] CertifDeviceError),
+    #[error(transparent)]
+    PlatformImportRecoveryDeviceError(#[from] PlatformImportRecoveryDeviceError),
+    #[error(transparent)]
+    ConnectionError(#[from] ConnectionError),
+    #[error(transparent)]
+    SaveDeviceError(#[from] SaveDeviceError),
 }
 
 #[cfg(test)]

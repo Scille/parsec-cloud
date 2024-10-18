@@ -266,7 +266,7 @@ pub enum RemoveDeviceError {
 pub use platform::remove_device;
 
 #[derive(Debug, thiserror::Error)]
-pub enum ImportRecoveryDeviceError {
+pub enum PlatformImportRecoveryDeviceError {
     #[error(transparent)]
     InvalidPath(anyhow::Error),
     #[error("Cannot deserialize file content")]
@@ -291,17 +291,8 @@ pub async fn inner_import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
     device_label: DeviceLabel,
-    save_strategy: DeviceSaveStrategy,
-    config_dir: PathBuf,
-) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    platform::import_recovery_device(
-        recovery_device,
-        passphrase,
-        device_label,
-        save_strategy,
-        config_dir,
-    )
-    .await
+) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
+    platform::import_recovery_device(recovery_device, passphrase, device_label).await
 }
 
 /// returns (secret key passphrase, recovery device encrypted data, recovery device)
