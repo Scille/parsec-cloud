@@ -29,19 +29,13 @@ VLOB_READ_REQUEST_ITEMS_LIMIT: int = 1000
 
 
 @dataclass(slots=True)
-class SequesterInconsistency:
-    last_common_certificate_timestamp: DateTime
-
-
-@dataclass(slots=True)
-class SequesterServiceNotAvailable:
+class SequesterServiceUnavailable:
     service_id: SequesterServiceID
 
 
 @dataclass(slots=True)
 class RejectedBySequesterService:
     service_id: SequesterServiceID
-    reason: str
 
 
 @dataclass(slots=True)
@@ -60,7 +54,6 @@ class VlobCreateBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_ALLOWED = auto()
     REALM_NOT_FOUND = auto()
     VLOB_ALREADY_EXISTS = auto()
-    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 class VlobUpdateBadOutcome(BadOutcomeEnum):
@@ -71,7 +64,6 @@ class VlobUpdateBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_ALLOWED = auto()
     VLOB_NOT_FOUND = auto()
     BAD_VLOB_VERSION = auto()
-    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 class VlobReadAsUserBadOutcome(BadOutcomeEnum):
@@ -114,8 +106,6 @@ class BaseVlobComponent:
         key_index: int,
         timestamp: DateTime,
         blob: bytes,
-        # Sequester is a special case, so gives it a default version to simplify tests
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -123,8 +113,7 @@ class BaseVlobComponent:
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
-        | SequesterServiceNotAvailable
-        | SequesterInconsistency
+        | SequesterServiceUnavailable
     ):
         raise NotImplementedError
 
@@ -138,8 +127,6 @@ class BaseVlobComponent:
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        # Sequester is a special case, so gives it a default version to simplify tests
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -147,8 +134,7 @@ class BaseVlobComponent:
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
-        | SequesterServiceNotAvailable
-        | SequesterInconsistency
+        | SequesterServiceUnavailable
     ):
         raise NotImplementedError
 
@@ -190,17 +176,29 @@ class BaseVlobComponent:
         webhook_url: str,
         service_id: SequesterServiceID,
         organization_id: OrganizationID,
-        sequester_blob: bytes,
-    ) -> None | SequesterServiceNotAvailable | RejectedBySequesterService:
+        author: DeviceID,
+        realm_id: VlobID,
+        vlob_id: VlobID,
+        key_index: int,
+        version: int,
+        timestamp: DateTime,
+        blob: bytes,
+    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
         # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
         try:
             ret = await self._http_client.post(
                 webhook_url,
                 params={
-                    "organization_id": organization_id.str,
                     "service_id": service_id.hex,
+                    "organization_id": organization_id.str,
+                    "author": author.hex,
+                    "realm_id": realm_id.hex,
+                    "vlob_id": vlob_id.hex,
+                    "key_index": key_index,
+                    "version": version,
+                    "timestamp": timestamp.to_rfc3339(),
                 },
-                content=sequester_blob,
+                content=blob,
             )
             if ret.status_code == 400:
                 raw_body = await ret.aread()
@@ -208,7 +206,6 @@ class BaseVlobComponent:
                     body = json.loads(raw_body)
                     if not isinstance(body, dict) or not isinstance(body.get("reason"), str):
                         raise ValueError
-                    reason = body["reason"]
 
                 except (json.JSONDecodeError, ValueError):
                     logger.warning(
@@ -217,10 +214,8 @@ class BaseVlobComponent:
                         service_id=service_id.hex,
                         body=raw_body,
                     )
-                    reason = "File rejected (no reason)"
                 return RejectedBySequesterService(
                     service_id=service_id,
-                    reason=reason,
                 )
 
             elif not ret.is_success:
@@ -230,7 +225,7 @@ class BaseVlobComponent:
                     service_id=service_id.hex,
                     status=ret.status_code,
                 )
-                return SequesterServiceNotAvailable(
+                return SequesterServiceUnavailable(
                     service_id=service_id,
                 )
 
@@ -241,7 +236,7 @@ class BaseVlobComponent:
                 service_id=service_id.hex,
                 exc_info=exc,
             )
-            return SequesterServiceNotAvailable(
+            return SequesterServiceUnavailable(
                 service_id=service_id,
             )
 
@@ -270,7 +265,6 @@ class BaseVlobComponent:
             key_index=req.key_index,
             timestamp=req.timestamp,
             blob=req.blob,
-            sequester_blob=req.sequester_blob,
         )
         match outcome:
             case None:
@@ -285,8 +279,6 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_create.RepRealmNotFound()
             case VlobCreateBadOutcome.VLOB_ALREADY_EXISTS:
                 return authenticated_cmds.latest.vlob_create.RepVlobAlreadyExists()
-            case VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
-                return authenticated_cmds.latest.vlob_create.RepOrganizationNotSequestered()
             case TimestampOutOfBallpark() as error:
                 return authenticated_cmds.latest.vlob_create.RepTimestampOutOfBallpark(
                     server_timestamp=error.server_timestamp,
@@ -298,17 +290,14 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_create.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
                 )
-            case SequesterInconsistency() as error:
-                return authenticated_cmds.latest.vlob_create.RepSequesterInconsistency(
-                    last_common_certificate_timestamp=error.last_common_certificate_timestamp
-                )
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_create.RepRejectedBySequesterService(
                     service_id=error.service_id,
-                    reason=error.reason,
                 )
-            case SequesterServiceNotAvailable():
-                return authenticated_cmds.latest.vlob_create.RepSequesterServiceUnavailable()
+            case SequesterServiceUnavailable() as error:
+                return authenticated_cmds.latest.vlob_create.RepSequesterServiceUnavailable(
+                    service_id=error.service_id
+                )
             case VlobCreateBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobCreateBadOutcome.ORGANIZATION_EXPIRED:
@@ -339,7 +328,6 @@ class BaseVlobComponent:
             version=req.version,
             timestamp=req.timestamp,
             blob=req.blob,
-            sequester_blob=req.sequester_blob,
         )
         match outcome:
             case None:
@@ -354,8 +342,6 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepBadVlobVersion()
             case VlobUpdateBadOutcome.VLOB_NOT_FOUND:
                 return authenticated_cmds.latest.vlob_update.RepVlobNotFound()
-            case VlobUpdateBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
-                return authenticated_cmds.latest.vlob_update.RepOrganizationNotSequestered()
             case TimestampOutOfBallpark() as error:
                 return authenticated_cmds.latest.vlob_update.RepTimestampOutOfBallpark(
                     server_timestamp=error.server_timestamp,
@@ -367,17 +353,14 @@ class BaseVlobComponent:
                 return authenticated_cmds.latest.vlob_update.RepRequireGreaterTimestamp(
                     strictly_greater_than=error.strictly_greater_than
                 )
-            case SequesterInconsistency() as error:
-                return authenticated_cmds.latest.vlob_update.RepSequesterInconsistency(
-                    last_common_certificate_timestamp=error.last_common_certificate_timestamp
-                )
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_update.RepRejectedBySequesterService(
                     service_id=error.service_id,
-                    reason=error.reason,
                 )
-            case SequesterServiceNotAvailable():
-                return authenticated_cmds.latest.vlob_update.RepSequesterServiceUnavailable()
+            case SequesterServiceUnavailable() as error:
+                return authenticated_cmds.latest.vlob_update.RepSequesterServiceUnavailable(
+                    service_id=error.service_id
+                )
             case VlobUpdateBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case VlobUpdateBadOutcome.ORGANIZATION_EXPIRED:
