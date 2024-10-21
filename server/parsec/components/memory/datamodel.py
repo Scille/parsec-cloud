@@ -540,6 +540,10 @@ class MemoryRealmKeyRotation:
     realm_key_rotation_certificate: bytes = field(repr=False)
     per_participant_keys_bundle_access: dict[UserID, bytes] = field(repr=False)
     keys_bundle: bytes = field(repr=False)
+    # None for non-sequestered organization
+    per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = field(
+        repr=False
+    )
 
 
 @dataclass(slots=True)
@@ -578,8 +582,6 @@ class MemoryVlobAtom:
     blob: bytes = field(repr=False)
     author: DeviceID
     created_on: DateTime
-    # None for non-sequestered organization
-    blob_for_storage_sequester_services: dict[SequesterServiceID, bytes] | None = field(repr=False)
     # None if not deleted
     deleted_on: DateTime | None = None
 
