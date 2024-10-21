@@ -2,6 +2,7 @@
 
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
+import { MockEntry, generateEntries, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
 import {
@@ -34,7 +35,6 @@ import {
 } from '@/parsec/types';
 import { MoveEntryModeTag, ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
-import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
 export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   if (!needsMocks()) {
@@ -110,62 +110,21 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
     return result as Result<EntryStat, WorkspaceStatEntryError>;
   }
 
-  // Mocked version
-
-  function generateDate(start?: DateTime): DateTime {
-    if (!start) {
-      start = DateTime.now();
-    }
-    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
-  }
-
-  const FILE_PREFIX = 'File_';
-
   MOCK_FILE_ID += 1;
 
-  const createdDate = generateDate();
-  if (path !== '/' && fileName.startsWith(FILE_PREFIX)) {
-    return {
-      ok: true,
-      value: {
-        tag: FileType.File,
-        confinementPoint: null,
-        isConfined: (): boolean => false,
-        id: `${MOCK_FILE_ID}`,
-        // Invalid parent ID, but hard to craft the correct one...
-        parent: `${MOCK_FILE_ID}`,
-        created: createdDate,
-        updated: generateDate(createdDate),
-        baseVersion: 1,
-        isPlaceholder: false,
-        needSync: Math.floor(Math.random() * 2) === 1,
-        size: Math.floor(Math.random() * 1_000_000),
-        isFile: (): boolean => true,
-        name: fileName,
-        path: path,
-      },
-    };
+  let entry: MockEntry;
+
+  if (path !== '/' && fileName.startsWith('File_')) {
+    entry = await generateFile(path, `${MOCK_FILE_ID}`);
   } else {
-    return {
-      ok: true,
-      value: {
-        tag: FileType.Folder,
-        confinementPoint: null,
-        isConfined: (): boolean => false,
-        id: `${MOCK_FILE_ID}`,
-        // Invalid parent ID, but hard to craft the correct one...
-        parent: `${MOCK_FILE_ID}`,
-        created: createdDate,
-        updated: generateDate(createdDate),
-        baseVersion: 1,
-        isPlaceholder: false,
-        needSync: Math.floor(Math.random() * 2) === 1,
-        isFile: (): boolean => false,
-        name: fileName,
-        path: path,
-      },
-    };
+    entry = await generateFolder(path, `${MOCK_FILE_ID}`);
   }
+  (entry as any as EntryStat).baseVersion = entry.version;
+  (entry as any as EntryStat).confinementPoint = null;
+  (entry as any as EntryStat).isConfined = (): boolean => false;
+  (entry as any as EntryStat).needSync = Math.floor(Math.random() * 2) === 1;
+  (entry as any as EntryStat).isPlaceholder = false;
+  return { ok: true, value: entry as any as EntryStat };
 }
 
 export async function statFolderChildren(
@@ -210,81 +169,15 @@ export async function statFolderChildren(
     };
   }
 
-  // Mocked version
-
-  const FILE_PREFIX = 'File_';
-  const FOLDER_PREFIX = 'Dir_';
-  const fileCount = 2;
-  const folderCount = 2;
-
-  function generateEntryName(prefix: string = '', addExtension = false): string {
-    const EXTENSIONS = ['.mp4', '.docx', '.pdf', '.png', '.mp3', '.xls', '.zip'];
-    const ext = addExtension ? EXTENSIONS[Math.floor(Math.random() * EXTENSIONS.length)] : '';
-    return `${prefix}${uniqueNamesGenerator({ dictionaries: [adjectives, animals] })}${ext}`;
-  }
-
-  function generateDate(start?: DateTime): DateTime {
-    if (!start) {
-      start = DateTime.now();
-    }
-    return DateTime.now().minus({ minutes: Math.floor(Math.random() * 60), seconds: Math.floor(Math.random() * 60) });
-  }
-
-  const items: Array<EntryStat> = [];
-
-  const parentId = crypto.randomUUID().toString();
-
-  // Add files
-  for (let i = 0; i < fileCount; i++) {
-    const name = generateEntryName(FILE_PREFIX, true);
-    const createdDate = generateDate();
-    const stat: EntryStat = {
-      tag: FileType.File,
-      confinementPoint: null,
-      isConfined: (): boolean => false,
-      id: crypto.randomUUID().toString(),
-      parent: parentId,
-      created: createdDate,
-      updated: generateDate(createdDate),
-      baseVersion: 1,
-      isPlaceholder: false,
-      needSync: Math.floor(Math.random() * 2) === 1,
-      size: Math.floor(Math.random() * 1_000_000),
-      isFile: (): boolean => true,
-      name: name,
-      path: await Path.join(path, name),
-    };
-
-    items.push(stat);
-  }
-
-  // Add folders
-  for (let i = 0; i < folderCount; i++) {
-    const name = generateEntryName(FOLDER_PREFIX, false);
-    const createdDate = generateDate();
-    const stat: EntryStat = {
-      tag: FileType.Folder,
-      confinementPoint: null,
-      isConfined: (): boolean => false,
-      id: crypto.randomUUID().toString(),
-      parent: parentId,
-      created: createdDate,
-      updated: generateDate(createdDate),
-      baseVersion: 1,
-      isPlaceholder: false,
-      needSync: Math.floor(Math.random() * 2) === 1,
-      isFile: (): boolean => false,
-      name: name,
-      path: await Path.join(path, name),
-    };
-
-    items.push(stat);
-  }
-
-  return {
-    ok: true,
-    value: items,
-  };
+  const items = (await generateEntries(path)).map((entry) => {
+    (entry as any as EntryStat).baseVersion = entry.version;
+    (entry as any as EntryStat).confinementPoint = null;
+    (entry as any as EntryStat).isConfined = (): boolean => false;
+    (entry as any as EntryStat).needSync = Math.floor(Math.random() * 2) === 1;
+    (entry as any as EntryStat).isPlaceholder = false;
+    return entry as any as EntryStat;
+  });
+  return { ok: true, value: items };
 }
 
 export async function moveEntry(
