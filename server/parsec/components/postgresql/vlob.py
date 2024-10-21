@@ -7,7 +7,6 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    SequesterServiceID,
     VlobID,
 )
 from parsec.ballpark import (
@@ -32,8 +31,7 @@ from parsec.components.realm import BadKeyIndex
 from parsec.components.vlob import (
     BaseVlobComponent,
     RejectedBySequesterService,
-    SequesterInconsistency,
-    SequesterServiceNotAvailable,
+    SequesterServiceUnavailable,
     VlobCreateBadOutcome,
     VlobPollChangesAsUserBadOutcome,
     VlobReadAsUserBadOutcome,
@@ -87,7 +85,6 @@ class PGVlobComponent(BaseVlobComponent):
         key_index: int,
         timestamp: DateTime,
         blob: bytes,
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -95,8 +92,7 @@ class PGVlobComponent(BaseVlobComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
-        | SequesterServiceNotAvailable
-        | SequesterInconsistency
+        | SequesterServiceUnavailable
     ):
         return await vlob_create(
             self.event_bus,
@@ -109,7 +105,6 @@ class PGVlobComponent(BaseVlobComponent):
             key_index,
             timestamp,
             blob,
-            sequester_blob,
         )
 
     @override
@@ -126,8 +121,6 @@ class PGVlobComponent(BaseVlobComponent):
         version: int,
         timestamp: DateTime,
         blob: bytes,
-        # Sequester is a special case, so gives it a default version to simplify tests
-        sequester_blob: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         None
         | BadKeyIndex
@@ -135,8 +128,7 @@ class PGVlobComponent(BaseVlobComponent):
         | TimestampOutOfBallpark
         | RequireGreaterTimestamp
         | RejectedBySequesterService
-        | SequesterServiceNotAvailable
-        | SequesterInconsistency
+        | SequesterServiceUnavailable
     ):
         return await vlob_update(
             self.event_bus,
@@ -149,7 +141,6 @@ class PGVlobComponent(BaseVlobComponent):
             version,
             timestamp,
             blob,
-            sequester_blob,
         )
 
     @override

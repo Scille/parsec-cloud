@@ -10,6 +10,7 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     UserProfile,
     VerifyKey,
@@ -29,6 +30,7 @@ from parsec.components.realm import (
     BaseRealmComponent,
     CertificateBasedActionIdempotentOutcome,
     KeysBundle,
+    ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmDumpRealmsGrantedRolesBadOutcome,
@@ -46,6 +48,8 @@ from parsec.components.realm import (
     RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    SequesterServiceMismatch,
+    SequesterServiceUnavailable,
     realm_create_validate,
     realm_rename_validate,
     realm_rotate_key_validate,
@@ -506,6 +510,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -513,6 +519,9 @@ class MemoryRealmComponent(BaseRealmComponent):
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -567,7 +576,9 @@ class MemoryRealmComponent(BaseRealmComponent):
                         participants.add(role.cooked.user_id)
 
                 if per_participant_keys_bundle_access.keys() != participants:
-                    return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+                    return ParticipantMismatch(
+                        last_realm_certificate_timestamp=realm_topic_last_timestamp
+                    )
 
                 # Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -584,6 +595,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         cooked=certif,
                         realm_key_rotation_certificate=realm_key_rotation_certificate,
                         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+                        per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
                         keys_bundle=keys_bundle,
                     )
                 )
