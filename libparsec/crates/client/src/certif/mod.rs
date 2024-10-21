@@ -2,6 +2,7 @@
 
 mod add;
 mod block_validate;
+mod device;
 mod encrypt;
 mod list;
 mod manifest_validate;
@@ -20,6 +21,7 @@ mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
+pub use device::CertifDeviceError;
 pub use encrypt::CertifEncryptForSequesterServicesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
@@ -618,6 +620,14 @@ impl CertificateOps {
             threshold,
         )
         .await
+    }
+
+    pub async fn create_new_device(
+        &self,
+        new_device: LocalDevice,
+        author: Arc<LocalDevice>,
+    ) -> Result<CertificateBasedActionOutcome, CertifDeviceError> {
+        device::create_new_device(self, new_device, author).await
     }
 }
 

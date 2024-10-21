@@ -22,9 +22,9 @@ pub(crate) struct EntryWatcher {
     // Never accessed, but we need to keep it alive
     #[allow(dead_code)]
     pub lifetimes: (
-        // Event triggered when a local change occured
+        // Event triggered when a local change occurred
         EventBusConnectionLifetime<EventWorkspaceOpsOutboundSyncNeeded>,
-        // Event triggered when a remote change occured
+        // Event triggered when a remote change occurred
         EventBusConnectionLifetime<EventWorkspaceOpsInboundSyncDone>,
     ),
 }

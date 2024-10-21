@@ -5,7 +5,8 @@ use std::{path::Path, sync::Arc};
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
+    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError,
+    PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError,
 };
 
@@ -65,5 +66,20 @@ pub async fn save_recovery_device(
     _key_file: &Path,
     _device: &LocalDevice,
 ) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
+    todo!()
+}
+
+pub async fn export_recovery_device(
+    _device: &LocalDevice,
+    _device_label: DeviceLabel,
+) -> Result<(SecretKeyPassphrase, Vec<u8>, LocalDevice), PlatformExportRecoveryDeviceError> {
+    todo!()
+}
+
+pub async fn import_recovery_device(
+    _recovery_device: Vec<u8>,
+    _passphrase: SecretKeyPassphrase,
+    _device_label: DeviceLabel,
+) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
     todo!()
 }
