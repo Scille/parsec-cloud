@@ -31,16 +31,15 @@ if (process.env.PARSEC_APP_TEST_MODE || process.env.APP_TEST_MODE) {
 
 if (process.env.PLATFORM !== undefined) {
   console.log(`PLATFORM environ set to \`${process.env.PLATFORM}\``);
-  if (process.env.PLATFORM === 'web') {
-    platform = 'web';
-  } else if (process.env.PLATFORM === 'native') {
-    platform = 'native';
+  const VALID_PLATFORMS = ['web', 'native'];
+  if (VALID_PLATFORMS.includes(process.env.PLATFORM)) {
+    platform = process.env.PLATFORM;
   } else {
-    throw new Error('Invalid value for PLATFORM environ variable, accepted values: `web`/`native`');
+    throw new Error(`Invalid value for PLATFORM environ variable, accepted values: ${VALID_PLATFORMS.join(', ')}`);
   }
 } else {
   // Ain't nobody got time to set environ variable !
-  console.log('PLATFORM environ variable not set, defaulting to `web`');
+  console.warn('PLATFORM environ variable not set, defaulting to `web`');
   platform = 'web';
 }
 
@@ -50,15 +49,21 @@ if (platform === 'web') {
   plugins.push(wasmPack([{ path: '../bindings/web/', name: 'libparsec_bindings_web' }]));
 }
 
-if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN) {
+if (process.env.SENTRY_AUTH_TOKEN) {
   const sentryPlugin = sentryVitePlugin({
     org: 'scille',
     project: 'parsec3-frontend',
-    authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN,
+    authToken: process.env.SENTRY_AUTH_TOKEN,
+    release: {
+      // The name of the release, e.g: parsec@3.0.0
+      name: process.env.SENTRY_RELEASE,
+      // Distribution identifier for this release, e.g.: web, native
+      dist: process.env.SENTRY_DIST,
+    },
   });
   plugins.push(sentryPlugin);
 } else {
-  console.log('PARSEC_APP_SENTRY_AUTH_TOKEN is not set');
+  console.warn('SENTRY_AUTH_TOKEN is not set');
 }
 
 // 3) Finally configure Vite

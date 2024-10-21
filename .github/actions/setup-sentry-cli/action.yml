@@ -1,0 +1,36 @@
+name: setup-sentry-cli
+description: Install Sentry-CLI
+
+inputs:
+  sentry-version:
+    description: Sentry-CLI version to install
+    required: true
+
+
+runs:
+  using: composite
+  steps:
+    - name: (*Nix) Install Sentry-CLI@${{ inputs.sentry-version }}
+      shell: bash -eux -o pipefail {0}
+      if: runner.os != 'Windows'
+      run: |
+        curl -sL https://sentry.io/get-cli/ | SENTRY_CLI_VERSION="${{ inputs.sentry-version }}" sh
+
+    - name: (Windows) Install scoop
+      shell: powershell
+      if: runner.os == 'Windows'
+      run: |
+        Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+        Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression
+
+        Join-Path (Resolve-Path ~).Path "scoop\shims" >> $Env:GITHUB_PATH
+
+    - name: (Windows) Install sentry-cli
+      shell: powershell
+      if: runner.os == 'Windows'
+      run: |
+        scoop install sentry-cli@${{ inputs.sentry-version }}
+
+    - name: Check sentry-cli is installed
+      shell: bash
+      run: sentry-cli --version
