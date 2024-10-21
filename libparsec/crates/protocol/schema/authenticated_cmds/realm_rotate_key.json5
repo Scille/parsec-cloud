@@ -18,6 +18,13 @@
                     "type": "Map<UserID, Bytes>"
                 },
                 {
+                    // Field set to `None` if sequester is disabled for the organization.
+                    // Per-sequester service signed&encrypted `RealmKeysBundleAccess`
+                    // document, contains the key to decrypt `keys_bundle` field
+                    "name": "per_sequester_service_keys_bundle_access",
+                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
+                },
+                {
                     // Signed&encrypted `RealmKeysBundle` document, contains all the
                     // keys ever in use for this realm
                     "name": "keys_bundle",
@@ -47,7 +54,62 @@
                 ]
             },
             {
-                "status": "participant_mismatch"
+                // Returned if `per_participant_keys_bundle_access` field is out of date
+                // with the server:
+                // - A user part of the realm is missing
+                // - A user no longer (or that have never been) part of the realm is present
+                "status": "participant_mismatch",
+                "fields": [
+                    {
+                        "name": "last_realm_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if `per_sequester_service_keys_bundle_access` field is out of
+                // date with the server:
+                // - A non-cancelled sequester service is missing
+                // - A cancelled sequester service is present
+                "status": "sequester_service_mismatch",
+                "fields": [
+                    {
+                        "name": "last_sequester_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // In case of a sequestered organization, sequester services can be
+                // configured to be notified by a webhook on modifications and to
+                // have the ability to reject them.
+                "status": "rejected_by_sequester_service",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    },
+                    {
+                        // Optional arbitrary message provided by the sequester service to explain
+                        // why it rejects the modification.
+                        "name": "reason",
+                        "type": "RequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                "status": "sequester_service_unavailable",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
+                    }
+                ]
+            },
+            {
+                // Returned if `per_sequester_service_keys_bundle_access` field is
+                // provided but the organization is not sequestered.
+                "status": "organization_not_sequestered"
             },
             {
                 "status": "invalid_certificate"
