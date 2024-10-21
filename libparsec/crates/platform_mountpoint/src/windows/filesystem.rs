@@ -194,6 +194,7 @@ impl ParsecFileSystemInterface {
                     Ok(stat) => Ok(parsec_file_stat_to_winfsp_file_info(&stat)),
                     Err(err) => Err(match err {
                         WorkspaceFdStatError::BadFileDescriptor => STATUS_INVALID_HANDLE,
+                        WorkspaceFdStatError::Internal(_) => STATUS_ACCESS_DENIED,
                     }),
                 }
             }

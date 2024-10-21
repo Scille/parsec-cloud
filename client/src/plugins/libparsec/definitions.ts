@@ -176,6 +176,16 @@ export interface DeviceInfo {
     createdBy: DeviceID | null
 }
 
+export interface FileStat {
+    id: VlobID
+    created: DateTime
+    updated: DateTime
+    baseVersion: VersionInt
+    isPlaceholder: boolean
+    needSync: boolean
+    size: SizeInt
+}
+
 export interface HumanHandle {
     email: string
     label: string
@@ -1981,6 +1991,24 @@ export type WorkspaceFdResizeError =
   | WorkspaceFdResizeErrorInternal
   | WorkspaceFdResizeErrorNotInWriteMode
 
+// WorkspaceFdStatError
+export enum WorkspaceFdStatErrorTag {
+    BadFileDescriptor = 'WorkspaceFdStatErrorBadFileDescriptor',
+    Internal = 'WorkspaceFdStatErrorInternal',
+}
+
+export interface WorkspaceFdStatErrorBadFileDescriptor {
+    tag: WorkspaceFdStatErrorTag.BadFileDescriptor
+    error: string
+}
+export interface WorkspaceFdStatErrorInternal {
+    tag: WorkspaceFdStatErrorTag.Internal
+    error: string
+}
+export type WorkspaceFdStatError =
+  | WorkspaceFdStatErrorBadFileDescriptor
+  | WorkspaceFdStatErrorInternal
+
 // WorkspaceFdWriteError
 export enum WorkspaceFdWriteErrorTag {
     BadFileDescriptor = 'WorkspaceFdWriteErrorBadFileDescriptor',
@@ -2676,43 +2704,6 @@ export interface LibParsecPlugin {
     clientStop(
         client: Handle
     ): Promise<Result<null, ClientStopError>>
-    fdClose(
-        workspace: Handle,
-        fd: FileDescriptor
-    ): Promise<Result<null, WorkspaceFdCloseError>>
-    fdFlush(
-        workspace: Handle,
-        fd: FileDescriptor
-    ): Promise<Result<null, WorkspaceFdFlushError>>
-    fdRead(
-        workspace: Handle,
-        fd: FileDescriptor,
-        offset: U64,
-        size: U64
-    ): Promise<Result<Uint8Array, WorkspaceFdReadError>>
-    fdResize(
-        workspace: Handle,
-        fd: FileDescriptor,
-        length: U64,
-        truncate_only: boolean
-    ): Promise<Result<null, WorkspaceFdResizeError>>
-    fdWrite(
-        workspace: Handle,
-        fd: FileDescriptor,
-        offset: U64,
-        data: Uint8Array
-    ): Promise<Result<U64, WorkspaceFdWriteError>>
-    fdWriteConstrainedIo(
-        workspace: Handle,
-        fd: FileDescriptor,
-        offset: U64,
-        data: Uint8Array
-    ): Promise<Result<U64, WorkspaceFdWriteError>>
-    fdWriteStartEof(
-        workspace: Handle,
-        fd: FileDescriptor,
-        data: Uint8Array
-    ): Promise<Result<U64, WorkspaceFdWriteError>>
     getDefaultConfigDir(
     ): Promise<Path>
     getDefaultDataBaseDir(
@@ -2860,6 +2851,47 @@ export interface LibParsecPlugin {
         workspace: Handle,
         link: ParsecWorkspacePathAddr
     ): Promise<Result<FsPath, WorkspaceDecryptPathAddrError>>
+    workspaceFdClose(
+        workspace: Handle,
+        fd: FileDescriptor
+    ): Promise<Result<null, WorkspaceFdCloseError>>
+    workspaceFdFlush(
+        workspace: Handle,
+        fd: FileDescriptor
+    ): Promise<Result<null, WorkspaceFdFlushError>>
+    workspaceFdRead(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        size: U64
+    ): Promise<Result<Uint8Array, WorkspaceFdReadError>>
+    workspaceFdResize(
+        workspace: Handle,
+        fd: FileDescriptor,
+        length: U64,
+        truncate_only: boolean
+    ): Promise<Result<null, WorkspaceFdResizeError>>
+    workspaceFdStat(
+        workspace: Handle,
+        fd: FileDescriptor
+    ): Promise<Result<FileStat, WorkspaceFdStatError>>
+    workspaceFdWrite(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
+    workspaceFdWriteConstrainedIo(
+        workspace: Handle,
+        fd: FileDescriptor,
+        offset: U64,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
+    workspaceFdWriteStartEof(
+        workspace: Handle,
+        fd: FileDescriptor,
+        data: Uint8Array
+    ): Promise<Result<U64, WorkspaceFdWriteError>>
     workspaceGeneratePathAddr(
         workspace: Handle,
         path: FsPath
@@ -2881,6 +2913,16 @@ export interface LibParsecPlugin {
         path: FsPath,
         mode: OpenOptions
     ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>>
+    workspaceOpenFileAndGetId(
+        workspace: Handle,
+        path: FsPath,
+        mode: OpenOptions
+    ): Promise<Result<[FileDescriptor, VlobID], WorkspaceOpenFileError>>
+    workspaceOpenFileById(
+        workspace: Handle,
+        entry_id: VlobID,
+        mode: OpenOptions
+    ): Promise<Result<FileDescriptor, WorkspaceOpenFileError>>
     workspaceRemoveEntry(
         workspace: Handle,
         path: FsPath
@@ -2897,11 +2939,22 @@ export interface LibParsecPlugin {
         workspace: Handle,
         path: FsPath
     ): Promise<Result<null, WorkspaceRemoveEntryError>>
+    workspaceRenameEntryById(
+        workspace: Handle,
+        src_parent_id: VlobID,
+        src_name: EntryName,
+        dst_name: EntryName,
+        mode: MoveEntryMode
+    ): Promise<Result<null, WorkspaceMoveEntryError>>
     workspaceStatEntry(
         workspace: Handle,
         path: FsPath
     ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
     workspaceStatEntryById(
+        workspace: Handle,
+        entry_id: VlobID
+    ): Promise<Result<EntryStat, WorkspaceStatEntryError>>
+    workspaceStatEntryByIdIgnoreConfinementPoint(
         workspace: Handle,
         entry_id: VlobID
     ): Promise<Result<EntryStat, WorkspaceStatEntryError>>

@@ -926,7 +926,8 @@ impl fuser::Filesystem for Filesystem {
                 Err(err) => {
                     return match err {
                         // Unexpected: We have just created this file descriptor !
-                        WorkspaceFdStatError::BadFileDescriptor => reply.manual().error(libc::EIO),
+                        WorkspaceFdStatError::BadFileDescriptor
+                        | WorkspaceFdStatError::Internal(_) => reply.manual().error(libc::EIO),
                     };
                 }
             };
@@ -1003,7 +1004,8 @@ impl fuser::Filesystem for Filesystem {
                         Err(err) => {
                             return match err {
                                 // Unexpected: FUSE is supposed to only give us valid file descriptors !
-                                WorkspaceFdStatError::BadFileDescriptor => {
+                                WorkspaceFdStatError::BadFileDescriptor
+                                | WorkspaceFdStatError::Internal(_) => {
                                     reply.manual().error(libc::EIO)
                                 }
                             };
@@ -1071,7 +1073,8 @@ impl fuser::Filesystem for Filesystem {
                         Err(err) => {
                             return match err {
                                 // Unexpected: we have just opened the file !
-                                WorkspaceFdStatError::BadFileDescriptor => {
+                                WorkspaceFdStatError::BadFileDescriptor
+                                | WorkspaceFdStatError::Internal(_) => {
                                     reply.manual().error(libc::EIO)
                                 }
                             };
