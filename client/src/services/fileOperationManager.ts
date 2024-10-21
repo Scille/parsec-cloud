@@ -23,6 +23,7 @@ import {
   resizeFile,
   writeFile,
 } from '@/parsec';
+import { DateTime } from 'luxon';
 import { wait } from '@/parsec/internals';
 import { v4 as uuid4 } from 'uuid';
 
@@ -49,6 +50,10 @@ enum FileOperationState {
   FolderCreated,
   EntryMoved,
   EntryCopied,
+  RestoreAdded,
+  RestoreStarted,
+  RestoreFailed,
+  EntryRestored,
 }
 
 export interface OperationProgressStateData {
@@ -72,6 +77,11 @@ export interface MoveFailedStateData {
   error: WorkspaceMoveEntryErrorTag;
 }
 
+export interface RestoreFailedStateData {
+  path: FsPath;
+  workspaceHandle: WorkspaceHandle;
+}
+
 export enum CopyFailedError {
   MaxRecursionReached = 'max-recursion-reached',
   MaxFilesReached = 'max-files-reached',
@@ -89,7 +99,8 @@ export type StateData =
   | WriteErrorStateData
   | FolderCreatedStateData
   | MoveFailedStateData
-  | CopyFailedStateData;
+  | CopyFailedStateData
+  | RestoreFailedStateData;
 
 type FileOperationCallback = (state: FileOperationState, operationData?: FileOperationData, stateData?: StateData) => Promise<void>;
 type FileOperationID = string;
@@ -99,6 +110,7 @@ export enum FileOperationDataType {
   Import,
   Copy,
   Move,
+  Restore,
 }
 
 interface IFileOperationDataType {
@@ -168,6 +180,21 @@ class MoveData extends FileOperationData {
   }
 }
 
+class RestoreData extends FileOperationData {
+  path: FsPath;
+  dateTime: DateTime;
+
+  constructor(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime) {
+    super(workspaceHandle, workspaceId);
+    this.path = path;
+    this.dateTime = dateTime;
+  }
+
+  getDataType(): FileOperationDataType {
+    return FileOperationDataType.Restore;
+  }
+}
+
 class FileOperationManager {
   private fileOperationData: Array<FileOperationData>;
   private callbacks: Array<[string, FileOperationCallback]>;
@@ -224,6 +251,15 @@ class FileOperationManager {
     }
     const newData = new CopyData(workspaceHandle, workspaceId, srcPath, dstPath);
     await this.sendState(FileOperationState.CopyAdded, newData);
+    this.fileOperationData.unshift(newData);
+  }
+
+  async restoreEntry(workspaceHandle: WorkspaceHandle, workspaceId: WorkspaceID, path: FsPath, dateTime: DateTime): Promise<void> {
+    if (!this.isRunning) {
+      this.start();
+    }
+    const newData = new RestoreData(workspaceHandle, workspaceId, path, dateTime);
+    await this.sendState(FileOperationState.RestoreAdded, newData);
     this.fileOperationData.unshift(newData);
   }
 
@@ -454,6 +490,17 @@ class FileOperationManager {
     }
   }
 
+  private async doRestore(data: RestoreData): Promise<void> {
+    await this.sendState(FileOperationState.RestoreStarted, data);
+    await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
+
+    console.log('Restoring', data.path);
+
+    // do something
+    // May need to be able to cancel, depending on how the restoration is done
+    await this.sendState(FileOperationState.EntryRestored, data);
+  }
+
   private async doImport(data: ImportData): Promise<void> {
     await this.sendState(FileOperationState.ImportStarted, data);
     const reader = data.file.stream().getReader();
@@ -603,6 +650,8 @@ class FileOperationManager {
           job = this.doMove(elem as MoveData);
         } else if (elem.getDataType() === FileOperationDataType.Copy) {
           job = this.doCopy(elem as CopyData);
+        } else if (elem.getDataType() === FileOperationDataType.Restore) {
+          job = this.doRestore(elem as RestoreData);
         } else {
           console.warn(`Unhandled file operation '${elem.getDataType()}'`);
           continue;

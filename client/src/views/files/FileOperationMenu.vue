@@ -231,6 +231,8 @@ function getFileOperationComponent(item: OperationItem): Component | undefined {
       return FileCopyItem;
     case FileOperationDataType.Move:
       return FileMoveItem;
+    case FileOperationDataType.Restore:
+      return FileMoveItem;
   }
 }
 
@@ -257,6 +259,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
           }
           break;
         case FileOperationDataType.Move:
+        case FileOperationDataType.Restore:
           index = queuedMoveItems.value.findIndex((op) => op.data.id === data.id);
           if (queuedMoveItems.value[index]) {
             const item = queuedMoveItems.value.splice(index, 1)[0];
@@ -280,6 +283,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         currentOperationArray = queuedCopyItems.value;
         break;
       case FileOperationDataType.Move:
+      case FileOperationDataType.Restore:
         currentOperationArray = queuedMoveItems.value;
         break;
     }
@@ -291,7 +295,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
   if (operation) {
     operation.state = state;
     operation.stateData = stateData;
-    if ([FileOperationState.FileImported, FileOperationState.EntryMoved, FileOperationState.EntryCopied].includes(state)) {
+    if ([FileOperationState.FileImported, FileOperationState.EntryMoved, FileOperationState.EntryCopied, FileOperationState.EntryRestored].includes(state)) {
       operation.finishedDate = DateTime.now();
       doneItems.value.push(operation);
       doneItemsCount.value += 1;
@@ -302,6 +306,7 @@ function updateImportState(data: FileOperationData, state: FileOperationState, s
         FileOperationState.MoveFailed,
         FileOperationState.CopyFailed,
         FileOperationState.Cancelled,
+        FileOperationState.RestoreFailed,
       ].includes(state)
     ) {
       operation.finishedDate = DateTime.now();
@@ -344,6 +349,7 @@ async function onFileOperationEvent(
   fileOperationData?: FileOperationData,
   stateData?: StateData,
 ): Promise<void> {
+  console.log(state);
   switch (state) {
     case FileOperationState.OperationAllStarted:
       isFileOperationManagerActive.value = true;
@@ -369,6 +375,7 @@ async function onFileOperationEvent(
       scrollToTop();
       break;
     case FileOperationState.MoveAdded:
+    case FileOperationState.RestoreAdded:
       queuedMoveItems.value.push({
         data: fileOperationData as FileOperationData,
         state: state,
@@ -390,11 +397,13 @@ async function onFileOperationEvent(
     case FileOperationState.FileImported:
     case FileOperationState.EntryMoved:
     case FileOperationState.EntryCopied:
+    case FileOperationState.EntryRestored:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.CreateFailed:
     case FileOperationState.MoveFailed:
     case FileOperationState.CopyFailed:
+    case FileOperationState.RestoreFailed:
       updateImportState(fileOperationData as FileOperationData, state, stateData);
       break;
     case FileOperationState.Cancelled:

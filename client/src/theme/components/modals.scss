@@ -286,3 +286,9 @@
     max-width: var(--parsec-modal-width-md);
   }
 }
+
+.workspace-history-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-lg);
+  }
+}

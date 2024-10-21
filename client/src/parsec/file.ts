@@ -130,6 +130,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
 export async function statFolderChildren(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
+  atDateTime?: DateTime,
 ): Promise<Result<Array<EntryStat>, WorkspaceStatFolderChildrenError>> {
   if (!needsMocks()) {
     const watchResult = await libparsec.workspaceWatchEntryOneshot(workspaceHandle, path);

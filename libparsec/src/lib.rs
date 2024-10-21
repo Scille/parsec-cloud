@@ -15,6 +15,7 @@ mod platform;
 mod testbed;
 mod validation;
 mod workspace;
+mod workspace_history;
 
 pub use addr::*;
 pub use cancel::*;
@@ -36,6 +37,7 @@ pub use platform::*;
 pub use testbed::*;
 pub use validation::*;
 pub use workspace::*;
+pub use workspace_history::*;
 
 pub mod internal {
     pub use libparsec_client::{
