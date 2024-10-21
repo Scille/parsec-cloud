@@ -333,6 +333,7 @@ class Backend:
                     author_verify_key=_get_device_verify_key(event.author),
                     realm_key_rotation_certificate=event.raw_certificate,
                     per_participant_keys_bundle_access=event.per_participant_keys_bundle_access,
+                    per_sequester_service_keys_bundle_access=event.per_sequester_service_keys_bundle_access,
                     keys_bundle=event.keys_bundle,
                 )
                 assert isinstance(outcome, RealmKeyRotationCertificate)
@@ -393,7 +394,6 @@ class Backend:
                         vlob_id=event.vlob_id,
                         timestamp=event.timestamp,
                         blob=event.encrypted,
-                        sequester_blob=event.sequestered,
                     )
                     assert outcome is None, outcome
                 else:
@@ -406,7 +406,6 @@ class Backend:
                         version=event.version,
                         timestamp=event.timestamp,
                         blob=event.encrypted,
-                        sequester_blob=event.sequestered,
                     )
                     assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventFreezeUser):

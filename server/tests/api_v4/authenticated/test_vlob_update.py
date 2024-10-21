@@ -10,7 +10,6 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmRole,
     SecretKeyAlgorithm,
-    SequesterServiceID,
     VlobID,
     authenticated_cmds,
     testbed,
@@ -98,7 +97,6 @@ async def test_authenticated_vlob_update_ok(
         key_index=key_index,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -111,7 +109,6 @@ async def test_authenticated_vlob_update_ok(
             version=2,
             blob=v2_blob,
             timestamp=v2_timestamp,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_update.RepOk()
 
@@ -164,7 +161,6 @@ async def test_authenticated_vlob_update_author_not_allowed(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -249,7 +245,6 @@ async def test_authenticated_vlob_update_author_not_allowed(
         timestamp=now,
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepAuthorNotAllowed()
 
@@ -276,7 +271,6 @@ async def test_authenticated_vlob_update_bad_key_index(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -329,7 +323,6 @@ async def test_authenticated_vlob_update_bad_key_index(
         timestamp=t2,
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
@@ -347,7 +340,6 @@ async def test_authenticated_vlob_update_vlob_not_found(coolorg: CoolorgRpcClien
         timestamp=DateTime.now(),
         version=2,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepVlobNotFound()
 
@@ -369,7 +361,6 @@ async def test_authenticated_vlob_update_bad_vlob_version(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -391,45 +382,8 @@ async def test_authenticated_vlob_update_bad_vlob_version(
         timestamp=DateTime.now(),
         version=bad_version,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepBadVlobVersion()
-
-    # Ensure no changes were made
-    dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-    assert dump == initial_dump
-
-
-async def test_authenticated_vlob_update_organization_not_sequestered(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    vlob_id = VlobID.new()
-    v1_timestamp = DateTime.now()
-    key_index = 1
-    outcome = await backend.vlob.create(
-        now=DateTime.now(),
-        organization_id=coolorg.organization_id,
-        author=coolorg.alice.device_id,
-        realm_id=coolorg.wksp1_id,
-        vlob_id=vlob_id,
-        key_index=key_index,
-        blob=b"<initial block content>",
-        timestamp=v1_timestamp,
-        sequester_blob=None,
-    )
-    assert outcome is None, outcome
-    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-
-    v2_timestamp = DateTime.now()
-    rep = await coolorg.alice.vlob_update(
-        vlob_id=vlob_id,
-        key_index=key_index,
-        timestamp=v2_timestamp,
-        version=2,
-        blob=b"<updated block content>",
-        sequester_blob={SequesterServiceID.new(): b"<dummy>"},
-    )
-    assert rep == authenticated_cmds.v4.vlob_update.RepOrganizationNotSequestered()
 
     # Ensure no changes were made
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
@@ -468,7 +422,6 @@ async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
         key_index=1,
         timestamp=t0,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert isinstance(rep, authenticated_cmds.v4.vlob_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
@@ -531,7 +484,6 @@ async def test_authenticated_vlob_update_require_greater_timestamp(
         timestamp=same_or_previous_timestamp,
         version=2,
         blob=b"<updated block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_update.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
@@ -563,7 +515,6 @@ async def test_authenticated_vlob_update_max_blob_size(
         key_index=key_index,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -576,7 +527,6 @@ async def test_authenticated_vlob_update_max_blob_size(
             timestamp=v2_timestamp,
             version=2,
             blob=v2_blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_update.RepOk()
 
@@ -621,7 +571,6 @@ async def test_authenticated_vlob_update_http_common_errors(
         key_index=1,
         blob=v1_blob,
         timestamp=v1_timestamp,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -634,7 +583,6 @@ async def test_authenticated_vlob_update_http_common_errors(
             version=2,
             blob=v2_blob,
             timestamp=v2_timestamp,
-            sequester_blob=None,
         )
 
     await authenticated_http_common_errors_tester(do)

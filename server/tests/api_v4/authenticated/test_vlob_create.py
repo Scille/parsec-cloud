@@ -10,7 +10,6 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmRole,
     SecretKeyAlgorithm,
-    SequesterServiceID,
     VlobID,
     authenticated_cmds,
     testbed,
@@ -95,7 +94,6 @@ async def test_authenticated_vlob_create_ok(
             key_index=key_index,
             timestamp=timestamp,
             blob=blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_create.RepOk()
 
@@ -189,7 +187,6 @@ async def test_authenticated_vlob_create_author_not_allowed(
         key_index=key_index,
         timestamp=now,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepAuthorNotAllowed()
 
@@ -255,7 +252,6 @@ async def test_authenticated_vlob_create_bad_key_index(
         key_index=bad_key_index,
         timestamp=t1,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepBadKeyIndex(
         last_realm_certificate_timestamp=wksp1_last_certificate_timestamp
@@ -278,7 +274,6 @@ async def test_authenticated_vlob_create_realm_not_found(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepRealmNotFound()
 
@@ -301,7 +296,6 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         blob=b"<block content 1>",
         timestamp=t0,
-        sequester_blob=None,
     )
     assert outcome is None, outcome
 
@@ -313,28 +307,8 @@ async def test_authenticated_vlob_create_vlob_already_exists(
         key_index=1,
         timestamp=DateTime.now(),
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepVlobAlreadyExists()
-
-    # Ensure no changes were made
-    dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-    assert dump == initial_dump
-
-
-async def test_authenticated_vlob_create_organization_not_sequestered(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
-    rep = await coolorg.alice.vlob_create(
-        realm_id=coolorg.wksp1_id,
-        vlob_id=VlobID.new(),
-        key_index=1,
-        timestamp=DateTime.now(),
-        blob=b"<block content>",
-        sequester_blob={SequesterServiceID.new(): b"<dummy>"},
-    )
-    assert rep == authenticated_cmds.v4.vlob_create.RepOrganizationNotSequestered()
 
     # Ensure no changes were made
     dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
@@ -373,7 +347,6 @@ async def test_authenticated_vlob_create_timestamp_out_of_ballpark(
         key_index=1,
         timestamp=t0,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert isinstance(rep, authenticated_cmds.v4.vlob_create.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
@@ -436,7 +409,6 @@ async def test_authenticated_vlob_create_require_greater_timestamp(
         key_index=2,
         timestamp=same_or_previous_timestamp,
         blob=b"<block content>",
-        sequester_blob=None,
     )
     assert rep == authenticated_cmds.v4.vlob_create.RepRequireGreaterTimestamp(
         strictly_greater_than=last_certificate_timestamp
@@ -467,7 +439,6 @@ async def test_authenticated_vlob_create_max_blob_size(
             key_index=1,
             timestamp=timestamp,
             blob=a_big_blob,
-            sequester_blob=None,
         )
         assert rep == authenticated_cmds.v4.vlob_create.RepOk()
 
@@ -502,7 +473,6 @@ async def test_authenticated_vlob_create_http_common_errors(
             key_index=1,
             timestamp=DateTime.now(),
             blob=b"<dummy>",
-            sequester_blob=None,
         )
 
     await authenticated_http_common_errors_tester(do)

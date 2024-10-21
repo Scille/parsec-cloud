@@ -5,7 +5,6 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    SequesterServiceID,
     VlobID,
 )
 from parsec.ballpark import (
@@ -22,8 +21,7 @@ from parsec.components.postgresql.utils import (
 from parsec.components.realm import BadKeyIndex
 from parsec.components.vlob import (
     RejectedBySequesterService,
-    SequesterInconsistency,
-    SequesterServiceNotAvailable,
+    SequesterServiceUnavailable,
     VlobCreateBadOutcome,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
@@ -190,7 +188,6 @@ async def vlob_create(
     key_index: int,
     timestamp: DateTime,
     blob: bytes,
-    sequester_blob: dict[SequesterServiceID, bytes] | None = None,
 ) -> (
     None
     | BadKeyIndex
@@ -198,8 +195,7 @@ async def vlob_create(
     | TimestampOutOfBallpark
     | RequireGreaterTimestamp
     | RejectedBySequesterService
-    | SequesterServiceNotAvailable
-    | SequesterInconsistency
+    | SequesterServiceUnavailable
 ):
     # 1) Query the database to get all info about org/device/user/realm/vlob
     #    and lock the common & realm topics
@@ -316,11 +312,7 @@ async def vlob_create(
 
     # 3) Sequester checks
 
-    # TODO: Sequester behavior has changed since Parsec v2, this `sequester_blob`
-    #       field is in fact no longer needed (so we will most likely drop in
-    #       when implementing the support of sequester...)
-    if sequester_blob is not None:
-        return VlobCreateBadOutcome.ORGANIZATION_NOT_SEQUESTERED
+    # TODO: Trigger sequester service webhooks here !
 
     # 4) All checks are good except for the vlob existence, now we do the actual insertion
     #    and rely on the database constraint to be informed if the vlob already exists.
