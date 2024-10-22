@@ -9,7 +9,6 @@ from parsec._parsec import (
     SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     SequesterServiceID,
-    VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp
 from parsec.components.events import EventBus
@@ -22,12 +21,13 @@ from parsec.components.sequester import (
     BaseSequesterService,
     SequesterCreateServiceStoreBadOutcome,
     SequesterCreateServiceValidateBadOutcome,
-    SequesterDumpRealmBadOutcome,
     SequesterGetOrganizationServicesBadOutcome,
     SequesterGetServiceBadOutcome,
     SequesterRevokeServiceStoreBadOutcome,
     SequesterRevokeServiceValidateBadOutcome,
+    SequesterServiceConfig,
     SequesterServiceType,
+    SequesterUpdateConfigForServiceStoreBadOutcome,
     StorageSequesterService,
     WebhookSequesterService,
     sequester_create_service_validate,
@@ -63,54 +63,12 @@ class MemorySequesterComponent(BaseSequesterComponent):
         self._data = data
         self._event_bus = event_bus
 
-    @override
-    async def create_storage_service(
+    async def create_service(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         service_certificate: bytes,
-    ) -> (
-        SequesterServiceCertificate
-        | SequesterCreateServiceValidateBadOutcome
-        | SequesterCreateServiceStoreBadOutcome
-        | RequireGreaterTimestamp
-    ):
-        return await self._create_service(
-            now=now,
-            organization_id=organization_id,
-            service_certificate=service_certificate,
-            service_type=SequesterServiceType.STORAGE,
-            webhook_url=None,
-        )
-
-    @override
-    async def create_webhook_service(
-        self,
-        now: DateTime,
-        organization_id: OrganizationID,
-        service_certificate: bytes,
-        webhook_url: str,
-    ) -> (
-        SequesterServiceCertificate
-        | SequesterCreateServiceValidateBadOutcome
-        | SequesterCreateServiceStoreBadOutcome
-        | RequireGreaterTimestamp
-    ):
-        return await self._create_service(
-            now=now,
-            organization_id=organization_id,
-            service_certificate=service_certificate,
-            service_type=SequesterServiceType.WEBHOOK,
-            webhook_url=webhook_url,
-        )
-
-    async def _create_service(
-        self,
-        now: DateTime,
-        organization_id: OrganizationID,
-        service_certificate: bytes,
-        service_type: SequesterServiceType,
-        webhook_url: str | None,
+        config: SequesterServiceConfig,
     ) -> (
         SequesterServiceCertificate
         | SequesterCreateServiceValidateBadOutcome
@@ -146,12 +104,19 @@ class MemorySequesterComponent(BaseSequesterComponent):
 
             # All checks are good, now we do the actual insertion
 
+            match config:
+                case SequesterServiceType.STORAGE as service_type:
+                    webhook_url = None
+                case (SequesterServiceType.WEBHOOK as service_type, webhook_url):
+                    pass
+
             org.sequester_services[certif.service_id] = MemorySequesterService(
                 cooked=certif,
                 sequester_service_certificate=service_certificate,
                 service_type=service_type,
                 webhook_url=webhook_url,
             )
+            org.per_topic_last_timestamp["sequester"] = certif.timestamp
 
             await self._event_bus.send(
                 EventSequesterCertificate(
@@ -160,6 +125,35 @@ class MemorySequesterComponent(BaseSequesterComponent):
             )
 
             return certif
+
+    @override
+    async def update_config_for_service(
+        self,
+        organization_id: OrganizationID,
+        service_id: SequesterServiceID,
+        config: SequesterServiceConfig,
+    ) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return SequesterUpdateConfigForServiceStoreBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if org.sequester_services is None:
+            return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
+
+        try:
+            service = org.sequester_services[service_id]
+        except KeyError:
+            return SequesterUpdateConfigForServiceStoreBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
+
+        match config:
+            case SequesterServiceType.STORAGE as service_type:
+                webhook_url = None
+            case (SequesterServiceType.WEBHOOK as service_type, webhook_url):
+                pass
+
+        service.service_type = service_type
+        service.webhook_url = webhook_url
 
     @override
     async def revoke_service(
@@ -207,8 +201,9 @@ class MemorySequesterComponent(BaseSequesterComponent):
 
             # All checks are good, now we do the actual insertion
 
-            service.sequester_service_certificate = revoked_service_certificate
+            service.sequester_revoked_service_certificate = revoked_service_certificate
             service.cooked_revoked = certif
+            org.per_topic_last_timestamp["sequester"] = certif.timestamp
 
             await self._event_bus.send(
                 EventSequesterCertificate(
@@ -250,42 +245,3 @@ class MemorySequesterComponent(BaseSequesterComponent):
             return SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED
 
         return [_cook_service(service) for service in org.sequester_services.values()]
-
-    @override
-    async def dump_realm(
-        self,
-        organization_id: OrganizationID,
-        service_id: SequesterServiceID,
-        realm_id: VlobID,
-    ) -> list[tuple[VlobID, int, bytes]] | SequesterDumpRealmBadOutcome:
-        """
-        Dump all vlobs in a given realm.
-        This should only be used in tests given it doesn't scale at all !
-        """
-        try:
-            org = self._data.organizations[organization_id]
-        except KeyError:
-            return SequesterDumpRealmBadOutcome.ORGANIZATION_NOT_FOUND
-
-        if org.sequester_services is None:
-            return SequesterDumpRealmBadOutcome.SEQUESTER_DISABLED
-        try:
-            service = org.sequester_services[service_id]
-        except KeyError:
-            return SequesterDumpRealmBadOutcome.SEQUESTER_SERVICE_NOT_FOUND
-
-        if service.service_type != SequesterServiceType.STORAGE:
-            return SequesterDumpRealmBadOutcome.SEQUESTER_SERVICE_NOT_STORAGE
-
-        dump: list[tuple[VlobID, int, bytes]] = []
-        for vlob_atoms in org.vlobs.values():
-            if vlob_atoms[0].realm_id != realm_id:
-                continue
-            for vlob_atom in vlob_atoms:
-                assert vlob_atom.blob_for_storage_sequester_services is not None
-                sequestered = vlob_atom.blob_for_storage_sequester_services.get(service_id)
-                if not sequestered:
-                    continue
-                dump.append((vlob_atom.vlob_id, vlob_atom.version, sequestered))
-
-        return dump

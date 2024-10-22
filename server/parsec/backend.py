@@ -16,6 +16,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRoleCertificate,
     RevokedUserCertificate,
+    SequesterRevokedServiceCertificate,
     SequesterServiceCertificate,
     ShamirRecoveryBriefCertificate,
     ShamirRecoveryDeletionCertificate,
@@ -36,7 +37,7 @@ from parsec.components.ping import BasePingComponent
 from parsec.components.pki import BasePkiEnrollmentComponent
 from parsec.components.postgresql import components_factory as postgresql_components_factory
 from parsec.components.realm import BaseRealmComponent
-from parsec.components.sequester import BaseSequesterComponent
+from parsec.components.sequester import BaseSequesterComponent, SequesterServiceType
 from parsec.components.shamir import BaseShamirComponent
 from parsec.components.user import BaseUserComponent, UserInfo
 from parsec.components.vlob import BaseVlobComponent
@@ -202,10 +203,11 @@ class Backend:
                 )
                 assert isinstance(outcome, tuple), outcome
             elif isinstance(event, testbed.TestbedEventNewSequesterService):
-                outcome = await self.sequester.create_storage_service(
+                outcome = await self.sequester.create_service(
                     now=event.timestamp,
                     organization_id=org_id,
                     service_certificate=event.raw_certificate,
+                    config=SequesterServiceType.STORAGE,
                 )
                 assert isinstance(outcome, SequesterServiceCertificate), outcome
             elif isinstance(event, testbed.TestbedEventRevokeSequesterService):
@@ -214,7 +216,7 @@ class Backend:
                     organization_id=org_id,
                     revoked_service_certificate=event.raw_certificate,
                 )
-                assert isinstance(outcome, SequesterServiceCertificate), outcome
+                assert isinstance(outcome, SequesterRevokedServiceCertificate), outcome
             elif isinstance(event, testbed.TestbedEventNewUser):
                 outcome = await self.user.create_user(
                     now=event.timestamp,
