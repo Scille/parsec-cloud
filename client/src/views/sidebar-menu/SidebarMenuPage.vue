@@ -16,8 +16,7 @@
             <!-- active organization -->
             <ion-card class="organization-card">
               <ion-card-header
-                class="organization-card-header"
-                :class="{ 'organization-card-header-desktop': canSwitchOrg }"
+                class="organization-card-header organization-card-header-desktop"
                 @click="openOrganizationChoice($event)"
               >
                 <ion-avatar class="organization-avatar body-lg">
@@ -36,7 +35,6 @@
                 <ms-image
                   :image="ChevronExpand"
                   class="header-icon"
-                  v-show="canSwitchOrg"
                 />
               </ion-card-header>
 
@@ -67,8 +65,8 @@
                   class="organization-card-buttons__item button-medium"
                   id="goHome"
                   button
-                  @click="goToHome"
-                  v-if="isDesktop()"
+                  v-show="!currentRouteIs(Routes.Workspaces)"
+                  @click="navigateTo(Routes.Workspaces)"
                 >
                   <ion-icon
                     class="button-icon"
@@ -199,10 +197,7 @@
                 lines="none"
                 class="list-workspaces-header menu-default"
               >
-                <div
-                  class="list-workspaces-header-title"
-                  @click="navigateTo(Routes.Workspaces)"
-                >
+                <div class="list-workspaces-header-title">
                   <ion-icon
                     class="list-workspaces-header-title__icon"
                     :icon="business"
@@ -313,7 +308,7 @@
 
 <script setup lang="ts">
 import { workspaceNameValidator } from '@/common/validators';
-import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient, I18n } from 'megashark-lib';
+import { ChevronExpand, MsImage, getTextFromUser, LogoIconGradient, I18n, MsModalResult } from 'megashark-lib';
 import OrganizationSwitchPopover from '@/components/organizations/OrganizationSwitchPopover.vue';
 import { WORKSPACES_PAGE_DATA_KEY, WorkspaceDefaultData, WorkspacesPageSavedData, openWorkspaceContextMenu } from '@/components/workspaces';
 import {
@@ -324,7 +319,6 @@ import {
   WorkspaceID,
   WorkspaceInfo,
   getCurrentAvailableDevice,
-  isDesktop,
   getClientInfo as parsecGetClientInfo,
   listWorkspaces as parsecListWorkspaces,
   getConnectionInfo,
@@ -387,9 +381,7 @@ const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
-const canSwitchOrg = computed(() => {
-  return isDesktop() && loggedInDevices.value.length > 1;
-});
+const canSwitchOrg = ref(true);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -537,15 +529,11 @@ async function openOrganizationChoice(event: Event): Promise<void> {
     showBackdrop: false,
   });
   await popover.present();
-  const { data } = await popover.onDidDismiss();
+  const { data, role } = await popover.onDidDismiss();
   await popover.dismiss();
-  if (data) {
+  if (role === MsModalResult.Confirm) {
     switchOrganization(data.handle);
   }
-}
-
-async function goToHome(): Promise<void> {
-  await switchOrganization(null);
 }
 
 async function openPricingLink(): Promise<void> {
@@ -805,10 +793,6 @@ ion-menu {
         margin-right: 0.5rem;
         position: relative;
       }
-    }
-
-    &-title {
-      cursor: pointer;
     }
 
     &__button {

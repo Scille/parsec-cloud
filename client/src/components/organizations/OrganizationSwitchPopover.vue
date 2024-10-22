@@ -16,6 +16,14 @@
           {{ currentOrg?.id }}
         </ion-text>
       </div>
+      <ion-button
+        @click="goToLogin"
+        fill="outline"
+      >
+        <ion-icon :icon="repeat" />
+
+        {{ $msTranslate('OrganizationSwitch.goToLogin') }}
+      </ion-button>
     </div>
     <div
       class="connected-organization"
@@ -68,10 +76,11 @@
 <script setup lang="ts">
 import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
-import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController } from '@ionic/vue';
+import { repeat } from 'ionicons/icons';
+import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController, IonButton } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 import { isTrialOrganizationDevice, getDurationBeforeExpiration, formatExpirationTime } from '@/common/organization';
-import { MsImage, LogoIconGradient } from 'megashark-lib';
+import { MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
 
 interface ConnectedOrganization {
   id: OrganizationID;
@@ -112,10 +121,12 @@ onMounted(async () => {
 
 async function onOrganizationClick(org: ConnectedOrganization): Promise<void> {
   if (org.handle !== getConnectionHandle()) {
-    await popoverController.dismiss({
-      handle: org.handle,
-    });
+    await popoverController.dismiss({ handle: org.handle }, MsModalResult.Confirm);
   }
+}
+
+async function goToLogin(): Promise<void> {
+  await popoverController.dismiss({ handle: null }, MsModalResult.Confirm);
 }
 </script>
 
