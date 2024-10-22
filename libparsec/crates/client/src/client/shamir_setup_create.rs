@@ -16,12 +16,7 @@ pub async fn shamir_setup_create(
 ) -> Result<(), ClientShamirError> {
     let outcome = client_ops
         .certificates_ops
-        .shamir_setup_create(
-            client_ops.device_id(),
-            client_ops.user_id(),
-            share_recipients,
-            threshold,
-        )
+        .shamir_setup_create(share_recipients, threshold)
         .await?;
 
     let latest_known_timestamps = match outcome {

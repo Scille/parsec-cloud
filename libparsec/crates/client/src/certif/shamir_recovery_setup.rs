@@ -11,9 +11,9 @@ use libparsec_protocol::authenticated_cmds::{
 };
 use libparsec_types::{
     anyhow, shamir_make_shares, thiserror, Bytes, CertificateSignerOwned, DateTime,
-    DeviceCertificate, DeviceID, DeviceLabel, InvitationToken, LocalDevice, MaybeRedacted,
-    SecretKey, ShamirRecoveryBriefCertificate, ShamirRecoverySecret,
-    ShamirRecoveryShareCertificate, ShamirRecoveryShareData, SigningKeyAlgorithm, UserID,
+    DeviceCertificate, DeviceLabel, InvitationToken, LocalDevice, MaybeRedacted, SecretKey,
+    ShamirRecoveryBriefCertificate, ShamirRecoverySecret, ShamirRecoveryShareCertificate,
+    ShamirRecoveryShareData, SigningKeyAlgorithm, UserID,
 };
 use std::{
     collections::{HashMap, HashSet},
@@ -118,37 +118,43 @@ impl From<ConnectionError> for CertifShamirError {
 }
 pub(super) async fn shamir_setup_create(
     certificate_ops: &CertificateOps,
-    author_device: DeviceID,
-    author_id: UserID,
     share_recipients: HashMap<UserID, u8>,
     threshold: u8,
 ) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
-    // Loop is needed to deal with server requiring greater timestamp
-    let mut timestamp = certificate_ops.device.now();
-    // TODO separate shamir_internals in 3 different functions
-    // - client side checks and certificate creation
-    // - send device certificate
-    // - send shamir certificates
-    // Hence, the two last part would be managed in two different loops
-    // Note that doing that would imply that the associated recovery device
-    // certificate could have a different timestamp than the shamir certificates.
+    // Keep looping while a RequireGreaterTimestamp is returned
+    let mut recovery_device_timestamp = certificate_ops.device.now();
+    let recovery_device = loop {
+        let outcome =
+            create_shamir_recovery_device(certificate_ops, recovery_device_timestamp).await?;
+
+        match outcome {
+            CreateShamirRecoveryDeviceOutcome::Done(recovery_device) => break recovery_device,
+            CreateShamirRecoveryDeviceOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
+                recovery_device_timestamp = greater_timestamp(
+                    &certificate_ops.device.time_provider,
+                    GreaterTimestampOffset::User,
+                    strictly_greater_than,
+                );
+            }
+        }
+    };
+
+    // Keep looping while a RequireGreaterTimestamp is returned
+    let mut recovery_setup_timestamp = certificate_ops.device.now();
     loop {
-        let outcome = shamir_internals(
+        let outcome = do_shamir_recovery_setup(
             certificate_ops,
-            author_device,
-            author_id,
+            &recovery_device,
             &share_recipients,
             threshold,
-            timestamp,
+            recovery_setup_timestamp,
         )
         .await?;
 
         match outcome {
-            ShamirInternalsOutcome::Done(outcome) => return Ok(outcome),
-            ShamirInternalsOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
-                // TODO: handle `strictly_greater_than` out of the client ballpark by
-                // returning an error
-                timestamp = greater_timestamp(
+            DoShamirRecoverySetupOutcome::Done(outcome) => return Ok(outcome),
+            DoShamirRecoverySetupOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
+                recovery_setup_timestamp = greater_timestamp(
                     &certificate_ops.device.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,
@@ -159,19 +165,112 @@ pub(super) async fn shamir_setup_create(
 }
 
 #[derive(Debug)]
-enum ShamirInternalsOutcome {
+enum CreateShamirRecoveryDeviceOutcome {
+    Done(LocalDevice),
+    RequireGreaterTimestamp(DateTime),
+}
+
+async fn create_shamir_recovery_device(
+    certificate_ops: &CertificateOps,
+    timestamp: DateTime,
+) -> Result<CreateShamirRecoveryDeviceOutcome, CertifShamirError> {
+    let author = &certificate_ops.device;
+
+    let recovery_device = LocalDevice::generate_new_device(
+        certificate_ops.device.organization_addr.clone(),
+        certificate_ops.device.initial_profile,
+        certificate_ops.device.human_handle.clone(),
+        DeviceLabel::try_from(format!("shamir-recovery-{timestamp}").as_str())
+            .expect("Invalid device label"),
+        Some(certificate_ops.device.user_id),
+        None,
+        None,
+        None,
+        None,
+    );
+
+    let device_cert = DeviceCertificate {
+        author: CertificateSignerOwned::User(author.device_id),
+        timestamp,
+        user_id: recovery_device.user_id,
+        device_id: recovery_device.device_id,
+        device_label: MaybeRedacted::Real(recovery_device.device_label.clone()),
+        verify_key: recovery_device.verify_key(),
+        algorithm: SigningKeyAlgorithm::Ed25519,
+    };
+
+    let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
+
+    let redacted_device_cert = device_cert.into_redacted();
+
+    let redacted_device_certificate = redacted_device_cert
+        .dump_and_sign(&author.signing_key)
+        .into();
+
+    match certificate_ops
+        .cmds
+        .send(device_create::Req {
+            device_certificate,
+            redacted_device_certificate,
+        })
+        .await?
+    {
+        device_create::Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(recovery_device)),
+        device_create::Rep::RequireGreaterTimestamp {
+            strictly_greater_than,
+        } =>
+        // The retry is handled by the caller
+        {
+            Ok(CreateShamirRecoveryDeviceOutcome::RequireGreaterTimestamp(
+                strictly_greater_than,
+            ))
+        }
+        device_create::Rep::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+            ..
+        } => {
+            let event = EventTooMuchDriftWithServerClock {
+                server_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+                client_timestamp,
+            };
+            certificate_ops.event_bus.send(&event);
+
+            Err(CertifShamirError::TimestampOutOfBallpark {
+                server_timestamp,
+                client_timestamp,
+                ballpark_client_early_offset,
+                ballpark_client_late_offset,
+            })
+        }
+        bad_rep @ (device_create::Rep::UnknownStatus { .. }
+        | device_create::Rep::InvalidCertificate
+        | device_create::Rep::DeviceAlreadyExists) => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+        }
+    }
+}
+
+#[derive(Debug)]
+enum DoShamirRecoverySetupOutcome {
     Done(CertificateBasedActionOutcome),
     RequireGreaterTimestamp(DateTime),
 }
 
-async fn shamir_internals(
+async fn do_shamir_recovery_setup(
     certificate_ops: &CertificateOps,
-    author_device: DeviceID,
-    author_id: UserID,
+    recovery_device: &LocalDevice,
     share_recipients: &HashMap<UserID, u8>,
     threshold: u8,
     timestamp: DateTime,
-) -> Result<ShamirInternalsOutcome, CertifShamirError> {
+) -> Result<DoShamirRecoverySetupOutcome, CertifShamirError> {
+    let author_device_id = certificate_ops.device.device_id;
+    let author_user_id = certificate_ops.device.user_id;
+
     // 1. Check if share_recipients and threshold are internally coherent
     let total_share_count: u8 = share_recipients.values().sum();
     if total_share_count < threshold {
@@ -180,7 +279,7 @@ async fn shamir_internals(
 
     if share_recipients
         .keys()
-        .any(|&recipient| recipient == author_id)
+        .any(|&recipient| recipient == author_user_id)
     {
         return Err(CertifShamirError::AuthorIncludedAsRecipient);
     }
@@ -196,14 +295,15 @@ async fn shamir_internals(
     // 2. Check for previous setup
     // TODO add option to force shamir creation
     if let Some(setup) =
-        get_latest_shamir_setup_for_author(certificate_ops, &author_id, &timestamp).await?
+        get_latest_shamir_setup_for_author(certificate_ops, &author_user_id, &timestamp).await?
     {
         return Err(CertifShamirError::ShamirSetupAlreadyExist(setup.timestamp));
     }
+
     // 3. Check recipients status
 
     let mut participants_id: HashSet<_> = share_recipients.keys().collect();
-    participants_id.insert(&author_id);
+    participants_id.insert(&author_user_id);
     // TODO implement a get_users method instead of list_user (let the DB do its job)
     let participants = certificate_ops.list_users(true, None, None).await?;
     let participants = participants
@@ -223,12 +323,13 @@ async fn shamir_internals(
             return Err(CertifShamirError::UserRevoked(info.id));
         }
     }
+
     // 4. Generate certificates
 
     let brief: Bytes = ShamirRecoveryBriefCertificate {
-        author: author_device,
+        author: author_device_id,
         timestamp,
-        user_id: author_id,
+        user_id: author_user_id,
         threshold: NonZeroU64::new(threshold.into()).expect("shamir threshold is zero"), // checked during the first step
         per_recipient_shares: share_recipients
             .iter()
@@ -237,25 +338,6 @@ async fn shamir_internals(
     }
     .dump_and_sign(&certificate_ops.device.signing_key)
     .into();
-
-    let recovery_device = LocalDevice::generate_new_device(
-        certificate_ops.device.organization_addr.clone(),
-        certificate_ops.device.initial_profile,
-        certificate_ops.device.human_handle.clone(),
-        DeviceLabel::try_from(
-            format!(
-                "recovery-{timestamp}-{}",
-                u32::from_be_bytes(brief[..4].try_into().expect("u32 from 4 u8 should be ok"))
-            )
-            .as_str(),
-        )
-        .expect("Invalid device label"),
-        Some(certificate_ops.device.user_id),
-        None,
-        None,
-        None,
-        None,
-    );
 
     let data_key = SecretKey::generate();
     let reveal_token = InvitationToken::default();
@@ -286,9 +368,9 @@ async fn shamir_internals(
 
         idx += share_count as usize;
         let share = ShamirRecoveryShareCertificate {
-            author: author_device,
+            author: author_device_id,
             timestamp,
-            user_id: author_id,
+            user_id: author_user_id,
             recipient: share_recipient_id,
             ciphered_share,
         }
@@ -306,59 +388,10 @@ async fn shamir_internals(
             shares,
         }),
     };
-
-    let (device_certificate, redacted_device_certificate) =
-        create_new_device(recovery_device, certificate_ops.device.clone(), timestamp);
-    match certificate_ops
-        .cmds
-        .send(device_create::Req {
-            device_certificate,
-            redacted_device_certificate,
-        })
-        .await?
-    {
-        device_create::Rep::Ok => {}
-        device_create::Rep::RequireGreaterTimestamp {
-            strictly_greater_than,
-        } =>
-        // The retry is handled by the caller
-        {
-            return Ok(ShamirInternalsOutcome::RequireGreaterTimestamp(
-                strictly_greater_than,
-            ))
-        }
-        device_create::Rep::TimestampOutOfBallpark {
-            server_timestamp,
-            client_timestamp,
-            ballpark_client_early_offset,
-            ballpark_client_late_offset,
-            ..
-        } => {
-            let event = EventTooMuchDriftWithServerClock {
-                server_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-                client_timestamp,
-            };
-            certificate_ops.event_bus.send(&event);
-
-            return Err(CertifShamirError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            });
-        }
-        bad_rep @ (device_create::Rep::UnknownStatus { .. }
-        | device_create::Rep::InvalidCertificate
-        | device_create::Rep::DeviceAlreadyExists) => {
-            return Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into());
-        }
-    }
     let rep = certificate_ops.cmds.send(req).await?;
 
     match rep {
-        Rep::Ok => Ok(ShamirInternalsOutcome::Done(
+        Rep::Ok => Ok(DoShamirRecoverySetupOutcome::Done(
             CertificateBasedActionOutcome::Uploaded {
                 certificate_timestamp: timestamp,
             },
@@ -368,7 +401,7 @@ async fn shamir_internals(
             strictly_greater_than,
         } => {
             // The retry is handled by the caller
-            Ok(ShamirInternalsOutcome::RequireGreaterTimestamp(
+            Ok(DoShamirRecoverySetupOutcome::RequireGreaterTimestamp(
                 strictly_greater_than,
             ))
         }
@@ -429,30 +462,4 @@ async fn get_latest_shamir_setup_for_author(
             )
         })
         .await??)
-}
-
-fn create_new_device(
-    new_device: LocalDevice,
-    author: Arc<LocalDevice>,
-    now: DateTime,
-) -> (Bytes, Bytes) {
-    let device_cert = DeviceCertificate {
-        author: CertificateSignerOwned::User(author.device_id),
-        timestamp: now,
-        user_id: new_device.user_id,
-        device_id: new_device.device_id,
-        device_label: MaybeRedacted::Real(new_device.device_label.clone()),
-        verify_key: new_device.verify_key(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
-    };
-
-    let device_certificate = device_cert.dump_and_sign(&author.signing_key).into();
-
-    let redacted_device_cert = device_cert.into_redacted();
-
-    let redacted_device_certificate = redacted_device_cert
-        .dump_and_sign(&author.signing_key)
-        .into();
-
-    (device_certificate, redacted_device_certificate)
 }

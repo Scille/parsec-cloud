@@ -605,19 +605,10 @@ impl CertificateOps {
 
     pub async fn shamir_setup_create(
         &self,
-        author_device: DeviceID,
-        author_id: UserID,
         share_recipients: HashMap<UserID, u8>,
         threshold: u8,
     ) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
-        shamir_recovery_setup::shamir_setup_create(
-            self,
-            author_device,
-            author_id,
-            share_recipients,
-            threshold,
-        )
-        .await
+        shamir_recovery_setup::shamir_setup_create(self, share_recipients, threshold).await
     }
 }
 
