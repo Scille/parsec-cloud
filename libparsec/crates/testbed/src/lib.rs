@@ -52,6 +52,10 @@ static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 6] = [
         "shamir",
         Mutex::new(TemplateState::NotGenerated(templates::shamir::generate)),
     ),
+    (
+        "sequestered",
+        Mutex::new(TemplateState::NotGenerated(templates::sequestered::generate)),
+    ),
 ];
 
 pub fn test_get_template(id: &str) -> Option<Arc<TestbedTemplate>> {
