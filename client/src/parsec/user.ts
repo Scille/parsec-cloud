@@ -30,6 +30,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           item.revokedOn = DateTime.fromSeconds(item.revokedOn as any as number);
         }
         (item as UserInfo).isRevoked = (): boolean => item.revokedOn !== null;
+        (item as UserInfo).isFrozen = (): boolean => false;
         return item;
       });
     }
@@ -48,6 +49,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedOn: null,
         revokedBy: null,
         isRevoked: (): boolean => false,
+        isFrozen: (): boolean => false,
       },
       {
         id: 'id1',
@@ -59,6 +61,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedOn: null,
         revokedBy: null,
         isRevoked: (): boolean => false,
+        isFrozen: (): boolean => false,
       },
       {
         id: 'id2',
@@ -70,6 +73,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedOn: null,
         revokedBy: null,
         isRevoked: (): boolean => false,
+        isFrozen: (): boolean => false,
       },
       {
         id: 'id3',
@@ -81,6 +85,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedOn: null,
         revokedBy: null,
         isRevoked: (): boolean => false,
+        isFrozen: (): boolean => true,
       },
       {
         id: 'id4',
@@ -92,6 +97,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedOn: null,
         revokedBy: null,
         isRevoked: (): boolean => false,
+        isFrozen: (): boolean => false,
       },
     ];
     if (!skipRevoked) {
@@ -106,6 +112,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedOn: DateTime.now(),
           revokedBy: 'device',
           isRevoked: (): boolean => true,
+          isFrozen: (): boolean => false,
         },
         {
           id: 'id6',
@@ -117,6 +124,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedOn: DateTime.now(),
           revokedBy: 'device',
           isRevoked: (): boolean => true,
+          isFrozen: (): boolean => false,
         },
         {
           id: 'id7',
@@ -128,6 +136,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedOn: DateTime.now(),
           revokedBy: 'device',
           isRevoked: (): boolean => true,
+          isFrozen: (): boolean => false,
         },
       );
     }
