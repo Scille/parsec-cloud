@@ -666,7 +666,7 @@
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
-        "goToHome": "Go to home",
+        "goToHome": "Back to my workspaces",
         "back": "Back",
         "trial": {
             "tag": "Trial version",
@@ -1227,7 +1227,8 @@
         "loggedInOrgs": "Connected organizations",
         "myOrgs": "My organizations",
         "invite": "Invite a member",
-        "manage": "Manage"
+        "manage": "Manage",
+        "goToLogin": "Switch organization"
     },
     "lib": {
         "components": {

@@ -666,7 +666,7 @@
         "storage": "Stockage",
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
-        "goToHome": "Aller à l'accueil",
+        "goToHome": "Retourner à mes espaces",
         "back": "Retour",
         "trial": {
             "tag": "Version d'essai",
@@ -1227,7 +1227,8 @@
         "loggedInOrgs": "Organisations connectées",
         "myOrgs": "Mes organisations",
         "invite": "Inviter un membre",
-        "manage": "Gérer"
+        "manage": "Gérer",
+        "goToLogin": "Changer d'organisation"
     },
     "lib": {
         "components": {
