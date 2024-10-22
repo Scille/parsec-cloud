@@ -391,13 +391,6 @@ async def test_authenticated_vlob_update_bad_vlob_version(
 
 
 @pytest.mark.skip(reason="TODO: missing test sequester")
-async def test_authenticated_vlob_update_sequester_inconsistency(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    raise Exception("Not implemented")
-
-
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_rejected_by_sequester_service(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
