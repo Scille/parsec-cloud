@@ -8,6 +8,7 @@
     :detail="false"
     :class="{
       selected: user.isSelected && !user.isRevoked(),
+      frozen: user.isFrozen(),
       revoked: user.isRevoked(),
       'no-padding-end': !user.isSelected,
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
@@ -230,5 +231,9 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
     }
   }
+}
+
+.frozen {
+  filter: blur(1px);
 }
 </style>

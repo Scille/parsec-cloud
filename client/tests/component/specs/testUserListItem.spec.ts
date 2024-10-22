@@ -28,6 +28,7 @@ describe('User List Item', () => {
       revokedOn: null,
       revokedBy: null,
       isRevoked: () => false,
+      isFrozen: () => false,
       isSelected: false,
       isCurrent: false,
     };

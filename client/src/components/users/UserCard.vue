@@ -8,6 +8,7 @@
       selected: user.isSelected,
       'no-padding-end': !user.isSelected,
       revoked: user.isRevoked(),
+      frozen: user.isFrozen(),
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('click', $event, user)"
@@ -219,5 +220,9 @@ async function onOptionsClick(event: Event): Promise<void> {
       overflow: hidden;
     }
   }
+}
+
+.frozen {
+  filter: blur(1px);
 }
 </style>
