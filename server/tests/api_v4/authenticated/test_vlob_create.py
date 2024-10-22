@@ -1,6 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from unittest.mock import ANY
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -14,11 +14,13 @@ from parsec._parsec import (
     authenticated_cmds,
     testbed,
 )
+from parsec.components.realm import SequesterServiceUnavailable
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
+    SequesteredOrgRpcClients,
     get_last_realm_certificate_timestamp,
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
@@ -315,25 +317,62 @@ async def test_authenticated_vlob_create_vlob_already_exists(
     assert dump == initial_dump
 
 
-@pytest.mark.skip(reason="TODO: missing test sequester")
-async def test_authenticated_vlob_create_sequester_inconsistency(
-    coolorg: CoolorgRpcClients, backend: Backend
-) -> None:
-    raise Exception("Not implemented")
-
-
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_create_rejected_by_sequester_service(
-    coolorg: CoolorgRpcClients, backend: Backend
+    sequestered_org: SequesteredOrgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    raise Exception("Not implemented")
+    _mocked_sequester_service_send_webhook = Mock(side_effect=[SequesterServiceUnavailable])
+    monkeypatch.setattr(
+        "parsec.components.vlob.BaseVlobComponent._sequester_service_send_webhook",
+        _mocked_sequester_service_send_webhook,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_create(
+        realm_id=sequestered_org.wksp1_id,
+        vlob_id=VlobID.new(),
+        key_index=3,
+        timestamp=DateTime.now(),
+        blob=b"<block content>",
+    )
+    assert rep == authenticated_cmds.v4.vlob_create.RepRejectedBySequesterService(
+        service_id=sequestered_org.sequester_service_2_id
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
 
 
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_create_sequester_service_unavailable(
-    coolorg: CoolorgRpcClients, backend: Backend
+    sequestered_org: SequesteredOrgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    raise Exception("Not implemented")
+    _mocked_sequester_service_send_webhook = Mock(side_effect=[SequesterServiceUnavailable])
+    monkeypatch.setattr(
+        "parsec.components.vlob.BaseVlobComponent._sequester_service_send_webhook",
+        _mocked_sequester_service_send_webhook,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_create(
+        realm_id=sequestered_org.wksp1_id,
+        vlob_id=VlobID.new(),
+        key_index=3,
+        timestamp=DateTime.now(),
+        blob=b"<block content>",
+    )
+    assert rep == authenticated_cmds.v4.vlob_create.RepSequesterServiceUnavailable(
+        service_id=sequestered_org.sequester_service_2_id
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
 
 
 async def test_authenticated_vlob_create_timestamp_out_of_ballpark(
