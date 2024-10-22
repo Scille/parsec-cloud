@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
+from typing import Literal
 
 from parsec._parsec import (
     CryptoError,
@@ -12,7 +13,6 @@ from parsec._parsec import (
     SequesterServiceCertificate,
     SequesterServiceID,
     SequesterVerifyKeyDer,
-    VlobID,
 )
 from parsec.ballpark import RequireGreaterTimestamp
 from parsec.types import BadOutcomeEnum
@@ -21,6 +21,13 @@ from parsec.types import BadOutcomeEnum
 class SequesterServiceType(Enum):
     STORAGE = "storage"
     WEBHOOK = "webhook"
+
+
+type SequesterServiceWebhookUrl = str
+type SequesterServiceConfig = (
+    Literal[SequesterServiceType.STORAGE]
+    | tuple[Literal[SequesterServiceType.WEBHOOK], SequesterServiceWebhookUrl]
+)
 
 
 @dataclass(slots=True, repr=False)
@@ -114,6 +121,11 @@ class SequesterCreateServiceStoreBadOutcome(BadOutcomeEnum):
     SEQUESTER_SERVICE_ALREADY_EXISTS = auto()
 
 
+class SequesterUpdateConfigForServiceStoreBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    SEQUESTER_SERVICE_NOT_FOUND = auto()
+
+
 class SequesterRevokeServiceStoreBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     SEQUESTER_DISABLED = auto()
@@ -132,19 +144,13 @@ class SequesterGetOrganizationServicesBadOutcome(BadOutcomeEnum):
     SEQUESTER_DISABLED = auto()
 
 
-class SequesterDumpRealmBadOutcome(BadOutcomeEnum):
-    ORGANIZATION_NOT_FOUND = auto()
-    SEQUESTER_DISABLED = auto()
-    SEQUESTER_SERVICE_NOT_FOUND = auto()
-    SEQUESTER_SERVICE_NOT_STORAGE = auto()
-
-
 class BaseSequesterComponent:
-    async def create_storage_service(
+    async def create_service(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         service_certificate: bytes,
+        config: SequesterServiceConfig,
     ) -> (
         SequesterServiceCertificate
         | SequesterCreateServiceValidateBadOutcome
@@ -153,18 +159,12 @@ class BaseSequesterComponent:
     ):
         raise NotImplementedError
 
-    async def create_webhook_service(
+    async def update_config_for_service(
         self,
-        now: DateTime,
         organization_id: OrganizationID,
-        service_certificate: bytes,
-        webhook_url: str,
-    ) -> (
-        SequesterServiceCertificate
-        | SequesterCreateServiceValidateBadOutcome
-        | SequesterCreateServiceStoreBadOutcome
-        | RequireGreaterTimestamp
-    ):
+        service_id: SequesterServiceID,
+        config: SequesterServiceConfig,
+    ) -> None | SequesterUpdateConfigForServiceStoreBadOutcome:
         raise NotImplementedError
 
     async def revoke_service(
@@ -188,16 +188,4 @@ class BaseSequesterComponent:
     async def get_organization_services(
         self, organization_id: OrganizationID
     ) -> list[BaseSequesterService] | SequesterGetOrganizationServicesBadOutcome:
-        raise NotImplementedError
-
-    async def dump_realm(
-        self,
-        organization_id: OrganizationID,
-        service_id: SequesterServiceID,
-        realm_id: VlobID,
-    ) -> list[tuple[VlobID, int, bytes]] | SequesterDumpRealmBadOutcome:
-        """
-        Dump all vlobs in a given realm.
-        This should only be used in tests given it doesn't scale at all !
-        """
         raise NotImplementedError
