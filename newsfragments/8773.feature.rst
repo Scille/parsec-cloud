@@ -1,0 +1,1 @@
+Add CLI command ``tos list`` to list the Terms of Service of an organization.

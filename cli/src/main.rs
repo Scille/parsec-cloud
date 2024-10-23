@@ -44,6 +44,9 @@ enum Command {
     Ls(ls::Ls),
     /// Remove a file from a workspace
     Rm(rm::Rm),
+    /// Contains subcommands related to Term of Service (TOS).
+    #[command(subcommand)]
+    Tos(tos::Group),
 }
 
 #[tokio::main]
@@ -65,5 +68,6 @@ async fn main() -> anyhow::Result<()> {
         }
         Command::Ls(ls) => ls::ls(ls).await,
         Command::Rm(rm) => rm::rm(rm).await,
+        Command::Tos(tos) => tos::dispatch_command(tos).await,
     }
 }

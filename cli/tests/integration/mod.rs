@@ -6,6 +6,7 @@ mod organization;
 mod rm;
 mod server;
 mod shamir_setup_create;
+mod tos;
 mod user;
 mod version;
 mod workspace;
