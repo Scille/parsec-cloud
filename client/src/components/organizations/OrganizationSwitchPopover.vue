@@ -16,14 +16,21 @@
           {{ currentOrg?.id }}
         </ion-text>
       </div>
-      <ion-button
+      <div
+        class="section-buttons custom-button custom-button-fill"
         @click="goToLogin"
-        fill="outline"
       >
-        <ion-icon :icon="repeat" />
-
-        {{ $msTranslate('OrganizationSwitch.goToLogin') }}
-      </ion-button>
+        <ion-icon
+          class="section-buttons-icon"
+          :icon="repeat"
+        />
+        <ion-text
+          class="button-medium"
+          button
+        >
+          {{ $msTranslate('OrganizationSwitch.goToLogin') }}
+        </ion-text>
+      </div>
     </div>
     <div
       class="connected-organization"
@@ -275,6 +282,18 @@ async function goToLogin(): Promise<void> {
         color: var(--parsec-color-light-secondary-grey);
       }
     }
+  }
+}
+
+.section-buttons {
+  margin: 1rem 0 0.5rem 0;
+
+  &:hover {
+    background-color: var(--parsec-color-light-secondary-premiere);
+  }
+
+  &-icon {
+    margin-bottom: 0.05rem;
   }
 }
 

@@ -666,7 +666,7 @@
         "storage": "Storage",
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
-        "goToHome": "Back to my workspaces",
+        "goToHome": "My workspaces",
         "back": "Back",
         "trial": {
             "tag": "Trial version",
