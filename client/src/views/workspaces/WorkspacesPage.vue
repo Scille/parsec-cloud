@@ -43,14 +43,9 @@
       <div class="workspaces-container scroll">
         <div
           v-show="querying && filteredWorkspaces.length === 0"
-          class="body-lg"
+          class="no-workspaces-content"
         >
-          <div class="no-workspaces-content">
-            <ms-spinner />
-            <ion-text>
-              {{ $msTranslate('WorkspacesPage.loading') }}
-            </ion-text>
-          </div>
+          <ms-spinner :title="'WorkspacesPage.loading'" />
         </div>
 
         <div
@@ -553,7 +548,7 @@ async function onOpenWorkspaceContextMenu(workspace: WorkspaceInfo, event: Event
     flex-direction: column;
     gap: 1rem;
     align-items: center;
-    padding: 2rem 1rem;
+    padding: 3rem 1rem;
 
     #new-workspace {
       display: flex;

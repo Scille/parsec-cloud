@@ -65,7 +65,7 @@
                   class="organization-card-buttons__item button-medium"
                   id="goHome"
                   button
-                  v-show="!currentRouteIs(Routes.Workspaces)"
+                  :class="currentRouteIs(Routes.Workspaces) ? 'active' : ''"
                   @click="navigateTo(Routes.Workspaces)"
                 >
                   <ion-icon
@@ -691,6 +691,7 @@ async function openPricingLink(): Promise<void> {
     user-select: none;
     gap: 0.75rem;
     padding: 1rem 0 1.5rem;
+    margin-inline: 0.75rem;
     border-bottom: 1px solid var(--parsec-color-light-primary-30-opacity15);
 
     &__item {
@@ -710,6 +711,11 @@ async function openPricingLink(): Promise<void> {
         overflow: hidden;
         white-space: nowrap;
         text-overflow: ellipsis;
+      }
+
+      &.active {
+        background: var(--parsec-color-light-primary-30-opacity15);
+        cursor: default;
       }
     }
   }
