@@ -84,7 +84,7 @@
 import { AvailableDevice, ConnectionHandle, OrganizationID, getLoggedInDevices } from '@/parsec';
 import { getConnectionHandle } from '@/router';
 import { repeat } from 'ionicons/icons';
-import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController, IonButton } from '@ionic/vue';
+import { IonAvatar, IonItem, IonLabel, IonList, IonText, IonTitle, popoverController, IonIcon } from '@ionic/vue';
 import { Ref, onMounted, ref } from 'vue';
 import { isTrialOrganizationDevice, getDurationBeforeExpiration, formatExpirationTime } from '@/common/organization';
 import { MsImage, LogoIconGradient, MsModalResult } from 'megashark-lib';
