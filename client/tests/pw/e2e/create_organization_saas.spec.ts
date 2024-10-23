@@ -120,6 +120,7 @@ msTest('Go through saas org creation process', async ({ home }) => {
   const summaryContainer = modal.locator('.summary-page');
   const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  const summaryEditButtons = modal.locator('.summary-item__button');
   await expect(orgNameContainer).toBeHidden();
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
@@ -130,6 +131,13 @@ msTest('Go through saas org creation process', async ({ home }) => {
   await expect(summaryNext).toBeVisible();
   await expect(summaryNext).not.toHaveDisabledAttribute();
   await expect(summaryContainer.locator('.tos')).toHaveText('By using Parsec, I accept the Terms and Conditions and Privacy Policy');
+
+  // Only the authentication and org name fields can be updated
+  await expect(summaryEditButtons.nth(0)).toBeVisible();
+  await expect(summaryEditButtons.nth(1)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(2)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(3)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(4)).toBeVisible();
 
   await cancelAndResume(home, summaryContainer);
 
@@ -252,8 +260,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeVisible();
   await expect(authContainer.locator('.modal-header-title__text')).toHaveText('Authentication');
-  await expect(authPrevious).toBeVisible();
-  await expect(authPrevious).not.toHaveDisabledAttribute();
+  await expect(authPrevious).not.toBeVisible();
   await expect(authNext).toBeVisible();
   await expect(authNext).toHaveDisabledAttribute();
   await fillIonInput(authContainer.locator('.choose-password').locator('ion-input').nth(0), DEFAULT_USER_INFORMATION.password);
@@ -266,6 +273,7 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   const summaryContainer = modal.locator('.summary-page');
   const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  const summaryEditButtons = modal.locator('.summary-item__button');
   await expect(bmsContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
   await expect(summaryContainer).toBeVisible();
@@ -274,6 +282,13 @@ msTest('Go through saas org creation process from bootstrap link', async ({ home
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
   await expect(summaryNext).not.toHaveDisabledAttribute();
+
+  // Only the authentication field can be updated
+  await expect(summaryEditButtons.nth(0)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(1)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(2)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(3)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(4)).toBeVisible();
 
   await cancelAndResume(home, summaryContainer);
 

@@ -158,6 +158,7 @@ msTest('Go through custom org creation process', async ({ home }) => {
   const summaryContainer = modal.locator('.summary-page');
   const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  const summaryEditButtons = modal.locator('.summary-item__button');
   await expect(orgServerContainer).toBeHidden();
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
@@ -167,6 +168,13 @@ msTest('Go through custom org creation process', async ({ home }) => {
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
   await expect(summaryNext).not.toHaveDisabledAttribute();
+
+  // Everything can be updated
+  await expect(summaryEditButtons.nth(0)).toBeVisible();
+  await expect(summaryEditButtons.nth(1)).toBeVisible();
+  await expect(summaryEditButtons.nth(2)).toBeVisible();
+  await expect(summaryEditButtons.nth(3)).toBeVisible();
+  await expect(summaryEditButtons.nth(4)).toBeVisible();
 
   await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
     'Organization',
@@ -254,6 +262,7 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   const summaryContainer = modal.locator('.summary-page');
   const summaryPrevious = modal.locator('.summary-page-footer').locator('ion-button').nth(0);
   const summaryNext = modal.locator('.summary-page-footer').locator('ion-button').nth(1);
+  const summaryEditButtons = modal.locator('.summary-item__button');
   await expect(orgServerContainer).toBeHidden();
   await expect(userInfoContainer).toBeHidden();
   await expect(authContainer).toBeHidden();
@@ -263,6 +272,13 @@ msTest('Go through custom org creation process from bootstrap link', async ({ ho
   await expect(summaryPrevious).not.toHaveDisabledAttribute();
   await expect(summaryNext).toBeVisible();
   await expect(summaryNext).not.toHaveDisabledAttribute();
+
+  // Name, email and authentication fields can be updated, server & org name cannot
+  await expect(summaryEditButtons.nth(0)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(1)).toBeVisible();
+  await expect(summaryEditButtons.nth(2)).toBeVisible();
+  await expect(summaryEditButtons.nth(3)).not.toBeVisible();
+  await expect(summaryEditButtons.nth(4)).toBeVisible();
 
   await expect(summaryContainer.locator('.summary-item__label')).toHaveText([
     'Organization',

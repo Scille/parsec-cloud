@@ -19,6 +19,7 @@
         class="modal-footer-buttons"
       >
         <ion-button
+          v-show="!hideBackButton"
           fill="clear"
           size="default"
           id="previous-button"
@@ -60,6 +61,10 @@ import { IonPage, IonButton, IonButtons, IonIcon, IonFooter } from '@ionic/vue';
 import { asyncComputed } from 'megashark-lib';
 import { ref } from 'vue';
 import CreateOrganizationModalHeader from '@/components/organizations/CreateOrganizationModalHeader.vue';
+
+defineProps<{
+  hideBackButton?: boolean;
+}>();
 
 defineEmits<{
   (e: 'authenticationChosen', saveStrategy: DeviceSaveStrategy): void;
