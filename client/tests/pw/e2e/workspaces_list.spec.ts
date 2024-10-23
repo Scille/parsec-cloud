@@ -214,7 +214,7 @@ msTest('Back from files with side menu', async ({ connected }) => {
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(1)).toHaveText(
     'The Copper Coronet',
   );
-  await connected.locator('.sidebar').locator('.sidebar-content').locator('.list-workspaces-header-title').click();
+  await connected.locator('.sidebar').locator('.sidebar-header').locator('#goHome').click();
   await expect(connected.locator('.topbar-left').locator('.topbar-left__breadcrumb').locator('ion-breadcrumb').nth(0)).toHaveText(
     'My workspaces',
   );

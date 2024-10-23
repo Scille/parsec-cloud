@@ -3,6 +3,7 @@
 import {
   ActiveUsersLimitTag,
   DeviceAccessStrategyKeyring,
+  DeviceFileType,
   DeviceSaveStrategyKeyring,
   DeviceSaveStrategyPassword,
   libparsec,
@@ -47,6 +48,32 @@ export interface LoggedInDeviceInfo {
 }
 
 const loggedInDevices: Array<LoggedInDeviceInfo> = [];
+
+export function mockLoggedInDevice(): void {
+  if (loggedInDevices.length === 0) {
+    loggedInDevices.push({
+      handle: DEFAULT_HANDLE,
+      device: {
+        keyFilePath: '/fake',
+        createdOn: DateTime.now(),
+        protectedOn: DateTime.now(),
+        serverUrl: 'parsec3://127.0.0.1:6770?no_ssl=true',
+        organizationId: 'MyOrg',
+        userId: 'MockUserId',
+        deviceId: 'MockDeviceId',
+        humanHandle: {
+          label: 'Gordon Freeman',
+          email: 'gordon.freeman@blackmesa.nm',
+        },
+        deviceLabel: 'HEV Suit',
+        ty: DeviceFileType.Password,
+      },
+      isExpired: false,
+      isOnline: true,
+      shouldAcceptTos: false,
+    });
+  }
+}
 
 export async function getLoggedInDevices(): Promise<Array<LoggedInDeviceInfo>> {
   return loggedInDevices;

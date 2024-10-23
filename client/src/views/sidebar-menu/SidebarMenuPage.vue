@@ -381,7 +381,6 @@ const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
-const canSwitchOrg = ref(true);
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -518,9 +517,6 @@ function onEnd(): void {
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
-  if (!canSwitchOrg.value) {
-    return;
-  }
   const popover = await popoverController.create({
     component: OrganizationSwitchPopover,
     cssClass: 'dropdown-popover',
