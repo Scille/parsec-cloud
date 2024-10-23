@@ -50,6 +50,7 @@ pub(crate) async fn create_new_device(
 }
 
 // returns (device_certificate, redacted_device_certificate)
+// TODO RENAME to genereate_certif
 pub(crate) fn generate_new_device(
     new_device: LocalDevice,
     author: Arc<LocalDevice>,

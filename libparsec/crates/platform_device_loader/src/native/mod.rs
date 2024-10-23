@@ -642,8 +642,10 @@ pub async fn export_recovery_device(
         Some(device.user_id),
         None,
         None,
+        Some(device.private_key.clone()),
         None,
-        None,
+        Some(device.user_realm_id),
+        Some(device.user_realm_key.clone()),
     );
     let ciphertext = {
         let mut cleartext = recovery_device.dump();
@@ -704,8 +706,10 @@ pub async fn import_recovery_device(
         Some(recovery_device.user_id),
         None,
         None,
+        Some(recovery_device.private_key.clone()),
         None,
-        None,
+        Some(recovery_device.user_realm_id),
+        Some(recovery_device.user_realm_key.clone()),
     );
 
     Ok((recovery_device, device))
