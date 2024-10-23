@@ -585,12 +585,13 @@ impl Client {
         Ok((passphrase, data))
     }
 
+    // TODO RENAME
     pub async fn create_device_from_recovery(
         &self,
         new_device: LocalDevice,
         access: DeviceAccessStrategy,
     ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-        // save recovery device
+        // save recovery device TODO save after upload
         let saved_device = save_device(&self.config.config_dir, &access, &new_device).await?;
 
         let outcome = self
@@ -610,19 +611,20 @@ impl Client {
                 certificate_timestamp,
             ),
         };
-        self.certificates_ops
-            .poll_server_for_new_certificates(Some(&latest_known_timestamps))
-            .await
-            .map_err(|e| match e {
-                CertifPollServerError::Stopped => ImportRecoveryDeviceError::Stopped,
-                CertifPollServerError::Offline => ImportRecoveryDeviceError::Offline,
-                CertifPollServerError::InvalidCertificate(err) => {
-                    ImportRecoveryDeviceError::InvalidCertificate(err)
-                }
-                CertifPollServerError::Internal(err) => err
-                    .context("Cannot poll server for new certificates")
-                    .into(),
-            })?;
+
+        // self.certificates_ops
+        //     .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+        //     .await
+        //     .map_err(|e| match e {
+        //         CertifPollServerError::Stopped => ImportRecoveryDeviceError::Stopped,
+        //         CertifPollServerError::Offline => ImportRecoveryDeviceError::Offline,
+        //         CertifPollServerError::InvalidCertificate(err) => {
+        //             ImportRecoveryDeviceError::InvalidCertificate(err)
+        //         }
+        //         CertifPollServerError::Internal(err) => err
+        //             .context("Cannot poll server for new certificates")
+        //             .into(),
+        //     })?;
 
         Ok(saved_device)
     }

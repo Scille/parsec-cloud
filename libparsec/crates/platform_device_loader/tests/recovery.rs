@@ -24,7 +24,7 @@ async fn test_ok_recovery() {
         None,
         None,
         None,
-        None,None
+        None,None,None,None,
     );
     let recovery_device_label = DeviceLabel::default();
     let new_device_label = DeviceLabel::default();
