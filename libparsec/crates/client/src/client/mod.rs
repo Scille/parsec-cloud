@@ -46,8 +46,8 @@ use crate::{
 use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
 use libparsec_platform_device_loader::{
-    save_device, PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError,
-    SaveDeviceError,
+    get_default_key_file, save_device, PlatformExportRecoveryDeviceError,
+    PlatformImportRecoveryDeviceError, SaveDeviceError,
 };
 use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps};
 use libparsec_types::prelude::*;
@@ -585,21 +585,41 @@ impl Client {
         Ok((passphrase, data))
     }
 
-    // TODO RENAME
     pub async fn create_device_from_recovery(
         &self,
-        new_device: LocalDevice,
-        access: DeviceAccessStrategy,
+        recovery_device: &LocalDevice,
+        device_label: &DeviceLabel,
+        save_strategy: DeviceSaveStrategy,
     ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+        let new_device = LocalDevice::generate_new_device(
+            recovery_device.organization_addr.clone(),
+            recovery_device.initial_profile,
+            recovery_device.human_handle.clone(),
+            device_label.clone(),
+            Some(recovery_device.user_id),
+            None,
+            None,
+            Some(recovery_device.private_key.clone()),
+            None,
+            Some(recovery_device.user_realm_id),
+            Some(recovery_device.user_realm_key.clone()),
+        );
         // save recovery device TODO save after upload
+        let access = {
+            let key_file = dbg!(get_default_key_file(
+                &self.config.config_dir,
+                &new_device.device_id
+            ));
+            save_strategy.into_access(key_file)
+        };
         let saved_device = save_device(&self.config.config_dir, &access, &new_device).await?;
 
         let outcome = self
             .certificates_ops
             .create_new_device(new_device, self.device.clone())
             .await?;
-
-        let latest_known_timestamps = match outcome {
+        // let latest_known_timestamps =
+        match outcome {
             CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
             CertificateBasedActionOutcome::Uploaded {
                 certificate_timestamp,

@@ -26,8 +26,8 @@ use crate::{
 };
 
 use super::{
-    device::generate_new_device, encrypt::CertifEncryptForUserError, greater_timestamp,
-    CertifStoreError, GreaterTimestampOffset,
+    device::generate_new_device_certificates, encrypt::CertifEncryptForUserError,
+    greater_timestamp, CertifStoreError, GreaterTimestampOffset,
 };
 
 #[derive(Debug, thiserror::Error)]
@@ -309,8 +309,11 @@ async fn shamir_internals(
         }),
     };
 
-    let (device_certificate, redacted_device_certificate) =
-        generate_new_device(recovery_device, certificate_ops.device.clone(), timestamp);
+    let (device_certificate, redacted_device_certificate) = generate_new_device_certificates(
+        &recovery_device,
+        certificate_ops.device.clone(),
+        timestamp,
+    );
     match certificate_ops
         .cmds
         .send(device_create::Req {

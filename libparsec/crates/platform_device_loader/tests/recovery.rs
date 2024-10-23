@@ -27,17 +27,14 @@ async fn test_ok_recovery() {
         None,None,None,None,
     );
     let recovery_device_label = DeviceLabel::default();
-    let new_device_label = DeviceLabel::default();
     let (secret_passphrase, data, exported_recovery_device) =
         inner_export_recovery_device(&local_device, recovery_device_label.clone())
             .await
             .unwrap();
-    let (imported_recovery_device, new_device) =
-        inner_import_recovery_device(data, secret_passphrase, new_device_label.clone())
-            .await
-            .unwrap();
+    let imported_recovery_device = inner_import_recovery_device(data, secret_passphrase)
+        .await
+        .unwrap();
 
     assert_eq!(exported_recovery_device, imported_recovery_device);
-    assert_eq!(new_device.device_label, new_device_label);
     assert_eq!(imported_recovery_device.device_label, recovery_device_label);
 }

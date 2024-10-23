@@ -79,7 +79,6 @@ pub async fn export_recovery_device(
 pub async fn import_recovery_device(
     _recovery_device: Vec<u8>,
     _passphrase: SecretKeyPassphrase,
-    _device_label: DeviceLabel,
-) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
+) -> Result<LocalDevice, PlatformImportRecoveryDeviceError> {
     todo!()
 }

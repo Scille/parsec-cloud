@@ -671,13 +671,12 @@ pub async fn export_recovery_device(
     Ok((passphrase, file_content, recovery_device))
 }
 
-/// returns (recovery device, new device)
+/// returns local recovery device
 /// Does not save the device
 pub async fn import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
-    device_label: DeviceLabel,
-) -> Result<(LocalDevice, LocalDevice), PlatformImportRecoveryDeviceError> {
+) -> Result<LocalDevice, PlatformImportRecoveryDeviceError> {
     let key = SecretKey::from_recovery_passphrase(passphrase)
         .map_err(|_| PlatformImportRecoveryDeviceError::InvalidPassphrase)?;
 
@@ -698,21 +697,8 @@ pub async fn import_recovery_device(
         // We are not expecting other type of device file
         _ => return Err(PlatformImportRecoveryDeviceError::InvalidData),
     };
-    let device = LocalDevice::generate_new_device(
-        recovery_device.organization_addr.clone(),
-        recovery_device.initial_profile,
-        recovery_device.human_handle.clone(),
-        device_label,
-        Some(recovery_device.user_id),
-        None,
-        None,
-        Some(recovery_device.private_key.clone()),
-        None,
-        Some(recovery_device.user_realm_id),
-        Some(recovery_device.user_realm_key.clone()),
-    );
 
-    Ok((recovery_device, device))
+    Ok(recovery_device)
 }
 
 pub fn is_keyring_available() -> bool {
