@@ -204,6 +204,8 @@ async fn create_second_device(
         None,
         None,
         None,
+        None,
+        None,
     ));
 
     let now = author.now();

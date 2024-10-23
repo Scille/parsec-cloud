@@ -1,9 +1,10 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 #![allow(unused_variables)] // TODO remove
 
+use std::sync::Arc;
+
 use libparsec_client::{Client, EventBus};
 pub use libparsec_client::{ExportRecoveryDeviceError, ImportRecoveryDeviceError};
-use libparsec_platform_device_loader::get_default_key_file;
 use libparsec_types::DeviceSaveStrategy;
 use libparsec_types::{AvailableDevice, DeviceLabel};
 
@@ -18,25 +19,21 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    let (recovery_device, new_device) =
-        libparsec_platform_device_loader::inner_import_recovery_device(
-            recovery_device,
-            passphrase.into(),
-            device_label,
-        )
-        .await?;
+    let recovery_device: Arc<_> = libparsec_platform_device_loader::inner_import_recovery_device(
+        recovery_device,
+        passphrase.into(),
+    )
+    .await?
+    .into();
     let client = Client::start(
         config.clone().into(),
         EventBus::default(),
-        recovery_device.into(),
+        recovery_device.clone(),
     )
     .await?;
-    let access = {
-        let key_file = get_default_key_file(&config.config_dir, &new_device.device_id);
-        save_strategy.into_access(key_file)
-    };
+
     let saved_device = client
-        .create_device_from_recovery(new_device, access)
+        .create_device_from_recovery(&recovery_device, &device_label, save_strategy)
         .await?;
 
     Ok(saved_device)

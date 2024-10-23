@@ -1,15 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
-
 use crate::DeviceInfo;
-use crate::{Client, EventBus};
-use libparsec_client_connection::test_register_sequence_of_send_hooks;
-use libparsec_platform_device_loader::get_default_key_file;
-use libparsec_protocol::authenticated_cmds;
+
+use libparsec_platform_device_loader::{get_default_key_file, load_device};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -41,37 +34,9 @@ fn assert_device(info: &DeviceInfo, expected_device: impl TryInto<DeviceID>, env
 #[parsec_test(testbed = "coolorg", with_server)]
 async fn ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    let client = client_factory(dbg!(&env.discriminant_dir), alice).await;
 
     let config = client.config.clone();
-    // Mock requests to server
-    let new_common_certificates: Arc<Mutex<Vec<Bytes>>> = Arc::default();
-
-    // 1. create recovery device
-    // test_register_sequence_of_send_hooks!(
-    //     &env.discriminant_dir,
-    //     {
-    //         let new_common_certificates = new_common_certificates.clone();
-    //         move |req: authenticated_cmds::latest::device_create::Req| {
-    //             new_common_certificates
-    //                 .lock()
-    //                 .unwrap()
-    //                 .push(req.device_certificate);
-    //             authenticated_cmds::latest::device_create::Rep::Ok
-    //         }
-    //     },
-    //     {
-    //         let new_common_certificates = new_common_certificates.clone();
-    //         move |_req: authenticated_cmds::latest::certificate_get::Req| {
-    //             authenticated_cmds::latest::certificate_get::Rep::Ok {
-    //                 common_certificates: new_common_certificates.lock().unwrap().clone(),
-    //                 realm_certificates: HashMap::new(),
-    //                 sequester_certificates: vec![],
-    //                 shamir_recovery_certificates: vec![],
-    //             }
-    //         }
-    //     },
-    // );
 
     let recovery_device_label = dbg!(DeviceLabel::try_from("recovery").unwrap());
     let (passphrase, data) = client
@@ -82,8 +47,6 @@ async fn ok(env: &TestbedEnv) {
 
     let workspaces = client.list_workspaces().await;
     p_assert_eq!(dbg!(&workspaces).len(), 1, "{:?}", workspaces);
-
-    // assert_eq!(new_common_certificates.lock().unwrap().len(), 1);
 
     let alice_devices = client
         .list_user_devices("alice".parse().unwrap())
@@ -98,61 +61,14 @@ async fn ok(env: &TestbedEnv) {
 
     // // we lose access
     client.stop().await;
-    // 2. import recovery device and create new device
-    // let new_common_certificates: Arc<Mutex<Vec<Bytes>>> = Arc::default();
-
-    // test_register_sequence_of_send_hooks!(
-    //     &env.discriminant_dir,
-    //     // download old certificates
-    //     // {
-    //     //     let new_common_certificates = new_common_certificates.clone();
-    //     //     move |_req: authenticated_cmds::latest::certificate_get::Req| {
-    //     //         authenticated_cmds::latest::certificate_get::Rep::Ok {
-    //     //             common_certificates: new_common_certificates.lock().unwrap().clone(),
-    //     //             realm_certificates: HashMap::new(),
-    //     //             sequester_certificates: vec![],
-    //     //             shamir_recovery_certificates: vec![],
-    //     //         }
-    //     //     }
-    //     // },
-    //     // create new device
-    //     {
-    //         let new_common_certificates = new_common_certificates.clone();
-    //         move |req: authenticated_cmds::latest::device_create::Req| {
-    //            // new_common_certificates.lock().unwrap().clear();
-    //             new_common_certificates
-    //                 .lock()
-    //                 .unwrap()
-    //                 .push(req.device_certificate);
-    //             authenticated_cmds::latest::device_create::Rep::Ok
-    //         }
-    //     },
-    //     {
-    //         let new_common_certificates = new_common_certificates.clone();
-    //         move |_req: authenticated_cmds::latest::certificate_get::Req| {
-    //             authenticated_cmds::latest::certificate_get::Rep::Ok {
-    //                 common_certificates: new_common_certificates.lock().unwrap().clone(),
-    //                 realm_certificates: HashMap::new(),
-    //                 sequester_certificates: vec![],
-    //                 shamir_recovery_certificates: vec![],
-    //             }
-    //         }
-    //     },
-    // );
     let new_device_label = dbg!(DeviceLabel::try_from("new_device").unwrap());
 
-    let (recovery_device, new_device) =
-        libparsec_platform_device_loader::inner_import_recovery_device(
-            data,
-            passphrase,
-            new_device_label.clone(),
-        )
-        .await
-        .unwrap();
+    let recovery_device =
+        libparsec_platform_device_loader::inner_import_recovery_device(data, passphrase)
+            .await
+            .unwrap();
 
-    let client = client_factory(&env.discriminant_dir, recovery_device.into()).await;
-
-    //client.poll_server_for_new_certificates().await.unwrap();
+    let client = client_factory(&env.discriminant_dir, recovery_device.clone().into()).await;
 
     assert_eq!(client.user_id(), "alice".parse().unwrap());
 
@@ -163,34 +79,24 @@ async fn ok(env: &TestbedEnv) {
     // assert_eq!(dbg!(&alice_devices[2]).device_label, recovery_device_label);
 
     let save_strategy = DeviceSaveStrategy::Keyring;
-    let access = {
-        let key_file = get_default_key_file(&client.config.config_dir, &new_device.device_id);
-        save_strategy.into_access(key_file)
-    };
+
     let saved_device = client
-        .create_device_from_recovery(new_device.clone(), access)
+        .create_device_from_recovery(&recovery_device, &new_device_label, save_strategy.clone())
         .await
         .unwrap();
 
     client.stop().await;
-    let client = client_factory(&env.discriminant_dir, new_device.into()).await;
+    let access = {
+        let key_file = dbg!(get_default_key_file(
+            &config.config_dir,
+            &saved_device.device_id
+        ));
+        save_strategy.into_access(key_file)
+    };
+    let new_device = load_device(&config.config_dir, &access).await.unwrap();
+    let client = client_factory(&env.discriminant_dir, new_device).await;
     // check from avavble device
 
-    // test_register_sequence_of_send_hooks!(
-    //     &env.discriminant_dir,
-
-    //     {
-    //         let new_common_certificates = new_common_certificates.clone();
-    //         move |_req: authenticated_cmds::latest::certificate_get::Req| {
-    //             authenticated_cmds::latest::certificate_get::Rep::Ok {
-    //                 common_certificates: new_common_certificates.lock().unwrap().clone(),
-    //                 realm_certificates: HashMap::new(),
-    //                 sequester_certificates: vec![],
-    //                 shamir_recovery_certificates: vec![],
-    //             }
-    //         }
-    //     },
-    // );
     client.poll_server_for_new_certificates().await.unwrap();
 
     let alice_devices = client.list_user_devices(client.user_id()).await.unwrap();

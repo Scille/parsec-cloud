@@ -51,8 +51,8 @@ pub(crate) async fn create_new_device(
 
 // returns (device_certificate, redacted_device_certificate)
 // TODO RENAME to genereate_certif
-pub(crate) fn generate_new_device(
-    new_device: LocalDevice,
+pub(crate) fn generate_new_device_certificates(
+    new_device: &LocalDevice,
     author: Arc<LocalDevice>,
     now: DateTime,
 ) -> (Bytes, Bytes) {
@@ -125,7 +125,7 @@ async fn internal_create_new_device(
     now: DateTime,
 ) -> Result<DeviceInternalsOutcome, CertifDeviceError> {
     let (device_certificate, redacted_device_certificate) =
-        generate_new_device(new_device, author, now);
+        generate_new_device_certificates(&new_device, author, now);
     match certificate_ops
         .cmds
         .send(device_create::Req {
