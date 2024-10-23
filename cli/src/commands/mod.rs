@@ -7,5 +7,6 @@ pub mod rm;
 pub mod run_testenv;
 pub mod server;
 pub mod shamir_setup;
+pub mod tos;
 pub mod user;
 pub mod workspace;
