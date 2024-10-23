@@ -8,7 +8,7 @@
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="$emit('backRequested')"
       @forgotten-password-clicked="step = Steps.BmsForgotPassword"
-      :show-back-button="true"
+      :show-back-button="bootstrapLink === undefined"
     />
     <bms-forgot-password
       v-if="step === Steps.BmsForgotPassword"
@@ -32,6 +32,7 @@
       @authentication-chosen="onAuthenticationChosen"
       @close-requested="$emit('closeRequested', false)"
       @go-back-requested="onGoBackRequested"
+      :hide-back-button="bootstrapLink !== undefined"
     />
     <organization-summary-page
       :class="step === Steps.Summary ? 'active' : ''"
@@ -45,7 +46,7 @@
       :server-type="ServerType.Saas"
       :can-edit-email="false"
       :can-edit-name="false"
-      :can-edit-organization-name="true"
+      :can-edit-organization-name="bootstrapLink === undefined"
       :can-edit-server-address="false"
       :can-edit-save-strategy="true"
       @create-clicked="onCreateClicked"
