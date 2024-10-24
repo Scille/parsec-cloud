@@ -46,13 +46,6 @@ for (const testData of TEST_DATA) {
     await expect(modal.locator('.ms-modal-header__title ')).toHaveText(new RegExp(`^Details on ${nameMatcher}$`));
     await expect(modal.locator('.file-info-basic__edit')).toHaveText(/^Updated: [A-Za-z]{3} \d{1,2}, 20[0-9]{2}$/);
 
-    const icon = modal.locator('.cloud-overlay');
-    if (isSynced) {
-      await expect(icon).toHaveTheClass('cloud-overlay-ok');
-    } else {
-      await expect(icon).toHaveTheClass('cloud-overlay-ko');
-    }
-
     const details = modal.locator('.file-info-details-item');
     await expect(details).toHaveCount(testData.isFile ? 3 : 2);
     await expect(details.nth(0).locator('.file-info-details-item__title')).toHaveText('Created');
@@ -94,6 +87,22 @@ for (const testData of TEST_DATA) {
 
     const filePath = await connected.evaluate(() => navigator.clipboard.readText());
     expect(filePath).toMatch(new RegExp(`^/home/${nameMatcher}$`));
+
+    const icon = modal.locator('.cloud-overlay');
+    const syncPopover = connected.locator('.tooltip-popover');
+    await icon.click();
+    await expect(syncPopover).toBeVisible();
+    if (isSynced) {
+      await expect(icon).toHaveTheClass('cloud-overlay-ok');
+      await expect(syncPopover).toHaveText(
+        testData.isFile ? 'This file is synced with the server.' : 'This folder is synced with the server.',
+      );
+    } else {
+      await expect(icon).toHaveTheClass('cloud-overlay-ko');
+      await expect(syncPopover).toHaveText(
+        testData.isFile ? 'This file is not synced with the server.' : 'This folder is not synced with the server.',
+      );
+    }
   });
 }
 

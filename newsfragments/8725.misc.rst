@@ -1,0 +1,1 @@
+Added an explanation tooltip for the server synchronization status in the file details
