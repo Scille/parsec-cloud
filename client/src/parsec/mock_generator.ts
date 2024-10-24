@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { Path } from '@/parsec/path';
-import { FileType, FsPath } from '@/parsec/types';
+import { EntryName, FileType, FsPath } from '@/parsec/types';
 import { DateTime } from 'luxon';
 import { adjectives, animals, uniqueNamesGenerator } from 'unique-names-generator';
 
@@ -13,8 +13,8 @@ export interface MockEntry {
   updated: DateTime;
   version: number;
   size?: number;
-  name: string;
-  path: string;
+  name: EntryName;
+  path: FsPath;
   isFile: () => boolean;
 }
 

@@ -34,8 +34,7 @@ import { DocumentImport, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonLabel } from '@ionic/vue';
-import { computed, inject, onMounted, onUnmounted, ref } from 'vue';
-import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 
 defineExpose({
   reset,
@@ -50,10 +49,10 @@ const props = defineProps<{
 
 const emits = defineEmits<{
   (e: 'filesAdded', imports: FileImportTuple[]): void;
+  (e: 'dropAsReader'): void;
 }>();
 
 const dragEnterCount = ref(0);
-const informationManager: InformationManager = inject(InformationManagerKey)!;
 
 const isActive = computed(() => {
   return !props.disabled && !props.isReader && dragEnterCount.value > 0;
@@ -77,19 +76,13 @@ onUnmounted(() => {
 
 async function onDrop(event: DragEvent): Promise<void> {
   if (props.isReader) {
-    await informationManager.present(
-      new Information({
-        message: 'FoldersPage.ImportFile.noDropForReader',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Toast,
-    );
+    event.stopPropagation();
+    emits('dropAsReader');
     return;
   }
   if (props.disabled) {
     return;
   }
-  event.stopPropagation();
   dragEnterCount.value = 0;
   const imports = await getFilesFromDrop(event, props.currentPath);
   if (imports.length) {
