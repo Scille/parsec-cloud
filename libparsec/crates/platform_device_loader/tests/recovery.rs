@@ -2,9 +2,7 @@
 
 #![allow(clippy::unwrap_used)]
 
-use libparsec_platform_device_loader::{
-    inner_export_recovery_device, inner_import_recovery_device,
-};
+use libparsec_platform_device_loader::{export_recovery_device, import_recovery_device};
 use libparsec_tests_lite::parsec_test;
 use libparsec_types::HumanHandle;
 use libparsec_types::ParsecOrganizationAddr;
@@ -33,10 +31,10 @@ async fn test_ok_recovery() {
     );
     let recovery_device_label = DeviceLabel::default();
     let (secret_passphrase, data, exported_recovery_device) =
-        inner_export_recovery_device(&local_device, recovery_device_label.clone())
+        export_recovery_device(&local_device, recovery_device_label.clone())
             .await
             .unwrap();
-    let imported_recovery_device = inner_import_recovery_device(data, secret_passphrase)
+    let imported_recovery_device = import_recovery_device(data, secret_passphrase)
         .await
         .unwrap();
 

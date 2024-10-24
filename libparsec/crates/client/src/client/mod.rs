@@ -547,11 +547,8 @@ impl Client {
         device_label: DeviceLabel,
     ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
         let (passphrase, data, recovery_device) =
-            libparsec_platform_device_loader::inner_export_recovery_device(
-                &self.device,
-                device_label,
-            )
-            .await?;
+            libparsec_platform_device_loader::export_recovery_device(&self.device, device_label)
+                .await?;
 
         // save recovery device
         let outcome =

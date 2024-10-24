@@ -63,7 +63,7 @@ async fn ok(env: &TestbedEnv) {
     let new_device_label = dbg!(DeviceLabel::try_from("new_device").unwrap());
 
     let recovery_device =
-        libparsec_platform_device_loader::inner_import_recovery_device(data, passphrase)
+        libparsec_platform_device_loader::import_recovery_device(data, passphrase)
             .await
             .unwrap();
 

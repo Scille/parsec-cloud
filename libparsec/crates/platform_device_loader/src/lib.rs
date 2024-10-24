@@ -289,7 +289,7 @@ pub enum PlatformExportRecoveryDeviceError {
 }
 
 /// Returns recovery device
-pub async fn inner_import_recovery_device(
+pub async fn import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
 ) -> Result<LocalDevice, PlatformImportRecoveryDeviceError> {
@@ -321,7 +321,7 @@ pub async fn inner_import_recovery_device(
 /// returns the passphrase associated with the key that
 /// encrypted device data, the dumped recovery device data
 /// and the recovery device itself
-pub async fn inner_export_recovery_device(
+pub async fn export_recovery_device(
     device: &LocalDevice,
     device_label: DeviceLabel,
 ) -> Result<(SecretKeyPassphrase, Vec<u8>, LocalDevice), PlatformExportRecoveryDeviceError> {

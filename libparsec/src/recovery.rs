@@ -20,7 +20,7 @@ pub async fn import_recovery_device(
     device_label: DeviceLabel,
     save_strategy: DeviceSaveStrategy,
 ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-    let recovery_device: Arc<_> = libparsec_platform_device_loader::inner_import_recovery_device(
+    let recovery_device: Arc<_> = libparsec_platform_device_loader::import_recovery_device(
         recovery_device,
         passphrase.into(),
     )
