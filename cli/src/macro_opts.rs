@@ -83,7 +83,7 @@ macro_rules! clap_parser_with_shared_opts_builder {
             }
         );
     };
-    // Device option
+    // Workspace option
     (
         #[with = workspace $(,$modifier:ident)*]
         $(#[$struct_attr:meta])*
@@ -101,6 +101,31 @@ macro_rules! clap_parser_with_shared_opts_builder {
                 #[doc = "Workspace ID"]
                 #[arg(short, long, env = "PARSEC_WORKSPACE_ID", value_parser = libparsec::VlobID::from_hex)]
                 pub(crate) workspace: libparsec::VlobID,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
+    // Organization option
+    (
+        #[with = organization $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "Organization ID"]
+                #[arg(short, long, env = "PARSEC_ORGANIZATION_ID")]
+                pub(crate) organization: libparsec::OrganizationID,
                 $(
                     $(#[$field_attr])*
                     $field_vis $field: $field_type,
