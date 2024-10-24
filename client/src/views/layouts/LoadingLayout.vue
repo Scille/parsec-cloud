@@ -9,7 +9,7 @@
             :image="LogoIconGradient"
             class="logo-img"
           />
-          <ms-spinner :title="'HomePage.organizationLogin.loading'" />
+          <ms-spinner title="HomePage.organizationLogin.loading" />
         </div>
       </div>
     </ion-content>
@@ -45,6 +45,7 @@ onMounted(async () => {
           replace: true,
         });
       } else {
+        window.electronAPI.log('error', 'Trying to log in with no log in info provided');
         await navigateTo(Routes.Home, { skipHandle: true, replace: true });
       }
     },

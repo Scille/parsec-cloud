@@ -165,7 +165,7 @@ async function refreshDevicesList(): Promise<void> {
       }),
       PresentationMode.Toast,
     );
-    console.log('Could not list devices', result.error);
+    window.electronAPI.log('error', `Failed to list devices ${JSON.stringify(result.error)}`);
   }
 }
 

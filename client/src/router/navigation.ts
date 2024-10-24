@@ -61,7 +61,7 @@ export async function backupCurrentOrganization(): Promise<void> {
   const currentHandle = getConnectionHandle();
 
   if (currentHandle === null) {
-    console.error('No current handle');
+    window.electronAPI.log('error', 'Cannot backup the current organization, no handle found');
   } else {
     // Backup the current route
     const currentRoute = getCurrentRoute();
@@ -69,7 +69,6 @@ export async function backupCurrentOrganization(): Promise<void> {
     if (index !== -1) {
       routesBackup.splice(index, 1);
     }
-    console.log('Saving', currentRoute.value.name, currentRoute.value.params, currentRoute.value.query);
     routesBackup.push({
       handle: currentHandle,
       data: {
@@ -92,10 +91,9 @@ export async function switchOrganization(handle: ConnectionHandle | null, backup
   } else {
     const backup = routesBackup.find((bk) => bk.handle === handle);
     if (!backup) {
-      console.error('No backup, organization was not connected');
+      window.electronAPI.log('error', 'Trying to switch to an organization for which we have no backup information');
       return;
     }
-    console.log('Restoring', backup.data.route, backup.data.params, backup.data.query);
     await navigateTo(Routes.Loading, { skipHandle: true, replace: true, query: { loginInfo: Base64.fromObject(backup) } });
   }
 }

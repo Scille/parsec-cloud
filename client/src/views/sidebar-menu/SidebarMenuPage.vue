@@ -418,7 +418,7 @@ async function loadAll(): Promise<void> {
   if (infoResult.ok) {
     userInfo.value = infoResult.value;
   } else {
-    console.log('Failed to get user info', infoResult.error);
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(infoResult.error)}`);
   }
 
   const deviceResult = await getCurrentAvailableDevice();
@@ -430,7 +430,7 @@ async function loadAll(): Promise<void> {
   if (result.ok) {
     workspaces.value = result.value.sort((w1, w2) => w1.currentName.toLocaleLowerCase().localeCompare(w2.currentName.toLocaleLowerCase()));
   } else {
-    console.log('Failed to list workspaces', result.error);
+    window.electronAPI.log('error', `Failed to list workspaces ${JSON.stringify(result.error)}`);
   }
 
   loggedInDevices.value = await getLoggedInDevices();
