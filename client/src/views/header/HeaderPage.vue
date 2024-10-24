@@ -168,7 +168,7 @@ const routeWatchCancel = watchRoute(async () => {
   if (result.ok) {
     userInfo.value = result.value;
   } else {
-    console.log('Could not get user info', result.error);
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(result.error)}`);
   }
   await updateRoute();
 });
@@ -251,7 +251,7 @@ onMounted(async () => {
   if (result.ok) {
     userInfo.value = result.value;
   } else {
-    console.log('Could not get user info', result.error);
+    window.electronAPI.log('error', `Failed to retrieve user info ${JSON.stringify(result.error)}`);
   }
   await updateRoute();
 });

@@ -239,7 +239,7 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   }
 
   if (!component) {
-    console.log('Invalid link');
+    window.electronAPI.log('error', 'Trying to open join link modal with invalid link');
     return;
   }
   const modal = await modalController.create({
@@ -326,7 +326,7 @@ async function handleLoginError(device: AvailableDevice, error: ClientStartError
       PresentationMode.Toast,
     );
   } else {
-    console.error('Could not connect to device type', device.ty);
+    window.electronAPI.log('error', `Unhandled device authentication type ${device.ty}`);
   }
 }
 

@@ -33,8 +33,10 @@ const lastAccepted: Ref<DateTime | null> = ref(null);
 
 onMounted(async () => {
   const handle = getConnectionHandle();
+
   if (!handle) {
-    console.error('Could not retrieve connection handle');
+    window.electronAPI.log('error', 'Failed to retrieve connection handle while logged in');
+    await navigateTo(Routes.Home, { replace: true, skipHandle: true });
     return;
   }
   // When in dev mode, we often open directly a connected page,
@@ -102,19 +104,20 @@ async function tryOpeningTOSModal(): Promise<void> {
 }
 
 async function logout(): Promise<void> {
-  const handle = getConnectionHandle();
-  if (!handle) {
-    console.error('Already logged out');
-    return;
-  }
   const modal = await openSpinnerModal('HomePage.topbar.logoutWait');
   const menuCtrls = useUploadMenu();
   menuCtrls.hide();
-  // Cleaning the injections will automatically cancel the imports
-  await injectionProvider.clean(handle);
-  const logoutResult = await parsecLogout();
-  if (!logoutResult.ok) {
-    window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
+
+  const handle = getConnectionHandle();
+  if (!handle) {
+    window.electronAPI.log('error', 'No handle found when trying to log out');
+  } else {
+    // Cleaning the injections will automatically cancel the imports
+    await injectionProvider.clean(handle);
+    const logoutResult = await parsecLogout();
+    if (!logoutResult.ok) {
+      window.electronAPI.log('error', `Error when logging out: ${JSON.stringify(logoutResult.error)}`);
+    }
   }
   await modal.dismiss();
   await navigateTo(Routes.Home, { replace: true, skipHandle: true });
