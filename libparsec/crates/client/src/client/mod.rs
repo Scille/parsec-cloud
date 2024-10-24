@@ -35,13 +35,13 @@ pub use self::{
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
     config::{ClientConfig, ServerConfig},
-    create_new_device,
     event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
         start_user_sync_monitor, start_workspaces_bootstrap_monitor,
         start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
+    register_new_device,
     user::UserOps,
     CertifDeviceError, CertificateBasedActionOutcome, InvalidCertificateError,
 };
@@ -552,7 +552,7 @@ impl Client {
 
         // save recovery device
         let outcome =
-            create_new_device(self.cmds.clone(), recovery_device, self.device.clone()).await?;
+            register_new_device(self.cmds.clone(), recovery_device, self.device.clone()).await?;
 
         let latest_known_timestamps = match outcome {
             CertificateBasedActionOutcome::LocalIdempotent => return Ok((passphrase, data)), // not sure how it could happen though
@@ -609,7 +609,7 @@ pub async fn create_device_from_recovery(
         save_strategy.into_access(key_file)
     };
     let saved_device = save_device(&config_dir, &access, &new_device).await?;
-    let outcome = create_new_device(cmds, new_device, recovery_device.clone().into()).await?;
+    let outcome = register_new_device(cmds, new_device, recovery_device.clone().into()).await?;
 
     match outcome {
         CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though

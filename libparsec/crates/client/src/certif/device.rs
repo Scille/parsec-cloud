@@ -15,7 +15,7 @@ use super::{
     GreaterTimestampOffset, InvalidCertificateError,
 };
 
-pub async fn create_new_device(
+pub async fn register_new_device(
     cmds: Arc<AuthenticatedCmds>,
     new_device: LocalDevice,
     author: Arc<LocalDevice>,
@@ -24,9 +24,13 @@ pub async fn create_new_device(
     let mut timestamp = author.now();
 
     loop {
-        let outcome =
-            internal_create_new_device(cmds.clone(), new_device.clone(), author.clone(), timestamp)
-                .await?;
+        let outcome = internal_register_new_device(
+            cmds.clone(),
+            new_device.clone(),
+            author.clone(),
+            timestamp,
+        )
+        .await?;
 
         match outcome {
             DeviceInternalsOutcome::Done(outcome) => return Ok(outcome),
@@ -111,7 +115,7 @@ enum DeviceInternalsOutcome {
     RequireGreaterTimestamp(DateTime),
 }
 
-async fn internal_create_new_device(
+async fn internal_register_new_device(
     cmds: Arc<AuthenticatedCmds>,
     new_device: LocalDevice,
     author: Arc<LocalDevice>,
