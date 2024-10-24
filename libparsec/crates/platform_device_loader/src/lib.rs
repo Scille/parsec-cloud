@@ -264,7 +264,7 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 #[derive(Debug, thiserror::Error)]
 pub enum PlatformImportRecoveryDeviceError {
@@ -302,13 +302,13 @@ pub async fn inner_import_recovery_device(
 
     let recovery_device = match device_file {
         DeviceFile::Recovery(x) => {
-            let mut cleartext = key
+            let cleartext = key
                 .decrypt(&x.ciphertext)
+                .map(Zeroizing::new)
                 .map_err(|_| PlatformImportRecoveryDeviceError::DecryptionFailed)?;
-            let device = LocalDevice::load(&cleartext)
-                .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
-            cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
-            device
+
+            LocalDevice::load(&cleartext)
+                .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?
         }
         // We are not expecting other type of device file
         _ => return Err(PlatformImportRecoveryDeviceError::InvalidData),
