@@ -55,20 +55,6 @@ pub async fn remove_device(_device_path: &Path) -> Result<(), crate::RemoveDevic
  * Recovery
  */
 
-pub async fn load_recovery_device(
-    _key_file: &Path,
-    _passphrase: SecretKeyPassphrase,
-) -> Result<LocalDevice, LoadRecoveryDeviceError> {
-    todo!()
-}
-
-pub async fn save_recovery_device(
-    _key_file: &Path,
-    _device: &LocalDevice,
-) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
-    todo!()
-}
-
 pub async fn export_recovery_device(
     _device: &LocalDevice,
     _device_label: DeviceLabel,
