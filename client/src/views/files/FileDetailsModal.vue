@@ -17,6 +17,7 @@
             class="cloud-overlay"
             :class="entry.needSync ? 'cloud-overlay-ko' : 'cloud-overlay-ok'"
             :icon="entry.needSync ? cloudOffline : cloudDone"
+            @click="openTooltip($event, getSyncString())"
           />
           <div class="file-info-basic">
             <ion-text class="file-info-basic__name title-h4">
@@ -103,7 +104,7 @@
 
 <script setup lang="ts">
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
-import { Clipboard, Folder, MsImage, MsModal, I18n } from 'megashark-lib';
+import { Clipboard, Folder, MsImage, MsModal, openTooltip, I18n } from 'megashark-lib';
 import { EntryStat, EntryStatFile, getSystemPath, WorkspaceHandle } from '@/parsec';
 import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
@@ -121,6 +122,14 @@ const props = defineProps<{
 }>();
 
 const copyStatus = ref(CopyStatus.NotCopied);
+
+function getSyncString(): string {
+  if (props.entry.isFile()) {
+    return props.entry.needSync ? 'FileDetails.fileSyncKo' : 'FileDetails.fileSyncOk';
+  } else {
+    return props.entry.needSync ? 'FileDetails.folderSyncKo' : 'FileDetails.folderSyncOk';
+  }
+}
 
 async function copyPath(): Promise<void> {
   const fullPathResult = await getSystemPath(props.workspaceHandle, props.entry.path);
@@ -159,6 +168,7 @@ async function copyPath(): Promise<void> {
   position: relative;
 
   .cloud-overlay {
+    cursor: pointer;
     position: absolute;
     font-size: 1rem;
     background: var(--parsec-color-light-secondary-background);

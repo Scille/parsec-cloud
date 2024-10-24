@@ -602,7 +602,11 @@
             "path": "Emplacement",
             "linkCopied": "Copié",
             "failedToCopy": "Impossible de copier"
-        }
+        },
+        "fileSyncOk": "Ce fichier est synchronisé avec le serveur.",
+        "fileSyncKo": "Ce fichier n'est pas synchronisé avec le serveur.",
+        "folderSyncOk": "Ce dossier est synchronisé avec le serveur.",
+        "folderSyncKo": "Ce dossier n'est pas synchronisé avec le serveur."
     },
     "OrganizationPage": {
         "infoPage": {
