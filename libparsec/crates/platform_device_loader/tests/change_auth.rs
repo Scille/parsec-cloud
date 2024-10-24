@@ -15,11 +15,13 @@ async fn same_key_file(tmp_path: TmpPath) {
         key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let url = ParsecOrganizationAddr::from_any(
+        // cspell:disable-next-line
+        "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
+    )
+    .unwrap();
     let device = LocalDevice::generate_new_device(
-        ParsecOrganizationAddr::from_any(
-            // cspell:disable-next-line
-            "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
-        ).unwrap(),
+        url,
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
@@ -27,7 +29,9 @@ async fn same_key_file(tmp_path: TmpPath) {
         None,
         None,
         None,
-        None,None,None,
+        None,
+        None,
+        None,
     );
 
     // Sanity check
@@ -82,11 +86,13 @@ async fn different_key_file(tmp_path: TmpPath) {
         key_file: key_file.clone(),
         password: "P@ssw0rd.".to_owned().into(),
     };
+    let url = ParsecOrganizationAddr::from_any(
+        // cspell:disable-next-line
+        "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
+    )
+    .unwrap();
     let device = LocalDevice::generate_new_device(
-        ParsecOrganizationAddr::from_any(
-            // cspell:disable-next-line
-            "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
-        ).unwrap(),
+        url,
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
@@ -94,7 +100,9 @@ async fn different_key_file(tmp_path: TmpPath) {
         None,
         None,
         None,
-        None,None,None,
+        None,
+        None,
+        None,
     );
 
     // Sanity check
