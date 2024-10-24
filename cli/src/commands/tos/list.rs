@@ -22,7 +22,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     let client = load_client(&config_dir, device, password_stdin).await?;
     match client.get_tos().await {
-        Ok(tos) => display_tos(tos),
+        Ok(tos) => display_tos(&tos),
         Err(libparsec_client::ClientGetTosError::NoTos) => {
             no_tos_available();
             Ok(())
@@ -35,7 +35,7 @@ fn no_tos_available() {
     println!("No Terms of Service available");
 }
 
-fn display_tos(tos: Tos) -> anyhow::Result<()> {
+pub(super) fn display_tos(tos: &Tos) -> anyhow::Result<()> {
     use std::io::Write;
 
     let mut stdout = std::io::stdout().lock();
@@ -44,7 +44,7 @@ fn display_tos(tos: Tos) -> anyhow::Result<()> {
         "Terms of Service updated on {}:",
         tos.updated_on.to_rfc3339()
     )?;
-    for (locale, url) in tos.per_locale_urls {
+    for (locale, url) in &tos.per_locale_urls {
         writeln!(stdout, "- {locale}: {url}")?;
     }
     Ok(())
