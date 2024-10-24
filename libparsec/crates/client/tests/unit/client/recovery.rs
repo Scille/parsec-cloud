@@ -38,7 +38,7 @@ async fn ok(env: &TestbedEnv) {
     let client = client_factory(dbg!(&env.discriminant_dir), alice).await;
 
     let config = client.config.clone();
-
+    let config_dir = config.config_dir.clone();
     let recovery_device_label = dbg!(DeviceLabel::try_from("recovery").unwrap());
     let (passphrase, data) = client
         .export_recovery_device(recovery_device_label.clone())
@@ -56,8 +56,6 @@ async fn ok(env: &TestbedEnv) {
     p_assert_eq!(alice_devices.len(), 3);
     assert_device(&alice_devices[0], "alice@dev1", env);
     assert_device(&alice_devices[1], "alice@dev2", env);
-    // assert_device(&alice_devices[2], dbg!(alice_devices[2].id), env);
-
     assert_eq!(dbg!(&alice_devices[2]).device_label, recovery_device_label);
 
     // // we lose access
@@ -69,16 +67,10 @@ async fn ok(env: &TestbedEnv) {
             .await
             .unwrap();
 
-    // let alice_devices = client.list_user_devices(client.user_id()).await.unwrap();
-    // p_assert_eq!(alice_devices.len(), 3);
-    // assert_device(&alice_devices[0], "alice@dev1", env);
-    // assert_device(&alice_devices[1], "alice@dev2", env);
-    // assert_eq!(dbg!(&alice_devices[2]).device_label, recovery_device_label);
-
     let save_strategy = DeviceSaveStrategy::Keyring;
 
     let cmds = AuthenticatedCmds::new(
-        &config.clone().config_dir,
+        &config_dir,
         recovery_device.clone().into(),
         ProxyConfig::default(),
     )
@@ -89,22 +81,26 @@ async fn ok(env: &TestbedEnv) {
         &recovery_device,
         &new_device_label,
         save_strategy.clone(),
-        config.clone().config_dir,
+        config_dir,
     )
     .await
     .unwrap();
 
     let access = {
-        let key_file = dbg!(get_default_key_file(&tmp_path, &saved_device.device_id));
+        let key_file = dbg!(get_default_key_file(
+            &env.discriminant_dir,
+            &saved_device.device_id
+        ));
         save_strategy.into_access(key_file)
     };
-    let new_device = load_device(&config.config_dir, &access).await.unwrap();
-    let client = client_factory(&env.discriminant_dir, new_device).await;
+    let new_device = load_device(&env.discriminant_dir, &access).await.unwrap();
+    let client = client_factory(&env.discriminant_dir, new_device.clone()).await;
 
     client.poll_server_for_new_certificates().await.unwrap();
 
     let alice_devices = client.list_user_devices(client.user_id()).await.unwrap();
     p_assert_eq!(alice_devices.len(), 4);
+
     assert_device(&alice_devices[0], "alice@dev1", env);
     assert_device(&alice_devices[1], "alice@dev2", env);
     assert_eq!(dbg!(&alice_devices[2]).device_label, recovery_device_label);
@@ -115,5 +111,4 @@ async fn ok(env: &TestbedEnv) {
 
     let workspaces = client.list_workspaces().await;
     p_assert_eq!(dbg!(&workspaces).len(), 1, "{:?}", workspaces);
-    // assert_eq!(new_common_certificates.lock().unwrap().len(), 2);
 }

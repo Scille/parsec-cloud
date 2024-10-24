@@ -249,6 +249,10 @@ pub(crate) fn maybe_load_device(
                             DeviceAccessStrategy::Smartcard { key_file: kf },
                             DeviceAccessStrategy::Smartcard { key_file: c_kf },
                         ) if c_kf == kf => Some(Ok(c_device.to_owned())),
+                        (
+                            DeviceAccessStrategy::Keyring { key_file: kf },
+                            DeviceAccessStrategy::Keyring { key_file: c_kf },
+                        ) if c_kf == kf => Some(Ok(c_device.to_owned())),
                         _ => None,
                     });
 

@@ -585,6 +585,7 @@ impl Client {
         Ok((passphrase, data))
     }
 }
+
 pub async fn create_device_from_recovery(
     cmds: Arc<AuthenticatedCmds>,
     recovery_device: &LocalDevice,
