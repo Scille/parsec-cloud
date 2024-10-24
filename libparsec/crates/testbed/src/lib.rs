@@ -23,7 +23,7 @@ enum TemplateState {
 // Templates are generated only once, then copied for fast initialization of testbed envs
 // On top of that we generated them lazily to further improve speed of single-test runs
 // given cargo-nextest relies on that even when running multiple tests.
-static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 4] = [
+static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 5] = [
     (
         "empty",
         Mutex::new(TemplateState::NotGenerated(templates::empty::generate)),
@@ -41,6 +41,12 @@ static TESTBED_TEMPLATES: [(&str, Mutex<TemplateState>); 4] = [
     (
         "coolorg",
         Mutex::new(TemplateState::NotGenerated(templates::coolorg::generate)),
+    ),
+    (
+        "sequestered",
+        Mutex::new(TemplateState::NotGenerated(
+            templates::sequestered::generate,
+        )),
     ),
 ];
 

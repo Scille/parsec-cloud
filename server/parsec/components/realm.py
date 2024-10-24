@@ -13,6 +13,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     VerifyKey,
     VlobID,
@@ -25,13 +26,26 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.sequester import SequesterServiceUnavailable
+from parsec.components.vlob import RejectedBySequesterService
 from parsec.types import BadOutcome, BadOutcomeEnum
+from parsec.webhooks import WebhooksComponent
 
 KeyIndex: TypeAlias = int
 
 
 @dataclass(slots=True)
 class BadKeyIndex(BadOutcome):
+    last_realm_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class SequesterServiceMismatch:
+    last_sequester_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class ParticipantMismatch:
     last_realm_certificate_timestamp: DateTime
 
 
@@ -216,6 +230,7 @@ def realm_rename_validate(
 class RealmRotateKeyValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
     TIMESTAMP_MISMATCH = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 def realm_rotate_key_validate(
@@ -293,7 +308,7 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
-    PARTICIPANT_MISMATCH = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
@@ -331,6 +346,9 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
 
 
 class BaseRealmComponent:
+    def __init__(self, webhooks: WebhooksComponent):
+        self.webhooks = webhooks
+
     #
     # Public methods
     #
@@ -417,6 +435,8 @@ class BaseRealmComponent:
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -424,6 +444,10 @@ class BaseRealmComponent:
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         raise NotImplementedError
 
@@ -667,6 +691,7 @@ class BaseRealmComponent:
             author_verify_key=client_ctx.device_verify_key,
             realm_key_rotation_certificate=req.realm_key_rotation_certificate,
             per_participant_keys_bundle_access=req.per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=req.per_sequester_service_keys_bundle_access,
             keys_bundle=req.keys_bundle,
         )
         match outcome:
@@ -689,12 +714,28 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex(
                     last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH:
-                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch()
+            case ParticipantMismatch() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp
+                )
+            case SequesterServiceMismatch() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceMismatch(
+                    last_sequester_certificate_timestamp=error.last_sequester_certificate_timestamp
+                )
+            case SequesterServiceUnavailable() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceUnavailable(
+                    service_id=error.service_id
+                )
+            case RejectedBySequesterService() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepRejectedBySequesterService(
+                    service_id=error.service_id, reason=error.reason
+                )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
+            case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
+                return authenticated_cmds.latest.realm_rotate_key.RepOrganizationNotSequestered()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED:
