@@ -14,6 +14,7 @@
     <organization-authentication-page
       v-show="step === Steps.Authentication"
       :class="step === Steps.Authentication ? 'active' : ''"
+      :is-last-step="true"
       @authentication-chosen="onAuthenticationChosen"
       @go-back-requested="onGoBackRequested"
       @close-requested="$emit('closeRequested')"

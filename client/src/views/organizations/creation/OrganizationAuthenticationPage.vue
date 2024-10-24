@@ -40,7 +40,7 @@
           :disabled="!valid"
         >
           <span>
-            {{ $msTranslate('CreateOrganization.button.next') }}
+            {{ isLastStep ? $msTranslate('CreateOrganization.button.create') : $msTranslate('CreateOrganization.button.next') }}
           </span>
           <ion-icon
             slot="start"
@@ -64,6 +64,7 @@ import CreateOrganizationModalHeader from '@/components/organizations/CreateOrga
 
 defineProps<{
   hideBackButton?: boolean;
+  isLastStep?: boolean;
 }>();
 
 defineEmits<{
