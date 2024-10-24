@@ -9,6 +9,7 @@ use libparsec_client::{
 use libparsec_platform_async::event::Event;
 use libparsec_types::prelude::*;
 
+/// Used to identify client handle
 pub type Handle = u32;
 const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 

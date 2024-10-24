@@ -651,7 +651,6 @@ impl Client {
 }
 
 #[derive(Debug, thiserror::Error)]
-
 pub enum ExportRecoveryDeviceError {
     #[error("Component has stopped")]
     Stopped,
@@ -686,7 +685,6 @@ pub enum ExportRecoveryDeviceError {
 }
 
 #[derive(Debug, thiserror::Error)]
-
 pub enum ImportRecoveryDeviceError {
     #[error("Component has stopped")]
     Stopped,
