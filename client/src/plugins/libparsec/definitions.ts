@@ -1481,11 +1481,14 @@ export enum ImportRecoveryDeviceErrorTag {
     CertifDeviceError = 'ImportRecoveryDeviceErrorCertifDeviceError',
     ConnectionError = 'ImportRecoveryDeviceErrorConnectionError',
     DataError = 'ImportRecoveryDeviceErrorDataError',
+    DecryptionFailed = 'ImportRecoveryDeviceErrorDecryptionFailed',
     GetCertificateError = 'ImportRecoveryDeviceErrorGetCertificateError',
     Internal = 'ImportRecoveryDeviceErrorInternal',
     InvalidCertificate = 'ImportRecoveryDeviceErrorInvalidCertificate',
+    InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
+    InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
+    InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
     Offline = 'ImportRecoveryDeviceErrorOffline',
-    PlatformImportRecoveryDeviceError = 'ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError',
     SaveDeviceError = 'ImportRecoveryDeviceErrorSaveDeviceError',
     Stopped = 'ImportRecoveryDeviceErrorStopped',
     TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
@@ -1504,6 +1507,10 @@ export interface ImportRecoveryDeviceErrorDataError {
     tag: ImportRecoveryDeviceErrorTag.DataError
     error: string
 }
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: ImportRecoveryDeviceErrorTag.DecryptionFailed
+    error: string
+}
 export interface ImportRecoveryDeviceErrorGetCertificateError {
     tag: ImportRecoveryDeviceErrorTag.GetCertificateError
     error: string
@@ -1516,12 +1523,20 @@ export interface ImportRecoveryDeviceErrorInvalidCertificate {
     tag: ImportRecoveryDeviceErrorTag.InvalidCertificate
     error: string
 }
-export interface ImportRecoveryDeviceErrorOffline {
-    tag: ImportRecoveryDeviceErrorTag.Offline
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: ImportRecoveryDeviceErrorTag.InvalidData
     error: string
 }
-export interface ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError {
-    tag: ImportRecoveryDeviceErrorTag.PlatformImportRecoveryDeviceError
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPassphrase
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPath
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: ImportRecoveryDeviceErrorTag.Offline
     error: string
 }
 export interface ImportRecoveryDeviceErrorSaveDeviceError {
@@ -1548,11 +1563,14 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorCertifDeviceError
   | ImportRecoveryDeviceErrorConnectionError
   | ImportRecoveryDeviceErrorDataError
+  | ImportRecoveryDeviceErrorDecryptionFailed
   | ImportRecoveryDeviceErrorGetCertificateError
   | ImportRecoveryDeviceErrorInternal
   | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
-  | ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError
   | ImportRecoveryDeviceErrorSaveDeviceError
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark

@@ -715,13 +715,40 @@ pub enum ImportRecoveryDeviceError {
     #[error(transparent)]
     CertifDeviceError(#[from] CertifDeviceError),
     #[error(transparent)]
-    PlatformImportRecoveryDeviceError(#[from] PlatformImportRecoveryDeviceError),
-    #[error(transparent)]
     ConnectionError(#[from] ConnectionError),
     #[error(transparent)]
     SaveDeviceError(#[from] SaveDeviceError),
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("Passphrase format is invalid")]
+    InvalidPassphrase,
+    #[error("Failed to decrypt file content")]
+    DecryptionFailed,
 }
 
+impl From<PlatformImportRecoveryDeviceError> for ImportRecoveryDeviceError {
+    fn from(value: PlatformImportRecoveryDeviceError) -> Self {
+        match value {
+            PlatformImportRecoveryDeviceError::InvalidPath(error) => {
+                ImportRecoveryDeviceError::InvalidPath(error)
+            }
+            PlatformImportRecoveryDeviceError::InvalidData => {
+                ImportRecoveryDeviceError::InvalidData
+            }
+            PlatformImportRecoveryDeviceError::InvalidPassphrase => {
+                ImportRecoveryDeviceError::InvalidPassphrase
+            }
+            PlatformImportRecoveryDeviceError::DecryptionFailed => {
+                ImportRecoveryDeviceError::DecryptionFailed
+            }
+            PlatformImportRecoveryDeviceError::SaveDeviceError(save_device_error) => {
+                ImportRecoveryDeviceError::SaveDeviceError(save_device_error)
+            }
+        }
+    }
+}
 #[cfg(test)]
 #[path = "../../tests/unit/client/mod.rs"]
 #[allow(clippy::unwrap_used)]

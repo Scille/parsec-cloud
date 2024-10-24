@@ -1271,6 +1271,10 @@ export interface ImportRecoveryDeviceErrorDataError {
     tag: "DataError"
     error: string
 }
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
 export interface ImportRecoveryDeviceErrorGetCertificateError {
     tag: "GetCertificateError"
     error: string
@@ -1283,12 +1287,20 @@ export interface ImportRecoveryDeviceErrorInvalidCertificate {
     tag: "InvalidCertificate"
     error: string
 }
-export interface ImportRecoveryDeviceErrorOffline {
-    tag: "Offline"
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: "InvalidData"
     error: string
 }
-export interface ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError {
-    tag: "PlatformImportRecoveryDeviceError"
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: "Offline"
     error: string
 }
 export interface ImportRecoveryDeviceErrorSaveDeviceError {
@@ -1315,11 +1327,14 @@ export type ImportRecoveryDeviceError =
   | ImportRecoveryDeviceErrorCertifDeviceError
   | ImportRecoveryDeviceErrorConnectionError
   | ImportRecoveryDeviceErrorDataError
+  | ImportRecoveryDeviceErrorDecryptionFailed
   | ImportRecoveryDeviceErrorGetCertificateError
   | ImportRecoveryDeviceErrorInternal
   | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
   | ImportRecoveryDeviceErrorOffline
-  | ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError
   | ImportRecoveryDeviceErrorSaveDeviceError
   | ImportRecoveryDeviceErrorStopped
   | ImportRecoveryDeviceErrorTimestampOutOfBallpark

@@ -5719,6 +5719,13 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorDataError".into(),
             )?;
         }
+        libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorDecryptionFailed".into(),
+            )?;
+        }
         libparsec::ImportRecoveryDeviceError::GetCertificateError { .. } => {
             Reflect::set(
                 &js_obj,
@@ -5740,18 +5747,32 @@ fn variant_import_recovery_device_error_rs_to_js(
                 &"ImportRecoveryDeviceErrorInvalidCertificate".into(),
             )?;
         }
+        libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidData".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidPassphrase".into(),
+            )?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ImportRecoveryDeviceErrorInvalidPath".into(),
+            )?;
+        }
         libparsec::ImportRecoveryDeviceError::Offline { .. } => {
             Reflect::set(
                 &js_obj,
                 &"tag".into(),
                 &"ImportRecoveryDeviceErrorOffline".into(),
-            )?;
-        }
-        libparsec::ImportRecoveryDeviceError::PlatformImportRecoveryDeviceError { .. } => {
-            Reflect::set(
-                &js_obj,
-                &"tag".into(),
-                &"ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError".into(),
             )?;
         }
         libparsec::ImportRecoveryDeviceError::SaveDeviceError { .. } => {
