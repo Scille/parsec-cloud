@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 use uuid::Uuid;
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 use libparsec_types::prelude::*;
 
@@ -255,12 +255,12 @@ pub async fn load_device(
                         parallelism,
                     )
                     .map_err(|_| LoadDeviceError::InvalidData)?;
-                    let mut cleartext = key
+                    let cleartext = key
                         .decrypt(&x.ciphertext)
+                        .map(Zeroizing::new)
                         .map_err(|_| LoadDeviceError::DecryptionFailed)?;
                     let device =
                         LocalDevice::load(&cleartext).map_err(|_| LoadDeviceError::InvalidData)?;
-                    cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
 
                     (device, x.created_on)
                 }
@@ -405,9 +405,8 @@ pub async fn save_device(
             .expect("Salt has the correct length");
 
             let ciphertext = {
-                let mut cleartext = device.dump();
+                let cleartext = Zeroizing::new(device.dump());
                 let ciphertext = key.encrypt(&cleartext);
-                cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
                 ciphertext.into()
             };
 
@@ -526,13 +525,12 @@ pub async fn load_recovery_device(
 
     let device = match device_file {
         DeviceFile::Recovery(x) => {
-            let mut cleartext = key
+            let cleartext = key
                 .decrypt(&x.ciphertext)
+                .map(Zeroizing::new)
                 .map_err(|_| LoadRecoveryDeviceError::DecryptionFailed)?;
-            let device =
-                LocalDevice::load(&cleartext).map_err(|_| LoadRecoveryDeviceError::InvalidData)?;
-            cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
-            device
+
+            LocalDevice::load(&cleartext).map_err(|_| LoadRecoveryDeviceError::InvalidData)?
         }
         // We are not expecting other type of device file
         _ => return Err(LoadRecoveryDeviceError::InvalidData),
@@ -559,9 +557,8 @@ pub async fn save_recovery_device(
     let (passphrase, key) = SecretKey::generate_recovery_passphrase();
 
     let ciphertext = {
-        let mut cleartext = device.dump();
+        let cleartext = Zeroizing::new(device.dump());
         let ciphertext = key.encrypt(&cleartext);
-        cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
         ciphertext.into()
     };
 
