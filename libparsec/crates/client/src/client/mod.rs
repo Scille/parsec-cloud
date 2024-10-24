@@ -612,9 +612,8 @@ pub async fn create_device_from_recovery(
         save_strategy.into_access(key_file)
     };
     let saved_device = save_device(&config_dir, &access, &new_device).await?;
-    assert!(saved_device.key_file_path.exists());
     let outcome = create_new_device(cmds, new_device, recovery_device.clone().into()).await?;
-    // let latest_known_timestamps =
+
     match outcome {
         CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
         CertificateBasedActionOutcome::Uploaded {

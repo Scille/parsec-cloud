@@ -5,8 +5,7 @@ use std::{path::Path, sync::Arc};
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError,
-    PlatformExportRecoveryDeviceError, PlatformImportRecoveryDeviceError, SaveDeviceError,
+    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
     SaveRecoveryDeviceError,
 };
 
