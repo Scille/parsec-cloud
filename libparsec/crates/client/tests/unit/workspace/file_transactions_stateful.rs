@@ -148,11 +148,12 @@ impl AsyncStateMachineTest for FileTransactionStateMachine {
             .await
             .unwrap();
 
+        let url = ParsecOrganizationAddr::from_any(
+            // cspell:disable-next-line
+            "parsec3://test.invalid:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
+        ).unwrap();
         let device = LocalDevice::generate_new_device(
-            ParsecOrganizationAddr::from_any(
-                // cspell:disable-next-line
-                "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
-            ).unwrap(),
+            url,
             UserProfile::Admin,
             HumanHandle::new("alice@dev1", "alice").unwrap(),
             "alice label".parse().unwrap(),
@@ -160,7 +161,9 @@ impl AsyncStateMachineTest for FileTransactionStateMachine {
             None,
             None,
             None,
-            None,None,None,
+            None,
+            None,
+            None,
         );
 
         let realm_id = VlobID::default();

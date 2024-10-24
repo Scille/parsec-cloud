@@ -12,7 +12,7 @@ async fn should_create_db_file_and_reusable(tmp_path: TmpPath) {
     let device_id = "alice@dev1".parse().unwrap();
     let device = LocalDevice::generate_new_device(
         // cspell:disable-next-line
-        "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA"
+        "parsec3://test.invalid/Org?no_ssl=true&p=xCBs8zpdIwovR8EdliVVo2vUOmtumnfsI6Fdndjm0WconA"
             .parse()
             .unwrap(),
         UserProfile::Admin,

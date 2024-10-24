@@ -15,18 +15,23 @@ use zeroize::Zeroizing;
 
 #[parsec_test]
 async fn test_ok_recovery() {
+    let url = ParsecOrganizationAddr::from_any(
+        // cspell:disable-next-line
+        "parsec3://test.invalid/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA",
+    )
+    .unwrap();
     let local_device = LocalDevice::generate_new_device(
-        ParsecOrganizationAddr::from_any(
-            // cspell:disable-next-line
-            "parsec3://127.0.0.1:6770/Org?no_ssl=true&p=xCD7SjlysFv3d4mTkRu-ZddRjIZPGraSjUnoOHT9s8rmLA"
-        ).unwrap(),
+        url,
         UserProfile::Admin,
         HumanHandle::new("alice@dev1", "alice").unwrap(),
         "alice label".parse().unwrap(),
         None,
         None,
         None,
-        None,None,None,None,
+        None,
+        None,
+        None,
+        None,
     );
     let recovery_device_label = DeviceLabel::default();
     let (secret_passphrase, data, exported_recovery_device) =
