@@ -5,6 +5,25 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.1.1-a.0.dev.20020+341e490 (2024-10-24)
+------------------------------------------------
+
+Features
+~~~~~~~~
+
+* Add CLI command ``tos list`` to list the Terms of Service of an organization.
+  (`#8773 <https://github.com/Scille/parsec-cloud/issues/8773>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Fixed a bug causing the user to access unintended steps of the organization
+  creation when creating it from a bootstrap link
+  (`#8771 <https://github.com/Scille/parsec-cloud/issues/8771>`__)
+
+
+
 Parsec v3.1.0 (2024-10-15)
 --------------------------
 
