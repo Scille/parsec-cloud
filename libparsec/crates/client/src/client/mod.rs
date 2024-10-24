@@ -17,6 +17,7 @@ mod workspace_start;
 use std::{
     collections::HashMap,
     fmt::Debug,
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 
@@ -40,10 +41,17 @@ use crate::{
         start_user_sync_monitor, start_workspaces_bootstrap_monitor,
         start_workspaces_process_needs_monitor, start_workspaces_refresh_list_monitor, Monitor,
     },
+    register_new_device,
     user::UserOps,
+    CertifDeviceError, CertificateBasedActionOutcome, InvalidCertificateError,
 };
-use libparsec_client_connection::AuthenticatedCmds;
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+use libparsec_platform_device_loader::{
+    get_default_key_file, save_device, PlatformExportRecoveryDeviceError,
+    PlatformImportRecoveryDeviceError, SaveDeviceError,
+};
+use libparsec_platform_storage::certificates::{GetCertificateError, PerTopicLastTimestamps};
 use libparsec_types::prelude::*;
 
 // Re-exposed for public API
@@ -533,8 +541,189 @@ impl Client {
     pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
         tos::accept_tos(self, tos_updated_on).await
     }
+
+    pub async fn export_recovery_device(
+        &self,
+        device_label: DeviceLabel,
+    ) -> Result<(SecretKeyPassphrase, Vec<u8>), ExportRecoveryDeviceError> {
+        let (passphrase, data, recovery_device) =
+            libparsec_platform_device_loader::export_recovery_device(&self.device, device_label)
+                .await?;
+
+        // save recovery device
+        let outcome =
+            register_new_device(self.cmds.clone(), recovery_device, self.device.clone()).await?;
+
+        let latest_known_timestamps = match outcome {
+            CertificateBasedActionOutcome::LocalIdempotent => return Ok((passphrase, data)), // not sure how it could happen though
+            CertificateBasedActionOutcome::Uploaded {
+                certificate_timestamp,
+            }
+            | CertificateBasedActionOutcome::RemoteIdempotent {
+                certificate_timestamp,
+            } => PerTopicLastTimestamps::new_for_common_and_shamir(
+                certificate_timestamp,
+                certificate_timestamp,
+            ),
+        };
+        self.certificates_ops
+            .poll_server_for_new_certificates(Some(&latest_known_timestamps))
+            .await
+            .map_err(|e| match e {
+                CertifPollServerError::Stopped => ExportRecoveryDeviceError::Stopped,
+                CertifPollServerError::Offline => ExportRecoveryDeviceError::Offline,
+                CertifPollServerError::InvalidCertificate(err) => {
+                    ExportRecoveryDeviceError::InvalidCertificate(err)
+                }
+                CertifPollServerError::Internal(err) => err
+                    .context("Cannot poll server for new certificates")
+                    .into(),
+            })?;
+        Ok((passphrase, data))
+    }
 }
 
+pub async fn create_device_from_recovery(
+    cmds: Arc<AuthenticatedCmds>,
+    recovery_device: &LocalDevice,
+    device_label: &DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+    config_dir: PathBuf,
+) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+    let new_device = LocalDevice::generate_new_device(
+        recovery_device.organization_addr.clone(),
+        recovery_device.initial_profile,
+        recovery_device.human_handle.clone(),
+        device_label.clone(),
+        Some(recovery_device.user_id),
+        None,
+        None,
+        Some(recovery_device.private_key.clone()),
+        None,
+        Some(recovery_device.user_realm_id),
+        Some(recovery_device.user_realm_key.clone()),
+    );
+    // save recovery device TODO save after upload
+    let access = {
+        let key_file = dbg!(get_default_key_file(&config_dir, &new_device.device_id));
+        save_strategy.into_access(key_file)
+    };
+    let saved_device = save_device(&config_dir, &access, &new_device).await?;
+    let outcome = register_new_device(cmds, new_device, recovery_device.clone().into()).await?;
+
+    match outcome {
+        CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
+        CertificateBasedActionOutcome::Uploaded {
+            certificate_timestamp,
+        }
+        | CertificateBasedActionOutcome::RemoteIdempotent {
+            certificate_timestamp,
+        } => PerTopicLastTimestamps::new_for_common_and_shamir(
+            certificate_timestamp,
+            certificate_timestamp,
+        ),
+    };
+
+    Ok(saved_device)
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ExportRecoveryDeviceError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("User {0} is revoked")]
+    UserRevoked(UserID),
+
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    TimestampOutOfBallpark {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    DataError(#[from] libparsec_types::DataError),
+    // #[error(transparent)]
+    // EncryptionError(#[from] CertifEncryptForUserError),
+    #[error(transparent)]
+    GetCertificateError(#[from] GetCertificateError),
+    #[error(transparent)]
+    CertifDeviceError(#[from] CertifDeviceError),
+    #[error(transparent)]
+    PlatformExportRecoveryDeviceError(#[from] PlatformExportRecoveryDeviceError),
+    #[error(transparent)]
+    ConnectionError(#[from] ConnectionError),
+}
+
+#[derive(Debug, thiserror::Error)]
+pub enum ImportRecoveryDeviceError {
+    #[error("Component has stopped")]
+    Stopped,
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+    #[error("User {0} is revoked")]
+    UserRevoked(UserID),
+
+    #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
+    TimestampOutOfBallpark {
+        server_timestamp: DateTime,
+        client_timestamp: DateTime,
+        ballpark_client_early_offset: f64,
+        ballpark_client_late_offset: f64,
+    },
+    #[error(transparent)]
+    InvalidCertificate(#[from] Box<InvalidCertificateError>),
+    #[error(transparent)]
+    DataError(#[from] libparsec_types::DataError),
+    // #[error(transparent)]
+    // EncryptionError(#[from] CertifEncryptForUserError),
+    #[error(transparent)]
+    GetCertificateError(#[from] GetCertificateError),
+    #[error(transparent)]
+    CertifDeviceError(#[from] CertifDeviceError),
+    #[error(transparent)]
+    ConnectionError(#[from] ConnectionError),
+    #[error(transparent)]
+    SaveDeviceError(#[from] SaveDeviceError),
+    #[error(transparent)]
+    InvalidPath(anyhow::Error),
+    #[error("Cannot deserialize file content")]
+    InvalidData,
+    #[error("Passphrase format is invalid")]
+    InvalidPassphrase,
+    #[error("Failed to decrypt file content")]
+    DecryptionFailed,
+}
+
+impl From<PlatformImportRecoveryDeviceError> for ImportRecoveryDeviceError {
+    fn from(value: PlatformImportRecoveryDeviceError) -> Self {
+        match value {
+            PlatformImportRecoveryDeviceError::InvalidPath(error) => {
+                ImportRecoveryDeviceError::InvalidPath(error)
+            }
+            PlatformImportRecoveryDeviceError::InvalidData => {
+                ImportRecoveryDeviceError::InvalidData
+            }
+            PlatformImportRecoveryDeviceError::InvalidPassphrase => {
+                ImportRecoveryDeviceError::InvalidPassphrase
+            }
+            PlatformImportRecoveryDeviceError::DecryptionFailed => {
+                ImportRecoveryDeviceError::DecryptionFailed
+            }
+            PlatformImportRecoveryDeviceError::SaveDeviceError(save_device_error) => {
+                ImportRecoveryDeviceError::SaveDeviceError(save_device_error)
+            }
+        }
+    }
+}
 #[cfg(test)]
 #[path = "../../tests/unit/client/mod.rs"]
 #[allow(clippy::unwrap_used)]

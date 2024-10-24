@@ -26,7 +26,7 @@ from .common import (
     RealmRole,
     Ref,
 )
-from .invite import DeviceSaveStrategy
+from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 from .events import OnClientEventCallback
 
@@ -445,4 +445,109 @@ async def client_share_workspace(
 
 
 def is_keyring_available() -> bool:
+    raise NotImplementedError
+
+
+class ImportRecoveryDeviceError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class UserRevoked(UserID):
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class DataError:
+        pass
+
+    class GetCertificateError:
+        pass
+
+    class CertifDeviceError:
+        pass
+
+    class ConnectionError:
+        pass
+
+    class SaveDeviceError:
+        pass
+
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class InvalidPassphrase:
+        pass
+
+    class DecryptionFailed:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+
+class ExportRecoveryDeviceError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class UserRevoked(UserID):
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class DataError:
+        pass
+
+    class GetCertificateError:
+        pass
+
+    class CertifDeviceError:
+        pass
+
+    class PlatformExportRecoveryDeviceError:
+        pass
+
+    class ConnectionError:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+
+async def import_recovery_device(
+    config: ClientConfig,
+    recovery_device: bytes,
+    passphrase: str,
+    device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ImportRecoveryDeviceError]:
+    raise NotImplementedError
+
+
+async def export_recovery_device(
+    client_handle: Handle,
+    device_label: DeviceLabel,
+) -> Result[tuple[str, bytes], ExportRecoveryDeviceError]:
     raise NotImplementedError

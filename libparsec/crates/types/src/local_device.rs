@@ -50,6 +50,8 @@ impl LocalDevice {
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
         time_provider: Option<TimeProvider>,
+        user_realm_id: Option<VlobID>,
+        user_real_key: Option<SecretKey>,
     ) -> Self {
         Self {
             organization_addr,
@@ -60,8 +62,8 @@ impl LocalDevice {
             signing_key: signing_key.unwrap_or_else(SigningKey::generate),
             private_key: private_key.unwrap_or_else(PrivateKey::generate),
             initial_profile,
-            user_realm_id: VlobID::default(),
-            user_realm_key: SecretKey::generate(),
+            user_realm_id: user_realm_id.unwrap_or_default(),
+            user_realm_key: user_real_key.unwrap_or_else(SecretKey::generate),
             local_symkey: SecretKey::generate(),
             time_provider: time_provider.unwrap_or_default(),
         }

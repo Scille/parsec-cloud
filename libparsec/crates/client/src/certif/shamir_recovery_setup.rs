@@ -187,6 +187,8 @@ async fn create_shamir_recovery_device(
         None,
         None,
         None,
+        Some(certificate_ops.device.user_realm_id),
+        Some(certificate_ops.device.user_realm_key.clone()),
     );
 
     let device_cert = DeviceCertificate {

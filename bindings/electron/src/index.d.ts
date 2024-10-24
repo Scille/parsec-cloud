@@ -1104,6 +1104,69 @@ export type EntryStat =
   | EntryStatFolder
 
 
+// ExportRecoveryDeviceError
+export interface ExportRecoveryDeviceErrorCertifDeviceError {
+    tag: "CertifDeviceError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorConnectionError {
+    tag: "ConnectionError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorDataError {
+    tag: "DataError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorGetCertificateError {
+    tag: "GetCertificateError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError {
+    tag: "PlatformExportRecoveryDeviceError"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ExportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ExportRecoveryDeviceErrorUserRevoked {
+    tag: "UserRevoked"
+    error: string
+}
+export type ExportRecoveryDeviceError =
+  | ExportRecoveryDeviceErrorCertifDeviceError
+  | ExportRecoveryDeviceErrorConnectionError
+  | ExportRecoveryDeviceErrorDataError
+  | ExportRecoveryDeviceErrorGetCertificateError
+  | ExportRecoveryDeviceErrorInternal
+  | ExportRecoveryDeviceErrorInvalidCertificate
+  | ExportRecoveryDeviceErrorOffline
+  | ExportRecoveryDeviceErrorPlatformExportRecoveryDeviceError
+  | ExportRecoveryDeviceErrorStopped
+  | ExportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ExportRecoveryDeviceErrorUserRevoked
+
+
 // GreetInProgressError
 export interface GreetInProgressErrorActiveUsersLimitReached {
     tag: "ActiveUsersLimitReached"
@@ -1193,6 +1256,89 @@ export type GreetInProgressError =
   | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
+
+
+// ImportRecoveryDeviceError
+export interface ImportRecoveryDeviceErrorCertifDeviceError {
+    tag: "CertifDeviceError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorConnectionError {
+    tag: "ConnectionError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorDataError {
+    tag: "DataError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorGetCertificateError {
+    tag: "GetCertificateError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorSaveDeviceError {
+    tag: "SaveDeviceError"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export interface ImportRecoveryDeviceErrorUserRevoked {
+    tag: "UserRevoked"
+    error: string
+}
+export type ImportRecoveryDeviceError =
+  | ImportRecoveryDeviceErrorCertifDeviceError
+  | ImportRecoveryDeviceErrorConnectionError
+  | ImportRecoveryDeviceErrorDataError
+  | ImportRecoveryDeviceErrorDecryptionFailed
+  | ImportRecoveryDeviceErrorGetCertificateError
+  | ImportRecoveryDeviceErrorInternal
+  | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorSaveDeviceError
+  | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorTimestampOutOfBallpark
+  | ImportRecoveryDeviceErrorUserRevoked
 
 
 // InviteListItem
@@ -2283,6 +2429,10 @@ export function clientStartWorkspace(
 export function clientStop(
     client: number
 ): Promise<Result<null, ClientStopError>>
+export function exportRecoveryDevice(
+    client_handle: number,
+    device_label: string
+): Promise<Result<[string, Uint8Array], ExportRecoveryDeviceError>>
 export function getDefaultConfigDir(
 ): Promise<string>
 export function getDefaultDataBaseDir(
@@ -2343,6 +2493,13 @@ export function greeterUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+export function importRecoveryDevice(
+    config: ClientConfig,
+    recovery_device: Uint8Array,
+    passphrase: string,
+    device_label: string,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(
