@@ -134,7 +134,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                         continue
                     if service.service_type == SequesterServiceType.WEBHOOK:
                         assert service.webhook_url is not None
-                        match await self._sequester_service_send_webhook(
+                        match await self.webhooks.sequester_service_on_vlob_create_or_update(
                             webhook_url=service.webhook_url,
                             service_id=service_id,
                             organization_id=organization_id,
@@ -268,7 +268,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                             continue
                         if service.service_type == SequesterServiceType.WEBHOOK:
                             assert service.webhook_url is not None
-                            match await self._sequester_service_send_webhook(
+                            match await self.webhooks.sequester_service_on_vlob_create_or_update(
                                 webhook_url=service.webhook_url,
                                 service_id=service_id,
                                 organization_id=organization_id,

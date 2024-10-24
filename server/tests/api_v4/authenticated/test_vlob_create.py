@@ -1,5 +1,6 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import asyncio
 from unittest.mock import ANY, Mock
 
 import pytest
@@ -15,6 +16,8 @@ from parsec._parsec import (
     testbed,
 )
 from parsec.components.realm import SequesterServiceUnavailable
+from parsec.components.sequester import SequesterServiceType
+from parsec.components.vlob import RejectedBySequesterService
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import (
     Backend,
@@ -320,7 +323,16 @@ async def test_authenticated_vlob_create_vlob_already_exists(
 async def test_authenticated_vlob_create_rejected_by_sequester_service(
     sequestered_org: SequesteredOrgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _mocked_sequester_service_send_webhook = Mock(side_effect=[SequesterServiceUnavailable])
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(RejectedBySequesterService(service_id=sequestered_org.sequester_service_2_id))
+    _mocked_sequester_service_send_webhook = Mock(side_effect=[future])
     monkeypatch.setattr(
         "parsec.components.vlob.BaseVlobComponent._sequester_service_send_webhook",
         _mocked_sequester_service_send_webhook,
@@ -349,7 +361,18 @@ async def test_authenticated_vlob_create_rejected_by_sequester_service(
 async def test_authenticated_vlob_create_sequester_service_unavailable(
     sequestered_org: SequesteredOrgRpcClients, backend: Backend, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    _mocked_sequester_service_send_webhook = Mock(side_effect=[SequesterServiceUnavailable])
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        SequesterServiceUnavailable(service_id=sequestered_org.sequester_service_2_id)
+    )
+    _mocked_sequester_service_send_webhook = Mock(side_effect=[future])
     monkeypatch.setattr(
         "parsec.components.vlob.BaseVlobComponent._sequester_service_send_webhook",
         _mocked_sequester_service_send_webhook,

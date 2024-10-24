@@ -23,6 +23,11 @@ class SequesterServiceType(Enum):
     WEBHOOK = "webhook"
 
 
+@dataclass(slots=True)
+class SequesterServiceUnavailable:
+    service_id: SequesterServiceID
+
+
 type SequesterServiceWebhookUrl = str
 type SequesterServiceConfig = (
     Literal[SequesterServiceType.STORAGE]

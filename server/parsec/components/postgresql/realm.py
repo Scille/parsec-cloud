@@ -53,11 +53,13 @@ from parsec.components.realm import (
     SequesterServiceMismatch,
     SequesterServiceUnavailable,
 )
+from parsec.components.vlob import RejectedBySequesterService
+from parsec.webhooks import WebhooksComponent
 
 
 class PGRealmComponent(BaseRealmComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
-        super().__init__()
+    def __init__(self, pool: AsyncpgPool, webhooks: WebhooksComponent, event_bus: EventBus):
+        super().__init__(self.webhooks)
         self.pool = pool
         self.event_bus = event_bus
 
@@ -205,6 +207,7 @@ class PGRealmComponent(BaseRealmComponent):
         | ParticipantMismatch
         | SequesterServiceMismatch
         | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         return await realm_rotate_key(
             self.event_bus,

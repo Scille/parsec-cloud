@@ -26,7 +26,10 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.sequester import SequesterServiceUnavailable
+from parsec.components.vlob import RejectedBySequesterService
 from parsec.types import BadOutcome, BadOutcomeEnum
+from parsec.webhooks import WebhooksComponent
 
 KeyIndex: TypeAlias = int
 
@@ -34,11 +37,6 @@ KeyIndex: TypeAlias = int
 @dataclass(slots=True)
 class BadKeyIndex(BadOutcome):
     last_realm_certificate_timestamp: DateTime
-
-
-@dataclass(slots=True)
-class SequesterServiceUnavailable:
-    service_id: SequesterServiceID
 
 
 @dataclass(slots=True)
@@ -348,6 +346,9 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
 
 
 class BaseRealmComponent:
+    def __init__(self, webhooks: WebhooksComponent):
+        self.webhooks = webhooks
+
     #
     # Public methods
     #
@@ -446,6 +447,7 @@ class BaseRealmComponent:
         | ParticipantMismatch
         | SequesterServiceMismatch
         | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         raise NotImplementedError
 
@@ -689,6 +691,7 @@ class BaseRealmComponent:
             author_verify_key=client_ctx.device_verify_key,
             realm_key_rotation_certificate=req.realm_key_rotation_certificate,
             per_participant_keys_bundle_access=req.per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=req.per_sequester_service_keys_bundle_access,
             keys_bundle=req.keys_bundle,
         )
         match outcome:
@@ -722,6 +725,10 @@ class BaseRealmComponent:
             case SequesterServiceUnavailable() as error:
                 return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceUnavailable(
                     service_id=error.service_id
+                )
+            case RejectedBySequesterService() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepRejectedBySequesterService(
+                    service_id=error.service_id, reason=error.reason
                 )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
