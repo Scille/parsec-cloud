@@ -14,10 +14,18 @@
             class="file-info-image"
           />
           <ion-icon
+            id="click-trigger"
             class="cloud-overlay"
             :class="entry.needSync ? 'cloud-overlay-ko' : 'cloud-overlay-ok'"
             :icon="entry.needSync ? cloudOffline : cloudDone"
           />
+          <ion-popover
+            trigger="click-trigger"
+            trigger-action="click"
+            :show-backdrop="false"
+          >
+            {{ $msTranslate(getSyncString()) }}
+          </ion-popover>
           <div class="file-info-basic">
             <ion-text class="file-info-basic__name title-h4">
               {{ entry.name }}
@@ -105,7 +113,7 @@
 import { formatFileSize, getFileIcon, shortenFileName } from '@/common/file';
 import { Clipboard, Folder, MsImage, MsModal, I18n } from 'megashark-lib';
 import { EntryStat, EntryStatFile, getSystemPath, WorkspaceHandle } from '@/parsec';
-import { IonButton, IonIcon, IonLabel, IonPage, IonText } from '@ionic/vue';
+import { IonButton, IonIcon, IonLabel, IonPage, IonPopover, IonText } from '@ionic/vue';
 import { cloudDone, cloudOffline, copy } from 'ionicons/icons';
 import { defineProps, ref } from 'vue';
 
@@ -121,6 +129,14 @@ const props = defineProps<{
 }>();
 
 const copyStatus = ref(CopyStatus.NotCopied);
+
+function getSyncString(): string {
+  if (props.entry.isFile()) {
+    return props.entry.needSync ? 'FileDetails.fileSyncKo' : 'FileDetails.fileSyncOk';
+  } else {
+    return props.entry.needSync ? 'FileDetails.folderSyncKo' : 'FileDetails.folderSyncOk';
+  }
+}
 
 async function copyPath(): Promise<void> {
   const fullPathResult = await getSystemPath(props.workspaceHandle, props.entry.path);
@@ -159,6 +175,7 @@ async function copyPath(): Promise<void> {
   position: relative;
 
   .cloud-overlay {
+    cursor: pointer;
     position: absolute;
     font-size: 1rem;
     background: var(--parsec-color-light-secondary-background);
