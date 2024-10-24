@@ -473,13 +473,22 @@ class ImportRecoveryDeviceError(ErrorVariant):
     class CertifDeviceError:
         pass
 
-    class PlatformImportRecoveryDeviceError:
-        pass
-
     class ConnectionError:
         pass
 
     class SaveDeviceError:
+        pass
+
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class InvalidPassphrase:
+        pass
+
+    class DecryptionFailed:
         pass
 
     class TimestampOutOfBallpark:

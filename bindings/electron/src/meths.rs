@@ -5040,6 +5040,11 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 JsString::try_new(cx, "ImportRecoveryDeviceErrorDataError").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
+        libparsec::ImportRecoveryDeviceError::DecryptionFailed { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorDecryptionFailed").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
         libparsec::ImportRecoveryDeviceError::GetCertificateError { .. } => {
             let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorGetCertificateError")
                 .or_throw(cx)?;
@@ -5054,16 +5059,23 @@ fn variant_import_recovery_device_error_rs_to_js<'a>(
                 .or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ImportRecoveryDeviceError::Offline { .. } => {
-            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
+        libparsec::ImportRecoveryDeviceError::InvalidData { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidData").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
-        libparsec::ImportRecoveryDeviceError::PlatformImportRecoveryDeviceError { .. } => {
-            let js_tag = JsString::try_new(
-                cx,
-                "ImportRecoveryDeviceErrorPlatformImportRecoveryDeviceError",
-            )
-            .or_throw(cx)?;
+        libparsec::ImportRecoveryDeviceError::InvalidPassphrase { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPassphrase").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::InvalidPath { .. } => {
+            let js_tag =
+                JsString::try_new(cx, "ImportRecoveryDeviceErrorInvalidPath").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+        }
+        libparsec::ImportRecoveryDeviceError::Offline { .. } => {
+            let js_tag = JsString::try_new(cx, "ImportRecoveryDeviceErrorOffline").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
         }
         libparsec::ImportRecoveryDeviceError::SaveDeviceError { .. } => {
