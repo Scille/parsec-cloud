@@ -264,6 +264,7 @@ pub enum RemoveDeviceError {
 }
 
 pub use platform::remove_device;
+use zeroize::Zeroize;
 
 #[derive(Debug, thiserror::Error)]
 pub enum PlatformImportRecoveryDeviceError {
@@ -287,17 +288,89 @@ pub enum PlatformExportRecoveryDeviceError {
     LoadDeviceError(#[from] LoadDeviceError),
 }
 
+/// Returns recovery device
 pub async fn inner_import_recovery_device(
     recovery_device: Vec<u8>,
     passphrase: SecretKeyPassphrase,
 ) -> Result<LocalDevice, PlatformImportRecoveryDeviceError> {
-    platform::import_recovery_device(recovery_device, passphrase).await
+    let key = SecretKey::from_recovery_passphrase(passphrase)
+        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidPassphrase)?;
+
+    // Regular load
+    let device_file = DeviceFile::load(&recovery_device)
+        .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
+
+    let recovery_device = match device_file {
+        DeviceFile::Recovery(x) => {
+            let mut cleartext = key
+                .decrypt(&x.ciphertext)
+                .map_err(|_| PlatformImportRecoveryDeviceError::DecryptionFailed)?;
+            let device = LocalDevice::load(&cleartext)
+                .map_err(|_| PlatformImportRecoveryDeviceError::InvalidData)?;
+            cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
+            device
+        }
+        // We are not expecting other type of device file
+        _ => return Err(PlatformImportRecoveryDeviceError::InvalidData),
+    };
+
+    Ok(recovery_device)
 }
 
-/// returns (secret key passphrase, recovery device encrypted data, recovery device)
+/// create a new recovery device from provided local device
+/// returns the passphrase associated with the key that
+/// encrypted device data, the dumped recovery device data
+/// and the recovery device itself
 pub async fn inner_export_recovery_device(
     device: &LocalDevice,
     device_label: DeviceLabel,
 ) -> Result<(SecretKeyPassphrase, Vec<u8>, LocalDevice), PlatformExportRecoveryDeviceError> {
-    platform::export_recovery_device(device, device_label).await
+    let created_on = device.now();
+    let server_url = {
+        ParsecAddr::new(
+            device.organization_addr.hostname().to_owned(),
+            Some(device.organization_addr.port()),
+            device.organization_addr.use_ssl(),
+        )
+        .to_http_url(None)
+        .to_string()
+    };
+
+    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
+
+    let recovery_device = LocalDevice::generate_new_device(
+        device.organization_addr.clone(),
+        device.initial_profile,
+        device.human_handle.clone(),
+        device_label,
+        Some(device.user_id),
+        None,
+        None,
+        Some(device.private_key.clone()),
+        None,
+        Some(device.user_realm_id),
+        Some(device.user_realm_key.clone()),
+    );
+    let ciphertext = {
+        let mut cleartext = recovery_device.dump();
+        let ciphertext = key.encrypt(&cleartext);
+        cleartext.zeroize(); // Scrub the buffer given it contains keys in clear
+        ciphertext.into()
+    };
+
+    let file_content = DeviceFile::Recovery(DeviceFileRecovery {
+        created_on,
+        // Note recovery device is not supposed to change its protection
+        protected_on: created_on,
+        server_url,
+        organization_id: recovery_device.organization_id().to_owned(),
+        user_id: recovery_device.user_id,
+        device_id: recovery_device.device_id,
+        human_handle: recovery_device.human_handle.to_owned(),
+        device_label: recovery_device.device_label.to_owned(),
+        ciphertext,
+    })
+    .dump();
+
+    Ok((passphrase, file_content, recovery_device))
 }
