@@ -3,8 +3,9 @@
 
 use std::sync::Arc;
 
-use libparsec_client::{Client, EventBus};
+use libparsec_client::{create_device_from_recovery, ProxyConfig};
 pub use libparsec_client::{ExportRecoveryDeviceError, ImportRecoveryDeviceError};
+use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::DeviceSaveStrategy;
 use libparsec_types::{AvailableDevice, DeviceLabel};
 
@@ -25,16 +26,21 @@ pub async fn import_recovery_device(
     )
     .await?
     .into();
-    let client = Client::start(
-        config.clone().into(),
-        EventBus::default(),
+
+    let cmds = AuthenticatedCmds::new(
+        &config.config_dir,
         recovery_device.clone(),
+        ProxyConfig::default(),
+    )?;
+
+    let saved_device = create_device_from_recovery(
+        cmds.into(),
+        &recovery_device,
+        &device_label,
+        save_strategy,
+        config.config_dir,
     )
     .await?;
-
-    let saved_device = client
-        .create_device_from_recovery(&recovery_device, &device_label, save_strategy)
-        .await?;
 
     Ok(saved_device)
 }

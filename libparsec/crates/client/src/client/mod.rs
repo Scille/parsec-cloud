@@ -17,6 +17,7 @@ mod workspace_start;
 use std::{
     collections::HashMap,
     fmt::Debug,
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 
@@ -34,6 +35,7 @@ pub use self::{
 use crate::{
     certif::{CertifPollServerError, CertificateOps},
     config::{ClientConfig, ServerConfig},
+    create_new_device,
     event_bus::EventBus,
     monitors::{
         start_certif_poll_monitor, start_connection_monitor, start_server_config_monitor,
@@ -552,10 +554,8 @@ impl Client {
             .await?;
 
         // save recovery device
-        let outcome = self
-            .certificates_ops
-            .create_new_device(recovery_device, self.device.clone())
-            .await?;
+        let outcome =
+            create_new_device(self.cmds.clone(), recovery_device, self.device.clone()).await?;
 
         let latest_known_timestamps = match outcome {
             CertificateBasedActionOutcome::LocalIdempotent => return Ok((passphrase, data)), // not sure how it could happen though
@@ -584,70 +584,50 @@ impl Client {
             })?;
         Ok((passphrase, data))
     }
+}
+pub async fn create_device_from_recovery(
+    cmds: Arc<AuthenticatedCmds>,
+    recovery_device: &LocalDevice,
+    device_label: &DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+    config_dir: PathBuf,
+) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
+    let new_device = LocalDevice::generate_new_device(
+        recovery_device.organization_addr.clone(),
+        recovery_device.initial_profile,
+        recovery_device.human_handle.clone(),
+        device_label.clone(),
+        Some(recovery_device.user_id),
+        None,
+        None,
+        Some(recovery_device.private_key.clone()),
+        None,
+        Some(recovery_device.user_realm_id),
+        Some(recovery_device.user_realm_key.clone()),
+    );
+    // save recovery device TODO save after upload
+    let access = {
+        let key_file = dbg!(get_default_key_file(&config_dir, &new_device.device_id));
+        save_strategy.into_access(key_file)
+    };
+    let saved_device = save_device(&config_dir, &access, &new_device).await?;
+    assert!(saved_device.key_file_path.exists());
+    let outcome = create_new_device(cmds, new_device, recovery_device.clone().into()).await?;
+    // let latest_known_timestamps =
+    match outcome {
+        CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
+        CertificateBasedActionOutcome::Uploaded {
+            certificate_timestamp,
+        }
+        | CertificateBasedActionOutcome::RemoteIdempotent {
+            certificate_timestamp,
+        } => PerTopicLastTimestamps::new_for_common_and_shamir(
+            certificate_timestamp,
+            certificate_timestamp,
+        ),
+    };
 
-    pub async fn create_device_from_recovery(
-        &self,
-        recovery_device: &LocalDevice,
-        device_label: &DeviceLabel,
-        save_strategy: DeviceSaveStrategy,
-    ) -> Result<AvailableDevice, ImportRecoveryDeviceError> {
-        let new_device = LocalDevice::generate_new_device(
-            recovery_device.organization_addr.clone(),
-            recovery_device.initial_profile,
-            recovery_device.human_handle.clone(),
-            device_label.clone(),
-            Some(recovery_device.user_id),
-            None,
-            None,
-            Some(recovery_device.private_key.clone()),
-            None,
-            Some(recovery_device.user_realm_id),
-            Some(recovery_device.user_realm_key.clone()),
-        );
-        // save recovery device TODO save after upload
-        let access = {
-            let key_file = dbg!(get_default_key_file(
-                &self.config.config_dir,
-                &new_device.device_id
-            ));
-            save_strategy.into_access(key_file)
-        };
-        let saved_device = save_device(&self.config.config_dir, &access, &new_device).await?;
-
-        let outcome = self
-            .certificates_ops
-            .create_new_device(new_device, self.device.clone())
-            .await?;
-        // let latest_known_timestamps =
-        match outcome {
-            CertificateBasedActionOutcome::LocalIdempotent => return Ok(saved_device), // not sure how it could happen though
-            CertificateBasedActionOutcome::Uploaded {
-                certificate_timestamp,
-            }
-            | CertificateBasedActionOutcome::RemoteIdempotent {
-                certificate_timestamp,
-            } => PerTopicLastTimestamps::new_for_common_and_shamir(
-                certificate_timestamp,
-                certificate_timestamp,
-            ),
-        };
-
-        // self.certificates_ops
-        //     .poll_server_for_new_certificates(Some(&latest_known_timestamps))
-        //     .await
-        //     .map_err(|e| match e {
-        //         CertifPollServerError::Stopped => ImportRecoveryDeviceError::Stopped,
-        //         CertifPollServerError::Offline => ImportRecoveryDeviceError::Offline,
-        //         CertifPollServerError::InvalidCertificate(err) => {
-        //             ImportRecoveryDeviceError::InvalidCertificate(err)
-        //         }
-        //         CertifPollServerError::Internal(err) => err
-        //             .context("Cannot poll server for new certificates")
-        //             .into(),
-        //     })?;
-
-        Ok(saved_device)
-    }
+    Ok(saved_device)
 }
 
 #[derive(Debug, thiserror::Error)]

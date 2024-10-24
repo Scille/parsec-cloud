@@ -1,7 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use crate::DeviceInfo;
+use crate::{create_device_from_recovery, DeviceInfo};
 
+use libparsec_client_connection::{AuthenticatedCmds, ProxyConfig};
 use libparsec_platform_device_loader::{get_default_key_file, load_device};
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -68,10 +69,6 @@ async fn ok(env: &TestbedEnv) {
             .await
             .unwrap();
 
-    let client = client_factory(&env.discriminant_dir, recovery_device.clone().into()).await;
-
-    assert_eq!(client.user_id(), "alice".parse().unwrap());
-
     // let alice_devices = client.list_user_devices(client.user_id()).await.unwrap();
     // p_assert_eq!(alice_devices.len(), 3);
     // assert_device(&alice_devices[0], "alice@dev1", env);
@@ -80,22 +77,29 @@ async fn ok(env: &TestbedEnv) {
 
     let save_strategy = DeviceSaveStrategy::Keyring;
 
-    let saved_device = client
-        .create_device_from_recovery(&recovery_device, &new_device_label, save_strategy.clone())
-        .await
-        .unwrap();
+    let cmds = AuthenticatedCmds::new(
+        &config.clone().config_dir,
+        recovery_device.clone().into(),
+        ProxyConfig::default(),
+    )
+    .unwrap();
 
-    client.stop().await;
+    let saved_device = create_device_from_recovery(
+        cmds.into(),
+        &recovery_device,
+        &new_device_label,
+        save_strategy.clone(),
+        config.clone().config_dir,
+    )
+    .await
+    .unwrap();
+
     let access = {
-        let key_file = dbg!(get_default_key_file(
-            &config.config_dir,
-            &saved_device.device_id
-        ));
+        let key_file = dbg!(get_default_key_file(&tmp_path, &saved_device.device_id));
         save_strategy.into_access(key_file)
     };
     let new_device = load_device(&config.config_dir, &access).await.unwrap();
     let client = client_factory(&env.discriminant_dir, new_device).await;
-    // check from avavble device
 
     client.poll_server_for_new_certificates().await.unwrap();
 

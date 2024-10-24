@@ -2,7 +2,7 @@
 
 use std::sync::Arc;
 
-use libparsec_client_connection::ConnectionError;
+use libparsec_client_connection::{AuthenticatedCmds, ConnectionError};
 use libparsec_platform_storage::certificates::GetCertificateError;
 use libparsec_protocol::authenticated_cmds::v4::device_create;
 use libparsec_types::{
@@ -10,29 +10,23 @@ use libparsec_types::{
     MaybeRedacted, SigningKeyAlgorithm, UserID,
 };
 
-use crate::EventTooMuchDriftWithServerClock;
-
 use super::{
     encrypt::CertifEncryptForUserError, greater_timestamp, CertificateBasedActionOutcome,
-    CertificateOps, GreaterTimestampOffset, InvalidCertificateError,
+    GreaterTimestampOffset, InvalidCertificateError,
 };
 
-pub(crate) async fn create_new_device(
-    certificate_ops: &CertificateOps,
+pub async fn create_new_device(
+    cmds: Arc<AuthenticatedCmds>,
     new_device: LocalDevice,
     author: Arc<LocalDevice>,
 ) -> Result<CertificateBasedActionOutcome, CertifDeviceError> {
     // Loop is needed to deal with server requiring greater timestamp
-    let mut timestamp = certificate_ops.device.now();
+    let mut timestamp = author.now();
 
     loop {
-        let outcome = internal_create_new_device(
-            certificate_ops,
-            new_device.clone(),
-            author.clone(),
-            timestamp,
-        )
-        .await?;
+        let outcome =
+            internal_create_new_device(cmds.clone(), new_device.clone(), author.clone(), timestamp)
+                .await?;
 
         match outcome {
             DeviceInternalsOutcome::Done(outcome) => return Ok(outcome),
@@ -40,7 +34,7 @@ pub(crate) async fn create_new_device(
                 // TODO: handle `strictly_greater_than` out of the client ballpark by
                 // returning an error
                 timestamp = greater_timestamp(
-                    &certificate_ops.device.time_provider,
+                    &author.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,
                 );
@@ -118,15 +112,14 @@ enum DeviceInternalsOutcome {
 }
 
 async fn internal_create_new_device(
-    certificate_ops: &CertificateOps,
+    cmds: Arc<AuthenticatedCmds>,
     new_device: LocalDevice,
     author: Arc<LocalDevice>,
     now: DateTime,
 ) -> Result<DeviceInternalsOutcome, CertifDeviceError> {
     let (device_certificate, redacted_device_certificate) =
         generate_new_device_certificates(&new_device, author, now);
-    match certificate_ops
-        .cmds
+    match cmds
         .send(device_create::Req {
             device_certificate,
             redacted_device_certificate,
@@ -153,22 +146,12 @@ async fn internal_create_new_device(
             ballpark_client_early_offset,
             ballpark_client_late_offset,
             ..
-        } => {
-            let event = EventTooMuchDriftWithServerClock {
-                server_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-                client_timestamp,
-            };
-            certificate_ops.event_bus.send(&event);
-
-            Err(CertifDeviceError::TimestampOutOfBallpark {
-                server_timestamp,
-                client_timestamp,
-                ballpark_client_early_offset,
-                ballpark_client_late_offset,
-            })
-        }
+        } => Err(CertifDeviceError::TimestampOutOfBallpark {
+            server_timestamp,
+            client_timestamp,
+            ballpark_client_early_offset,
+            ballpark_client_late_offset,
+        }),
         bad_rep @ (device_create::Rep::UnknownStatus { .. }
         | device_create::Rep::InvalidCertificate
         | device_create::Rep::DeviceAlreadyExists) => {

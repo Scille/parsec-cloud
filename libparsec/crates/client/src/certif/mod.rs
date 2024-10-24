@@ -21,7 +21,7 @@ mod workspace_bootstrap;
 
 pub use add::{CertifAddCertificatesBatchError, InvalidCertificateError, MaybeRedactedSwitch};
 pub use block_validate::{CertifValidateBlockError, InvalidBlockAccessError};
-pub use device::CertifDeviceError;
+pub use device::{create_new_device, CertifDeviceError};
 pub use encrypt::CertifEncryptForSequesterServicesError;
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 pub use list::{
@@ -611,14 +611,6 @@ impl CertificateOps {
         threshold: u8,
     ) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
         shamir_recovery_setup::shamir_setup_create(self, share_recipients, threshold).await
-    }
-
-    pub async fn create_new_device(
-        &self,
-        new_device: LocalDevice,
-        author: Arc<LocalDevice>,
-    ) -> Result<CertificateBasedActionOutcome, CertifDeviceError> {
-        device::create_new_device(self, new_device, author).await
     }
 }
 
