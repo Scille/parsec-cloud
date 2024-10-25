@@ -83,6 +83,31 @@ macro_rules! clap_parser_with_shared_opts_builder {
             }
         );
     };
+    // Auto accept TOS
+    (
+        #[with = auto_tos $(,$modifier:ident)*]
+        $(#[$struct_attr:meta])*
+        $visibility:vis struct $name:ident {
+            $(
+                $(#[$field_attr:meta])*
+                $field_vis:vis $field:ident: $field_type:ty,
+            )*
+        }
+    ) => {
+        $crate::clap_parser_with_shared_opts_builder!(
+            #[with = $($modifier),*]
+            $(#[$struct_attr])*
+            $visibility struct $name {
+                #[doc = "Automatically accept the Terms of Service"]
+                #[arg(long, env = "PARSEC_AUTO_TOS_ACCEPT")]
+                pub(crate) auto_accept_tos: bool,
+                $(
+                    $(#[$field_attr])*
+                    $field_vis $field: $field_type,
+                )*
+            }
+        );
+    };
     // Workspace option
     (
         #[with = workspace $(,$modifier:ident)*]
