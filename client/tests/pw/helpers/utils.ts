@@ -2,6 +2,8 @@
 
 import { BrowserContext, Locator, Page } from '@playwright/test';
 import { expect } from '@tests/pw/helpers/assertions';
+import { readFileSync } from 'fs';
+import path from 'path';
 
 interface QuestionOptions {
   expectedTitleText?: string | RegExp;
@@ -93,4 +95,26 @@ export async function sortBy(sortButton: Locator, clickOnLabel: string): Promise
   const popover = sortButton.page().locator('.sorter-popover');
   await popover.getByRole('listitem').filter({ hasText: clickOnLabel }).click();
   await expect(popover).toBeHidden();
+}
+
+export async function dragAndDropFile(page: Page, element: Locator, filePaths: Array<string>): Promise<void> {
+  const files: Array<{ content: string; name: string }> = [];
+
+  for (const filePath of filePaths) {
+    files.push({ content: readFileSync(filePath).toString('base64'), name: path.basename(filePath) });
+  }
+
+  const dataTransfer = await page.evaluateHandle(async (filesInfo: Array<{ content: string; name: string }>) => {
+    const dt = new DataTransfer();
+
+    for (const fileInfo of filesInfo) {
+      const blobData = await fetch(`data:application/octet-stream;base64,${fileInfo.content}`).then((res) => res.blob());
+      const upload = new File([blobData], fileInfo.name, { type: 'application/octet-stream' });
+      dt.items.add(upload);
+    }
+    return dt;
+  }, files);
+
+  await element.dispatchEvent('dragenter');
+  await element.dispatchEvent('drop', { dataTransfer });
 }

@@ -23,21 +23,30 @@ export interface FolderSelectionOptions {
 export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<FileImportTuple[]> {
   if (event.dataTransfer) {
     const entries: FileSystemEntry[] = [];
-    // May have to use event.dataTransfer.files instead of items.
-    // .files gets us a FileList, the API is not as good
-    // but it's the same used in <input> and it should be compatible with
-    // Cypress.
+    const files: File[] = [];
+
+    /*
+      In some cases (Playwright, Cypress, old browsers, ...), `webkitGetAsEntry`
+      will fail. In those cases, we use the file list. It's a lower API and
+      doesn't allow us to travel the tree, but it's good enough as a backup.
+    */
+
     for (let i = 0; i < event.dataTransfer.items.length; i++) {
       const entry = event.dataTransfer.items[i].webkitGetAsEntry();
       if (entry) {
         entries.push(entry);
+      } else if (event.dataTransfer.files[i]) {
+        files.push(event.dataTransfer.files[i]);
       }
     }
-    if (entries.length) {
+    if (entries.length || files.length) {
       const imports: FileImportTuple[] = [];
       for (const entry of entries) {
         const result = await unwindEntry(path, entry);
         imports.push(...result);
+      }
+      for (const file of files) {
+        imports.push({ file: file, path: path });
       }
       return imports;
     }
