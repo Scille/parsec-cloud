@@ -216,17 +216,51 @@ parts:
     prime:
       - bin/desktop-launch-wrapper
       - bin/desktop-launch
+      - bin/xdg-open
       - flavor-select
     override-build: |
+      # Build the GTK desktop helpers
       cd gtk
       make -j build
 
+      # Create the entry point for the parsec app
       cat > command.sh << EOF
       #!/bin/bash -e
+      # Snap bin directory needs more priority than `/usr/bin` and `/bin` in order for
+      # the `xdg-open` script to work properly.
+      export PATH="\$SNAP/bin:\$PATH"
       exec "\$SNAP/bin/desktop-launch-wrapper" "\$SNAP/app/parsec" "\$@" --no-sandbox
       EOF
 
+      # Create the entry point for xdg-open
+      # Explanation:
+      # When running the app through `desktop-launch-wrapper`, the environment is populated
+      # with variables that are specific to the snap enviroment. But when the electron app
+      # uses `xdg-open` to open an external resource, we want to use the host environment
+      # (otherwise, the host applications might end up crashing when trying to load libraries
+      # from the snap environment). This is why we expose an `xdg-open` script with a higher
+      # priority in the PATH that will call the host `xdg-open` binary (see `command.sh`
+      # above). In order for `xdg-open` to initialize a new and properly configured environment,
+      # we filter all existing environment variables except for those three:
+      # - LANG (needed for locale settings)
+      # - DISPLAY (needed for X11 applications)
+      # - PATH (filtered to remove the snap bin directory)
+      # Another way of dealing with this issue would be to export the current environment
+      # in `command.sh` before calling `desktop-launch-wrapper`. Then the saved environment
+      # could be restored in `xdg-open.sh`.
+      # See: https://github.com/Scille/parsec-cloud/issues/8737
+      cat > xdg-open.sh << EOF
+      #!/bin/bash -e
+      XDG_OPEN=\$(which -a xdg-open | grep -v "\$SNAP" | head -n 1)
+      FILTERED_PATH=\$(echo -n "\$PATH" | sed -e "s#\$SNAP/bin:##g")
+      exec env - LANG="\$LANG" DISPLAY="\$DISPLAY" PATH="\$FILTERED_PATH" "\$XDG_OPEN" "\$@"
+      EOF
+
+      # Expose the entry points and helpers in the snap bin directory
       mkdir -p "$CRAFT_PART_INSTALL"/bin
       install -v --mode=555 desktop-launch "$CRAFT_PART_INSTALL"/bin/desktop-launch-wrapper
       install -v --mode=555 command.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
+      install -v --mode=555 xdg-open.sh "$CRAFT_PART_INSTALL"/bin/xdg-open
+
+      # Install the flavor-select file selecting GTK3
       install -v --mode=444 flavor-select "$CRAFT_PART_INSTALL"/flavor-select
