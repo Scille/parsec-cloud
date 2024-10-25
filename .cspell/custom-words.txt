@@ -173,6 +173,7 @@ fdata
 fetchrow
 fetchval
 fghij
+filechooser
 fileprovider
 firacode
 fireraptor
