@@ -82,6 +82,7 @@
           class="step user-info-page"
         >
           <user-information
+            class="user-details"
             :default-email="''"
             :default-name="''"
             :email-enabled="false"
@@ -519,5 +520,9 @@ onUnmounted(async () => {
 
 .spinner {
   padding-bottom: 0.4rem;
+}
+
+.user-details {
+  width: 100%;
 }
 </style>
