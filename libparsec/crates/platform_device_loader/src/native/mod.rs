@@ -12,9 +12,8 @@ use zeroize::{Zeroize, Zeroizing};
 use libparsec_types::prelude::*;
 
 use crate::{
-    ChangeAuthentificationError, LoadDeviceError, LoadRecoveryDeviceError, SaveDeviceError,
-    SaveRecoveryDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB, ARGON2ID_DEFAULT_OPSLIMIT,
-    ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
+    ChangeAuthentificationError, LoadDeviceError, SaveDeviceError, ARGON2ID_DEFAULT_MEMLIMIT_KB,
+    ARGON2ID_DEFAULT_OPSLIMIT, ARGON2ID_DEFAULT_PARALLELISM, DEVICE_FILE_EXT,
 };
 
 const KEYRING_SERVICE: &str = "parsec";
@@ -502,79 +501,6 @@ pub async fn remove_device(device_path: &Path) -> Result<(), crate::RemoveDevice
     tokio::fs::remove_file(device_path)
         .await
         .map_err(|e| crate::RemoveDeviceError::Internal(e.into()))
-}
-
-/*
- * Recovery
- */
-
-pub async fn load_recovery_device(
-    key_file: &Path,
-    passphrase: SecretKeyPassphrase,
-) -> Result<LocalDevice, LoadRecoveryDeviceError> {
-    let key = SecretKey::from_recovery_passphrase(passphrase)
-        .map_err(|_| LoadRecoveryDeviceError::InvalidPassphrase)?;
-
-    // TODO: make file access on a worker thread !
-    let content =
-        std::fs::read(key_file).map_err(|e| LoadRecoveryDeviceError::InvalidPath(e.into()))?;
-
-    // Regular load
-    let device_file =
-        DeviceFile::load(&content).map_err(|_| LoadRecoveryDeviceError::InvalidData)?;
-
-    let device = match device_file {
-        DeviceFile::Recovery(x) => {
-            let cleartext = key
-                .decrypt(&x.ciphertext)
-                .map(Zeroizing::new)
-                .map_err(|_| LoadRecoveryDeviceError::DecryptionFailed)?;
-
-            LocalDevice::load(&cleartext).map_err(|_| LoadRecoveryDeviceError::InvalidData)?
-        }
-        // We are not expecting other type of device file
-        _ => return Err(LoadRecoveryDeviceError::InvalidData),
-    };
-
-    Ok(device)
-}
-
-pub async fn save_recovery_device(
-    key_file: &Path,
-    file_content: &[u8],
-) -> Result<(), SaveRecoveryDeviceError> {
-    if let Some(parent) = key_file.parent() {
-        std::fs::create_dir_all(parent)
-            .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
-    }
-    let tmp_path = match key_file.file_name() {
-        Some(file_name) => {
-            let mut tmp_path = key_file.to_owned();
-            {
-                let mut tmp_file_name = file_name.to_owned();
-                tmp_file_name.push(".tmp");
-                tmp_path.set_file_name(tmp_file_name);
-            }
-            tmp_path
-        }
-        None => {
-            return Err(SaveRecoveryDeviceError::InvalidPath(anyhow::anyhow!(
-                "Path is missing a file name"
-            )))
-        }
-    };
-
-    // Classic pattern for atomic file creation:
-    // - First write the file in a temporary location
-    // - Then move the file to it final location
-    // This way a crash during file write won't end up with a corrupted
-    // file in the final location.
-    std::fs::write(&tmp_path, file_content)
-        .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
-    std::fs::rename(&tmp_path, key_file)
-        .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
-
-    Ok(())
 }
 
 pub fn is_keyring_available() -> bool {
