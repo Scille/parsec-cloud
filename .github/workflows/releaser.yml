@@ -127,7 +127,8 @@ jobs:
           # cp ${CP_ARGS} artifacts/windows-exe-X64-electron/latest-win-*.yml release-files
 
           # CLI
-          cp ${CP_ARGS} artifacts/Linux-X64-cli/parsec-cli_${{ needs.version.outputs.full }}_linux_* release-files
+          cp ${CP_ARGS} artifacts/Linux-x86_64-unknown-linux-gnu-cli/parsec-cli_${{ needs.version.outputs.full }}_linux-x86_64-gnu release-files
+          cp ${CP_ARGS} artifacts/Linux-x86_64-unknown-linux-musl-cli/parsec-cli_${{ needs.version.outputs.full }}_linux-x86_64-musl release-files
         env:
           # TODO: Current version of cp don't support `--update` with argument,
           # recent version (coreutils-9.5) allows for `none-fail` that make `cp` fail if it would have overwritten a file.
@@ -226,7 +227,7 @@ jobs:
             release-files/Parsec_${{ needs.version.outputs.full }}_linux_*.snap*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.dmg*
             release-files/Parsec_${{ needs.version.outputs.full }}_mac_*.zip*
-            release-files/parsec-cli_${{ needs.version.outputs.full }}_linux_*
+            release-files/parsec-cli_${{ needs.version.outputs.full }}_linux-x86_64-*
             release-files/python-*-requirements.txt
             release-files/python-*-requirements.txt.sha256
             release-files/latest-*.yml

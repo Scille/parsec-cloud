@@ -68,6 +68,8 @@ WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for rele
 WEB_DEV_CARGO_FLAGS = "--dev -- --features test-utils"
 WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
+CLI_RELEASE_CARGO_FLAGS = f"--profile=release {MAYBE_FORCE_VENDORED_OPENSSL}"
+
 # TL;DR: ONLY USE THE REAL ZSTD IN PRODUCTION !!!
 #
 # `libparsec_zstd` is just a shim over `zstd` crate to provide a simpler-to-build
@@ -243,6 +245,10 @@ COMMANDS: dict[tuple[str, ...], Union[Op, tuple[Op, ...]]] = {
     ("python-release-libparsec-cargo-flags",): Echo(PYTHON_RELEASE_CARGO_FLAGS),
     # Flags used in poetry's `server/build.py` when generating the dev wheel
     ("python-dev-libparsec-cargo-flags",): Echo(PYTHON_DEV_CARGO_FLAGS),
+    #
+    # Parsec CLI
+    #
+    ("cli-release-cargo-flags",): Echo(CLI_RELEASE_CARGO_FLAGS),
     #
     # Electron bindings
     #
