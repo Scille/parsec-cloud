@@ -73,7 +73,7 @@ msTest('Go through the greet process', async ({ userGreetModal }) => {
   await expect(userGreetModal.page()).toShowToast('Gordon Freeman can now access to the organization.', 'Success');
 });
 
-msTest('User join select invalid SAS code', async ({ userGreetModal }) => {
+msTest('User greet select invalid SAS code', async ({ userGreetModal }) => {
   const title = userGreetModal.locator('.modal-header__title');
   const nextButton = userGreetModal.locator('#next-button');
   await nextButton.click();
@@ -86,7 +86,7 @@ msTest('User join select invalid SAS code', async ({ userGreetModal }) => {
   await expect(title).toHaveText('Onboard a new user');
 });
 
-msTest('User join select no SAS code', async ({ userGreetModal }) => {
+msTest('User greet select no SAS code', async ({ userGreetModal }) => {
   const title = userGreetModal.locator('.modal-header__title');
   const nextButton = userGreetModal.locator('#next-button');
   await nextButton.click();

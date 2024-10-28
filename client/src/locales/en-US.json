@@ -756,7 +756,7 @@
                     "no": "Resume"
                 }
             },
-            "success": "You can connect to this organisation from your new device.",
+            "success": "You can connect to this organization from your new device.",
             "linkCopiedToClipboard": "Invitation link has been copied to clipboard.",
             "linkNotCopiedToClipboard": "Failed to copy the link. Your browser or device does not seem to support copy/paste.",
             "emailSent": "Email sent!",
