@@ -148,9 +148,9 @@ class Q:
             )
         )
 
-        # Existing the program here has two purposes:
+        # Exiting the program here has two purposes:
         # - It makes easy to display the query (e.g. no need to pass `-s` when running pytest)
-        # - PostgreSQL's EXPLAIN actually execute the query, hence if the query
+        # - PostgreSQL's EXPLAIN actually executes the query, hence if the query
         #   is an INSERT/UPDATE our program is broken anyway if we try to continue.
         raise SystemExit(msg)
 
