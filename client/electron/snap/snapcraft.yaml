@@ -76,8 +76,8 @@ parts:
       npm clean-install
       npm run build:release
 
-      cp -va dist/libparsec/index.node "$CRAFT_PART_INSTALL/libparsec.node"
-      cp -va dist/libparsec/index.d.ts "$CRAFT_PART_INSTALL/libparsec.d.ts"
+      cp -va dist/libparsec.node "$CRAFT_PART_INSTALL/libparsec.node"
+      cp -va dist/libparsec.d.ts "$CRAFT_PART_INSTALL/libparsec.d.ts"
 
   # We pre-package `megashark-lib` to workaround a permission issue during it's `prepare` step when installed as a 3rd dependencies from `client-vite`.
   megashark-lib:

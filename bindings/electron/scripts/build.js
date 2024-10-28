@@ -72,7 +72,7 @@ function build_electron_bindings(cargo_flags) {
     "cargo-cp-artifact",
     "--npm",
     "cdylib",
-    "dist/libparsec/index.node",
+    "dist/libparsec.node",
     "--",
     "cargo",
     "build",
@@ -100,4 +100,4 @@ build_electron_bindings(cargo_flags);
 
 
 // Finally, copy the typing info
-fs.copyFileSync('src/index.d.ts', 'dist/libparsec/index.d.ts');
+fs.copyFileSync('src/index.d.ts', 'dist/libparsec.d.ts');

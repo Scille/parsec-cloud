@@ -26,10 +26,10 @@ Install electron dependencies and build:
 ```bash
 # In /bindings/electron
 npm install
-npm run build  # Generate index.node (basically a .so that node can load)
+npm run build  # Generate libparsec.node (basically a .so that node can load)
 ```
 
-> *Note: `../client/electron` project automatically does `npm build` and copy `index.node` where needed.*
+> *Note: `../client/electron` project automatically does `npm build` and copy `libparsec.node` where needed.*
 
 ## 2. Android
 

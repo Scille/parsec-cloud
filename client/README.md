@@ -83,7 +83,7 @@ npm run electron:dist -- -- --dir  # To debug the generated payload
 npm run electron:dist -- -- --linux snap  # To generate a subset (see `npx electron-builder build --help`)
 ```
 
-> The `index.node` will be automatically copied by electron on build (see
+> The `libparsec.node` will be automatically copied by electron on build (see
 > `libparsec` script defined in `client/electron/package.json`)
 
 ## Android dev

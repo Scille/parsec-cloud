@@ -63,6 +63,13 @@ jobs:
       nightly_build: ${{ github.event_name == 'schedule' || github.ref == 'refs/tags/nightly' }}
     secrets:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+      MACOS_CI_KEYCHAIN_PASSWD: ${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}
+      MACOS_CERT_PASSWD: ${{ secrets.MACOS_CERT_PASSWD }}
+      MACOS_CERT: ${{ secrets.MACOS_CERT }}
+      MACOS_CERT_COMMON_NAME: ${{ secrets.MACOS_CERT_COMMON_NAME }}
+      MACOS_NOTARIZATION_TEAM_ID: ${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}
+      MACOS_NOTARIZATION_APPLE_ID: ${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}
+      MACOS_NOTARIZATION_PASSWD: ${{ secrets.MACOS_NOTARIZATION_PASSWD }}
 
   package-parsec-cli:
     needs: version
@@ -116,7 +123,7 @@ jobs:
           cp ${CP_ARGS} artifacts/linux-appimage-X64-electron/latest-linux-*.yml release-files
 
           # DMG & ZIP
-          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.unsigned{.dmg,.zip}{,.blockmap} release-files
+          cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/Parsec_${{ needs.version.outputs.full }}_mac_*.{dmg,zip}{,.blockmap} release-files
           cp ${CP_ARGS} artifacts/macos-dmg-X64-electron/latest-mac-*.yml release-files
 
           # TODO: Currently, Windows electron client is not signed by the CI, thus
