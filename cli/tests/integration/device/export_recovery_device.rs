@@ -18,10 +18,9 @@ async fn export_recovery_device(tmp_path: TmpPath) {
         "export-recovery-device",
         "--device",
         &alice.device_id.hex(),
-        "--output",
         &output.to_string_lossy()
     )
-    .stdout(predicates::str::contains("Saved in"));
+    .stdout(predicates::str::contains("Recovery device saved at"));
 
     assert!(output.exists());
 }
