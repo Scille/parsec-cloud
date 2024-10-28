@@ -209,38 +209,6 @@ pub async fn change_authentication(
     platform::change_authentication(current_access, new_access).await
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum SaveRecoveryDeviceError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-}
-
-pub async fn save_recovery_device(
-    key_file: &Path,
-    file_content: &[u8],
-) -> Result<(), SaveRecoveryDeviceError> {
-    platform::save_recovery_device(key_file, file_content).await
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum LoadRecoveryDeviceError {
-    #[error(transparent)]
-    InvalidPath(anyhow::Error),
-    #[error("Cannot deserialize file content")]
-    InvalidData,
-    #[error("Passphrase format is invalid")]
-    InvalidPassphrase,
-    #[error("Failed to decrypt file content")]
-    DecryptionFailed,
-}
-
-pub async fn load_recovery_device(
-    key_file: &Path,
-    passphrase: SecretKeyPassphrase,
-) -> Result<LocalDevice, LoadRecoveryDeviceError> {
-    platform::load_recovery_device(key_file, passphrase).await
-}
-
 pub fn is_keyring_available() -> bool {
     #[cfg(target_arch = "wasm32")]
     return false;
