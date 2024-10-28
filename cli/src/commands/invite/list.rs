@@ -27,7 +27,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let (cmds, _) = load_cmds(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Listing invitations".into());
 
-    let rep = cmds.send(invite_list::Req).await?;
+    let rep = cmds.send(invite_list::Req).await?; // TODO: Handle connection error
 
     let invitations = match rep {
         InviteListRep::Ok { invitations } => invitations,

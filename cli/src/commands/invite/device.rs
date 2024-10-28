@@ -29,7 +29,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     let rep = cmds
         .send(invite_new_device::Req { send_email: false })
-        .await?;
+        .await?; // TODO: Handle connection error
 
     let url = match rep {
         InviteNewDeviceRep::Ok { token, .. } => ParsecInvitationAddr::new(

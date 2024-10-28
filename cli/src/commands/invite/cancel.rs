@@ -8,7 +8,7 @@ use libparsec::{
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, auto_tos]
     pub struct Args {
         /// Invitation token
         #[arg(short, long, value_parser = InvitationToken::from_hex)]
@@ -22,6 +22,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device,
         config_dir,
         password_stdin,
+        auto_accept_tos,
     } = args;
     log::trace!(
         "Cancelling invitation (confdir={}, device={})",
@@ -32,7 +33,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
     let (cmds, _) = load_cmds(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Deleting invitation".into());
 
-    let rep = cmds.send(invite_cancel::Req { token }).await?;
+    let rep = cmds.send(invite_cancel::Req { token }).await?; // TODO: Handle connection error
 
     match rep {
         InviteCancelRep::Ok => (),
