@@ -386,18 +386,8 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
         ]
     },
     ROOT_DIR / "misc/versions.toml": {
-        Tool.Rust: [ReplaceRegex(r'rust = "[0-9.]+"', 'rust = "{version}"')],
-        Tool.Python: [ReplaceRegex(r'python = "[0-9.]+"', 'python = "{version}"')],
-        Tool.Poetry: [ReplaceRegex(r'poetry = "[0-9.]+"', 'poetry = "{version}"')],
-        Tool.Node: [ReplaceRegex(r'node = "[0-9.]+"', 'node = "{version}"')],
-        Tool.WasmPack: [ReplaceRegex(r'wasm-pack = "[0-9.]+"', 'wasm-pack = "{version}"')],
-        Tool.Nextest: [ReplaceRegex(r'nextest = "[0-9.]+"', 'nextest = "{version}"')],
-        Tool.Parsec: [ReplaceRegex(r'parsec = "[0-9.]+.*"', 'parsec = "{version}"')],
-        Tool.License: [ReplaceRegex(r'license = "[^\"]*"', 'license = "{version}"')],
-        Tool.PostgreSQL: [ReplaceRegex(r'postgres = "[0-9.]+"', 'postgres = "{version}"')],
-        Tool.WinFSP: [ReplaceRegex(r'winfsp = "[0-9.]+"', 'winfsp = "{version}"')],
-        Tool.Testbed: [ReplaceRegex(r'testbed = "[0-9.]+.*"', 'testbed = "{version}"')],
-        Tool.PreCommit: [ReplaceRegex(r'pre-commit = "[0-9.]+"', 'pre-commit = "{version}"')],
+        tool: [ReplaceRegex(rf'^{tool.value} = ".*"', f'{tool.value} = "{{version}}"')]
+        for tool in Tool
     },
     ROOT_DIR / "server/packaging/server/in-docker-build.sh": {
         Tool.Poetry: [
