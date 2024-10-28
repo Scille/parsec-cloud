@@ -63,7 +63,7 @@ pub async fn load_recovery_device(
 
 pub async fn save_recovery_device(
     _key_file: &Path,
-    _device: &LocalDevice,
-) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
+    _file_content: &[u8],
+) -> Result<(), SaveRecoveryDeviceError> {
     todo!()
 }

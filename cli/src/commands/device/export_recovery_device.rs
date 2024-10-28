@@ -2,15 +2,14 @@
 
 use std::path::PathBuf;
 
-use libparsec::save_recovery_device;
+use libparsec::{DateTime, DeviceLabel};
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
-        /// Recovery device output
-        #[arg(short, long)]
+        /// Path where to save recovery device data
         output: PathBuf,
     }
 );
@@ -29,17 +28,21 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device.as_deref().unwrap_or("N/A")
     );
 
-    let device = load_and_unlock_device(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Saving recovery device file".into());
 
-    // TODO: save recovery device instead of local device
-    // The recovery device must be generated first
-    let passphrase = save_recovery_device(&output, &device).await?;
+    let client = load_client(&config_dir, device.clone(), password_stdin).await?;
+
+    let now = DateTime::now();
+    let (passphrase, data) = client
+        .client_export_recovery_device(DeviceLabel::try_from(format!("recovery-{now}").as_str())?)
+        .await?;
+
+    tokio::fs::write(&output, data).await?;
 
     handle.stop_with_message(format!(
-        "Saved in {}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{}{RESET}",
-        output.display(),
-        passphrase.as_str()
+        "Recovery device saved at {path}\n{RED}Save the recovery passphrase in a safe place:{RESET} {GREEN}{passwd}{RESET}",
+        path = output.display(),
+        passwd = passphrase.as_str()
     ));
 
     Ok(())

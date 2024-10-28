@@ -1,17 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
-use libparsec::{load_recovery_device, DeviceAccessStrategy};
+use libparsec::DeviceLabel;
 
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, password_stdin]
     pub struct Args {
-        /// Recovery file
+        /// Path where encrypted recovery device data is
         #[arg(short, long)]
         input: PathBuf,
+        /// new device label
+        #[arg(short, long)]
+        label: String,
     }
 );
 
@@ -20,28 +23,22 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         input,
         config_dir,
         password_stdin,
+        label,
     } = args;
     log::trace!(
         "Importing recovery device from {} (confdir={})",
         input.display(),
         config_dir.display(),
     );
+    let recovery_device = tokio::fs::read(input).await?;
 
-    let device = {
-        let passphrase = read_password(if password_stdin {
-            ReadPasswordFrom::Stdin
-        } else {
-            ReadPasswordFrom::Tty {
-                prompt: "Enter passphrase for the recovery file:",
-            }
-        })?;
-        let mut handle = start_spinner("Loading recovery device file".into());
-        let res = load_recovery_device(&input, passphrase).await?;
-
-        handle.stop_with_newline();
-        res
-    };
-
+    let passphrase = read_password(if password_stdin {
+        ReadPasswordFrom::Stdin
+    } else {
+        ReadPasswordFrom::Tty {
+            prompt: "Enter passphrase for the recovery file:",
+        }
+    })?;
     let password = choose_password(if password_stdin {
         ReadPasswordFrom::Stdin
     } else {
@@ -50,13 +47,16 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         }
     })?;
 
-    let key_file = libparsec::get_default_key_file(&config_dir, &device.device_id);
-
-    let access = DeviceAccessStrategy::Password { key_file, password };
-
     let mut handle = start_spinner("Saving new device".into());
 
-    libparsec::save_device(Path::new(""), &access, &device).await?;
+    libparsec_client::import_recovery_device(
+        &config_dir,
+        &recovery_device,
+        passphrase.to_string(),
+        DeviceLabel::try_from(label.as_str())?,
+        libparsec::DeviceSaveStrategy::Password { password },
+    )
+    .await?;
 
     handle.stop_with_message("Saved new device".into());
 

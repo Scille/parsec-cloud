@@ -541,41 +541,8 @@ pub async fn load_recovery_device(
 
 pub async fn save_recovery_device(
     key_file: &Path,
-    device: &LocalDevice,
-) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
-    let created_on = device.now();
-    let server_url = {
-        ParsecAddr::new(
-            device.organization_addr.hostname().to_owned(),
-            Some(device.organization_addr.port()),
-            device.organization_addr.use_ssl(),
-        )
-        .to_http_url(None)
-        .to_string()
-    };
-
-    let (passphrase, key) = SecretKey::generate_recovery_passphrase();
-
-    let ciphertext = {
-        let cleartext = Zeroizing::new(device.dump());
-        let ciphertext = key.encrypt(&cleartext);
-        ciphertext.into()
-    };
-
-    let file_content = DeviceFile::Recovery(DeviceFileRecovery {
-        created_on,
-        // Note recovery device is not supposed to change its protection
-        protected_on: created_on,
-        server_url,
-        organization_id: device.organization_id().to_owned(),
-        user_id: device.user_id,
-        device_id: device.device_id,
-        human_handle: device.human_handle.to_owned(),
-        device_label: device.device_label.to_owned(),
-        ciphertext,
-    })
-    .dump();
-
+    file_content: &[u8],
+) -> Result<(), SaveRecoveryDeviceError> {
     if let Some(parent) = key_file.parent() {
         std::fs::create_dir_all(parent)
             .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
@@ -607,7 +574,7 @@ pub async fn save_recovery_device(
     std::fs::rename(&tmp_path, key_file)
         .map_err(|e| SaveRecoveryDeviceError::InvalidPath(e.into()))?;
 
-    Ok(passphrase)
+    Ok(())
 }
 
 pub fn is_keyring_available() -> bool {

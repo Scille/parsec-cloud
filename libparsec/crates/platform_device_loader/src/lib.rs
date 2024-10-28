@@ -217,9 +217,9 @@ pub enum SaveRecoveryDeviceError {
 
 pub async fn save_recovery_device(
     key_file: &Path,
-    device: &LocalDevice,
-) -> Result<SecretKeyPassphrase, SaveRecoveryDeviceError> {
-    platform::save_recovery_device(key_file, device).await
+    file_content: &[u8],
+) -> Result<(), SaveRecoveryDeviceError> {
+    platform::save_recovery_device(key_file, file_content).await
 }
 
 #[derive(Debug, thiserror::Error)]
