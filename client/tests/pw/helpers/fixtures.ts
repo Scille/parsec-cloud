@@ -13,10 +13,12 @@ export const msTest = base.extend<{
   documents: Page;
   documentsReadOnly: Page;
   usersPage: Page;
+  organizationPage: Page;
   myProfilePage: Page;
   userJoinModal: Locator;
   createOrgModal: Locator;
   userGreetModal: Locator;
+  deviceGreetModal: Locator;
   workspaceSharingModal: Locator;
   clientArea: Page;
 }>({
@@ -75,6 +77,17 @@ export const msTest = base.extend<{
     use(connected);
   },
 
+  organizationPage: async ({ connected }, use) => {
+    await connected.locator('.sidebar').locator('#manageOrganization').click();
+    const sidebarItem = connected.locator('.sidebar').locator('.manage-organization').locator('.organization').locator('ion-item');
+    await expect(sidebarItem).toHaveTheClass('item-not-selected');
+    await sidebarItem.click();
+    await expect(connected).toHavePageTitle('Information');
+    await expect(sidebarItem).toHaveTheClass('item-selected');
+    await expect(connected).toBeOrganizationPage();
+    use(connected);
+  },
+
   myProfilePage: async ({ connected }, use) => {
     await connected.locator('.topbar').locator('.profile-header').click();
     const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
@@ -113,6 +126,19 @@ export const msTest = base.extend<{
     await expect(greetButton).toHaveText('Greet');
     await greetButton.click();
     const modal = connected.locator('.greet-organization-modal');
+    await use(modal);
+  },
+
+  deviceGreetModal: async ({ connected }, use) => {
+    await connected.locator('.topbar').locator('.profile-header').click();
+    const myProfileButton = connected.locator('.profile-header-popover').locator('.main-list').getByRole('listitem').nth(0);
+    await expect(myProfileButton).toHaveText('My profile');
+    await myProfileButton.click();
+    await expect(connected).toHavePageTitle('My profile');
+    await expect(connected).toBeMyProfilePage();
+    await connected.locator('.devices-header-button').click();
+    const modal = connected.locator('.greet-organization-modal');
+    await expect(modal).toBeVisible();
     await use(modal);
   },
 
