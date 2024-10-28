@@ -20,7 +20,7 @@ Basically `make.py` wraps the following commands:
 
 ```shell
 npm install
-# (re)generate index.node
+# (re)generate dist/libparsec.node
 npm run build:dev
 # Or for release
 npm run build:release

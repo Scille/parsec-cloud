@@ -82,9 +82,21 @@ const fs = require('node:fs');
 fs.mkdirSync('build/assets', { recursive: true });
 fs.writeFileSync('build/assets/publishConfig.json', JSON.stringify(publishConfig));
 
-const SIGN_OPTIONS = {
+/**
+ * @type {Partial<import('app-builder-lib').WindowsConfiguration>}
+ */
+const WIN_SIGN_OPTIONS = {
   certificateSubjectName: 'Scille',
   certificateSha1: '9EB59B224218EE4B9C436CBD327BE60940592013',
+};
+
+/**
+ * @type {Partial<import('app-builder-lib').MacConfiguration>}
+ */
+const MACOS_SIGN_OPTIONS = {
+  notarize: {
+    teamId: process.env.APPLE_TEAM_ID,
+  },
 };
 
 const UNSIGNED_ARTIFACT_NAME =
@@ -138,7 +150,7 @@ const options = {
 
   win: {
     target: 'nsis',
-    ...(OPTS.sign ? SIGN_OPTIONS : {}),
+    ...(OPTS.sign ? WIN_SIGN_OPTIONS : {}),
     extraResources: [
       {
         from: 'node_modules/regedit/vbs',
@@ -164,6 +176,9 @@ const options = {
     hardenedRuntime: true,
     entitlements: './macOS/entitlements.plist',
     entitlementsInherit: './macOS/entitlements.plist',
+    ...(OPTS.sign ? MACOS_SIGN_OPTIONS : {}),
+    // https://www.electron.build/mac#binaries
+    binaries: ['build/src/libparsec.node'],
   },
 
   linux: {

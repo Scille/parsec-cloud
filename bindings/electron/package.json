@@ -2,7 +2,7 @@
     "name": "libparsec_bindings_electron",
     "version": "3.1.1-a.0+dev",
     "description": "",
-    "main": "index.node",
+    "main": "dist/libparsec.node",
     "scripts": {
         "build:ci": "node scripts/build.js ci",
         "build:dev": "node scripts/build.js dev",

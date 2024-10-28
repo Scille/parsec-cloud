@@ -1,6 +1,6 @@
 [package]
 name = "libparsec_bindings_electron"
-exclude = ["index.node"]
+exclude = ["libparsec.node"]
 publish.workspace = true
 authors.workspace = true
 edition.workspace = true

@@ -30,6 +30,20 @@ on:
     secrets:
       SENTRY_AUTH_TOKEN:
         required: true
+      MACOS_CI_KEYCHAIN_PASSWD:
+        required: true
+      MACOS_CERT_PASSWD:
+        required: true
+      MACOS_CERT:
+        required: true
+      MACOS_CERT_COMMON_NAME:
+        required: true
+      MACOS_NOTARIZATION_TEAM_ID:
+        required: true
+      MACOS_NOTARIZATION_APPLE_ID:
+        required: true
+      MACOS_NOTARIZATION_PASSWD:
+        required: true
   workflow_dispatch:
     inputs:
       version:
@@ -326,20 +340,47 @@ jobs:
         working-directory: client
         timeout-minutes: 1
 
+      - name: Prepare codesign
+        shell: bash -o pipefail -eux {0}
+        if: matrix.platform == 'macos'
+        run: |
+          printenv MACOS_CERT | base64 --decode > certificate.p12
+
+          security create-keychain -p "${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}" build.keychain
+          security import certificate.p12 -k build.keychain -P "${{ secrets.MACOS_CERT_PASSWD }}" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "${{ secrets.MACOS_CI_KEYCHAIN_PASSWD }}" build.keychain
+        env:
+          MACOS_CERT: ${{ secrets.MACOS_CERT }}
+        timeout-minutes: 2
+
       - name: Build Electron apps
         # What's about the extra `--` in `-- --nightly`?
         # The reason is for npm to pass the flag `--nightly` to the underlying npm script.
         # But since the base npm script `npm run electron:release` call another npm script,
         # we need to escape the flag another time by adding another `--`.
-        run: >-
-          npm run electron:release
-          ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' || '' }}
-          ${{ matrix.platform == 'linux' && 'appimage' || '' }}
-          ${{ inputs.nightly_build && '--nightly' || '' }}
+        shell: bash -eux -o pipefail {0}
+        run: |
+          if ${{ matrix.platform == 'macos' }}; then
+            export CSC_LINK='${{ secrets.MACOS_CERT }}'
+            export CSC_KEY_PASSWORD='${{ secrets.MACOS_CERT_PASSWD }}'
+            export CSC_NAME='${{ secrets.MACOS_CERT_COMMON_NAME }}'
+            export CSC_IDENTITY_AUTO_DISCOVERY=true
+            export CSC_KEYCHAIN=build.keychain
+            export APPLE_TEAM_ID='${{ secrets.MACOS_NOTARIZATION_TEAM_ID }}'
+            export APPLE_ID='${{ secrets.MACOS_NOTARIZATION_APPLE_ID }}'
+            export APPLE_APP_SPECIFIC_PASSWORD='${{ secrets.MACOS_NOTARIZATION_PASSWD }}'
+          fi
+          npm run electron:release \
+            ${{ (matrix.platform == 'linux' || inputs.nightly_build || matrix.platform == 'macos') && '--' || '' }} \
+            ${{ matrix.platform == 'linux' && 'appimage' || '' }} \
+            ${{ inputs.nightly_build && '--nightly' || '' }} \
+            ${{ matrix.platform == 'macos' && '--sign' || ''}}
         env:
           PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
-        timeout-minutes: 5
+        timeout-minutes: 10
 
       - name: Upload client electron sourcemaps
         run: npm run sentry:sourcemaps
@@ -365,7 +406,7 @@ jobs:
         shell: bash
         run: |
           arch=$(uname -m)
-          app_file="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ matrix.platform == 'linux' && '' || '.unsigned'}}.${{ matrix.extension }}"
+          app_file="Parsec_${{ steps.version.outputs.full }}_${{ matrix.os_alias }}_${arch}${{ (matrix.platform == 'windows' || matrix.platform == 'linux') && '.unsigned' || '' }}.${{ matrix.extension }}"
           latest_file="latest-${{ matrix.os_alias }}-${arch}.yml"
 
           cat << EOF | tee -a $GITHUB_OUTPUT
@@ -380,9 +421,10 @@ jobs:
         working-directory: client/electron/dist
 
       - name: Sanity check that "latest" file contain the correct application file
+        shell: bash
         run: |
           cat "${{ steps.build-info.outputs.latest_file }}"
-          grep -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
+          grep -q -e "${{ steps.build-info.outputs.app_file }}" "${{ steps.build-info.outputs.latest_file }}"
         working-directory: client/electron/dist
 
       - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
