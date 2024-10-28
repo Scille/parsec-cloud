@@ -1148,7 +1148,13 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  await navigateTo(Routes.History, { query: { documentPath: entries[0].path, workspaceHandle: workspaceInfo.value.handle } });
+  await navigateTo(Routes.History, {
+    query: {
+      documentPath: entries[0].path,
+      workspaceHandle: workspaceInfo.value.handle,
+      selectFile: entries[0].isFile() ? entries[0].name : undefined,
+    },
+  });
 }
 
 async function openEntries(entries: EntryModel[]): Promise<void> {

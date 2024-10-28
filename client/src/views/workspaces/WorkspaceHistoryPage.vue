@@ -33,7 +33,7 @@
           <div class="folder-container-header">
             <div
               class="folder-container-header__navigation"
-              v-if="!resultFromSearch && !currentIsFile"
+              v-if="!resultFromSearch"
             >
               <ion-buttons>
                 <ion-button
@@ -143,14 +143,14 @@
 <script setup lang="ts">
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
-import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt } from '@/parsec';
+import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
 import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
 import { chevronBack, chevronForward, warning } from 'ionicons/icons';
-import { currentRouteIs, getDocumentPath, getWorkspaceHandle, Routes } from '@/router';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes } from '@/router';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { SortProperty } from '@/components/users';
 
@@ -168,8 +168,8 @@ const entries: Ref<WorkspaceHistoryEntryCollection<WorkspaceHistoryEntryModel>> 
 const querying = ref(false);
 let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
-const currentIsFile = ref(false);
 const error = ref('');
+const selectEntry: Ref<EntryName> = ref('');
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -188,8 +188,14 @@ onMounted(async () => {
     } else {
       console.error('Failed to retrieve workspace info');
     }
+  } else {
+    return;
   }
   currentPath.value = getDocumentPath() ?? '/';
+  const query = getCurrentRouteQuery();
+  if (query.selectFile) {
+    selectEntry.value = query.selectFile;
+  }
 
   await listCurrentPath();
 });
@@ -222,46 +228,47 @@ async function listCurrentPath(): Promise<void> {
 
     if (!statsResult.ok) {
       error.value = 'workspaceHistory.error';
+      entries.value.clear();
       return;
     }
     error.value = '';
+
     if (statsResult.value.isFile()) {
-      currentIsFile.value = true;
-      (statsResult.value as WorkspaceHistoryEntryModel).isSelected = false;
-      entries.value.replace([statsResult.value as WorkspaceHistoryEntryModel]);
-    } else {
-      const breadcrumbs = await Path.parse(currentPath.value);
+      // If the current path is set to a file, we instead set it to the parent dir
+      currentPath.value = await Path.parent(currentPath.value);
+    }
 
-      const result = await statFolderChildrenAt(workspaceHandle, currentPath.value, DateTime.fromJSDate(selectedDateTime.value));
-      if (result.ok) {
-        const newEntries: WorkspaceHistoryEntryModel[] = [];
-        for (const entry of result.value) {
-          (entry as WorkspaceHistoryEntryModel).isSelected = false;
-          newEntries.push(entry as WorkspaceHistoryEntryModel);
-        }
-        entries.value.replace(newEntries);
-        entries.value.sort(SortProperty.Name as any, true);
+    const breadcrumbs = await Path.parse(currentPath.value);
+
+    const result = await statFolderChildrenAt(workspaceHandle, currentPath.value, DateTime.fromJSDate(selectedDateTime.value));
+    if (result.ok) {
+      const newEntries: WorkspaceHistoryEntryModel[] = [];
+      for (const entry of result.value) {
+        (entry as WorkspaceHistoryEntryModel).isSelected = Boolean(selectEntry.value && selectEntry.value === entry.name);
+        newEntries.push(entry as WorkspaceHistoryEntryModel);
       }
+      entries.value.replace(newEntries);
+      entries.value.sort(SortProperty.Name as any, true);
+    }
 
-      let path = '/';
-      headerPath.value = [];
+    let path = '/';
+    headerPath.value = [];
+    headerPath.value.push({
+      id: 0,
+      display: workspaceInfo.value.currentName,
+      name: '',
+      query: { documentPath: path },
+    });
+    let id = 1;
+    for (const breadcrumb of breadcrumbs) {
+      path = await Path.join(path, breadcrumb);
       headerPath.value.push({
-        id: 0,
-        display: workspaceInfo.value.currentName,
+        id: id,
+        display: breadcrumb === '/' ? '' : breadcrumb,
         name: '',
         query: { documentPath: path },
       });
-      let id = 1;
-      for (const breadcrumb of breadcrumbs) {
-        path = await Path.join(path, breadcrumb);
-        headerPath.value.push({
-          id: id,
-          display: breadcrumb === '/' ? '' : breadcrumb,
-          name: '',
-          query: { documentPath: path },
-        });
-        id += 1;
-      }
+      id += 1;
     }
   } finally {
     querying.value = false;
@@ -276,6 +283,7 @@ async function forward(): Promise<void> {
   }
   backStack.push(currentPath.value);
   currentPath.value = forwardPath;
+  selectEntry.value = '';
   await listCurrentPath();
 }
 
@@ -287,11 +295,13 @@ async function back(): Promise<void> {
   }
   forwardStack.push(currentPath.value);
   currentPath.value = backPath;
+  selectEntry.value = '';
   await listCurrentPath();
 }
 
 async function onPathChange(node: RouterPathNode): Promise<void> {
   forwardStack.splice(0, forwardStack.length);
+  selectEntry.value = '';
   if (node.query && node.query.documentPath) {
     currentPath.value = node.query.documentPath;
     await listCurrentPath();
@@ -307,6 +317,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
     console.log('Click on file');
   } else {
     backStack.push(currentPath.value);
+    selectEntry.value = '';
     currentPath.value = await Path.join(currentPath.value, entry.name);
     await listCurrentPath();
   }

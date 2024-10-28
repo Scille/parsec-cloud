@@ -83,6 +83,7 @@ async function onDrop(event: DragEvent): Promise<void> {
   if (props.disabled) {
     return;
   }
+  event.stopPropagation();
   dragEnterCount.value = 0;
   const imports = await getFilesFromDrop(event, props.currentPath);
   if (imports.length) {
