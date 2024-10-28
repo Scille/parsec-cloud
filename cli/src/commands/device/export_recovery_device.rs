@@ -7,7 +7,7 @@ use libparsec::save_recovery_device;
 use crate::utils::*;
 
 crate::clap_parser_with_shared_opts_builder!(
-    #[with = config_dir, device, password_stdin]
+    #[with = config_dir, device, password_stdin, auto_tos]
     pub struct Args {
         /// Recovery device output
         #[arg(short, long)]
@@ -21,6 +21,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device,
         config_dir,
         password_stdin,
+        auto_accept_tos,
     } = args;
     log::trace!(
         "Exporting recovery device at {} (confdir={}, device={})",

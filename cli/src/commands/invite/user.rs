@@ -41,7 +41,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             claimer_email: email,
             send_email,
         })
-        .await?;
+        .await?; // TODO: Handle connection error
 
     let url = match rep {
         InviteNewUserRep::Ok { token, .. } => ParsecInvitationAddr::new(

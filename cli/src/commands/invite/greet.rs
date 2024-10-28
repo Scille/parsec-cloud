@@ -71,7 +71,7 @@ async fn step0(
 ) -> anyhow::Result<InviteListItem> {
     let mut handle = start_spinner("Retrieving invitation info".into());
 
-    let rep = cmds.send(invite_list::Req).await?;
+    let rep = cmds.send(invite_list::Req).await?; // TODO: Handle connection error
 
     let invitations = match rep {
         invite_list::InviteListRep::Ok { invitations } => invitations,
