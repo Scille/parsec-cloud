@@ -87,6 +87,7 @@ class Tool(enum.Enum):
     WinFSP = "winfsp"
     Testbed = "testbed"
     PreCommit = "pre-commit"
+    Cross = "cross"
 
     def post_update_hook(self, updated_files: set[Path]) -> set[Path]:
         updated: set[Path] = set()
@@ -245,6 +246,9 @@ FILES_WITH_VERSION_INFO: dict[Path, dict[Tool, RawRegexes]] = {
     ROOT_DIR / ".github/workflows/package-server.yml": {
         Tool.Poetry: [POETRY_GA_VERSION],
         Tool.Node: [NODE_GA_VERSION],
+    },
+    ROOT_DIR / ".github/workflows/package-cli.yml": {
+        Tool.Cross: [ReplaceRegex(r"cross-version: .*", "cross-version: {version}")],
     },
     ROOT_DIR / ".github/workflows/package-client.yml": {
         Tool.Node: [NODE_GA_VERSION],

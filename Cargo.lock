@@ -3046,6 +3046,7 @@ dependencies = [
  "libparsec",
  "libparsec_client",
  "libparsec_client_connection",
+ "libparsec_crypto",
  "libparsec_platform_ipc",
  "log",
  "predicates",

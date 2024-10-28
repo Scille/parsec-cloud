@@ -1,0 +1,27 @@
+# cspell: words gcompat
+
+[target.x86_64-unknown-linux-gnu]
+# FIXME: Remove me once cross-rs provide an updated image for x86_64-unknown-linux-gnu that do not use ubuntu-xenial.
+# Use a more recent version of the container since the one provided by 0.2.5 is ubuntu-xenial (16.04) which is too old for our needs
+# https://github.com/cross-rs/cross/issues/517#issuecomment-1500585369
+image = "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:cf091033b6c4b0416a03d181080ad45c418248a262867a623306748a2c02a3c2" # pin ghcr.io/cross-rs/x86_64-unknown-linux-gnu:main
+pre-build = [
+    "dpkg --add-architecture $CROSS_DEB_ARCH",
+    "apt-get update && apt-get --assume-yes install libfuse3-dev libssl-dev libunwind-dev liblzma-dev",
+]
+
+[target.x86_64-unknown-linux-musl]
+image = "alpine:3.16"
+pre-build = [
+    "apk add --no-cache fuse3-dev fuse3-static openssl-dev musl-dev build-base perl rustup gcompat",
+    # Install our own rustup toolchain since we prefer to not rely on the host provided one
+    "rustup-init -y --default-toolchain stable --profile minimal",
+    # Make sure the build user will be able to access the toolchain binaries
+    "P=/root/.rustup/toolchains/stable-x86_64-unknown-linux-musl/bin; while [ \"$P\" != \"/\" ]; do chmod -v 755 $P; P=$(dirname $P); done",
+]
+
+[target.x86_64-unknown-linux-musl.env]
+passthrough = [
+    # Modify the PATH to prefer the rust toolchain of the container over the host one.
+    "PATH=/root/.rustup/toolchains/stable-x86_64-unknown-linux-musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+]

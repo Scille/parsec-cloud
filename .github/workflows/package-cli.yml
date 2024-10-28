@@ -55,6 +55,19 @@ jobs:
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     name: 📦 Packaging CLI for linux 🐧
     runs-on: ubuntu-24.04
+    env:
+      cross-version: v0.2.5
+    strategy:
+      fail-fast: false
+      # Parsec CLI has three potential dynamic dependencies: `libc`, `fuse3` and `openssl`, hence we have two build strategy here:
+      matrix:
+        include:
+          # The MUSL target provide a statically linked CLI
+          - target: x86_64-unknown-linux-musl
+            suffix: linux-x86_64-musl
+          # The GNU target provide a dynamically linked CLI
+          - target: x86_64-unknown-linux-gnu
+            suffix: linux-x86_64-gnu
     steps:
       - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
         with:
@@ -83,30 +96,45 @@ jobs:
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
         timeout-minutes: 1
 
-      # Install fuse for building the CLI (libparsec includes platform_mountpoint)
-      - name: Install fuse
+      - name: Use Cross
         shell: bash
         run: |
-          until sudo apt-get -y install fuse3 libfuse3-dev; do
-            echo "Failed to install APT package, retrying...";
-          done
+          dir="$RUNNER_TEMP/cross-download"
+          mkdir "$dir"
+          echo "$dir" >> $GITHUB_PATH
+          cd "$dir"
+          curl -LO "https://github.com/cross-rs/cross/releases/download/${{ env.cross-version }}/cross-x86_64-unknown-linux-musl.tar.gz"
+          tar xf cross-x86_64-unknown-linux-musl.tar.gz
         timeout-minutes: 5
 
       - name: Build CLI
-        run: cargo build -p parsec-cli --release
-        timeout-minutes: 10
+        shell: bash -o pipefail -eux {0}
+        run: >-
+          cross build -p parsec-cli
+          --target=${{ matrix.target }}
+          $(python make.py cli-release-cargo-flags --quiet)
+        env:
+          LIBPARSEC_FORCE_VENDORED_OPENSSL: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'true' || 'false' }}
+        timeout-minutes: 15
+
+      - name: Debug target folder
+        if: runner.debug || false
+        shell: bash
+        run: tree target
+        timeout-minutes: 1
 
       - name: Rename CLI artifact
         id: rename
+        shell: bash
         run: |
-          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_linux_${{ steps.runner-specs.outputs.arch }}"
-          cp -v target/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
+          FINAL_ARTIFACT_NAME="parsec-cli_${{ steps.version.outputs.full }}_${{ matrix.suffix }}"
+          cp -v target/${{ matrix.target }}/release/parsec-cli ${{ runner.temp }}/$FINAL_ARTIFACT_NAME
           echo "artifact_name=$FINAL_ARTIFACT_NAME" >> $GITHUB_OUTPUT
         timeout-minutes: 1
 
       - uses: actions/upload-artifact@b4b15b8c7c6ac21ea08fcf65892d2ee8f75cf882 # pin v4.4.3
         with:
-          name: ${{ runner.os }}-${{ runner.arch }}-cli
+          name: ${{ runner.os }}-${{ matrix.target }}-cli
           path: |
             ${{ runner.temp }}/${{ steps.rename.outputs.artifact_name }}
           if-no-files-found: error
