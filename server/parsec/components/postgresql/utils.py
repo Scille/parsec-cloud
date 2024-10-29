@@ -15,6 +15,7 @@ from parsec._parsec import (
     DateTime,
     DeviceID,
     GreetingAttemptID,
+    SequesterServiceID,
     UserID,
     VlobID,
 )
@@ -36,6 +37,7 @@ SqlQueryParam = (
     | DeviceID
     | VlobID
     | BlockID
+    | SequesterServiceID
     | GreetingAttemptID
     | ActiveUsersLimit
     | Iterable["SqlQueryParam"]
@@ -122,7 +124,7 @@ class Q:
         ```python
             _q_get_foo = Q("SELECT * FROM foo WHERE id = $id")
             row = await conn.fetch(*_q_get_foo(id=42))  # <-- Modify this...
-            row = await conn.fetch(*await _q_get_foo.test_explain_and_exit(id=42)) # <-- ...into this !
+            row = await conn.fetch(*await _q_get_foo.test_explain_and_exit(conn, id=42)) # <-- ...into this !
         ```
 
         This will print the explain query on stdout and exit the program.
@@ -270,6 +272,9 @@ q_realm, q_realm_internal_id = _table_q_factory("realm", "realm_id")
 q_block, q_block_internal_id = _table_q_factory("block", "block_id")
 q_human, q_human_internal_id = _table_q_factory("human", "email")
 q_invitation, q_invitation_internal_id = _table_q_factory("invitation", "token")
+q_sequester_service, q_sequester_service_internal_id = _table_q_factory(
+    "sequester_service", "service_id"
+)
 
 
 class WithPool(Protocol):
