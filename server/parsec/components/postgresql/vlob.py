@@ -38,6 +38,7 @@ from parsec.components.vlob import (
     VlobReadResult,
     VlobUpdateBadOutcome,
 )
+from parsec.webhooks import WebhooksComponent
 
 _q_get_vlob_info = Q(
     """
@@ -54,7 +55,13 @@ LIMIT 1
 
 
 class PGVlobComponent(BaseVlobComponent):
-    def __init__(self, pool: AsyncpgPool, event_bus: EventBus):
+    def __init__(
+        self,
+        pool: AsyncpgPool,
+        event_bus: EventBus,
+        webhooks: WebhooksComponent,
+    ):
+        super().__init__(webhooks)
         self.pool = pool
         self.event_bus = event_bus
 

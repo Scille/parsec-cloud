@@ -23,6 +23,7 @@ class AuthAndLockCommonOnlyBadOutcome(BadOutcomeEnum):
 @dataclass(slots=True)
 class AuthAndLockCommonOnlyData:
     organization_internal_id: int
+    organization_is_sequestered: bool
     device_internal_id: int
     user_id: UserID
     user_internal_id: int
@@ -34,7 +35,8 @@ _Q_AUTH_AND_LOCK_COMMON_ONLY_TEMPLATE = """
 WITH my_organization AS (
     SELECT
         _id,
-        is_expired
+        is_expired,
+        sequester_authority_certificate IS NOT NULL AS is_sequestered
     FROM organization
     WHERE
         organization_id = $organization_id
@@ -79,6 +81,7 @@ my_user AS (
 SELECT
     (SELECT _id FROM my_organization) AS organization_internal_id,
     (SELECT is_expired FROM my_organization) AS organization_is_expired,
+    (SELECT is_sequestered FROM my_organization) AS organization_is_sequestered,
     (SELECT last_timestamp FROM my_locked_common_topic) AS last_common_certificate_timestamp,
     (SELECT _id FROM my_device) AS device_internal_id,
     (SELECT _id FROM my_user) AS user_internal_id,
@@ -149,6 +152,12 @@ async def _do_query(
         case unknown:
             assert False, repr(unknown)
 
+    match row["organization_is_sequestered"]:
+        case bool() as organization_is_sequestered:
+            pass
+        case unknown:
+            assert False, repr(unknown)
+
     # 2) Check device & user
 
     match row["device_internal_id"]:
@@ -205,6 +214,7 @@ async def _do_query(
 
     return AuthAndLockCommonOnlyData(
         organization_internal_id=organization_internal_id,
+        organization_is_sequestered=organization_is_sequestered,
         last_common_certificate_timestamp=last_common_certificate_timestamp,
         device_internal_id=device_internal_id,
         user_internal_id=user_internal_id,
