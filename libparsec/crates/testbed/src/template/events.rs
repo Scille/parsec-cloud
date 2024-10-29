@@ -1608,7 +1608,7 @@ struct TestbedEventRotateKeyRealmCache {
     certificates: TestbedEventCertificatesCache,
     keys_bundle: TestbedEventCacheEntry<Bytes>,
     per_user_keys_bundle_access: TestbedEventCacheEntry<HashMap<UserID, Bytes>>,
-    per_sequester_service_bundle_access:
+    per_sequester_service_keys_bundle_access:
         TestbedEventCacheEntry<Option<HashMap<SequesterServiceID, Bytes>>>,
 }
 
@@ -1625,6 +1625,7 @@ pub struct TestbedEventRotateKeyRealm {
     // Customize the key canary is only useful to test bad key canary
     pub custom_key_canary: Option<Vec<u8>>,
     pub participants: Vec<(UserID, PublicKey)>,
+    pub sequester_services: Option<Vec<(SequesterServiceID, SequesterPublicKeyDer)>>,
     #[serde(skip)]
     cache: Arc<Mutex<TestbedEventRotateKeyRealmCache>>,
 }
@@ -1642,6 +1643,7 @@ impl_event_debug!(
         hash_algorithm: HashAlgorithm,
         custom_key_canary: Option<Vec<u8>>,
         participants: Vec<(UserID, PublicKey)>,
+        sequester_services: Option<Vec<(SequesterServiceID, SequesterPublicKeyDer)>>,
     ]
 );
 impl_event_crc_hash!(
@@ -1657,6 +1659,7 @@ impl_event_crc_hash!(
         hash_algorithm: HashAlgorithm,
         custom_key_canary: Option<Vec<u8>>,
         participants: Vec<(UserID, PublicKey)>,
+        sequester_services: Option<Vec<(SequesterServiceID, SequesterPublicKeyDer)>>,
     ]
 );
 
@@ -1695,6 +1698,21 @@ impl TestbedEventRotateKeyRealm {
             })
             .collect();
 
+        let sequester_services = match utils::non_revoked_sequester_services(&builder.events) {
+            None => None,
+            Some(non_revoked_sequester_services) => {
+                let items = non_revoked_sequester_services
+                    .map(|sequester_service| {
+                        (
+                            sequester_service.id,
+                            sequester_service.encryption_public_key.clone(),
+                        )
+                    })
+                    .collect();
+                Some(items)
+            }
+        };
+
         let (key_index, keys) = builder
             .events
             .iter()
@@ -1722,6 +1740,7 @@ impl TestbedEventRotateKeyRealm {
             encryption_algorithm: SecretKeyAlgorithm::Blake2bXsalsa20Poly1305,
             hash_algorithm: HashAlgorithm::Sha256,
             participants,
+            sequester_services,
             cache: Arc::default(),
         }
     }
@@ -1807,25 +1826,31 @@ impl TestbedEventRotateKeyRealm {
 
     pub fn per_sequester_service_keys_bundle_access(
         &self,
-        template: &TestbedTemplate,
     ) -> Option<HashMap<SequesterServiceID, Bytes>> {
         let populate = || {
+            let sequester_services = match &self.sequester_services {
+                None => return None,
+                Some(sequester_services) => sequester_services,
+            };
+
             let access = RealmKeysBundleAccess {
                 keys_bundle_key: self.keys_bundle_access_key.clone(),
             }
             .dump();
 
-            template.sequester_services_public_key().map(|iter| {
-                iter.map(|(id, public_key)| {
+            let keys_bundles = sequester_services
+                .iter()
+                .map(|(service_id, public_key)| {
                     let encrypted = public_key.encrypt(&access);
-                    (id.to_owned(), Bytes::from(encrypted))
+                    (*service_id, Bytes::from(encrypted))
                 })
-                .collect()
-            })
+                .collect();
+
+            Some(keys_bundles)
         };
         let mut guard = self.cache.lock().expect("Mutex is poisoned");
         guard
-            .per_sequester_service_bundle_access
+            .per_sequester_service_keys_bundle_access
             .populated(populate)
             .to_owned()
     }
