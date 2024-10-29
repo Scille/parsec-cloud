@@ -230,11 +230,11 @@ parts:
 
   local-scripts:
     plugin: nil
-    source: .
+    source: client/electron/snap/local
     prime:
       - bin/desktop-launch
       - bin/xdg-open
     override-build: |
       mkdir -p "$CRAFT_PART_INSTALL"/bin
-      install -v --mode=555 snap/local/xdg-open.sh "$CRAFT_PART_INSTALL"/bin/xdg-open
-      install -v --mode=555 snap/local/desktop-launch.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
+      install -v --mode=555 xdg-open.sh "$CRAFT_PART_INSTALL"/bin/xdg-open
+      install -v --mode=555 desktop-launch.sh "$CRAFT_PART_INSTALL"/bin/desktop-launch
