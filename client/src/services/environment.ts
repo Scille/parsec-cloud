@@ -75,8 +75,8 @@ async function openLicenseLink(): Promise<void> {
   window.open(I18n.translate({ key: 'app.licenseLink', data: { version: APP_VERSION_PREFIX } }), '_blank');
 }
 
-async function openChangelogLink(): Promise<void> {
-  window.open(I18n.translate({ key: 'app.history', data: { version: APP_VERSION_PREFIX } }), '_blank');
+async function openChangelogLink(version?: string): Promise<void> {
+  window.open(I18n.translate({ key: 'app.history', data: { version: version ?? APP_VERSION_PREFIX } }), '_blank');
 }
 
 async function openSourcesLink(): Promise<void> {
