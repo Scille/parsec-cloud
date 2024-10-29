@@ -923,7 +923,7 @@ fn event_to_pyobject(
                     pyobj.unbind()
                 },
                 per_sequester_service_keys_bundle_access: {
-                    match x.per_sequester_service_keys_bundle_access(template) {
+                    match x.per_sequester_service_keys_bundle_access() {
                         None => py.None().into_py(py),
                         Some(x) => {
                             let pyobj = PyDict::new_bound(py);
