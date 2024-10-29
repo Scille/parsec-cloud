@@ -114,7 +114,6 @@ async fn non_placeholder(
             p_assert_eq!(req.key_index, 1);
             p_assert_eq!(req.vlob_id, wksp1_foo_id);
             p_assert_eq!(req.version, 2);
-            assert!(req.sequester_blob.is_none());
             authenticated_cmds::latest::vlob_update::Rep::Ok {}
         },
     );
@@ -181,7 +180,6 @@ async fn inbound_sync_needed(env: &TestbedEnv) {
             p_assert_eq!(req.key_index, 1);
             p_assert_eq!(req.vlob_id, wksp1_foo_id);
             p_assert_eq!(req.version, 2);
-            assert!(req.sequester_blob.is_none());
             authenticated_cmds::latest::vlob_update::Rep::BadVlobVersion
         },
     );

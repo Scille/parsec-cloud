@@ -1,6 +1,5 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use libparsec_client_connection::protocol::authenticated_cmds;
@@ -10,8 +9,7 @@ use libparsec_types::prelude::*;
 use super::super::WorkspaceOps;
 use super::WorkspaceSyncError;
 use crate::certif::{
-    CertifBootstrapWorkspaceError, CertifEncryptForRealmError,
-    CertifEncryptForSequesterServicesError, CertifPollServerError,
+    CertifBootstrapWorkspaceError, CertifEncryptForRealmError, CertifPollServerError,
 };
 use crate::workspace::store::{
     ForUpdateSyncLocalOnlyError, ReadChunkOrBlockError, WorkspaceStoreOperationError,
@@ -442,18 +440,6 @@ async fn upload_manifest<M: RemoteManifest>(
                 }
             })?;
         let encrypted = encrypted.into();
-        let sequester_blob = ops
-            .certificates_ops
-            .encrypt_for_sequester_services(&signed)
-            .await
-            .map_err(|e| match e {
-                CertifEncryptForSequesterServicesError::Stopped => WorkspaceSyncError::Stopped,
-                CertifEncryptForSequesterServicesError::Internal(err) => err
-                    .context("Cannot encrypt manifest for sequester services")
-                    .into(),
-            })?;
-        let sequester_blob =
-            sequester_blob.map(|sequester_blob| HashMap::from_iter(sequester_blob.into_iter()));
 
         // Sync the vlob with server
 
@@ -465,7 +451,6 @@ async fn upload_manifest<M: RemoteManifest>(
                 vlob_id,
                 timestamp: to_upload.timestamp(),
                 blob: encrypted,
-                sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
@@ -491,7 +476,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 },
 
                 // TODO: provide a dedicated error for this exotic behavior ?
-                Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
+                Rep::SequesterServiceUnavailable { .. } => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
                 // A key rotation occured concurrently, should poll for new certificates and retry
@@ -508,27 +493,11 @@ async fn upload_manifest<M: RemoteManifest>(
                         })?;
                     continue;
                 }
-                // Sequester services has changed concurrently, should poll for new certificates and retry
-                Rep::SequesterInconsistency { last_common_certificate_timestamp } => {
-                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp);
-                    ops.certificates_ops
-                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
-                        .await
-                        .map_err(|err| match err {
-                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
-                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
-                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
-                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
-                        })?;
-                    continue;
-                }
 
                 // Unexpected errors :(
                 bad_rep @ (
-                    // Got sequester info from certificates
-                    Rep::OrganizationNotSequestered
                     // Already checked the realm exists when we called `CertificateOps::encrypt_for_realm`
-                    | Rep::RealmNotFound
+                    Rep::RealmNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }
                 ) => {
@@ -543,7 +512,6 @@ async fn upload_manifest<M: RemoteManifest>(
                 version: to_upload.version(),
                 timestamp: to_upload.timestamp(),
                 blob: encrypted,
-                sequester_blob,
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
@@ -569,7 +537,7 @@ async fn upload_manifest<M: RemoteManifest>(
                 },
 
                 // TODO: provide a dedicated error for this exotic behavior ?
-                Rep::SequesterServiceUnavailable => Err(WorkspaceSyncError::Offline),
+                Rep::SequesterServiceUnavailable { .. } => Err(WorkspaceSyncError::Offline),
                 // TODO: we should send a dedicated event for this, and return an according error
                 Rep::RejectedBySequesterService { .. } => todo!(),
                 // A key rotation occured concurrently, should poll for new certificates and retry
@@ -586,27 +554,11 @@ async fn upload_manifest<M: RemoteManifest>(
                         })?;
                     continue;
                 }
-                // Sequester services has changed concurrently, should poll for new certificates and retry
-                Rep::SequesterInconsistency { last_common_certificate_timestamp }=> {
-                    let latest_known_timestamps = PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp);
-                    ops.certificates_ops
-                        .poll_server_for_new_certificates(Some(&latest_known_timestamps))
-                        .await
-                        .map_err(|err| match err {
-                            CertifPollServerError::Stopped => WorkspaceSyncError::Stopped,
-                            CertifPollServerError::Offline => WorkspaceSyncError::Offline,
-                            CertifPollServerError::InvalidCertificate(err) => WorkspaceSyncError::InvalidCertificate(err),
-                            CertifPollServerError::Internal(err) => err.context("Cannot poll server for new certificates").into(),
-                        })?;
-                    continue;
-                }
 
                 // Unexpected errors :(
                 bad_rep @ (
-                    // Got sequester info from certificates
-                    Rep::OrganizationNotSequestered
                     // Already checked the vlob exists since the manifest has version > 0
-                    | Rep::VlobNotFound
+                    Rep::VlobNotFound
                     // Don't know what to do with this status :/
                     | Rep::UnknownStatus { .. }
                 ) => {

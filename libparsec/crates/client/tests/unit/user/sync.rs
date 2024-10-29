@@ -66,7 +66,6 @@ async fn sync_non_placeholder(
         move |req: authenticated_cmds::latest::vlob_update::Req| {
             p_assert_eq!(req.vlob_id, alice.user_realm_id);
             p_assert_eq!(req.version, 2);
-            assert!(req.sequester_blob.is_none());
 
             UserManifest::decrypt_verify_and_load(
                 &req.blob,
