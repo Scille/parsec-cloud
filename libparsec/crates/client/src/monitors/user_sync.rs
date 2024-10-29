@@ -94,7 +94,7 @@ fn task_future_factory(user_ops: Arc<UserOps>, event_bus: EventBus) -> impl Futu
                             log::warn!(
                                 "Rejected upload by sequester service {}: {}",
                                 service_id,
-                                reason
+                                reason.as_ref().map_or("<no reason>", |r| r.as_str())
                             );
                         }
                         UserSyncError::InvalidCertificate(error) => {

@@ -8,8 +8,7 @@ use libparsec_types::prelude::*;
 use super::{UserOps, UserStoreUpdateError};
 use crate::{
     certif::{
-        CertifEncryptForSequesterServicesError, CertifEnsureRealmCreatedError,
-        CertifPollServerError, CertifValidateManifestError, InvalidCertificateError,
+        CertifEnsureRealmCreatedError, CertifValidateManifestError, InvalidCertificateError,
         InvalidManifestError,
     },
     greater_timestamp, EventUserOpsOutboundSyncDone, GreaterTimestampOffset,
@@ -21,10 +20,10 @@ pub enum UserSyncError {
     Offline,
     #[error("Component has stopped")]
     Stopped,
-    #[error("Sequester service `{service_id}` rejected the data: `{reason}`")]
+    #[error("Sequester service `{service_id}` rejected the data: `{}`", .reason.as_ref().map(|x| x.as_ref()).unwrap_or_else(|| "<no reason>"))]
     RejectedBySequesterService {
         service_id: SequesterServiceID,
-        reason: String,
+        reason: Option<String>,
     },
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
@@ -104,16 +103,6 @@ async fn upload_manifest(
 
         let signed = to_sync_um.dump_and_sign(&ops.device.signing_key);
         let ciphered = ops.device.user_realm_key.encrypt(&signed).into();
-        let sequester_blob = ops
-            .certificates_ops
-            .encrypt_for_sequester_services(&signed)
-            .await
-            .map_err(|e| match e {
-                CertifEncryptForSequesterServicesError::Stopped => UserSyncError::Stopped,
-                CertifEncryptForSequesterServicesError::Internal(err) => {
-                    err.context("Cannot encrypt for sequester services").into()
-                }
-            })?;
 
         // Sync the vlob with server
 
@@ -125,7 +114,6 @@ async fn upload_manifest(
                 key_index: 0,
                 timestamp,
                 blob: ciphered,
-                sequester_blob: sequester_blob.map(|v| v.into_iter().collect()),
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
@@ -143,23 +131,7 @@ async fn upload_manifest(
                 }
                 // Timeout is about sequester service webhook not being available, no need
                 // for a custom handling of such an exotic error
-                Rep::SequesterServiceUnavailable => Err(UserSyncError::Offline),
-                Rep::SequesterInconsistency { .. } => {
-                    // Sequester services must have been concurrently modified in our back,
-                    // update and retry
-                    ops.certificates_ops
-                        .poll_server_for_new_certificates(None)
-                        .await
-                        .map_err(|err| match err {
-                            CertifPollServerError::Offline => UserSyncError::Offline,
-                            CertifPollServerError::Stopped => UserSyncError::Stopped,
-                            CertifPollServerError::InvalidCertificate(what) => {
-                                UserSyncError::InvalidCertificate(what)
-                            }
-                            err @ CertifPollServerError::Internal(_) => UserSyncError::Internal(err.into()),
-                        })?;
-                    continue;
-                }
+                Rep::SequesterServiceUnavailable { .. } => Err(UserSyncError::Offline),
                 Rep::RejectedBySequesterService {
                     service_id,
                     reason,
@@ -181,8 +153,6 @@ async fn upload_manifest(
                     Rep::AuthorNotAllowed
                     // `outbound_sync_inner` ensures the realm is created before calling us
                     | Rep::RealmNotFound
-                    // We only encrypt for sequester services when the realm is sequestered
-                    | Rep::OrganizationNotSequestered
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
                     | Rep::UnknownStatus { .. }
@@ -196,7 +166,6 @@ async fn upload_manifest(
                 key_index: 0,
                 timestamp,
                 blob: ciphered,
-                sequester_blob: sequester_blob.map(|v| v.into_iter().collect()),
             };
             let rep = ops.cmds.send(req).await?;
             match rep {
@@ -214,23 +183,7 @@ async fn upload_manifest(
                 }
                 // Timeout is about sequester service webhook not being available, no need
                 // for a custom handling of such an exotic error
-                Rep::SequesterServiceUnavailable => Err(UserSyncError::Offline),
-                Rep::SequesterInconsistency { .. } => {
-                    // Sequester services must have been concurrently modified in our back,
-                    // update and retry
-                    ops.certificates_ops
-                        .poll_server_for_new_certificates(None)
-                        .await
-                        .map_err(|err| match err {
-                            CertifPollServerError::Offline => UserSyncError::Offline,
-                            CertifPollServerError::Stopped => UserSyncError::Stopped,
-                            CertifPollServerError::InvalidCertificate(what) => {
-                                UserSyncError::InvalidCertificate(what)
-                            }
-                            err @ CertifPollServerError::Internal(_) => UserSyncError::Internal(err.into()),
-                        })?;
-                    continue;
-                }
+                Rep::SequesterServiceUnavailable { .. } => Err(UserSyncError::Offline),
                 Rep::RejectedBySequesterService {
                     service_id,
                     reason,
@@ -252,8 +205,6 @@ async fn upload_manifest(
                     Rep::AuthorNotAllowed
                     // The vlob must exists since we are at version > 1
                     | Rep::VlobNotFound
-                    // We only encrypt for sequester services when the realm is sequestered
-                    | Rep::OrganizationNotSequestered
                     // The user realm is never supposed to do key rotation
                     | Rep::BadKeyIndex { .. }
                     | Rep::UnknownStatus { .. }
