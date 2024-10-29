@@ -144,6 +144,13 @@ SELECT
 """)
 
 
+_q_create_sequester_topic = Q("""
+INSERT INTO sequester_topic (organization, last_timestamp)
+VALUES ($organization_internal_id, $last_timestamp)
+RETURNING _id
+""")
+
+
 async def organization_bootstrap(
     conn: AsyncpgConnection,
     id: OrganizationID,
@@ -258,5 +265,20 @@ async def organization_bootstrap(
             pass
         case unknown:
             assert False, unknown
+
+    # 4) If the organization is sequestered, we also need to create a corresponding topic
+
+    if sequester_certif is not None:
+        sequester_topic_internal_id = await conn.fetchval(
+            *_q_create_sequester_topic(
+                organization_internal_id=organization_internal_id,
+                last_timestamp=sequester_certif.timestamp,
+            )
+        )
+        match sequester_topic_internal_id:
+            case int():
+                pass
+            case unknown:
+                assert False, unknown
 
     return (user_certif, device_certif, sequester_certif)
