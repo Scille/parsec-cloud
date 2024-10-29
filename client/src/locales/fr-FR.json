@@ -118,7 +118,8 @@
             "updateConfirmQuestion": "Vous serez déconnecté(e) et l'application sera fermée. Assurez vous de ne pas avoir d'opérations en cours. Souhaitez-vous continuer ?",
             "updateYes": "Mettre à jour Parsec",
             "updateNo": "Plus tard",
-            "updateAvailable": "Mise à jour disponible",
+            "currentVersion": "Votre version actuelle: ",
+            "updateAvailable": "Une nouvelle mise à jour disponible",
             "newVersionAvailable": "Nouvelle version disponible"
         },
         "organizationList": {
