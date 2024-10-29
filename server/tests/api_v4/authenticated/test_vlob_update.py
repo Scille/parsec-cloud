@@ -1,6 +1,7 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-from unittest.mock import ANY
+import asyncio
+from unittest.mock import ANY, Mock
 
 import pytest
 
@@ -14,6 +15,11 @@ from parsec._parsec import (
     authenticated_cmds,
     testbed,
 )
+from parsec.components.sequester import (
+    RejectedBySequesterService,
+    SequesterServiceType,
+    SequesterServiceUnavailable,
+)
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
 from tests.common import (
     Backend,
@@ -23,6 +29,7 @@ from tests.common import (
     wksp1_alice_gives_role,
     wksp1_bob_becomes_owner_and_changes_alice,
 )
+from tests.common.client import SequesteredOrgRpcClients
 
 
 @pytest.mark.parametrize(
@@ -390,18 +397,96 @@ async def test_authenticated_vlob_update_bad_vlob_version(
     assert dump == initial_dump
 
 
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_rejected_by_sequester_service(
-    coolorg: CoolorgRpcClients, backend: Backend
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
 ) -> None:
-    raise Exception("Not implemented")
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        RejectedBySequesterService(service_id=sequestered_org.sequester_service_2_id, reason=None)
+    )
+    _mocked_sequester_service_on_vlob_create_or_update = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_vlob_create_or_update",
+        _mocked_sequester_service_on_vlob_create_or_update,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_update(
+        vlob_id=sequestered_org.wksp1_id,
+        version=2,
+        key_index=3,
+        timestamp=DateTime.now(),
+        blob=b"<block content>",
+    )
+    assert rep == authenticated_cmds.v4.vlob_update.RepRejectedBySequesterService(
+        service_id=sequestered_org.sequester_service_2_id, reason=None
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
 
 
-@pytest.mark.skip(reason="TODO: missing test sequester")
 async def test_authenticated_vlob_update_sequester_service_unavailable(
-    coolorg: CoolorgRpcClients, backend: Backend
+    sequestered_org: SequesteredOrgRpcClients,
+    backend: Backend,
+    monkeypatch: pytest.MonkeyPatch,
+    with_postgresql: bool,
 ) -> None:
-    raise Exception("Not implemented")
+    if with_postgresql:
+        pytest.xfail("TODO: Webhook sequester service not implemented yet in PostgreSQL")
+
+    outcome = await backend.sequester.update_config_for_service(
+        organization_id=sequestered_org.organization_id,
+        service_id=sequestered_org.sequester_service_2_id,
+        config=(SequesterServiceType.WEBHOOK, "https://parsec.invalid/webhook"),
+    )
+    assert outcome is None
+
+    future = asyncio.Future()
+    future.set_result(
+        SequesterServiceUnavailable(service_id=sequestered_org.sequester_service_2_id)
+    )
+    _mocked_sequester_service_on_vlob_create_or_update = Mock(side_effect=[future])
+    monkeypatch.setattr(
+        "parsec.webhooks.WebhooksComponent.sequester_service_on_vlob_create_or_update",
+        _mocked_sequester_service_on_vlob_create_or_update,
+    )
+
+    initial_dump = await backend.vlob.test_dump_vlobs(
+        organization_id=sequestered_org.organization_id
+    )
+
+    rep = await sequestered_org.alice.vlob_update(
+        vlob_id=sequestered_org.wksp1_id,
+        version=2,
+        key_index=3,
+        timestamp=DateTime.now(),
+        blob=b"<block content>",
+    )
+    assert rep == authenticated_cmds.v4.vlob_update.RepSequesterServiceUnavailable(
+        service_id=sequestered_org.sequester_service_2_id
+    )
+
+    # Ensure no changes were made
+    dump = await backend.vlob.test_dump_vlobs(organization_id=sequestered_org.organization_id)
+    assert dump == initial_dump
 
 
 async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
@@ -409,14 +494,14 @@ async def test_authenticated_vlob_update_timestamp_out_of_ballpark(
 ) -> None:
     initial_dump = await backend.vlob.test_dump_vlobs(organization_id=coolorg.organization_id)
     t0 = DateTime.now().subtract(seconds=3600)
-    rep = await coolorg.alice.vlob_create(
-        realm_id=coolorg.wksp1_id,
-        vlob_id=VlobID.new(),
+    rep = await coolorg.alice.vlob_update(
+        vlob_id=coolorg.wksp1_id,
         key_index=1,
+        version=2,
         timestamp=t0,
         blob=b"<block content>",
     )
-    assert isinstance(rep, authenticated_cmds.v4.vlob_create.RepTimestampOutOfBallpark)
+    assert isinstance(rep, authenticated_cmds.v4.vlob_update.RepTimestampOutOfBallpark)
     assert rep.ballpark_client_early_offset == 300.0
     assert rep.ballpark_client_late_offset == 320.0
     assert rep.client_timestamp == t0
