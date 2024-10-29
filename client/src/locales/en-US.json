@@ -591,7 +591,7 @@
             "waiting": "waiting",
             "cancelled": "cancelled",
             "failed": "failed",
-            "failedDetails": "Could not restore this file."
+            "failedDetails": "Could not restore this file or folder."
         },
         "uploadsLeft": "{amount} imports pending",
         "copiesLeft": "{amount} copies pending",
@@ -1648,10 +1648,10 @@
             "restore": "Restore",
             "cancel": "Cancel"
         },
-        "restoreConfirmTitle": "Restore files",
-        "restoreConfirmQuestion": "This will restore one file or folder. It will overwrite your current files if present. Are you sure? | This will restore multiple files or folders. It will overwrite your current files if present. Are you sure?",
-        "empty": "No files or folders at this date.",
-        "error": "Failed to list history.",
+        "restoreConfirmTitle": "Confirm file restore?",
+        "restoreConfirmQuestion": "Are you sure to restore the selected file or folder? This will overwrite any current version but you can still retrieve it in the History. | Are you sure to restore the selected files or folders? This will overwrite any current version but you can still retrieve them in the History.",
+        "empty": "No files or folders for the selected date.",
+        "error": "Failed to retrieve workspace history for the selected date.",
         "loading": "Loading...",
         "workspace": "Workspace:",
         "date": "Preview date:"
