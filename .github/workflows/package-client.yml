@@ -228,7 +228,7 @@ jobs:
             artifact_tag: windows-exe
           - name: 🍎 macOS
             platform: macos
-            os: macos-12
+            os: macos-13
             raw_latest_file: latest-mac.yml
             extension: "*" # Use wildcard to match dmg and zip extension
             os_alias: mac

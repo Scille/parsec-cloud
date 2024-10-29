@@ -69,7 +69,7 @@ jobs:
             os: ubuntu-22.04
           - name: 🍎 macOS
             platform: macos
-            os: macos-12
+            os: macos-13
           - name: 🏁 Windows
             platform: windows
             os: windows-2022
