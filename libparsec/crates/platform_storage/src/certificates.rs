@@ -57,6 +57,14 @@ impl PerTopicLastTimestamps {
             shamir_recovery: None,
         }
     }
+    pub fn new_for_sequester(sequester_timestamp: DateTime) -> Self {
+        Self {
+            common: None,
+            sequester: Some(sequester_timestamp),
+            realm: HashMap::default(),
+            shamir_recovery: None,
+        }
+    }
     pub fn new_for_common_and_realm(
         common_timestamp: DateTime,
         realm_id: VlobID,
