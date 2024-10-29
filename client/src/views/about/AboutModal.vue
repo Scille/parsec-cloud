@@ -2,7 +2,7 @@
 
 <template>
   <ms-modal
-    :title="$msTranslate('HeaderPage.titles.about')"
+    title="HeaderPage.titles.about"
     :close-button="{ visible: true }"
   >
     <about-view />

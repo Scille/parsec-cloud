@@ -94,14 +94,16 @@
 </template>
 
 <script setup lang="ts">
-import { LogoRowWhite, MsImage } from 'megashark-lib';
-import { IonButton, IonButtons, IonIcon } from '@ionic/vue';
+import { LogoRowWhite, MsImage, MsModalResult } from 'megashark-lib';
+import { IonButton, IonButtons, IonIcon, modalController } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle, sparkles, documentText } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
-import { Answer, askQuestion } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
+import { needsMocks } from '@/parsec';
+import UpdateAppModal from '@/views/about/UpdateAppModal.vue';
+import { APP_VERSION } from '@/services/environment';
 
 const injectionProvider: InjectionProvider = inject(InjectionProviderKey)!;
 const eventDistributor = injectionProvider.getDefault().eventDistributor;
@@ -115,6 +117,10 @@ onMounted(async () => {
     }
   });
   window.electronAPI.getUpdateAvailability();
+  if (needsMocks()) {
+    // Dispatch dummy update event to be able to debug the UpdateAppModal
+    eventDistributor.dispatchEvent(Events.UpdateAvailability, { updateAvailable: true, version: 'v3.1.0' });
+  }
 });
 
 onUnmounted(async () => {
@@ -124,11 +130,30 @@ onUnmounted(async () => {
 });
 
 async function update(): Promise<void> {
-  const answer = await askQuestion('HomePage.topbar.updateConfirmTitle', 'HomePage.topbar.updateConfirmQuestion', {
-    yesText: 'HomePage.topbar.updateYes',
-    noText: 'HomePage.topbar.updateNo',
+  if (!updateAvailability.value) {
+    window.electronAPI.log('error', 'Missing update data when trying to update');
+    return;
+  }
+  if (!updateAvailability.value.version) {
+    window.electronAPI.log('error', 'Version missing from update data');
+    return;
+  }
+
+  const modal = await modalController.create({
+    component: UpdateAppModal,
+    canDismiss: true,
+    cssClass: 'update-app-modal',
+    backdropDismiss: false,
+    componentProps: {
+      currentVersion: APP_VERSION,
+      targetVersion: updateAvailability.value.version,
+    },
   });
-  if (answer === Answer.Yes) {
+  await modal.present();
+  const { role } = await modal.onWillDismiss();
+  await modal.dismiss();
+
+  if (role === MsModalResult.Confirm) {
     window.electronAPI.prepareUpdate();
   }
 }
