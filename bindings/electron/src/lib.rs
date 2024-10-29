@@ -19,10 +19,13 @@ static SENTRY_CLIENT_GUARD: OnceCell<ClientInitGuard> = OnceCell::new();
 
 fn init_sentry() {
     SENTRY_CLIENT_GUARD.get_or_init(|| {
+        let version = std::option_env!("CARGO_PKG_VERSION").expect("Missing cargo version");
         sentry::init((
             SENTRY_DSN_LIBPARSEC,
             ClientOptions {
-                release: sentry::release_name!(),
+                release: Some(std::borrow::Cow::Owned(format!(
+                    "parsec-electron@{version}"
+                ))),
                 ..Default::default()
             },
         ))

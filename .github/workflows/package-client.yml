@@ -50,6 +50,7 @@ env:
   node-version: 18.12.0
   wasm-pack-version: 0.12.1
   WINFSP_VERSION: 2.0.23075
+  sentry-cli-version: 2.37.0
 
 permissions:
   contents: read
@@ -86,6 +87,14 @@ jobs:
           path: ${{ runner.temp }}/version.patch
           run-id: ${{ inputs.version_patch_run_id || github.run_id }}
 
+      - name: Load version config
+        id: version
+        shell: bash
+        run: |
+          cat version.patch/version.ini > "$GITHUB_OUTPUT"
+          cat "$GITHUB_OUTPUT"
+        working-directory: ${{ runner.temp }}
+
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
@@ -98,6 +107,9 @@ jobs:
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
+      # TODO: wasm-pack do provide debug info by default
+      # https://github.com/rustwasm/wasm-pack/issues/1351
+      # https://docs.sentry.io/platforms/native/data-management/debug-files/file-formats/#wasm
       - name: Build web bindings
         run: npm run build:release
         working-directory: bindings/web
@@ -105,7 +117,9 @@ jobs:
       - name: Build web app
         run: npm run web:release
         env:
-          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
+          SENTRY_DIST: web
         working-directory: client
 
       - name: Generate SBOM
@@ -165,22 +179,19 @@ jobs:
           sed -i 's/node package.js --mode prod --platform linux dir/& --nightly/' snap/snapcraft.yaml
         working-directory: client/electron
 
-      # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
-      - name: Patch vite config for snap build
-        run: >-
-          sed -i
-          -e s'/if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN)/if (true)/'
-          -e s';authToken: process.env.PARSEC_APP_SENTRY_AUTH_TOKEN;authToken: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
-          vite.config.ts
-        working-directory: client
-
-      - name: Patch snapcraft file for sentry auth token and vite mode
-        run: >-
-          sed -i
-          -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
-          -e s'/VITE_MODE: development/VITE_MODE: ${{ steps.version.outputs.type }}/'
-          snap/snapcraft.yaml
-        working-directory: client/electron
+      - name: Create env file for snapcraft
+        run:
+          (
+            echo "SENTRY_CLI_VERSION=${{ env.sentry-cli-version }}";
+            echo "SENTRY_AUTH_TOKEN=${{ secrets.SENTRY_AUTH_TOKEN }}";
+            echo "SENTRY_RELEASE=parsec@${{ steps.version.outputs.full }}";
+            echo "SENTRY_DIST=snapcraft-linux";
+            echo "SENTRY_ORG=scille";
+            echo "SENTRY_CLIENT_PROJECT=parsec3-frontend";
+            echo "SENTRY_LIBPARSEC_PROJECT=parsec3-libparsec";
+            echo "VITE_MODE=${{ steps.version.outputs.type }}";
+          ) | tee snapcraft.env
+        shell: bash
 
       - name: Build snap
         run: |
@@ -254,6 +265,10 @@ jobs:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
 
+      - uses: ./.github/actions/setup-sentry-cli
+        with:
+          sentry-version: ${{ env.sentry-cli-version }}
+
       - name: Download version.patch artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # pin v4.1.8
         with:
@@ -316,8 +331,23 @@ jobs:
         # MacOS is really slow when build rust
         timeout-minutes: 30
 
+      - name: Upload debug info to sentry
+        shell: bash
+        run: |
+          sentry-cli debug-files check dist/libparsec/index.node
+          sentry-cli debug-files upload --include-sources dist/libparsec/index.node
+        working-directory: bindings/electron
+        env:
+          SENTRY_ORG: scille
+          SENTRY_PROJECT: parsec3-libparsec
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
       - name: Build client for electron
         run: npm run native:build -- --mode ${{ steps.version.outputs.type }}
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DIST: ${{ matrix.platform }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
         working-directory: client
         timeout-minutes: 5
 
@@ -336,15 +366,20 @@ jobs:
           ${{ (matrix.platform == 'linux' || inputs.nightly_build) && '--' || '' }}
           ${{ matrix.platform == 'linux' && 'appimage' || '' }}
           ${{ inputs.nightly_build && '--nightly' || '' }}
-        env:
-          PARSEC_APP_SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
         working-directory: client/electron
         timeout-minutes: 5
 
       - name: Upload client electron sourcemaps
-        run: npm run sentry:sourcemaps
+        run: |
+          npm exec sentry-cli -- sourcemaps inject --release $SENTRY_RELEASE ./build
+          npm exec sentry-cli -- sourcemaps upload --release $SENTRY_RELEASE --dist $SENTRY_DIST ./build
+        shell: bash
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DIST: ${{ matrix.platform }}
+          SENTRY_RELEASE: parsec@${{ steps.version.outputs.full }}
+          SENTRY_ORG: scille
+          SENTRY_PROJECT: parsec3-frontend
         working-directory: client/electron
         timeout-minutes: 1
 
@@ -357,7 +392,7 @@ jobs:
         run: syft packages --config=.syft.yaml --output=spdx-json=client/electron/dist/Parsec-SBOM-Electron-${{ matrix.artifact_tag }}.spdx.json .
 
       - name: Debug dist folder
-        if: runner.debug || false
+        if: runner.debug
         run: ls client/electron/dist
 
       - name: Build info
