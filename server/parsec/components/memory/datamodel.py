@@ -219,6 +219,10 @@ class MemoryOrganization:
     def is_sequestered(self) -> bool:
         return self.sequester_authority_certificate is not None
 
+    def active_sequester_services(self) -> Iterable[MemorySequesterService]:
+        services = self.sequester_services.values() if self.sequester_services else ()
+        return (service for service in services if not service.is_revoked)
+
     @property
     def is_bootstrapped(self) -> bool:
         return self.bootstrapped_on is not None
