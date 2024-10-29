@@ -286,3 +286,13 @@
     max-width: var(--parsec-modal-width-md);
   }
 }
+
+.update-app-modal {
+  &::part(content) {
+    max-width: var(--parsec-modal-width-sm);
+  }
+
+  .ms-modal {
+    padding-top: 1.5rem;
+  }
+}

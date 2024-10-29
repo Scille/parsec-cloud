@@ -118,8 +118,10 @@
             "updateConfirmQuestion": "You will be logged out and the application will close. Make sure to save your work before. Do you want to continue?",
             "updateYes": "Update Parsec",
             "updateNo": "Later",
-            "updateAvailable": "Update available",
-            "newVersionAvailable": "New version available"
+            "changelog": "What's new?",
+            "currentVersion": "Current version: ",
+            "updateAvailable": "New update available",
+            "newVersionAvailable": "New update available"
         },
         "organizationList": {
             "title": "Your organizations",
