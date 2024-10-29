@@ -59,10 +59,8 @@ CREATE TABLE sequester_service (
     webhook_url TEXT, -- NULL if service_type != WEBHOOK;
     service_type SEQUESTER_SERVICE_TYPE NOT NULL,
 
-
     revoked_on TIMESTAMPTZ, -- NULL if not yet revoked
-    revoked_sequester_certificate BYTEA, -- NULL if not yet revoked
-    revoked_sequester_certifier INTEGER, -- NULL if not yet revoked
+    sequester_revoked_service_certificate BYTEA, -- NULL if not yet revoked
 
     UNIQUE (organization, service_id)
 );
@@ -147,9 +145,6 @@ ADD CONSTRAINT fk_user_device_user_certifier FOREIGN KEY (
 ALTER TABLE user_
 ADD CONSTRAINT fk_user_device_revoked_user_certifier FOREIGN KEY (
     revoked_user_certifier
-) REFERENCES device (_id);
-ALTER TABLE sequester_service ADD FOREIGN KEY (
-    revoked_sequester_certifier
 ) REFERENCES device (_id);
 
 ALTER TABLE profile ADD FOREIGN KEY (certified_by) REFERENCES device (_id);
@@ -402,6 +397,7 @@ CREATE TABLE realm_user_change (
     UNIQUE (realm, user_)
 );
 
+
 CREATE TABLE realm_keys_bundle (
     _id SERIAL PRIMARY KEY,
     realm INTEGER REFERENCES realm (_id) NOT NULL,
@@ -415,6 +411,7 @@ CREATE TABLE realm_keys_bundle (
 
     UNIQUE (realm, key_index)
 );
+
 
 CREATE TABLE realm_keys_bundle_access (
     _id SERIAL PRIMARY KEY,
@@ -435,8 +432,11 @@ CREATE TABLE realm_sequester_keys_bundle_access (
 
     access BYTEA NOT NULL,
 
+    realm INTEGER REFERENCES realm (_id) NOT NULL,
+
     UNIQUE (sequester_service, realm_keys_bundle)
 );
+
 
 CREATE TABLE realm_name (
     _id SERIAL PRIMARY KEY,
