@@ -1,17 +1,13 @@
 # Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
 from enum import auto
-
-import httpx
 
 from parsec._parsec import (
     DateTime,
     DeviceID,
     OrganizationID,
-    SequesterServiceID,
     VlobID,
     authenticated_cmds,
 )
@@ -19,23 +15,15 @@ from parsec.api import api
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.client_context import AuthenticatedClientContext
 from parsec.components.realm import BadKeyIndex
+from parsec.components.sequester import RejectedBySequesterService, SequesterServiceUnavailable
 from parsec.logging import get_logger
 from parsec.types import BadOutcomeEnum
+from parsec.webhooks import WebhooksComponent
 
 logger = get_logger()
 
 # Maximum number of vlobs that can be read in a single request
 VLOB_READ_REQUEST_ITEMS_LIMIT: int = 1000
-
-
-@dataclass(slots=True)
-class SequesterServiceUnavailable:
-    service_id: SequesterServiceID
-
-
-@dataclass(slots=True)
-class RejectedBySequesterService:
-    service_id: SequesterServiceID
 
 
 @dataclass(slots=True)
@@ -89,8 +77,8 @@ class VlobListVersionsBadOutcome(BadOutcomeEnum):
 
 
 class BaseVlobComponent:
-    def __init__(self, http_client: httpx.AsyncClient):
-        self._http_client = http_client
+    def __init__(self, webhooks: WebhooksComponent):
+        self.webhooks = webhooks
 
     #
     # Public methods
@@ -171,75 +159,6 @@ class BaseVlobComponent:
     ) -> dict[VlobID, list[tuple[DeviceID, DateTime, VlobID, bytes]]]:
         raise NotImplementedError
 
-    async def _sequester_service_send_webhook(
-        self,
-        webhook_url: str,
-        service_id: SequesterServiceID,
-        organization_id: OrganizationID,
-        author: DeviceID,
-        realm_id: VlobID,
-        vlob_id: VlobID,
-        key_index: int,
-        version: int,
-        timestamp: DateTime,
-        blob: bytes,
-    ) -> None | SequesterServiceUnavailable | RejectedBySequesterService:
-        # Proceed webhook service before storage (guarantee data are not stored if they are rejected)
-        try:
-            ret = await self._http_client.post(
-                webhook_url,
-                params={
-                    "service_id": service_id.hex,
-                    "organization_id": organization_id.str,
-                    "author": author.hex,
-                    "realm_id": realm_id.hex,
-                    "vlob_id": vlob_id.hex,
-                    "key_index": key_index,
-                    "version": version,
-                    "timestamp": timestamp.to_rfc3339(),
-                },
-                content=blob,
-            )
-            if ret.status_code == 400:
-                raw_body = await ret.aread()
-                try:
-                    body = json.loads(raw_body)
-                    if not isinstance(body, dict) or not isinstance(body.get("reason"), str):
-                        raise ValueError
-
-                except (json.JSONDecodeError, ValueError):
-                    logger.warning(
-                        "Invalid rejection reason body returned by webhook",
-                        organization_id=organization_id.str,
-                        service_id=service_id.hex,
-                        body=raw_body,
-                    )
-                return RejectedBySequesterService(
-                    service_id=service_id,
-                )
-
-            elif not ret.is_success:
-                logger.warning(
-                    "Invalid HTTP status returned by webhook",
-                    organization_id=organization_id.str,
-                    service_id=service_id.hex,
-                    status=ret.status_code,
-                )
-                return SequesterServiceUnavailable(
-                    service_id=service_id,
-                )
-
-        except OSError as exc:
-            logger.warning(
-                "Cannot reach webhook server",
-                organization_id=organization_id.str,
-                service_id=service_id.hex,
-                exc_info=exc,
-            )
-            return SequesterServiceUnavailable(
-                service_id=service_id,
-            )
-
     #
     # API commands
     #
@@ -293,6 +212,7 @@ class BaseVlobComponent:
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_create.RepRejectedBySequesterService(
                     service_id=error.service_id,
+                    reason=error.reason,
                 )
             case SequesterServiceUnavailable() as error:
                 return authenticated_cmds.latest.vlob_create.RepSequesterServiceUnavailable(
@@ -356,6 +276,7 @@ class BaseVlobComponent:
             case RejectedBySequesterService() as error:
                 return authenticated_cmds.latest.vlob_update.RepRejectedBySequesterService(
                     service_id=error.service_id,
+                    reason=error.reason,
                 )
             case SequesterServiceUnavailable() as error:
                 return authenticated_cmds.latest.vlob_update.RepSequesterServiceUnavailable(

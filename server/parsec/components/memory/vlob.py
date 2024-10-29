@@ -35,6 +35,7 @@ from parsec.components.vlob import (
     VlobUpdateBadOutcome,
 )
 from parsec.events import EVENT_VLOB_MAX_BLOB_SIZE, EventVlob
+from parsec.webhooks import WebhooksComponent
 
 # Tuple contains: blob, author, timestamp, certificate index at the time of creation
 type VlobData = list[tuple[bytes, DeviceID, DateTime, int]]
@@ -46,10 +47,9 @@ class MemoryVlobComponent(BaseVlobComponent):
         self,
         data: MemoryDatamodel,
         event_bus: EventBus,
-        *args,
-        **kwargs,
+        webhooks: WebhooksComponent,
     ) -> None:
-        super().__init__(*args, **kwargs)
+        super().__init__(webhooks)
         self._data = data
         self._event_bus = event_bus
 
@@ -134,7 +134,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                         continue
                     if service.service_type == SequesterServiceType.WEBHOOK:
                         assert service.webhook_url is not None
-                        match await self._sequester_service_send_webhook(
+                        match await self.webhooks.sequester_service_on_vlob_create_or_update(
                             webhook_url=service.webhook_url,
                             service_id=service_id,
                             organization_id=organization_id,
@@ -268,7 +268,7 @@ class MemoryVlobComponent(BaseVlobComponent):
                             continue
                         if service.service_type == SequesterServiceType.WEBHOOK:
                             assert service.webhook_url is not None
-                            match await self._sequester_service_send_webhook(
+                            match await self.webhooks.sequester_service_on_vlob_create_or_update(
                                 webhook_url=service.webhook_url,
                                 service_id=service_id,
                                 organization_id=organization_id,
