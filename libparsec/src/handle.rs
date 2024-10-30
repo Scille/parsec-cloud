@@ -9,6 +9,7 @@ use libparsec_client::{
 use libparsec_platform_async::event::Event;
 use libparsec_types::prelude::*;
 
+/// Used to identify [HandleItem]
 pub type Handle = u32;
 const INVALID_HANDLE_ERROR_MSG: &str = "Invalid Handle";
 
@@ -22,9 +23,9 @@ pub(crate) struct EntryWatcher {
     // Never accessed, but we need to keep it alive
     #[allow(dead_code)]
     pub lifetimes: (
-        // Event triggered when a local change occured
+        // Event triggered when a local change occurred
         EventBusConnectionLifetime<EventWorkspaceOpsOutboundSyncNeeded>,
-        // Event triggered when a remote change occured
+        // Event triggered when a remote change occurred
         EventBusConnectionLifetime<EventWorkspaceOpsInboundSyncDone>,
     ),
 }

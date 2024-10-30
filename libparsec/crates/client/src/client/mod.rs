@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod recovery_device;
 mod shamir_setup_create;
 mod tos;
 mod user_revoke;
@@ -44,7 +45,11 @@ use crate::{
 };
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_platform_async::lock::Mutex as AsyncMutex;
+
 use libparsec_types::prelude::*;
+pub use recovery_device::{
+    import_recovery_device, ClientExportRecoveryDeviceError, ImportRecoveryDeviceError,
+};
 
 // Re-exposed for public API
 pub use crate::certif::{
@@ -532,6 +537,13 @@ impl Client {
 
     pub async fn accept_tos(&self, tos_updated_on: DateTime) -> Result<(), ClientAcceptTosError> {
         tos::accept_tos(self, tos_updated_on).await
+    }
+
+    pub async fn client_export_recovery_device(
+        &self,
+        device_label: DeviceLabel,
+    ) -> Result<(SecretKeyPassphrase, Vec<u8>), ClientExportRecoveryDeviceError> {
+        recovery_device::export_recovery_device(self, device_label).await
     }
 }
 

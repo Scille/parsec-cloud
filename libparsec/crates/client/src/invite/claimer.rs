@@ -863,6 +863,8 @@ impl UserClaimInProgress3Ctx {
             Some(signing_key),
             Some(private_key),
             Some(self.0.time_provider.clone()),
+            None,
+            None,
         ));
 
         self.0.do_acknowledge().await?;

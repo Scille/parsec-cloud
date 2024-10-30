@@ -13,7 +13,6 @@ use libparsec_types::prelude::*;
 #[parsec_test]
 async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPath) {
     let key_file = tmp_path.join("keyring_file");
-
     let device = LocalDevice::generate_new_device(
         ParsecOrganizationAddr::from_any(
             // cspell:disable-next-line
@@ -26,7 +25,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
         None,
         None,
         None,
-        None,
+        None,None,None,
     );
 
     let (access, expected_available_device) = match kind {
@@ -38,7 +37,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://127.0.0.1:6770/".to_string(),
+                server_url: "http://test.invalid/".to_string(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,
@@ -57,7 +56,7 @@ async fn save_load(#[values("keyring", "password")] kind: &str, tmp_path: TmpPat
                 key_file_path: key_file.clone(),
                 created_on: "2000-01-01T00:00:00Z".parse().unwrap(),
                 protected_on: "2000-01-01T00:00:00Z".parse().unwrap(),
-                server_url: "http://127.0.0.1:6770/".to_string(),
+                server_url: "http://test.invalid/".to_string(),
                 organization_id: device.organization_id().to_owned(),
                 user_id: device.user_id,
                 device_id: device.device_id,

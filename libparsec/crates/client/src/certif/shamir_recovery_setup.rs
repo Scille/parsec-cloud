@@ -176,17 +176,10 @@ async fn create_shamir_recovery_device(
 ) -> Result<CreateShamirRecoveryDeviceOutcome, CertifShamirError> {
     let author = &certificate_ops.device;
 
-    let recovery_device = LocalDevice::generate_new_device(
-        certificate_ops.device.organization_addr.clone(),
-        certificate_ops.device.initial_profile,
-        certificate_ops.device.human_handle.clone(),
+    let recovery_device = LocalDevice::from_existing_device_for_user(
+        &author.clone(),
         DeviceLabel::try_from(format!("shamir-recovery-{timestamp}").as_str())
             .expect("Invalid device label"),
-        Some(certificate_ops.device.user_id),
-        None,
-        None,
-        None,
-        None,
     );
 
     let device_cert = DeviceCertificate {
