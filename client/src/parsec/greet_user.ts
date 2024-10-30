@@ -96,6 +96,7 @@ export class UserGreet {
       }
       return result;
     } else {
+      await wait(MOCK_WAITING_TIME);
       this.hostSASCode = '2EDF';
       return {
         ok: true,
@@ -158,6 +159,7 @@ export class UserGreet {
       this.canceller = null;
       return result;
     } else {
+      await wait(MOCK_WAITING_TIME);
       return { ok: true, value: { handle: DEFAULT_HANDLE } };
     }
   }

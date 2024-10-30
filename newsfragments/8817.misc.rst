@@ -1,0 +1,1 @@
+Slight improvement of how connection problems are handled during the greeting process

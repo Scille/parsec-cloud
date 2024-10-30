@@ -61,6 +61,7 @@
           class="step"
         >
           <sas-code-choice
+            :disabled="querying"
             :choices="greeter.SASCodeChoices"
             @select="selectGuestSas"
           />
@@ -140,10 +141,13 @@
             </span>
           </ion-button>
           <div
-            v-show="waitingForGuest"
+            v-show="waitingForGuest || querying"
             class="spinner-container"
           >
-            <ion-text class="subtitles-normal">
+            <ion-text
+              class="subtitles-normal"
+              v-show="!querying"
+            >
               {{ $msTranslate('UsersPage.greet.waiting') }}
             </ion-text>
             <ms-spinner class="spinner" />
@@ -199,6 +203,7 @@ const canGoForward = ref(false);
 const waitingForGuest = ref(true);
 const greeter = ref(new UserGreet());
 const cancelled = ref(false);
+const querying = ref(false);
 
 const profileOptions: MsOptions = new MsOptions([
   {
@@ -269,27 +274,32 @@ async function selectGuestSas(code: string | null): Promise<void> {
     await showErrorAndRestart('UsersPage.greet.errors.noneCodeSelected');
     return;
   }
-  if (code === greeter.value.correctSASCode) {
-    const result = await greeter.value.signifyTrust();
-    if (result.ok) {
-      await nextStep();
-    } else {
-      if (result.error.tag === GreetInProgressErrorTag.GreetingAttemptCancelled) {
-        switch (result.error.reason) {
-          case CancelledGreetingAttemptReason.ManuallyCancelled:
-            await showErrorAndRestart('UsersPage.greet.errors.claimer.manuallyCancelled');
-            break;
-          default:
-            await showErrorAndRestart('UsersPage.greet.errors.claimer.default');
-            break;
-        }
+  try {
+    querying.value = true;
+    if (code === greeter.value.correctSASCode) {
+      const result = await greeter.value.signifyTrust();
+      if (result.ok) {
+        await nextStep();
       } else {
-        await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+        if (result.error.tag === GreetInProgressErrorTag.GreetingAttemptCancelled) {
+          switch (result.error.reason) {
+            case CancelledGreetingAttemptReason.ManuallyCancelled:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.manuallyCancelled');
+              break;
+            default:
+              await showErrorAndRestart('UsersPage.greet.errors.claimer.default');
+              break;
+          }
+        } else {
+          await showErrorAndRestart({ key: 'UsersPage.greet.errors.unexpected', data: { reason: result.error.tag } });
+        }
       }
+    } else {
+      await greeter.value.denyTrust();
+      await showErrorAndRestart('UsersPage.greet.errors.invalidCodeSelected');
     }
-  } else {
-    await greeter.value.denyTrust();
-    await showErrorAndRestart('UsersPage.greet.errors.invalidCodeSelected');
+  } finally {
+    querying.value = false;
   }
 }
 

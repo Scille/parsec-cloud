@@ -85,6 +85,7 @@
           class="step"
         >
           <sas-code-choice
+            :disabled="querying"
             :choices="claimer.SASCodeChoices"
             @select="selectHostSas($event)"
           />
@@ -152,10 +153,10 @@
             </span>
           </ion-button>
           <div
-            v-show="waitingForHost"
+            v-show="waitingForHost || querying"
             class="spinner-container"
           >
-            <ms-spinner title="JoinOrganization.waitingForHost" />
+            <ms-spinner :title="!querying ? 'JoinOrganization.waitingForHost' : undefined" />
           </div>
         </ion-buttons>
       </ion-footer>
@@ -213,6 +214,7 @@ const authChoice = ref();
 const fieldsUpdated = ref(false);
 const cancelled = ref(false);
 const organizationName: Ref<OrganizationID> = ref('');
+const querying = ref(false);
 
 const claimer = ref(new UserClaim());
 
@@ -283,7 +285,10 @@ async function showErrorAndRestart(message: Translatable): Promise<void> {
 async function selectHostSas(selectedCode: string | null): Promise<void> {
   if (!selectedCode) {
     await showErrorAndRestart('JoinOrganization.errors.noneCodeSelected');
-  } else {
+    return;
+  }
+  try {
+    querying.value = true;
     if (selectedCode === claimer.value.correctSASCode) {
       const result = await claimer.value.signifyTrust();
       if (result.ok) {
@@ -306,6 +311,8 @@ async function selectHostSas(selectedCode: string | null): Promise<void> {
       await claimer.value.denyTrust();
       await showErrorAndRestart('JoinOrganization.errors.invalidCodeSelected');
     }
+  } finally {
+    querying.value = false;
   }
 }
 
