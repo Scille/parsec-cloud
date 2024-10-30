@@ -743,6 +743,46 @@ export type ClientEvent =
   | ClientEventWorkspaceWatchedEntryChanged
   | ClientEventWorkspacesSelfListChanged
 
+// ClientExportRecoveryDeviceError
+export enum ClientExportRecoveryDeviceErrorTag {
+    Internal = 'ClientExportRecoveryDeviceErrorInternal',
+    InvalidCertificate = 'ClientExportRecoveryDeviceErrorInvalidCertificate',
+    Offline = 'ClientExportRecoveryDeviceErrorOffline',
+    Stopped = 'ClientExportRecoveryDeviceErrorStopped',
+    TimestampOutOfBallpark = 'ClientExportRecoveryDeviceErrorTimestampOutOfBallpark',
+}
+
+export interface ClientExportRecoveryDeviceErrorInternal {
+    tag: ClientExportRecoveryDeviceErrorTag.Internal
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorInvalidCertificate {
+    tag: ClientExportRecoveryDeviceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorOffline {
+    tag: ClientExportRecoveryDeviceErrorTag.Offline
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorStopped {
+    tag: ClientExportRecoveryDeviceErrorTag.Stopped
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: ClientExportRecoveryDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export type ClientExportRecoveryDeviceError =
+  | ClientExportRecoveryDeviceErrorInternal
+  | ClientExportRecoveryDeviceErrorInvalidCertificate
+  | ClientExportRecoveryDeviceErrorOffline
+  | ClientExportRecoveryDeviceErrorStopped
+  | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
+
 // ClientGetTosError
 export enum ClientGetTosErrorTag {
     Internal = 'ClientGetTosErrorInternal',
@@ -1407,6 +1447,70 @@ export type GreetInProgressError =
   | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
+
+// ImportRecoveryDeviceError
+export enum ImportRecoveryDeviceErrorTag {
+    DecryptionFailed = 'ImportRecoveryDeviceErrorDecryptionFailed',
+    Internal = 'ImportRecoveryDeviceErrorInternal',
+    InvalidCertificate = 'ImportRecoveryDeviceErrorInvalidCertificate',
+    InvalidData = 'ImportRecoveryDeviceErrorInvalidData',
+    InvalidPassphrase = 'ImportRecoveryDeviceErrorInvalidPassphrase',
+    InvalidPath = 'ImportRecoveryDeviceErrorInvalidPath',
+    Offline = 'ImportRecoveryDeviceErrorOffline',
+    Stopped = 'ImportRecoveryDeviceErrorStopped',
+    TimestampOutOfBallpark = 'ImportRecoveryDeviceErrorTimestampOutOfBallpark',
+}
+
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: ImportRecoveryDeviceErrorTag.DecryptionFailed
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInternal {
+    tag: ImportRecoveryDeviceErrorTag.Internal
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidCertificate {
+    tag: ImportRecoveryDeviceErrorTag.InvalidCertificate
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: ImportRecoveryDeviceErrorTag.InvalidData
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPassphrase
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: ImportRecoveryDeviceErrorTag.InvalidPath
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: ImportRecoveryDeviceErrorTag.Offline
+    error: string
+}
+export interface ImportRecoveryDeviceErrorStopped {
+    tag: ImportRecoveryDeviceErrorTag.Stopped
+    error: string
+}
+export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: ImportRecoveryDeviceErrorTag.TimestampOutOfBallpark
+    error: string
+    serverTimestamp: DateTime
+    clientTimestamp: DateTime
+    ballparkClientEarlyOffset: number
+    ballparkClientLateOffset: number
+}
+export type ImportRecoveryDeviceError =
+  | ImportRecoveryDeviceErrorDecryptionFailed
+  | ImportRecoveryDeviceErrorInternal
+  | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 // InviteListItem
 export enum InviteListItemTag {
@@ -2985,6 +3089,10 @@ export interface LibParsecPlugin {
         client: Handle,
         name: EntryName
     ): Promise<Result<VlobID, ClientCreateWorkspaceError>>
+    clientExportRecoveryDevice(
+        client_handle: Handle,
+        device_label: DeviceLabel
+    ): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
     clientGetTos(
         client: Handle
     ): Promise<Result<Tos, ClientGetTosError>>
@@ -3117,6 +3225,13 @@ export interface LibParsecPlugin {
         canceller: Handle,
         handle: Handle
     ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+    importRecoveryDevice(
+        config: ClientConfig,
+        recovery_device: Uint8Array,
+        passphrase: string,
+        device_label: DeviceLabel,
+        save_strategy: DeviceSaveStrategy
+    ): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
     isKeyringAvailable(
     ): Promise<boolean>
     listAvailableDevices(
