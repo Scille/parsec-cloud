@@ -12,6 +12,7 @@ mod handle;
 mod invite;
 mod path;
 mod platform;
+mod recovery;
 mod testbed;
 mod validation;
 mod workspace;
@@ -25,6 +26,7 @@ pub use device::{archive_device, list_available_devices, ArchiveDeviceError};
 pub use events::*;
 pub use handle::Handle;
 pub use invite::*;
+pub use libparsec_client::{ClientExportRecoveryDeviceError, ImportRecoveryDeviceError};
 pub use libparsec_client_connection::*;
 pub use libparsec_platform_device_loader::{
     get_default_key_file, is_keyring_available, load_device, load_recovery_device, save_device,
@@ -34,6 +36,7 @@ pub use libparsec_platform_storage as storage;
 pub use libparsec_protocol::*;
 pub use path::*;
 pub use platform::*;
+pub use recovery::*;
 pub use testbed::*;
 pub use validation::*;
 pub use workspace::*;

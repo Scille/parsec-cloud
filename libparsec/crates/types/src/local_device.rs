@@ -17,14 +17,19 @@ pub struct LocalDevice {
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: DeviceLabel,
+    /// user human readable info
     pub human_handle: HumanHandle,
+    /// used by the device to sign certificates and vlobs
     pub signing_key: SigningKey,
+    /// used to receive messages
     pub private_key: PrivateKey,
     /// Profile the user had at enrollment time, use `CertificateOps::get_current_self_profile`
     /// instead of relying on this.
     pub initial_profile: UserProfile,
+
     pub user_realm_id: VlobID,
     pub user_realm_key: SecretKey,
+    /// used to locally encrypt data
     pub local_symkey: SecretKey,
     pub time_provider: TimeProvider,
 }
@@ -39,6 +44,7 @@ impl std::fmt::Debug for LocalDevice {
 }
 
 impl LocalDevice {
+    /// TODO: Use it only for tests see #8790
     #[allow(clippy::too_many_arguments)]
     pub fn generate_new_device(
         organization_addr: ParsecOrganizationAddr,
@@ -50,6 +56,8 @@ impl LocalDevice {
         signing_key: Option<SigningKey>,
         private_key: Option<PrivateKey>,
         time_provider: Option<TimeProvider>,
+        user_realm_id: Option<VlobID>,
+        user_realm_key: Option<SecretKey>,
     ) -> Self {
         Self {
             organization_addr,
@@ -60,10 +68,38 @@ impl LocalDevice {
             signing_key: signing_key.unwrap_or_else(SigningKey::generate),
             private_key: private_key.unwrap_or_else(PrivateKey::generate),
             initial_profile,
-            user_realm_id: VlobID::default(),
-            user_realm_key: SecretKey::generate(),
+            user_realm_id: user_realm_id.unwrap_or_default(),
+            user_realm_key: user_realm_key.unwrap_or_else(SecretKey::generate),
             local_symkey: SecretKey::generate(),
             time_provider: time_provider.unwrap_or_default(),
+        }
+    }
+
+    /// generates a new device for a given user
+    pub fn from_existing_device_for_user(
+        device: &LocalDevice,
+        device_label: DeviceLabel,
+    ) -> LocalDevice {
+        LocalDevice {
+            // generate device specific fields
+            device_label,
+            device_id: DeviceID::default(),
+            signing_key: SigningKey::generate(),
+            local_symkey: SecretKey::generate(),
+
+            // the other fields are the same as the existing device
+            organization_addr: device.organization_addr.clone(),
+            user_id: device.user_id,
+            human_handle: device.human_handle.clone(),
+            private_key: device.private_key.clone(),
+            initial_profile: device.initial_profile,
+            user_realm_id: device.user_realm_id,
+            user_realm_key: device.user_realm_key.clone(),
+
+            // this is not serialized
+            // it's derived from the previous device to
+            // assure that mocked devices work properly
+            time_provider: device.time_provider.new_child(),
         }
     }
 

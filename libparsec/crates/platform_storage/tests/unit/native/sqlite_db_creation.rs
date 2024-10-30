@@ -23,6 +23,8 @@ async fn should_create_db_file_and_reusable(tmp_path: TmpPath) {
         None,
         None,
         None,
+        None,
+        None,
     );
 
     let sqlite_path = tmp_path

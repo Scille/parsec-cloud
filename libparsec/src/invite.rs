@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{path::PathBuf, sync::Arc};
+use std::sync::Arc;
 
 pub use libparsec_client::{
     ClientCancelInvitationError, ClientNewDeviceInvitationError, ClientNewUserInvitationError,
@@ -12,25 +12,6 @@ use crate::{
     handle::{borrow_from_handle, register_handle, take_and_close_handle, Handle, HandleItem},
     listen_canceller, ClientConfig, ClientEvent, OnEventCallbackPlugged,
 };
-
-#[derive(Debug, Clone)]
-pub enum DeviceSaveStrategy {
-    Keyring,
-    Password { password: Password },
-    Smartcard,
-}
-
-impl DeviceSaveStrategy {
-    pub fn into_access(self, key_file: PathBuf) -> DeviceAccessStrategy {
-        match self {
-            DeviceSaveStrategy::Keyring => DeviceAccessStrategy::Keyring { key_file },
-            DeviceSaveStrategy::Password { password } => {
-                DeviceAccessStrategy::Password { key_file, password }
-            }
-            DeviceSaveStrategy::Smartcard => DeviceAccessStrategy::Smartcard { key_file },
-        }
-    }
-}
 
 /*
  * Bootstrap organization

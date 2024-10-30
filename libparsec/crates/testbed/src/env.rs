@@ -642,7 +642,7 @@ impl TestbedEnv {
                 }
                 _ => None,
             })
-            .unwrap()
+            .unwrap_or_else(|| panic!("unable to find {device_id}"))
     }
 
     pub fn get_revoked_certificate(
