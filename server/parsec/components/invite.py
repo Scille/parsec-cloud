@@ -13,7 +13,7 @@ from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from enum import auto
-from typing import Callable
+from typing import Callable, TypeAlias
 
 import anyio
 
@@ -47,6 +47,8 @@ from parsec.logging import get_logger
 from parsec.templates import get_template
 from parsec.types import BadOutcome, BadOutcomeEnum
 
+ShamirRecoveryRecipient: TypeAlias = invited_cmds.latest.invite_info.ShamirRecoveryRecipient
+
 logger = get_logger()
 
 
@@ -73,28 +75,56 @@ class DeviceInvitation:
     status: InvitationStatus
 
 
-Invitation = UserInvitation | DeviceInvitation
+@dataclass(slots=True)
+class ShamirRecoveryInvitation:
+    TYPE = InvitationType.SHAMIR_RECOVERY
+    created_by_user_id: UserID
+    created_by_device_id: DeviceID
+    created_by_human_handle: HumanHandle
+    token: InvitationToken
+    created_on: DateTime
+    status: InvitationStatus
+
+    # Shamir-specific fields
+    claimer_user_id: UserID
+    threshold: int
+    recipients: list[ShamirRecoveryRecipient]
+
+
+Invitation = UserInvitation | DeviceInvitation | ShamirRecoveryInvitation
 
 
 def generate_invite_email(
+    invitation_type: InvitationType,
     from_addr: str,
     to_addr: str,
-    reply_to: str | None,
-    greeter_name: str | None,  # None for device invitation
     organization_id: OrganizationID,
     invitation_url: str,
     server_url: str,
+    reply_to: str | None = None,
+    greeter_name: str | None = None,
 ) -> Message:
     # Quick fix to have a similar behavior between Rust and Python
     if server_url.endswith("/"):
         server_url = server_url[:-1]
+
+    is_user_invitation = invitation_type == invitation_type.USER
+    is_device_invitation = invitation_type == invitation_type.DEVICE
+    is_shamir_recovery_invitation = invitation_type == invitation_type.SHAMIR_RECOVERY
+
     html = get_template("invitation_mail.html").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
         server_url=server_url,
     )
     text = get_template("invitation_mail.txt").render(
+        is_user_invitation=is_user_invitation,
+        is_device_invitation=is_device_invitation,
+        is_shamir_recovery_invitation=is_shamir_recovery_invitation,
         greeter=greeter_name,
         organization_id=organization_id.str,
         invitation_url=invitation_url,
@@ -211,6 +241,15 @@ class InviteNewForDeviceBadOutcome(BadOutcomeEnum):
     ORGANIZATION_EXPIRED = auto()
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
+
+
+class InviteNewForShamirBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    AUTHOR_REVOKED = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    USER_NOT_FOUND = auto()
 
 
 class InviteCancelBadOutcome(BadOutcomeEnum):
@@ -543,6 +582,7 @@ class BaseInviteComponent:
         ).to_http_redirection_url()
 
         message = generate_invite_email(
+            invitation_type=InvitationType.USER,
             from_addr=self._config.email_config.sender,
             to_addr=claimer_email,
             greeter_name=greeter_human_handle.label,
@@ -576,10 +616,44 @@ class BaseInviteComponent:
         ).to_http_redirection_url()
 
         message = generate_invite_email(
+            invitation_type=InvitationType.DEVICE,
             from_addr=self._config.email_config.sender,
             to_addr=email,
-            greeter_name=None,
-            reply_to=None,
+            organization_id=organization_id,
+            invitation_url=invitation_url,
+            server_url=self._config.server_addr.to_http_url(),
+        )
+
+        return await send_email(
+            email_config=self._config.email_config,
+            to_addr=email,
+            message=message,
+        )
+
+    # Used by `new_for_shamir_recovery` implementations
+    async def _send_shamir_recovery_invitation_email(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        email: str,
+        greeter_human_handle: HumanHandle,
+    ) -> None | SendEmailBadOutcome:
+        if not self._config.server_addr:
+            return SendEmailBadOutcome.BAD_SMTP_CONFIG
+
+        invitation_url = ParsecInvitationAddr.build(
+            server_addr=self._config.server_addr,
+            organization_id=organization_id,
+            invitation_type=InvitationType.SHAMIR_RECOVERY,
+            token=token,
+        ).to_http_redirection_url()
+
+        message = generate_invite_email(
+            invitation_type=InvitationType.SHAMIR_RECOVERY,
+            from_addr=self._config.email_config.sender,
+            to_addr=email,
+            greeter_name=greeter_human_handle.label,
+            reply_to=greeter_human_handle.email,
             organization_id=organization_id,
             invitation_url=invitation_url,
             server_url=self._config.server_addr.to_http_url(),
@@ -616,6 +690,18 @@ class BaseInviteComponent:
         # Only needed for testbed template
         force_token: InvitationToken | None = None,
     ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForDeviceBadOutcome:
+        raise NotImplementedError
+
+    async def new_for_shamir_recovery(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        send_email: bool,
+        claimer_user_id: UserID,
+        # Only needed for testbed template
+        force_token: InvitationToken | None = None,
+    ) -> tuple[InvitationToken, None | SendEmailBadOutcome] | InviteNewForShamirBadOutcome:
         raise NotImplementedError
 
     async def cancel(
@@ -730,6 +816,48 @@ class BaseInviteComponent:
         )
 
     @api
+    async def api_invite_new_shamir_recovery(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.invite_new_shamir_recovery.Req,
+    ) -> authenticated_cmds.latest.invite_new_shamir_recovery.Rep:
+        outcome = await self.new_for_shamir_recovery(
+            now=DateTime.now(),
+            organization_id=client_ctx.organization_id,
+            author=client_ctx.device_id,
+            send_email=req.send_email,
+            claimer_user_id=req.claimer_user_id,
+        )
+        match outcome:
+            case (InvitationToken() as token, None):
+                email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SUCCESS
+            case (
+                InvitationToken() as token,
+                SendEmailBadOutcome.BAD_SMTP_CONFIG
+                | SendEmailBadOutcome.SERVER_UNAVAILABLE,
+            ):
+                email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.SERVER_UNAVAILABLE
+            case (InvitationToken() as token, SendEmailBadOutcome.RECIPIENT_REFUSED):
+                email_sent = authenticated_cmds.latest.invite_new_shamir_recovery.InvitationEmailSentStatus.RECIPIENT_REFUSED
+            case InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.invite_new_shamir_recovery.RepAuthorNotAllowed()
+            case InviteNewForShamirBadOutcome.USER_NOT_FOUND:
+                return authenticated_cmds.latest.invite_new_shamir_recovery.RepUserNotFound()
+            case InviteNewForShamirBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteNewForShamirBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteNewForShamirBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case InviteNewForShamirBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+
+        return authenticated_cmds.latest.invite_new_shamir_recovery.RepOk(
+            token=token,
+            email_sent=email_sent,
+        )
+
+    @api
     async def api_invite_cancel(
         self,
         client_ctx: AuthenticatedClientContext,
@@ -795,6 +923,13 @@ class BaseInviteComponent:
                         created_on=invitation.created_on,
                         status=invitation.status,
                     )
+                case ShamirRecoveryInvitation():
+                    cooked = authenticated_cmds.latest.invite_list.InviteListItemShamirRecovery(
+                        token=invitation.token,
+                        created_on=invitation.created_on,
+                        status=invitation.status,
+                        claimer_user_id=invitation.claimer_user_id,
+                    )
             cooked_invitations.append(cooked)
 
         return authenticated_cmds.latest.invite_list.RepOk(invitations=cooked_invitations)
@@ -820,6 +955,13 @@ class BaseInviteComponent:
                     invited_cmds.latest.invite_info.UserOrDeviceDevice(
                         greeter_user_id=invitation.created_by_user_id,
                         greeter_human_handle=invitation.created_by_human_handle,
+                    )
+                )
+            case ShamirRecoveryInvitation() as invitation:
+                return invited_cmds.latest.invite_info.RepOk(
+                    invited_cmds.latest.invite_info.UserOrDeviceShamirRecovery(
+                        threshold=invitation.threshold,
+                        recipients=invitation.recipients,
                     )
                 )
             case InviteAsInvitedInfoBadOutcome.ORGANIZATION_NOT_FOUND:

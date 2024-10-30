@@ -3,6 +3,7 @@ mod claim;
 mod device;
 mod greet;
 mod list;
+mod shared_recovery;
 mod user;
 
 #[derive(clap::Subcommand)]
@@ -19,6 +20,8 @@ pub enum Group {
     User(user::Args),
     /// Create device invitation
     Device(device::Args),
+    /// Create shared recovery invitation
+    SharedRecovery(shared_recovery::Args),
 }
 
 pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
@@ -29,5 +32,6 @@ pub async fn dispatch_command(command: Group) -> anyhow::Result<()> {
         Group::List(args) => list::main(args).await,
         Group::User(args) => user::main(args).await,
         Group::Device(args) => device::main(args).await,
+        Group::SharedRecovery(args) => shared_recovery::main(args).await,
     }
 }

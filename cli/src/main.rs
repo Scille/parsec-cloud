@@ -38,8 +38,6 @@ enum Command {
     /// This command creates three users, `Alice`, `Bob` and `Toto`,
     /// To run testenv, see the script run_testenv in the current directory.
     RunTestenv(run_testenv::RunTestenv),
-    /// Create a shamir setup
-    ShamirSetupCreate(shamir_setup::ShamirSetupCreate),
     /// List files in a workspace
     Ls(ls::Ls),
     /// Remove a file from a workspace
@@ -47,6 +45,9 @@ enum Command {
     /// Contains subcommands related to Term of Service (TOS).
     #[command(subcommand)]
     Tos(tos::Group),
+    /// Contains subcommands related to shared recovery devices (shamir)
+    #[command(subcommand)]
+    SharedRecovery(shared_recovery::Group),
 }
 
 #[tokio::main]
@@ -63,11 +64,11 @@ async fn main() -> anyhow::Result<()> {
         Command::Workspace(workspace) => workspace::dispatch_command(workspace).await,
         #[cfg(feature = "testenv")]
         Command::RunTestenv(run_testenv) => run_testenv::run_testenv(run_testenv).await,
-        Command::ShamirSetupCreate(shamir_setup_create) => {
-            shamir_setup::shamir_setup_create(shamir_setup_create).await
-        }
         Command::Ls(ls) => ls::ls(ls).await,
         Command::Rm(rm) => rm::rm(rm).await,
         Command::Tos(tos) => tos::dispatch_command(tos).await,
+        Command::SharedRecovery(shared_recovery) => {
+            shared_recovery::dispatch_command(shared_recovery).await
+        }
     }
 }

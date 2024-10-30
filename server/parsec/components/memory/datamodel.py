@@ -289,8 +289,12 @@ class MemoryInvitation:
     type: InvitationType
     created_by_user_id: UserID
     created_by_device_id: DeviceID
+
     # Required for when type=USER
     claimer_email: str | None
+    # Required for when type=SHAMIR_RECOVERY
+    claimer_user_id: UserID | None
+
     created_on: DateTime
     deleted_on: DateTime | None = None
     deleted_reason: MemoryInvitationDeletedReason | None = None

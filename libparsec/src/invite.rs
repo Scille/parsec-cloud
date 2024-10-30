@@ -3,7 +3,8 @@
 use std::sync::Arc;
 
 pub use libparsec_client::{
-    ClientCancelInvitationError, ClientNewDeviceInvitationError, ClientNewUserInvitationError,
+    ClientCancelInvitationError, ClientNewDeviceInvitationError,
+    ClientNewShamirRecoveryInvitationError, ClientNewUserInvitationError,
     InvitationEmailSentStatus, ListInvitationsError,
 };
 pub use libparsec_types::prelude::*;
@@ -755,6 +756,32 @@ pub async fn client_new_device_invitation(
     })
 }
 
+pub async fn client_new_shamir_recovery_invitation(
+    client: Handle,
+    claimer_user_id: UserID,
+    send_email: bool,
+) -> Result<NewInvitationInfo, ClientNewShamirRecoveryInvitationError> {
+    let client = borrow_from_handle(client, |x| match x {
+        HandleItem::Client { client, .. } => Some(client.clone()),
+        _ => None,
+    })?;
+
+    let (token, email_sent_status) = client
+        .new_shamir_recovery_invitation(claimer_user_id, send_email)
+        .await?;
+
+    Ok(NewInvitationInfo {
+        addr: ParsecInvitationAddr::new(
+            client.organization_addr(),
+            client.organization_id().to_owned(),
+            InvitationType::ShamirRecovery,
+            token,
+        ),
+        token,
+        email_sent_status,
+    })
+}
+
 pub async fn client_cancel_invitation(
     client: Handle,
     token: InvitationToken,
@@ -781,6 +808,13 @@ pub enum InviteListItem {
         addr: ParsecInvitationAddr,
         token: InvitationToken,
         created_on: DateTime,
+        status: InvitationStatus,
+    },
+    ShamirRecovery {
+        addr: ParsecInvitationAddr,
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_user_id: UserID,
         status: InvitationStatus,
     },
 }
@@ -834,6 +868,26 @@ pub async fn client_list_invitations(
                     created_on,
                     status,
                     token,
+                }
+            }
+            libparsec_client::InviteListItem::ShamirRecovery {
+                created_on,
+                status,
+                token,
+                claimer_user_id,
+            } => {
+                let addr = ParsecInvitationAddr::new(
+                    client.organization_addr(),
+                    client.organization_id().to_owned(),
+                    InvitationType::ShamirRecovery,
+                    token,
+                );
+                InviteListItem::ShamirRecovery {
+                    addr,
+                    created_on,
+                    status,
+                    token,
+                    claimer_user_id,
                 }
             }
         })

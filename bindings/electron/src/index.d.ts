@@ -1325,6 +1325,14 @@ export interface InviteListItemDevice {
     created_on: number
     status: InvitationStatus
 }
+export interface InviteListItemShamirRecovery {
+    tag: "ShamirRecovery"
+    addr: string
+    token: string
+    created_on: number
+    claimer_user_id: string
+    status: InvitationStatus
+}
 export interface InviteListItemUser {
     tag: "User"
     addr: string
@@ -1335,6 +1343,7 @@ export interface InviteListItemUser {
 }
 export type InviteListItem =
   | InviteListItemDevice
+  | InviteListItemShamirRecovery
   | InviteListItemUser
 
 
@@ -1421,6 +1430,14 @@ export interface ParsedParsecAddrInvitationDevice {
     organization_id: string
     token: string
 }
+export interface ParsedParsecAddrInvitationShamirRecovery {
+    tag: "InvitationShamirRecovery"
+    hostname: string
+    port: number
+    use_ssl: boolean
+    organization_id: string
+    token: string
+}
 export interface ParsedParsecAddrInvitationUser {
     tag: "InvitationUser"
     hostname: string
@@ -1469,6 +1486,7 @@ export interface ParsedParsecAddrWorkspacePath {
 }
 export type ParsedParsecAddr =
   | ParsedParsecAddrInvitationDevice
+  | ParsedParsecAddrInvitationShamirRecovery
   | ParsedParsecAddrInvitationUser
   | ParsedParsecAddrOrganization
   | ParsedParsecAddrOrganizationBootstrap

@@ -20,10 +20,11 @@ use crate::{
  */
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-#[serde(rename_all = "UPPERCASE")]
+#[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum InvitationType {
     User,
     Device,
+    ShamirRecovery,
 }
 
 #[derive(Debug, Clone)]
@@ -54,6 +55,7 @@ impl Display for InvitationType {
         match self {
             Self::User => write!(f, "USER"),
             Self::Device => write!(f, "DEVICE"),
+            Self::ShamirRecovery => write!(f, "SHAMIR_RECOVERY"),
         }
     }
 }

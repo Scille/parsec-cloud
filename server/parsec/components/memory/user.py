@@ -597,7 +597,10 @@ class MemoryUserComponent(BaseUserComponent):
 
         for user_id, shamir in sorted(org.shamir_setup.items(), key=lambda x: x[1].brief.timestamp):
             # filter on timestamp
-            if shamir_recovery_after is not None and shamir.brief.timestamp < shamir_recovery_after:
+            if (
+                shamir_recovery_after is not None
+                and shamir.brief.timestamp <= shamir_recovery_after
+            ):
                 continue
 
             # if it is user's certificate keep brief
@@ -606,8 +609,9 @@ class MemoryUserComponent(BaseUserComponent):
 
             # if user is a share recipient keep share and brief
             if author_user_id in shamir.shares.keys():
-                shamir_recovery_certificates.append(shamir.shares[author_user_id])
+                # Important: the brief certificate must come first
                 shamir_recovery_certificates.append(shamir.brief_bytes)
+                shamir_recovery_certificates.append(shamir.shares[author_user_id])
 
         return CertificatesBundle(
             common=common_certificates,

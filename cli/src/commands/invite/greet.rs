@@ -61,6 +61,9 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             let ctx = step4_device(ctx).await?;
             step5_device(ctx).await
         }
+        InviteListItem::ShamirRecovery { .. } => {
+            todo!();
+        }
     }
 }
 

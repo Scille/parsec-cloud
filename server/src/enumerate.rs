@@ -32,7 +32,12 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     InvitationType,
     libparsec_types::InvitationType,
     ["DEVICE", device, libparsec_types::InvitationType::Device],
-    ["USER", user, libparsec_types::InvitationType::User]
+    ["USER", user, libparsec_types::InvitationType::User],
+    [
+        "SHAMIR_RECOVERY",
+        shamir_recovery,
+        libparsec_types::InvitationType::ShamirRecovery
+    ]
 );
 
 crate::binding_utils::gen_py_wrapper_class_for_enum!(

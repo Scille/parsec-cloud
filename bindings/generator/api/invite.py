@@ -358,6 +358,30 @@ async def client_new_device_invitation(
     raise NotImplementedError
 
 
+class ClientNewShamirRecoveryInvitationError(ErrorVariant):
+    class Offline:
+        pass
+
+    class NotAllowed:
+        pass
+
+    class UserNotFound:
+        pass
+
+    class Internal:
+        pass
+
+
+async def client_new_shamir_recovery_invitation(
+    client: Handle,
+    send_email: bool,
+) -> Result[
+    NewInvitationInfo,
+    ClientNewShamirRecoveryInvitationError,
+]:
+    raise NotImplementedError
+
+
 class ClientCancelInvitationError(ErrorVariant):
     class Offline:
         pass
@@ -391,6 +415,13 @@ class InviteListItem(Variant):
         addr: ParsecInvitationAddr
         token: InvitationToken
         created_on: DateTime
+        status: InvitationStatus
+
+    class ShamirRecovery:
+        addr: ParsecInvitationAddr
+        token: InvitationToken
+        created_on: DateTime
+        claimer_user_id: UserID
         status: InvitationStatus
 
 
