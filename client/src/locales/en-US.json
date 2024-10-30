@@ -562,7 +562,7 @@
             "browse": "Go to location",
             "tabs": {
                 "inProgress": "In progress",
-                "lastUploaded": "Last uploaded",
+                "done": "Done",
                 "failed": "Failed"
             },
             "noImportInProgress": "No import in progress",

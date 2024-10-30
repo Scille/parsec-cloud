@@ -562,8 +562,8 @@
             "browse": "Aller à l'emplacement",
             "tabs": {
                 "inProgress": "En cours",
-                "lastUploaded": "Derniers ajouts",
-                "failed": "Échoué"
+                "done": "Terminés",
+                "failed": "Échoués"
             },
             "noImportInProgress": "Pas d'import en cours",
             "noImportDone": "Pas d'import terminé",

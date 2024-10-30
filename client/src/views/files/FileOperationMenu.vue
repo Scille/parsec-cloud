@@ -40,7 +40,7 @@
         @click="currentTab = Tabs.Done"
       >
         <div class="item-container">
-          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.lastUploaded') }}</ion-text>
+          <ion-text>{{ $msTranslate('FoldersPage.ImportFile.tabs.done') }}</ion-text>
           <span class="text-counter">{{ doneItemsCount > 99 ? '+99' : doneItemsCount }}</span>
         </div>
       </ion-item>
