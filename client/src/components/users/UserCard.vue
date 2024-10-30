@@ -64,6 +64,11 @@
       <div class="user-card-profile">
         <tag-profile :profile="user.currentProfile" />
       </div>
+      <div class="user-card-join">
+        <ion-text class="user-card-join-label body-sm">
+          {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
+        </ion-text>
+      </div>
     </div>
   </ion-item>
 </template>
@@ -76,7 +81,7 @@ import { UserModel } from '@/components/users/types';
 import { IonIcon, IonItem, IonText } from '@ionic/vue';
 import { ellipsisHorizontal } from 'ionicons/icons';
 import { onBeforeUnmount, onMounted, ref } from 'vue';
-import { MsCheckbox } from 'megashark-lib';
+import { MsCheckbox, formatTimeSince } from 'megashark-lib';
 
 const isHovered = ref(false);
 const menuOpened = ref(false);
