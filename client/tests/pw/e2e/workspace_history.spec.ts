@@ -56,8 +56,9 @@ msTest('Test workspace history page', async ({ connected }) => {
   await expect(restoreButton).toBeTrulyEnabled();
   await restoreButton.click();
   await answerQuestion(connected, true, {
-    expectedTitleText: 'Restore files',
-    expectedQuestionText: 'This will restore one file or folder. It will overwrite your current files if present. Are you sure?',
+    expectedTitleText: 'Confirm file restore?',
+    expectedQuestionText: `Are you sure to restore the selected file or folder?
+This will overwrite any current version but you can still retrieve it in the History.`,
     expectedPositiveText: 'Restore',
     expectedNegativeText: 'Cancel',
   });
