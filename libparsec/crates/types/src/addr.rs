@@ -35,6 +35,7 @@ const PARSEC_ACTION_BOOTSTRAP_ORGANIZATION: &str = "bootstrap_organization";
 const PARSEC_ACTION_WORKSPACE_PATH: &str = "path";
 const PARSEC_ACTION_CLAIM_USER: &str = "claim_user";
 const PARSEC_ACTION_CLAIM_DEVICE: &str = "claim_device";
+const PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY: &str = "claim_shamir_recovery";
 const PARSEC_ACTION_PKI_ENROLLMENT: &str = "pki_enrollment";
 
 /// Url has a special way to parse http/https schemes. This is because those kind
@@ -824,15 +825,18 @@ impl ParsecInvitationAddr {
         let invitation_type = match extract_param(&pairs, PARSEC_PARAM_ACTION)? {
             x if x == PARSEC_ACTION_CLAIM_USER => InvitationType::User,
             x if x == PARSEC_ACTION_CLAIM_DEVICE => InvitationType::Device,
+            x if x == PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY => InvitationType::ShamirRecovery,
             _ => {
                 return Err(AddrError::InvalidParamValue {
                     param: PARSEC_PARAM_ACTION,
                     help: format!(
-                        "Expected `{}={}` or `{}={}`",
+                        "Expected `{}={}`, `{}={}` or `{}={}`",
                         PARSEC_PARAM_ACTION,
                         PARSEC_ACTION_CLAIM_USER,
                         PARSEC_PARAM_ACTION,
-                        PARSEC_ACTION_CLAIM_DEVICE
+                        PARSEC_ACTION_CLAIM_DEVICE,
+                        PARSEC_PARAM_ACTION,
+                        PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY
                     ),
                 })
             }
@@ -866,6 +870,7 @@ impl ParsecInvitationAddr {
                 match self.invitation_type() {
                     InvitationType::User => PARSEC_ACTION_CLAIM_USER,
                     InvitationType::Device => PARSEC_ACTION_CLAIM_DEVICE,
+                    InvitationType::ShamirRecovery => PARSEC_ACTION_CLAIM_SHAMIR_RECOVERY,
                 },
             )
             .append_pair(PARSEC_PARAM_PAYLOAD, &payload);

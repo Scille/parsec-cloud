@@ -5468,6 +5468,74 @@ fn variant_invite_list_item_js_to_rs<'a>(
                 status,
             })
         }
+        "InviteListItemShamirRecovery" => {
+            let addr = {
+                let js_val: Handle<JsString> = obj.get(cx, "addr")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let created_on = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "createdOn")?;
+                {
+                    let v = js_val.value(cx);
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    match custom_from_rs_f64(v) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let claimer_user_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "claimerUserId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                        libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let status = {
+                let js_val: Handle<JsString> = obj.get(cx, "status")?;
+                {
+                    let js_string = js_val.value(cx);
+                    enum_invitation_status_js_to_rs(cx, js_string.as_str())?
+                }
+            };
+            Ok(libparsec::InviteListItem::ShamirRecovery {
+                addr,
+                token,
+                created_on,
+                claimer_user_id,
+                status,
+            })
+        }
         "InviteListItemUser" => {
             let addr = {
                 let js_val: Handle<JsString> = obj.get(cx, "addr")?;
@@ -5580,6 +5648,62 @@ fn variant_invite_list_item_rs_to_js<'a>(
                 }
             });
             js_obj.set(cx, "createdOn", js_created_on)?;
+            let js_status =
+                JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
+            js_obj.set(cx, "status", js_status)?;
+        }
+        libparsec::InviteListItem::ShamirRecovery {
+            addr,
+            token,
+            created_on,
+            claimer_user_id,
+            status,
+            ..
+        } => {
+            let js_tag = JsString::try_new(cx, "InviteListItemShamirRecovery").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_addr = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "addr", js_addr)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+            let js_created_on = JsNumber::new(cx, {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            });
+            js_obj.set(cx, "createdOn", js_created_on)?;
+            let js_claimer_user_id = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(claimer_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "claimerUserId", js_claimer_user_id)?;
             let js_status =
                 JsString::try_new(cx, enum_invitation_status_rs_to_js(status)).or_throw(cx)?;
             js_obj.set(cx, "status", js_status)?;
@@ -5876,6 +6000,60 @@ fn variant_parsed_parsec_addr_js_to_rs<'a>(
                 }
             };
             Ok(libparsec::ParsedParsecAddr::InvitationDevice {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                token,
+            })
+        }
+        "ParsedParsecAddrInvitationShamirRecovery" => {
+            let hostname = {
+                let js_val: Handle<JsString> = obj.get(cx, "hostname")?;
+                js_val.value(cx)
+            };
+            let port = {
+                let js_val: Handle<JsNumber> = obj.get(cx, "port")?;
+                {
+                    let v = js_val.value(cx);
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        cx.throw_type_error("Not an u32 number")?
+                    }
+                    let v = v as u32;
+                    v
+                }
+            };
+            let use_ssl = {
+                let js_val: Handle<JsBoolean> = obj.get(cx, "useSsl")?;
+                js_val.value(cx)
+            };
+            let organization_id = {
+                let js_val: Handle<JsString> = obj.get(cx, "organizationId")?;
+                {
+                    let custom_from_rs_string = |s: String| -> Result<_, String> {
+                        libparsec::OrganizationID::try_from(s.as_str()).map_err(|e| e.to_string())
+                    };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            let token = {
+                let js_val: Handle<JsString> = obj.get(cx, "token")?;
+                {
+                    let custom_from_rs_string =
+                        |s: String| -> Result<libparsec::InvitationToken, _> {
+                            libparsec::InvitationToken::from_hex(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                    match custom_from_rs_string(js_val.value(cx)) {
+                        Ok(val) => val,
+                        Err(err) => return cx.throw_type_error(err),
+                    }
+                }
+            };
+            Ok(libparsec::ParsedParsecAddr::InvitationShamirRecovery {
                 hostname,
                 port,
                 use_ssl,
@@ -6181,6 +6359,36 @@ fn variant_parsed_parsec_addr_rs_to_js<'a>(
             ..
         } => {
             let js_tag = JsString::try_new(cx, "ParsedParsecAddrInvitationDevice").or_throw(cx)?;
+            js_obj.set(cx, "tag", js_tag)?;
+            let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
+            js_obj.set(cx, "hostname", js_hostname)?;
+            let js_port = JsNumber::new(cx, port as f64);
+            js_obj.set(cx, "port", js_port)?;
+            let js_use_ssl = JsBoolean::new(cx, use_ssl);
+            js_obj.set(cx, "useSsl", js_use_ssl)?;
+            let js_organization_id = JsString::try_new(cx, organization_id).or_throw(cx)?;
+            js_obj.set(cx, "organizationId", js_organization_id)?;
+            let js_token = JsString::try_new(cx, {
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return cx.throw_type_error(err),
+                }
+            })
+            .or_throw(cx)?;
+            js_obj.set(cx, "token", js_token)?;
+        }
+        libparsec::ParsedParsecAddr::InvitationShamirRecovery {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            token,
+            ..
+        } => {
+            let js_tag =
+                JsString::try_new(cx, "ParsedParsecAddrInvitationShamirRecovery").or_throw(cx)?;
             js_obj.set(cx, "tag", js_tag)?;
             let js_hostname = JsString::try_new(cx, hostname).or_throw(cx)?;
             js_obj.set(cx, "hostname", js_hostname)?;

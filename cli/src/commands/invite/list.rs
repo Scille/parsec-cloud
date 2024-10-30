@@ -1,9 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec::{
-    authenticated_cmds::latest::invite_list::{self, InviteListItem, InviteListRep},
-    InvitationStatus,
-};
+use libparsec::{authenticated_cmds::latest::invite_list::InviteListItem, InvitationStatus};
 
 use crate::utils::*;
 
@@ -24,23 +21,17 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
         device.as_deref().unwrap_or("N/A")
     );
 
-    let (cmds, _) = load_cmds(&config_dir, device, password_stdin).await?;
+    let client = load_client(&config_dir, device, password_stdin).await?;
     let mut handle = start_spinner("Listing invitations".into());
 
-    let rep = cmds.send(invite_list::Req).await?;
+    let invitations = client.list_invitations().await?;
 
-    let invitations = match rep {
-        InviteListRep::Ok { invitations } => invitations,
-        rep => {
-            return Err(anyhow::anyhow!(
-                "Server error while listing invitations: {rep:?}"
-            ));
-        }
-    };
+    let users = client.list_users(false, None, None).await?;
 
     if invitations.is_empty() {
         handle.stop_with_message("No invitation.".into());
     } else {
+        handle.stop_with_message(format!("{} invitations found.", invitations.len()));
         for invitation in invitations {
             let (token, status, display_type) = match invitation {
                 InviteListItem::User {
@@ -50,6 +41,23 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                     ..
                 } => (token, status, format!("user (email={claimer_email}")),
                 InviteListItem::Device { status, token, .. } => (token, status, "device".into()),
+                InviteListItem::ShamirRecovery {
+                    status,
+                    token,
+                    claimer_user_id,
+                    ..
+                } => {
+                    let claimer_human_handle = users
+                        .iter()
+                        .find(|user| user.id == claimer_user_id)
+                        .map(|user| format!("{}", user.human_handle))
+                        .unwrap_or("N/A".to_string());
+                    (
+                        token,
+                        status,
+                        format!("shamir recovery ({claimer_human_handle})"),
+                    )
+                }
             };
 
             let token = token.hex();
@@ -61,7 +69,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
                 InvitationStatus::Finished => format!("{GREEN}finished{RESET}"),
             };
 
-            handle.stop_with_message(format!("{token}\t{display_status}\t{display_type}"))
+            println!("{token}\t{display_status}\t{display_type}");
         }
     }
 

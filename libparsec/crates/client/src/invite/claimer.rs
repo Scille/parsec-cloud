@@ -258,6 +258,10 @@ pub async fn claimer_retrieve_info(
                     time_provider,
                 ),
             )),
+            UserOrDevice::ShamirRecovery {
+                recipients,
+                threshold,
+            } => todo!("Implement UserOrDeviceClaimInitialCtx::Shamir {recipients:?} {threshold}"),
         },
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())

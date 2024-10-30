@@ -17,6 +17,7 @@ from . import (
     invite_greeter_step,
     invite_list,
     invite_new_device,
+    invite_new_shamir_recovery,
     invite_new_user,
     list_frozen_users,
     ping,
@@ -57,6 +58,7 @@ class AnyCmdReq:
         | invite_greeter_step.Req
         | invite_list.Req
         | invite_new_device.Req
+        | invite_new_shamir_recovery.Req
         | invite_new_user.Req
         | list_frozen_users.Req
         | ping.Req
@@ -94,6 +96,7 @@ __all__ = [
     "invite_greeter_step",
     "invite_list",
     "invite_new_device",
+    "invite_new_shamir_recovery",
     "invite_new_user",
     "list_frozen_users",
     "ping",

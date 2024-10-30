@@ -6,7 +6,7 @@ use crate::utils::{load_client, start_spinner};
 
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
-    pub struct ShamirSetupCreate {
+    pub struct Args {
         /// Share recipients, if missing organization's admins will be used instead
         /// Author must not be included as recipient.
         /// User email is expected
@@ -24,8 +24,8 @@ crate::clap_parser_with_shared_opts_builder!(
     }
 );
 
-pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Result<()> {
-    let ShamirSetupCreate {
+pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
+    let Args {
         recipients,
         weights,
         threshold,
@@ -35,8 +35,13 @@ pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Res
     } = shamir_setup;
 
     let client = load_client(&config_dir, device, password_stdin).await?;
-    let mut handle = start_spinner("Creating shamir setup".into());
 
+    {
+        let _spinner = start_spinner("Poll server for new certificates".into());
+        client.poll_server_for_new_certificates().await?;
+    }
+
+    let mut handle = start_spinner("Creating shamir setup".into());
     let users = client.list_users(true, None, None).await?;
     let recipients_ids: Vec<_> = if let Some(recipients) = recipients {
         let recipient_info: HashMap<_, _> = users
@@ -45,7 +50,7 @@ pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Res
             .map(|info| (info.human_handle.email().to_owned(), info.id))
             .collect();
         if recipient_info.len() != recipients.len() {
-            handle.stop_with_message("A user in missing".into());
+            handle.stop_with_message("A user is missing".into());
             client.stop().await;
             return Ok(());
         }
@@ -56,7 +61,9 @@ pub async fn shamir_setup_create(shamir_setup: ShamirSetupCreate) -> anyhow::Res
     } else {
         users
             .iter()
-            .filter(|info| info.current_profile == UserProfile::Admin)
+            .filter(|info| {
+                info.current_profile == UserProfile::Admin && info.id != client.user_id()
+            })
             .map(|info| info.id)
             .collect()
     };

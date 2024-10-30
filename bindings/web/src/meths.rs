@@ -6035,6 +6035,85 @@ fn variant_invite_list_item_js_to_rs(obj: JsValue) -> Result<libparsec::InviteLi
                 status,
             })
         }
+        "InviteListItemShamirRecovery" => {
+            let addr = {
+                let js_val = Reflect::get(&obj, &"addr".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::ParsecInvitationAddr::from_any(&s).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid ParsecInvitationAddr"))?
+            };
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            let created_on = {
+                let js_val = Reflect::get(&obj, &"createdOn".into())?;
+                {
+                    let v = js_val.dyn_into::<Number>()?.value_of();
+                    let custom_from_rs_f64 = |n: f64| -> Result<_, &'static str> {
+                        libparsec::DateTime::from_timestamp_micros((n * 1_000_000f64) as i64)
+                            .map_err(|_| "Out-of-bound datetime")
+                    };
+                    let v = custom_from_rs_f64(v).map_err(|e| TypeError::new(e.as_ref()))?;
+                    v
+                }
+            };
+            let claimer_user_id = {
+                let js_val = Reflect::get(&obj, &"claimerUserId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<libparsec::UserID, _> {
+                            libparsec::UserID::from_hex(s.as_str()).map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid UserID"))?
+            };
+            let status = {
+                let js_val = Reflect::get(&obj, &"status".into())?;
+                {
+                    let raw_string = js_val.as_string().ok_or_else(|| {
+                        let type_error = TypeError::new("value is not a string");
+                        type_error.set_cause(&js_val);
+                        JsValue::from(type_error)
+                    })?;
+                    enum_invitation_status_js_to_rs(raw_string.as_str())
+                }?
+            };
+            Ok(libparsec::InviteListItem::ShamirRecovery {
+                addr,
+                token,
+                created_on,
+                claimer_user_id,
+                status,
+            })
+        }
         "InviteListItemUser" => {
             let addr = {
                 let js_val = Reflect::get(&obj, &"addr".into())?;
@@ -6160,6 +6239,65 @@ fn variant_invite_list_item_rs_to_js(
                 JsValue::from(v)
             };
             Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
+            Reflect::set(&js_obj, &"status".into(), &js_status)?;
+        }
+        libparsec::InviteListItem::ShamirRecovery {
+            addr,
+            token,
+            created_on,
+            claimer_user_id,
+            status,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"InviteListItemShamirRecovery".into(),
+            )?;
+            let js_addr = JsValue::from_str({
+                let custom_to_rs_string =
+                    |addr: libparsec::ParsecInvitationAddr| -> Result<String, &'static str> {
+                        Ok(addr.to_url().into())
+                    };
+                match custom_to_rs_string(addr) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"addr".into(), &js_addr)?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+            let js_created_on = {
+                let custom_to_rs_f64 = |dt: libparsec::DateTime| -> Result<f64, &'static str> {
+                    Ok((dt.as_timestamp_micros() as f64) / 1_000_000f64)
+                };
+                let v = match custom_to_rs_f64(created_on) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                };
+                JsValue::from(v)
+            };
+            Reflect::set(&js_obj, &"createdOn".into(), &js_created_on)?;
+            let js_claimer_user_id = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::UserID| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(claimer_user_id) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"claimerUserId".into(), &js_claimer_user_id)?;
             let js_status = JsValue::from_str(enum_invitation_status_rs_to_js(status));
             Reflect::set(&js_obj, &"status".into(), &js_status)?;
         }
@@ -6487,6 +6625,76 @@ fn variant_parsed_parsec_addr_js_to_rs(
                     .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
             };
             Ok(libparsec::ParsedParsecAddr::InvitationDevice {
+                hostname,
+                port,
+                use_ssl,
+                organization_id,
+                token,
+            })
+        }
+        "ParsedParsecAddrInvitationShamirRecovery" => {
+            let hostname = {
+                let js_val = Reflect::get(&obj, &"hostname".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))?
+            };
+            let port = {
+                let js_val = Reflect::get(&obj, &"port".into())?;
+                {
+                    let v = js_val
+                        .dyn_into::<Number>()
+                        .map_err(|_| TypeError::new("Not a number"))?
+                        .value_of();
+                    if v < (u32::MIN as f64) || (u32::MAX as f64) < v {
+                        return Err(JsValue::from(TypeError::new("Not an u32 number")));
+                    }
+                    v as u32
+                }
+            };
+            let use_ssl = {
+                let js_val = Reflect::get(&obj, &"useSsl".into())?;
+                js_val
+                    .dyn_into::<Boolean>()
+                    .map_err(|_| TypeError::new("Not a boolean"))?
+                    .value_of()
+            };
+            let organization_id = {
+                let js_val = Reflect::get(&obj, &"organizationId".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string = |s: String| -> Result<_, String> {
+                            libparsec::OrganizationID::try_from(s.as_str())
+                                .map_err(|e| e.to_string())
+                        };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid OrganizationID"))?
+            };
+            let token = {
+                let js_val = Reflect::get(&obj, &"token".into())?;
+                js_val
+                    .dyn_into::<JsString>()
+                    .ok()
+                    .and_then(|s| s.as_string())
+                    .ok_or_else(|| TypeError::new("Not a string"))
+                    .and_then(|x| {
+                        let custom_from_rs_string =
+                            |s: String| -> Result<libparsec::InvitationToken, _> {
+                                libparsec::InvitationToken::from_hex(s.as_str())
+                                    .map_err(|e| e.to_string())
+                            };
+                        custom_from_rs_string(x).map_err(|e| TypeError::new(e.as_ref()))
+                    })
+                    .map_err(|_| TypeError::new("Not a valid InvitationToken"))?
+            };
+            Ok(libparsec::ParsedParsecAddr::InvitationShamirRecovery {
                 hostname,
                 port,
                 use_ssl,
@@ -6884,6 +7092,38 @@ fn variant_parsed_parsec_addr_rs_to_js(
                 &js_obj,
                 &"tag".into(),
                 &"ParsedParsecAddrInvitationDevice".into(),
+            )?;
+            let js_hostname = hostname.into();
+            Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;
+            let js_port = JsValue::from(port);
+            Reflect::set(&js_obj, &"port".into(), &js_port)?;
+            let js_use_ssl = use_ssl.into();
+            Reflect::set(&js_obj, &"useSsl".into(), &js_use_ssl)?;
+            let js_organization_id = JsValue::from_str(organization_id.as_ref());
+            Reflect::set(&js_obj, &"organizationId".into(), &js_organization_id)?;
+            let js_token = JsValue::from_str({
+                let custom_to_rs_string =
+                    |x: libparsec::InvitationToken| -> Result<String, &'static str> { Ok(x.hex()) };
+                match custom_to_rs_string(token) {
+                    Ok(ok) => ok,
+                    Err(err) => return Err(JsValue::from(TypeError::new(err.as_ref()))),
+                }
+                .as_ref()
+            });
+            Reflect::set(&js_obj, &"token".into(), &js_token)?;
+        }
+        libparsec::ParsedParsecAddr::InvitationShamirRecovery {
+            hostname,
+            port,
+            use_ssl,
+            organization_id,
+            token,
+            ..
+        } => {
+            Reflect::set(
+                &js_obj,
+                &"tag".into(),
+                &"ParsedParsecAddrInvitationShamirRecovery".into(),
             )?;
             let js_hostname = hostname.into();
             Reflect::set(&js_obj, &"hostname".into(), &js_hostname)?;

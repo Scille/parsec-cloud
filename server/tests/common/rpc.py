@@ -188,6 +188,15 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.invite_new_device.Rep.load(raw_rep)
 
+    async def invite_new_shamir_recovery(
+        self, claimer_user_id: UserID, send_email: bool
+    ) -> authenticated_cmds.latest.invite_new_shamir_recovery.Rep:
+        req = authenticated_cmds.latest.invite_new_shamir_recovery.Req(
+            claimer_user_id=claimer_user_id, send_email=send_email
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.invite_new_shamir_recovery.Rep.load(raw_rep)
+
     async def invite_new_user(
         self, claimer_email: str, send_email: bool
     ) -> authenticated_cmds.latest.invite_new_user.Rep:

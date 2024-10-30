@@ -1547,6 +1547,7 @@ export type ImportRecoveryDeviceError =
 // InviteListItem
 export enum InviteListItemTag {
     Device = 'InviteListItemDevice',
+    ShamirRecovery = 'InviteListItemShamirRecovery',
     User = 'InviteListItemUser',
 }
 
@@ -1555,6 +1556,14 @@ export interface InviteListItemDevice {
     addr: ParsecInvitationAddr
     token: InvitationToken
     createdOn: DateTime
+    status: InvitationStatus
+}
+export interface InviteListItemShamirRecovery {
+    tag: InviteListItemTag.ShamirRecovery
+    addr: ParsecInvitationAddr
+    token: InvitationToken
+    createdOn: DateTime
+    claimerUserId: UserID
     status: InvitationStatus
 }
 export interface InviteListItemUser {
@@ -1567,6 +1576,7 @@ export interface InviteListItemUser {
 }
 export type InviteListItem =
   | InviteListItemDevice
+  | InviteListItemShamirRecovery
   | InviteListItemUser
 
 // ListInvitationsError
@@ -1669,6 +1679,7 @@ export type ParseParsecAddrError =
 // ParsedParsecAddr
 export enum ParsedParsecAddrTag {
     InvitationDevice = 'ParsedParsecAddrInvitationDevice',
+    InvitationShamirRecovery = 'ParsedParsecAddrInvitationShamirRecovery',
     InvitationUser = 'ParsedParsecAddrInvitationUser',
     Organization = 'ParsedParsecAddrOrganization',
     OrganizationBootstrap = 'ParsedParsecAddrOrganizationBootstrap',
@@ -1679,6 +1690,14 @@ export enum ParsedParsecAddrTag {
 
 export interface ParsedParsecAddrInvitationDevice {
     tag: ParsedParsecAddrTag.InvitationDevice
+    hostname: string
+    port: U32
+    useSsl: boolean
+    organizationId: OrganizationID
+    token: InvitationToken
+}
+export interface ParsedParsecAddrInvitationShamirRecovery {
+    tag: ParsedParsecAddrTag.InvitationShamirRecovery
     hostname: string
     port: U32
     useSsl: boolean
@@ -1733,6 +1752,7 @@ export interface ParsedParsecAddrWorkspacePath {
 }
 export type ParsedParsecAddr =
   | ParsedParsecAddrInvitationDevice
+  | ParsedParsecAddrInvitationShamirRecovery
   | ParsedParsecAddrInvitationUser
   | ParsedParsecAddrOrganization
   | ParsedParsecAddrOrganizationBootstrap

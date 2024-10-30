@@ -132,6 +132,67 @@ pub async fn new_device_invitation(
 }
 
 /*
+ * new_shamir_invitation
+ */
+
+#[derive(Debug, thiserror::Error)]
+pub enum NewShamirRecoveryInvitationError {
+    #[error("Cannot reach the server")]
+    Offline,
+    #[error("Author not part of the user's current recipients")]
+    NotAllowed,
+    #[error("Provided user not found")]
+    UserNotFound,
+    #[error(transparent)]
+    Internal(#[from] anyhow::Error),
+}
+
+impl From<ConnectionError> for NewShamirRecoveryInvitationError {
+    fn from(value: ConnectionError) -> Self {
+        match value {
+            ConnectionError::NoResponse(_) => Self::Offline,
+            err => Self::Internal(err.into()),
+        }
+    }
+}
+
+pub async fn new_shamir_recovery_invitation(
+    cmds: &AuthenticatedCmds,
+    claimer_user_id: UserID,
+    send_email: bool,
+) -> Result<(InvitationToken, InvitationEmailSentStatus), NewShamirRecoveryInvitationError> {
+    use authenticated_cmds::latest::invite_new_shamir_recovery::{
+        InvitationEmailSentStatus as ApiInvitationEmailSentStatus, Rep, Req,
+    };
+
+    let req = Req {
+        send_email,
+        claimer_user_id,
+    };
+    let rep = cmds.send(req).await?;
+
+    match rep {
+        Rep::Ok { token, email_sent } => {
+            let email_sent = match email_sent {
+                ApiInvitationEmailSentStatus::Success => InvitationEmailSentStatus::Success,
+                ApiInvitationEmailSentStatus::ServerUnavailable => {
+                    InvitationEmailSentStatus::ServerUnavailable
+                }
+                ApiInvitationEmailSentStatus::RecipientRefused => {
+                    InvitationEmailSentStatus::RecipientRefused
+                }
+            };
+            Ok((token, email_sent))
+        }
+        Rep::AuthorNotAllowed => Err(NewShamirRecoveryInvitationError::NotAllowed),
+        Rep::UserNotFound => Err(NewShamirRecoveryInvitationError::UserNotFound),
+        rep @ Rep::UnknownStatus { .. } => {
+            Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+        }
+    }
+}
+
+/*
  * delete_invitation
  */
 

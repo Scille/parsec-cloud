@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationStatus, InvitationToken
+from parsec._parsec import DateTime, InvitationStatus, InvitationToken, UserID
 
 class InviteListItem:
     pass
@@ -30,6 +30,23 @@ class InviteListItemDevice(InviteListItem):
     def __init__(
         self, token: InvitationToken, created_on: DateTime, status: InvitationStatus
     ) -> None: ...
+    @property
+    def created_on(self) -> DateTime: ...
+    @property
+    def status(self) -> InvitationStatus: ...
+    @property
+    def token(self) -> InvitationToken: ...
+
+class InviteListItemShamirRecovery(InviteListItem):
+    def __init__(
+        self,
+        token: InvitationToken,
+        created_on: DateTime,
+        claimer_user_id: UserID,
+        status: InvitationStatus,
+    ) -> None: ...
+    @property
+    def claimer_user_id(self) -> UserID: ...
     @property
     def created_on(self) -> DateTime: ...
     @property

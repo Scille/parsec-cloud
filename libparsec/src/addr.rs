@@ -50,6 +50,13 @@ pub enum ParsedParsecAddr {
         organization_id: OrganizationID,
         token: InvitationToken,
     },
+    InvitationShamirRecovery {
+        hostname: String,
+        port: u32,
+        use_ssl: bool,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+    },
     PkiEnrollment {
         hostname: String,
         port: u32,
@@ -88,6 +95,13 @@ pub fn parse_parsec_addr(url: &str) -> Result<ParsedParsecAddr, ParseParsecAddrE
                     token: addr.token(),
                 },
                 InvitationType::Device => ParsedParsecAddr::InvitationDevice {
+                    hostname: addr.hostname().into(),
+                    port: addr.port() as u32,
+                    use_ssl: addr.use_ssl(),
+                    organization_id: addr.organization_id().clone(),
+                    token: addr.token(),
+                },
+                InvitationType::ShamirRecovery => ParsedParsecAddr::InvitationShamirRecovery {
                     hostname: addr.hostname().into(),
                     port: addr.port() as u32,
                     use_ssl: addr.use_ssl(),

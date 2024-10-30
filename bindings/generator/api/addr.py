@@ -95,6 +95,13 @@ class ParsedParsecAddr(Variant):
         organization_id: OrganizationID
         token: InvitationToken
 
+    class InvitationShamirRecovery:
+        hostname: str
+        port: U32
+        use_ssl: bool
+        organization_id: OrganizationID
+        token: InvitationToken
+
     class PkiEnrollment:
         hostname: str
         port: U32

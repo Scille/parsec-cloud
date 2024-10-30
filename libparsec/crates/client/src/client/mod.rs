@@ -67,6 +67,7 @@ pub use crate::invite::{
     CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
     InvitationEmailSentStatus, InviteListItem, ListInvitationsError as ClientListInvitationsError,
     NewDeviceInvitationError as ClientNewDeviceInvitationError,
+    NewShamirRecoveryInvitationError as ClientNewShamirRecoveryInvitationError,
     NewUserInvitationError as ClientNewUserInvitationError, UserGreetInitialCtx,
 };
 pub use crate::workspace::WorkspaceOps;
@@ -497,6 +498,15 @@ impl Client {
         send_email: bool,
     ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewDeviceInvitationError> {
         crate::invite::new_device_invitation(&self.cmds, send_email).await
+    }
+
+    pub async fn new_shamir_recovery_invitation(
+        &self,
+        user_id: UserID,
+        send_email: bool,
+    ) -> Result<(InvitationToken, InvitationEmailSentStatus), ClientNewShamirRecoveryInvitationError>
+    {
+        crate::invite::new_shamir_recovery_invitation(&self.cmds, user_id, send_email).await
     }
 
     pub async fn cancel_invitation(
