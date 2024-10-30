@@ -7,6 +7,7 @@
         <ion-button
           class="button-choice code"
           fill="outline"
+          :disabled="disabled"
           @click="$emit('select', choices[0])"
         >
           {{ choices[0] }}
@@ -16,6 +17,7 @@
         <ion-button
           class="button-choice code"
           fill="outline"
+          :disabled="disabled"
           @click="$emit('select', choices[1])"
         >
           {{ choices[1] }}
@@ -27,6 +29,7 @@
         <ion-button
           class="button-choice code"
           fill="outline"
+          :disabled="disabled"
           @click="$emit('select', choices[2])"
         >
           {{ choices[2] }}
@@ -36,6 +39,7 @@
         <ion-button
           class="button-choice code"
           fill="outline"
+          :disabled="disabled"
           @click="$emit('select', choices[3])"
         >
           {{ choices[3] }}
@@ -47,6 +51,7 @@
         <ion-button
           class="button-clear"
           fill="clear"
+          :disabled="disabled"
           @click="$emit('select', null)"
         >
           {{ $msTranslate('SasCodeChoice.noneOfTheChoices') }}
@@ -61,6 +66,7 @@ import { IonButton, IonCol, IonGrid, IonRow } from '@ionic/vue';
 
 defineProps<{
   choices: string[];
+  disabled?: boolean;
 }>();
 
 defineEmits<{
