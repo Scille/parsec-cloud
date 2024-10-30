@@ -25,10 +25,7 @@
       <ion-label class="user-list-header__label cell-title label-email">
         {{ $msTranslate('UsersPage.listDisplayTitles.email') }}
       </ion-label>
-      <ion-label
-        class="user-list-header__label cell-title label-joined-on"
-        v-show="false"
-      >
+      <ion-label class="user-list-header__label cell-title label-joined-on">
         {{ $msTranslate('UsersPage.listDisplayTitles.joinedOn') }}
       </ion-label>
       <ion-label class="user-list-header__label cell-title label-status">

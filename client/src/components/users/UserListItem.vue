@@ -59,22 +59,19 @@
       </ion-label>
     </div>
 
+    <!-- user joined on -->
+    <div class="user-join">
+      <ion-label class="user-join-label cell">
+        {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
+      </ion-label>
+    </div>
+
     <!-- user status -->
     <div
       class="user-status"
       :class="user.isRevoked() ? 'user-revoked' : ''"
     >
       <user-status-tag :revoked="user.isRevoked()" />
-    </div>
-
-    <!-- user joined on -->
-    <div
-      class="user-join"
-      v-show="false"
-    >
-      <ion-label class="user-join-label cell">
-        {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
-      </ion-label>
     </div>
 
     <!-- options -->
