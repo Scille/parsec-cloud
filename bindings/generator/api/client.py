@@ -26,7 +26,7 @@ from .common import (
     RealmRole,
     Ref,
 )
-from .invite import DeviceSaveStrategy
+from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
 from .events import OnClientEventCallback
 
@@ -445,4 +445,73 @@ async def client_share_workspace(
 
 
 def is_keyring_available() -> bool:
+    raise NotImplementedError
+
+
+class ImportRecoveryDeviceError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class InvalidPath:
+        pass
+
+    class InvalidData:
+        pass
+
+    class InvalidPassphrase:
+        pass
+
+    class DecryptionFailed:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+
+class ClientExportRecoveryDeviceError(ErrorVariant):
+    class Internal:
+        pass
+
+    class Stopped:
+        pass
+
+    class Offline:
+        pass
+
+    class InvalidCertificate:
+        pass
+
+    class TimestampOutOfBallpark:
+        server_timestamp: DateTime
+        client_timestamp: DateTime
+        ballpark_client_early_offset: float
+        ballpark_client_late_offset: float
+
+
+async def import_recovery_device(
+    config: ClientConfig,
+    recovery_device: Ref[bytes],
+    passphrase: str,
+    device_label: DeviceLabel,
+    save_strategy: DeviceSaveStrategy,
+) -> Result[AvailableDevice, ImportRecoveryDeviceError]:
+    raise NotImplementedError
+
+
+async def client_export_recovery_device(
+    client_handle: Handle,
+    device_label: DeviceLabel,
+) -> Result[tuple[str, bytes], ClientExportRecoveryDeviceError]:
     raise NotImplementedError

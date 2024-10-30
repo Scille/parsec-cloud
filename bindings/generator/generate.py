@@ -506,7 +506,7 @@ def generate_api_specs(api_module: ModuleType) -> ApiSpecs:
         api_items[item_name] = item
 
     # The variant/struct types we define for the api can be recursive and/or
-    # refere other types defined later on.
+    # refer other types defined later on.
     # Hence we do the parsing in two passes:
     # - First we populate `TYPES_DB` by collecting the variant/struct types and storing them as placeholders
     # - Then we do the actual type parsing and replace the placeholders

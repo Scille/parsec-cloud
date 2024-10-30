@@ -665,6 +665,39 @@ export type ClientEvent =
   | ClientEventWorkspacesSelfListChanged
 
 
+// ClientExportRecoveryDeviceError
+export interface ClientExportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ClientExportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export type ClientExportRecoveryDeviceError =
+  | ClientExportRecoveryDeviceErrorInternal
+  | ClientExportRecoveryDeviceErrorInvalidCertificate
+  | ClientExportRecoveryDeviceErrorOffline
+  | ClientExportRecoveryDeviceErrorStopped
+  | ClientExportRecoveryDeviceErrorTimestampOutOfBallpark
+
+
 // ClientGetTosError
 export interface ClientGetTosErrorInternal {
     tag: "Internal"
@@ -1202,6 +1235,59 @@ export type GreetInProgressError =
   | GreetInProgressErrorTimestampOutOfBallpark
   | GreetInProgressErrorUserAlreadyExists
   | GreetInProgressErrorUserCreateNotAllowed
+
+
+// ImportRecoveryDeviceError
+export interface ImportRecoveryDeviceErrorDecryptionFailed {
+    tag: "DecryptionFailed"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidCertificate {
+    tag: "InvalidCertificate"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidData {
+    tag: "InvalidData"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPassphrase {
+    tag: "InvalidPassphrase"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorInvalidPath {
+    tag: "InvalidPath"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorStopped {
+    tag: "Stopped"
+    error: string
+}
+export interface ImportRecoveryDeviceErrorTimestampOutOfBallpark {
+    tag: "TimestampOutOfBallpark"
+    error: string
+    server_timestamp: number
+    client_timestamp: number
+    ballpark_client_early_offset: number
+    ballpark_client_late_offset: number
+}
+export type ImportRecoveryDeviceError =
+  | ImportRecoveryDeviceErrorDecryptionFailed
+  | ImportRecoveryDeviceErrorInternal
+  | ImportRecoveryDeviceErrorInvalidCertificate
+  | ImportRecoveryDeviceErrorInvalidData
+  | ImportRecoveryDeviceErrorInvalidPassphrase
+  | ImportRecoveryDeviceErrorInvalidPath
+  | ImportRecoveryDeviceErrorOffline
+  | ImportRecoveryDeviceErrorStopped
+  | ImportRecoveryDeviceErrorTimestampOutOfBallpark
 
 
 // InviteListItem
@@ -2501,6 +2587,10 @@ export function clientCreateWorkspace(
     client: number,
     name: string
 ): Promise<Result<string, ClientCreateWorkspaceError>>
+export function clientExportRecoveryDevice(
+    client_handle: number,
+    device_label: string
+): Promise<Result<[string, Uint8Array], ClientExportRecoveryDeviceError>>
 export function clientGetTos(
     client: number
 ): Promise<Result<Tos, ClientGetTosError>>
@@ -2633,6 +2723,13 @@ export function greeterUserInitialDoWaitPeer(
     canceller: number,
     handle: number
 ): Promise<Result<UserGreetInProgress1Info, GreetInProgressError>>
+export function importRecoveryDevice(
+    config: ClientConfig,
+    recovery_device: Uint8Array,
+    passphrase: string,
+    device_label: string,
+    save_strategy: DeviceSaveStrategy
+): Promise<Result<AvailableDevice, ImportRecoveryDeviceError>>
 export function isKeyringAvailable(
 ): Promise<boolean>
 export function listAvailableDevices(
