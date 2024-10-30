@@ -178,8 +178,8 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-email {
-  max-width: 20rem;
-  min-width: 20rem;
+  max-width: 16rem;
+  min-width: 16rem;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);
   overflow: hidden;
@@ -199,7 +199,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-join {
-  min-width: 7.5rem;
+  min-width: 11.25rem;
   flex-grow: 0;
   overflow: hidden;
   color: var(--parsec-color-light-secondary-grey);

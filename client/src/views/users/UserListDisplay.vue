@@ -108,7 +108,7 @@ const someSelected = computed(() => {
   }
 
   .label-email {
-    min-width: 20rem;
+    min-width: 17rem;
     flex-grow: 0;
     text-overflow: ellipsis;
     white-space: nowrap;
