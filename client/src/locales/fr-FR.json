@@ -1648,7 +1648,7 @@
             "restore": "Restaurer",
             "cancel": "Annuler"
         },
-        "restoreConfirmTitle": "Confirmer la restauration des fichiers?",
+        "restoreConfirmTitle": "Confirmer la restauration des fichiers ?",
         "restoreConfirmQuestion": "Êtes-vous sûr de vouloir restaurer le fichier ou le dossier sélectionné ? Cette opération écrasera la version actuelle, mais vous pourrez toujours la retrouver dans l'historique. | Êtes-vous sûr de vouloir restaurer les fichiers ou dossiers sélectionnés ? Cette opération écrasera toute version actuelle, mais vous pourrez toujours les récupérer dans l'historique.",
         "empty": "Aucun fichier ou dossier à la date sélectionnée.",
         "error": "Impossible de récupérer l'historique de l'espace de travail pour la date sélectionnée",
