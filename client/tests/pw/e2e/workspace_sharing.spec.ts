@@ -14,6 +14,8 @@ msTest('Workspace sharing modal default state', async ({ workspaceSharingModal }
   // cspell:disable-next-line
   await expect(users.locator('.person-name')).toHaveText(['Gordon Freeman', 'Korgan Bloodaxe', 'Jaheira']);
   await expect(users.locator('.filter-button')).toHaveText(['Owner', 'Reader', 'Not shared']);
+  await expect(users.nth(2).locator('.label-profile')).toBeVisible();
+  await expect(users.nth(2).locator('.label-profile')).toHaveText('External');
   await expect(users.nth(0).locator('.filter-button')).toHaveDisabledAttribute();
 });
 
