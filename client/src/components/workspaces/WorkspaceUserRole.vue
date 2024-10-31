@@ -13,6 +13,11 @@
       >
         {{ $msTranslate('UsersPage.currentUser') }}
       </span>
+
+      <tag-profile
+        v-if="user.profile === UserProfile.Outsider"
+        :profile="UserProfile.Outsider"
+      />
     </div>
 
     <ms-dropdown
@@ -29,7 +34,7 @@
 
 <script setup lang="ts">
 import { MsAppearance, MsDropdown, MsOption, MsOptions } from 'megashark-lib';
-import UserAvatarName from '@/components/users/UserAvatarName.vue';
+import { TagProfile, UserAvatarName } from '@/components/users';
 import { canChangeRole } from '@/components/workspaces/utils';
 import { UserProfile, UserTuple, WorkspaceRole } from '@/parsec';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';

@@ -1,0 +1,1 @@
+Added an indication that the user is an outsider when sharing a workspace
