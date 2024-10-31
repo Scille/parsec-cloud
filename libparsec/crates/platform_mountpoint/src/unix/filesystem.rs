@@ -208,6 +208,27 @@ pub(crate) static LOOKUP_HOOK: Mutex<
     Option<Box<dyn FnMut(&FsPath) -> Option<Result<EntryStat, WorkspaceStatEntryError>> + Send>>,
 > = Mutex::new(None);
 
+/// Helper macro to add one (or multiple) capabilities to fuser config.
+///
+/// Example:
+/// ```
+/// add_capabilities!(config, <capability>)
+/// add_capabilities!(config, <capability1>, ..., <capabilityN>)
+/// ```
+macro_rules! add_capabilities {
+    ($config:expr, $capability:ident) => {
+        $config
+            .add_capabilities(fuser::consts::$capability)
+            .expect(concat!("Capability available: ", stringify!($capability)));
+    };
+
+    ($config:expr, $($capability:ident),*) => {
+        $(
+            add_capabilities!($config, $capability);
+        )*
+    };
+}
+
 // See https://libfuse.github.io/doxygen/structfuse__operations.html for documentation
 // of each of the methods implemented here.
 impl fuser::Filesystem for Filesystem {
@@ -243,61 +264,44 @@ impl fuser::Filesystem for Filesystem {
         // - https://www.kernel.org/doc/html/latest/filesystems/fuse-io.html
         // - https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L322
 
-        // Do not send separate SETATTR request before open(O_TRUNC).
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L188
-        config
-            .add_capabilities(fuser::consts::FUSE_ATOMIC_O_TRUNC)
-            .expect("Capability available");
-
-        // Support IOCTL on directories.
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L253
-        config
-            .add_capabilities(fuser::consts::FUSE_IOCTL_DIR)
-            .expect("Capability available");
-
-        // Tell FUSE the data may change without going through the filesystem, hence attributes
-        // validity should be checked on each access (leading to `getattr()` on timeout).
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L275
-        config
-            .add_capabilities(fuser::consts::FUSE_AUTO_INVAL_DATA)
-            .expect("Capability available");
-
-        // Enable `readdirplus` support (readdir + lookup in one a single go).
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L283
-        config
-            .add_capabilities(fuser::consts::FUSE_DO_READDIRPLUS)
-            .expect("Capability available");
-
-        // Adaptative readdirplus optimization support: still use readdir when lookup is
-        // has already been done by the previous readdirplus.
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L311
-        config
-            .add_capabilities(fuser::consts::FUSE_READDIRPLUS_AUTO)
-            .expect("Capability available");
+        add_capabilities!(
+            config,
+            // Do not send separate SETATTR request before open(O_TRUNC).
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L188
+            FUSE_ATOMIC_O_TRUNC,
+            // Support IOCTL on directories.
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L253
+            FUSE_IOCTL_DIR,
+            // Tell FUSE the data may change without going through the filesystem, hence attributes
+            // validity should be checked on each access (leading to `getattr()` on timeout).
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L275
+            FUSE_AUTO_INVAL_DATA,
+            // Enable `readdirplus` support (readdir + lookup in one a single go).
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L283
+            FUSE_DO_READDIRPLUS,
+            // Adaptative readdirplus optimization support: still use readdir when lookup is
+            // has already been done by the previous readdirplus.
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L311
+            FUSE_READDIRPLUS_AUTO,
+            // Allow parallel lookups and readdir on any given folder (default is serialized).
+            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L354
+            FUSE_PARALLEL_DIROPS
+        );
 
         // Fuser doesn't provided splice config on macOS
         #[cfg(not(target_os = "macos"))]
         {
-            // TODO: `FUSE_SPLICE_READ` seems to require `write_buf()` to be implemented, which is
-            //       not even exposed in fuser !
-            // Allow splice operations (see `man 2 splice`, basically kernel space page-based operations)
-            // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L216
-            config
-                .add_capabilities(fuser::consts::FUSE_SPLICE_WRITE)
-                .expect("Capability available");
-            config
-                .add_capabilities(fuser::consts::FUSE_SPLICE_MOVE)
-                .expect("Capability available");
-            config
-                .add_capabilities(fuser::consts::FUSE_SPLICE_READ)
-                .expect("Capability available");
+            add_capabilities!(
+                config,
+                // TODO: `FUSE_SPLICE_READ` seems to require `write_buf()` to be implemented, which is
+                //       not even exposed in fuser !
+                // Allow splice operations (see `man 2 splice`, basically kernel space page-based operations)
+                // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L216
+                FUSE_SPLICE_WRITE,
+                FUSE_SPLICE_MOVE,
+                FUSE_SPLICE_READ
+            );
         }
-
-        // Allow parallel lookups and readdir on any given folder (default is serialized).
-        // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L354
-        config
-            .add_capabilities(fuser::consts::FUSE_PARALLEL_DIROPS)
-            .expect("Capability available");
 
         // Inform the Kernel about the granularity of the timestamps supported by our filesystem.
         // See https://github.com/libfuse/libfuse/blob/2aeef499b84b596608181f9b48d589c4f8ffe24a/include/fuse_common.h#L609-L622
