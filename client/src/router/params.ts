@@ -35,10 +35,10 @@ export function getRoutePath(): string {
 
 export function getDocumentPath(): FsPath {
   const query = getCurrentRouteQuery();
-  if (query.documentPath) {
+  if (query.documentPath && query.documentPath.startsWith('/')) {
     return query.documentPath;
   }
-  return '';
+  return '/';
 }
 
 export function getCurrentRouteParams(): object {

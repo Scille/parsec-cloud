@@ -124,9 +124,9 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
   let entry: MockEntry;
 
   if (path !== '/' && fileName.startsWith('File_')) {
-    entry = await generateFile(path, `${MOCK_FILE_ID}`);
+    entry = await generateFile(path, { parentId: `${MOCK_FILE_ID}`, fileName: fileName });
   } else {
-    entry = await generateFolder(path, `${MOCK_FILE_ID}`);
+    entry = await generateFolder(path, { parentId: `${MOCK_FILE_ID}`, fileName: fileName });
   }
   (entry as any as EntryStat).baseVersion = entry.version;
   (entry as any as EntryStat).confinementPoint = null;
@@ -330,6 +330,24 @@ export async function readFile(
       case 'png':
         console.log('Using PNG content');
         return { ok: true, value: MockFiles.PNG };
+      case 'docx':
+        console.log('Using DOCX content');
+        return { ok: true, value: MockFiles.DOCX };
+      case 'txt':
+        console.log('Using TXT content');
+        return { ok: true, value: MockFiles.TXT };
+      case 'py':
+        console.log('Using PY content');
+        return { ok: true, value: MockFiles.PY };
+      case 'pdf':
+        console.log('Using PDF content');
+        return { ok: true, value: MockFiles.PDF };
+      case 'mp3':
+        console.log('Using MP3 content');
+        return { ok: true, value: MockFiles.MP3 };
+      case 'mp4':
+        console.log('Using MP4 content');
+        return { ok: true, value: MockFiles.MP4 };
     }
     console.log('Using default file content');
     return {

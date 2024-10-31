@@ -144,18 +144,34 @@
 <script setup lang="ts">
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
-import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
-import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
+import {
+  FsPath,
+  Path,
+  getWorkspaceInfo,
+  StartedWorkspaceInfo,
+  statFolderChildrenAt,
+  entryStatAt,
+  EntryName,
+  isDesktop,
+  WorkspaceHandle,
+  WorkspaceHistoryEntryStatFile,
+} from '@/parsec';
+import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, openSpinnerModal, Base64, I18n } from 'megashark-lib';
 import { DateTime } from 'luxon';
+import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';
 import { WorkspaceHistoryEntryCollection, WorkspaceHistoryEntryModel, HistoryFileListItem } from '@/components/files';
 import { chevronBack, chevronForward, warning } from 'ionicons/icons';
-import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, Routes } from '@/router';
+import { currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes } from '@/router';
 import { FileOperationManager, FileOperationManagerKey } from '@/services/fileOperationManager';
 import { SortProperty } from '@/components/users';
+import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
+import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
+const storageManager: StorageManager = inject(StorageManagerKey)!;
+const informationManager: InformationManager = inject(InformationManagerKey)!;
 const workspaceInfo: Ref<StartedWorkspaceInfo | null> = ref(null);
 // Default it to 5 seconds ago to not interfere with the `max` value
 const selectedDateTime: Ref<Date> = ref(DateTime.now().minus({ seconds: 5 }).toJSDate());
@@ -171,6 +187,7 @@ let timeoutId: number | null = null;
 const resultFromSearch = ref(false);
 const error = ref('');
 const selectEntry: Ref<EntryName> = ref('');
+const OPEN_FILE_SIZE_LIMIT = 15_000_000;
 
 const allSelected = computed(() => {
   return entries.value.selectedCount() === entries.value.entriesCount();
@@ -313,9 +330,67 @@ async function selectAll(selected: boolean): Promise<void> {
   entries.value.selectAll(selected);
 }
 
+async function openWithSystem(_workspaceHandle: WorkspaceHandle, _entry: WorkspaceHistoryEntryStatFile): Promise<void> {
+  await informationManager.present(
+    new Information({
+      message: 'FoldersPage.open.fileFailed',
+      level: InformationLevel.Error,
+    }),
+    PresentationMode.Modal,
+  );
+}
+
 async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> {
   if (entry.isFile()) {
-    console.log('Click on file');
+    if (!workspaceInfo.value) {
+      return;
+    }
+
+    // Cannot open files for now
+
+    // Doing it this way to trick the linter
+    const a = 0;
+    if (a === 0) {
+      return;
+    }
+
+    const config = await storageManager.retrieveConfig();
+
+    if (isDesktop() && config.skipViewers) {
+      await openWithSystem(workspaceInfo.value.handle, entry as WorkspaceHistoryEntryStatFile);
+      return;
+    }
+
+    const modal = await openSpinnerModal('OPENING FILE');
+    const contentType = await detectFileContentType(workspaceInfo.value.handle, entry.path, DateTime.fromJSDate(selectedDateTime.value));
+
+    try {
+      if (!contentType || contentType.type === FileContentType.Unknown) {
+        await openWithSystem(workspaceInfo.value.handle, entry as WorkspaceHistoryEntryStatFile);
+      } else {
+        if ((entry as WorkspaceHistoryEntryStatFile).size > OPEN_FILE_SIZE_LIMIT) {
+          informationManager.present(
+            new Information({
+              message: 'FILE TOO BIG',
+              level: InformationLevel.Warning,
+            }),
+            PresentationMode.Toast,
+          );
+          await openWithSystem(workspaceInfo.value.handle, entry as WorkspaceHistoryEntryStatFile);
+          return;
+        }
+        await navigateTo(Routes.Viewer, {
+          query: {
+            workspaceHandle: workspaceInfo.value.handle,
+            documentPath: entry.path,
+            fileTypeInfo: Base64.fromObject(contentType),
+            timestamp: selectedDateTime.value.getTime().toString(),
+          },
+        });
+      }
+    } finally {
+      await modal.dismiss();
+    }
   } else {
     backStack.push(currentPath.value);
     selectEntry.value = '';

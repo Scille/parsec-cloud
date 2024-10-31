@@ -12,3 +12,4 @@ electron/node_modules
 src/views/testing/TestPage.vue
 bindings
 playwright.config.ts
+src/parsec/mock_files

@@ -99,6 +99,9 @@ const config: UserConfigExport = () => ({
     port: 8080,
     hmr: true,
   },
+  worker: {
+    format: 'es',
+  },
 });
 
 export default defineConfig(config);

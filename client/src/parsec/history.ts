@@ -2,9 +2,11 @@
 
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
+import { MockFiles } from '@/parsec/mock_files';
 import { generateEntries, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import {
+  EntryName,
   FileDescriptor,
   FsPath,
   Result,
@@ -14,13 +16,18 @@ import {
   WorkspaceHistoryEntryStatFolder,
   WorkspaceHistoryEntryStatTag,
   WorkspaceHistoryFdCloseError,
+  WorkspaceHistoryFdCloseErrorTag,
   WorkspaceHistoryFdReadError,
+  WorkspaceHistoryFdReadErrorTag,
   WorkspaceHistoryOpenFileError,
   WorkspaceHistoryStatEntryError,
   WorkspaceHistoryStatFolderChildrenError,
 } from '@/parsec/types';
 import { libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
+
+const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
+let MOCK_CURRENT_FD = 1;
 
 export async function statFolderChildrenAt(
   handle: WorkspaceHandle,
@@ -80,7 +87,7 @@ export async function entryStatAt(
     }
     return result;
   }
-  const entry = fileName.startsWith('File_') ? await generateFile(path, 'MOCK_ID') : await generateFolder(path, 'MOCK_ID');
+  const entry = fileName.startsWith('File_') ? await generateFile(path, { fileName: fileName }) : await generateFolder(path);
   return { ok: true, value: entry as any as WorkspaceHistoryEntryStat };
 }
 
@@ -93,7 +100,10 @@ export async function openFileAt(
     const result = await libparsec.workspaceHistoryOpenFile(workspaceHandle, at.toSeconds() as any as DateTime, path);
     return result;
   } else {
-    return { ok: true, value: 42 };
+    const fd = MOCK_CURRENT_FD;
+    MOCK_CURRENT_FD += 1;
+    MOCK_OPENED_FILES.set(fd, path);
+    return { ok: true, value: fd };
   }
 }
 
@@ -104,6 +114,10 @@ export async function closeHistoryFile(
   if (!needsMocks()) {
     return await libparsec.workspaceHistoryFdClose(workspaceHandle, fd);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceHistoryFdCloseErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
+    MOCK_OPENED_FILES.delete(fd);
     return { ok: true, value: null };
   }
 }
@@ -117,8 +131,49 @@ export async function readHistoryFile(
   if (!needsMocks()) {
     return await libparsec.workspaceHistoryFdRead(workspaceHandle, fd, offset, size);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceHistoryFdReadErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
     await wait(100);
-    return { ok: true, value: new Uint8Array([77, 97, 120, 32, 105, 115, 32, 115, 101, 120, 121]) };
+    const path = MOCK_OPENED_FILES.get(fd) as string;
+    const fileName = (await Path.filename(path)) as EntryName;
+    const ext = Path.getFileExtension(fileName);
+
+    switch (ext) {
+      case 'xlsx':
+        console.log('Using XLSX content');
+        return { ok: true, value: MockFiles.XLSX };
+      case 'png':
+        console.log('Using PNG content');
+        return { ok: true, value: MockFiles.PNG };
+      case 'docx':
+        console.log('Using DOCX content');
+        return { ok: true, value: MockFiles.DOCX };
+      case 'txt':
+        console.log('Using TXT content');
+        return { ok: true, value: MockFiles.TXT };
+      case 'py':
+        console.log('Using PY content');
+        return { ok: true, value: MockFiles.PY };
+      case 'pdf':
+        console.log('Using PDF content');
+        return { ok: true, value: MockFiles.PDF };
+      case 'mp3':
+        console.log('Using MP3 content');
+        return { ok: true, value: MockFiles.MP3 };
+      case 'mp4':
+        console.log('Using MP4 content');
+        return { ok: true, value: MockFiles.MP4 };
+    }
+    console.log('Using default file content');
+    return {
+      ok: true,
+      value: new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 5, 0, 0, 0, 5, 8, 6, 0, 0, 0, 141, 111, 38, 229, 0, 0, 0, 28,
+        73, 68, 65, 84, 8, 215, 99, 248, 255, 255, 63, 195, 127, 6, 32, 5, 195, 32, 18, 132, 208, 49, 241, 130, 88, 205, 4, 0, 14, 245, 53,
+        203, 209, 142, 14, 31, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]),
+    };
   }
 }
 

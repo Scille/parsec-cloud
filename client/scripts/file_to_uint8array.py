@@ -13,9 +13,8 @@ if __name__ == "__main__":
     parser.add_argument("-o", "--output", default=sys.stdout, help="Where to put the result")
     args = parser.parse_args()
     content = args.input.read_bytes()
-    array = ",".join([str(c) for c in content])
-    result = f"""
-// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
+    array = ", ".join([str(c) for c in content])
+    result = f"""// Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 /*
 Generated automatically with {sys.argv[0]}

@@ -311,7 +311,8 @@
             },
             "myProfile": "My profile",
             "recoveryExport": "Recovery file",
-            "history": "History"
+            "history": "History",
+            "viewer": "File viewer"
         },
         "previous": "Go back",
         "invitations": {
@@ -1671,5 +1672,8 @@
         "loading": "Loading...",
         "workspace": "Workspace:",
         "date": "Preview date:"
+    },
+    "fileViewers": {
+        "openWithDefault": "Open with default application"
     }
 }
