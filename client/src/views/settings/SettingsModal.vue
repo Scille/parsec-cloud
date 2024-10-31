@@ -117,6 +117,14 @@
                   </ion-button>
                 </settings-option>
 
+                <settings-option
+                  v-if="isDesktop() && false"
+                  title="DONT USE VIEWERS"
+                  description="ALWAYS OPEN FILES WITH DEFAULT DESKTOP APP"
+                >
+                  <ion-toggle v-model="config.skipViewers" />
+                </settings-option>
+
                 <!-- display unsync files -->
                 <settings-option
                   :title="'SettingsModal.unsyncFiles.label'"

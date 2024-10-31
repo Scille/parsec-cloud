@@ -311,7 +311,8 @@
             },
             "myProfile": "Mon profil",
             "recoveryExport": "Fichier de récupération",
-            "history": "Historique"
+            "history": "Historique",
+            "viewer": "Aperçu du fichier"
         },
         "previous": "Précédent",
         "invitations": {
@@ -1671,5 +1672,8 @@
         "loading": "Chargement...",
         "workspace": "Espace de travail :",
         "date": "Date de prévisualisation :"
+    },
+    "fileViewers": {
+        "openWithDefault": "Ouvrir avec l'application par défaut"
     }
 }

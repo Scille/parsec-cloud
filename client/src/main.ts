@@ -31,6 +31,9 @@ import { Information, InformationDataType, InformationLevel, InformationManager,
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
 import { Sentry } from '@/services/sentry';
 import { Answer, Base64, I18n, Locale, MegaSharkPlugin, ThemeManager, Validity, askQuestion } from 'megashark-lib';
+import editorWorker from 'monaco-editor/esm/vs/editor/editor.worker?worker';
+import * as pdfjs from 'pdfjs-dist';
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker?worker&url';
 
 enum AppState {
   Ready = 'ready',
@@ -49,6 +52,16 @@ function preventRightClick(): void {
       }
     }
   });
+}
+
+async function initViewers(): Promise<void> {
+  pdfjs.GlobalWorkerOptions.workerSrc = pdfjsWorker;
+
+  self.MonacoEnvironment = {
+    getWorker: function (_workerId, _label): Worker {
+      return new editorWorker();
+    },
+  };
 }
 
 async function setupApp(): Promise<void> {
@@ -93,6 +106,8 @@ async function setupApp(): Promise<void> {
   app.provide(StorageManagerKey, storageManager);
   app.provide(InjectionProviderKey, injectionProvider);
   app.provide(HotkeyManagerKey, hotkeyManager);
+
+  await initViewers();
 
   // We get the app element
   const appElem = document.getElementById('app');

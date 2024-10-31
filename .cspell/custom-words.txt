@@ -53,6 +53,7 @@ blockstores
 Booyakasha
 boto
 botocore
+bottombar
 broadcastable
 browserslistrc
 Bsas
@@ -736,6 +737,7 @@ winify
 winres
 wizz
 wksp
+wordprocessingml
 workdir
 workspacefs
 wpath

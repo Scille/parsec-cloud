@@ -96,6 +96,11 @@ async function openTOS(tosLink: string): Promise<void> {
   await openUrl(tosLink);
 }
 
+async function openLink(link: string): Promise<void> {
+  window.electronAPI.authorizeURL(link);
+  window.open(link, '_blank');
+}
+
 export const Env = {
   getStripeApiKey,
   getBmsUrl,
@@ -110,5 +115,6 @@ export const Env = {
     openSourcesLink,
     openDeveloperLink,
     openTOS,
+    openLink,
   },
 };

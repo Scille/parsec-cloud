@@ -170,11 +170,8 @@ for (const gridMode of [false, true]) {
     } else {
       await documents.locator('.folder-container').getByRole('listitem').nth(2).dblclick();
     }
-    const modal = documents.locator('.information-modal');
-    await expect(modal).toBeVisible();
-    await expect(modal.locator('.container-textinfo')).toHaveText('This feature is not yet available in web mode.');
-    await modal.locator('#next-button').click();
-    await expect(modal).toBeHidden();
+
+    await expect(documents).toHavePageTitle('File viewer');
   });
 
   msTest(`Navigation back and forth in ${gridMode ? 'grid' : 'list'} mode`, async ({ documents }) => {

@@ -51,11 +51,15 @@
         "file-type": "^19.6.0",
         "luxon": "^3.4.4",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#f65a38f9255bb7b4e1fafe1be3b833b6a1a8f1d4",
+        "mammoth": "^1.8.0",
+        "monaco-editor": "^0.52.0",
+        "pdfjs-dist": "^4.8.69",
         "qrcode-vue3": "^1.6.8",
         "uuid": "^9.0.1",
         "vue": "^3.3.8",
         "vue-i18n": "^9.6.5",
-        "vue-router": "^4.2.5"
+        "vue-router": "^4.2.5",
+        "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
     },
     "devDependencies": {
         "@capacitor/cli": "^5.6.0",

@@ -14,3 +14,4 @@ package-lock.json
 # Auto-generated
 src/plugins/libparsec/definitions.ts
 src/components.d.ts
+src/parsec/mock_files

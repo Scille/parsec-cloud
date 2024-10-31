@@ -21,6 +21,7 @@ export enum Routes {
   ClientAreaLogin = 'clientLogin',
   ClientArea = 'clientArea',
   History = 'history',
+  Viewer = 'viewer',
 }
 
 const routes: Array<RouteRecordRaw> = [
@@ -118,6 +119,11 @@ const routes: Array<RouteRecordRaw> = [
                 name: Routes.RecoveryExport,
                 component: () => import('@/views/devices/ExportRecoveryDevicePage.vue'),
               },
+              {
+                path: `/:handle(\\d+)/${Routes.Viewer}`,
+                name: Routes.Viewer,
+                component: () => import('@/views/viewers/FileViewer.vue'),
+              },
             ],
           },
         ],
@@ -171,6 +177,8 @@ export interface Query {
   workspaceHandle?: WorkspaceHandle;
   bmsOrganizationId?: OrganizationID;
   createOrg?: ServerType;
+  fileTypeInfo?: string;
+  timestamp?: string;
 }
 
 export interface ClientAreaQuery {
