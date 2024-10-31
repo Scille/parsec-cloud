@@ -133,7 +133,7 @@
             "labelSortBy": "Trier par",
             "search": "Rechercher",
             "loggedIn": "Connecté",
-            "noMatch": "Aucune organisation trouvé qui correspond à la recherche '{query}'.",
+            "noMatch": "Aucune organisation trouvée qui correspond à la recherche '{query}'.",
             "trialOrganization": "Version d'essai",
             "expiration": {
                 "days": "1 jour restant | {days} jours restants",
