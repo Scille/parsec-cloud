@@ -265,11 +265,11 @@ async function onLoginClick(): Promise<void> {
 
 <style lang="scss" scoped>
 .recovery-content {
-  height: 100%;
+  height: auto;
   width: 60vw;
   max-width: var(--parsec-max-forgotten-pwd-width);
   display: flex;
-  margin: 0 auto;
+  margin: auto;
   flex-direction: column;
   align-items: center;
   gap: 2rem;
