@@ -16,7 +16,8 @@ use crate::utils::*;
 
 #[derive(clap::Parser)]
 pub struct Args {
-    /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL)
+    // cspell:disable-next-line
+    /// Server invitation address (e.g.: parsec3://127.0.0.1:41997/Org?no_ssl=true&a=claim_shamir_recovery&p=xBA2FaaizwKy4qG5cGDFlXaL`)
     #[arg(short, long)]
     addr: ParsecInvitationAddr,
     /// Read the password from stdin instead of a TTY.
