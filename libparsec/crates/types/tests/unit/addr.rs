@@ -489,7 +489,8 @@ fn invitation_addr_bad_type(
                 &url,
                 AddrError::InvalidParamValue {
                     param: "a",
-                    help: "Expected `a=claim_user` or `a=claim_device`".to_string(),
+                    help: "Expected `a=claim_user`, `a=claim_device` or `a=claim_shamir_recovery`"
+                        .to_string(),
                 },
             );
         }

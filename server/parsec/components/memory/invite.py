@@ -544,7 +544,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             case InvitationType.SHAMIR_RECOVERY:
                 shamir_recovery_invitation = self._get_shamir_recovery_invitation(org, invitation)
                 if shamir_recovery_invitation is None:
-                    # TODO: The invitation is not actually deleted, but the corresoinding setup has
+                    # TODO: The invitation is not actually deleted, but the corresponding setup has
                     # been deleted. This is a bit misleading, we should find a way to differentiate
                     # between the two cases.
                     return InviteAsInvitedInfoBadOutcome.INVITATION_DELETED
