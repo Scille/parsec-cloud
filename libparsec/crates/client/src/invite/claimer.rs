@@ -261,7 +261,10 @@ pub async fn claimer_retrieve_info(
             UserOrDevice::ShamirRecovery {
                 recipients,
                 threshold,
-            } => todo!("Implement UserOrDeviceClaimInitialCtx::Shamir {recipients:?} {threshold}"),
+            } => {
+                // See https://github.com/Scille/parsec-cloud/issues/8841
+                todo!("Implement UserOrDeviceClaimInitialCtx::Shamir {recipients:?} {threshold}")
+            }
         },
         bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
