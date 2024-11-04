@@ -11,9 +11,9 @@ python = "^3.12.0"
 sphinx = "<8.0.0"
 sphinx-copybutton = "^0.5.2"
 sphinx-intl = "^2.2.0"
-sphinx-rtd-theme = "^2.0.0"
-sphinx-tabs = "^3.4.5"
-docutils = "0.20.1"
+sphinx-rtd-theme = "^3.0.1"
+sphinx-tabs = "^3.4.7"
+docutils = "0.21.2"
 poutils = "^0.15.4"
 
 [build-system]
