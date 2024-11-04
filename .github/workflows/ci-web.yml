@@ -151,27 +151,13 @@ jobs:
       - name: Check testbed server is running
         run: curl http://localhost:6777
 
-      - name: Install cypress binary
-        run: |
-          npm exec cypress version
-          npm exec cypress install
-        working-directory: client
-        timeout-minutes: 5
-
-      - name: E2E tests
-        run: npm run test:e2e:headless
-        env:
-          TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
-        working-directory: client
-        timeout-minutes: 20
-
       - name: Install Playwright dependencies
         run: npx playwright install --with-deps
         working-directory: client
         timeout-minutes: 5
 
-      - name: Playwright E2E tests
-        run: npm run pw:e2e:headless
+      - name: E2E tests
+        run: npm run test:e2e:headless
         env:
           TESTBED_SERVER: parsec3://localhost:6777?no_ssl=true
         working-directory: client
