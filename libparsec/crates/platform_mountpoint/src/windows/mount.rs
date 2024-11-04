@@ -97,7 +97,14 @@ impl Mountpoint {
                 //   file name is entirely composed of ASCII characters.
                 // - Using `EntryName::MAX_LENGTH_BYTES / 2` any UTF16 character works, but
                 //   we have arbitrary split the size in half :/
-                .set_max_component_length(EntryName::MAX_LENGTH_BYTES as u16);
+                .set_max_component_length(EntryName::MAX_LENGTH_BYTES as u16)
+                // When an application closes a file, the Windows OS may still keep the file
+                // open for a number of reasons (e.g. caching).
+                // This is an issue in Parsec since an opened file is considered busy and
+                // cannot be synchronized.
+                // WinFPS's `FlushAndPurgeOnCleanup ` flag limits the time that Windows
+                // keeps files open after an application has closed them.
+                .set_flush_and_purge_on_cleanup(true);
 
             Params {
                 volume_params,
