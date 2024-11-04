@@ -425,7 +425,13 @@ impl fuser::Filesystem for Filesystem {
         )
     }
 
-    fn getattr(&mut self, req: &fuser::Request<'_>, ino: u64, reply: fuser::ReplyAttr) {
+    fn getattr(
+        &mut self,
+        req: &fuser::Request<'_>,
+        ino: u64,
+        _fh: Option<u64>,
+        reply: fuser::ReplyAttr,
+    ) {
         log::debug!("[FUSE] getattr(ino: {:#x?})", ino);
         let reply = reply_on_drop_guard!(reply, fuser::ReplyAttr);
 
