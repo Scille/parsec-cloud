@@ -40,7 +40,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -48,7 +48,7 @@ jobs:
         uses: ./.github/actions/system-info
         timeout-minutes: 1
 
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # pin v4.1.0
         with:
           node-version: ${{ env.node-version }}
           cache: npm
@@ -93,7 +93,7 @@ jobs:
 
       - name: Restore libparsec if Rust hasn't been modified
         id: cache-libparsec
-        uses: actions/cache/restore@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
+        uses: actions/cache/restore@6849a6489940f00c2f30c0fb92c6274307ccb58a # pin v4.1.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
@@ -123,7 +123,7 @@ jobs:
         timeout-minutes: 5
 
       # Install wasm-pack command
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@678b06b887cdbf44fa0601e5915f865e17c2241d # pin v2.44.60
         with:
           tool: wasm-pack@${{ env.wasm-pack-version }}
 
@@ -135,7 +135,7 @@ jobs:
 
       - name: Save libparsec to be reuse later
         if: steps.cache-libparsec.outputs.cache-hit != 'true'
-        uses: actions/cache/save@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
+        uses: actions/cache/save@6849a6489940f00c2f30c0fb92c6274307ccb58a # pin v4.1.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |
