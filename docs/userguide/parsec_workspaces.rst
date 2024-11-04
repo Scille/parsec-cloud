@@ -138,3 +138,52 @@ workspace.
   Strong cryptographic security prevents data recovery. If the workspace is
   not shared with others, and the user loses access to its device or cannot
   log in for any reason, data stored in the workspace will be lost forever.
+
+See a workspace history
+-----------------------
+
+Parsec lets you explore a workspace at a given point in time, showing you all the files as they used to be.
+You will need the **Owner** or **Manager** roles on the workspace.
+The ``History`` option is available in the workspace context menu.
+
+.. image:: screens/workspace_context_menu_history.png
+    :align: center
+    :width: 250
+    :alt: See workspace history
+
+You can navigate inside the workspace as you normally would.
+
+.. image:: screens/workspace_history.png
+    :align: center
+    :alt: Workspace history
+
+If you change the date or time, files and folders will be automatically updated to reflect the state of the workspace at this moment.
+You can only select a time between the workspace's creation date and now.
+
+.. image:: screens/workspace_history_select_date.png
+    :align: center
+    :width: 300
+    :alt: Select a date and time
+
+If you wish to restore a file or a folder, you can select it and click ``Restore``. This will replace the current version of the file with the version from this moment in time.
+
+.. image:: screens/workspace_history_restore.png
+    :align: center
+    :alt: Restore a file
+
+.. note::
+
+  If you make a mistake, don't worry, we're not deleting the file history! Let's take an example with a file named **File.txt** that had its content updated as follows:
+
+    #. On April 1st, **Creation** of the file with the content **AAA**. This is **version 1**.
+    #. On April 5th, **Update** of the file with the content **BBB** (replacing the previous content). This is **version 2**.
+    #. On April 7th, **Update** of the file with the content **CCC** (replacing the previous content). This is **version 3**.
+
+  If you look at this workspace history on April 6th, the content of the file will be **BBB**. Should you chose to restore this version, the content of **File.txt** (**CCC** currently) will be replaced by **BBB**. This will be **version 4**, which means that **version 3** has not been deleted, and if you later change your mind, you will still be able to restore it.
+
+
+You can also explore a workspace history from a specific file. This will open the history page directly at the right path.
+
+.. image:: screens/workspace_history_from_file.png
+    :align: center
+    :alt: Open workspace history from a file

@@ -8,17 +8,16 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Parsec 3.0.0-rc.1+dev\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-09-19 17:32+0200\n"
+"POT-Creation-Date: 2024-11-04 15:46+0100\n"
 "PO-Revision-Date: 2024-09-19 17:35+0200\n"
 "Last-Translator: Marcos Medrano <marcos.medrano@scille.fr>\n"
-"Language-Team: fr <dev-parsec@scille.fr>\n"
 "Language: fr\n"
+"Language-Team: fr <dev-parsec@scille.fr>\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"Generated-By: Babel 2.15.0\n"
-"X-Generator: Poedit 3.5\n"
+"Generated-By: Babel 2.16.0\n"
 
 #: ../../userguide/parsec_workspaces.rst:6
 msgid "Parsec workspaces"
@@ -27,8 +26,8 @@ msgstr "Espaces de travail Parsec"
 #: ../../userguide/parsec_workspaces.rst:8
 msgid "In Parsec, your data is securely stored within **workspaces**."
 msgstr ""
-"Dans Parsec, vos données sont stockées en toute sécurité dans des **espaces "
-"de travail**."
+"Dans Parsec, vos données sont stockées en toute sécurité dans des "
+"**espaces de travail**."
 
 #: ../../userguide/parsec_workspaces.rst:-1
 msgid "Parsec workspace"
@@ -36,12 +35,12 @@ msgstr "Espace de travail Parsec"
 
 #: ../../userguide/parsec_workspaces.rst:14
 msgid ""
-"You can import your data into a Parsec workspace and manage your files and "
-"directories as you will do with a regular file explorer."
+"You can import your data into a Parsec workspace and manage your files "
+"and directories as you will do with a regular file explorer."
 msgstr ""
-"Vous pouvez importer vos données dans un espace de travail Parsec et gérer "
-"vos fichiers et répertoires comme vous le feriez avec un explorateur de "
-"fichiers classique."
+"Vous pouvez importer vos données dans un espace de travail Parsec et "
+"gérer vos fichiers et répertoires comme vous le feriez avec un "
+"explorateur de fichiers classique."
 
 #: ../../userguide/parsec_workspaces.rst:-1
 msgid "Parsec file explorer"
@@ -49,25 +48,25 @@ msgstr "Explorateur de fichiers Parsec"
 
 #: ../../userguide/parsec_workspaces.rst:21
 msgid ""
-"Workspaces are mounted by default in your system and will also appear in the "
-"file explorer as regular folders. This is convenient to copy files from and "
-"to Parsec."
+"Workspaces are mounted by default in your system and will also appear in "
+"the file explorer as regular folders. This is convenient to copy files "
+"from and to Parsec."
 msgstr ""
 "Les espaces de travail sont montés par défaut dans votre système et "
-"apparaissent dans l'explorateur de fichiers comme des dossiers normaux. Ceci "
-"est pratique pour copier des fichiers depuis et vers Parsec."
+"apparaissent dans l'explorateur de fichiers comme des dossiers normaux. "
+"Ceci est pratique pour copier des fichiers depuis et vers Parsec."
 
 #: ../../userguide/parsec_workspaces.rst:25
 msgid ""
 "Each workspace has its own :ref:`role-based policy "
 "<doc_userguide_parsec_workspaces_roles>` for read and write access. This "
-"allows a fine-grained access control as each user can have different roles "
-"in different workspaces."
+"allows a fine-grained access control as each user can have different "
+"roles in different workspaces."
 msgstr ""
 "Chaque espace de travail a sa propre :ref:`politique basée sur les rôles "
 "<doc_userguide_parsec_workspaces_roles>` pour l'accès en lecture et en "
-"écriture. Cela permet un contrôle d'accès très fin car chaque utilisateur "
-"peut avoir différents rôles dans différents espaces de travail."
+"écriture. Cela permet un contrôle d'accès très fin car chaque utilisateur"
+" peut avoir différents rôles dans différents espaces de travail."
 
 #: ../../userguide/parsec_workspaces.rst:31
 msgid ""
@@ -75,10 +74,10 @@ msgid ""
 "synchronized by Parsec while connected. Synchronization will occur "
 "automatically as soon as the connection with the server is established."
 msgstr ""
-"Lorsque vous êtes hors ligne, vous pouvez toujours accéder aux documents à "
-"condition qu'ils aient été synchronisés par Parsec lors de la connexion. La "
-"synchronisation se fait automatiquement dès que la connexion avec le serveur "
-"est établie."
+"Lorsque vous êtes hors ligne, vous pouvez toujours accéder aux documents "
+"à condition qu'ils aient été synchronisés par Parsec lors de la "
+"connexion. La synchronisation se fait automatiquement dès que la "
+"connexion avec le serveur est établie."
 
 #: ../../userguide/parsec_workspaces.rst:51
 msgid "Create a workspace"
@@ -86,11 +85,11 @@ msgstr "Créer un espace de travail"
 
 #: ../../userguide/parsec_workspaces.rst:53
 msgid ""
-"You can create a workspace by clicking ``New workspace`` and entering a name "
-"for the workspace."
+"You can create a workspace by clicking ``New workspace`` and entering a "
+"name for the workspace."
 msgstr ""
-"Vous pouvez créer un espace de travail en cliquant sur ``Nouvel espace de "
-"travail`` et en saisissant un nom pour l'espace de travail."
+"Vous pouvez créer un espace de travail en cliquant sur ``Nouvel espace de"
+" travail`` et en saisissant un nom pour l'espace de travail."
 
 #: ../../userguide/parsec_workspaces.rst:-1
 msgid "Creating a workspace"
@@ -114,16 +113,16 @@ msgid ""
 "If you have the **Owner** or **Manager** role, the ``Sharing and roles`` "
 "option will be available from the workspace menu."
 msgstr ""
-"Si vous avez le rôle **Propriétaire** ou **Gérant**, l'option ``Partage et "
-"rôles`` sera disponible dans le menu de l'espace de travail."
+"Si vous avez le rôle **Propriétaire** ou **Gérant**, l'option ``Partage "
+"et rôles`` sera disponible dans le menu de l'espace de travail."
 
 #: ../../userguide/parsec_workspaces.rst:72
 msgid ""
-"Find the user you want to share the workspace with and select its :ref:"
-"`workspace roles <doc_userguide_parsec_workspaces_roles>`."
+"Find the user you want to share the workspace with and select its "
+":ref:`workspace roles <doc_userguide_parsec_workspaces_roles>`."
 msgstr ""
-"Trouvez l'utilisateur avec lequel vous voulez partager l'espace de travail "
-"et sélectionnez son :ref:`rôles d'espace de travail "
+"Trouvez l'utilisateur avec lequel vous voulez partager l'espace de "
+"travail et sélectionnez son :ref:`rôles d'espace de travail "
 "<doc_userguide_parsec_workspaces_roles>`."
 
 #: ../../userguide/parsec_workspaces.rst:-1
@@ -132,19 +131,19 @@ msgstr "Partager un espace de travail"
 
 #: ../../userguide/parsec_workspaces.rst:79
 msgid ""
-"Depending on the user profile within the organization, some roles may not be "
-"available for the selected user."
+"Depending on the user profile within the organization, some roles may not"
+" be available for the selected user."
 msgstr ""
-"Selon le profil de l'utilisateur au sein de l'organisation, certains rôles "
-"peuvent ne pas être disponibles pour l'utilisateur sélectionné."
+"Selon le profil de l'utilisateur au sein de l'organisation, certains "
+"rôles peuvent ne pas être disponibles pour l'utilisateur sélectionné."
 
 #: ../../userguide/parsec_workspaces.rst:82
 msgid ""
-"You can remove access to this workspace by selecting ``Not shared`` for a "
-"given user."
+"You can remove access to this workspace by selecting ``Not shared`` for a"
+" given user."
 msgstr ""
-"Vous pouvez supprimer l'accès à cet espace de travail en sélectionnant ``Non "
-"partagé`` pour un utilisateur donné."
+"Vous pouvez supprimer l'accès à cet espace de travail en sélectionnant "
+"``Non partagé`` pour un utilisateur donné."
 
 #: ../../userguide/parsec_workspaces.rst:89
 msgid "Workspace roles"
@@ -156,18 +155,18 @@ msgid ""
 "workspace. Since the role is specific to the workspace, a user can have "
 "different roles in different workspaces."
 msgstr ""
-"Le **rôle de l'espace de travail** définit ce que l'utilisateur est autorisé "
-"à faire dans l'espace de travail. Comme le rôle est spécifique à l'espace de "
-"travail, un utilisateur peut avoir différents rôles dans différents espaces "
-"de travail."
+"Le **rôle de l'espace de travail** définit ce que l'utilisateur est "
+"autorisé à faire dans l'espace de travail. Comme le rôle est spécifique à"
+" l'espace de travail, un utilisateur peut avoir différents rôles dans "
+"différents espaces de travail."
 
 #: ../../userguide/parsec_workspaces.rst:95
 msgid ""
 "The available roles and what they allow to do are shown in the following "
 "table."
 msgstr ""
-"Les rôles disponibles et ce qu'ils permettent de faire sont indiqués dans le "
-"tableau suivant."
+"Les rôles disponibles et ce qu'ils permettent de faire sont indiqués dans"
+" le tableau suivant."
 
 #: ../../userguide/parsec_workspaces.rst:101
 msgid "User rights"
@@ -237,11 +236,11 @@ msgstr "Peut promouvoir d'autres utilisateurs en tant que Propriétaire"
 
 #: ../../userguide/parsec_workspaces.rst:132
 msgid ""
-"Users without a role in the workspace, are not allowed to access nor see the "
-"workspace."
+"Users without a role in the workspace, are not allowed to access nor see "
+"the workspace."
 msgstr ""
-"Les utilisateurs qui n'ont pas de rôle dans l'espace de travail ne sont pas "
-"autorisés à accéder à l'espace de travail ni à le voir."
+"Les utilisateurs qui n'ont pas de rôle dans l'espace de travail ne sont "
+"pas autorisés à accéder à l'espace de travail ni à le voir."
 
 #: ../../userguide/parsec_workspaces.rst:136
 msgid "It is recommended to always share the workspace with other users."
@@ -251,12 +250,126 @@ msgstr ""
 
 #: ../../userguide/parsec_workspaces.rst:138
 msgid ""
-"Strong cryptographic security prevents data recovery. If the workspace is "
-"not shared with others, and the user loses access to its device or cannot "
-"log in for any reason, data stored in the workspace will be lost forever."
+"Strong cryptographic security prevents data recovery. If the workspace is"
+" not shared with others, and the user loses access to its device or "
+"cannot log in for any reason, data stored in the workspace will be lost "
+"forever."
 msgstr ""
-"La sécurité cryptographique forte empêche la récupération des données. Si "
-"l'espace de travail n'est pas partagé avec d'autres personnes et que "
-"l'utilisateur perd l'accès à son appareil ou ne peut pas se connecter pour "
-"une raison quelconque, les données stockées dans l'espace de travail seront "
-"perdues à jamais."
+"La sécurité cryptographique forte empêche la récupération des données. Si"
+" l'espace de travail n'est pas partagé avec d'autres personnes et que "
+"l'utilisateur perd l'accès à son appareil ou ne peut pas se connecter "
+"pour une raison quelconque, les données stockées dans l'espace de travail"
+" seront perdues à jamais."
+
+#: ../../userguide/parsec_workspaces.rst:143
+msgid "See a workspace history"
+msgstr "Voir l'historique d'un espace de travail"
+
+#: ../../userguide/parsec_workspaces.rst:145
+msgid ""
+"Parsec lets you explore a workspace at a given point in time, showing you"
+" all the files as they used to be. You will need the **Owner** or "
+"**Manager** roles on the workspace. The ``History`` option is available "
+"in the workspace context menu."
+msgstr "Parsec vous permet d'explorer un espace de travail à n'importe quel moment dans le temps,"
+" en affichant les fichiers tels qu'ils étaient. Vous devez être **Propriétaire** or **Gérant**"
+" de l'espace. ``Historique des versions`` est disponible dans le menu contextuel de l'espace"
+" de travail."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+#, fuzzy
+msgid "See workspace history"
+msgstr "Espaces de travail Parsec"
+
+#: ../../userguide/parsec_workspaces.rst:154
+msgid "You can navigate inside the workspace as you normally would."
+msgstr "Vous pouvez naviguer normalement dans l'espace de travail."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+#, fuzzy
+msgid "Workspace history"
+msgstr "Rôles des espaces de travail"
+
+#: ../../userguide/parsec_workspaces.rst:160
+msgid ""
+"If you change the date or time, files and folders will be automatically "
+"updated to reflect the state of the workspace at this moment. You can "
+"only select a time between the workspace's creation date and now."
+msgstr "Si vous modifiez la date ou l'heure, les fichiers et les dossiers seront"
+" automatiquement mis à jour pour refléter leur état à l'instant choisi."
+" Vous ne pouvez que sélectionner une date et une heure entre la date de création"
+" de l'espace et maintenant."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Select a date and time"
+msgstr "Choisissez une date et une heure"
+
+#: ../../userguide/parsec_workspaces.rst:168
+msgid ""
+"If you wish to restore a file or a folder, you can select it and click "
+"``Restore``. This will replace the current version of the file with the "
+"version from this moment in time."
+msgstr "Si vous souhaitez restorer un fichier ou un dossier, vous pouvez le "
+" sélectionner et cliquer sur ``Restaurer``. La version actuelle du fichier sera"
+" remplacée par la version choisie."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Restore a file"
+msgstr "Restaurer un fichier"
+
+#: ../../userguide/parsec_workspaces.rst:176
+msgid ""
+"If you make a mistake, don't worry, we're not deleting the file history! "
+"Let's take an example with a file named **File.txt** that had its content"
+" updated as follows:"
+msgstr "Si vous faites une erreur, aucun soucis, l'historique du fichier n'est"
+" pas supprimé !"
+"Prenons en exemple un fichier nommé **Fichier.txt** dont le contenu a été mis"
+" à jour comme suit :"
+
+#: ../../userguide/parsec_workspaces.rst:178
+msgid ""
+"On April 1st, **Creation** of the file with the content **AAA**. This is "
+"**version 1**."
+msgstr "Le 1er avril, **Création** du fichier avec le contenu **AAA**. Il s'agit"
+" de la **version 1**."
+
+#: ../../userguide/parsec_workspaces.rst:179
+msgid ""
+"On April 5th, **Update** of the file with the content **BBB** (replacing "
+"the previous content). This is **version 2**."
+msgstr "Le 5 avril, **Mise à jour** du fichier avec le contenu **BBB**"
+" (remplaçant le contenu précédent). Il s'agit de la **version 2**."
+
+#: ../../userguide/parsec_workspaces.rst:180
+msgid ""
+"On April 7th, **Update** of the file with the content **CCC** (replacing "
+"the previous content). This is **version 3**."
+msgstr "Le 7 avril, **Mise à jour** du fichier avec le contenu **CCC**"
+" (remplaçant le contenu précédent). Il s'agit de la **version 3**."
+
+#: ../../userguide/parsec_workspaces.rst:182
+msgid ""
+"If you look at this workspace history on April 6th, the content of the "
+"file will be **BBB**. Should you chose to restore this version, the "
+"content of **File.txt** (**CCC** currently) will be replaced by **BBB**. "
+"This will be **version 4**, which means that **version 3** has not been "
+"deleted, and if you later change your mind, you will still be able to "
+"restore it."
+msgstr "Si l'on observe l'historique de cet espace le 6 avril, le contenu"
+" du fichier sera **BBB**. Si vous choisissez de restaurer cette version,"
+" le contenu de **Fichier.txt** (**CCC** actuellement) sera remplacé par"
+" **BBB**. Il s'agira de la **version 4**, ce qui signifie que la **version 3**"
+" n'a pas été supprimée, et si vous changez d'avis plus tard, vous serez"
+" capable de la restaurer."
+
+#: ../../userguide/parsec_workspaces.rst:185
+msgid ""
+"You can also explore a workspace history from a specific file. This will "
+"open the history page directly at the right path."
+msgstr "Vous pouvez également explorer l'historique d'un espace depuis un fichier"
+" spécifique. L'historique sera ouvert directement au bon chemin."
+
+#: ../../userguide/parsec_workspaces.rst:-1
+msgid "Open workspace history from a file"
+msgstr "Ouvrir l'historique de l'espace de travail depuis un fichier"
