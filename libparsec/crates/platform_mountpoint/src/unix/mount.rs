@@ -8,7 +8,7 @@ use std::os::linux::fs::MetadataExt;
 
 use std::{sync::Arc, thread::JoinHandle};
 
-use libparsec_client::{MountpointMountStrategy, WorkspaceOps};
+use libparsec_client::MountpointMountStrategy;
 use libparsec_types::prelude::*;
 
 #[derive(Debug)]
@@ -44,14 +44,17 @@ impl Mountpoint {
                 }
             };
 
+            let (workspace_name, _) = ops.get_current_name_and_self_role();
             let (mountpoint_path, initial_st_dev) =
-                create_suitable_mountpoint_dir(mountpoint_base_dir, &ops)
+                create_suitable_mountpoint_dir(mountpoint_base_dir, &workspace_name)
                     .context("cannot create mountpoint dir")?;
 
             let filesystem =
                 super::filesystem::Filesystem::new(ops, tokio::runtime::Handle::current());
             let options = [
                 fuser::MountOption::FSName("parsec".into()),
+                #[cfg(target_os = "macos")]
+                fuser::MountOption::CUSTOM(format!("volname={workspace_name}")),
                 fuser::MountOption::DefaultPermissions,
                 fuser::MountOption::NoSuid,
                 fuser::MountOption::Async,
@@ -150,10 +153,8 @@ impl Drop for Mountpoint {
 // changes on the mountpoint path.
 fn create_suitable_mountpoint_dir(
     base_mountpoint_path: &std::path::Path,
-    ops: &WorkspaceOps,
+    workspace_name: &EntryName,
 ) -> anyhow::Result<(std::path::PathBuf, u64)> {
-    let (workspace_name, _) = ops.get_current_name_and_self_role();
-
     // In case of hard crash, it's possible the FUSE mountpoint is still mounted
     // but points to nothing. In such case any FS operation on it will fail.
     // For this reason, we cannot consider FS errors as rare & unexpected and let
@@ -172,7 +173,7 @@ fn create_suitable_mountpoint_dir(
         let mountpoint_path = if tentative == 1 {
             base_mountpoint_path.join(workspace_name.as_ref())
         } else {
-            base_mountpoint_path.join(format!("{} ({})", workspace_name.as_ref(), tentative))
+            base_mountpoint_path.join(format!("{workspace_name} ({tentative})"))
         };
 
         // On POSIX systems, mounting target must exists
