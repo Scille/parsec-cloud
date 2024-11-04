@@ -70,7 +70,7 @@ export async function listUserInvitations(options?: {
   includeFinished?: boolean;
 }): Promise<Result<Array<UserInvitation>, ListInvitationsError>> {
   function shouldIncludeInvitation(invite: InviteListItem): boolean {
-    if (invite.tag === InviteListItemTag.Device) {
+    if (invite.tag !== InviteListItemTag.User) {
       return false;
     }
     if (invite.status === InvitationStatus.Cancelled && (!options || !options.includeCancelled)) {
