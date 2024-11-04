@@ -1073,7 +1073,7 @@
         },
         "sort": {
             "byName": "Nom",
-            "byJoined": "Date",
+            "byJoined": "Date d'inscription",
             "byProfile": "Profil",
             "byStatus": "Statut",
             "asc": "Croissant",
