@@ -400,7 +400,7 @@ msTest('User sort popover default state', async ({ usersPage }) => {
   const popover = usersPage.locator('.sorter-popover');
   const items = popover.locator('.sorter-container').getByRole('listitem');
   await expect(items).toHaveCount(5);
-  await expect(items).toHaveText(['Ascending', 'Name', 'Date joined', 'Profile', 'Status']);
+  await expect(items).toHaveText(['Ascending', 'Name', 'Joining date', 'Profile', 'Status']);
   for (const [index, item] of (await items.all()).entries()) {
     if (index === 3) {
       await expect(item).toHaveTheClass('selected');
