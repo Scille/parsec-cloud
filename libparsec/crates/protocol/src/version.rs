@@ -11,6 +11,9 @@ use libparsec_types::prelude::*;
 // - v3.1 (Parsec 2.10+): Add `user_revoked` return status to `realm_update_role` command
 // - v3.2 (Parsec 2.11+): Sequester API
 // v4 (Parsec 3.0+): `certificate_get` command & `certificate_updated` event
+// - v4.1 (Parsec 3.2+):
+//   * Add `ShamirRecovery` variants to `invite_list` and `invite_info`
+//   * Add `invite_new_shamir_recovery` command
 pub const API_V1_VERSION: &ApiVersion = &ApiVersion {
     version: 1,
     revision: 3,
@@ -25,7 +28,7 @@ pub const API_V3_VERSION: &ApiVersion = &ApiVersion {
 };
 pub const API_V4_VERSION: &ApiVersion = &ApiVersion {
     version: 4,
-    revision: 0,
+    revision: 1,
 };
 pub const API_LATEST_VERSION: &ApiVersion = API_V4_VERSION;
 
