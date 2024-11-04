@@ -133,7 +133,7 @@ eventsource-stream = { version = "0.2.3", default-features = false }
 flate2 = { version = "1.0.34", features = ["rust_backend"], default-features = false }
 flume = { version = "0.11.1", default-features = false }
 fnmatch-regex = { version = "0.2.1", default-features = false }
-fuser = { version = "0.14.0", default-features = false }
+fuser = { version = "0.15.0", default-features = false }
 futures = { version = "0.3.31", default-features = false }
 generic-array = { version = "0.14.7", default-features = false }
 getrandom = { package = "getrandom", version = "0.2.15", default-features = false }
@@ -210,11 +210,6 @@ winfsp_wrs_build = { version = "0.3.0", default-features = false }
 x25519-dalek = { version = "2.0.1", default-features = false }
 zeroize = { version = "1.8.1", default-features = false }
 zstd = { version = "0.13.2", default-features = false }
-
-[patch.crates-io]
-# FIXME: Remove me once https://github.com/cberner/fuser/pull/307 is merged and released
-# We use this patch to provide a fix for the rename operation on MacOS with MacFUSE where filename are empty without it.
-fuser = { git = "https://github.com/FirelightFlagboy/fuser", rev = "3b1376bf6499c21a277335ad7f23624dc62fa658" }
 
 [workspace.dependencies.criterion]
 default-features = false
