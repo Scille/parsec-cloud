@@ -1,0 +1,1 @@
+Fixed a bug on Windows causing much delayed synchronization on files created/modified from the mount point.
