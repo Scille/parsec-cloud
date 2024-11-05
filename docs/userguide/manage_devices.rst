@@ -22,7 +22,7 @@ access to your computer or cannot log in for any reason.
    event you lose access to your computer. You will need to be re-invited to
    :ref:`join the organization <doc_userguide_join_organization>`.
 
-   We strongly encourage you to create a :ref:`recovery device <doc_userguide_recovery_devices>`.
+   We strongly encourage you to create a :ref:`recovery file <doc_userguide_recovery_files>`.
 
 
 Add a new device
@@ -57,35 +57,35 @@ You can add a new device from your profile page.
   You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section.
 
 
-.. _doc_userguide_recovery_devices:
+.. _doc_userguide_recovery_files:
 
-Recovery devices
-----------------
+Recovery files
+--------------
 
-A recovery device is a special type of device that allows you to get access to your data back
+A recovery file allows you to get back access to your data
 in case your forgot your password or lose your computer.
 
-It is composed of two parts:
+You will need:
 
-  - a file, ending with `.psrk`
-  - a passphrase, composed of letters and numbers separated by dashes.
+  - the Recovery File, ending with `.psrk`
+  - the Secret Key, a passphrase composed of letters and numbers separated by dashes.
 
-The passphrase is used to unlock the file and get access to your data.
+The Secret Key is used to unlock the Recovery File and get access to your data.
 
 .. note::
 
-  A recovery device is linked to a specific organization. If you have multiple organization,
-  you will have to create multiple recovery devices.
+  A recovery file is linked to a specific organization. If you have multiple organizations,
+  you need to create multiple recovery files.
 
 .. caution::
 
-  If someone gets access to both the file and the passphrase, they can get
+  If someone gets access to both the recovery file and the secret key, they can get
   full access to your data as if they were you.
   We **strongly** recommend storing them separately in a safe place. They are as precious and
   secret as your password.
 
-Create a recovery device
-------------------------
+Create a recovery files
+-----------------------
 
 When you access your profile, in the ``My Devices`` page, click on ``Create recovery files``.
 
@@ -97,7 +97,7 @@ When you access your profile, in the ``My Devices`` page, click on ``Create reco
 .. image:: screens/profile_add_recovery_device.png
     :align: center
     :width: 400
-    :alt: Create a recovery device
+    :alt: Create a recovery file
 
 Once you're ready, click on ``I understand``.
 
@@ -105,7 +105,7 @@ Once you're ready, click on ``I understand``.
     :align: center
     :alt: Export a recovery device
 
-You'll be able to download both the file and the passphrase. Make sure to get them both.
+You'll be able to download both the Recovery File and the Secret Key. Make sure to get them both.
 
 .. caution::
 
@@ -117,11 +117,11 @@ You'll be able to download both the file and the passphrase. Make sure to get th
     :alt: Download the recovery file and passphrase
 
 
-Import a recovery device
-------------------------
+Use a recovery file to get back access
+--------------------------------------
 
-If you forget your password and you have both the recovery file and the passphrase,
-you can import them and gain access to your data back.
+If you forget your password and you have both the Recovery File and the Secret Key,
+you can use them and gain access back.
 
 When trying to log in, click on ``Forgot your password?``.
 
@@ -130,7 +130,7 @@ When trying to log in, click on ``Forgot your password?``.
     :width: 350
     :alt: Click on password forgotten
 
-You will be able to import the recovery file and type in the passphrase.
+You will be able to import the Recovery File and type in the Secret Key.
 
 .. image:: screens/import_recovery_device.png
     :align: center
@@ -143,4 +143,4 @@ You will be able to import the recovery file and type in the passphrase.
     :alt: Click on password forgotten
 
 
-Once imported, this will create a new device and you will be able to log into your organization by clicking ``Next``.
+Once imported, Parsec will create a new device and you will be able to log into your organization by clicking ``Next``.
