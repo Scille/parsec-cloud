@@ -25,6 +25,8 @@ from .common import (
     VlobID,
     RealmRole,
     Ref,
+    Enum,
+    EnumItemUnit,
 )
 from .invite import DeviceSaveStrategy, AvailableDevice
 from .config import ClientConfig
@@ -199,8 +201,16 @@ class UserInfo(Structure):
     revoked_by: Optional[DeviceID]
 
 
+class DevicePurpose(Enum):
+    Standard = EnumItemUnit
+    ShamirRecovery = EnumItemUnit
+    PassphraseRecovery = EnumItemUnit
+    WebAuth = EnumItemUnit
+
+
 class DeviceInfo(Structure):
     id: DeviceID
+    purpose: DevicePurpose
     device_label: DeviceLabel
     created_on: DateTime
     created_by: Optional[DeviceID]
