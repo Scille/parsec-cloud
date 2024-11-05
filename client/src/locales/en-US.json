@@ -176,8 +176,8 @@
         "loginErrors": {
             "keyringFailed": "Could not log in",
             "keyringFailedTitle": "Login failed",
-            "keyringFailedQuestion": "Could not login to this device using the system authentication. Would you like to use a recovery device?",
-            "keyringFailedUsedRecovery": "Use a recovery device",
+            "keyringFailedQuestion": "Could not login using the system authentication. Would you like to use a recovery file?",
+            "keyringFailedUsedRecovery": "Use a recovery file",
             "keyringFailedAbort": "No"
         },
         "bmsOrganizationNotFound": "Could not find the organization {organization} on this device.",
@@ -865,7 +865,7 @@
             "recoveryKey": "Parsec_Recovery_Code_{org}.txt"
         },
         "errors": {
-            "exportFailed": "Failed to create a recovery device."
+            "exportFailed": "Failed to create a recovery file."
         }
     },
     "SasCodeChoice": {

@@ -176,8 +176,8 @@
         "loginErrors": {
             "keyringFailed": "Impossible de se connecter",
             "keyringFailedTitle": "Impossible de se connecter",
-            "keyringFailedQuestion": "La connexion à cet appareil en utilisant l'authentification du système a échoué. Souhaitez-vous utiliser un appareil de récupération ?",
-            "keyringFailedUsedRecovery": "Utiliser un appareil de récupération",
+            "keyringFailedQuestion": "La connexion en utilisant l'authentification du système a échoué. Souhaitez-vous utiliser un fichier de récupération ?",
+            "keyringFailedUsedRecovery": "Utiliser un fichier de récupération",
             "keyringFailedAbort": "Non"
         },
         "bmsOrganizationNotFound": "Impossible de trouver l'organisation {organization} sur cet appareil.",
@@ -865,7 +865,7 @@
             "recoveryKey": "Parsec_Code_Récupération_{org}.txt"
         },
         "errors": {
-            "exportFailed": "Impossible de créer un appareil de récupération."
+            "exportFailed": "Impossible de créer un fichier de récupération."
         }
     },
     "SasCodeChoice": {

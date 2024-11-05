@@ -1,1 +1,1 @@
-Added the export and import of recovery devices to help with password loss
+Added support for recovery files to recover access in case the password is lost or the user loses access to its computer
