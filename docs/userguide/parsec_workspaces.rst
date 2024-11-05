@@ -140,7 +140,7 @@ workspace.
   log in for any reason, data stored in the workspace will be lost forever.
 
 Browse workspace history and restore files
------------------------
+------------------------------------------
 
 Parsec allows you to browse a workspace at a given time, showing you all the files as they were.
 You will need to have the **Owner** or **Manager** roles on the workspace.
