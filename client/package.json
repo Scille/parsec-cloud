@@ -52,6 +52,7 @@
         "@sentry/vue": "^8.33.1",
         "@types/luxon": "^3.3.4",
         "axios": "^1.7.4",
+        "file-type": "^19.6.0",
         "luxon": "^3.4.4",
         "megashark-lib": "git+https://github.com/Scille/megashark-lib.git#a9430d2cd6d0f481ff4fef3c53682553a1391822",
         "qrcode-vue3": "^1.6.8",
