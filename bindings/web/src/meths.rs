@@ -105,6 +105,33 @@ fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static 
     }
 }
 
+// DevicePurpose
+
+#[allow(dead_code)]
+fn enum_device_purpose_js_to_rs(raw_value: &str) -> Result<libparsec::DevicePurpose, JsValue> {
+    match raw_value {
+        "DevicePurposePassphraseRecovery" => Ok(libparsec::DevicePurpose::PassphraseRecovery),
+        "DevicePurposeShamirRecovery" => Ok(libparsec::DevicePurpose::ShamirRecovery),
+        "DevicePurposeStandard" => Ok(libparsec::DevicePurpose::Standard),
+        "DevicePurposeWebAuth" => Ok(libparsec::DevicePurpose::WebAuth),
+        _ => {
+            let range_error = RangeError::new("Invalid value for enum DevicePurpose");
+            range_error.set_cause(&JsValue::from(raw_value));
+            Err(JsValue::from(range_error))
+        }
+    }
+}
+
+#[allow(dead_code)]
+fn enum_device_purpose_rs_to_js(value: libparsec::DevicePurpose) -> &'static str {
+    match value {
+        libparsec::DevicePurpose::PassphraseRecovery => "DevicePurposePassphraseRecovery",
+        libparsec::DevicePurpose::ShamirRecovery => "DevicePurposeShamirRecovery",
+        libparsec::DevicePurpose::Standard => "DevicePurposeStandard",
+        libparsec::DevicePurpose::WebAuth => "DevicePurposeWebAuth",
+    }
+}
+
 // GreeterOrClaimer
 
 #[allow(dead_code)]
@@ -1266,6 +1293,17 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
             })
             .map_err(|_| TypeError::new("Not a valid DeviceID"))?
     };
+    let purpose = {
+        let js_val = Reflect::get(&obj, &"purpose".into())?;
+        {
+            let raw_string = js_val.as_string().ok_or_else(|| {
+                let type_error = TypeError::new("value is not a string");
+                type_error.set_cause(&js_val);
+                JsValue::from(type_error)
+            })?;
+            enum_device_purpose_js_to_rs(raw_string.as_str())
+        }?
+    };
     let device_label = {
         let js_val = Reflect::get(&obj, &"deviceLabel".into())?;
         js_val
@@ -1316,6 +1354,7 @@ fn struct_device_info_js_to_rs(obj: JsValue) -> Result<libparsec::DeviceInfo, Js
     };
     Ok(libparsec::DeviceInfo {
         id,
+        purpose,
         device_label,
         created_on,
         created_by,
@@ -1335,6 +1374,8 @@ fn struct_device_info_rs_to_js(rs_obj: libparsec::DeviceInfo) -> Result<JsValue,
         .as_ref()
     });
     Reflect::set(&js_obj, &"id".into(), &js_id)?;
+    let js_purpose = JsValue::from_str(enum_device_purpose_rs_to_js(rs_obj.purpose));
+    Reflect::set(&js_obj, &"purpose".into(), &js_purpose)?;
     let js_device_label = JsValue::from_str(rs_obj.device_label.as_ref());
     Reflect::set(&js_obj, &"deviceLabel".into(), &js_device_label)?;
     let js_created_on = {

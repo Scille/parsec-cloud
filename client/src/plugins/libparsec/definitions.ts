@@ -25,6 +25,13 @@ export enum DeviceFileType {
     Smartcard = 'DeviceFileTypeSmartcard',
 }
 
+export enum DevicePurpose {
+    PassphraseRecovery = 'DevicePurposePassphraseRecovery',
+    ShamirRecovery = 'DevicePurposeShamirRecovery',
+    Standard = 'DevicePurposeStandard',
+    WebAuth = 'DevicePurposeWebAuth',
+}
+
 export enum GreeterOrClaimer {
     Claimer = 'GreeterOrClaimerClaimer',
     Greeter = 'GreeterOrClaimerGreeter',
@@ -171,6 +178,7 @@ export interface DeviceGreetInitialInfo {
 
 export interface DeviceInfo {
     id: DeviceID
+    purpose: DevicePurpose
     deviceLabel: DeviceLabel
     createdOn: DateTime
     createdBy: DeviceID | null
