@@ -5,8 +5,12 @@
     <div
       class="resize-divider"
       ref="divider"
+      v-show="isVisible()"
     />
-    <ion-split-pane content-id="main">
+    <ion-split-pane
+      content-id="main"
+      :when="true"
+    >
       <ion-menu
         content-id="main"
         class="sidebar"
@@ -50,10 +54,10 @@
                   button
                 >
                   <ion-icon
-                    class="button-icon"
+                    class="organization-card-buttons__icon"
                     :icon="userInfo && userInfo.currentProfile === UserProfile.Admin ? cog : informationCircle"
                   />
-                  <span>
+                  <span class="organization-card-buttons__text">
                     {{
                       userInfo && userInfo.currentProfile === UserProfile.Admin
                         ? $msTranslate('SideMenu.manageOrganization')
@@ -69,10 +73,10 @@
                   @click="navigateTo(Routes.Workspaces)"
                 >
                   <ion-icon
-                    class="button-icon"
+                    class="organization-card-buttons__icon"
                     :icon="home"
                   />
-                  <span>
+                  <span class="organization-card-buttons__text">
                     {{ $msTranslate('SideMenu.goToHome') }}
                   </span>
                 </ion-text>
@@ -268,7 +272,7 @@
             v-show="currentRouteIsOrganizationManagementRoute()"
             class="manage-organization"
           >
-            <ion-label class="title-h4">
+            <ion-label class="title-h4 manage-organization-title">
               {{
                 userInfo && userInfo.currentProfile === UserProfile.Admin
                   ? $msTranslate('SideMenu.manageOrganization')
@@ -326,7 +330,7 @@
                   class="sidebar-item-icon"
                   slot="start"
                 />
-                <ion-label>{{ $msTranslate('SideMenu.organizationInfo') }}</ion-label>
+                <ion-label class="sidebar-item-text">{{ $msTranslate('SideMenu.organizationInfo') }}</ion-label>
               </ion-item>
             </ion-list>
           </div>
@@ -412,6 +416,7 @@ import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
 import { recentFileManager, RecentFile } from '@/services/recentFiles';
 import { openPath } from '@/services/fileOpener';
+import { SIDEBAR_MENU_DATA_KEY, SidebarDefaultData, SidebarSavedData } from '@/views/sidebar-menu/utils';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -419,15 +424,18 @@ const informationManager: InformationManager = inject(InformationManagerKey)!;
 const storageManager: StorageManager = inject(StorageManagerKey)!;
 let eventDistributorCbId: string | null = null;
 const divider = ref();
-const { defaultWidth, initialWidth, computedWidth } = useSidebarMenu();
+const { computedWidth: computedWidth, storedWidth: storedWidth, isVisible: isVisible } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const currentDevice = ref<AvailableDevice | null>(null);
 const favorites: Ref<WorkspaceID[]> = ref([]);
-const sidebarWidthProperty = ref(`${defaultWidth}px`);
+const sidebarWidthProperty = ref('');
 const isTrialOrg = ref(false);
 const expirationDuration = ref<Duration | undefined>(undefined);
 const isExpired = ref(false);
 const loggedInDevices = ref<LoggedInDeviceInfo[]>([]);
+
+const MIN_WIDTH = 150;
+const MAX_WIDTH = 370;
 
 const watchSidebarWidthCancel = watch(computedWidth, (value: number) => {
   sidebarWidthProperty.value = `${value}px`;
@@ -495,6 +503,15 @@ onMounted(async () => {
     },
   );
 
+  const savedSidebarData = await storageManager.retrieveComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, SidebarDefaultData);
+  if (savedSidebarData.hidden) {
+    computedWidth.value = 2;
+    storedWidth.value = savedSidebarData.width;
+  } else {
+    computedWidth.value = savedSidebarData.width;
+  }
+  sidebarWidthProperty.value = `${computedWidth.value}px`;
+
   const connInfo = getConnectionInfo();
   if (connInfo) {
     isExpired.value = connInfo.isExpired;
@@ -506,7 +523,6 @@ onMounted(async () => {
     const gesture = createGesture({
       gestureName: 'resize-menu',
       el: divider.value,
-      onEnd,
       onMove,
     });
     gesture.enable();
@@ -520,10 +536,14 @@ onMounted(async () => {
   }
 });
 
-onUnmounted(() => {
+onUnmounted(async () => {
   if (eventDistributorCbId) {
     eventDistributor.removeCallback(eventDistributorCbId);
   }
+  await storageManager.storeComponentData<SidebarSavedData>(SIDEBAR_MENU_DATA_KEY, {
+    width: computedWidth.value < MIN_WIDTH ? storedWidth.value : computedWidth.value,
+    hidden: computedWidth.value < MIN_WIDTH,
+  });
   watchSidebarWidthCancel();
   setToastOffset(0);
 });
@@ -548,19 +568,13 @@ const nonFavoriteWorkspaces = computed(() => {
 });
 
 function onMove(detail: GestureDetail): void {
-  requestAnimationFrame(() => {
-    let currentWidth = initialWidth.value + detail.deltaX;
-    if (currentWidth >= 2 && currentWidth <= 500) {
-      if (currentWidth <= 150) {
-        currentWidth = 2;
-      }
-      computedWidth.value = currentWidth;
-    }
-  });
-}
-
-function onEnd(): void {
-  initialWidth.value = computedWidth.value;
+  if (detail.currentX < MIN_WIDTH) {
+    computedWidth.value = MIN_WIDTH;
+  } else if (detail.currentX > MAX_WIDTH) {
+    computedWidth.value = MAX_WIDTH;
+  } else {
+    computedWidth.value = detail.currentX;
+  }
 }
 
 async function openOrganizationChoice(event: Event): Promise<void> {
@@ -773,6 +787,17 @@ async function removeRecentFile(file: RecentFile): Promise<void> {
         cursor: default;
       }
     }
+
+    &__icon {
+      position: absolute;
+    }
+
+    &__text {
+      margin-left: 1.4rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }
 
@@ -914,6 +939,12 @@ ion-menu {
     margin-inline-end: 12px;
   }
 
+  &-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   & > ion-label {
     --color: var(--parsec-color-light-primary-100);
   }
@@ -1032,6 +1063,9 @@ ion-menu {
   .title-h4 {
     padding: 1.5em 0 1em;
     border-top: 1px solid var(--parsec-color-light-primary-30-opacity15);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   &-list {

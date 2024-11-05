@@ -3,11 +3,12 @@
 <template>
   <div class="header-content">
     <ion-button
-      v-if="!isMobile() && !isSidebarMenuVisible()"
+      v-if="!isMobile()"
       slot="icon-only"
       id="trigger-toggle-menu-button"
-      class="ion-hide-lg-down topbar-button__item"
-      @click="resetSidebarMenu()"
+      class="topbar-button__item menu-button"
+      fill="clear"
+      @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
     >
       <ion-icon
         slot="icon-only"
@@ -55,7 +56,7 @@ import useSidebarMenu from '@/services/sidebarMenu';
 import { ClientAreaPages } from '@/views/client-area/types';
 import { openSettingsModal } from '@/views/settings';
 
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 
 defineProps<{
   title: Translatable;
@@ -110,5 +111,9 @@ function getUserName(): string {
   display: flex;
   align-items: center;
   gap: 1rem;
+}
+
+.menu-button {
+  margin-right: 1rem;
 }
 </style>

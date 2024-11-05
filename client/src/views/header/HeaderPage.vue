@@ -10,11 +10,11 @@
         <!-- icon visible when menu is hidden -->
         <ion-buttons slot="start">
           <ion-button
-            v-if="!isMobile() && !isSidebarMenuVisible()"
+            v-if="!isMobile()"
             slot="icon-only"
             id="trigger-toggle-menu-button"
-            class="ion-hide-lg-down topbar-button__item"
-            @click="resetSidebarMenu()"
+            class="topbar-button__item"
+            @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
           >
             <ion-icon
               slot="icon-only"
@@ -52,7 +52,10 @@
         </div>
 
         <!-- icon menu on mobile -->
-        <ion-buttons slot="start">
+        <ion-buttons
+          slot="start"
+          v-if="isMobile()"
+        >
           <ion-menu-button />
         </ion-buttons>
         <!-- end of icon menu on mobile -->
@@ -159,7 +162,7 @@ import { Ref, inject, onMounted, onUnmounted, ref } from 'vue';
 const hotkeyManager: HotkeyManager = inject(HotkeyManagerKey)!;
 let hotkeys: HotkeyGroup | null = null;
 const workspaceName = ref('');
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu } = useSidebarMenu();
+const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 const userInfo: Ref<ClientInfo | null> = ref(null);
 const fullPath: Ref<RouterPathNode[]> = ref([]);
 const notificationPopoverIsVisible: Ref<boolean> = ref(false);
