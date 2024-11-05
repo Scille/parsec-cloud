@@ -1,0 +1,1 @@
+Added CLI commands ``tos config``, ``tos list`` and ``tos accept`` to manage an organization's Term of Service

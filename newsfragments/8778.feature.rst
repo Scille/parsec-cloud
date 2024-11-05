@@ -1,1 +1,0 @@
-Add CLI Command to configure TOS for an organization

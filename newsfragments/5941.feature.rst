@@ -1,1 +1,1 @@
-Display when a user joined the organization and added sort by joined date
+The list of users in the organization now shows the date the user joined
