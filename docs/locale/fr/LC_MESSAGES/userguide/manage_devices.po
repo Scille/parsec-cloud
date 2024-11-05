@@ -163,7 +163,7 @@ msgstr "une clé secrète, une combinaison de lettres et de chiffres séparés p
 
 #: ../../userguide/manage_devices.rst:73
 msgid "The passphrase is used to unlock the file and get access to your data."
-msgstr "La clé secrète est utilisée pour déverouiller le fichier et accéder à vos données."
+msgstr "La clé secrète est utilisée pour déverrouiller le fichier et accéder à vos données."
 
 #: ../../userguide/manage_devices.rst:77
 msgid ""
