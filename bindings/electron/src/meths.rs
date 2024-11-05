@@ -99,6 +99,34 @@ fn enum_device_file_type_rs_to_js(value: libparsec::DeviceFileType) -> &'static 
     }
 }
 
+// DevicePurpose
+
+#[allow(dead_code)]
+fn enum_device_purpose_js_to_rs<'a>(
+    cx: &mut impl Context<'a>,
+    raw_value: &str,
+) -> NeonResult<libparsec::DevicePurpose> {
+    match raw_value {
+        "DevicePurposePassphraseRecovery" => Ok(libparsec::DevicePurpose::PassphraseRecovery),
+        "DevicePurposeShamirRecovery" => Ok(libparsec::DevicePurpose::ShamirRecovery),
+        "DevicePurposeStandard" => Ok(libparsec::DevicePurpose::Standard),
+        "DevicePurposeWebAuth" => Ok(libparsec::DevicePurpose::WebAuth),
+        _ => cx.throw_range_error(format!(
+            "Invalid value `{raw_value}` for enum DevicePurpose"
+        )),
+    }
+}
+
+#[allow(dead_code)]
+fn enum_device_purpose_rs_to_js(value: libparsec::DevicePurpose) -> &'static str {
+    match value {
+        libparsec::DevicePurpose::PassphraseRecovery => "DevicePurposePassphraseRecovery",
+        libparsec::DevicePurpose::ShamirRecovery => "DevicePurposeShamirRecovery",
+        libparsec::DevicePurpose::Standard => "DevicePurposeStandard",
+        libparsec::DevicePurpose::WebAuth => "DevicePurposeWebAuth",
+    }
+}
+
 // GreeterOrClaimer
 
 #[allow(dead_code)]
@@ -1175,6 +1203,13 @@ fn struct_device_info_js_to_rs<'a>(
             }
         }
     };
+    let purpose = {
+        let js_val: Handle<JsString> = obj.get(cx, "purpose")?;
+        {
+            let js_string = js_val.value(cx);
+            enum_device_purpose_js_to_rs(cx, js_string.as_str())?
+        }
+    };
     let device_label = {
         let js_val: Handle<JsString> = obj.get(cx, "deviceLabel")?;
         {
@@ -1222,6 +1257,7 @@ fn struct_device_info_js_to_rs<'a>(
     };
     Ok(libparsec::DeviceInfo {
         id,
+        purpose,
         device_label,
         created_on,
         created_by,
@@ -1244,6 +1280,9 @@ fn struct_device_info_rs_to_js<'a>(
     })
     .or_throw(cx)?;
     js_obj.set(cx, "id", js_id)?;
+    let js_purpose =
+        JsString::try_new(cx, enum_device_purpose_rs_to_js(rs_obj.purpose)).or_throw(cx)?;
+    js_obj.set(cx, "purpose", js_purpose)?;
     let js_device_label = JsString::try_new(cx, rs_obj.device_label).or_throw(cx)?;
     js_obj.set(cx, "deviceLabel", js_device_label)?;
     let js_created_on = JsNumber::new(cx, {
