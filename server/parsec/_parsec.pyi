@@ -50,6 +50,7 @@ from parsec._parsec_pyi.crypto import (
 )
 from parsec._parsec_pyi.enumerate import (
     CancelledGreetingAttemptReason,
+    DevicePurpose,
     GreeterOrClaimer,
     InvitationStatus,
     InvitationType,
@@ -141,6 +142,7 @@ __all__ = [
     "UserProfile",
     "GreeterOrClaimer",
     "CancelledGreetingAttemptReason",
+    "DevicePurpose",
     # Ids
     "OrganizationID",
     "VlobID",

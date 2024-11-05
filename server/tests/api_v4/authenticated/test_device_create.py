@@ -7,6 +7,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     RevokedUserCertificate,
     SigningKey,
     SigningKeyAlgorithm,
@@ -39,6 +40,7 @@ def generate_new_alice_device_certificates(
     raw_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
         device_label=DeviceLabel("New device"),
@@ -49,6 +51,7 @@ def generate_new_alice_device_certificates(
     raw_redacted_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
         device_label=None,

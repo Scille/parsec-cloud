@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     EnrollmentID,
     HumanHandle,
     PkiEnrollmentAnswerPayload,
@@ -249,6 +250,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 
     d_certif = DeviceCertificate(
         author=coolorg.alice.device_id,
+        purpose=DevicePurpose.STANDARD,
         user_id=u_certif.user_id,
         device_id=DeviceID.new(),
         timestamp=t1,
@@ -260,6 +262,7 @@ async def test_anonymous_pki_enrollment_submit_already_enrolled(
 
     redacted_device_certificate = DeviceCertificate(
         author=d_certif.author,
+        purpose=d_certif.purpose,
         user_id=u_certif.user_id,
         device_id=d_certif.device_id,
         timestamp=d_certif.timestamp,
