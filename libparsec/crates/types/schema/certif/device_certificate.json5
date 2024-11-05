@@ -3,6 +3,12 @@
     "type": "device_certificate",
     "other_fields": [
         {
+            "name": "purpose",
+            // Field added in Parsec v3.2
+            // Defaults to Standard if field is not present
+            "type": "NonRequiredOption<DevicePurpose>"
+        },
+        {
             "name": "author",
             "type": "CertificateSignerOwned"
         },
@@ -39,6 +45,27 @@
                 {
                     "name": "Ed25519",
                     "discriminant_value": "ED25519"
+                }
+            ]
+        },
+        {
+            "name": "DevicePurpose",
+            "variants": [
+                {
+                    "name": "Standard",
+                    "discriminant_value": "STANDARD"
+                },
+                {
+                    "name": "ShamirRecovery",
+                    "discriminant_value": "SHAMIR_RECOVERY"
+                },
+                {
+                    "name": "PassphraseRecovery",
+                    "discriminant_value": "PASSPHRASE_RECOVERY"
+                },
+                {
+                    "name": "WebAuth",
+                    "discriminant_value": "WEB_AUTH"
                 }
             ]
         }

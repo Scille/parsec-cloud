@@ -56,6 +56,7 @@ pub fn alice_device_certif(alice: &Device) -> DeviceCertificate {
     DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
+        purpose: DevicePurpose::Standard,
         user_id: alice.user_id,
         device_id: alice.device_id,
         device_label: MaybeRedacted::Real(alice.device_label.clone()),
@@ -70,6 +71,7 @@ pub fn bob_device_certif(bob: &Device) -> DeviceCertificate {
     DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
+        purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
@@ -84,6 +86,7 @@ pub fn mallory_device_certif(mallory: &Device) -> DeviceCertificate {
     DeviceCertificate {
         author: CertificateSignerOwned::Root,
         timestamp: DateTime::from_ymd_hms_us(2000, 1, 1, 0, 0, 0, 0).unwrap(),
+        purpose: DevicePurpose::Standard,
         user_id: mallory.user_id,
         device_id: mallory.device_id,
         device_label: MaybeRedacted::Real(mallory.device_label.clone()),

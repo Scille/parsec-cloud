@@ -635,6 +635,7 @@ impl TestbedEventBootstrapOrganization {
                         let mut certif = DeviceCertificate {
                             author: CertificateSignerOwned::Root,
                             timestamp: self.timestamp,
+                            purpose: DevicePurpose::Standard,
                             user_id: self.first_user_id,
                             device_id: self.first_user_first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
@@ -994,6 +995,7 @@ impl TestbedEventNewUser {
                         let mut certif = DeviceCertificate {
                             author: CertificateSignerOwned::User(self.author),
                             timestamp: self.timestamp,
+                            purpose: DevicePurpose::Standard,
                             user_id: self.user_id,
                             device_id: self.first_device_id,
                             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(
@@ -1044,6 +1046,7 @@ single_certificate_event!(
         let mut certif = DeviceCertificate {
             author: CertificateSignerOwned::User(e.author),
             timestamp: e.timestamp,
+            purpose: DevicePurpose::Standard,
             user_id: e.user_id,
             device_id: e.device_id,
             device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(e.device_id)),

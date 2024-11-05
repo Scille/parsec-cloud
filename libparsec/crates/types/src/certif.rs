@@ -492,6 +492,7 @@ pub struct DeviceCertificate {
     pub author: CertificateSignerOwned,
     pub timestamp: DateTime,
 
+    pub purpose: DevicePurpose,
     pub user_id: UserID,
     pub device_id: DeviceID,
     pub device_label: MaybeRedacted<DeviceLabel>,
@@ -518,6 +519,7 @@ impl DeviceCertificate {
         Self {
             author: self.author,
             timestamp: self.timestamp,
+            purpose: self.purpose,
             user_id: self.user_id,
             device_id: self.device_id,
             device_label,
@@ -557,6 +559,7 @@ impl From<DeviceCertificateData> for DeviceCertificate {
         Self {
             author: data.author,
             timestamp: data.timestamp,
+            purpose: data.purpose.unwrap_or(DevicePurpose::Standard),
             user_id: data.user_id,
             device_id: data.device_id,
             device_label,
@@ -576,6 +579,7 @@ impl From<DeviceCertificate> for DeviceCertificateData {
             ty: Default::default(),
             author: obj.author,
             timestamp: obj.timestamp,
+            purpose: Some(obj.purpose),
             user_id: obj.user_id,
             device_id: obj.device_id,
             device_label,

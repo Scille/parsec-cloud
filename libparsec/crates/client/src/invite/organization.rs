@@ -94,6 +94,7 @@ pub async fn bootstrap_organization(
         let mut device_certificate = DeviceCertificate {
             author: CertificateSignerOwned::Root,
             timestamp,
+            purpose: DevicePurpose::Standard,
             user_id: device.user_id,
             device_id: device.device_id,
             device_label: MaybeRedacted::Real(device.device_label.clone()),

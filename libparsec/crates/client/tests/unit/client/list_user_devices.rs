@@ -17,6 +17,7 @@ async fn ok(env: &TestbedEnv) {
         let DeviceInfo {
             id,
             device_label,
+            purpose,
             created_on,
             created_by,
         } = info;
@@ -26,6 +27,7 @@ async fn ok(env: &TestbedEnv) {
             MaybeRedacted::Redacted(_) => unreachable!(),
         };
         p_assert_eq!(device_label, expected_device_label);
+        p_assert_eq!(purpose, &certif.purpose);
         p_assert_eq!(created_on, &certif.timestamp);
         let expected_created_by = match &certif.author {
             CertificateSignerOwned::User(author) => Some(author),

@@ -997,6 +997,7 @@ fn create_new_signed_user_certificates(
     let device_certificate = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id,
         device_id,
         device_label: MaybeRedacted::Real(device_label.clone()),
@@ -1007,6 +1008,7 @@ fn create_new_signed_user_certificates(
     let redacted_device_certificate = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id,
         device_id,
         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
@@ -1050,6 +1052,7 @@ fn create_new_signed_device_certificates(
     let device_certificate = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id: author.user_id,
         device_id,
         device_label: MaybeRedacted::Real(device_label),
@@ -1060,6 +1063,7 @@ fn create_new_signed_device_certificates(
     let redacted_device_certificate = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id: author.user_id,
         device_id,
         device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),

@@ -1,5 +1,11 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU64,
+    sync::Arc,
+};
+
 use libparsec_client_connection::ConnectionError;
 use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
 use libparsec_protocol::authenticated_cmds::{
@@ -9,17 +15,7 @@ use libparsec_protocol::authenticated_cmds::{
         shamir_recovery_setup::ShamirRecoverySetup,
     },
 };
-use libparsec_types::{
-    anyhow, shamir_make_shares, thiserror, Bytes, CertificateSignerOwned, DateTime,
-    DeviceCertificate, DeviceLabel, InvitationToken, LocalDevice, MaybeRedacted, SecretKey,
-    ShamirRecoveryBriefCertificate, ShamirRecoverySecret, ShamirRecoveryShareCertificate,
-    ShamirRecoveryShareData, SigningKeyAlgorithm, UserID,
-};
-use std::{
-    collections::{HashMap, HashSet},
-    num::NonZeroU64,
-    sync::Arc,
-};
+use libparsec_types::prelude::*;
 
 use crate::{
     CertificateBasedActionOutcome, CertificateOps, EventTooMuchDriftWithServerClock,
@@ -185,6 +181,7 @@ async fn create_shamir_recovery_device(
     let device_cert = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp,
+        purpose: DevicePurpose::ShamirRecovery,
         user_id: recovery_device.user_id,
         device_id: recovery_device.device_id,
         device_label: MaybeRedacted::Real(recovery_device.device_label.clone()),

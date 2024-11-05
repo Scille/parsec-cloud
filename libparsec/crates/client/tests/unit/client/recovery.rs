@@ -14,6 +14,7 @@ fn assert_device(info: &DeviceInfo, expected_device: impl TryInto<DeviceID>, env
     let DeviceInfo {
         id,
         device_label,
+        purpose,
         created_on,
         created_by,
     } = info;
@@ -23,6 +24,7 @@ fn assert_device(info: &DeviceInfo, expected_device: impl TryInto<DeviceID>, env
         MaybeRedacted::Redacted(_) => unreachable!(),
     };
     p_assert_eq!(device_label, expected_device_label);
+    p_assert_eq!(purpose, &certif.purpose);
     p_assert_eq!(created_on, &certif.timestamp);
     let expected_created_by = match &certif.author {
         CertificateSignerOwned::User(author) => Some(author),
@@ -71,6 +73,10 @@ async fn ok(env: &TestbedEnv) {
     assert_device(&alice_devices[1], "alice@dev2", env);
     assert_eq!(alice_devices[2].device_label, recovery_device_label);
 
+    let devices = client.list_user_devices(client.user_id()).await.unwrap();
+    p_assert_eq!(devices.len(), 3);
+    p_assert_eq!(devices[2].purpose, DevicePurpose::PassphraseRecovery);
+
     //  we lose access
     client.stop().await;
 
@@ -98,6 +104,10 @@ async fn ok(env: &TestbedEnv) {
     let client = client_factory(&env.discriminant_dir, new_device.clone()).await;
 
     client.poll_server_for_new_certificates().await.unwrap();
+
+    let devices = client.list_user_devices(client.user_id()).await.unwrap();
+    p_assert_eq!(devices.len(), 4);
+    p_assert_eq!(devices[3].purpose, DevicePurpose::Standard);
 
     let alice_devices = client.list_user_devices(client.user_id()).await.unwrap();
     p_assert_eq!(alice_devices.len(), 4);
