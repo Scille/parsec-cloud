@@ -22,6 +22,8 @@ access to your computer or cannot log in for any reason.
    event you lose access to your computer. You will need to be re-invited to
    :ref:`join the organization <doc_userguide_join_organization>`.
 
+   We strongly encourage you to create a :ref:`recovery device <doc_userguide_recovery_devices>`.
+
 
 Add a new device
 ----------------
@@ -53,3 +55,92 @@ You can add a new device from your profile page.
   there is a very high probability you are victim of a
   `Man-in-the-middle attack <https://en.wikipedia.org/wiki/Man-in-the-middle_attack>`_.
   You can read more about that process at the :ref:`Cryptography <doc_cryptography>` section.
+
+
+.. _doc_userguide_recovery_devices:
+
+Recovery devices
+----------------
+
+A recovery device is a special type of device that allows you to get access to your data back
+in case your forgot your password or lose your computer.
+
+It is composed of two parts:
+
+  - a file, ending with `.psrk`
+  - a passphrase, composed of letters and numbers separated by dashes.
+
+The passphrase is used to unlock the file and get access to your data.
+
+.. note::
+
+  A recovery device is linked to a specific organization. If you have multiple organization,
+  you will have to create multiple recovery devices.
+
+.. caution::
+
+  If someone gets access to both the file and the passphrase, they can get
+  full access to your data as if they were you.
+  We **strongly** recommend storing them separately in a safe place. They are as precious and
+  secret as your password.
+
+Create a recovery device
+------------------------
+
+When you access your profile, in the ``My Devices`` page, click on ``Create recovery files``.
+
+.. image:: screens/profile_popover.png
+    :align: center
+    :width: 250
+    :alt: Access your profile
+
+.. image:: screens/profile_add_recovery_device.png
+    :align: center
+    :width: 400
+    :alt: Create a recovery device
+
+Once you're ready, click on ``I understand``.
+
+.. image:: screens/export_recovery_device_page.png
+    :align: center
+    :alt: Export a recovery device
+
+You'll be able to download both the file and the passphrase. Make sure to get them both.
+
+.. caution::
+
+  As mentioned before, these two files combined will allow someone to access your data.
+  Store them separately and don't let someone access them.
+
+.. image:: screens/export_recovery_device_download.png
+    :align: center
+    :alt: Download the recovery file and passphrase
+
+
+Import a recovery device
+------------------------
+
+If you forget your password and you have both the recovery file and the passphrase,
+you can import them and gain access to your data back.
+
+When trying to log in, click on ``Forgot your password?``.
+
+.. image:: screens/forgot_password.png
+    :align: center
+    :width: 350
+    :alt: Click on password forgotten
+
+You will be able to import the recovery file and type in the passphrase.
+
+.. image:: screens/import_recovery_device.png
+    :align: center
+    :width: 400
+    :alt: Click on password forgotten
+
+.. image:: screens/import_recovery_device_filled.png
+    :align: center
+    :width: 400
+    :alt: Click on password forgotten
+
+
+Once imported, this will create a new device and you will be able to log into your organization by clicking ``Next``.
