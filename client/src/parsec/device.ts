@@ -8,6 +8,7 @@ import {
   ClientListUserDevicesErrorTag,
   DeviceFileType,
   DeviceInfo,
+  DevicePurpose,
   OwnDeviceInfo,
   Result,
   UserID,
@@ -103,6 +104,7 @@ export async function importRecoveryDevice(
       value: {
         id: 'fake_id',
         deviceLabel: deviceLabel,
+        purpose: DevicePurpose.Standard,
         createdOn: DateTime.now(),
         createdBy: null,
       },
@@ -113,6 +115,7 @@ export async function importRecoveryDevice(
       value: {
         id: 'fake_id',
         deviceLabel: deviceLabel,
+        purpose: DevicePurpose.Standard,
         createdOn: DateTime.now(),
         createdBy: null,
       },
@@ -182,6 +185,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
         {
           id: 'device1',
           deviceLabel: 'Web',
+          purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: 'some_device',
           isCurrent: true,
@@ -189,6 +193,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
         {
           id: 'device2',
           deviceLabel: 'Web',
+          purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: 'device1',
           isCurrent: false,
@@ -196,6 +201,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
         {
           id: `${RECOVERY_DEVICE_PREFIX}_device`,
           deviceLabel: 'Recovery Device',
+          purpose: DevicePurpose.PassphraseRecovery,
           createdOn: DateTime.now(),
           createdBy: 'device1',
           isCurrent: false,
@@ -224,18 +230,21 @@ export async function listUserDevices(user: UserID): Promise<Result<Array<Device
         {
           id: 'device1',
           deviceLabel: 'My First Device',
+          purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: 'some_device',
         },
         {
           id: 'device2',
           deviceLabel: 'My Second Device',
+          purpose: DevicePurpose.Standard,
           createdOn: DateTime.now(),
           createdBy: 'device1',
         },
         {
           id: `${RECOVERY_DEVICE_PREFIX}_device1`,
           deviceLabel: 'Recovery First Device',
+          purpose: DevicePurpose.PassphraseRecovery,
           createdOn: DateTime.now(),
           createdBy: 'device1',
         },

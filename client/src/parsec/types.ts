@@ -25,6 +25,7 @@ export {
   ClientStopErrorTag,
   DeviceAccessStrategyTag,
   DeviceFileType,
+  DevicePurpose,
   DeviceSaveStrategyTag,
   EntryStatTag as FileType,
   GreetInProgressErrorTag,
