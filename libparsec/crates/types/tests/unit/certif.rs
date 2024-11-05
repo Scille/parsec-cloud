@@ -39,6 +39,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
     let device_certificate = DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
@@ -51,6 +52,7 @@ fn debug_format(alice: &Device, bob: &Device, timestamp: DateTime) {
             "DeviceCertificate {",
             " author: User(DeviceID { nickname: \"alice@dev1\", id: \"de10a11c-ec00-1000-0000-000000000000\" }),",
             " timestamp: DateTime(\"2020-01-01T00:00:00Z\"),",
+            " purpose: Standard,",
             " user_id: UserID { nickname: \"bob\", id: \"808c0010-0000-0000-0000-000000000000\" },",
             " device_id: DeviceID { nickname: \"bob@dev1\", id: \"de10808c-0010-0000-0000-000000000000\" },",
             " device_label: Real(DeviceLabel(\"My dev1 machine\")),",
@@ -443,38 +445,214 @@ fn serde_user_certificate_redacted(alice: &Device, bob: &Device) {
 }
 
 #[rstest]
-fn serde_device_certificate(alice: &Device, bob: &Device) {
-    // Generated from Parsec 3.0.0-b.12+dev
-    // Content:
-    //   type: 'device_certificate'
-    //   author: ext(2, 0xde10a11cec0010000000000000000000)
-    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
-    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
-    //   device_id: ext(2, 0xde10808c001000000000000000000000)
-    //   device_label: 'My dev1 machine'
-    //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
-    //   algorithm: 'ED25519'
-    let data = Bytes::from_static(&hex!(
-    "7594b5baab012bc81b0ddbe668cfcfa25cd6beffc7ea42a1a0dcbeeb9da4f51e861a2c"
-    "b15148b8f456e56f3f92ba570ade7da5ec670edc079479e754901e5b020028b52ffd00"
-    "58d50500940a88a474797065b26465766963655f6365727469666963617465a6617574"
-    "686f72d802de10a11cec001000a974696d657374616d70d7010005d250a2269a75a775"
-    "7365725f6964d8020000a96964d802de10808c00ac6c6162656caf4d79206465763120"
-    "6d616368696e65aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77db5f0"
-    "a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da745443235353139"
-    "05003f1933687887b3e153d2e90565"
-    ));
-    let data = Bytes::from(data.as_ref().to_vec());
+fn serde_device_certificate(
+    alice: &Device,
+    bob: &Device,
+    #[values(
+        // In Parsec < 3.12, the DeviceCertificate did not have the `purpose` field
+        "standard_pre_parsec_3_12",
+        "standard",
+        "shamir_recovery",
+        "passphrase_recovery",
+        "web_auth",
+    )]
+    kind: &str,
+) {
+    let (data, expected) = match kind {
+        "standard_pre_parsec_3_12" => {
+            // Generated from Parsec 3.0.0-b.12+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: 'My dev1 machine'
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "7594b5baab012bc81b0ddbe668cfcfa25cd6beffc7ea42a1a0dcbeeb9da4f51e861a2c"
+                "b15148b8f456e56f3f92ba570ade7da5ec670edc079479e754901e5b020028b52ffd00"
+                "58d50500940a88a474797065b26465766963655f6365727469666963617465a6617574"
+                "686f72d802de10a11cec001000a974696d657374616d70d7010005d250a2269a75a775"
+                "7365725f6964d8020000a96964d802de10808c00ac6c6162656caf4d79206465763120"
+                "6d616368696e65aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77db5f0"
+                "a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da745443235353139"
+                "05003f1933687887b3e153d2e90565"
+            )
+            .as_ref();
 
-    let expected = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
-        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: alice.user_id,
-        device_id: bob.device_id.to_owned(),
-        device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
-        verify_key: bob.verify_key(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::Standard,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "standard" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'STANDARD'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: 'My dev1 machine'
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "51fa25896896c199392fc553ddeb8eb81e9f768264d7f571592b792482aa93dc923d53"
+                "d9cae1ff11a2c1b4a10caace16a96617a3dfc78d916178d4226b3ae10b0028b52ffd00"
+                "585d0600a40b89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365a85354414e44415244a6617574686f72d802de10a11cec001000a974696d65"
+                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
+                "8c00ac6c6162656caf4d792064657631206d616368696e65aa7665726966795f6b6579"
+                "c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9"
+                "616c676f726974686da74544323535313905003f193368b88bb3e153d2ed0ba0"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::Standard,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "shamir_recovery" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'SHAMIR_RECOVERY'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: 'My dev1 machine'
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "3acfc58cf7f4de13b1a0e65ad8448aaa8ef919862bca5bbc1781049aa9929be7633fbe"
+                "e8e99839af959e53d8e86aeae1d3838afde0f31e8649b3fbe0b28283000028b52ffd00"
+                "589d0600140c89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365af5348414d49525f5245434f56455259a6617574686f72d802de10a11cec00"
+                "1000a974696d657374616d70d7010005d250a2269a75a7757365725f6964d8020000a9"
+                "6964d802de10808c00ac6c6162656caf4d792064657631206d616368696e65aa766572"
+                "6966795f6b6579c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf4038"
+                "8ef6bca64909a9616c676f726974686da74544323535313905003f193368788db3e153"
+                "d285179801"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::ShamirRecovery,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "passphrase_recovery" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'PASSPHRASE_RECOVERY'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: 'My dev1 machine'
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "57d8ddb451a78e3b60cf3dc7b640524275d3f48cee451b2ee1a7d59411dfa81834e8a6"
+                "9fc76ff278bf585c5d8c3c3d4c40f79db0ff0215be53a57accea98f4010028b52ffd00"
+                "58bd0600540c89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365b3504153535048524153455f5245434f56455259a6617574686f72d802de10"
+                "a11cec001000a974696d657374616d70d7010005d250a2269a75a7757365725f6964d8"
+                "020000a96964d802de10808c00ac6c6162656caf4d792064657631206d616368696e65"
+                "aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1e"
+                "eabf40388ef6bca64909a9616c676f726974686da74544323535313905003f19336878"
+                "8eb3e153d28d179801"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::PassphraseRecovery,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "web_auth" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'WEB_AUTH'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: 'My dev1 machine'
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "5d9bb4081cb98055d9d608e855a101395b215aabe9ff5cc61bd7fbd9e5323a7cecae29"
+                "32edbd1db5d2f1907522ad2a7855f74cffd59906e0e917092cf3b79f0b0028b52ffd00"
+                "585d0600a40b89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365a85745425f41555448a6617574686f72d802de10a11cec001000a974696d65"
+                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
+                "8c00ac6c6162656caf4d792064657631206d616368696e65aa7665726966795f6b6579"
+                "c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9"
+                "616c676f726974686da74544323535313905003f193368b88bb3e153d2ed0ba0"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::WebAuth,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Real(bob.device_label.to_owned()),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        unknown => panic!("Unknown kind: {}", unknown),
     };
+    let data = Bytes::from_static(data);
 
     let certif = DeviceCertificate::verify_and_load(
         &data,
@@ -532,37 +710,211 @@ fn serde_device_certificate(alice: &Device, bob: &Device) {
 }
 
 #[rstest]
-fn serde_device_certificate_redacted(alice: &Device, bob: &Device) {
-    // Generated from Parsec 3.0.0-b.12+dev
-    // Content:
-    //   type: 'device_certificate'
-    //   author: ext(2, 0xde10a11cec0010000000000000000000)
-    //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
-    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
-    //   device_id: ext(2, 0xde10808c001000000000000000000000)
-    //   device_label: None
-    //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
-    //   algorithm: 'ED25519'
-    let data = Bytes::from_static(&hex!(
-    "8d90b720e56cff7706388e064c24ab4b6ea8dc0f62e07f93b9f8bcc5409b30caac42ee"
-    "b6bd77c01ccf32bf6c0e5db51ed55b21b93fe219f9c5d813d5f25ed90a0028b52ffd00"
-    "585d0500a40988a474797065b26465766963655f6365727469666963617465a6617574"
-    "686f72d802de10a11cec001000a974696d657374616d70d7010005d250a2269a75a775"
-    "7365725f6964d8020000a96964d802de10808c00ac6c6162656cc0aa7665726966795f"
-    "6b6579c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca6"
-    "4909a9616c676f726974686da74544323535313905003f1933687887b3e153d2e90565"
-    ));
-    let data = Bytes::from(data.as_ref().to_vec());
+fn serde_device_certificate_redacted(
+    alice: &Device,
+    bob: &Device,
+    #[values(
+        // In Parsec < 3.12, the DeviceCertificate did not have the `purpose` field
+        "standard_pre_parsec_3_12",
+        "standard",
+        "shamir_recovery",
+        "passphrase_recovery",
+        "web_auth",
+    )]
+    kind: &str,
+) {
+    let (data, expected) = match kind {
+        "standard_pre_parsec_3_12" => {
+            // Generated from Parsec 3.0.0-b.12+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: None
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "8d90b720e56cff7706388e064c24ab4b6ea8dc0f62e07f93b9f8bcc5409b30caac42ee"
+                "b6bd77c01ccf32bf6c0e5db51ed55b21b93fe219f9c5d813d5f25ed90a0028b52ffd00"
+                "585d0500a40988a474797065b26465766963655f6365727469666963617465a6617574"
+                "686f72d802de10a11cec001000a974696d657374616d70d7010005d250a2269a75a775"
+                "7365725f6964d8020000a96964d802de10808c00ac6c6162656cc0aa7665726966795f"
+                "6b6579c420840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca6"
+                "4909a9616c676f726974686da74544323535313905003f1933687887b3e153d2e90565"
+            )
+            .as_ref();
 
-    let expected = DeviceCertificate {
-        author: CertificateSignerOwned::User(alice.device_id),
-        timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
-        user_id: alice.user_id,
-        device_id: bob.device_id.to_owned(),
-        device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
-        verify_key: bob.verify_key(),
-        algorithm: SigningKeyAlgorithm::Ed25519,
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::Standard,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "standard" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'STANDARD'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: None
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "7f0fa671b2383646d545bda638f659b3530a3c056dd61bd4af3547e362e74aa94c20fb"
+                "8e8c3c3507b173423ff58c4c21e74034110f0d54909e23bca1ca5baf000028b52ffd00"
+                "58e50500b40a89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365a85354414e44415244a6617574686f72d802de10a11cec001000a974696d65"
+                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
+                "8c00ac6c6162656cc0aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77d"
+                "b5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da74544323535"
+                "313905003f193368b88bb3e153d2ed0ba0"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::Standard,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "shamir_recovery" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'SHAMIR_RECOVERY'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: None
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "b0e041d9e9f300ee3b4f17b36296e3f1aede3ae13bddd03698b9658aa722622b4b3798"
+                "239573402723adb5b98abdd1f1410746e78b0470dcef21232d41ae68000028b52ffd00"
+                "58250600240b89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365af5348414d49525f5245434f56455259a6617574686f72d802de10a11cec00"
+                "1000a974696d657374616d70d7010005d250a2269a75a7757365725f6964d8020000a9"
+                "6964d802de10808c00ac6c6162656cc0aa7665726966795f6b6579c420840d872f4252"
+                "da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f72697468"
+                "6da74544323535313905003f193368788db3e153d285179801"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::ShamirRecovery,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "passphrase_recovery" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'PASSPHRASE_RECOVERY'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: None
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "29b6f62ff3e164177ebc618a7d126e4980f0f57640e3327cd0f6170c8cca748538fb8b"
+                "f0251d275ebd18d994df455c374987347f9ad17f79f1f7609c11c66d000028b52ffd00"
+                "58450600640b89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365b3504153535048524153455f5245434f56455259a6617574686f72d802de10"
+                "a11cec001000a974696d657374616d70d7010005d250a2269a75a7757365725f6964d8"
+                "020000a96964d802de10808c00ac6c6162656cc0aa7665726966795f6b6579c420840d"
+                "872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f"
+                "726974686da74544323535313905003f193368788eb3e153d28d179801"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::PassphraseRecovery,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        "web_auth" => {
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   type: 'device_certificate'
+            //   purpose: 'WEB_AUTH'
+            //   author: ext(2, 0xde10a11cec0010000000000000000000)
+            //   timestamp: ext(1, 1638618643208821) i.e. 2021-12-04T12:50:43.208821Z
+            //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+            //   device_id: ext(2, 0xde10808c001000000000000000000000)
+            //   device_label: None
+            //   verify_key: 0x840d872f4252da2d1c9f81a77db5f0a5b9b60a5cde1eeabf40388ef6bca64909
+            //   algorithm: 'ED25519'
+            let data: &[u8] = hex!(
+                "1ccd27b3faf282353ae98aae7c39e1650768d3fb1ea7f776f5ffb092d1dd5b43cdde37"
+                "9bf8e02a9ee2a4eb175fe346bd819744fecd244d4c767da625aeaf3d070028b52ffd00"
+                "58e50500b40a89a474797065b26465766963655f6365727469666963617465a7707572"
+                "706f7365a85745425f41555448a6617574686f72d802de10a11cec001000a974696d65"
+                "7374616d70d7010005d250a2269a75a7757365725f6964d8020000a96964d802de1080"
+                "8c00ac6c6162656cc0aa7665726966795f6b6579c420840d872f4252da2d1c9f81a77d"
+                "b5f0a5b9b60a5cde1eeabf40388ef6bca64909a9616c676f726974686da74544323535"
+                "313905003f193368b88bb3e153d2ed0ba0"
+            )
+            .as_ref();
+
+            let expected = DeviceCertificate {
+                author: CertificateSignerOwned::User(alice.device_id),
+                timestamp: "2021-12-04T11:50:43.208821Z".parse().unwrap(),
+                purpose: DevicePurpose::WebAuth,
+                user_id: alice.user_id,
+                device_id: bob.device_id.to_owned(),
+                device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(bob.device_id)),
+                verify_key: bob.verify_key(),
+                algorithm: SigningKeyAlgorithm::Ed25519,
+            };
+
+            (data, expected)
+        }
+
+        unknown => panic!("Unknown kind: {}", unknown),
     };
+    let data = Bytes::from_static(data);
 
     let certif = DeviceCertificate::verify_and_load(
         &data,

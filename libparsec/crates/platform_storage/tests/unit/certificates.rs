@@ -162,6 +162,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 timestamp: t4,
                 user_id,
                 device_id,
+                purpose: DevicePurpose::Standard,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
                 device_label: MaybeRedacted::Redacted(DeviceLabel::new_redacted(device_id)),
@@ -537,6 +538,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
             &DeviceCertificate {
                 timestamp: t6,
                 device_id,
+                purpose: DevicePurpose::Standard,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,
                 user_id,
@@ -1121,6 +1123,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
             &DeviceCertificate {
                 timestamp: t4,
                 device_id,
+                purpose: DevicePurpose::Standard,
                 user_id,
                 // Not meaningful for the test
                 author: CertificateSignerOwned::Root,

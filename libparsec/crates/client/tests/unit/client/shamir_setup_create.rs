@@ -12,10 +12,10 @@ use libparsec_types::prelude::*;
 
 use super::utils::client_factory;
 
-#[parsec_test(testbed = "coolorg", with_server)]
+#[parsec_test(testbed = "coolorg")]
 async fn ok(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
-    let client = client_factory(&env.discriminant_dir, alice).await;
+    let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
     // Mock requests to server
     let new_shamir_certificates: Arc<Mutex<Vec<Bytes>>> = Arc::default();
@@ -26,11 +26,21 @@ async fn ok(env: &TestbedEnv) {
         // 1) Create setup and device
         {
             let new_device_certificates = new_device_certificates.clone();
+            let alice = alice.clone();
             move |req: authenticated_cmds::latest::device_create::Req| {
-                let device_certificate = dbg!(req.device_certificate);
+                // Ensure the device is of the right type
+                let new_device = DeviceCertificate::verify_and_load(
+                    &req.device_certificate,
+                    &alice.verify_key(),
+                    CertificateSignerRef::User(&alice.device_id),
+                    None,
+                )
+                .unwrap();
+                p_assert_eq!(new_device.purpose, DevicePurpose::ShamirRecovery);
+
                 let mut certs = new_device_certificates.lock().unwrap();
-                certs.push(device_certificate);
-                dbg!(authenticated_cmds::latest::device_create::Rep::Ok)
+                certs.push(req.device_certificate);
+                authenticated_cmds::latest::device_create::Rep::Ok
             }
         },
         {

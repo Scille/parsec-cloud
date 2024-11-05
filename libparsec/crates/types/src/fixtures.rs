@@ -10,9 +10,10 @@ use rstest::fixture;
 use libparsec_crypto::{PrivateKey, PublicKey, SecretKey, SigningKey, VerifyKey};
 
 use crate::{
-    CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, Duration, HumanHandle,
-    LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr, PrivateKeyAlgorithm,
-    SigningKeyAlgorithm, TimeProvider, UserCertificate, UserID, UserProfile, VlobID,
+    CertificateSignerOwned, DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, Duration,
+    HumanHandle, LocalDevice, MaybeRedacted, OrganizationID, ParsecOrganizationAddr,
+    PrivateKeyAlgorithm, SigningKeyAlgorithm, TimeProvider, UserCertificate, UserID, UserProfile,
+    VlobID,
 };
 // Re-expose `DateTime` to simplify use of `timestamp` fixture
 pub use crate::DateTime;
@@ -252,6 +253,7 @@ pub fn device_certificate(alice: &Device, bob: &Device, timestamp: DateTime) -> 
     DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
         device_label: MaybeRedacted::Real(bob.device_label.clone()),
@@ -267,6 +269,7 @@ pub fn redacted_device_certificate(alice: &Device, bob: &Device, timestamp: Date
     DeviceCertificate {
         author: CertificateSignerOwned::User(alice.device_id),
         timestamp,
+        purpose: DevicePurpose::Standard,
         user_id: bob.user_id,
         device_id: bob.device_id,
         device_label: MaybeRedacted::Real(DeviceLabel::new_redacted(bob.device_id)),

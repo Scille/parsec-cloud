@@ -8,14 +8,11 @@ use libparsec_platform_device_loader::{
 };
 use libparsec_platform_storage::certificates::PerTopicLastTimestamps;
 use libparsec_protocol::authenticated_cmds::v4::device_create;
-use libparsec_types::{
-    AvailableDevice, DeviceLabel, DeviceSaveStrategy, LocalDevice, SecretKeyPassphrase,
-};
+use libparsec_types::prelude::*;
 
 use crate::{
     greater_timestamp, CertifPollServerError, GreaterTimestampOffset, InvalidCertificateError,
 };
-use libparsec_types::prelude::*;
 
 use super::Client;
 
@@ -28,8 +25,13 @@ pub async fn export_recovery_device(
             .await;
 
     // save recovery device
-    let latest_known_timestamp =
-        register_new_device(&client.cmds, &recovery_device, &client.device).await?;
+    let latest_known_timestamp = register_new_device(
+        &client.cmds,
+        &recovery_device,
+        DevicePurpose::PassphraseRecovery,
+        &client.device,
+    )
+    .await?;
 
     let latest_known_timestamp = PerTopicLastTimestamps::new_for_common(latest_known_timestamp);
 
@@ -176,13 +178,16 @@ impl From<SaveDeviceError> for ImportRecoveryDeviceError {
 async fn register_new_device(
     cmds: &AuthenticatedCmds,
     new_device: &LocalDevice,
+    new_device_purpose: DevicePurpose,
     author: &LocalDevice,
 ) -> Result<DateTime, RegisterNewDeviceError> {
     // Loop is needed to deal with server requiring greater timestamp
     let mut timestamp = author.now();
 
     loop {
-        let outcome = internal_register_new_device(cmds, new_device, author, timestamp).await?;
+        let outcome =
+            internal_register_new_device(cmds, new_device, new_device_purpose, author, timestamp)
+                .await?;
 
         match outcome {
             DeviceInternalsOutcome::Done(timestamp) => return Ok(timestamp),
@@ -207,12 +212,14 @@ pub(crate) struct DeviceCertificatesBytes {
 /// generates certificates for new device signed by author at now
 pub(crate) fn generate_new_device_certificates(
     new_device: &LocalDevice,
+    new_device_purpose: DevicePurpose,
     author: &LocalDevice,
     now: DateTime,
 ) -> DeviceCertificatesBytes {
     let device_cert = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp: now,
+        purpose: new_device_purpose,
         user_id: new_device.user_id,
         device_id: new_device.device_id,
         device_label: MaybeRedacted::Real(new_device.device_label.clone()),
@@ -271,13 +278,14 @@ enum DeviceInternalsOutcome {
 async fn internal_register_new_device(
     cmds: &AuthenticatedCmds,
     new_device: &LocalDevice,
+    new_device_purpose: DevicePurpose,
     author: &LocalDevice,
     now: DateTime,
 ) -> Result<DeviceInternalsOutcome, RegisterNewDeviceError> {
     let DeviceCertificatesBytes {
         full: device_certificate,
         redacted: redacted_device_certificate,
-    } = generate_new_device_certificates(new_device, author, now);
+    } = generate_new_device_certificates(new_device, new_device_purpose, author, now);
     match cmds
         .send(device_create::Req {
             device_certificate,
@@ -343,7 +351,13 @@ pub async fn import_recovery_device(
 
     // 1) Upload the device on the server
 
-    register_new_device(&cmds, &new_device, &recovery_device).await?;
+    register_new_device(
+        &cmds,
+        &new_device,
+        DevicePurpose::Standard,
+        &recovery_device,
+    )
+    .await?;
 
     // 2) Save the device on disk
 

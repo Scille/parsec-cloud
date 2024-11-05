@@ -6,6 +6,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     HashAlgorithm,
     HumanHandle,
     PrivateKey,
@@ -76,6 +77,7 @@ async def insert_full_data(
     zack_d = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=zack_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=zack_u.user_id,
         device_id=DeviceID.new(),
         device_label=DeviceLabel("pc42"),
@@ -85,6 +87,7 @@ async def insert_full_data(
     zack_dr = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=zack_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=zack_u.user_id,
         device_id=zack_d.device_id,
         device_label=None,
@@ -124,6 +127,7 @@ async def insert_full_data(
     marty_d = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=marty_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=marty_u.user_id,
         device_id=DeviceID.new(),
         device_label=DeviceLabel("Overboard"),
@@ -133,6 +137,7 @@ async def insert_full_data(
     marty_dr = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=marty_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=marty_u.user_id,
         device_id=marty_d.device_id,
         device_label=None,
@@ -172,6 +177,7 @@ async def insert_full_data(
     doc_d = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=doc_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=doc_u.user_id,
         device_id=DeviceID.new(),
         device_label=DeviceLabel("Delorean"),
@@ -181,6 +187,7 @@ async def insert_full_data(
     doc_dr = DeviceCertificate(
         author=coolorg.alice.device_id,
         timestamp=doc_u.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=doc_u.user_id,
         device_id=doc_d.device_id,
         device_label=None,
