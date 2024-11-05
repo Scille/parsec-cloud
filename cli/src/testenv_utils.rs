@@ -8,10 +8,10 @@ use std::{
 use libparsec::{
     authenticated_cmds::{latest::device_create, v4::user_create},
     AuthenticatedCmds, Bytes, CertificateSignerOwned, ClientConfig, DateTime, DeviceAccessStrategy,
-    DeviceCertificate, DeviceID, DeviceLabel, HumanHandle, LocalDevice, MaybeRedacted,
-    OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey, SigningKeyAlgorithm,
-    UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR, PARSEC_BASE_DATA_DIR,
-    PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
+    DeviceCertificate, DeviceID, DeviceLabel, DevicePurpose, HumanHandle, LocalDevice,
+    MaybeRedacted, OrganizationID, ParsecAddr, PrivateKeyAlgorithm, ProxyConfig, SigningKey,
+    SigningKeyAlgorithm, UserCertificate, UserProfile, PARSEC_BASE_CONFIG_DIR,
+    PARSEC_BASE_DATA_DIR, PARSEC_BASE_HOME_DIR, PARSEC_SCHEME,
 };
 
 use crate::{
@@ -257,6 +257,7 @@ pub(crate) fn create_new_device(
     let device_cert = DeviceCertificate {
         author: CertificateSignerOwned::User(author.device_id),
         timestamp: now,
+        purpose: DevicePurpose::Standard,
         user_id: new_device.user_id,
         device_id: new_device.device_id,
         device_label: MaybeRedacted::Real(new_device.device_label.clone()),

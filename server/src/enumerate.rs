@@ -110,3 +110,28 @@ crate::binding_utils::gen_py_wrapper_class_for_enum!(
     ["STANDARD", standard, libparsec_types::UserProfile::Standard],
     ["OUTSIDER", outsider, libparsec_types::UserProfile::Outsider]
 );
+
+crate::binding_utils::gen_py_wrapper_class_for_enum!(
+    DevicePurpose,
+    libparsec_types::DevicePurpose,
+    [
+        "STANDARD",
+        standard,
+        libparsec_types::DevicePurpose::Standard
+    ],
+    [
+        "SHAMIR_RECOVERY",
+        shamir_recovery,
+        libparsec_types::DevicePurpose::ShamirRecovery
+    ],
+    [
+        "PASSPHRASE_RECOVERY",
+        key_file_recovery,
+        libparsec_types::DevicePurpose::PassphraseRecovery
+    ],
+    [
+        "WEB_AUTH",
+        web_auth,
+        libparsec_types::DevicePurpose::WebAuth
+    ]
+);

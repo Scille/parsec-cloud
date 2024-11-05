@@ -9,6 +9,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
@@ -50,6 +51,7 @@ def alice_generated_data(
                 device_certif = DeviceCertificate(
                     author=coolorg.alice.device_id,
                     timestamp=now,
+                    purpose=DevicePurpose.STANDARD,
                     user_id=coolorg.alice.user_id,
                     device_id=device_id,
                     device_label=DeviceLabel("New device"),
@@ -60,6 +62,7 @@ def alice_generated_data(
                 redacted_device_certif = DeviceCertificate(
                     author=coolorg.alice.device_id,
                     timestamp=now,
+                    purpose=DevicePurpose.STANDARD,
                     user_id=coolorg.alice.user_id,
                     device_id=device_id,
                     device_label=None,
@@ -149,6 +152,7 @@ def alice_generated_realm_wksp1_data(
                 device_certif = DeviceCertificate(
                     author=coolorg.alice.device_id,
                     timestamp=now,
+                    purpose=DevicePurpose.STANDARD,
                     user_id=coolorg.alice.user_id,
                     device_id=device_id,
                     device_label=DeviceLabel("New device"),
@@ -159,6 +163,7 @@ def alice_generated_realm_wksp1_data(
                 redacted_device_certif = DeviceCertificate(
                     author=coolorg.alice.device_id,
                     timestamp=now,
+                    purpose=DevicePurpose.STANDARD,
                     user_id=coolorg.alice.user_id,
                     device_id=device_id,
                     device_label=None,

@@ -71,3 +71,15 @@ class UserProfile:
     def from_str(cls, value: str) -> UserProfile: ...
     @property
     def str(self) -> str: ...
+
+class DevicePurpose:
+    STANDARD: DevicePurpose
+    SHAMIR_RECOVERY: DevicePurpose
+    PASSPHRASE_RECOVERY: DevicePurpose
+    WEB_AUTH: DevicePurpose
+    VALUES: tuple[DevicePurpose, ...]
+
+    @classmethod
+    def from_str(cls, value: str) -> DevicePurpose: ...
+    @property
+    def str(self) -> str: ...

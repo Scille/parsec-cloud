@@ -14,6 +14,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     HumanHandle,
     OrganizationID,
     PrivateKey,
@@ -375,6 +376,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     device_certificate = DeviceCertificate(
         author=device_id,
         timestamp=late if device_certif_late else now,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
         device_label=device_label,
@@ -384,6 +386,7 @@ async def test_anonymous_organization_bootstrap_timestamp_out_of_ballpark(
     redacted_device_certificate = DeviceCertificate(
         author=device_certificate.author,
         timestamp=device_certificate.timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_certificate.device_id,
         device_label=None,

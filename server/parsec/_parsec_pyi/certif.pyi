@@ -9,7 +9,7 @@ from parsec._parsec_pyi.crypto import (
     SigningKey,
     VerifyKey,
 )
-from parsec._parsec_pyi.enumerate import RealmRole, UserProfile
+from parsec._parsec_pyi.enumerate import DevicePurpose, RealmRole, UserProfile
 from parsec._parsec_pyi.ids import (
     DeviceID,
     DeviceLabel,
@@ -88,6 +88,7 @@ class DeviceCertificate:
         self,
         author: DeviceID | None,
         timestamp: DateTime,
+        purpose: DevicePurpose,
         user_id: UserID,
         device_id: DeviceID,
         device_label: DeviceLabel | None,
@@ -98,6 +99,8 @@ class DeviceCertificate:
     def author(self) -> DeviceID | None: ...
     @property
     def timestamp(self) -> DateTime: ...
+    @property
+    def purpose(self) -> DevicePurpose: ...
     @property
     def user_id(self) -> UserID: ...
     @property

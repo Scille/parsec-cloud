@@ -15,7 +15,7 @@ use libparsec_types::{
 
 use crate::{
     crypto::{PublicKey, SequesterPublicKeyDer, SequesterVerifyKeyDer, SigningKey, VerifyKey},
-    enumerate::{RealmRole, UserProfile},
+    enumerate::{DevicePurpose, RealmRole, UserProfile},
     ids::{DeviceID, DeviceLabel, HumanHandle, SequesterServiceID, UserID, VlobID},
     time::DateTime,
 };
@@ -209,10 +209,12 @@ crate::binding_utils::gen_py_wrapper_class!(
 #[pymethods]
 impl DeviceCertificate {
     #[new]
-    #[pyo3(signature = (author, timestamp, user_id, device_id, device_label, verify_key, algorithm))]
+    #[allow(clippy::too_many_arguments)]
+    #[pyo3(signature = (author, timestamp, purpose, user_id, device_id, device_label, verify_key, algorithm))]
     fn new(
         author: Option<DeviceID>,
         timestamp: DateTime,
+        purpose: DevicePurpose,
         user_id: UserID,
         device_id: DeviceID,
         device_label: Option<DeviceLabel>,
@@ -231,6 +233,7 @@ impl DeviceCertificate {
                 None => CertificateSignerOwned::Root,
             },
             timestamp: timestamp.0,
+            purpose: purpose.0,
             user_id: user_id.0,
             device_id: device_id.0,
             device_label,
@@ -280,6 +283,7 @@ impl DeviceCertificate {
         let libparsec_types::DeviceCertificate {
             author,
             timestamp,
+            purpose,
             user_id,
             device_id,
             verify_key,
@@ -290,6 +294,7 @@ impl DeviceCertificate {
         let libparsec_types::DeviceCertificate {
             author: redacted_author,
             timestamp: redacted_timestamp,
+            purpose: redacted_purpose,
             user_id: redacted_user_id,
             device_id: redacted_device_id,
             verify_key: redacted_verify_key,
@@ -299,6 +304,7 @@ impl DeviceCertificate {
 
         author == redacted_author
             && timestamp == redacted_timestamp
+            && purpose == redacted_purpose
             && device_id == redacted_device_id
             && user_id == redacted_user_id
             && verify_key == redacted_verify_key
@@ -316,6 +322,11 @@ impl DeviceCertificate {
     #[getter]
     fn timestamp(&self) -> DateTime {
         DateTime(self.0.timestamp)
+    }
+
+    #[getter]
+    fn purpose(&self) -> DevicePurpose {
+        DevicePurpose(self.0.purpose)
     }
 
     #[getter]

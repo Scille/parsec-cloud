@@ -8,6 +8,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     HashAlgorithm,
     HumanHandle,
     OrganizationID,
@@ -90,6 +91,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_device_certificate = DeviceCertificate(
         author=None,
         timestamp=t1,
+        purpose=DevicePurpose.STANDARD,
         user_id=alice_user_id,
         device_id=alice1_device_id,
         device_label=DeviceLabel("Dev1"),
@@ -100,6 +102,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     alice_redacted_device_certificate = DeviceCertificate(
         author=None,
         timestamp=t1,
+        purpose=DevicePurpose.STANDARD,
         user_id=alice_user_id,
         device_id=alice1_device_id,
         device_label=None,
@@ -158,6 +161,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     bob_device_certificate = DeviceCertificate(
         author=alice1_device_id,
         timestamp=t2,
+        purpose=DevicePurpose.STANDARD,
         user_id=bob_user_id,
         device_id=bob1_device_id,
         device_label=DeviceLabel("Dev1"),
@@ -168,6 +172,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     bob_redacted_device_certificate = DeviceCertificate(
         author=alice1_device_id,
         timestamp=t2,
+        purpose=DevicePurpose.STANDARD,
         user_id=bob_user_id,
         device_id=bob1_device_id,
         device_label=None,
@@ -243,6 +248,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     mallory_device_certificate = DeviceCertificate(
         author=alice1_device_id,
         timestamp=t4,
+        purpose=DevicePurpose.STANDARD,
         user_id=mallory_user_id,
         device_id=mallory1_device_id,
         device_label=DeviceLabel("Dev1"),
@@ -253,6 +259,7 @@ async def test_authenticated_certificate_get_ok_common_certificates(
     mallory_redacted_device_certificate = DeviceCertificate(
         author=alice1_device_id,
         timestamp=t4,
+        purpose=DevicePurpose.STANDARD,
         user_id=mallory_user_id,
         device_id=mallory1_device_id,
         device_label=None,

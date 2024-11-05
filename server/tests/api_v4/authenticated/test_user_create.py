@@ -8,6 +8,7 @@ from parsec._parsec import (
     DeviceCertificate,
     DeviceID,
     DeviceLabel,
+    DevicePurpose,
     HumanHandle,
     PrivateKey,
     PrivateKeyAlgorithm,
@@ -52,6 +53,7 @@ def generate_new_mike_device_certificates(
     raw_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
         device_label=NEW_MIKE_DEVICE_LABEL,
@@ -62,6 +64,7 @@ def generate_new_mike_device_certificates(
     raw_redacted_device_certificate = DeviceCertificate(
         author=author_device_id,
         timestamp=timestamp,
+        purpose=DevicePurpose.STANDARD,
         user_id=user_id,
         device_id=device_id,
         device_label=None,
