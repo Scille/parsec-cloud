@@ -34,7 +34,7 @@ def _validate_postgres_db_url(ctx: Any, param: Any, value: str) -> str:
 @click.option("--dry-run", is_flag=True)
 # Avoid polluting CLI command output with INFO logs
 @logging_config_options(default_log_level="WARNING")
-# Add --debug
+# Add --debug & --version
 @debug_config_options
 def migrate(db: str, debug: bool, dry_run: bool, **kwargs: Any) -> None:
     """
