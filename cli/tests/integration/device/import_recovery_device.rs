@@ -16,9 +16,7 @@ async fn import_recovery_device(tmp_path: TmpPath) {
     let client = start_client(alice).await.unwrap();
 
     let (passphrase, data) = client
-        .client_export_recovery_device(
-            DeviceLabel::try_from("recovery".to_string().as_str()).unwrap(),
-        )
+        .export_recovery_device(DeviceLabel::try_from("recovery".to_string().as_str()).unwrap())
         .await
         .unwrap();
     tokio::fs::write(&input, data).await.unwrap();

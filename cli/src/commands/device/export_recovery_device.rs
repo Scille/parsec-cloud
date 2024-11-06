@@ -34,7 +34,7 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
 
     let now = DateTime::now();
     let (passphrase, data) = client
-        .client_export_recovery_device(DeviceLabel::try_from(format!("recovery-{now}").as_str())?)
+        .export_recovery_device(DeviceLabel::try_from(format!("recovery-{now}").as_str())?)
         .await?;
 
     tokio::fs::write(&output, data).await?;
