@@ -34,7 +34,7 @@ pub async fn client_export_recovery_device(
         _ => None,
     })?;
 
-    let (passphrase, data) = client.client_export_recovery_device(device_label).await?;
+    let (passphrase, data) = client.export_recovery_device(device_label).await?;
 
     Ok((passphrase.to_string(), data))
 }

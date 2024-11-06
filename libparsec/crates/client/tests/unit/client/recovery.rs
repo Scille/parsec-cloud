@@ -51,7 +51,7 @@ async fn ok(env: &TestbedEnv) {
     let config_dir = config.config_dir.clone();
     let recovery_device_label = DeviceLabel::try_from("recovery").unwrap();
     let (passphrase, data) = client
-        .client_export_recovery_device(recovery_device_label.clone())
+        .export_recovery_device(recovery_device_label.clone())
         .await
         .unwrap();
     client.refresh_workspaces_list().await.unwrap();

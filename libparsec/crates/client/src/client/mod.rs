@@ -539,7 +539,7 @@ impl Client {
         tos::accept_tos(self, tos_updated_on).await
     }
 
-    pub async fn client_export_recovery_device(
+    pub async fn export_recovery_device(
         &self,
         device_label: DeviceLabel,
     ) -> Result<(SecretKeyPassphrase, Vec<u8>), ClientExportRecoveryDeviceError> {
