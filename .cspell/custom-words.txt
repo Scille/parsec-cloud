@@ -424,12 +424,14 @@ ntics
 ntns
 ntstatus
 numprocesses
+officedocument
 oname
 onboarded
 oneof
 oneofschema
 Onone
 opengl
+openxmlformats
 opses
 OpsLimit
 ORGANIZATIONID
@@ -633,6 +635,7 @@ speechd
 SPHINXBUILD
 SPHINXOPTS
 splashscreen
+spreadsheetml
 sqldrivers
 sqlfluff
 sqlx
