@@ -42,6 +42,7 @@ export {
   WorkspaceDecryptPathAddrErrorTag,
   WorkspaceFdCloseErrorTag,
   WorkspaceFdReadErrorTag,
+  WorkspaceFdResizeErrorTag,
   WorkspaceFdWriteErrorTag,
   WorkspaceHistoryEntryStatTag,
   WorkspaceHistoryFdCloseErrorTag,

@@ -2,6 +2,7 @@
 
 import { needsMocks } from '@/parsec/environment';
 import { wait } from '@/parsec/internals';
+import { MockFiles } from '@/parsec/mock_files';
 import { MockEntry, generateEntries, generateFile, generateFolder } from '@/parsec/mock_generator';
 import { Path } from '@/parsec/path';
 import { getParsecHandle, getWorkspaceHandle } from '@/parsec/routing';
@@ -17,15 +18,20 @@ import {
   OpenOptions,
   ParseParsecAddrError,
   ParseParsecAddrErrorTag,
+  ParsedParsecAddrTag,
   ParsedParsecAddrWorkspacePath,
   Result,
   WorkspaceCreateFileError,
   WorkspaceCreateFolderError,
   WorkspaceCreateFolderErrorTag,
   WorkspaceFdCloseError,
+  WorkspaceFdCloseErrorTag,
   WorkspaceFdReadError,
+  WorkspaceFdReadErrorTag,
   WorkspaceFdResizeError,
+  WorkspaceFdResizeErrorTag,
   WorkspaceFdWriteError,
+  WorkspaceFdWriteErrorTag,
   WorkspaceHandle,
   WorkspaceMoveEntryError,
   WorkspaceOpenFileError,
@@ -33,8 +39,11 @@ import {
   WorkspaceStatEntryError,
   WorkspaceStatFolderChildrenError,
 } from '@/parsec/types';
-import { MoveEntryModeTag, ParsedParsecAddrTag, libparsec } from '@/plugins/libparsec';
+import { MoveEntryModeTag, libparsec } from '@/plugins/libparsec';
 import { DateTime } from 'luxon';
+
+const MOCK_OPENED_FILES = new Map<FileDescriptor, FsPath>();
+let MOCK_CURRENT_FD = 1;
 
 export async function createFile(workspaceHandle: WorkspaceHandle, path: FsPath): Promise<Result<FileID, WorkspaceCreateFileError>> {
   if (!needsMocks()) {
@@ -242,7 +251,10 @@ export async function openFile(
   if (workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceOpenFile(workspaceHandle, path, parsecOptions);
   } else {
-    return { ok: true, value: 42 };
+    const fd = MOCK_CURRENT_FD;
+    MOCK_CURRENT_FD += 1;
+    MOCK_OPENED_FILES.set(fd, path);
+    return { ok: true, value: fd };
   }
 }
 
@@ -250,6 +262,10 @@ export async function closeFile(workspaceHandle: WorkspaceHandle, fd: FileDescri
   if (!needsMocks()) {
     return await libparsec.workspaceFdClose(workspaceHandle, fd);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceFdCloseErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
+    MOCK_OPENED_FILES.delete(fd);
     return { ok: true, value: null };
   }
 }
@@ -262,6 +278,9 @@ export async function resizeFile(
   if (workspaceHandle && !needsMocks()) {
     return await libparsec.workspaceFdResize(workspaceHandle, fd, length, true);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceFdResizeErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
     return { ok: true, value: null };
   }
 }
@@ -275,6 +294,9 @@ export async function writeFile(
   if (!needsMocks()) {
     return await libparsec.workspaceFdWrite(workspaceHandle, fd, offset, data);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceFdWriteErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
     await wait(100);
     return { ok: true, value: data.length };
   }
@@ -289,8 +311,31 @@ export async function readFile(
   if (!needsMocks()) {
     return await libparsec.workspaceFdRead(workspaceHandle, fd, offset, size);
   } else {
+    if (!MOCK_OPENED_FILES.has(fd)) {
+      return { ok: false, error: { tag: WorkspaceFdReadErrorTag.BadFileDescriptor, error: 'Invalid file descriptor' } };
+    }
     await wait(100);
-    return { ok: true, value: new Uint8Array([77, 97, 120, 32, 105, 115, 32, 115, 101, 120, 121]) };
+    const path = MOCK_OPENED_FILES.get(fd) as string;
+    const fileName = (await Path.filename(path)) as EntryName;
+    const ext = Path.getFileExtension(fileName);
+
+    switch (ext) {
+      case 'xlsx':
+        console.log('Using XLSX content');
+        return { ok: true, value: MockFiles.XLSX };
+      case 'png':
+        console.log('Using PNG content');
+        return { ok: true, value: MockFiles.PNG };
+    }
+    console.log('Using default file content');
+    return {
+      ok: true,
+      value: new Uint8Array([
+        137, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 5, 0, 0, 0, 5, 8, 6, 0, 0, 0, 141, 111, 38, 229, 0, 0, 0, 28,
+        73, 68, 65, 84, 8, 215, 99, 248, 255, 255, 63, 195, 127, 6, 32, 5, 195, 32, 18, 132, 208, 49, 241, 130, 88, 205, 4, 0, 14, 245, 53,
+        203, 209, 142, 14, 31, 0, 0, 0, 0, 73, 69, 78, 68, 174, 66, 96, 130,
+      ]),
+    };
   }
 }
 
