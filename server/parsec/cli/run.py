@@ -329,7 +329,7 @@ For instance: `en_US:https://example.com/tos_en,fr_FR:https://example.com/tos_fr
     show_envvar=True,
     help="Keep SSE connection open by sending keepalive messages to client (pass <= 0 to disable)",
 )
-# Add --debug
+# Add --debug & --version
 @debug_config_options
 def run_cmd(
     host: str,
