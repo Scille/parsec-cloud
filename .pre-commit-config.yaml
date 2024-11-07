@@ -97,6 +97,14 @@ repos:
       - id: shellcheck
         args: [--exclude=SC1090, --severity=warning]
 
+  # powrap, script to fix indentation of .po files.
+  #
+  # These files are located in ./docs/locale/fr/LC_MESSAGES/
+  - repo: https://git.afpy.org/AFPy/powrap
+    rev: 57a5dd9c3d7d479a5450b2ad4ab85f70efe8b961
+    hooks:
+      - id: powrap
+
   ########
   # Python
 
