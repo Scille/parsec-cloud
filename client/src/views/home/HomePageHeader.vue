@@ -48,7 +48,7 @@
           slot="start"
           :icon="arrowBack"
         />
-        {{ $msTranslate('HomePage.organizationLogin.backToList') }}
+        {{ $msTranslate(backButtonTitle ?? 'HomePage.topbar.backToList') }}
       </ion-button>
     </div>
     <div class="topbar-right">
@@ -94,11 +94,11 @@
 </template>
 
 <script setup lang="ts">
-import { LogoRowWhite, MsImage, MsModalResult } from 'megashark-lib';
 import { IonButton, IonButtons, IonIcon, modalController } from '@ionic/vue';
 import { arrowBack, chatbubbles, cog, informationCircle, sparkles, documentText } from 'ionicons/icons';
 import { EventData, Events, UpdateAvailabilityData } from '@/services/eventDistributor';
 import { InjectionProvider, InjectionProviderKey } from '@/services/injectionProvider';
+import { LogoRowWhite, MsImage, Translatable, MsModalResult } from 'megashark-lib';
 import { onMounted, onUnmounted, ref, inject, Ref } from 'vue';
 import { Env } from '@/services/environment';
 import { needsMocks } from '@/parsec';
@@ -160,6 +160,7 @@ async function update(): Promise<void> {
 
 defineProps<{
   showBackButton: boolean;
+  backButtonTitle?: Translatable;
 }>();
 
 defineEmits<{

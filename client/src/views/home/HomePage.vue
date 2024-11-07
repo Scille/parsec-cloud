@@ -15,15 +15,16 @@
             class="header"
             @settings-click="openSettingsModal"
             @about-click="openAboutModal"
-            @back-click="backToOrganizations"
+            @back-click="backToPreviousPage"
+            :back-button-title="getBackButtonTitle()"
             @customer-area-click="goToCustomerAreaLogin"
             :show-back-button="
               state === HomePageState.Login || state === HomePageState.ForgottenPassword || state === HomePageState.CustomerArea
             "
           />
           <slide-horizontal
-            :appear-from="state === HomePageState.OrganizationList ? Position.Left : Position.Right"
-            :disappear-to="state === HomePageState.OrganizationList ? Position.Right : Position.Left"
+            :appear-from="slidePositions.appearFrom"
+            :disappear-to="slidePositions.disappearTo"
           >
             <template v-if="state === HomePageState.OrganizationList">
               <organization-list-page
@@ -35,23 +36,24 @@
                 ref="organizationListRef"
               />
             </template>
-            <template v-if="state === HomePageState.CustomerArea">
+            <template v-else-if="state === HomePageState.CustomerArea">
               <client-area-login-page />
             </template>
-            <template v-if="state === HomePageState.ForgottenPassword && selectedDevice">
-              <import-recovery-device-page
-                :device="selectedDevice"
-                @organization-selected="onOrganizationSelected"
-              />
-            </template>
-            <!-- after animation -->
-            <template v-if="state === HomePageState.Login && selectedDevice">
+            <template v-else-if="state === HomePageState.Login">
               <login-page
+                v-if="selectedDevice"
                 :device="selectedDevice"
                 @login-click="login"
                 @forgotten-password-click="onForgottenPasswordClicked"
                 :login-in-progress="loginInProgress"
                 ref="loginPageRef"
+              />
+            </template>
+            <template v-else-if="state === HomePageState.ForgottenPassword">
+              <import-recovery-device-page
+                v-if="selectedDevice"
+                :device="selectedDevice"
+                @organization-selected="onOrganizationSelected"
               />
             </template>
           </slide-horizontal>
@@ -100,7 +102,7 @@ import { openSettingsModal } from '@/views/settings';
 import { IonContent, IonPage, modalController } from '@ionic/vue';
 import { DateTime } from 'luxon';
 import { Base64, Validity, MsModalResult, Position, SlideHorizontal, getTextFromUser, askQuestion, Answer } from 'megashark-lib';
-import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw } from 'vue';
+import { Ref, inject, nextTick, onMounted, onUnmounted, ref, toRaw, watch } from 'vue';
 import ClientAreaLoginPage from '@/views/client-area/ClientAreaLoginPage.vue';
 import { getServerTypeFromAddress, ServerType } from '@/services/parsecServers';
 import { getDurationBeforeExpiration, isExpired, isTrialOrganizationDevice } from '@/common/organization';
@@ -125,7 +127,18 @@ const loginInProgress = ref(false);
 const queryInProgress = ref(false);
 const organizationListRef = ref();
 
+const slidePositions = ref({ appearFrom: Position.Left, disappearTo: Position.Right });
+
 let hotkeys: HotkeyGroup | null = null;
+
+const stateWatchCancel = watch(state, (newState, oldState) => {
+  // we use the enum ordering to determine the direction of the slide
+  if (oldState > newState) {
+    slidePositions.value = { appearFrom: Position.Right, disappearTo: Position.Left };
+  } else {
+    slidePositions.value = { appearFrom: Position.Left, disappearTo: Position.Right };
+  }
+});
 
 const routeWatchCancel = watchRoute(async () => {
   if (!currentRouteIs(Routes.Home)) {
@@ -163,6 +176,7 @@ onUnmounted(() => {
     hotkeyManager.unregister(hotkeys);
   }
   routeWatchCancel();
+  stateWatchCancel();
 });
 
 async function handleQuery(): Promise<void> {
@@ -261,11 +275,6 @@ async function openJoinByLinkModal(link: string): Promise<void> {
   } else {
     await navigateTo(Routes.Home);
   }
-}
-
-async function backToOrganizations(): Promise<void> {
-  state.value = HomePageState.OrganizationList;
-  selectedDevice.value = null;
 }
 
 async function onOrganizationSelected(device: AvailableDevice): Promise<void> {
@@ -468,6 +477,15 @@ async function associateDefaultEvents(eventDistributor: EventDistributor, inform
   );
 }
 
+async function backToPreviousPage(): Promise<void> {
+  if (state.value === HomePageState.Login || state.value === HomePageState.CustomerArea) {
+    state.value = HomePageState.OrganizationList;
+    selectedDevice.value = null;
+  } else if (state.value === HomePageState.ForgottenPassword) {
+    state.value = HomePageState.Login;
+  }
+}
+
 function onForgottenPasswordClicked(device: AvailableDevice): void {
   selectedDevice.value = device;
   state.value = HomePageState.ForgottenPassword;
@@ -505,6 +523,17 @@ async function onJoinOrganizationClicked(): Promise<void> {
       await openJoinByLinkModal(link);
     }
   }
+}
+
+function getBackButtonTitle(): string {
+  if (state.value === HomePageState.Login) {
+    return 'HomePage.topbar.backToList';
+  } else if (state.value === HomePageState.ForgottenPassword) {
+    return 'HomePage.topbar.backToLogin';
+  } else if (state.value === HomePageState.CustomerArea) {
+    return 'HomePage.topbar.backToList';
+  }
+  return '';
 }
 </script>
 
