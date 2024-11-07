@@ -78,9 +78,9 @@ msgid ""
 "information is not tampered: what your contact says is what you hear. You "
 "should avoid using SMS."
 msgstr ""
-"Les canaux authentiques ne sont pas confidentiels, mais ils garantissent "
-"que l'information n'est pas altérée : ce que votre contact dit est ce que "
-"vous entendez. Les SMS sont à éviter."
+"Les canaux authentiques ne sont pas confidentiels, mais ils garantissent que "
+"l'information n'est pas altérée : ce que votre contact dit est ce que vous "
+"entendez. Les SMS sont à éviter."
 
 #: ../../userguide/join_organization.rst:36
 msgid ""
