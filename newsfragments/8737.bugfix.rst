@@ -1,1 +1,0 @@
-Improve snap packaging to prevent some user applications to crash when trying to open a file from Parsec

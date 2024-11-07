@@ -1,1 +1,0 @@
-Added workspace history: can now browse and restore files at any given time from the workspace history

@@ -5,6 +5,77 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.0 (2024-11-22)
+--------------------------
+
+Features
+~~~~~~~~
+
+* The list of users in the organization now shows the date the user joined
+  (`#5941 <https://github.com/Scille/parsec-cloud/issues/5941>`__)
+
+* Show which users are External when sharing a workspace
+  (`#8245 <https://github.com/Scille/parsec-cloud/issues/8245>`__)
+
+* Improve Parsec update dialog and show the version about to be installed
+  (`#8572 <https://github.com/Scille/parsec-cloud/issues/8572>`__)
+
+* Added workspace history: can now browse and restore files at any given time
+  from the workspace history
+  (`#8663 <https://github.com/Scille/parsec-cloud/issues/8663>`__)
+
+* Added CLI commands ``tos config``, ``tos list`` and ``tos accept`` to manage
+  an organization's Term of Service
+  (`#8664 <https://github.com/Scille/parsec-cloud/issues/8664>`__)
+
+* Added full support for macOS
+  (`#8669 <https://github.com/Scille/parsec-cloud/issues/8669>`__)
+
+* Added support for recovery files to recover access in case the password is
+  lost or the user loses access to its computer
+  (`#8667 <https://github.com/Scille/parsec-cloud/issues/8667>`__)
+
+* Displays the revocation date in the user details modal
+  (`#8862 <https://github.com/Scille/parsec-cloud/issues/8862>`__)
+
+
+Bugfixes
+~~~~~~~~
+
+* Improve snap packaging to prevent some user applications to crash when trying
+  to open a file from Parsec
+  (`#8737 <https://github.com/Scille/parsec-cloud/issues/8737>`__)
+
+* Fixed a bug allowing the user to access unintended steps during organization
+  creation from a bootstrap link
+  (`#8771 <https://github.com/Scille/parsec-cloud/issues/8771>`__)
+
+* Fixed a bug on Windows causing much delayed synchronization on files
+  created/modified from the mount point.
+  (`#8818 <https://github.com/Scille/parsec-cloud/issues/8818>`__)
+
+* Prompt the user for administrator permissions when winfsp is being installed,
+  instead of failing silently if the installer wasn't already running in
+  administrator mode.
+  (`#8934 <https://github.com/Scille/parsec-cloud/issues/8934>`__)
+
+* Confined files are no longer included in selection and file count
+  (`#8913 <https://github.com/Scille/parsec-cloud/issues/8913>`__)
+
+* No longer opens an empty context menu with right clicking in the list of files
+  (`#8915 <https://github.com/Scille/parsec-cloud/issues/8915>`__)
+
+Miscellaneous internal changes
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+* Added tooltip explaining server synchronization status in file details
+  (`#8725 <https://github.com/Scille/parsec-cloud/issues/8725>`__)
+
+* Improve how connection issues are handled during the greeting process
+  (`#8817 <https://github.com/Scille/parsec-cloud/issues/8817>`__)
+
+
+
 Parsec v3.1.0 (2024-10-15)
 --------------------------
 

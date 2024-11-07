@@ -1,1 +1,0 @@
-Improve Parsec update dialog and show the version about to be installed
