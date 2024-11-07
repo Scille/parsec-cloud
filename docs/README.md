@@ -74,8 +74,16 @@ Translations are based on [Sphinx Internationalization](http://www.sphinx-doc.or
 
 3. Translate `.po` files (manually or with a tool like [Poedit](https://poedit.net/))
 
-4. Build docs `.po -> .mo`
+4. Make sure to wrap files before commit
+
+    ```bash
+    make wrap
+    ```
+
+5. To build translations locally (`.po -> .mo`).
 
     ```bash
     make -e SPHINXOPTS="-D language='fr'" html
     ```
+
+Note that you should only commit the `.po` files (not `.mo` files).
