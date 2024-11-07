@@ -38,6 +38,10 @@ from parsec.components.organization import (
     TosLocale,
     TosUrl,
 )
+from parsec.components.sequester import (
+    SequesterGetOrganizationServicesBadOutcome,
+    WebhookSequesterService,
+)
 from parsec.components.user import UserFreezeUserBadOutcome, UserInfo, UserListUsersBadOutcome
 from parsec.events import ActiveUsersLimitField, DateTimeField, OrganizationIDField, UserIDField
 from parsec.logging import get_logger
@@ -523,5 +527,45 @@ async def administration_organization_users_freeze(
             "user_email": user.human_handle.email,
             "user_name": user.human_handle.label,
             "frozen": user.frozen,
+        },
+    )
+
+
+@administration_router.get("/administration/organizations/{raw_organization_id}/sequester/services")
+@log_request
+async def administration_organization_sequester_services(
+    raw_organization_id: str,
+    auth: Annotated[None, Depends(check_administration_auth)],
+    request: Request,
+) -> Response:
+    backend: Backend = request.app.state.backend
+
+    organization_id = parse_organization_id_or_die(raw_organization_id)
+
+    outcome = await backend.sequester.get_organization_services(organization_id)
+    match outcome:
+        case list() as services:
+            cooked_services = []
+            for service in services:
+                cooked_service = {
+                    "service_id": service.service_id.hex,
+                    "service_label": service.service_label,
+                    "created_on": service.created_on.to_rfc3339(),
+                    "revoked_on": service.revoked_on.to_rfc3339() if service.revoked_on else None,
+                    "type": service.service_type.value,
+                }
+                if isinstance(service, WebhookSequesterService):
+                    cooked_service["webhook_url"] = service.webhook_url
+                cooked_services.append(cooked_service)
+
+        case SequesterGetOrganizationServicesBadOutcome.ORGANIZATION_NOT_FOUND:
+            raise HTTPException(status_code=404, detail="Organization not found")
+        case SequesterGetOrganizationServicesBadOutcome.SEQUESTER_DISABLED:
+            cooked_services = []
+
+    return JSONResponse(
+        status_code=200,
+        content={
+            "services": cooked_services,
         },
     )
