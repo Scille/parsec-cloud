@@ -16,8 +16,6 @@
 # serve to show the default.
 
 
-import os
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -114,18 +112,9 @@ sphinx_tabs_disable_tab_closing = True
 
 # -- Options for HTML output -------------------------------------------
 
-# on_rtd is whether we are on readthedocs.org, this line of code grabbed from docs.readthedocs.org
-on_rtd = os.environ.get("READTHEDOCS", None) == "True"
-
-import sphinx_rtd_theme  # type: ignore (we type check from the wrong virtualenv)
-
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 html_theme = "sphinx_rtd_theme"
-# Add any paths that contain custom themes here, relative to this directory.
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
-if on_rtd:
-    using_rtd_theme = True
 
 # Theme options are theme-specific and customize the look and feel of a
 # theme further.  For a list of options available for each theme, see the
@@ -136,7 +125,8 @@ html_theme_options = {
     # 'sticky_navigation': True  # Set to False to disable the sticky nav while scrolling.
     "logo_only": True,  # if we have a html_logo below, this shows /only/ the logo with no title text
     "collapse_navigation": False,  # Collapse navigation (False makes it tree-like)
-    "display_version": True,  # Display the docs version
+    "version_selector": True,  # Display a version selector below the title (only if hosted on RTD and if more than 1 active version)
+    "language_selector": True,  # Display a language selector below the title (only if hosted on RTD and if more than 1 active version)
     # 'navigation_depth': 4,  # Depth of the headers shown in the navigation bar
 }
 
