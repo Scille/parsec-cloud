@@ -197,6 +197,13 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.invite_new_user.Rep.load(raw_rep)
 
+    async def list_frozen_users(
+        self,
+    ) -> authenticated_cmds.latest.list_frozen_users.Rep:
+        req = authenticated_cmds.latest.list_frozen_users.Req()
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.list_frozen_users.Rep.load(raw_rep)
+
     async def ping(self, ping: str) -> authenticated_cmds.latest.ping.Rep:
         req = authenticated_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "authenticated")

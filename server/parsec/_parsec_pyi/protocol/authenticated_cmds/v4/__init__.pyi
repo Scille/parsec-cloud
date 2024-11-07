@@ -18,6 +18,7 @@ from . import (
     invite_list,
     invite_new_device,
     invite_new_user,
+    list_frozen_users,
     ping,
     pki_enrollment_accept,
     pki_enrollment_list,
@@ -57,6 +58,7 @@ class AnyCmdReq:
         | invite_list.Req
         | invite_new_device.Req
         | invite_new_user.Req
+        | list_frozen_users.Req
         | ping.Req
         | pki_enrollment_accept.Req
         | pki_enrollment_list.Req
@@ -93,6 +95,7 @@ __all__ = [
     "invite_list",
     "invite_new_device",
     "invite_new_user",
+    "list_frozen_users",
     "ping",
     "pki_enrollment_accept",
     "pki_enrollment_list",
