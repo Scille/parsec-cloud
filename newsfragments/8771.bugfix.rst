@@ -1,1 +1,0 @@
-Fixed a bug allowing the user to access unintended steps during organization creation from a bootstrap link

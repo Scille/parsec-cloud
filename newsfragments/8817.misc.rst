@@ -1,1 +1,0 @@
-Improve how connection issues are handled during the greeting process
