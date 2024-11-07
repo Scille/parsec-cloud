@@ -7,6 +7,7 @@
 SPHINXOPTS  ?=
 SPHINXBUILD ?= sphinx-build
 PAPER       ?=
+POWRAP      ?= powrap
 BUILDDIR    ?= _build
 
 # User-friendly check for sphinx-build
@@ -49,6 +50,7 @@ help:
 	@echo "  pseudoxml  to make pseudoxml-XML files for display purposes"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
+	@echo "  wrap       to wrap all the PO files to a fixed column width"
 
 clean:
 	rm -rf $(BUILDDIR)/*
@@ -192,3 +194,7 @@ pseudoxml:
 	$(SPHINXBUILD) --builder pseudoxml $(ALLSPHINXOPTS) $(BUILDDIR)/pseudoxml
 	@echo
 	@echo "Build finished. The pseudo-XML files are in $(BUILDDIR)/pseudoxml."
+
+.PHONY: wrap
+wrap:
+	$(POWRAP) $(shell find locale/ -type f -name '*.po')
