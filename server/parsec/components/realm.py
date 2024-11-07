@@ -6,6 +6,7 @@ from enum import auto
 from typing import TypeAlias
 
 from parsec._parsec import (
+    BlockID,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -344,6 +345,69 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+type RealmExportBatchOffsetMarker = int
+
+
+@dataclass(slots=True)
+class RealmExportDoBaseInfo:
+    root_verify_key: VerifyKey
+    common_certificates: list[bytes]
+    realm_certificates: list[bytes]
+    vlob_upper_marker: RealmExportBatchOffsetMarker
+    vlobs_total: int
+    block_upper_marker: RealmExportBatchOffsetMarker
+    blocks_total: int
+
+
+class RealmExportDoBaseInfoBadOutcome(BadOutcome):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportCertificates:
+    # List of (<DB primary key>, <realm_role_certificate>)
+    realm_role_certificates: list[tuple[int, bytes]]
+
+    # List of (<DB primary key>, <user_certificate>, <revoked_user_certificate>)
+    user_certificates: list[tuple[int, bytes, bytes | None]]
+
+    # List of (<DB primary key>, <user_update_certificate>)
+    user_update_certificates: list[tuple[int, bytes]]
+
+    # List of (<DB primary key>, <device_certificate>)
+    device_certificates: list[tuple[int, bytes]]
+
+
+class RealmExportDoCertificatesBadOutcome(BadOutcome):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatch:
+    batch_offset_marker: RealmExportBatchOffsetMarker
+    # List of (<DB primary key>, <vlob_id>, <version>, <blob>, <author's DB primary key>, <timestamp>)
+    vlobs: list[tuple[int, VlobID, int, bytes, int, DateTime]]
+
+
+class RealmExportDoVlobsBatchBadOutcome(BadOutcome):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportBlocksBatch:
+    batch_offset_marker: RealmExportBatchOffsetMarker
+    # List of (<DB primary key>, <block_id>, <block>, <author's DB primary key>)
+    blocks: list[tuple[int, BlockID, bytes, int]]
+
+
+class RealmExportDoBlocksBatchBadOutcome(BadOutcome):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
 class BaseRealmComponent:
     def __init__(self, webhooks: WebhooksComponent):
         self.webhooks = webhooks
@@ -472,6 +536,26 @@ class BaseRealmComponent:
     async def dump_realms_granted_roles(
         self, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_base_info(
+        self, organization_id: OrganizationID, realm_id: VlobID
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_certificates(
+        self, organization_id: OrganizationID, realm_id: VlobID
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_vlobs_batch(
+        self, batch_offset_marker: RealmExportBatchOffsetMarker, batch_size: int = 1000
+    ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_blocks_batch(
+        self, batch_offset_marker: RealmExportBatchOffsetMarker, batch_size: int = 1000
+    ) -> RealmExportBlocksBatch | RealmExportDoBlocksBatchBadOutcome:
         raise NotImplementedError
 
     #

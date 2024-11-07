@@ -2,25 +2,28 @@
 from __future__ import annotations
 
 from abc import ABC
-from base64 import b64decode, b64encode
-from typing import TYPE_CHECKING, Annotated, Literal, override
+from base64 import b64encode
+from typing import TYPE_CHECKING, Literal, override
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, PlainValidator, ValidationError
+from pydantic import BaseModel, ConfigDict, Field
 
 from parsec._parsec import (
-    ActiveUsersLimit,
-    DateTime,
-    DeviceID,
     EnrollmentID,
-    InvitationStatus,
-    InvitationToken,
-    OrganizationID,
-    RealmRole,
-    UserID,
     UserProfile,
-    VlobID,
     authenticated_cmds,
+)
+from parsec.types import (
+    ActiveUsersLimitField,
+    Base64Bytes,
+    DateTimeField,
+    DeviceIDField,
+    InvitationStatusField,
+    InvitationTokenField,
+    OrganizationIDField,
+    UserIDField,
+    UserProfileField,
+    VlobIDField,
 )
 
 if TYPE_CHECKING:
@@ -34,81 +37,6 @@ if TYPE_CHECKING:
 # fields and the blob is base64 encoded (which alone adds ~33% in size).
 # (Also see `test_vlob_event_max_size_compatible_with_postgresql` test enforcing this).
 EVENT_VLOB_MAX_BLOB_SIZE = 4096
-
-
-OrganizationIDField = Annotated[
-    OrganizationID,
-    PlainValidator(lambda x: x if isinstance(x, OrganizationID) else OrganizationID(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
-]
-UserIDField = Annotated[
-    UserID,
-    PlainValidator(lambda x: x if isinstance(x, UserID) else UserID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
-]
-DeviceIDField = Annotated[
-    DeviceID,
-    PlainValidator(lambda x: x if isinstance(x, DeviceID) else DeviceID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
-]
-InvitationTokenField = Annotated[
-    InvitationToken,
-    PlainValidator(lambda x: x if isinstance(x, InvitationToken) else InvitationToken.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
-]
-InvitationStatusField = Annotated[
-    InvitationStatus,
-    PlainValidator(
-        lambda x: x if isinstance(x, InvitationStatus) else InvitationStatus.from_str(x)
-    ),
-    PlainSerializer(lambda x: x.str, return_type=str),
-]
-RealmRoleField = Annotated[
-    RealmRole,
-    PlainValidator(lambda x: x if isinstance(x, RealmRole) else RealmRole.from_str(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
-]
-VlobIDField = Annotated[
-    VlobID,
-    PlainValidator(lambda x: x if isinstance(x, VlobID) else VlobID.from_hex(x)),
-    PlainSerializer(lambda x: x.hex, return_type=str),
-]
-DateTimeField = Annotated[
-    DateTime,
-    PlainValidator(lambda x: x if isinstance(x, DateTime) else DateTime.from_rfc3339(x)),
-    PlainSerializer(lambda x: x.to_rfc3339(), return_type=str),
-]
-UserProfileField = Annotated[
-    UserProfile,
-    PlainValidator(lambda x: x if isinstance(x, UserProfile) else UserProfile.from_str(x)),
-    PlainSerializer(lambda x: x.str, return_type=str),
-]
-ActiveUsersLimitField = Annotated[
-    ActiveUsersLimit,
-    PlainValidator(
-        lambda x: x if isinstance(x, ActiveUsersLimit) else ActiveUsersLimit.from_maybe_int(x)
-    ),
-    PlainSerializer(lambda x: x.to_maybe_int(), return_type=int | None),
-]
-
-
-def base64_bytes_validator(val: object) -> bytes:
-    if isinstance(val, bytes):
-        return val
-    elif isinstance(val, bytearray):
-        return bytes(val)
-    elif isinstance(val, str):
-        return b64decode(val)
-    raise ValidationError()
-
-
-def base64_bytes_serializer(val: bytes) -> str:
-    return b64encode(val).decode("ascii")
-
-
-Base64Bytes = Annotated[
-    bytes, PlainValidator(base64_bytes_validator), PlainSerializer(base64_bytes_serializer)
-]
 
 
 class ClientBroadcastableEvent(ABC):
