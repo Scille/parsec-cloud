@@ -11,43 +11,56 @@
       }"
     >
       <div class="details">
-        <div class="details-item">
-          <ion-text class="details-item__title subtitles-sm">
-            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.name') }}
-          </ion-text>
-          <ion-text class="details-item__text subtitles-normal">
-            {{ user.humanHandle.label }}
-          </ion-text>
+        <div
+          class="details-item"
+          :class="{ revoked: user.isRevoked() }"
+        >
+          <div class="details-item-name">
+            <ion-text class="details-item-name__title subtitles-sm">
+              {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.name') }}
+            </ion-text>
+            <ion-text class="details-item-name__text subtitles-normal">
+              {{ user.humanHandle.label }}
+            </ion-text>
+          </div>
           <ion-chip
             v-if="user.isRevoked()"
             color="danger"
-            class="revoked"
+            class="revoked-chip"
           >
-            <ion-icon
-              class="revoked__icon"
-              :icon="ellipse"
-            />
             <ion-label class="subtitles-sm">
               {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revoked') }}
             </ion-label>
           </ion-chip>
         </div>
-        <div class="details-item">
-          <ion-text class="details-item__title subtitles-sm">
+
+        <!-- join on -->
+        <div class="details-item time-item">
+          <ion-text class="details-item-name__title subtitles-sm">
+            <ion-icon
+              class="details-item__icon"
+              :icon="personAdd"
+            />
             {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
           </ion-text>
-          <ion-text class="details-item__text body-lg">
+          <ion-text class="details-item-name__text body-lg">
             {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
           </ion-text>
         </div>
+
+        <!-- revoked since -->
         <div
-          class="details-item"
+          class="details-item time-item"
           v-if="user.isRevoked() && user.revokedOn"
         >
-          <ion-text class="details-item__title subtitles-sm">
-            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}
+          <ion-text class="details-item-name__title">
+            <ion-icon
+              class="details-item__icon body-lg"
+              :icon="personRemove"
+            />
+            <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}</span>
           </ion-text>
-          <ion-text class="details-item__text body-lg">
+          <ion-text class="details-item-name__text body-lg">
             {{ $msTranslate(I18n.formatDate(user.revokedOn, 'short')) }}
           </ion-text>
         </div>
@@ -99,7 +112,7 @@ import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
-import { business, ellipse } from 'ionicons/icons';
+import { business, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
 const sharedWorkspaces: Ref<Array<SharedWithInfo>> = ref([]);
@@ -130,34 +143,71 @@ onMounted(async () => {
 .details {
   display: flex;
   margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
 
   .details-item {
     display: flex;
     flex-direction: column;
-    width: 50%;
+    flex-shrink: 0;
+    width: calc(50% - 0.5rem);
     gap: 0.5rem;
 
-    &__title {
-      color: var(--parsec-color-light-secondary-text);
+    &.revoked {
+      width: 100%;
+      flex-direction: row;
+      gap: 1rem;
+      margin-bottom: 1rem;
     }
 
-    &__text {
-      color: var(--parsec-color-light-primary-800);
+    &-name {
+      margin: auto 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+
+      &__title {
+        color: var(--parsec-color-light-secondary-text);
+      }
+
+      &__text {
+        color: var(--parsec-color-light-primary-800);
+      }
     }
 
-    .revoked {
+    .revoked-chip {
       display: flex;
       gap: 0.5rem;
       align-items: center;
+      align-self: end;
       justify-content: center;
       width: 5.5rem;
       padding: 0.125rem;
       min-height: 0;
       border-radius: var(--parsec-radius-6);
       margin: 0;
+      height: fit-content;
+    }
 
-      &__icon {
-        font-size: 0.375rem;
+    &.time-item {
+      background: var(--parsec-color-light-secondary-background);
+      padding: 0.75rem;
+      border: 1px solid var(--parsec-color-light-secondary-premiere);
+      border-radius: var(--parsec-radius-6);
+
+      .details-item__icon {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      .details-item-name__title {
+        color: var(--parsec-color-light-secondary-hard-grey);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .details-item-name__text {
+        color: var(--parsec-color-light-primary-800);
       }
     }
   }
