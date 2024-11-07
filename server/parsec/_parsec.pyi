@@ -70,7 +70,6 @@ from parsec._parsec_pyi.ids import (
     InvitationToken,
     OrganizationID,
     SequesterServiceID,
-    ShamirRevealToken,
     UserID,
     VlobID,
 )
@@ -160,7 +159,6 @@ __all__ = [
     "EnrollmentID",
     "BootstrapToken",
     "InvitationToken",
-    "ShamirRevealToken",
     "GreetingAttemptID",
     # Addrs
     "ParsecAddr",
