@@ -209,7 +209,7 @@
         "acceptTOS": {
             "label": "En utilisant Parsec, j'accepte les",
             "tos": "Conditions Générales de Vente et d'Utilisation ",
-            "tosLink": "https://parsec.cloud/wp-content/uploads/2024/09/CGVU-Parsec.pdf",
+            "tosLink": "https://parsec.cloud/cgvu-parsec/",
             "and": "et la ",
             "privacyPolicy": "Politique de Confidentialité",
             "privacyPolicyLink": "https://parsec.cloud/fr/politique-de-confidentialite/",
