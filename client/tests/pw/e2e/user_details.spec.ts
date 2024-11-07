@@ -7,10 +7,14 @@ import { msTest } from '@tests/pw/helpers/fixtures';
 async function openModalWithUser(usersPage: Page, userIndex: number): Promise<Locator> {
   await expect(usersPage.locator('.user-details-modal')).toBeHidden();
   const user = usersPage.locator('#users-page-user-list').getByRole('listitem').nth(userIndex);
+  const isRevoked = (await user.locator('.user-status').innerText()) === 'Revoked';
   await user.hover();
   await user.locator('.options-button').click();
   const popover = usersPage.locator('.user-context-menu');
-  await popover.getByRole('listitem').nth(3).click();
+  await popover
+    .getByRole('listitem')
+    .nth(isRevoked ? 1 : 3)
+    .click();
   const modal = usersPage.locator('.user-details-modal');
   await expect(modal).toBeVisible();
   return modal;
@@ -21,11 +25,11 @@ msTest('User details modal', async ({ usersPage }) => {
 
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
   const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
-  await expect(detailsItems.nth(0).locator('.details-item__title')).toHaveText('Name');
+  await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
   // cspell:disable-next-line
-  await expect(detailsItems.nth(0).locator('.details-item__text')).toHaveText('Cernd');
-  await expect(detailsItems.nth(1).locator('.details-item__title')).toHaveText('Joined');
-  await expect(detailsItems.nth(1).locator('.details-item__text')).toHaveText(/^now|< 1 minute$/);
+  await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Cernd');
+  await expect(detailsItems.nth(1).locator('.details-item-name__title')).toHaveText('Joined');
+  await expect(detailsItems.nth(1).locator('.details-item-name__text')).toHaveText(/^now|< 1 minute$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
   await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.item-container__name')).toHaveText([
@@ -36,14 +40,18 @@ msTest('User details modal', async ({ usersPage }) => {
 });
 
 msTest('User details modal no common workspaces', async ({ usersPage }) => {
-  const modal = await openModalWithUser(usersPage, 4);
+  const modal = await openModalWithUser(usersPage, 2);
 
   await expect(modal.locator('.ms-modal-header__title')).toHaveText('User details');
   const detailsItems = modal.locator('.ms-modal-content').locator('.details-item');
-  await expect(detailsItems.nth(0).locator('.details-item__title')).toHaveText('Name');
-  await expect(detailsItems.nth(0).locator('.details-item__text')).toHaveText('Patches');
-  await expect(detailsItems.nth(1).locator('.details-item__title')).toHaveText('Joined');
-  await expect(detailsItems.nth(1).locator('.details-item__text')).toHaveText('Oct 6, 2009');
+  await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
+  // cspell:disable-next-line
+  await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Arthas Menethil');
+  await expect(detailsItems.nth(0).locator('.revoked-chip')).toBeVisible();
+  await expect(detailsItems.nth(1).locator('.details-item-name__title')).toHaveText('Joined');
+  await expect(detailsItems.nth(1).locator('.details-item-name__text')).toHaveText('Jul 3, 2002');
+  await expect(detailsItems.nth(2).locator('.details-item-name__title')).toHaveText('Revoked since');
+  await expect(detailsItems.nth(2).locator('.details-item-name__text')).toHaveText('Apr 7, 2022');
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');
