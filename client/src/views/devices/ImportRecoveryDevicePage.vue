@@ -1,11 +1,11 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <!-- step 1: recovery file -->
   <div
     v-if="state === ImportDevicePageState.Start"
     class="recovery-content"
   >
+    <!-- step 1: recovery file -->
     <div class="recovery-header">
       <ion-title class="recovery-header__title title-h1">
         {{ $msTranslate('ImportRecoveryDevicePage.titles.forgottenPassword') }}

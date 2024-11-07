@@ -100,6 +100,8 @@
     },
     "HomePage": {
         "topbar": {
+            "backToList": "Return to organizations",
+            "backToLogin": "Return to login",
             "settings": "Settings",
             "contactUs": "Contact us",
             "documentation": "Documentation",
@@ -152,7 +154,6 @@
             "joinOrganizationSubtitle": "I received an invitation to join an organization"
         },
         "organizationLogin": {
-            "backToList": "Return to organizations",
             "forgottenPassword": "Forgot your password?",
             "emailLabel": "Email",
             "passwordLabel": "Password",
