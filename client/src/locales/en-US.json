@@ -1064,7 +1064,8 @@
                 "name": "Name",
                 "joined": "Joined",
                 "commonWorkspaces": "Shared workspaces",
-                "revoked": "Revoked"
+                "revoked": "Revoked",
+                "revokedSince": "Revoked since"
             },
             "actions": {
                 "close": "Close"

@@ -1064,7 +1064,8 @@
                 "name": "Nom",
                 "joined": "Rejoint",
                 "commonWorkspaces": "Espaces de travail communs",
-                "revoked": "Révoqué"
+                "revoked": "Révoqué",
+                "revokedSince": "Révoqué depuis le"
             },
             "actions": {
                 "close": "Fermer"

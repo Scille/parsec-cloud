@@ -40,6 +40,17 @@
             {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
           </ion-text>
         </div>
+        <div
+          class="details-item"
+          v-if="user.isRevoked() && user.revokedOn"
+        >
+          <ion-text class="details-item__title subtitles-sm">
+            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}
+          </ion-text>
+          <ion-text class="details-item__text body-lg">
+            {{ $msTranslate(I18n.formatDate(user.revokedOn, 'short')) }}
+          </ion-text>
+        </div>
       </div>
 
       <ion-list class="workspace">
@@ -83,7 +94,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, formatTimeSince } from 'megashark-lib';
+import { MsModal, formatTimeSince, I18n } from 'megashark-lib';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
