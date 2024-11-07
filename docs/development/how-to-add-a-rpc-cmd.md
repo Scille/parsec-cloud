@@ -92,7 +92,12 @@ error[E0425]: cannot find function `rep_dummy_rep_without_fields` in module `dum
 
 As for the content, the goal of these serialization tests is to go from bytes to the tested type, assert it's OK and back to bytes and assert it's adding up.
 
-On how to generate the bytes see [here](generate_blob.md) and [there](../rfcs/1009-hexstring-format.md)
+On how to generate the bytes you can use [this script](../../misc/test_expected_payload_cooker.py)
+
+> TLDR :
+> - add `println!("***expected: {:?}", expected.dump().unwrap());` in each new test
+> - execute `$ cargo nextest run -p libparsec_protocol 2>&1 | python ./misc/test_expected_payload_cooker.py`
+> - copy paste the output
 
 ## Server-side implementation
 
