@@ -208,11 +208,12 @@ jobs:
       #   sqlfluff in `test-rust-linux` to do the libparsec checks.
       # - `eslint`: Requires to have the Javascript GUI project installed, so run
       #   instead in `test-web-app`.
+      # - `powrap`: Run in `docs`
       - uses: ./.github/actions/use-pre-commit
         with:
           config-file: ${{ steps.patched-pre-commit-config.outputs.path }}
         env:
-          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint,deptry,sqlfluff
+          SKIP: clippy,fmt,cspell,ruff,black,pyright,eslint,deptry,sqlfluff,powrap
         timeout-minutes: 5
 
   python:

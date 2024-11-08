@@ -42,6 +42,10 @@ jobs:
           project-path: ./docs
         timeout-minutes: 10
 
+      - name: Install gettext (required by powrap)
+        run: sudo apt-get install -y gettext
+        timeout-minutes: 5
+
       - name: Install docs deps
         run: |
           poetry --directory ./docs env info
@@ -52,6 +56,11 @@ jobs:
         run: poetry run make --environment-overrides intl-fr
         working-directory: docs
         timeout-minutes: 2
+
+      - name: Wrap `*.po` files
+        run: poetry run make --environment-overrides wrap
+        working-directory: docs
+        timeout-minutes: 1
 
       - name: Check if `*.po` were modified
         shell: bash
