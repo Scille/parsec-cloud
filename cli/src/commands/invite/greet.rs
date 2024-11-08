@@ -62,8 +62,8 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             step5_device(ctx).await
         }
         InviteListItem::ShamirRecovery { .. } => {
-            // See: https://github.com/Scille/parsec-cloud/issues/8841
-            todo!("Implement shamir recovery greeting");
+            // TODO: https://github.com/Scille/parsec-cloud/issues/8841
+            Err(anyhow::anyhow!("Shamir recovery greeting not implemented"))
         }
     }
 }

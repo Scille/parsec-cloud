@@ -262,8 +262,11 @@ pub async fn claimer_retrieve_info(
                 recipients,
                 threshold,
             } => {
-                // See https://github.com/Scille/parsec-cloud/issues/8841
-                todo!("Implement UserOrDeviceClaimInitialCtx::Shamir {recipients:?} {threshold}")
+                // TODO: https://github.com/Scille/parsec-cloud/issues/8841
+                Err(anyhow::anyhow!(
+                    "Shamir recovery greeting not implemented {recipients:?} {threshold}"
+                )
+                .into())
             }
         },
         bad_rep @ Rep::UnknownStatus { .. } => {
