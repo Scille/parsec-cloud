@@ -168,7 +168,7 @@ const options = {
     guid: '2f56a772-db54-4a32-b264-28c42970f684',
   },
 
-  afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'electron-builder-notarize',
+  afterSign: OPTS.sign === false || OPTS.platform !== 'darwin' ? undefined : 'scripts/after-sign.js',
 
   mac: {
     target: 'default',
