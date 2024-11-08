@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { mockLibParsec } from '@tests/component/support/mocks';
-import { it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 mockLibParsec();
 

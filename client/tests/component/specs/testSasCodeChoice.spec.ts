@@ -3,6 +3,7 @@
 import SasCodeChoice from '@/components/sas-code/SasCodeChoice.vue';
 import { IonButton } from '@ionic/vue';
 import { VueWrapper, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Sas code choice', () => {
   let wrapper: VueWrapper;

@@ -4,6 +4,7 @@ import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { mockI18n } from '@tests/component/support/mocks';
 import { I18n } from 'megashark-lib';
+import { beforeEach } from 'vitest';
 
 beforeEach(() => {
   I18n.init({

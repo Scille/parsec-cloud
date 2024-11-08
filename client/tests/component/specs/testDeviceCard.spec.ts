@@ -4,7 +4,7 @@ import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Device Card', () => {
   beforeEach(() => {

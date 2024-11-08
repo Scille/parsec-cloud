@@ -169,11 +169,6 @@ jobs:
         uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
         timeout-minutes: 2
 
-      - name: Patch cannot install cypress on lxd
-        run: npm remove cypress{,-file-upload,-real-events,-vite}
-        working-directory: client
-        timeout-minutes: 2
-
       - name: Patch snapcraft for nightly build
         if: inputs.nightly_build
         run:

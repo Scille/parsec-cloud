@@ -26,7 +26,7 @@ export async function getFilesFromDrop(event: DragEvent, path: FsPath): Promise<
     const files: File[] = [];
 
     /*
-      In some cases (Playwright, Cypress, old browsers, ...), `webkitGetAsEntry`
+      In some cases (Playwright, old browsers, ...), `webkitGetAsEntry`
       will fail. In those cases, we use the file list. It's a lower API and
       doesn't allow us to travel the tree, but it's good enough as a backup.
     */

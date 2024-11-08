@@ -5,7 +5,7 @@ import appEnUS from '@/locales/en-US.json';
 import appFrFR from '@/locales/fr-FR.json';
 import { Path } from '@/parsec';
 import { I18n } from 'megashark-lib';
-import { it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('File', () => {
   it('test get extension', () => {

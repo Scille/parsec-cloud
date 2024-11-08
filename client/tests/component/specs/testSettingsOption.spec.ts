@@ -2,6 +2,7 @@
 
 import SettingsOption from '@/components/settings/SettingsOption.vue';
 import { mount, VueWrapper } from '@vue/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Setting Option', () => {
   let wrapper: VueWrapper;

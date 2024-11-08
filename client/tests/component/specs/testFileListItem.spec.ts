@@ -9,7 +9,7 @@ import FileListItem from '@/components/files/FileListItem.vue';
 import { FileType } from '@/parsec';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('File List Item', () => {
   beforeEach(() => {

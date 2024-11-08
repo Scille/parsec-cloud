@@ -9,10 +9,6 @@ export function isDesktop(): boolean {
   return window.isDesktop();
 }
 
-export function isCypress(): boolean {
-  return 'Cypress' in window;
-}
-
 export function isWeb(): boolean {
   return window.getPlatform() === Platform.Web;
 }
@@ -41,9 +37,9 @@ export function usesTestbed(): boolean {
 // Currently, this can be used on web, since the bindings are not fully
 // implemented, but it could also prove useful when in a testing environment.
 export function needsMocks(): boolean {
-  return !isDesktop() || isCypress();
+  return !isDesktop();
 }
 
 export function isElectron(): boolean {
-  return isPlatform('electron') && !('Cypress' in window);
+  return isPlatform('electron');
 }

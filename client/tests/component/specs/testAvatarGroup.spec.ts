@@ -3,6 +3,7 @@
 import AvatarGroup from '@/components/workspaces/AvatarGroup.vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
 describe('User Avatar', () => {
   it('Display avatar for user', () => {

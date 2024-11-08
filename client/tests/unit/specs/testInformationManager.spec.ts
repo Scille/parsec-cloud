@@ -10,7 +10,7 @@ import {
   PresentationMode,
 } from '@/services/informationManager';
 import { MsReportTheme } from 'megashark-lib';
-import { vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Information Manager', () => {
   let informationManager: InformationManager;

@@ -111,7 +111,7 @@ async function setupApp(): Promise<void> {
     const configDir = await libparsec.getDefaultConfigDir();
     const dataBaseDir = await libparsec.getDefaultDataBaseDir();
     const mountpointBaseDir = await libparsec.getDefaultMountpointBaseDir();
-    const isDesktop = !('TESTING' in window) && !('Cypress' in window) && isPlatform('electron');
+    const isDesktop = !('TESTING' in window) && isPlatform('electron');
     const platform = await libparsec.getPlatform();
     const isLinux = isDesktop && platform === Platform.Linux;
 
@@ -162,7 +162,7 @@ async function setupApp(): Promise<void> {
   // - dev with a testbed Parsec server with the default devices
   // - dev or prod where devices are fetched from the local storage
   // - tests with Playwright where the testbed instantiation is done by Playwright
-  if (('TESTING' in window && window.TESTING) || 'Cypress' in window) {
+  if ('TESTING' in window && window.TESTING) {
     //  handle the testbed and provides the configPath
     window.nextStageHook = (): any => {
       return [libparsec, nextStage];

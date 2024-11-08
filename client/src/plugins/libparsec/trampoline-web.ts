@@ -22,7 +22,7 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
   // 3. The special solution ಠ_ಠ
   //
   // Solution 1 is not great given it means we need to compile electron bindings
-  // for running Vitest tests (while Cypress tests require to compile web bindings).
+  // for running Vitest tests (while playwright tests require to compile web bindings).
   //
   // Solution 2 is probably a mess: Vitest doesn't provide the web APIs, but
   // libparsec relies on them to send HTTP requests to the testbed server (so
@@ -30,7 +30,7 @@ export async function LoadWebLibParsecPlugin(): Promise<any> {
   //
   // Hence we go with solution 3: prevent use of libparsec from Vitest.
   if (import.meta.env.VITEST) {
-    throw new Error('libparsec is not available with Vitest, use Cypress instead !');
+    throw new Error('libparsec is not available with Vitest, use playwright instead !');
   }
 
   await init_module();

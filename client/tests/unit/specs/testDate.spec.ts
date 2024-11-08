@@ -2,7 +2,7 @@
 
 import { DateTime } from 'luxon';
 import { I18n, formatTimeSince } from 'megashark-lib';
-import { it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Date formatting', () => {
   beforeEach(() => {

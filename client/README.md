@@ -47,16 +47,6 @@ npx playwright install --with-deps
 Then, run the tests with:
 
 ```bash
-npm run pw:e2e:headless
-```
-
-#### Cypress (legacy)
-
-Most of the Cypress tests have been migrated to Playwright.
-
-You can run the remaining ones with:
-
-```bash
 npm run test:e2e:headless
 ```
 

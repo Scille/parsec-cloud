@@ -4,6 +4,7 @@ import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
 import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
 describe('User Avatar', () => {
   it('Display avatar for user', () => {

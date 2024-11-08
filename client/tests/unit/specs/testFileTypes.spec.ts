@@ -3,7 +3,7 @@
 import { detectFileContentType, FileContentType } from '@/common/fileTypes';
 import fs from 'fs';
 import path from 'path';
-import { it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('File types detection', async () => {
   it.each([

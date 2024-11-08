@@ -2,7 +2,7 @@
 
 import { DataCache } from '@/common/cache';
 import { DateTime } from 'luxon';
-import { it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Data cache', () => {
   beforeEach(() => {

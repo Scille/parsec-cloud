@@ -6,6 +6,7 @@ import { IonAvatar } from '@ionic/vue';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Workspace List Item', () => {
   let wrapper: VueWrapper;

@@ -6,6 +6,7 @@ import { UserProfile } from '@/parsec';
 import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import { mount } from '@vue/test-utils';
 import { DateTime } from 'luxon';
+import { describe, expect, it } from 'vitest';
 
 describe('User Card', () => {
   it('Display item for user', () => {
