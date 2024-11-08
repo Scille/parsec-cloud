@@ -160,9 +160,10 @@ jobs:
       - name: Apply version.patch
         run: git apply --allow-empty ${{ runner.temp }}/version.patch/version.patch
 
+      # In case this step timeout, check the status of snapcraft.io at https://status.snapcraft.io/
       - name: Install snapcraft
         uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
-        timeout-minutes: 1
+        timeout-minutes: 15
 
       - name: Setup LXD
         uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
