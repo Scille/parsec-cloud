@@ -106,8 +106,8 @@ impl SigningKey {
         PyBytes::new_bound(py, self.0.sign_only_signature(data).as_slice())
     }
 
-    fn encode(&self) -> [u8; libparsec_types::SigningKey::SIZE] {
-        self.0.to_bytes()
+    fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.to_bytes())
     }
 }
 
@@ -293,8 +293,8 @@ impl PrivateKey {
         }
     }
 
-    fn encode(&self) -> [u8; libparsec_types::PrivateKey::SIZE] {
-        self.0.to_bytes()
+    fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.to_bytes())
     }
 
     fn generate_shared_secret_key(&self, peer_public_key: &PublicKey) -> SecretKey {
@@ -335,8 +335,8 @@ impl PublicKey {
         Ok(PyBytes::new_bound(py, &self.0.encrypt_for_self(bytes)))
     }
 
-    fn encode(&self) -> &[u8] {
-        self.0.as_ref()
+    fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, self.0.as_ref())
     }
 }
 
