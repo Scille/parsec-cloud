@@ -410,6 +410,7 @@ noreferrer
 noreply
 noserver
 nosetests
+notarytool
 notbase
 NOTIFS
 notr

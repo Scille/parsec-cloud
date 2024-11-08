@@ -81,7 +81,6 @@
         "cypress-real-events": "^1.11.0",
         "cypress-vite": "^1.4.2",
         "dotenv": "^16.4.5",
-        "electron-builder-notarize": "^1.5.2",
         "esbuild": "^0.19.5",
         "eslint": "^8.53.0",
         "eslint-config-standard-with-typescript": "^39.1.1",
