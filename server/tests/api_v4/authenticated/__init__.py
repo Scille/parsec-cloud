@@ -32,3 +32,4 @@ from .test_invite_greeter_start_greeting_attempt import *  # noqa
 from .test_invite_greeter_cancel_greeting_attempt import *  # noqa
 from .test_invite_greeter_step import *  # noqa
 from .test_invite_complete import *  # noqa
+from .test_list_frozen_users import *  # noqa
