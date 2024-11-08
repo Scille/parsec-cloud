@@ -30,7 +30,7 @@ module.exports = {
     project: `${BASE_DIR}/tsconfig.eslint.json`,
     extraFileExtensions: ['.vue'],
   },
-  plugins: ['vue', 'cypress', 'no-relative-import-paths'],
+  plugins: ['vue', 'no-relative-import-paths'],
   rules: {
     'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',

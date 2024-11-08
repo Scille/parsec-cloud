@@ -7,6 +7,7 @@ mockRouter();
 
 import HeaderBreadcrumbs, { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import { mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Header breadcrumbs', () => {
   beforeEach(() => {

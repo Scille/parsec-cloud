@@ -3,7 +3,7 @@
 import { formatExpirationTime, generateTrialOrganizationName, getDurationBeforeExpiration, isExpired } from '@/common/organization';
 import { DateTime, Duration } from 'luxon';
 import { Translatable } from 'megashark-lib';
-import { it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('Trial organization', () => {
   beforeEach(() => {

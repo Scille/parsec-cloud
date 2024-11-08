@@ -2,6 +2,7 @@
 
 import SasCodeProvide from '@/components/sas-code/SasCodeProvide.vue';
 import { VueWrapper, mount } from '@vue/test-utils';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Sas code provide', () => {
   let wrapper: VueWrapper;

@@ -1,6 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { I18n, PasswordValidation } from 'megashark-lib';
+import { describe, expect, it } from 'vitest';
 
 describe('Password validation', () => {
   it('Checks password strength', () => {

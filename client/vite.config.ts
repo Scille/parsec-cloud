@@ -14,9 +14,7 @@ const plugins: PluginOption[] = [vue(), topLevelAwait()];
 let platform: string;
 
 // Vite only expose in `import.meta.env` the environ variables with a `PARSEC_APP_` prefix,
-// however testbed server url must also be configured in Cypress (you guessed it: where
-// only `CYPRESS_` prefixed variables are exposed).
-// So we want the user to only have to set `TESTBED_SERVER` for both Vite and Cypress.
+// but to make it a bit easier, we're also letting the user provide TESTBED_SERVER
 if (process.env.PARSEC_APP_TESTBED_SERVER || process.env.TESTBED_SERVER) {
   // Why this if guard ? Guess what kiddo !
   // Setting `process.env.PARSEC_APP_TESTBED_SERVER = undefined` got chewed up

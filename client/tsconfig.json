@@ -14,7 +14,7 @@
         "useDefineForClassFields": true,
         "sourceMap": true,
         "baseUrl": ".",
-        "types": ["node", "cypress", "vite/client", "cypress-file-upload", "cypress-real-events"],
+        "types": ["node", "vite/client"],
         "paths": {
             "@/*": ["src/*"],
             "@tests/*": ["tests/*"]

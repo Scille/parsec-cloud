@@ -136,8 +136,7 @@ function vitePluginWasmPack(
           // Patch the load path according to the asset directory
 
           let wasmFileName = `${crate.name}_bg.wasm`;
-          // Cypress uses `vite build` so it appears as production
-          if (configIsProduction && !process.env.CYPRESS) {
+          if (configIsProduction) {
             const content = fs.readFileSync(getWasmFilePath(crate));
             wasmFileName = `${crate.name}_bg-${generateDigest(content)}.wasm`;
           }
@@ -189,13 +188,6 @@ function vitePluginWasmPack(
 
     // Copy all .wasm files in the asset folder
     buildEnd(): void {
-      // Cypress is not able to serve assets (everything is supposed to be inlined
-      // in the final .js test file).
-      // If you wonder how the wasm file is provided in this case, have a look at
-      // `fetch_libparsec_wasm` task in `cypress.config.ts` ;-)
-      if (process.env.CYPRESS) {
-        return;
-      }
       for (const crate of crates) {
         const content = fs.readFileSync(getWasmFilePath(crate));
         const wasmFileName = `${crate.name}_bg-${generateDigest(content)}.wasm`;

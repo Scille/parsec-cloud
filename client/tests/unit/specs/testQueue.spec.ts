@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { FIFO } from '@/common/queue';
-import { it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Queues', () => {
   it('Test FIFO', async () => {

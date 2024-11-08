@@ -3,6 +3,7 @@
 import { IonText } from '@ionic/vue';
 import { VueWrapper, mount } from '@vue/test-utils';
 import { MsWizardStepper } from 'megashark-lib';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 describe('Wizard stepper', () => {
   let wrapper: VueWrapper;

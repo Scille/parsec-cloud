@@ -5,6 +5,7 @@ import { getDefaultProvideConfig } from '@tests/component/support/mocks';
 import TagProfile from '@/components/users/TagProfile.vue';
 import { UserProfile } from '@/parsec';
 import { mount } from '@vue/test-utils';
+import { describe, expect, it } from 'vitest';
 
 describe('User Avatar', () => {
   it('Display avatar for user', () => {

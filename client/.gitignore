@@ -37,9 +37,6 @@ npm-debug.log*
 /electron/out/
 # `trampoline.ts` is set during build depending on the target
 /src/plugins/libparsec/trampoline.ts
-# Cypress captures on test error
-/tests/e2e/screenshots
-/tests/e2e/videos
 # Vite pre-build deps
 /.vite/deps
 /test-results/

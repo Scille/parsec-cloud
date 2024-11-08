@@ -3,7 +3,7 @@
 import { canChangeRole, compareWorkspaceRoles } from '@/components/workspaces/utils';
 import { UserProfile, WorkspaceRole } from '@/parsec';
 import { I18n } from 'megashark-lib';
-import { it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 describe('Workspace role', () => {
   it.each([

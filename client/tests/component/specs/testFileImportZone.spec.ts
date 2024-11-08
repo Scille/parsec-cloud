@@ -4,6 +4,8 @@ import { mockLibParsec } from '@tests/component/support/mocks';
 
 mockLibParsec();
 
+import { describe, it } from 'vitest';
+
 describe('File Drop Zone', () => {
   it('Handles dropped file', async () => {
     // A real pain to mock
