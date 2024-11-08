@@ -28,6 +28,7 @@ from parsec.components.postgresql.user_get_user_info import (
     user_get_user_info,
     user_get_user_info_from_email,
 )
+from parsec.components.postgresql.user_list_frozen_users import user_list_frozen_users
 from parsec.components.postgresql.user_list_users import user_list_users
 from parsec.components.postgresql.user_revoke_user import user_revoke_user
 from parsec.components.postgresql.user_test_dump_current_users import user_test_dump_current_users
@@ -53,6 +54,7 @@ from parsec.components.user import (
     UserFreezeUserBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
+    UserListFrozenUsersBadOutcome,
     UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
@@ -267,6 +269,13 @@ class PGUserComponent(BaseUserComponent):
         self, conn: AsyncpgConnection, organization_id: OrganizationID
     ) -> list[UserInfo] | UserListUsersBadOutcome:
         return await user_list_users(conn, organization_id)
+
+    @override
+    @no_transaction
+    async def list_frozen_users(
+        self, conn: AsyncpgConnection, organization_id: OrganizationID, device_id: DeviceID
+    ) -> list[UserID] | UserListFrozenUsersBadOutcome:
+        return await user_list_frozen_users(conn, organization_id, device_id)
 
     @override
     @no_transaction

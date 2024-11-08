@@ -40,6 +40,7 @@ from parsec.components.user import (
     UserGetActiveDeviceVerifyKeyBadOutcome,
     UserGetCertificatesAsUserBadOutcome,
     UserInfo,
+    UserListFrozenUsersBadOutcome,
     UserListUsersBadOutcome,
     UserRevokeUserStoreBadOutcome,
     UserRevokeUserValidateBadOutcome,
@@ -679,6 +680,31 @@ class MemoryUserComponent(BaseUserComponent):
                     frozen=user.is_frozen,
                 )
             )
+
+        return users
+
+    @override
+    async def list_frozen_users(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> list[UserID] | UserListFrozenUsersBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return UserListFrozenUsersBadOutcome.ORGANIZATION_NOT_FOUND
+        try:
+            device = org.devices[device_id]
+            user = org.users[device.cooked.user_id]
+
+        except KeyError:
+            return UserListFrozenUsersBadOutcome.AUTHOR_NOT_FOUND
+        if user.current_profile != UserProfile.ADMIN:
+            return UserListFrozenUsersBadOutcome.AUTHOR_NOT_ALLOWED
+
+        # TODO check author is admin
+        users = []
+        for user in org.users.values():
+            if user.is_frozen:
+                users.append(user.cooked.user_id)
 
         return users
 

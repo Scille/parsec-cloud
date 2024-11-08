@@ -344,6 +344,14 @@ class UserAcceptTosBadOutcome(BadOutcomeEnum):
     TOS_MISMATCH = auto()
 
 
+class UserListFrozenUsersBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    AUTHOR_NOT_ALLOWED = auto()
+    AUTHOR_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    AUTHOR_REVOKED = auto()
+
+
 class BaseUserComponent:
     #
     # Public methods
@@ -460,6 +468,11 @@ class BaseUserComponent:
         author: DeviceID,
         tos_updated_on: DateTime,
     ) -> None | UserAcceptTosBadOutcome:
+        raise NotImplementedError
+
+    async def list_frozen_users(
+        self, organization_id: OrganizationID, device_id: DeviceID
+    ) -> list[UserID] | UserListFrozenUsersBadOutcome:
         raise NotImplementedError
 
     #
@@ -698,3 +711,24 @@ class BaseUserComponent:
                 return tos_cmds.latest.tos_accept.RepNoTos()
             case UserAcceptTosBadOutcome.TOS_MISMATCH:
                 return tos_cmds.latest.tos_accept.RepTosMismatch()
+
+    @api
+    async def api_list_frozen_users(
+        self,
+        client_ctx: AuthenticatedClientContext,
+        req: authenticated_cmds.latest.list_frozen_users.Req,
+    ) -> authenticated_cmds.latest.list_frozen_users.Rep:
+        outcome = await self.list_frozen_users(client_ctx.organization_id, client_ctx.device_id)
+        match outcome:
+            case list() as frozen_users:
+                return authenticated_cmds.latest.list_frozen_users.RepOk(frozen_users)
+            case UserListFrozenUsersBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case UserListFrozenUsersBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case UserListFrozenUsersBadOutcome.AUTHOR_NOT_FOUND:
+                client_ctx.author_not_found_abort()
+            case UserListFrozenUsersBadOutcome.AUTHOR_REVOKED:
+                client_ctx.author_revoked_abort()
+            case UserListFrozenUsersBadOutcome.AUTHOR_NOT_ALLOWED:
+                return authenticated_cmds.latest.list_frozen_users.RepAuthorNotAllowed()
