@@ -97,14 +97,6 @@ repos:
       - id: shellcheck
         args: [--exclude=SC1090, --severity=warning]
 
-  # powrap, script to fix indentation of .po files.
-  #
-  # These files are located in ./docs/locale/fr/LC_MESSAGES/
-  - repo: https://git.afpy.org/AFPy/powrap
-    rev: 57a5dd9c3d7d479a5450b2ad4ab85f70efe8b961
-    hooks:
-      - id: powrap
-
   ########
   # Python
 
@@ -182,6 +174,18 @@ repos:
         types_or: [python, sql]
         # TODO: currently SQL embedded in Python server code is dirty, so we ignore it
         files: ^(server/parsec/components/postgresql/migrations/)|(libparsec/crates/platform_storage/src/native/)
+        require_serial: true
+        language: system
+
+      # powrap, script to fix indentation of .po files.
+      #
+      # - running with poetry in order to reuse environment from ./docs
+      # - using one-liner because pre-commit run script from the repo root directory
+      # - powrap is called via "make wrap" (see ./docs/Makefile)
+      - id: powrap
+        name: powrap (using `poetry --directory ./docs run make wrap`)
+        entry: poetry --directory ./docs run python -c 'import os;os.chdir("./docs");os.execlp("make", "make", "wrap");'
+        types: [pofile]
         require_serial: true
         language: system
 
