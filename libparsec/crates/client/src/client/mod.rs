@@ -2,6 +2,7 @@
 
 #![allow(dead_code)]
 
+mod list_frozen_users;
 mod recovery_device;
 mod shamir_setup_create;
 mod tos;
@@ -22,6 +23,7 @@ use std::{
 };
 
 pub use self::{
+    list_frozen_users::ClientListFrozenUsersError,
     tos::{ClientAcceptTosError, ClientGetTosError, Tos},
     workspace_bootstrap::ClientEnsureWorkspacesBootstrappedError,
     workspace_create::ClientCreateWorkspaceError,
@@ -301,6 +303,11 @@ impl Client {
         self.certificates_ops
             .list_users(skip_revoked, offset, limit)
             .await
+    }
+
+    /// List all frozen users.
+    pub async fn list_frozen_users(&self) -> Result<Vec<UserID>, ClientListFrozenUsersError> {
+        list_frozen_users::list_frozen_users(&self.cmds).await
     }
 
     /// List all devices for a given user.

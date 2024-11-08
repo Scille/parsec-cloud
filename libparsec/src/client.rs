@@ -2,13 +2,13 @@
 
 use std::{path::Path, sync::Arc};
 
-use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError,
     ClientGetTosError, ClientGetUserDeviceError, ClientListUserDevicesError, ClientListUsersError,
     ClientListWorkspaceUsersError, ClientRenameWorkspaceError, ClientRevokeUserError,
     ClientShareWorkspaceError, DeviceInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
+use libparsec_client::{ClientListFrozenUsersError, ServerConfig};
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
 use libparsec_types::prelude::*;
@@ -423,6 +423,18 @@ pub async fn client_list_users(
     let client = borrow_client(client)?;
 
     client.list_users(skip_revoked, None, None).await
+}
+
+/*
+ * List frozen users
+ */
+
+pub async fn client_list_frozen_users(
+    client: Handle,
+) -> Result<Vec<UserID>, ClientListFrozenUsersError> {
+    let client = borrow_client(client)?;
+
+    client.list_frozen_users().await
 }
 
 /*

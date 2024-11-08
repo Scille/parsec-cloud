@@ -2,6 +2,7 @@
 
 mod create_workspace;
 mod ensure_workspaces_bootstrapped;
+mod list_frozen_users;
 mod list_user_devices;
 mod list_users;
 mod list_workspace_users;

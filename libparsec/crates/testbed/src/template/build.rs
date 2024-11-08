@@ -330,7 +330,7 @@ impl TestbedTemplateBuilder {
         get_stuff(&self.stuff, key)
     }
 
-    /// Remove events you're not happy with (use it in conjuction with `TestbedEnv::customize`)
+    /// Remove events you're not happy with (use it in conjunction with `TestbedEnv::customize`)
     ///
     /// You are only able to remove client-side events, as server-side ones depend
     /// on each other (e.g. removing NewUser that creates a device used in ShareRealm).

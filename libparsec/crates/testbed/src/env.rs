@@ -937,7 +937,7 @@ pub async fn test_new_testbed(
 
     // 3) Finally register the testbed env
     let mut envs = TESTBED_ENVS.lock().expect("Mutex is poisoned");
-    // Config dir is used as discriminent by the testbed, hence we must make sure it
+    // Config dir is used as discriminant by the testbed, hence we must make sure it
     // is unique across the process to avoid concurrency issues
     static ENVS_COUNTER: AtomicUsize = AtomicUsize::new(0);
     let current = ENVS_COUNTER.fetch_add(1, Ordering::Relaxed);
