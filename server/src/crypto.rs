@@ -163,10 +163,6 @@ impl VerifyKey {
     fn encode<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new_bound(py, self.0.as_ref())
     }
-
-    fn __bytes__<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
-        PyBytes::new_bound(py, self.0.as_ref())
-    }
 }
 
 crate::binding_utils::gen_py_wrapper_class!(
