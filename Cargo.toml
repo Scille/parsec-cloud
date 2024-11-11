@@ -104,7 +104,7 @@ libparsec_zstd = { path = "libparsec/crates/zstd", default-features = false }
 
 # Third parties
 android_logger = { version = "0.13", default-features = false }
-anyhow = { version = "1.0.92", default-features = false }
+anyhow = { version = "1.0.93", default-features = false }
 argon2 = { version = "0.5.3", default-features = false }
 assert_cmd = { version = "2.0.16", default-features = false }
 async-broadcast = { version = "0.5.1", default-features = false }
@@ -148,7 +148,7 @@ jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
 keyring = { version = "2.3.3", default-features = false }
 lazy_static = { version = "1.5.0", default-features = false }
-libc = { version = "0.2.161", default-features = false }
+libc = { version = "0.2.162", default-features = false }
 libsodium-sys = { version = "0.2.7", default-features = false }
 libsqlite3-sys = { version = "0.26.0", default-features = false }
 log = { version = "0.4.22", default-features = false }
@@ -194,10 +194,10 @@ sodiumoxide = { version = "0.2.7", default-features = false }
 spinners = { version = "4.1.1", default-features = false }
 sqlx = { version = "0.7.2", default-features = false }
 syn = { version = "2.0.87", default-features = false }
-thiserror = { version = "1.0.67", default-features = false }
-tokio = { version = "1.41.0", default-features = false }
+thiserror = { version = "1.0.69", default-features = false }
+tokio = { version = "1.41.1", default-features = false }
 unicode-normalization = { version = "0.1.24", default-features = false }
-url = { version = "2.5.2", default-features = false }
+url = { version = "2.5.3", default-features = false }
 uuid = { version = "1.11.0", default-features = false }
 wasm-bindgen = { version = "0.2.95", default-features = false }
 wasm-bindgen-futures = { version = "0.4.45", default-features = false }
