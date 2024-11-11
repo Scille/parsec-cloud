@@ -21,7 +21,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
 
       - name: Generate cspell cache key
@@ -54,7 +54,7 @@ jobs:
 
       - name: Restore cspell cache
         id: cache
-        uses: actions/cache/restore@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
+        uses: actions/cache/restore@6849a6489940f00c2f30c0fb92c6274307ccb58a # pin v4.1.2
         with:
           path: |
             package-lock.json
@@ -74,7 +74,7 @@ jobs:
 
       - name: Check spelling in the repository
         id: cspell
-        uses: streetsidesoftware/cspell-action@934c74da3775ac844ec89503f666f67efb427fed # pin v6.8.1
+        uses: streetsidesoftware/cspell-action@9759be9ad475fe8145f8d2a1bf29a1c4d1c6f18d # pin v6.9.0
         with:
           config: .cspell/cspell.config.yml
           # Only check for changed files on a PR
@@ -91,7 +91,7 @@ jobs:
         if: >-
           steps.installation.outputs.previous-cache-hash != hashFiles('.cspellcache')
           && contains(github.ref, 'gh-readonly-queue') != 'true'
-        uses: actions/cache/save@3624ceb22c1c5a301c8db4169662070a689d9ea8 # pin v4.1.1
+        uses: actions/cache/save@6849a6489940f00c2f30c0fb92c6274307ccb58a # pin v4.1.2
         with:
           key: ${{ steps.cache-key.outputs.key }}
           path: |

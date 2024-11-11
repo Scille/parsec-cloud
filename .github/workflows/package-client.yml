@@ -83,12 +83,12 @@ jobs:
     runs-on: ubuntu-22.04
     name: ⚡ Package web app
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # pin v4.1.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -108,7 +108,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -137,7 +137,7 @@ jobs:
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
     if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
@@ -166,7 +166,7 @@ jobs:
         timeout-minutes: 15
 
       - name: Setup LXD
-        uses: canonical/setup-lxd@4e959f8e0d9c5feb27d44c5e4d9a330a782edee0 # pin v0.1.1
+        uses: canonical/setup-lxd@54a5806e490d92e207b57183cf111ed54bbdeff4 # pin v0.1.2
         timeout-minutes: 2
 
       - name: Patch cannot install cypress on lxd
@@ -210,7 +210,7 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
         with:
           tool: syft@0.84.0
 
@@ -259,12 +259,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           ref: ${{ inputs.commit_sha }}
         timeout-minutes: 5
 
-      - uses: actions/setup-node@0a44ba7841725637a19e28fa30b79a866c81b0a6  # pin v4.0.4
+      - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af  # pin v4.1.0
         with:
           node-version: ${{ env.node-version }}
         timeout-minutes: 2
@@ -400,7 +400,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
         with:
           tool: syft@0.84.0
 

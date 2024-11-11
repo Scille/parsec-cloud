@@ -54,7 +54,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
           sparse-checkout: |
             misc
@@ -138,7 +138,7 @@ jobs:
 
       - name: Publish wheel on PyPI
         if: steps.version.outputs.local == ''
-        uses: pypa/gh-action-pypi-publish@f7600683efdcb7656dec5b29656edb7bc586e597 # pin v1.10.3
+        uses: pypa/gh-action-pypi-publish@15c56dba361d8335944d31a2ecd17d700fc7bcbc # pin v1.12.2
         with:
           user: __token__
           password: ${{ secrets.PYPI_CREDENTIALS }}
