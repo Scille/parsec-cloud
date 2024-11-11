@@ -28,7 +28,7 @@ jobs:
   docker-server:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 3
 
       # Set up BuildKit Docker container builder to be able to build
@@ -45,7 +45,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install python
-        uses: actions/setup-python@19dfb7b659fa9e60c2f89c33335ab5f6f1792b6e  # pin v5.2.0
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b  # pin v5.3.0
         id: setup-python
         with:
           python-version: 3.12

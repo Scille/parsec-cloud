@@ -67,7 +67,7 @@ jobs:
         ports:
           - 6777:6777
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -102,7 +102,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
         with:
           tool: nextest@0.9.54, wasm-pack@0.12.1, cargo-deny@0.15.0
 
@@ -214,7 +214,7 @@ jobs:
     timeout-minutes: 60
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # pin v4.2.1
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         timeout-minutes: 5
 
       - name: Retrieve runner specs
@@ -263,7 +263,7 @@ jobs:
         timeout-minutes: 5
 
       # Install cargo nextest command
-      - uses: taiki-e/install-action@437c908c7e5ee18b63a261286cbe5147219f8a39 # pin v2.44.44
+      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
         with:
           tool: nextest@0.9.54
 
