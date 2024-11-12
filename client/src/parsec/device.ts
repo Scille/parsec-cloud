@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { needsMocks } from '@/parsec/environment';
-import { getClientConfig } from '@/parsec/internals';
+import { getClientConfig, wait } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -33,6 +33,7 @@ export async function exportRecoveryDevice(): Promise<Result<[string, Uint8Array
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientExportRecoveryDevice(handle, generateRecoveryDeviceLabel());
   } else {
+    await wait(300);
     return {
       ok: true,
       value: ['ABCDEF', new Uint8Array([0x6d, 0x65, 0x6f, 0x77])],

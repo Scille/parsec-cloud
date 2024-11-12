@@ -35,6 +35,7 @@
           </div>
 
           <ion-button
+            :disabled="processing"
             @click="exportDevice()"
             id="exportDevice"
           >
@@ -173,6 +174,7 @@ const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const orgId = ref('');
+const processing = ref(false);
 
 onMounted(async (): Promise<void> => {
   const clientInfo = await getClientInfo();
@@ -180,7 +182,9 @@ onMounted(async (): Promise<void> => {
 });
 
 async function exportDevice(): Promise<void> {
+  processing.value = true;
   const result = await exportRecoveryDevice();
+  processing.value = false;
   if (!result.ok) {
     const notificationMsg = 'ExportRecoveryDevicePage.errors.exportFailed';
     // toast atm but to be changed
