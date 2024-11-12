@@ -438,7 +438,7 @@ onMounted(async () => {
     Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced,
     async (event: Events, data?: EventData) => {
       if (event === Events.EntryUpdated) {
-        await listFolder();
+        await listFolder(true);
       } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
         await updateWorkspaceInfo(workspaceInfo.value.id);
       } else if (event === Events.EntrySynced) {
@@ -623,7 +623,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
       moveData.workspaceHandle === workspaceInfo.value?.handle &&
       (Path.areSame(dstPathParent, currentPath.value) || Path.areSame(srcPathParent, currentPath.value))
     ) {
-      await listFolder();
+      await listFolder(true);
     }
   } else if (state === FileOperationState.EntryCopied && operationData) {
     const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
@@ -633,7 +633,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
     const copyData = operationData as CopyData;
     const dstPathParent = await Path.parent(copyData.dstPath);
     if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(dstPathParent, currentPath.value)) {
-      await listFolder();
+      await listFolder(true);
     }
   } else if (state === FileOperationState.FolderCreated) {
     const folderData = stateData as FolderCreatedStateData;
@@ -720,14 +720,20 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
   return operations;
 });
 
-async function listFolder(): Promise<void> {
+async function listFolder(sameFolder = false): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
   if (!currentRouteIs(Routes.Documents)) {
     return;
   }
-  querying.value = true;
+  /*
+   * If the folder didn't change, we don't need to show a spinner
+   * as it will result in blinking.
+   */
+  if (!sameFolder) {
+    querying.value = true;
+  }
   const result = await parsec.statFolderChildren(workspaceInfo.value.handle, currentPath.value);
   if (result.ok) {
     const newFolders: FolderModel[] = [];
@@ -787,7 +793,9 @@ async function listFolder(): Promise<void> {
       PresentationMode.Toast,
     );
   }
-  querying.value = false;
+  if (!sameFolder) {
+    querying.value = false;
+  }
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
@@ -837,7 +845,7 @@ async function createFolder(): Promise<void> {
       PresentationMode.Toast,
     );
   }
-  await listFolder();
+  await listFolder(true);
 }
 
 async function onImportClicked(event: Event): Promise<void> {
@@ -937,7 +945,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       );
     }
   }
-  await listFolder();
+  await listFolder(true);
 }
 
 async function renameEntries(entries: EntryModel[]): Promise<void> {
