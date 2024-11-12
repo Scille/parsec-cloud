@@ -63,32 +63,37 @@ function getTrialServers(): Array<string> {
 const CLEAN_APP_VERSION = `${APP_VERSION.slice(0, APP_VERSION.indexOf('+') === -1 ? undefined : APP_VERSION.indexOf('+'))}`;
 const APP_VERSION_PREFIX = `v${CLEAN_APP_VERSION}`;
 
+async function openUrl(url: string): Promise<void> {
+  window.electronAPI.log('debug', `Opening ${url}`);
+  window.open(url, '_blank');
+}
+
 async function openDocumentationLink(): Promise<void> {
-  window.open(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }), '_blank');
+  await openUrl(I18n.translate({ key: 'MenuPage.documentationLink', data: { version: APP_VERSION_PREFIX } }));
 }
 
 async function openContactLink(): Promise<void> {
-  window.open(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: getSignUrl() } }), '_blank');
+  await openUrl(I18n.translate({ key: 'MenuPage.contactLink', data: { signUrl: getSignUrl() } }));
 }
 
 async function openLicenseLink(): Promise<void> {
-  window.open(I18n.translate({ key: 'app.licenseLink', data: { version: APP_VERSION_PREFIX } }), '_blank');
+  await openUrl(I18n.translate({ key: 'app.licenseLink', data: { version: APP_VERSION_PREFIX } }));
 }
 
 async function openChangelogLink(version?: string): Promise<void> {
-  window.open(I18n.translate({ key: 'app.history', data: { version: version ?? APP_VERSION_PREFIX } }), '_blank');
+  await openUrl(I18n.translate({ key: 'app.history', data: { version: version ?? APP_VERSION_PREFIX } }));
 }
 
 async function openSourcesLink(): Promise<void> {
-  window.open(I18n.translate('app.projectSources'), '_blank');
+  await openUrl(I18n.translate('app.projectSources'));
 }
 
 async function openDeveloperLink(): Promise<void> {
-  window.open(I18n.translate('app.developerLink'), '_blank');
+  await openUrl(I18n.translate('app.developerLink'));
 }
 
 async function openTOS(tosLink: string): Promise<void> {
-  window.open(tosLink, '_blank');
+  await openUrl(tosLink);
 }
 
 export const Env = {
