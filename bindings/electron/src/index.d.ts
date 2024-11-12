@@ -758,6 +758,25 @@ export type ClientInfoError =
   | ClientInfoErrorStopped
 
 
+// ClientListFrozenUsersError
+export interface ClientListFrozenUsersErrorAuthorNotAllowed {
+    tag: "AuthorNotAllowed"
+    error: string
+}
+export interface ClientListFrozenUsersErrorInternal {
+    tag: "Internal"
+    error: string
+}
+export interface ClientListFrozenUsersErrorOffline {
+    tag: "Offline"
+    error: string
+}
+export type ClientListFrozenUsersError =
+  | ClientListFrozenUsersErrorAuthorNotAllowed
+  | ClientListFrozenUsersErrorInternal
+  | ClientListFrozenUsersErrorOffline
+
+
 // ClientListUserDevicesError
 export interface ClientListUserDevicesErrorInternal {
     tag: "Internal"
@@ -2609,6 +2628,9 @@ export function clientGetUserDevice(
 export function clientInfo(
     client: number
 ): Promise<Result<ClientInfo, ClientInfoError>>
+export function clientListFrozenUsers(
+    client_handle: number
+): Promise<Result<Array<string>, ClientListFrozenUsersError>>
 export function clientListInvitations(
     client: number
 ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>

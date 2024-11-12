@@ -857,6 +857,30 @@ export type ClientInfoError =
   | ClientInfoErrorInternal
   | ClientInfoErrorStopped
 
+// ClientListFrozenUsersError
+export enum ClientListFrozenUsersErrorTag {
+    AuthorNotAllowed = 'ClientListFrozenUsersErrorAuthorNotAllowed',
+    Internal = 'ClientListFrozenUsersErrorInternal',
+    Offline = 'ClientListFrozenUsersErrorOffline',
+}
+
+export interface ClientListFrozenUsersErrorAuthorNotAllowed {
+    tag: ClientListFrozenUsersErrorTag.AuthorNotAllowed
+    error: string
+}
+export interface ClientListFrozenUsersErrorInternal {
+    tag: ClientListFrozenUsersErrorTag.Internal
+    error: string
+}
+export interface ClientListFrozenUsersErrorOffline {
+    tag: ClientListFrozenUsersErrorTag.Offline
+    error: string
+}
+export type ClientListFrozenUsersError =
+  | ClientListFrozenUsersErrorAuthorNotAllowed
+  | ClientListFrozenUsersErrorInternal
+  | ClientListFrozenUsersErrorOffline
+
 // ClientListUserDevicesError
 export enum ClientListUserDevicesErrorTag {
     Internal = 'ClientListUserDevicesErrorInternal',
@@ -3111,6 +3135,9 @@ export interface LibParsecPlugin {
     clientInfo(
         client: Handle
     ): Promise<Result<ClientInfo, ClientInfoError>>
+    clientListFrozenUsers(
+        client_handle: Handle
+    ): Promise<Result<Array<UserID>, ClientListFrozenUsersError>>
     clientListInvitations(
         client: Handle
     ): Promise<Result<Array<InviteListItem>, ListInvitationsError>>

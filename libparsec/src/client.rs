@@ -2,13 +2,14 @@
 
 use std::{path::Path, sync::Arc};
 
+use libparsec_client::ServerConfig;
 pub use libparsec_client::{
     ClientAcceptTosError, ClientCreateWorkspaceError, ClientGetCurrentSelfProfileError,
-    ClientGetTosError, ClientGetUserDeviceError, ClientListUserDevicesError, ClientListUsersError,
-    ClientListWorkspaceUsersError, ClientRenameWorkspaceError, ClientRevokeUserError,
-    ClientShareWorkspaceError, DeviceInfo, Tos, UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
+    ClientGetTosError, ClientGetUserDeviceError, ClientListFrozenUsersError,
+    ClientListUserDevicesError, ClientListUsersError, ClientListWorkspaceUsersError,
+    ClientRenameWorkspaceError, ClientRevokeUserError, ClientShareWorkspaceError, DeviceInfo, Tos,
+    UserInfo, WorkspaceInfo, WorkspaceUserAccessInfo,
 };
-use libparsec_client::{ClientListFrozenUsersError, ServerConfig};
 use libparsec_platform_async::event::{Event, EventListener};
 use libparsec_platform_device_loader::ChangeAuthentificationError;
 use libparsec_types::prelude::*;

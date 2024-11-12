@@ -525,3 +525,20 @@ async def client_export_recovery_device(
     device_label: DeviceLabel,
 ) -> Result[tuple[str, bytes], ClientExportRecoveryDeviceError]:
     raise NotImplementedError
+
+
+class ClientListFrozenUsersError(ErrorVariant):
+    class Offline:
+        pass
+
+    class Internal:
+        pass
+
+    class AuthorNotAllowed:
+        pass
+
+
+async def client_list_frozen_users(
+    client_handle: Handle,
+) -> Result[list[UserID], ClientListFrozenUsersError]:
+    raise NotImplementedError
