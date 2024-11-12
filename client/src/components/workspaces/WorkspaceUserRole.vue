@@ -26,7 +26,7 @@
       :options="options"
       :disabled="disabled"
       :default-option-key="role"
-      :appearance="MsAppearance.Clear"
+      :appearance="MsAppearance.Outline"
       @change="onRoleChanged(user, $event.option, $event.oldOption)"
     />
   </div>
@@ -93,8 +93,8 @@ function onRoleChanged(user: UserTuple, newRoleOption: MsOption, oldRoleOption?:
     content: '';
     position: absolute;
     display: block;
-    width: 90%;
-    border-bottom: 1px solid var(--parsec-color-light-secondary-disabled);
+    width: calc(100% - 3rem);
+    border-bottom: 1px solid var(--parsec-color-light-secondary-medium);
     bottom: 0;
     right: 0;
   }

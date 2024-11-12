@@ -320,7 +320,6 @@
         }
     },
     "WorkspaceSharing": {
-        "title": "Share this workspace",
         "searchPlaceholder": "e.g.: John Smith",
         "currentUserLabel": "Me",
         "unshareSuccess": "The workspace is no longer shared with {user}.",
@@ -331,8 +330,22 @@
             "alreadyNotShared": "This workspace is not shared with {user}.",
             "alreadyHasRole": "{user} is already {role} on this workspace."
         },
+        "batchSharing": {
+            "outsiderRoleWarning": "{external} profiles can only have {contributor} or {reader} roles.",
+            "external": "External",
+            "contributor": "Contributor",
+            "reader": "Reader",
+            "buttonSelect": "Multiple selection",
+            "buttonFinish": "Finish",
+            "chooseRole": "Choose a role",
+            "noChanges": "Selected members were already {role}.",
+            "someFailed": "Some role assignments failed.",
+            "allFailed": "And error has occurred, role assignment has failed. (Reason: {reason})",
+            "updateRoleSuccess": "Selected members' roles have been updated to {role}.",
+            "unshareSuccess": "The workspace is no longer shared with selected members."
+        },
         "onlyOwnerWarning": "To prevent data loss if you ever leave the organization, we recommend promoting someone else to {owner} on this workspace.",
-        "owner": "owner",
+        "owner": "Owner",
         "noMatch": "No user found that matches '{query}'."
     },
     "SettingsModal": {

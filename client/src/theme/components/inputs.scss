@@ -20,3 +20,20 @@
 .sc-ion-input-md-h:not(.legacy-input) {
   min-height: 0;
 }
+
+.workspace-sharing-modal {
+  .filter-button {
+    --background: none;
+    --background-hover: var(--parsec-color-light-secondary-premiere);
+    color: var(--parsec-color-light-secondary-text);
+
+    &::part(native) {
+      border: none;
+      padding: 0.5rem 1rem !important;
+    }
+
+    .ms-dropdown-icon {
+      font-size: 1rem;
+    }
+  }
+}

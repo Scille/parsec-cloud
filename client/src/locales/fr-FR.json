@@ -320,7 +320,6 @@
         }
     },
     "WorkspaceSharing": {
-        "title": "Partager cet espace de travail",
         "searchPlaceholder": "ex : Jean Martin",
         "currentUserLabel": "Moi",
         "unshareSuccess": "L'espace de travail n'est plus partagé avec {user}.",
@@ -331,8 +330,22 @@
             "alreadyNotShared": "Cet espace de travail n'est pas partagé avec {user}.",
             "alreadyHasRole": "{user} est déjà {role} sur cet espace de travail."
         },
+        "batchSharing": {
+            "outsiderRoleWarning": "Les profils {external} ne peuvent avoir que les rôles {contributor} ou {reader}.",
+            "external": "Externe",
+            "contributor": "Contributeur",
+            "reader": "Lecteur",
+            "buttonSelect": "Sélection multiple",
+            "buttonFinish": "Terminer",
+            "chooseRole": "Choisir un rôle",
+            "noChanges": "Les membres sélectionnés étaient déjà {role}.",
+            "someFailed": "Certaines assignations de rôle ont échoué.",
+            "allFailed": "Une erreur est survenue, les assignations de rôle ont échoué. (Raison : {reason})",
+            "updateRoleSuccess": "Le rôle des membres sélectionnées est désormais {role}.",
+            "unshareSuccess": "L'espace de travail n'est plus partagé avec les membres sélectionnés."
+        },
         "onlyOwnerWarning": "Nous vous recommandons de promouvoir quelqu'un d'autre au poste de {owner}. Vous éviterez ainsi de perdre des données si vous quittez l'organisation.",
-        "owner": "propriétaire",
+        "owner": "Propriétaire",
         "noMatch": "Aucun utilisateur trouvé qui correspond à la recherche '{query}'."
     },
     "SettingsModal": {

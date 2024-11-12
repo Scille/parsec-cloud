@@ -3,19 +3,9 @@
 <template>
   <ion-page class="modal">
     <ms-modal
-      :title="'WorkspaceSharing.title'"
+      :title="I18n.valueAsTranslatable(workspaceName)"
       :close-button="{ visible: true }"
     >
-      <div class="modal-head-content">
-        <ion-text class="modal-title title-h4">
-          {{ workspaceName }}
-        </ion-text>
-        <ms-search-input
-          class="modal-head-content__search"
-          v-model="search"
-          :placeholder="'WorkspaceSharing.searchPlaceholder'"
-        />
-      </div>
       <ms-report-text
         :theme="MsReportTheme.Info"
         v-if="isOnlyOwner()"
@@ -30,6 +20,55 @@
           </template>
         </i18n-t>
       </ms-report-text>
+      <div class="modal-head-content">
+        <ms-search-input
+          class="modal-head-content__search"
+          v-model="search"
+          :placeholder="'WorkspaceSharing.searchPlaceholder'"
+          @change="updateSelectedUsers()"
+        />
+        <div class="modal-head-content-right">
+          <ion-text
+            id="batch-activate-button"
+            @click="onBatchSharingActivate()"
+            fill="clear"
+            class="button-small"
+          >
+            {{ $msTranslate(showCheckboxes ? 'WorkspaceSharing.batchSharing.buttonFinish' : 'WorkspaceSharing.batchSharing.buttonSelect') }}
+          </ion-text>
+          <ms-dropdown
+            v-show="showCheckboxes"
+            ref="dropdownRef"
+            class="dropdown"
+            :options="options"
+            :disabled="!someUserSelected"
+            :label="'WorkspaceSharing.batchSharing.chooseRole'"
+            :appearance="MsAppearance.Outline"
+            @change="onBatchRoleChange($event.option)"
+          />
+        </div>
+      </div>
+      <ms-report-text
+        :theme="MsReportTheme.Info"
+        id="profile-assign-info"
+        v-if="showCheckboxes && orgHasExternalUsers"
+      >
+        <i18n-t
+          keypath="WorkspaceSharing.batchSharing.outsiderRoleWarning"
+          scope="global"
+        >
+          <template #external>
+            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.external') }} </strong>
+          </template>
+          <template #contributor>
+            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.contributor') }} </strong>
+          </template>
+          <template #reader>
+            <strong> {{ $msTranslate('WorkspaceSharing.batchSharing.reader') }} </strong>
+          </template>
+        </i18n-t>
+      </ms-report-text>
+
       <!-- content -->
       <div class="modal-container">
         <ion-list class="user-list">
@@ -38,8 +77,7 @@
             class="no-match-result body"
             v-show="
               userRoles.length > 0 &&
-                filteredSharedUserRoles.length === 0 &&
-                filteredNotSharedUserRoles.length === 0 &&
+                filteredUserRoles.length === 0 &&
                 !currentUserMatchSearch()
             "
           >
@@ -51,11 +89,20 @@
             class="user-list-members"
             v-show="currentUserMatchSearch() || filteredSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list__title title-h5">
+            <ion-text class="user-list-title title-h5">
+              <ms-checkbox
+                class="checkbox"
+                id="all-members-checkbox"
+                :indeterminate="someMembersSelected && !allMembersSelected"
+                :checked="allMembersSelected"
+                @change="selectAllMembers()"
+                v-show="showCheckboxes && filteredSharedUserRoles.length > 0"
+              />
               {{ $msTranslate({ key: 'workspaceRoles.members', data: { count: countSharedUsers }, count: countSharedUsers }) }}
             </ion-text>
             <workspace-user-role
               v-if="clientInfo"
+              :class="{ 'checkbox-space': showCheckboxes }"
               v-show="currentUserMatchSearch()"
               :disabled="true"
               :user="{ id: clientInfo.userId, humanHandle: clientInfo.humanHandle, profile: clientInfo.currentProfile }"
@@ -65,17 +112,28 @@
               :is-current-user="true"
               class="current-user"
             />
-
-            <workspace-user-role
+            <div
               v-for="entry in filteredSharedUserRoles"
-              :disabled="isSelectDisabled(entry[1])"
-              :key="entry[0].id"
-              :user="entry[0]"
-              :role="entry[1]"
-              :client-profile="ownProfile"
-              :client-role="ownRole"
-              @role-update="updateUserRole"
-            />
+              :key="`${entry.user.id}-${entry.role}`"
+              class="user-list-members-item"
+            >
+              <ms-checkbox
+                id="member-checkbox"
+                v-show="showCheckboxes"
+                v-model="entry.isSelected"
+              />
+              <workspace-user-role
+                class="workspace-user-role"
+                :disabled="isSelectDisabled(entry.role)"
+                :user="entry.user"
+                :role="entry.role"
+                :client-profile="ownProfile"
+                :client-role="ownRole"
+                :show-checkbox="showCheckboxes"
+                :checkbox-value="entry.isSelected"
+                @role-update="updateUserRole"
+              />
+            </div>
           </div>
 
           <!-- user suggestions -->
@@ -83,17 +141,31 @@
             class="user-list-suggestions"
             v-if="(ownRole === WorkspaceRole.Manager || ownRole === WorkspaceRole.Owner) && filteredNotSharedUserRoles.length > 0"
           >
-            <ion-text class="user-list__title title-h5">{{ $msTranslate('workspaceRoles.suggestion') }}</ion-text>
-            <workspace-user-role
+            <ion-text class="user-list-title title-h5">
+              {{ $msTranslate('workspaceRoles.suggestion') }}
+            </ion-text>
+            <div
               v-for="entry in filteredNotSharedUserRoles"
-              :disabled="isSelectDisabled(entry[1])"
-              :key="entry[0].id"
-              :user="entry[0]"
-              :role="entry[1]"
-              :client-profile="ownProfile"
-              :client-role="ownRole"
-              @role-update="updateUserRole"
-            />
+              :key="`${entry.user.id}-${entry.role}`"
+              class="user-list-suggestions-item"
+            >
+              <ms-checkbox
+                id="suggested-checkbox"
+                v-show="showCheckboxes"
+                v-model="entry.isSelected"
+              />
+              <workspace-user-role
+                class="workspace-user-role"
+                :disabled="isSelectDisabled(entry.role)"
+                :user="entry.user"
+                :role="entry.role"
+                :client-profile="ownProfile"
+                :client-role="ownRole"
+                :show-checkbox="showCheckboxes"
+                :checkbox-value="entry.isSelected"
+                @role-update="updateUserRole"
+              />
+            </div>
           </div>
         </ion-list>
       </div>
@@ -102,7 +174,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsModal, MsSearchInput } from 'megashark-lib';
+import { MsAppearance, MsCheckbox, MsDropdown, MsModal, MsOption, MsOptions, MsSearchInput } from 'megashark-lib';
 import WorkspaceUserRole from '@/components/workspaces/WorkspaceUserRole.vue';
 import {
   ClientInfo,
@@ -115,12 +187,14 @@ import {
   getClientInfo,
   getWorkspaceSharing,
   shareWorkspace,
+  ClientShareWorkspaceError,
 } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
 import { getWorkspaceRoleTranslationKey } from '@/services/translation';
 import { I18n, MsReportText, MsReportTheme } from 'megashark-lib';
 import { IonList, IonPage, IonText } from '@ionic/vue';
 import { Ref, onMounted, ref, computed } from 'vue';
+import { canChangeRole } from '@/components/workspaces/utils';
 
 const search = ref('');
 let ownProfile = UserProfile.Outsider;
@@ -132,36 +206,57 @@ const props = defineProps<{
   informationManager: InformationManager;
 }>();
 
+interface UserRole {
+  user: UserTuple;
+  role: WorkspaceRole | null;
+  isSelected: boolean;
+}
+
 const clientInfo: Ref<ClientInfo | null> = ref(null);
 
-const userRoles: Ref<Array<[UserTuple, WorkspaceRole | null]>> = ref([]);
-const filteredSharedUserRoles = computed(() => {
+const showCheckboxes = ref<boolean>(false);
+const dropdownRef = ref();
+
+const userRoles: Ref<Array<UserRole>> = ref([]);
+
+const filteredUserRoles = computed(() => {
   const searchString = search.value.toLocaleLowerCase();
-  return userRoles.value
-    .filter(([user, role]) => {
-      const isSharedUser = role !== null;
-      const matchesSearch =
-        user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
-        user.humanHandle.label.toLocaleLowerCase().includes(searchString);
-      return isSharedUser && matchesSearch;
-    })
-    .sort((item1, item2) => item1[0].humanHandle.label.localeCompare(item2[0].humanHandle.label));
+  return userRoles.value.filter((userRole: UserRole) => {
+    return (
+      userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
+      userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)
+    );
+  });
+});
+
+const filteredOutUserRoles = computed(() => {
+  const searchString = search.value.toLocaleLowerCase();
+  return userRoles.value.filter((userRole: UserRole) => {
+    return (
+      !userRole.user.humanHandle.email.toLocaleLowerCase().includes(searchString) &&
+      !userRole.user.humanHandle.label.toLocaleLowerCase().includes(searchString)
+    );
+  });
+});
+
+const filteredSharedUserRoles = computed(() => {
+  return filteredUserRoles.value
+    .filter((userRole: UserRole) => userRole.role !== null)
+    .sort((item1, item2) => item1.user.humanHandle.label.localeCompare(item2.user.humanHandle.label));
 });
 
 const filteredNotSharedUserRoles = computed(() => {
-  const searchString = search.value.toLocaleLowerCase();
-  return userRoles.value
-    .filter(([user, role]) => {
-      const isNotSharedUser = role === null;
-      const matchesSearch =
-        user.humanHandle.email.toLocaleLowerCase().includes(searchString) ||
-        user.humanHandle.label.toLocaleLowerCase().includes(searchString);
-      return isNotSharedUser && matchesSearch;
-    })
-    .sort((item1, item2) => item1[0].humanHandle.label.localeCompare(item2[0].humanHandle.label));
+  return filteredUserRoles.value
+    .filter((userRole: UserRole) => userRole.role === null)
+    .sort((item1, item2) => item1.user.humanHandle.label.localeCompare(item2.user.humanHandle.label));
 });
 
+const selectedUsers = computed(() => filteredUserRoles.value.filter((user) => user.isSelected === true));
 const countSharedUsers = computed(() => filteredSharedUserRoles.value.length + (clientInfo.value ? 1 : 0));
+const someUserSelected = computed(() => filteredUserRoles.value.some((user) => user.isSelected === true));
+const someMembersSelected = computed(() => filteredSharedUserRoles.value.some((user) => user.isSelected === true));
+const allMembersSelected = computed(() => filteredSharedUserRoles.value.every((user) => user.isSelected === true));
+const orgHasExternalUsers = computed(() => userRoles.value.some((user) => user.user.profile === UserProfile.Outsider));
 
 function currentUserMatchSearch(): boolean {
   const searchString = search.value.toLocaleLowerCase();
@@ -191,11 +286,85 @@ function isSelectDisabled(role: WorkspaceRole | null): boolean {
   return false;
 }
 
+function updateSelectedUsers(): void {
+  if (!showCheckboxes.value) {
+    return;
+  }
+  for (const userRole of filteredOutUserRoles.value) {
+    userRole.isSelected = false;
+  }
+}
+
+async function onBatchSharingActivate(): Promise<void> {
+  if (showCheckboxes.value === true) {
+    for (const user of userRoles.value) {
+      user.isSelected = false;
+    }
+  }
+  showCheckboxes.value = !showCheckboxes.value;
+}
+
+function getLowestSelectedProfile(): UserProfile {
+  let lowestProfile = UserProfile.Admin;
+  for (const user of selectedUsers.value) {
+    if (user.user.profile === UserProfile.Outsider) {
+      return UserProfile.Outsider;
+    }
+    if (user.user.profile === UserProfile.Standard) {
+      lowestProfile = UserProfile.Standard;
+    }
+  }
+  return lowestProfile;
+}
+
+function getHighestSelectedRole(): WorkspaceRole {
+  let highestRole = WorkspaceRole.Reader;
+  for (const user of selectedUsers.value) {
+    if (!user.role) {
+      continue;
+    }
+    if (user.role === WorkspaceRole.Manager || user.role === WorkspaceRole.Owner) return user.role;
+    if (user.role === WorkspaceRole.Contributor) {
+      highestRole = WorkspaceRole.Contributor;
+    }
+  }
+  return highestRole;
+}
+
+const options = computed((): MsOptions => {
+  return new MsOptions(
+    [WorkspaceRole.Owner, WorkspaceRole.Manager, WorkspaceRole.Contributor, WorkspaceRole.Reader, null].map(
+      (role: WorkspaceRole | null) => {
+        return {
+          key: role,
+          label: getWorkspaceRoleTranslationKey(role).label,
+          description: getWorkspaceRoleTranslationKey(role).description,
+          disabled: !canChangeRole(ownProfile, getLowestSelectedProfile(), props.ownRole, getHighestSelectedRole(), role).authorized,
+          disabledReason: canChangeRole(ownProfile, getLowestSelectedProfile(), props.ownRole, getHighestSelectedRole(), role).reason,
+        };
+      },
+    ),
+  );
+});
+
+function selectAllMembers(): void {
+  const value = !allMembersSelected.value;
+  for (const user of filteredSharedUserRoles.value) {
+    user.isSelected = value;
+  }
+}
+
 async function refreshSharingInfo(): Promise<void> {
   const result = await getWorkspaceSharing(props.workspaceId, true);
 
   if (result.ok) {
-    userRoles.value = result.value;
+    userRoles.value = result.value.map((userInfo) => {
+      return {
+        user: userInfo[0],
+        role: userInfo[1],
+        isSelected: false,
+      };
+    });
   } else {
     props.informationManager.present(
       new Information({
@@ -220,8 +389,8 @@ function isOnlyOwner(): boolean {
   if (props.ownRole !== WorkspaceRole.Owner) {
     return false;
   }
-  for (const role of userRoles.value) {
-    if (role[1] === WorkspaceRole.Owner) {
+  for (const user of userRoles.value) {
+    if (user.role === WorkspaceRole.Owner) {
       return false;
     }
   }
@@ -234,10 +403,10 @@ async function updateUserRole(
   newRole: WorkspaceRole | null,
   reject: () => void,
 ): Promise<void> {
-  const current = userRoles.value.find((item) => item[0].id === user.id);
+  const current = userRoles.value.find((item) => item.user.id === user.id);
 
   // Trying to set the same role again
-  if (current && current[1] === newRole) {
+  if (current && current.role === newRole) {
     if (newRole === null) {
       props.informationManager.present(
         new Information({
@@ -310,6 +479,74 @@ async function updateUserRole(
   }
   await refreshSharingInfo();
 }
+
+async function onBatchRoleChange(newRoleOption: MsOption): Promise<void> {
+  let changesMade: number = 0;
+  let errorCount: number = 0;
+  let error: ClientShareWorkspaceError | undefined = undefined;
+
+  for (const userRole of selectedUsers.value) {
+    if (!userRole.role || newRoleOption.key !== userRole.role) {
+      const result = await shareWorkspace(props.workspaceId, userRole.user.id, newRoleOption.key);
+      if (result.ok) {
+        changesMade += 1;
+      } else {
+        if (errorCount === 0) {
+          error = result.error;
+        }
+        errorCount += 1;
+      }
+    }
+  }
+
+  if (errorCount > 0) {
+    if (changesMade === 0) {
+      console.error(error);
+      props.informationManager.present(
+        new Information({
+          message: { key: 'WorkspaceSharing.batchSharing.allFailed', data: { reason: error?.tag } },
+          level: InformationLevel.Error,
+        }),
+        PresentationMode.Toast,
+      );
+    } else {
+      props.informationManager.present(
+        new Information({
+          message: 'WorkspaceSharing.batchSharing.someFailed',
+          level: InformationLevel.Warning,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  } else {
+    if (newRoleOption.key) {
+      props.informationManager.present(
+        new Information({
+          message: {
+            key: 'WorkspaceSharing.batchSharing.updateRoleSuccess',
+            data: {
+              role: I18n.translate(getWorkspaceRoleTranslationKey(newRoleOption.key).label),
+            },
+          },
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    } else {
+      props.informationManager.present(
+        new Information({
+          message: 'WorkspaceSharing.batchSharing.unshareSuccess',
+          level: InformationLevel.Success,
+        }),
+        PresentationMode.Toast,
+      );
+    }
+  }
+
+  dropdownRef.value.setCurrentKey(0);
+  showCheckboxes.value = false;
+  await refreshSharingInfo();
+}
 </script>
 
 <!-- eslint-disable-next-line vue-scoped-css/enforce-style-type -->
@@ -351,6 +588,30 @@ async function updateUserRole(
     max-width: 15rem;
     margin: 0;
   }
+
+  &-right {
+    display: flex;
+    gap: 1rem;
+
+    #batch-activate-button {
+      font-size: 0.875rem;
+      padding: 0.5rem 1rem;
+      color: var(--parsec-color-light-secondary-text);
+      background: var(--parsec-color-light-secondary-premiere);
+      border-radius: var(--parsec-radius-6);
+      cursor: pointer;
+      transition: background 0.2s;
+
+      &:hover {
+        background: var(--parsec-color-light-secondary-medium);
+      }
+    }
+  }
+}
+
+#profile-assign-info {
+  margin-bottom: 0;
+  margin-top: 0.5rem;
 }
 
 .modal-container {
@@ -368,18 +629,48 @@ async function updateUserRole(
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  border-radius: var(--parsec-radius-6);
   position: relative;
 
-  &__title {
+  &-title {
     color: var(--parsec-color-light-secondary-grey);
-    background: var(--parsec-color-light-secondary-premiere);
+    background: var(--parsec-color-light-secondary-medium);
     border-radius: var(--parsec-radius-6);
-    padding: 0.375rem 0.5rem;
+    padding: 0.375rem 0.75rem;
     display: flex;
     position: sticky;
+    align-items: center;
+    gap: 0.5rem;
     top: 0;
     z-index: 3;
+  }
+
+  &-members,
+  &-suggestions {
+    display: flex;
+    flex-direction: column;
+
+    #member-checkbox,
+    #suggested-checkbox {
+      padding-left: 0.75rem;
+    }
+
+    &-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+
+      &:last-child .workspace-user-role::after {
+        border-bottom: none;
+      }
+
+      .workspace-user-role {
+        flex: 1;
+      }
+    }
+  }
+
+  .checkbox-space {
+    padding-left: 3rem;
   }
 }
 </style>

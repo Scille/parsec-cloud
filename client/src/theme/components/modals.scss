@@ -196,11 +196,11 @@
 }
 
 .workspace-sharing-modal {
-  --max-height: var(--parsec-modal-max-height);
+  --max-height: 700px;
 
   &::part(content) {
-    min-width: var(--parsec-modal-width-md);
-    max-width: var(--parsec-modal-width-md);
+    min-width: var(--parsec-modal-width-lg);
+    max-width: var(--parsec-modal-width-lg);
     height: 100%;
   }
 
