@@ -164,6 +164,6 @@ for (const mode of ['grid', 'list', 'sidebar']) {
     const popover = connected.locator('.workspace-context-menu');
     await popover.getByRole('listitem').nth(5).click();
     await expect(connected.locator('.workspace-sharing-modal')).toBeVisible();
-    await expect(connected.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('Share this workspace');
+    await expect(connected.locator('.workspace-sharing-modal').locator('.ms-modal-header__title')).toHaveText('Trademeet');
   });
 }
