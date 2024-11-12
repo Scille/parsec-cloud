@@ -142,7 +142,6 @@ gloo-timers = { version = "0.3.0", default-features = false }
 hex = { version = "0.4.3", default-features = false }
 hex-literal = { version = "0.4.1", default-features = false }
 indexed_db_futures = { version = "0.5.0", default-features = false }
-instant = { version = "0.1.13", default-features = false }
 itertools = { version = "0.12.1", default-features = false }
 jni = { version = "0.21.1", default-features = false }
 js-sys = { version = "0.3.70", default-features = false }
@@ -203,6 +202,7 @@ wasm-bindgen = { version = "0.2.95", default-features = false }
 wasm-bindgen-futures = { version = "0.4.45", default-features = false }
 wasm-bindgen-test = { version = "0.3.45", default-features = false }
 web-sys = { version = "0.3.72", default-features = false }
+web-time = { version = "1.1.0", default-features = false }
 widestring = { version = "1.1.0", default-features = false }
 windows-sys = { version = "0.59.0", default-features = false }
 winfsp_wrs = { version = "0.3.0", default-features = false }
