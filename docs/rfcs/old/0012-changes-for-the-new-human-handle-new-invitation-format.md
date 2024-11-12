@@ -1,4 +1,5 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
+<!-- cspell: ignore XPSZKBEKXYQFBOLERWQNEDY MVNZCLPXPKN Qssss -->
 
 # Changes for the new human handle + new invitation format
 
