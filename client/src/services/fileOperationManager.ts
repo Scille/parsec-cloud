@@ -34,6 +34,7 @@ import { DateTime } from 'luxon';
 import { v4 as uuid4 } from 'uuid';
 
 const MAX_SIMULTANEOUS_OPERATIONS = 3;
+const MIN_OPERATION_TIME_MS = 500;
 
 export const FileOperationManagerKey = 'fileOperationManager';
 
@@ -312,6 +313,7 @@ class FileOperationManager {
     await this.sendState(FileOperationState.CopyStarted, data);
 
     let tree: EntryTree;
+    const start = DateTime.now();
 
     const statResult = await entryStat(data.workspaceHandle, data.srcPath);
     if (!statResult.ok) {
@@ -467,6 +469,12 @@ class FileOperationManager {
         }
       }
     }
+    const end = DateTime.now();
+    const diff = end.toMillis() - start.toMillis();
+
+    if (diff < MIN_OPERATION_TIME_MS) {
+      await wait(MIN_OPERATION_TIME_MS - diff);
+    }
     await this.sendState(FileOperationState.EntryCopied, data);
   }
 
@@ -474,7 +482,9 @@ class FileOperationManager {
     await this.sendState(FileOperationState.MoveStarted, data);
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
+    const start = DateTime.now();
     let moveResult = await moveEntry(data.workspaceHandle, data.srcPath, data.dstPath, data.forceReplace);
+
     if (!moveResult.ok) {
       let i = 2;
       // If an entry with the same name already exists, we try appending a number at the end of the file.
@@ -500,6 +510,12 @@ class FileOperationManager {
         await this.sendState(FileOperationState.MoveFailed, data, { error: moveResult.error.tag });
       }
     } else {
+      const end = DateTime.now();
+      const diff = end.toMillis() - start.toMillis();
+
+      if (diff < MIN_OPERATION_TIME_MS) {
+        await wait(MIN_OPERATION_TIME_MS - diff);
+      }
       await this.sendState(FileOperationState.EntryMoved, data);
     }
   }
@@ -509,6 +525,8 @@ class FileOperationManager {
     await this.sendState(FileOperationState.OperationProgress, data, { progress: 0 });
 
     let tree: HistoryEntryTree;
+
+    const start = DateTime.now();
 
     const statResult = await entryStatAt(data.workspaceHandle, data.path, data.dateTime);
     if (!statResult.ok) {
@@ -654,6 +672,12 @@ class FileOperationManager {
         }
       }
     }
+    const end = DateTime.now();
+    const diff = end.toMillis() - start.toMillis();
+
+    if (diff < MIN_OPERATION_TIME_MS) {
+      await wait(MIN_OPERATION_TIME_MS - diff);
+    }
     await this.sendState(FileOperationState.EntryRestored, data);
   }
 
@@ -672,6 +696,8 @@ class FileOperationManager {
         return;
       }
     }
+
+    const start = DateTime.now();
 
     const openResult = await openFile(data.workspaceHandle, filePath, { write: true, truncate: true, create: true });
 
@@ -738,6 +764,14 @@ class FileOperationManager {
       }
     }
     await closeFile(data.workspaceHandle, fd);
+
+    const end = DateTime.now();
+    const diff = end.toMillis() - start.toMillis();
+
+    if (diff < MIN_OPERATION_TIME_MS) {
+      await wait(MIN_OPERATION_TIME_MS - diff);
+    }
+
     await this.sendState(FileOperationState.FileImported, data);
   }
 
