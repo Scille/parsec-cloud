@@ -25,7 +25,7 @@ log = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dirs = { workspace = true }
-keyring = { workspace = true, features = ["platform-all"] }
+keyring = { workspace = true, features = ["linux-native", "apple-native", "windows-native"] }
 uuid = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 
