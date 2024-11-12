@@ -33,7 +33,7 @@
           <ion-text class="app-info-value"> v{{ APP_VERSION }} </ion-text>
           <ion-button
             class="changelog-btn button-outline"
-            @click="Env.Links.openChangelogLink"
+            @click="Env.Links.openChangelogLink()"
           >
             {{ $msTranslate('AboutPage.update.showChangelog') }}
           </ion-button>
@@ -47,7 +47,7 @@
         </ion-label>
         <ion-text class="app-info-value">
           <span
-            @click="Env.Links.openDeveloperLink"
+            @click="Env.Links.openDeveloperLink()"
             class="link"
           >
             {{ $msTranslate('app.developer') }}
@@ -62,7 +62,7 @@
         </ion-label>
         <ion-text class="app-info-value">
           <span
-            @click="Env.Links.openLicenseLink"
+            @click="Env.Links.openLicenseLink()"
             class="link"
           >
             {{ $msTranslate('app.license') }}
@@ -77,7 +77,7 @@
         </ion-label>
         <ion-text class="app-info-value">
           <span
-            @click="Env.Links.openSourcesLink"
+            @click="Env.Links.openSourcesLink()"
             target="_blank"
             :href="$msTranslate('app.projectSources')"
             class="link"
