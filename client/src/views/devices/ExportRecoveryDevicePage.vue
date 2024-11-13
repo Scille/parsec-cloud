@@ -4,50 +4,7 @@
   <ion-page>
     <ion-content :fullscreen="true">
       <div class="recovery">
-        <!-- STEP 1 • Information -->
-        <div
-          class="recovery-container information"
-          v-if="state === ExportDevicePageState.Start"
-        >
-          <ms-informative-text>
-            {{ $msTranslate('ExportRecoveryDevicePage.subtitles.newPassword') }}
-          </ms-informative-text>
-
-          <div class="file">
-            <ms-informative-text>
-              {{ $msTranslate('ExportRecoveryDevicePage.subtitles.twoFilesToKeep') }}
-            </ms-informative-text>
-
-            <div class="file-list">
-              <div class="file-item">
-                <div class="file-item__title subtitles-normal">
-                  <ion-icon :icon="document" />
-                  {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryFile') }}
-                </div>
-              </div>
-              <div class="file-item">
-                <div class="file-item__title subtitles-normal">
-                  <ion-icon :icon="key" />
-                  {{ $msTranslate('ExportRecoveryDevicePage.titles.recoveryKey') }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <ion-button
-            :disabled="processing"
-            @click="exportDevice()"
-            id="exportDevice"
-          >
-            {{ $msTranslate('ExportRecoveryDevicePage.actions.understand') }}
-          </ion-button>
-        </div>
-
-        <!-- STEP 2 • Download files -->
-        <div
-          class="recovery-container download"
-          v-else-if="state === ExportDevicePageState.Download"
-        >
+        <div class="recovery-container download">
           <ms-informative-text>
             {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keepFilesSeparate') }}
           </ms-informative-text>
@@ -161,12 +118,6 @@ import { IonButton, IonContent, IonIcon, IonPage, IonText } from '@ionic/vue';
 import { checkmarkCircle, document, download, home, key, reload } from 'ionicons/icons';
 import { inject, onMounted, ref } from 'vue';
 
-enum ExportDevicePageState {
-  Start = 'start',
-  Download = 'download',
-}
-
-const state = ref(ExportDevicePageState.Start);
 let code = '';
 let content = new Uint8Array();
 const downloadLink = ref();
@@ -174,18 +125,15 @@ const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const orgId = ref('');
-const processing = ref(false);
 
 onMounted(async (): Promise<void> => {
-  const clientInfo = await getClientInfo();
-  orgId.value = clientInfo.ok ? clientInfo.value.organizationId : '';
-});
+  const result = await getClientInfo();
 
-async function exportDevice(): Promise<void> {
-  processing.value = true;
-  const result = await exportRecoveryDevice();
-  processing.value = false;
   if (!result.ok) {
+    return;
+  }
+  const exportResult = await exportRecoveryDevice();
+  if (!exportResult.ok) {
     const notificationMsg = 'ExportRecoveryDevicePage.errors.exportFailed';
     // toast atm but to be changed
     informationManager.present(
@@ -197,10 +145,9 @@ async function exportDevice(): Promise<void> {
     );
     return;
   }
-  code = result.value[0];
-  content = result.value[1];
-  state.value = ExportDevicePageState.Download;
-}
+  code = exportResult.value[0];
+  content = exportResult.value[1];
+});
 
 async function downloadRecoveryKey(): Promise<void> {
   await downloadFile(code, 'text/plain', { key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } });
@@ -262,12 +209,6 @@ async function goToDevicesPage(): Promise<void> {
   display: flex;
   flex-direction: column;
   gap: 2rem;
-
-  .file {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-  }
 
   .file-list {
     display: flex;
@@ -334,13 +275,6 @@ async function goToDevicesPage(): Promise<void> {
         }
       }
     }
-  }
-}
-
-.information {
-  #exportDevice {
-    margin-top: 0.5rem;
-    width: fit-content;
   }
 }
 
