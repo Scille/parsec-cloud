@@ -1199,6 +1199,10 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
+  if (ownRole.value === WorkspaceRole.Reader) {
+    return;
+  }
+
   const popover = await popoverController.create({
     component: FolderGlobalContextMenu,
     cssClass: 'folder-global-context-menu',
