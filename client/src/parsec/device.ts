@@ -115,7 +115,7 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
   } else {
     return {
       ok: true,
-      value: [1, 2].map((n) => {
+      value: [1, 2, 3].map((n) => {
         return {
           id: `device${n}`,
           deviceLabel: n === 3 ? `${RECOVERY_DEVICE_PREFIX}_device${n}` : `device${n}`,
