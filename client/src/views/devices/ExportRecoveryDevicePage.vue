@@ -39,6 +39,7 @@
               <div class="file-item__button">
                 <ion-button
                   @click="downloadRecoveryFile()"
+                  :disabled="disableFileDownload"
                   id="downloadButton"
                   size="default"
                   :fill="recoveryFileDownloaded ? 'outline' : 'solid'"
@@ -81,6 +82,7 @@
                 <ion-button
                   @click="downloadRecoveryKey()"
                   id="downloadButton"
+                  :disabled="disableKeyDownload"
                   size="default"
                   :fill="recoveryKeyDownloaded ? 'outline' : 'solid'"
                 >
@@ -129,6 +131,8 @@ let content = new Uint8Array();
 const downloadLink = ref();
 const recoveryKeyDownloaded = ref(false);
 const recoveryFileDownloaded = ref(false);
+const disableFileDownload = ref(false);
+const disableKeyDownload = ref(false);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
 const orgId = ref('');
 
@@ -156,8 +160,10 @@ onMounted(async (): Promise<void> => {
 });
 
 async function downloadRecoveryKey(): Promise<void> {
+  disableKeyDownload.value = true;
   await downloadFile(code, 'text/plain', { key: 'ExportRecoveryDevicePage.filenames.recoveryKey', data: { org: orgId.value } });
   setTimeout(() => {
+    disableKeyDownload.value = false;
     recoveryKeyDownloaded.value = true;
     informationManager.present(
       new Information({
@@ -170,11 +176,13 @@ async function downloadRecoveryKey(): Promise<void> {
 }
 
 async function downloadRecoveryFile(): Promise<void> {
+  disableFileDownload.value = true;
   await downloadFile(content, 'application/octet-stream', {
     key: 'ExportRecoveryDevicePage.filenames.recoveryFile',
     data: { org: orgId.value },
   });
   setTimeout(() => {
+    disableFileDownload.value = false;
     recoveryFileDownloaded.value = true;
     informationManager.present(
       new Information({
