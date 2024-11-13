@@ -970,7 +970,13 @@
         },
         "status": {
             "active": "Actif",
-            "revoked": "Révoqué"
+            "revoked": "Révoqué",
+            "frozen": "Suspendu"
+        },
+        "statusDescriptions": {
+            "active": "L'utilisateur est actif et peut accéder à cette organisation.",
+            "revoked": "L'utilisateur a été révoqué et ne peut plus accéder à cette organisation.",
+            "frozen": "L'utilisateur a été temporairement suspendu et ne peut pas accéder à cette organisation."
         },
         "success": {
             "email": "Adresse email :",

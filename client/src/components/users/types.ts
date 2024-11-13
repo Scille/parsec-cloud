@@ -33,6 +33,7 @@ function compareUserProfiles(profile1: UserProfile, profile2: UserProfile): numb
 export interface UserFilterLabels {
   statusActive?: boolean;
   statusRevoked?: boolean;
+  statusFrozen?: boolean;
   profileAdmin?: boolean;
   profileStandard?: boolean;
   profileOutsider?: boolean;
@@ -51,6 +52,7 @@ export class UserCollection {
     this.filters = {
       statusActive: true,
       statusRevoked: true,
+      statusFrozen: true,
       profileAdmin: true,
       profileStandard: true,
       profileOutsider: true,
@@ -99,7 +101,11 @@ export class UserCollection {
     ) {
       return false;
     }
-    if ((!this.filters.statusRevoked && user.isRevoked()) || (!this.filters.statusActive && !user.isRevoked())) {
+    if (
+      (!this.filters.statusRevoked && user.isRevoked()) ||
+      (!this.filters.statusActive && user.isActive()) ||
+      (!this.filters.statusFrozen && user.isFrozen())
+    ) {
       return false;
     }
     return true;
@@ -115,6 +121,15 @@ export class UserCollection {
 
   selectedCount(): number {
     return this.getSelectedUsers().length;
+  }
+
+  private statusDiff(user1: UserModel, user2: UserModel): number {
+    return (
+      Number(user2.isActive()) * 4 +
+      Number(user2.isRevoked()) * 2 +
+      Number(user2.isFrozen()) -
+      (Number(user1.isActive()) * 4 + Number(user1.isRevoked()) * 2 + Number(user1.isFrozen()))
+    );
   }
 
   sort(property: SortProperty, ascending: boolean): void {
@@ -144,18 +159,11 @@ export class UserCollection {
           }
         case SortProperty.Profile:
           if (profile1 === profile2) {
-            return user2.isRevoked() && !user1.isRevoked() ? -1 : 0;
+            return this.statusDiff(user1, user2);
           }
           return diff;
         case SortProperty.Status:
-          if (user2.isRevoked() === user1.isRevoked()) {
-            return ascending ? diff : -diff;
-          }
-          if (ascending) {
-            return user2.isRevoked() && !user1.isRevoked() ? -1 : 0;
-          } else {
-            return user1.isRevoked() && !user2.isRevoked() ? -1 : 0;
-          }
+          return ascending ? this.statusDiff(user1, user2) : this.statusDiff(user2, user1);
         default:
           return 0;
       }

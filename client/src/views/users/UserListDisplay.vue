@@ -116,7 +116,7 @@ const someSelected = computed(() => {
   }
 
   .label-status {
-    min-width: 7.5rem;
+    min-width: 8rem;
     flex-grow: 0;
   }
 

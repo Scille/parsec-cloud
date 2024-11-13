@@ -8,7 +8,6 @@
     :detail="false"
     :class="{
       selected: user.isSelected && !user.isRevoked(),
-      frozen: user.isFrozen(),
       revoked: user.isRevoked(),
       'no-padding-end': !user.isSelected,
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
@@ -71,7 +70,11 @@
       class="user-status"
       :class="user.isRevoked() ? 'user-revoked' : ''"
     >
-      <user-status-tag :revoked="user.isRevoked()" />
+      <user-status-tag
+        :revoked="user.isRevoked()"
+        :frozen="user.isFrozen()"
+        :show-tooltip="true"
+      />
     </div>
 
     <!-- options -->
@@ -192,7 +195,7 @@ async function onOptionsClick(event: Event): Promise<void> {
 }
 
 .user-status {
-  min-width: 7.5rem;
+  min-width: 8rem;
   width: auto;
   flex-grow: 0;
   color: var(--parsec-color-light-secondary-grey);
@@ -228,9 +231,5 @@ async function onOptionsClick(event: Event): Promise<void> {
       }
     }
   }
-}
-
-.frozen {
-  filter: blur(1px);
 }
 </style>

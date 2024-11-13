@@ -20,6 +20,8 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
   if (handle !== null && !needsMocks()) {
     const result = await libparsec.clientListUsers(handle, skipRevoked);
     if (result.ok) {
+      const frozenResult = await libparsec.clientListFrozenUsers(handle);
+      const frozen: Array<UserID> = frozenResult.ok ? frozenResult.value : [];
       if (pattern.length > 0) {
         // Won't be using dates or `isRevoked` so the cast is fine
         result.value = filterUserList(result.value as Array<UserInfo>, pattern);
@@ -30,7 +32,9 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           item.revokedOn = DateTime.fromSeconds(item.revokedOn as any as number);
         }
         (item as UserInfo).isRevoked = (): boolean => item.revokedOn !== null;
-        (item as UserInfo).isFrozen = (): boolean => false;
+        (item as UserInfo).isFrozen = (): boolean =>
+          !(item as UserInfo).isRevoked() && frozen.find((userId) => userId === item.id) !== undefined;
+        (item as UserInfo).isActive = (): boolean => !(item as UserInfo).isRevoked() && !(item as UserInfo).isFrozen();
         return item;
       });
     }
@@ -50,6 +54,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedBy: null,
         isRevoked: (): boolean => false,
         isFrozen: (): boolean => false,
+        isActive: (): boolean => true,
       },
       {
         id: 'id1',
@@ -62,6 +67,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedBy: null,
         isRevoked: (): boolean => false,
         isFrozen: (): boolean => false,
+        isActive: (): boolean => true,
       },
       {
         id: 'id2',
@@ -74,6 +80,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedBy: null,
         isRevoked: (): boolean => false,
         isFrozen: (): boolean => false,
+        isActive: (): boolean => true,
       },
       {
         id: 'id3',
@@ -86,6 +93,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedBy: null,
         isRevoked: (): boolean => false,
         isFrozen: (): boolean => true,
+        isActive: (): boolean => false,
       },
       {
         id: 'id4',
@@ -98,6 +106,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
         revokedBy: null,
         isRevoked: (): boolean => false,
         isFrozen: (): boolean => false,
+        isActive: (): boolean => true,
       },
     ];
     if (!skipRevoked) {
@@ -113,6 +122,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedBy: 'device',
           isRevoked: (): boolean => true,
           isFrozen: (): boolean => false,
+          isActive: (): boolean => false,
         },
         {
           id: 'id6',
@@ -125,6 +135,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedBy: 'device',
           isRevoked: (): boolean => true,
           isFrozen: (): boolean => false,
+          isActive: (): boolean => false,
         },
         {
           id: 'id7',
@@ -137,6 +148,7 @@ export async function listUsers(skipRevoked = true, pattern = ''): Promise<Resul
           revokedBy: 'device',
           isRevoked: (): boolean => true,
           isFrozen: (): boolean => false,
+          isActive: (): boolean => false,
         },
       );
     }

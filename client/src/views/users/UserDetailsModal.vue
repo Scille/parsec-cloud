@@ -11,10 +11,7 @@
       }"
     >
       <div class="details">
-        <div
-          class="details-item"
-          :class="{ revoked: user.isRevoked() }"
-        >
+        <div class="details-item">
           <div class="details-item-name">
             <ion-text class="details-item-name__title subtitles-sm">
               {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.name') }}
@@ -23,46 +20,45 @@
               {{ user.humanHandle.label }}
             </ion-text>
           </div>
-          <ion-chip
-            v-if="user.isRevoked()"
-            color="danger"
-            class="revoked-chip"
+          <user-status-tag
+            :active="user.isActive()"
+            :revoked="user.isRevoked()"
+            :frozen="user.isFrozen()"
+            :show-tooltip="true"
+          />
+        </div>
+
+        <div class="time-list">
+          <!-- join on -->
+          <div class="time-list-item">
+            <ion-text class="time-list-item__title">
+              <ion-icon
+                class="time-list-item__icon body-lg"
+                :icon="personAdd"
+              />
+              <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}</span>
+            </ion-text>
+            <ion-text class="time-list-item__text body-lg">
+              {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
+            </ion-text>
+          </div>
+
+          <!-- revoked since -->
+          <div
+            class="time-list-item"
+            v-if="user.isRevoked() && user.revokedOn"
           >
-            <ion-label class="subtitles-sm">
-              {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revoked') }}
-            </ion-label>
-          </ion-chip>
-        </div>
-
-        <!-- join on -->
-        <div class="details-item time-item">
-          <ion-text class="details-item-name__title subtitles-sm">
-            <ion-icon
-              class="details-item__icon"
-              :icon="personAdd"
-            />
-            {{ $msTranslate('UsersPage.UserDetailsModal.subtitles.joined') }}
-          </ion-text>
-          <ion-text class="details-item-name__text body-lg">
-            {{ $msTranslate(formatTimeSince(user.createdOn, '--', 'short')) }}
-          </ion-text>
-        </div>
-
-        <!-- revoked since -->
-        <div
-          class="details-item time-item"
-          v-if="user.isRevoked() && user.revokedOn"
-        >
-          <ion-text class="details-item-name__title">
-            <ion-icon
-              class="details-item__icon body-lg"
-              :icon="personRemove"
-            />
-            <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}</span>
-          </ion-text>
-          <ion-text class="details-item-name__text body-lg">
-            {{ $msTranslate(I18n.formatDate(user.revokedOn, 'short')) }}
-          </ion-text>
+            <ion-text class="time-list-item__title">
+              <ion-icon
+                class="time-list-item__icon body-lg"
+                :icon="personRemove"
+              />
+              <span class="subtitles-sm">{{ $msTranslate('UsersPage.UserDetailsModal.subtitles.revokedSince') }}</span>
+            </ion-text>
+            <ion-text class="time-list-item__text body-lg">
+              {{ $msTranslate(I18n.formatDate(user.revokedOn, 'short')) }}
+            </ion-text>
+          </div>
         </div>
       </div>
 
@@ -109,9 +105,10 @@
 <script setup lang="ts">
 import { MsModal, formatTimeSince, I18n } from 'megashark-lib';
 import WorkspaceTagRole from '@/components/workspaces/WorkspaceTagRole.vue';
+import UserStatusTag from '@/components/users/UserStatusTag.vue';
 import { SharedWithInfo, UserInfo, getWorkspacesSharedWith } from '@/parsec';
 import { Information, InformationLevel, InformationManager, PresentationMode } from '@/services/informationManager';
-import { IonCard, IonCardContent, IonChip, IonIcon, IonLabel, IonList, IonPage, IonText } from '@ionic/vue';
+import { IonCard, IonCardContent, IonIcon, IonList, IonPage, IonText } from '@ionic/vue';
 import { business, personAdd, personRemove } from 'ionicons/icons';
 import { Ref, onMounted, ref } from 'vue';
 
@@ -142,23 +139,17 @@ onMounted(async () => {
 <style lang="scss" scoped>
 .details {
   display: flex;
+  flex-direction: column;
   margin-bottom: 1rem;
-  flex-wrap: wrap;
   gap: 1rem;
 
   .details-item {
     display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    width: calc(50% - 0.5rem);
-    gap: 0.5rem;
-
-    &.revoked {
-      width: 100%;
-      flex-direction: row;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
+    width: 100%;
+    flex-direction: row;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    align-items: end;
 
     &-name {
       margin: auto 0;
@@ -174,39 +165,34 @@ onMounted(async () => {
         color: var(--parsec-color-light-primary-800);
       }
     }
+  }
 
-    .revoked-chip {
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-      align-self: end;
-      justify-content: center;
-      width: 5.5rem;
-      padding: 0.125rem;
-      min-height: 0;
-      border-radius: var(--parsec-radius-6);
-      margin: 0;
-      height: fit-content;
-    }
+  .time-list {
+    display: flex;
+    gap: 1rem;
 
-    &.time-item {
+    &-item {
       background: var(--parsec-color-light-secondary-background);
       padding: 0.75rem;
       border: 1px solid var(--parsec-color-light-secondary-premiere);
       border-radius: var(--parsec-radius-6);
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
 
-      .details-item__icon {
-        color: var(--parsec-color-light-secondary-hard-grey);
-      }
-
-      .details-item-name__title {
+      &__title {
         color: var(--parsec-color-light-secondary-hard-grey);
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 0.5rem;
       }
 
-      .details-item-name__text {
+      &__icon {
+        color: var(--parsec-color-light-secondary-hard-grey);
+      }
+
+      &__text {
         color: var(--parsec-color-light-primary-800);
       }
     }
@@ -239,13 +225,15 @@ onMounted(async () => {
 
     .workspace-list-item {
       background: var(--parsec-color-light-secondary-background);
-      border: 1px solid var(--parsec-color-light-secondary-disabled);
+      border: 1px solid var(--parsec-color-light-secondary-premiere);
       flex-shrink: 0;
       display: flex;
       align-items: center;
       padding: 1rem 1.5rem 1rem 1rem;
       margin: 0;
+      border-radius: var(--parsec-radius-6);
       box-shadow: none;
+
       &::after {
         display: none;
       }

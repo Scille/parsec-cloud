@@ -8,7 +8,7 @@
       selected: user.isSelected,
       'no-padding-end': !user.isSelected,
       revoked: user.isRevoked(),
-      frozen: user.isFrozen(),
+      suspended: user.isFrozen(),
       'user-hovered': !user.isSelected && (menuOpened || isHovered),
     }"
     @click="$emit('click', $event, user)"
@@ -28,12 +28,6 @@
         @ion-change="$emit('select', user, $event)"
       />
       <!-- eslint-enable vue/no-mutating-props -->
-    </div>
-    <div
-      v-if="user.isRevoked()"
-      class="user-revoked"
-    >
-      <user-status-tag :revoked="user.isRevoked()" />
     </div>
     <div
       class="user-card-option"
@@ -63,6 +57,16 @@
       </div>
       <div class="user-card-profile">
         <tag-profile :profile="user.currentProfile" />
+        <div
+          v-if="!user.isActive()"
+          class="user-revoked user-suspended"
+        >
+          <user-status-tag
+            :revoked="user.isRevoked()"
+            :frozen="user.isFrozen()"
+            :show-tooltip="true"
+          />
+        </div>
       </div>
       <div class="user-card-join">
         <ion-text class="user-card-join-label body-sm">
@@ -143,16 +147,6 @@ async function onOptionsClick(event: Event): Promise<void> {
     }
   }
 
-  &.revoked {
-    position: relative;
-
-    .user-revoked {
-      position: absolute;
-      top: 0.725rem;
-      right: 0.725rem;
-    }
-  }
-
   &.selected:not(.revoked) {
     --background: var(--parsec-color-light-primary-100);
     border: 1px solid var(--parsec-color-light-primary-100);
@@ -225,9 +219,11 @@ async function onOptionsClick(event: Event): Promise<void> {
       overflow: hidden;
     }
   }
-}
 
-.frozen {
-  filter: blur(1px);
+  &-profile {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
 }
 </style>

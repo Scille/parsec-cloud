@@ -42,6 +42,21 @@
             @change="users.unselectHiddenUsers()"
           />
         </ion-item>
+        <ion-item
+          class="list-group-item ion-no-padding"
+          id="filter-check-frozen"
+        >
+          <user-status-tag
+            :revoked="false"
+            :frozen="true"
+            class="status-tag"
+            @click="users.filters.statusFrozen = !users.filters.statusFrozen"
+          />
+          <ms-checkbox
+            v-model="users.filters.statusFrozen"
+            @change="users.unselectHiddenUsers()"
+          />
+        </ion-item>
       </ion-item-group>
       <ion-item-group class="list-group">
         <ion-text

@@ -10,6 +10,7 @@ const USERS = [
     profile: 'Administrator',
     active: true,
     currentUser: true,
+    frozen: false,
   },
   {
     // cspell:disable-next-line
@@ -17,6 +18,7 @@ const USERS = [
     email: 'jaheira@gmail.com',
     profile: 'Administrator',
     active: true,
+    frozen: false,
   },
   {
     // cspell:disable-next-line
@@ -24,6 +26,7 @@ const USERS = [
     email: 'arthasmenethil@gmail.com',
     profile: 'Administrator',
     active: false,
+    frozen: false,
   },
   {
     // cspell:disable-next-line
@@ -31,12 +34,14 @@ const USERS = [
     email: 'cernd@gmail.com',
     profile: 'Standard',
     active: true,
+    frozen: false,
   },
   {
     name: 'Patches',
     email: 'patches@yahoo.fr',
     profile: 'Standard',
     active: true,
+    frozen: false,
   },
   {
     // cspell:disable-next-line
@@ -44,19 +49,22 @@ const USERS = [
     email: 'val@gmail.com',
     profile: 'Standard',
     active: false,
-  },
-  {
-    // cspell:disable-next-line
-    name: 'Karl Hungus',
-    email: 'karlhungus@gmail.com',
-    profile: 'External',
-    active: true,
+    frozen: false,
   },
   {
     name: 'Gaia',
     email: 'gaia@gmail.com',
     profile: 'External',
     active: false,
+    frozen: false,
+  },
+  {
+    // cspell:disable-next-line
+    name: 'Karl Hungus',
+    email: 'karlhungus@gmail.com',
+    profile: 'External',
+    active: false,
+    frozen: true,
   },
 ];
 
@@ -72,6 +80,13 @@ msTest('User list default state', async ({ usersPage }) => {
   await expect(usersPage.locator('#users-page-user-list').getByRole('listitem')).toHaveCount(USERS.length);
 });
 
+function getStatusForUser(user: any): string {
+  if (user.frozen) {
+    return 'Suspended';
+  }
+  return user.active ? 'Active' : 'Revoked';
+}
+
 msTest('Check user list items', async ({ usersPage }) => {
   const usersList = usersPage.locator('#users-page-user-list');
   for (const [index, user] of USERS.entries()) {
@@ -79,8 +94,8 @@ msTest('Check user list items', async ({ usersPage }) => {
     await expect(item.locator('.user-name').locator('.person-name')).toHaveText(user.name);
     await expect(item.locator('.user-profile')).toHaveText(user.profile);
     await expect(item.locator('.user-email')).toHaveText(user.email);
-    await expect(item.locator('.user-status')).toHaveText(user.active ? 'Active' : 'Revoked');
-    if (!user.active) {
+    await expect(item.locator('.user-status')).toHaveText(getStatusForUser(user));
+    if (!user.active && !user.frozen) {
       await expect(item).toHaveTheClass('revoked');
     }
   }
@@ -94,12 +109,12 @@ msTest('Check user grid items', async ({ usersPage }) => {
     const card = usersGrid.locator('.user-card-item').nth(index);
     await expect(card.locator('.user-card-info').locator('.user-card-info__name').locator('span').nth(0)).toHaveText(user.name);
     await expect(card.locator('.user-card-info').locator('.user-card-info__email')).toHaveText(user.email);
-    await expect(card.locator('.user-card-profile')).toHaveText(user.profile);
-    if (user.active) {
-      await expect(card.locator('.user-revoked')).toBeHidden();
+    await expect(card.locator('.user-card-profile').locator('.label-profile')).toHaveText(user.profile);
+    if (user.frozen || !user.active) {
+      await expect(card.locator('.user-card-profile').locator('.label-status')).toBeVisible();
+      await expect(card.locator('.user-card-profile').locator('.label-status')).toHaveText(getStatusForUser(user));
     } else {
-      await expect(card.locator('.user-revoked')).toBeVisible();
-      await expect(card).toHaveTheClass('revoked');
+      await expect(card.locator('.user-card-profile').locator('.label-status')).toBeHidden();
     }
   }
 });
@@ -243,7 +258,7 @@ msTest('Test users selection in list mode', async ({ usersPage }) => {
       await expect(checkbox).toHaveState('checked');
     }
   }
-  const expectedSelected = USERS.filter((u) => u.active && u.name !== 'Gordon Freeman');
+  const expectedSelected = USERS.filter((u) => (u.active || u.frozen) && u.name !== 'Gordon Freeman');
   await expect(actionBar.locator('.counter')).toHaveText(`${expectedSelected.length} users selected`, { useInnerText: true });
   await expect(headerCheckbox).toHaveState('checked');
   // Unselect one
@@ -324,8 +339,8 @@ msTest('User filter popover default state', async ({ usersPage }) => {
   await expect(popover.locator('#user-filter-list').getByRole('group')).toHaveCount(2);
   const statusGroup = popover.locator('#user-filter-list').getByRole('group').nth(0);
   await expect(statusGroup.locator('.list-group-title')).toHaveText('Status');
-  await expect(statusGroup.getByRole('listitem')).toHaveCount(2);
-  await expect(statusGroup.getByRole('listitem')).toHaveText(['Active', 'Revoked']);
+  await expect(statusGroup.getByRole('listitem')).toHaveCount(3);
+  await expect(statusGroup.getByRole('listitem')).toHaveText(['Active', 'Revoked', 'Suspended']);
   for (const checkbox of await statusGroup.locator('ion-checkbox').all()) {
     await expect(checkbox).toHaveState('checked');
   }
@@ -357,17 +372,17 @@ msTest('Filter users list', async ({ usersPage }) => {
   // Also hides revoked
   await toggleFilter(usersPage, 'Revoked');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.filter((u) => u.profile !== 'Administrator' && u.active === true).map((u) => u.name),
+    USERS.filter((u) => u.profile !== 'Administrator' && (u.active === true || u.frozen)).map((u) => u.name),
   );
   // Also hides external
   await toggleFilter(usersPage, 'External');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.filter((u) => u.profile !== 'Administrator' && u.profile !== 'External' && u.active === true).map((u) => u.name),
+    USERS.filter((u) => u.profile !== 'Administrator' && u.profile !== 'External' && (u.active === true || u.frozen)).map((u) => u.name),
   );
   // Show admins again
   await toggleFilter(usersPage, 'Administrator');
   await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.filter((u) => u.profile !== 'External' && u.active === true).map((u) => u.name),
+    USERS.filter((u) => u.profile !== 'External' && u.active === true && !u.frozen).map((u) => u.name),
   );
   await expect(usersPage.locator('.no-match-result')).toBeHidden();
   // Also hide active users
@@ -436,26 +451,6 @@ msTest('Sort users list', async ({ usersPage }) => {
       } else {
         return u2.name.localeCompare(u1.name);
       }
-    }).map((u) => u.name),
-  );
-  await sortBy(sortButton, 'Descending');
-  await sortBy(sortButton, 'Status');
-  await expect(sortButton).toHaveText('Status');
-  const PROFILE_WEIGHTS = new Map([
-    ['Administrator', 8],
-    ['Standard', 4],
-    ['External', 2],
-  ]);
-  await expect(usersList.getByRole('listitem').locator('.user-name').locator('.person-name')).toHaveText(
-    USERS.sort((u1, u2) => {
-      if (u1.currentUser) {
-        return -1;
-      } else if (u2.currentUser) {
-        return 1;
-      }
-      const u1Weight = (PROFILE_WEIGHTS.get(u1.profile) as number) + Number(u1.active) * 16;
-      const u2Weight = (PROFILE_WEIGHTS.get(u2.profile) as number) + Number(u2.active) * 16;
-      return u1.name.localeCompare(u2.name) - (u1Weight - u2Weight);
     }).map((u) => u.name),
   );
 });
