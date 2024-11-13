@@ -713,7 +713,11 @@
             "done": {
                 "subtitle": "Vous avez créé et sauvegardé les fichiers de récupération d'authentification'.",
                 "label": "Fichiers déjà téléchargés",
-                "button": "Re-télécharger les fichiers"
+                "button": "Re-télécharger les fichiers",
+                "recreateQuestionTitle": "Fichier de récupération",
+                "recreateQuestionMessage": "Vous avez déjà un ou plusieurs fichiers de récupération, voulez-vous en créer un autre ?",
+                "recreateYes": "Créer un nouvel fichier",
+                "recreateNo": "Annuler"
             },
             "notDone": {
                 "label": "Action requise",

@@ -713,7 +713,11 @@
             "done": {
                 "subtitle": "Authentication recovery files have been created and downloaded.",
                 "label": "Files already downloaded",
-                "button": "Re-download recovery files"
+                "button": "Re-download recovery files",
+                "recreateQuestionTitle": "Already have a recovery file",
+                "recreateQuestionMessage": "This will create a new recovery file, do you want to continue?",
+                "recreateYes": "Create a new recovery file",
+                "recreateNo": "Cancel"
             },
             "notDone": {
                 "label": "Action required",
