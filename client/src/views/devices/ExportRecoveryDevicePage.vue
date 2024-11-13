@@ -6,7 +6,13 @@
       <div class="recovery">
         <div class="recovery-container download">
           <ms-informative-text>
+            {{ $msTranslate('ExportRecoveryDevicePage.subtitles.aboutRecoveryFiles') }}
+          </ms-informative-text>
+          <ms-informative-text>
             {{ $msTranslate('ExportRecoveryDevicePage.subtitles.keepFilesSeparate') }}
+          </ms-informative-text>
+          <ms-informative-text>
+            {{ $msTranslate('ExportRecoveryDevicePage.subtitles.warningUniqueness') }}
           </ms-informative-text>
 
           <div class="file-list">
