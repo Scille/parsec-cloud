@@ -714,7 +714,7 @@
                 "label": "Recovery file already created",
                 "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
                 "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
-                "button": "Create recovery file",
+                "button": "Create a recovery file",
                 "recreateQuestionTitle": "Create a new recovery file?",
                 "recreateQuestionMessage": "You have already created a recovery file in the past. Do you want to create a new one?",
                 "recreateYes": "Create a new recovery file",
@@ -724,7 +724,7 @@
                 "label": "Action required",
                 "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
                 "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
-                "button": "Create recovery file"
+                "button": "Create a recovery file"
             }
         },
         "greet": {

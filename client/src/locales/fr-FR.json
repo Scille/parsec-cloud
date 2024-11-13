@@ -714,7 +714,7 @@
                 "label": "Fichier de récupération déjà créé",
                 "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
                 "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
-                "button": "Créer fichier de récupération",
+                "button": "Créer un fichier de récupération",
                 "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
                 "recreateQuestionMessage": "Vous avez déjà créé un fichier de récupération dans le passé. Souhaitez-vous en créer un nouveau ?",
                 "recreateYes": "Créer un nouveau fichier",
@@ -724,7 +724,7 @@
                 "label": "Action requise",
                 "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
                 "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
-                "button": "Créer fichier de récupération"
+                "button": "Créer un fichier de récupération"
             }
         },
         "greet": {

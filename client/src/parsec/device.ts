@@ -101,7 +101,8 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
       if (result.ok) {
         result.value.map((device) => {
           (device as OwnDeviceInfo).isCurrent = device.id === clientResult.value.deviceId;
-          (device as OwnDeviceInfo).isRecovery = device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX);
+          (device as OwnDeviceInfo).isRecovery =
+            device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX) || device.purpose === DevicePurpose.PassphraseRecovery;
           return device;
         });
       }
