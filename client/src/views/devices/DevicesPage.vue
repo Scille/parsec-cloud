@@ -126,7 +126,7 @@
 </template>
 
 <script setup lang="ts">
-import { MsImage, MsModalResult, PasswordLock } from 'megashark-lib';
+import { Answer, askQuestion, MsImage, MsModalResult, PasswordLock } from 'megashark-lib';
 import DeviceCard from '@/components/devices/DeviceCard.vue';
 import { OwnDeviceInfo, listOwnDevices } from '@/parsec';
 import { Routes, navigateTo, watchRoute, getCurrentRouteName } from '@/router';
@@ -158,6 +158,16 @@ onUnmounted(async () => {
 });
 
 async function goToExportRecoveryDevice(): Promise<void> {
+  if (hasRecoveryDevice.value) {
+    const answer = await askQuestion(
+      'DevicesPage.restorePassword.done.recreateQuestionTitle',
+      'DevicesPage.restorePassword.done.recreateQuestionMessage',
+      { yesText: 'DevicesPage.restorePassword.done.recreateYes', noText: 'DevicesPage.restorePassword.done.recreateNo' },
+    );
+    if (answer === Answer.No) {
+      return;
+    }
+  }
   await navigateTo(Routes.RecoveryExport);
 }
 
