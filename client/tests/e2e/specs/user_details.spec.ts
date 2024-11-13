@@ -27,8 +27,9 @@ msTest('User details modal', async ({ usersPage }) => {
   await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
   // cspell:disable-next-line
   await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Cernd');
-  await expect(detailsItems.nth(1).locator('.details-item-name__title')).toHaveText('Joined');
-  await expect(detailsItems.nth(1).locator('.details-item-name__text')).toHaveText(/^now|< 1 minute$/);
+  const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
+  await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined');
+  await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText(/^now|< 1 minute$/);
   await expect(modal.locator('.workspace-list')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toBeHidden();
   await expect(modal.locator('.workspace-list').locator('.workspace-list-item').locator('.item-container__name')).toHaveText([
@@ -46,11 +47,12 @@ msTest('User details modal no common workspaces', async ({ usersPage }) => {
   await expect(detailsItems.nth(0).locator('.details-item-name__title')).toHaveText('Name');
   // cspell:disable-next-line
   await expect(detailsItems.nth(0).locator('.details-item-name__text')).toHaveText('Arthas Menethil');
-  await expect(detailsItems.nth(0).locator('.revoked-chip')).toBeVisible();
-  await expect(detailsItems.nth(1).locator('.details-item-name__title')).toHaveText('Joined');
-  await expect(detailsItems.nth(1).locator('.details-item-name__text')).toHaveText('Jul 3, 2002');
-  await expect(detailsItems.nth(2).locator('.details-item-name__title')).toHaveText('Revoked since');
-  await expect(detailsItems.nth(2).locator('.details-item-name__text')).toHaveText('Apr 7, 2022');
+  await expect(detailsItems.nth(0).locator('.label-status')).toBeVisible();
+  const timeItems = modal.locator('.ms-modal-content').locator('.time-list-item');
+  await expect(timeItems.nth(0).locator('.time-list-item__title')).toHaveText('Joined');
+  await expect(timeItems.nth(0).locator('.time-list-item__text')).toHaveText('Jul 3, 2002');
+  await expect(timeItems.nth(1).locator('.time-list-item__title')).toHaveText('Revoked since');
+  await expect(timeItems.nth(1).locator('.time-list-item__text')).toHaveText('Apr 7, 2022');
   await expect(modal.locator('.workspace-list')).toBeHidden();
   await expect(modal.locator('.workspace-empty')).toBeVisible();
   await expect(modal.locator('.workspace-empty')).toHaveText('You have no workspaces in common with this user.');

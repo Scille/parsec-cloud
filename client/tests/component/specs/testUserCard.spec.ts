@@ -20,6 +20,7 @@ describe('User Card', () => {
       revokedBy: null,
       isRevoked: () => false,
       isFrozen: () => false,
+      isActive: () => true,
       isSelected: false,
       isCurrent: false,
     };

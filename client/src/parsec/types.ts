@@ -204,6 +204,7 @@ type SystemPath = Path;
 interface UserInfo extends ParsecUserInfo {
   isRevoked: () => boolean;
   isFrozen: () => boolean;
+  isActive: () => boolean;
 }
 
 interface OwnDeviceInfo extends DeviceInfo {

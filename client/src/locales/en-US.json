@@ -971,7 +971,13 @@
         },
         "status": {
             "active": "Active",
-            "revoked": "Revoked"
+            "revoked": "Revoked",
+            "frozen": "Suspended"
+        },
+        "statusDescriptions": {
+            "active": "User is active and can access this organization.",
+            "revoked": "User has been revoked and can no longer access this organization.",
+            "frozen": "User has been temporarily suspended and cannot access this organization."
         },
         "success": {
             "email": "Email address:",
