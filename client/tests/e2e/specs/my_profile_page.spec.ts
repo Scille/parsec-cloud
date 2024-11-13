@@ -14,11 +14,12 @@ msTest('Check devices list', async ({ myProfilePage }) => {
 msTest('Check if restore-password section is displayed', async ({ myProfilePage }) => {
   const restorePassword = myProfilePage.locator('.restore-password');
   await expect(restorePassword).toBeVisible();
-  await expect(restorePassword.locator('.restore-password-header__title')).toHaveText('Authentication recovery files');
+  await expect(restorePassword.locator('.restore-password-header__title')).toHaveText('Create a recovery file');
   await expect(restorePassword.locator('.restore-password-subtitles')).toHaveText(
-    'Authentication recovery files have been created and downloaded.',
+    `A recovery file allows you to get back access to your data in case your forgot your password or lose your
+ devices.Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.`,
   );
-  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Re-download recovery files');
+  await expect(restorePassword.locator('.restore-password-button')).toHaveText('Create a recovery file');
 });
 
 msTest('Open authentication section', async ({ myProfilePage }) => {
