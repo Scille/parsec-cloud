@@ -29,9 +29,8 @@ async def test_authenticated_list_frozen_users_author_not_allowed(
     coolorg: CoolorgRpcClients, backend: Backend
 ) -> None:
     pass
-    # rep = await coolorg.mallory.list_frozen_users()  # mallory is an outsider
-    # TODO check author is admin
-    # assert rep == authenticated_cmds.v4.list_frozen_users.RepAuthorNotAllowed()
+    rep = await coolorg.mallory.list_frozen_users()  # mallory is an outsider
+    assert rep == authenticated_cmds.v4.list_frozen_users.RepAuthorNotAllowed()
 
 
 async def test_authenticated_list_frozen_users_http_common_errors(

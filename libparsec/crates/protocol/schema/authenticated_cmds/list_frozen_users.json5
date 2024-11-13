@@ -18,6 +18,9 @@
             },
             {
                 "status": "author_not_allowed"
+            },
+            {
+                "status": "author_not_found"
             }
         ]
     }
