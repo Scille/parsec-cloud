@@ -24,6 +24,24 @@ pub fn rep_author_not_allowed() {
     p_assert_eq!(data2, expected);
 }
 
+pub fn rep_author_not_found() {
+    // Generated from Parsec 3.1.1-a.0+dev
+    // Content:
+    //   status: 'author_not_found'
+    let raw: &[u8] = hex!("81a6737461747573b0617574686f725f6e6f745f666f756e64").as_ref();
+    let expected = authenticated_cmds::list_frozen_users::Rep::AuthorNotFound;
+    let data = authenticated_cmds::list_frozen_users::Rep::load(raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::list_frozen_users::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+}
+
 pub fn rep_ok() {
     // Generated from Parsec 3.1.1-a.0+dev
     // Content:
@@ -38,7 +56,6 @@ pub fn rep_ok() {
     let expected = authenticated_cmds::list_frozen_users::Rep::Ok {
         frozen_users: vec![UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap()],
     };
-    println!("***expected: {:?}", expected.dump().unwrap());
     let data = authenticated_cmds::list_frozen_users::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
@@ -60,7 +77,6 @@ pub fn req() {
     let req = authenticated_cmds::list_frozen_users::Req;
 
     let expected = authenticated_cmds::AnyCmdReq::ListFrozenUsers(req.clone());
-    println!("***expected: {:?}", req.dump().unwrap());
     let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
     p_assert_eq!(data, expected);

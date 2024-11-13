@@ -700,7 +700,6 @@ class MemoryUserComponent(BaseUserComponent):
         if user.current_profile != UserProfile.ADMIN:
             return UserListFrozenUsersBadOutcome.AUTHOR_NOT_ALLOWED
 
-        # TODO check author is admin
         users = []
         for user in org.users.values():
             if user.is_frozen:
