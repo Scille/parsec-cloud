@@ -221,7 +221,7 @@
                 "yes": "Accept",
                 "no": "Refuse and log out",
                 "confirmationMessage": "You have accepted the new terms of service.",
-                "acceptError": "An error occured."
+                "acceptError": "An error occurred."
             }
         },
         "parsecServerUrl": "URL of your Parsec server",
@@ -310,7 +310,7 @@
                 "information": "Information"
             },
             "myProfile": "My profile",
-            "recoveryExport": "Recovery files",
+            "recoveryExport": "Recovery file",
             "history": "History"
         },
         "previous": "Go back",
@@ -709,21 +709,22 @@
         "joinedOn": "Joined:",
         "now": "Now",
         "restorePassword": {
-            "title": "Authentication recovery files",
+            "title": "Create a recovery file",
             "done": {
-                "subtitle": "Authentication recovery files have been created and downloaded.",
-                "label": "Files already downloaded",
-                "button": "Re-download recovery files",
-                "recreateQuestionTitle": "Already have a recovery file",
-                "recreateQuestionMessage": "This will create a new recovery file, do you want to continue?",
+                "label": "Recovery file already created",
+                "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
+                "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
+                "button": "Create recovery file",
+                "recreateQuestionTitle": "Create a new recovery file?",
+                "recreateQuestionMessage": "You have already created a recovery file in the past. Do you want to create a new one?",
                 "recreateYes": "Create a new recovery file",
                 "recreateNo": "Cancel"
             },
             "notDone": {
                 "label": "Action required",
-                "subtitle": "Parsec does not store your password.",
-                "subtitle2": "These files can be used to reset your authentication on a device.",
-                "button": "Create recovery files"
+                "subtitle": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
+                "subtitle2": "Without a recovery file, your account cannot be recovered and you will need to be re-invited to join the organization.",
+                "button": "Create recovery file"
             }
         },
         "greet": {
@@ -822,7 +823,7 @@
             "passwordChanged": "Authentication was successfully updated!"
         },
         "subtitles": {
-            "recoveryFilesMustExistWarning": "You must have created recovery files in order to reset your authentication.",
+            "recoveryFilesMustExistWarning": "You must have created a recovery file in order to reset your authentication method.",
             "password": "Password",
             "passwordModified": "You can now login with your new authentication.",
             "noFileSelected": "No file selected"
@@ -848,15 +849,14 @@
             "recoveryKey": "Secret Key"
         },
         "subtitles": {
-            "newPassword": "Recovery files let you create a new password in the event that you forget it on this device.",
-            "twoFilesToKeep": "You will then have to keep two separate files:",
-            "keepFilesSeparate": "Please make sure both files are not stored in the same folder.",
-            "fileExplanation": "This file will allow you to reset your password using the secret key.",
-            "keyExplanation": "The secret key is a code to use with the recovery file to create a new password.",
+            "aboutRecoveryFiles": "A recovery file allows you to get back access to your data in case your forgot your password or lose your devices.",
+            "keepFilesSeparate": "You will need to save the recovery file and its secret key. Make sure both are not stored in the same place.",
+            "warningUniqueness": "Please note that these files are not stored by Parsec. If you lose one or both, you will need to create a new recovery file.",
+            "fileExplanation": "The recovery file allows you to reset your password using the corresponding secret key.",
+            "keyExplanation": "The secret key is a code that must be used with the recovery file to create a new password.",
             "fileDownloaded": "File downloaded"
         },
         "actions": {
-            "understand": "I understand",
             "download": "Download",
             "downloadAgain": "Download again",
             "backToDevices": "Back to my devices"

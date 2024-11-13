@@ -106,6 +106,9 @@
           <ion-text class="body">
             {{ $msTranslate('DevicesPage.restorePassword.done.subtitle') }}
           </ion-text>
+          <ion-text class="body">
+            {{ $msTranslate('DevicesPage.restorePassword.done.subtitle2') }}
+          </ion-text>
         </div>
         <div class="restore-password-button">
           <ion-button
