@@ -139,6 +139,7 @@ export async function entryStat(workspaceHandle: WorkspaceHandle, path: FsPath):
 export async function statFolderChildren(
   workspaceHandle: WorkspaceHandle,
   path: FsPath,
+  excludeConfined = true,
 ): Promise<Result<Array<EntryStat>, WorkspaceStatFolderChildrenError>> {
   if (!needsMocks()) {
     const watchResult = await libparsec.workspaceWatchEntryOneshot(workspaceHandle, path);
@@ -156,20 +157,22 @@ export async function statFolderChildren(
 
     const cooked: Array<EntryStat> = [];
     for (const [name, stat] of result.value) {
-      stat.created = DateTime.fromSeconds(stat.created as any as number);
-      stat.updated = DateTime.fromSeconds(stat.updated as any as number);
-      if (stat.tag === FileType.File) {
-        (stat as EntryStatFile).isFile = (): boolean => true;
-        (stat as EntryStatFile).name = name;
-        (stat as EntryStatFile).path = await Path.join(path, name);
-        (stat as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
-      } else {
-        (stat as EntryStatFolder).isFile = (): boolean => false;
-        (stat as EntryStatFolder).name = name;
-        (stat as EntryStatFolder).path = await Path.join(path, name);
-        (stat as EntryStatFolder).isConfined = (): boolean => stat.confinementPoint !== null;
+      if (!stat.confinementPoint || !excludeConfined) {
+        stat.created = DateTime.fromSeconds(stat.created as any as number);
+        stat.updated = DateTime.fromSeconds(stat.updated as any as number);
+        if (stat.tag === FileType.File) {
+          (stat as EntryStatFile).isFile = (): boolean => true;
+          (stat as EntryStatFile).name = name;
+          (stat as EntryStatFile).path = await Path.join(path, name);
+          (stat as EntryStatFile).isConfined = (): boolean => stat.confinementPoint !== null;
+        } else {
+          (stat as EntryStatFolder).isFile = (): boolean => false;
+          (stat as EntryStatFolder).name = name;
+          (stat as EntryStatFolder).path = await Path.join(path, name);
+          (stat as EntryStatFolder).isConfined = (): boolean => stat.confinementPoint !== null;
+        }
+        cooked.push(stat as EntryStat);
       }
-      cooked.push(stat as EntryStat);
     }
 
     return {
