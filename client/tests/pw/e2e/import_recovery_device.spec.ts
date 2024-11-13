@@ -10,7 +10,7 @@ msTest('Import recovery device', async ({ home }, testInfo: TestInfo) => {
   const container = home.locator('.recovery-content');
 
   await expect(container.locator('.container-textinfo')).toHaveText(
-    'You must have created recovery files in order to reset your authentication.',
+    'You must have created a recovery file in order to reset your authentication method.',
   );
 
   const okButton = container.locator('#to-password-change-btn');
