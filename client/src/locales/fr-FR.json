@@ -310,7 +310,7 @@
                 "information": "Informations"
             },
             "myProfile": "Mon profil",
-            "recoveryExport": "Fichiers de récupération",
+            "recoveryExport": "Fichier de récupération",
             "history": "Historique"
         },
         "previous": "Précédent",
@@ -709,17 +709,22 @@
         "joinedOn": "Rejoint :",
         "now": "À l'instant",
         "restorePassword": {
-            "title": "Fichiers de récupération d'authentification'",
+            "title": "Créer un fichier de récupération",
             "done": {
-                "subtitle": "Vous avez créé et sauvegardé les fichiers de récupération d'authentification'.",
-                "label": "Fichiers déjà téléchargés",
-                "button": "Re-télécharger les fichiers"
+                "label": "Fichier de récupération déjà créé",
+                "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+                "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
+                "button": "Créer un fichier de récupération",
+                "recreateQuestionTitle": "Créer un nouveau fichier de récupération ?",
+                "recreateQuestionMessage": "Vous avez déjà créé un fichier de récupération dans le passé. Souhaitez-vous en créer un nouveau ?",
+                "recreateYes": "Créer un nouveau fichier",
+                "recreateNo": "Annuler"
             },
             "notDone": {
                 "label": "Action requise",
-                "subtitle": "Parsec ne garde pas votre mot de passe.",
-                "subtitle2": "Ces fichiers vous permettent de réinitialiser votre authentification sur un appareil en cas d'oubli.",
-                "button": "Créer des fichiers de récupération"
+                "subtitle": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+                "subtitle2": "Sans fichier de récupération, votre compte ne pourra pas être récupéré et vous devrez être réinvité à rejoindre l'organisation.",
+                "button": "Créer un fichier de récupération"
             }
         },
         "greet": {
@@ -818,7 +823,7 @@
             "passwordChanged": "L'authentification a bien été modifiée"
         },
         "subtitles": {
-            "recoveryFilesMustExistWarning": "Vous devez avoir créé des fichiers de récupération pour réinitialiser votre authentification.",
+            "recoveryFilesMustExistWarning": "Vous devez avoir créé un fichier de récupération pour réinitialiser votre authentification.",
             "password": "Mot de passe",
             "passwordModified": "Vous pouvez vous connecter avec votre nouvelle authentification.",
             "noFileSelected": "Aucun fichier sélectionné"
@@ -844,15 +849,14 @@
             "recoveryKey": "Clé secrète"
         },
         "subtitles": {
-            "newPassword": "Les fichiers de récupération vous permettront de recréer un mot de passe en cas d'oubli sur un appareil.",
-            "twoFilesToKeep": "La récupération vous donnera 2 fichiers à conserver :",
-            "keepFilesSeparate": "Veillez à bien conserver ces fichiers idéalement dans des répertoires indépendants.",
-            "fileExplanation": "Ce fichier permettra de choisir votre mot de passe à l'aide de la clé secrète.",
-            "keyExplanation": "La clé secrète est un code qui vous permettra de choisir un nouveau mot de passe.",
+            "aboutRecoveryFiles": "Un fichier de récupération vous permet de retrouver l'accès à vos données en cas d'oubli de votre mot de passe ou de perte de vos appareils.",
+            "keepFilesSeparate": "Vous devez enregistrer le fichier de récupération et sa clé secrète. Assurez-vous que les deux ne sont pas stockés au même endroit.",
+            "warningUniqueness": "Veuillez noter que ces fichiers ne sont pas stockés par Parsec. Si vous perdez l'un de ces fichiers ou les deux, vous devrez créer un nouveau fichier de récupération.",
+            "fileExplanation": "Le fichier de récupération vous permet de réinitialiser votre mot de passe à l'aide de la clé secrète correspondante.",
+            "keyExplanation": "La clé secrète est un code qui doit être utilisé avec le fichier de récupération pour créer un nouveau mot de passe.",
             "fileDownloaded": "Fichier téléchargé"
         },
         "actions": {
-            "understand": "J'ai compris",
             "download": "Télécharger",
             "downloadAgain": "Télécharger à nouveau",
             "backToDevices": "Retour à mes appareils"

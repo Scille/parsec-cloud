@@ -25,6 +25,7 @@
               @update:model-value="onDateTimeChange"
               :min-date="workspaceInfo && workspaceInfo.created ? workspaceInfo.created.toJSDate() : undefined"
               :max-date="DateTime.now().toJSDate()"
+              :locale="I18n.getLocale()"
             />
           </div>
         </div>
@@ -144,7 +145,7 @@
 import { IonPage, IonList, IonLabel, IonButtons, IonIcon, IonButton, IonListHeader, IonContent, IonText } from '@ionic/vue';
 import { computed, onBeforeUnmount, onMounted, ref, Ref, inject } from 'vue';
 import { FsPath, Path, getWorkspaceInfo, StartedWorkspaceInfo, statFolderChildrenAt, entryStatAt, EntryName } from '@/parsec';
-import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker } from 'megashark-lib';
+import { MsCheckbox, MsSpinner, MsSearchInput, askQuestion, Answer, MsDatetimePicker, I18n } from 'megashark-lib';
 import { DateTime } from 'luxon';
 import { RouterPathNode } from '@/components/header/HeaderBreadcrumbs.vue';
 import HeaderBreadcrumbs from '@/components/header/HeaderBreadcrumbs.vue';

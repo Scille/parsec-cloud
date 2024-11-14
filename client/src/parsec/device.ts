@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 import { needsMocks } from '@/parsec/environment';
-import { getClientConfig } from '@/parsec/internals';
+import { getClientConfig, wait } from '@/parsec/internals';
 import { getClientInfo } from '@/parsec/login';
 import { getParsecHandle } from '@/parsec/routing';
 import {
@@ -33,6 +33,7 @@ export async function exportRecoveryDevice(): Promise<Result<[string, Uint8Array
   if (handle !== null && !needsMocks()) {
     return await libparsec.clientExportRecoveryDevice(handle, generateRecoveryDeviceLabel());
   } else {
+    await wait(300);
     return {
       ok: true,
       value: ['ABCDEF', new Uint8Array([0x6d, 0x65, 0x6f, 0x77])],
@@ -100,7 +101,8 @@ export async function listOwnDevices(): Promise<Result<Array<OwnDeviceInfo>, Cli
       if (result.ok) {
         result.value.map((device) => {
           (device as OwnDeviceInfo).isCurrent = device.id === clientResult.value.deviceId;
-          (device as OwnDeviceInfo).isRecovery = device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX);
+          (device as OwnDeviceInfo).isRecovery =
+            device.deviceLabel.startsWith(RECOVERY_DEVICE_PREFIX) || device.purpose === DevicePurpose.PassphraseRecovery;
           return device;
         });
       }

@@ -1,15 +1,20 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+import { answerQuestion } from '@tests/pw/helpers';
 import { expect } from '@tests/pw/helpers/assertions';
 import { msTest } from '@tests/pw/helpers/fixtures';
 
 msTest('Export recovery device', async ({ myProfilePage }) => {
   const container = myProfilePage.locator('.restore-password');
   await container.locator('.restore-password-button').click();
-  await expect(myProfilePage.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('Recovery files');
+  await answerQuestion(myProfilePage, true, {
+    expectedTitleText: 'Create a new recovery file?',
+    expectedQuestionText: 'You have already created a recovery file in the past. Do you want to create a new one?',
+    expectedPositiveText: 'Create a new recovery file',
+    expectedNegativeText: 'Cancel',
+  });
+  await expect(myProfilePage.locator('.topbar-left').locator('.topbar-left__title')).toHaveText('Recovery file');
   const recoveryContainer = myProfilePage.locator('.recovery-container');
-  await expect(recoveryContainer.locator('ion-button')).toHaveText('I understand');
-  await recoveryContainer.locator('ion-button').click();
   const fileContainer = recoveryContainer.locator('.file-item').nth(0);
   const passphraseContainer = recoveryContainer.locator('.file-item').nth(1);
 
