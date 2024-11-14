@@ -1120,8 +1120,6 @@ impl ShamirRecoveryBriefCertificate {
     ) -> DataResult<Self> {
         let r = Self::base_verify_and_load(signed, author_verify_key)?;
 
-        r.check_data_integrity()?;
-
         if r.author != expected_author {
             return Err(DataError::UnexpectedAuthor {
                 expected: expected_author,
