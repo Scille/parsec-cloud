@@ -64,6 +64,8 @@ msTest('Documents page default state in a read only workspace', async ({ documen
   ]);
   await expect(entries.locator('.file-lastUpdate')).toHaveText(new Array(4).fill(TIME_MATCHER));
   await expect(entries.locator('.file-size')).toHaveText(['', '', SIZE_MATCHER, SIZE_MATCHER]);
+  // Useless click just to move the mouse
+  await documentsReadOnly.locator('.folder-list-header__label').nth(1).click();
   for (const checkbox of await entries.locator('ion-checkbox').all()) {
     await expect(checkbox).toBeHidden();
   }
