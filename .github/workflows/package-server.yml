@@ -107,30 +107,6 @@ jobs:
       - name: Set file for wheel version
         run: cp -v libparsec/version dist/version
 
-      - name: Hack the wheel macos version
-        if: startsWith(matrix.os, 'macos-')
-        shell: bash -eux -o pipefail {0}
-        run: |
-          # Old wheel name
-          OLD_WHEEL_NAME=$(basename dist/parsec_cloud-*.whl)
-          # Unzip the wheel
-          mkdir temp
-          cd temp
-          unzip ../dist/$OLD_WHEEL_NAME
-          # Get platform new wheel name
-          # FIXME: We fix the version of wheel to 0.43.0 as a temporary fix for the deprecated `bdist_wheel` module
-          python -m pip install -U pip wheel==0.43.0 setuptools
-          PLATFORM=$(python -c "from wheel.bdist_wheel import get_platform; print(get_platform('.'))")
-          NEW_WHEEL_NAME=$(basename ../dist/parsec_cloud-*.whl | sed "s/macosx_.*_x86_64/$PLATFORM/")
-          # Update archive and zip back
-          sed -i "" "s/macosx_.*_x86_64/$PLATFORM/" parsec_cloud-*.dist-info/WHEEL
-          zip -r $NEW_WHEEL_NAME *
-          cd ..
-          # Replace old wheel with the new one
-          mv temp/$NEW_WHEEL_NAME dist/
-          rm dist/$OLD_WHEEL_NAME
-          rm -rf temp
-
       - name: Generate requirements & constraints infos
         run: python server/packaging/wheel/wheel_it.py ./server --output dist --skip-wheel
 
