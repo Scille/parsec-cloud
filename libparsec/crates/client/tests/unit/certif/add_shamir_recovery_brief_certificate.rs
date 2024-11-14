@@ -14,11 +14,13 @@ use super::utils::certificates_ops_factory;
 async fn ok(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
     })
     .await;
@@ -47,17 +49,20 @@ async fn ok(env: &TestbedEnv) {
 async fn multiple(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
     })
     .await;
@@ -87,12 +92,14 @@ async fn multiple(env: &TestbedEnv) {
 async fn older_than_author(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder
             .new_shamir_recovery(
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
             )
             .customize(|event| {
                 event.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap()
@@ -136,12 +143,14 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
             builder.new_user("bob");
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
             let timestamp = builder
                 .new_shamir_recovery(
                     "bob",
                     1,
                     [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                    recovery_device_id,
                 )
                 .map(|event| event.timestamp);
 
@@ -150,6 +159,7 @@ async fn invalid_timestamp(env: &TestbedEnv) {
                     "bob",
                     1,
                     [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                    recovery_device_id,
                 )
                 .customize(|event| event.timestamp = timestamp);
 
@@ -193,16 +203,17 @@ async fn revoked(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
             builder.new_user("bob");
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
             let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
 
-            builder
-                // Check can't be bypassed
-                .new_shamir_recovery(
-                    "alice",
+            builder.with_check_consistency_disabled(|builder| {
+                builder.new_shamir_recovery(
+                    "bob",
                     1,
                     [("alice".parse().unwrap(), 1.try_into().unwrap())],
-                )
-                .customize(|event| event.author = "bob@dev1".parse().unwrap());
+                    recovery_device_id,
+                );
+            });
 
             timestamp
         })
@@ -241,6 +252,7 @@ async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
         builder.new_user("mallory");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
@@ -249,6 +261,7 @@ async fn threshold_equal_sum_of_shares(env: &TestbedEnv) {
                 ("alice".parse().unwrap(), 1.try_into().unwrap()),
                 ("mallory".parse().unwrap(), 1.try_into().unwrap()),
             ],
+            recovery_device_id,
         );
     })
     .await;
@@ -280,6 +293,7 @@ async fn self_recipient(env: &TestbedEnv) {
             "alice",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            "alice@dev1",
         );
     })
     .await;
@@ -309,14 +323,18 @@ async fn recipient_revoked(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
             builder.new_user("bob");
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
             let timestamp = builder.revoke_user("bob").map(|event| event.timestamp);
 
-            builder.new_shamir_recovery(
-                "alice",
-                1,
-                [("bob".parse().unwrap(), 1.try_into().unwrap())],
-            );
+            builder.with_check_consistency_disabled(|builder| {
+                builder.new_shamir_recovery(
+                    "alice",
+                    1,
+                    [("bob".parse().unwrap(), 1.try_into().unwrap())],
+                    recovery_device_id,
+                );
+            });
 
             timestamp
         })
@@ -355,11 +373,13 @@ async fn invalid_user_id(env: &TestbedEnv) {
     let bob_user_id = env
         .customize(|builder| {
             let bob_user_id = builder.new_user("bob").map(|u| u.user_id);
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
             builder.new_shamir_recovery(
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
             );
 
             bob_user_id

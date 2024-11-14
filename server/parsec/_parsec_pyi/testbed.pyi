@@ -216,7 +216,11 @@ class TestbedEventNewShamirRecovery:
     author: DeviceID
     threshold: int
     per_recipient_shares: dict[UserID, int]
+    recovery_device: DeviceID
+    data_key: SecretKey
+    reveal_token: InvitationToken
 
+    ciphered_data: bytes
     brief_certificate: ShamirRecoveryBriefCertificate
     raw_brief_certificate: bytes
     shares_certificates: list[ShamirRecoveryShareCertificate]

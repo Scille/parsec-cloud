@@ -802,6 +802,7 @@ impl_event_builder!(
         user: UserID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        recovery_device: DeviceID,
     ]
 );
 

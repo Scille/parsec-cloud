@@ -383,6 +383,10 @@ event_wrapper!(
         author: DeviceID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        recovery_device: DeviceID,
+        data_key: SecretKey,
+        reveal_token: InvitationToken,
+        ciphered_data: Py<PyBytes>,
         brief_certificate: ShamirRecoveryBriefCertificate,
         raw_brief_certificate: Py<PyBytes>,
         share_certificates: Py<PyList>,
@@ -930,6 +934,10 @@ fn event_to_pyobject(
                     .iter()
                     .map(|(k, v)| (k.clone().into(), *v))
                     .collect(),
+                recovery_device: x.recovery_device.into(),
+                data_key: x.data_key.clone().into(),
+                reveal_token: x.reveal_token.into(),
+                ciphered_data: PyBytes::new_bound(py, &x.ciphered_data(template)).into(),
                 brief_certificate,
                 raw_brief_certificate,
                 share_certificates: share_certificates.unbind(),

@@ -328,8 +328,18 @@ class Backend:
                 # TODO: Realm archiving not implemented yet !
                 raise NotImplementedError
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
-                # TODO: Shamir not implemented yet !
-                raise NotImplementedError
+                outcome = await self.shamir.add_recovery_setup(
+                    now=event.timestamp,
+                    organization_id=org_id,
+                    author=event.brief_certificate.user_id,
+                    device=event.brief_certificate.author,
+                    author_verify_key=_get_device_verify_key(event.author),
+                    setup_ciphered_data=event.ciphered_data,
+                    setup_reveal_token=event.reveal_token,
+                    setup_brief=event.raw_brief_certificate,
+                    setup_shares=event.raw_shares_certificates,
+                )
+                assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventCreateBlock):
                 outcome = await self.block.create(
                     now=event.timestamp,
