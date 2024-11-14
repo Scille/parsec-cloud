@@ -117,7 +117,6 @@ interface OrganizationInfo {
 
 export async function getOrganizationHandle(orgInfo: OrganizationInfo): Promise<ConnectionHandle | null> {
   const matchingDevices = loggedInDevices.filter((item) => item.device.organizationId === orgInfo.id);
-
   if (!orgInfo.server || matchingDevices.length <= 1) {
     return matchingDevices.length > 0 ? matchingDevices[0].handle : null;
   }
@@ -219,13 +218,13 @@ export async function login(
         eventDistributor.dispatchEvent(Events.WorkspaceUpdated);
         break;
       case ClientEventTag.WorkspaceWatchedEntryChanged:
-        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, 300);
+        eventDistributor.dispatchEvent(Events.EntryUpdated, undefined, 1000);
         break;
       case ClientEventTag.WorkspaceOpsInboundSyncDone:
-        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'inbound' });
         break;
       case ClientEventTag.WorkspaceOpsOutboundSyncDone:
-        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId });
+        eventDistributor.dispatchEvent(Events.EntrySynced, { workspaceId: event.realmId, entryId: event.entryId, way: 'outbound' });
         break;
       // Ignore those events for now
       case ClientEventTag.WorkspaceOpsOutboundSyncStarted:

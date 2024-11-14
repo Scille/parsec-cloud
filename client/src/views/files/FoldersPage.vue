@@ -452,12 +452,16 @@ onMounted(async () => {
         if (!workspaceInfo.value || workspaceInfo.value.id !== syncedData.workspaceId) {
           return;
         }
-        let entry: EntryModel | undefined = files.value.getEntries().find((e) => e.id === syncedData.entryId);
-        if (!entry) {
-          entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
-        }
-        if (entry) {
-          entry.needSync = false;
+        if (syncedData.way === 'inbound') {
+          await listFolder({ sameFolder: true });
+        } else {
+          let entry: EntryModel | undefined = files.value.getEntries().find((e) => e.id === syncedData.entryId);
+          if (!entry) {
+            entry = folders.value.getEntries().find((e) => e.id === syncedData.entryId);
+          }
+          if (entry) {
+            entry.needSync = false;
+          }
         }
       }
     },
