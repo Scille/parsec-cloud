@@ -56,9 +56,11 @@
           </ion-label>
         </ion-item>
 
+        <!-- Disabled on MacOS since Finder to Finder operations cause mountpoint
+          crashes https://github.com/Scille/parsec-cloud/issues/8907 -->
         <ion-item
           button
-          v-show="isDesktop()"
+          v-show="isDesktop() && !isMacOS()"
           @click="onClick(WorkspaceAction.OpenInExplorer)"
           class="ion-no-padding list-group-item"
         >
@@ -163,7 +165,7 @@ export enum WorkspaceAction {
 </script>
 
 <script setup lang="ts">
-import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop } from '@/parsec';
+import { UserProfile, WorkspaceName, WorkspaceRole, isDesktop, isMacOS } from '@/parsec';
 import { IonContent, IonIcon, IonItem, IonItemGroup, IonLabel, IonList, popoverController } from '@ionic/vue';
 import { cloudy, informationCircle, link, open, pencil, shareSocial, star, time } from 'ionicons/icons';
 
