@@ -4,7 +4,7 @@ import type { CapacitorElectronConfig } from '@capacitor-community/electron';
 import { getCapacitorElectronConfig, setupElectronDeepLinking } from '@capacitor-community/electron';
 import * as Sentry from '@sentry/electron/main';
 import type { MenuItemConstructorOptions } from 'electron';
-import { MenuItem, app, ipcMain, shell } from 'electron';
+import { MenuItem, app, dialog, ipcMain, shell } from 'electron';
 import unhandled from 'electron-unhandled';
 import { electronIsDev } from './utils';
 
@@ -17,6 +17,8 @@ const PARSEC_CONFIG_DIR_NAME = 'parsec3';
 const ELECTRON_CONFIG_DIR_NAME = electronIsDev ? 'app-dev' : 'app';
 const SENTRY_DSN_GUI_ELECTRON = process.env.SENTRY_DSN_GUI_ELECTRON;
 const SENTRY_DSN_GUI_ELECTRON_DEFAULT = 'https://f7f91bb7f676a2f1b8451c386f1a8f9a@o155936.ingest.us.sentry.io/4507638897246208';
+const INSTALL_GUIDE_URL_FR = 'https://docs.parsec.cloud/fr/latest/userguide/installation.html';
+const INSTALL_GUIDE_URL_EN = 'https://docs.parsec.cloud/en/latest/userguide/installation.html';
 
 // Graceful handling of unhandled errors.
 unhandled();
@@ -214,4 +216,31 @@ ipcMain.on(PageToWindowChannel.OpenConfigDir, async () => {
 
 ipcMain.on(PageToWindowChannel.AuthorizeURL, async (_event, url: string) => {
   myCapacitorApp.addAuthorizedURL(url);
+});
+
+ipcMain.on(PageToWindowChannel.MacfuseNotInstalled, async (_event) => {
+  const isFRLocale: boolean = app.getLocale().startsWith('fr');
+  const url: string = isFRLocale ? INSTALL_GUIDE_URL_FR : INSTALL_GUIDE_URL_EN;
+
+  console.log(_event, url);
+  shell.openExternal(url);
+
+  dialog.showErrorBox(
+    isFRLocale ? "macFUSE n'est pas installé" : 'macFUSE is not installed',
+    isFRLocale
+      ? `Pour utiliser Parsec, macFUSE doit être installé sur votre Mac.\n\nUn guide d'installation devrait s'être ouvert dans votre \
+navigateur, dans lequel vous trouverez les étapes pour installer macFUSE dans l'onglet "macOS".\n\nSi le lien ne s'est pas ouvert \
+automatiquement, le guide peut être trouvé à cette adresse : ${INSTALL_GUIDE_URL_FR}`
+      : `In order to use Parsec, macFUSE must be installed on your Mac.\n\nAn installation guide should have opened in your browser, \
+in which you can find steps to install macFUSE in the "macOS" tab.\n\nIf the link did not automatically open, the guide can be found \
+at this address: ${INSTALL_GUIDE_URL_EN}`,
+  );
+  myCapacitorApp.forceClose = true;
+  await myCapacitorApp.quitApp();
+});
+
+ipcMain.on(PageToWindowChannel.CriticalError, async (_event, message: string, error: Error) => {
+  dialog.showErrorBox('Critical error', `${message}: ${error.message}`);
+  myCapacitorApp.forceClose = true;
+  await myCapacitorApp.quitApp();
 });
