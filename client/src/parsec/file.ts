@@ -181,6 +181,7 @@ export async function statFolderChildren(
     };
   }
 
+  await wait(500);
   const items = (await generateEntries(path)).map((entry) => {
     (entry as any as EntryStat).baseVersion = entry.version;
     (entry as any as EntryStat).confinementPoint = null;

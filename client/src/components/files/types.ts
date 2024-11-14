@@ -109,6 +109,7 @@ export class EntryCollection<Model extends EntryModel> {
         existing.confinementPoint = entry.confinementPoint;
         existing.isConfined = (): boolean => entry.confinementPoint !== null;
         existing.created = entry.created;
+        existing.isSelected = entry.isSelected;
         existing.name = entry.name;
         existing.needSync = entry.needSync;
         existing.tag = entry.tag;
