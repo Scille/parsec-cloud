@@ -39,6 +39,7 @@ interface UpdateAvailabilityData {
 interface EntrySyncedData {
   workspaceId: WorkspaceID;
   entryId: EntryID;
+  way: 'inbound' | 'outbound';
 }
 
 interface IncompatibleServerData {
