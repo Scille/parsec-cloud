@@ -6,10 +6,8 @@ require('./rt/electron-rt');
 
 import { contextBridge, ipcRenderer } from 'electron';
 import { PageToWindowChannel } from './communicationChannels';
-import libparsec from './libparsec';
 
-process.once('loaded', () => {
-  contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
+process.once('loaded', async () => {
   contextBridge.exposeInMainWorld('electronAPI', {
     sendConfig: (config: any) => {
       ipcRenderer.send(PageToWindowChannel.ConfigUpdate, config);
@@ -48,4 +46,17 @@ process.once('loaded', () => {
       ipcRenderer.send(PageToWindowChannel.AuthorizeURL, url);
     },
   });
+
+  try {
+    const libparsec = await import('./libparsec');
+    contextBridge.exposeInMainWorld('libparsec_plugin', libparsec);
+  } catch (error: any) {
+    console.error(error);
+    ipcRenderer.send(PageToWindowChannel.Log, 'error', JSON.stringify(error));
+    if (process.platform === 'darwin' && error.toString().includes("Reason: tried: '/usr/local/lib/libfuse.2.dylib' (no such file)")) {
+      ipcRenderer.send(PageToWindowChannel.MacfuseNotInstalled);
+    } else {
+      ipcRenderer.send(PageToWindowChannel.CriticalError, 'Failed to initialize Parsec', error);
+    }
+  }
 });
