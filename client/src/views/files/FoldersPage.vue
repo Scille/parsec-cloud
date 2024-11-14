@@ -246,6 +246,7 @@ import {
   FsPath,
   EntryStat,
   WorkspaceStatFolderChildrenErrorTag,
+  EntryName,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
 import { HotkeyGroup, HotkeyManager, HotkeyManagerKey, Modifiers, Platforms } from '@/services/hotkeyManager';
@@ -297,8 +298,10 @@ const routeWatchCancel = watchRoute(async () => {
   if (newPath === '') {
     return;
   }
+  let samePath = true;
   if (newPath !== currentPath.value) {
     currentPath.value = newPath;
+    samePath = false;
   }
   const workspaceHandle = getWorkspaceHandle();
   if (workspaceHandle) {
@@ -307,7 +310,10 @@ const routeWatchCancel = watchRoute(async () => {
       workspaceInfo.value = infoResult.value;
     }
   }
-  await listFolder();
+
+  const query = getCurrentRouteQuery();
+
+  await listFolder({ selectFile: query.selectFile, sameFolder: samePath });
 });
 
 const fileOperationManager: FileOperationManager = inject(FileOperationManagerKey)!;
@@ -438,7 +444,7 @@ onMounted(async () => {
     Events.EntryUpdated | Events.WorkspaceUpdated | Events.EntrySynced,
     async (event: Events, data?: EventData) => {
       if (event === Events.EntryUpdated) {
-        await listFolder(true);
+        await listFolder({ sameFolder: true });
       } else if (event === Events.WorkspaceUpdated && workspaceInfo.value) {
         await updateWorkspaceInfo(workspaceInfo.value.id);
       } else if (event === Events.EntrySynced) {
@@ -623,7 +629,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
       moveData.workspaceHandle === workspaceInfo.value?.handle &&
       (Path.areSame(dstPathParent, currentPath.value) || Path.areSame(srcPathParent, currentPath.value))
     ) {
-      await listFolder(true);
+      await listFolder({ sameFolder: true });
     }
   } else if (state === FileOperationState.EntryCopied && operationData) {
     const index = fileOperations.value.findIndex((item) => item.data.id === operationData.id);
@@ -633,7 +639,7 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
     const copyData = operationData as CopyData;
     const dstPathParent = await Path.parent(copyData.dstPath);
     if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(dstPathParent, currentPath.value)) {
-      await listFolder(true);
+      await listFolder({ sameFolder: true });
     }
   } else if (state === FileOperationState.FolderCreated) {
     const folderData = stateData as FolderCreatedStateData;
@@ -720,7 +726,7 @@ const fileOperationsCurrentDir = asyncComputed(async () => {
   return operations;
 });
 
-async function listFolder(sameFolder = false): Promise<void> {
+async function listFolder(options?: { selectFile?: EntryName; sameFolder?: boolean }): Promise<void> {
   if (!workspaceInfo.value) {
     return;
   }
@@ -731,7 +737,7 @@ async function listFolder(sameFolder = false): Promise<void> {
    * If the folder didn't change, we don't need to show a spinner
    * as it will result in blinking.
    */
-  if (!sameFolder) {
+  if (!options || !options.sameFolder) {
     querying.value = true;
   }
   const result = await parsec.statFolderChildren(workspaceInfo.value.handle, currentPath.value);
@@ -739,7 +745,6 @@ async function listFolder(sameFolder = false): Promise<void> {
     const newFolders: FolderModel[] = [];
     const newFiles: FileModel[] = [];
 
-    const query = getCurrentRouteQuery();
     for (const childStat of result.value) {
       const childName = childStat.name;
       // Excluding files currently being imported
@@ -760,7 +765,7 @@ async function listFolder(sameFolder = false): Promise<void> {
       }
       if (!foundInFileOps) {
         if (childStat.isFile()) {
-          (childStat as FileModel).isSelected = query.selectFile && query.selectFile === childName ? true : false;
+          (childStat as FileModel).isSelected = Boolean(options && options.selectFile && options.selectFile === childName);
           newFiles.push(childStat as FileModel);
         } else {
           (childStat as FolderModel).isSelected = false;
@@ -793,9 +798,7 @@ async function listFolder(sameFolder = false): Promise<void> {
       PresentationMode.Toast,
     );
   }
-  if (!sameFolder) {
-    querying.value = false;
-  }
+  querying.value = false;
 }
 
 async function onEntryClick(entry: EntryModel, _event: Event): Promise<void> {
@@ -845,7 +848,7 @@ async function createFolder(): Promise<void> {
       PresentationMode.Toast,
     );
   }
-  await listFolder(true);
+  await listFolder({ sameFolder: true });
 }
 
 async function onImportClicked(event: Event): Promise<void> {
@@ -945,7 +948,7 @@ async function deleteEntries(entries: EntryModel[]): Promise<void> {
       );
     }
   }
-  await listFolder(true);
+  await listFolder({ sameFolder: true });
 }
 
 async function renameEntries(entries: EntryModel[]): Promise<void> {
