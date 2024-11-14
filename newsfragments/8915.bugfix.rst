@@ -1,1 +1,0 @@
-No longer opens an empty context menu with right clicking in the list of files

@@ -5,6 +5,20 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.0-rc.2 (2024-11-14)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Confined files are no longer included in selection and file count
+  (`#8913 <https://github.com/Scille/parsec-cloud/issues/8913>`__)
+
+* No longer opens an empty context menu with right clicking in the list of files
+  (`#8915 <https://github.com/Scille/parsec-cloud/issues/8915>`__)
+
+
+
 Parsec v3.2.0-rc.1 (2024-11-08)
 -------------------------------
 

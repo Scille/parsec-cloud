@@ -1,1 +1,0 @@
-Confined files are no longer included in selection and file count
