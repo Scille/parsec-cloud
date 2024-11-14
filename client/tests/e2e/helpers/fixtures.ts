@@ -60,6 +60,7 @@ export const msTest = base.extend<{
     await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(0).click();
     await expect(connected).toHaveHeader(['The Copper Coronet'], true, true);
     await expect(connected).toBeDocumentPage();
+    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     use(connected);
   },
 
@@ -67,6 +68,7 @@ export const msTest = base.extend<{
     await connected.locator('.workspaces-container-grid').locator('.workspaces-grid-item').nth(2).click();
     await expect(connected).toHaveHeader(["Watcher's Keep"], true, true);
     await expect(connected).toBeDocumentPage();
+    await expect(connected.locator('.folder-container').locator('.no-files-content')).toBeHidden();
     use(connected);
   },
 
