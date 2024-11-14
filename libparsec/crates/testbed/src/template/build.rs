@@ -906,6 +906,32 @@ impl_event_builder!(
 );
 
 /*
+ * TestbedEventFreezeUser
+ */
+
+impl_event_builder!(
+    FreezeUser,
+    [
+        user: UserID,
+    ]
+);
+
+/*
+ * TestbedEventUpdateOrganization
+ */
+
+impl_event_builder!(
+    UpdateOrganization,
+    [
+        is_expired: Option<bool>,
+        active_users_limit: Option<ActiveUsersLimit>,
+        user_profile_outsider_allowed: Option<bool>,
+        minimum_archiving_period: Option<u64>,
+        tos: Option<HashMap<String, String>>,
+    ]
+);
+
+/*
  * TestbedEventCertificatesStorageFetchCertificatesBuilder
  */
 

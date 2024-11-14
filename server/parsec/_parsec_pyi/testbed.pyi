@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from parsec._parsec import (
+    ActiveUsersLimit,
     BlockID,
     DateTime,
     DeviceCertificate,
@@ -34,6 +35,7 @@ from parsec._parsec import (
     UserUpdateCertificate,
     VlobID,
 )
+from parsec.types import UnsetType
 
 def test_get_testbed_template(id: str) -> TestbedTemplateContent | None: ...
 def test_load_testbed_customization(
@@ -248,6 +250,17 @@ class TestbedEventCreateOpaqueBlock:
     key_index: int
     encrypted: bytes
 
+class TestbedEventFreezeUser:
+    user: UserID
+
+class TestbedEventUpdateOrganization:
+    timestamp: DateTime
+    is_expired: bool | UnsetType
+    active_users_limit: ActiveUsersLimit | UnsetType
+    user_profile_outsider_allowed: bool | UnsetType
+    minimum_archiving_period: int | UnsetType
+    tos: None | dict[str, str] | UnsetType
+
 TestbedEvent = (
     TestbedEventBootstrapOrganization
     | TestbedEventNewSequesterService
@@ -264,4 +277,6 @@ TestbedEvent = (
     | TestbedEventNewShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob
     | TestbedEventCreateOpaqueBlock
+    | TestbedEventFreezeUser
+    | TestbedEventUpdateOrganization
 )

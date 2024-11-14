@@ -528,6 +528,8 @@ def get_last_realm_certificate_timestamp(
                 | tb.TestbedEventNewShamirRecovery()
                 | tb.TestbedEventCreateOrUpdateOpaqueVlob()
                 | tb.TestbedEventCreateOpaqueBlock()
+                | tb.TestbedEventFreezeUser()
+                | tb.TestbedEventUpdateOrganization()
             ):
                 pass
 
