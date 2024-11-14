@@ -1883,14 +1883,22 @@ impl TestbedEventArchiveRealm {
  * TestbedEventNewShamirRecovery
  */
 
+pub struct TestbedEventNewShamirRecoveryCache {
+    pub certificates: Vec<TestbedTemplateEventCertificate>,
+    pub ciphered_data: Bytes,
+}
+
 #[derive(Serialize, Deserialize, Clone)]
 pub struct TestbedEventNewShamirRecovery {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub threshold: NonZeroU64,
     pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    pub recovery_device: DeviceID,
+    pub data_key: SecretKey,
+    pub reveal_token: InvitationToken,
     #[serde(skip)]
-    cache: Arc<Mutex<TestbedEventCacheEntry<Vec<TestbedTemplateEventCertificate>>>>,
+    cache: Arc<Mutex<TestbedEventCacheEntry<TestbedEventNewShamirRecoveryCache>>>,
 }
 
 impl_event_debug!(
@@ -1900,6 +1908,9 @@ impl_event_debug!(
         author: DeviceID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        recovery_device: DeviceID,
+        data_key: SecretKey,
+        reveal_token: InvitationToken,
     ]
 );
 impl_event_crc_hash!(
@@ -1909,6 +1920,9 @@ impl_event_crc_hash!(
         author: DeviceID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        recovery_device: DeviceID,
+        data_key: SecretKey,
+        reveal_token: InvitationToken,
     ]
 );
 
@@ -1918,14 +1932,30 @@ impl TestbedEventNewShamirRecovery {
         user: UserID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        recovery_device: DeviceID,
     ) -> Self {
         // 1) Consistency checks
-        if builder.check_consistency {
-            utils::assert_organization_bootstrapped(&builder.events);
-        }
-        utils::assert_user_exists_and_not_revoked(&builder.events, user);
 
-        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, user) {
+        let user_created_event = if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            let recovery_device_user_id =
+                match utils::assert_device_exists_and_not_revoked(&builder.events, recovery_device)
+                {
+                    TestbedEvent::BootstrapOrganization(e) => e.first_user_id,
+                    TestbedEvent::NewUser(e) => e.user_id,
+                    TestbedEvent::NewDevice(e) => e.user_id,
+                    _ => unreachable!(),
+                };
+            assert_eq!(
+                recovery_device_user_id, user,
+                "`recovery_device` corresponds to a different user"
+            );
+            utils::assert_user_exists_and_not_revoked(&builder.events, user)
+        } else {
+            utils::assert_user_exists(&builder.events, user)
+        };
+
+        let author = match user_created_event {
             TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id,
             TestbedEvent::NewUser(x) => x.first_device_id,
             _ => unreachable!(),
@@ -1933,80 +1963,208 @@ impl TestbedEventNewShamirRecovery {
 
         // 2) Actual creation
 
+        let data_key = builder.counters.next_secret_key();
+        let reveal_token = builder.counters.next_invitation_token();
         Self {
             timestamp: builder.counters.next_timestamp(),
             author,
             threshold,
             per_recipient_shares,
+            recovery_device,
+            data_key,
+            reveal_token,
             cache: Arc::default(),
         }
     }
 
-    // We need three lifetimes here to describe the fact the output iterator
-    // (lifetime 'c) wraps data from both the self object (lifetime 'a)
-    // and the template (lifetime 'b). Hence 'c outliving both 'a and 'b.
-    pub fn certificates<'a: 'c, 'b: 'c, 'c>(
-        &'a self,
-        template: &'b TestbedTemplate,
-    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> + 'c {
+    fn generate_certificates(
+        &self,
+        template: &TestbedTemplate,
+    ) -> Vec<TestbedTemplateEventCertificate> {
+        let author_signkey = template.device_signing_key(self.author);
+        let author_user_id = template.device_user_id(self.author);
         // One brief certificate + one share certificate per recipient
-        let certifs = self.per_recipient_shares.len() + 1;
+        let certificates_count = self.per_recipient_shares.len() + 1;
+        let mut certificates = Vec::with_capacity(certificates_count);
 
-        (0..certifs).map(move |i| {
-            let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        // Brief certificate
 
-            let populate = || {
-                let author_signkey = template.device_signing_key(self.author);
-                let author_user_id = template.device_user_id(self.author);
-                let mut certifs = Vec::with_capacity(certifs);
+        let certif = ShamirRecoveryBriefCertificate {
+            author: self.author,
+            timestamp: self.timestamp,
+            user_id: author_user_id,
+            threshold: self.threshold,
+            per_recipient_shares: self.per_recipient_shares.clone(),
+        };
+        let signed: Bytes = certif.dump_and_sign(author_signkey).into();
 
-                // Brief certificate
+        let brief_certif = TestbedTemplateEventCertificate {
+            certificate: AnyArcCertificate::ShamirRecoveryBrief(Arc::new(certif)),
+            signed_redacted: signed.clone(),
+            signed,
+        };
+        certificates.push(brief_certif);
 
-                let certif = ShamirRecoveryBriefCertificate {
-                    author: self.author,
-                    timestamp: self.timestamp,
-                    user_id: author_user_id,
-                    threshold: self.threshold,
-                    per_recipient_shares: self.per_recipient_shares.clone(),
-                };
-                let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+        // Share certificates
 
-                let brief_certif = TestbedTemplateEventCertificate {
-                    certificate: AnyArcCertificate::ShamirRecoveryBrief(Arc::new(certif)),
-                    signed_redacted: signed.clone(),
-                    signed,
-                };
-                certifs.push(brief_certif);
+        for recipient in self.per_recipient_shares.keys() {
+            // TODO: Put a real share here once shamir recovery is implemented
+            let ciphered_share = b"".to_vec();
 
-                // Share certificates
-
-                for recipient in self.per_recipient_shares.keys() {
-                    // TODO: Put a real share here once shamir recovery is implemented
-                    let ciphered_share = b"".to_vec();
-
-                    let certif = ShamirRecoveryShareCertificate {
-                        author: self.author,
-                        timestamp: self.timestamp,
-                        user_id: author_user_id,
-                        recipient: recipient.to_owned(),
-                        ciphered_share,
-                    };
-                    let signed: Bytes = certif.dump_and_sign(author_signkey).into();
-
-                    let share_certif = TestbedTemplateEventCertificate {
-                        certificate: AnyArcCertificate::ShamirRecoveryShare(Arc::new(certif)),
-                        signed_redacted: signed.clone(),
-                        signed,
-                    };
-                    certifs.push(share_certif);
-                }
-
-                certifs
+            let certif = ShamirRecoveryShareCertificate {
+                author: self.author,
+                timestamp: self.timestamp,
+                user_id: author_user_id,
+                recipient: recipient.to_owned(),
+                ciphered_share,
             };
+            let signed: Bytes = certif.dump_and_sign(author_signkey).into();
 
-            let certifs = guard.populated(populate);
-            certifs[i].clone()
-        })
+            let share_certif = TestbedTemplateEventCertificate {
+                certificate: AnyArcCertificate::ShamirRecoveryShare(Arc::new(certif)),
+                signed_redacted: signed.clone(),
+                signed,
+            };
+            certificates.push(share_certif);
+        }
+
+        certificates
+    }
+
+    fn generate_ciphered_data(&self, template: &TestbedTemplate) -> Bytes {
+        let generate_organization_addr_placeholder = || -> ParsecOrganizationAddr {
+            // Here we hit a shortcoming with the testbed system !
+            //
+            // When this code is called, the server address and organization ID are unknown,
+            // this is especially true since on the server we first load the template as
+            // it own organization, then clone it everytime we need to instantiate the template
+            // for a given test.
+            //
+            // So we have no choice but to provide placeholder values for server address and
+            // organization ID.
+            let placeholder_server_addr: ParsecAddr = "parsec3://parsec.invalid".parse().unwrap();
+            let placeholder_organization_id = "PlaceholderOrg".parse().unwrap();
+            let verify_key = match template.events.first() {
+                Some(TestbedEvent::BootstrapOrganization(e)) => e.root_signing_key.verify_key(),
+                _ => panic!("Missing bootstrap organization event"),
+            };
+            ParsecOrganizationAddr::new(
+                placeholder_server_addr,
+                placeholder_organization_id,
+                verify_key,
+            )
+        };
+
+        let recovery_device_local_device = template
+            .events
+            .iter()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(x)
+                    if x.first_user_first_device_id == self.recovery_device =>
+                {
+                    Some(Arc::new(LocalDevice {
+                        organization_addr: generate_organization_addr_placeholder(),
+                        device_id: x.first_user_first_device_id,
+                        user_id: x.first_user_id,
+                        device_label: x.first_user_first_device_label.clone(),
+                        human_handle: x.first_user_human_handle.clone(),
+                        signing_key: x.first_user_first_device_signing_key.clone(),
+                        private_key: x.first_user_private_key.clone(),
+                        initial_profile: UserProfile::Admin,
+                        user_realm_id: x.first_user_user_realm_id,
+                        user_realm_key: x.first_user_user_realm_key.clone(),
+                        local_symkey: x.first_user_local_symkey.clone(),
+                        time_provider: TimeProvider::default(),
+                    }))
+                }
+                TestbedEvent::NewUser(x) if x.first_device_id == self.recovery_device => {
+                    Some(Arc::new(LocalDevice {
+                        organization_addr: generate_organization_addr_placeholder(),
+                        device_id: x.first_device_id,
+                        user_id: x.user_id,
+                        device_label: x.first_device_label.clone(),
+                        human_handle: x.human_handle.clone(),
+                        signing_key: x.first_device_signing_key.clone(),
+                        private_key: x.private_key.clone(),
+                        initial_profile: x.initial_profile,
+                        user_realm_id: x.user_realm_id,
+                        user_realm_key: x.user_realm_key.clone(),
+                        local_symkey: x.local_symkey.clone(),
+                        time_provider: TimeProvider::default(),
+                    }))
+                }
+                TestbedEvent::NewDevice(d) if d.device_id == self.recovery_device => {
+                    template.events.iter().find_map(|e| match e {
+                        TestbedEvent::BootstrapOrganization(u) if u.first_user_id == d.user_id => {
+                            Some(Arc::new(LocalDevice {
+                                organization_addr: generate_organization_addr_placeholder(),
+                                device_id: d.device_id,
+                                user_id: u.first_user_id,
+                                device_label: d.device_label.clone(),
+                                human_handle: u.first_user_human_handle.clone(),
+                                signing_key: d.signing_key.clone(),
+                                private_key: u.first_user_private_key.clone(),
+                                initial_profile: UserProfile::Admin,
+                                user_realm_id: u.first_user_user_realm_id,
+                                user_realm_key: u.first_user_user_realm_key.clone(),
+                                local_symkey: d.local_symkey.clone(),
+                                time_provider: TimeProvider::default(),
+                            }))
+                        }
+                        TestbedEvent::NewUser(u) if u.user_id == d.user_id => {
+                            Some(Arc::new(LocalDevice {
+                                organization_addr: generate_organization_addr_placeholder(),
+                                device_id: d.device_id,
+                                user_id: u.user_id,
+                                device_label: d.device_label.clone(),
+                                human_handle: u.human_handle.clone(),
+                                signing_key: d.signing_key.clone(),
+                                private_key: u.private_key.clone(),
+                                initial_profile: u.initial_profile,
+                                user_realm_id: u.user_realm_id,
+                                user_realm_key: u.user_realm_key.clone(),
+                                local_symkey: d.local_symkey.clone(),
+                                time_provider: TimeProvider::default(),
+                            }))
+                        }
+                        _ => None,
+                    })
+                }
+                _ => None,
+            })
+            .expect("Recovery device doesn't exist");
+
+        self.data_key
+            .encrypt(&recovery_device_local_device.dump())
+            .into()
+    }
+
+    fn cache<R>(
+        &self,
+        template: &TestbedTemplate,
+        cb: impl FnOnce(&TestbedEventNewShamirRecoveryCache) -> R,
+    ) -> R {
+        let populate = || TestbedEventNewShamirRecoveryCache {
+            certificates: self.generate_certificates(template),
+            ciphered_data: self.generate_ciphered_data(template),
+        };
+
+        let mut guard = self.cache.lock().expect("Mutex is poisoned");
+        let cache = guard.populated(populate);
+        cb(cache)
+    }
+
+    pub fn certificates(
+        &self,
+        template: &TestbedTemplate,
+    ) -> impl Iterator<Item = TestbedTemplateEventCertificate> {
+        // False positive in clippy, see https://github.com/rust-lang/rust-clippy/issues/8148
+        #[allow(clippy::unnecessary_to_owned)]
+        self.cache(template, |cache| cache.certificates.to_owned().into_iter())
+    }
+
+    pub fn ciphered_data(&self, template: &TestbedTemplate) -> Bytes {
+        self.cache(template, |cache| cache.ciphered_data.to_owned())
     }
 }
 
@@ -2753,7 +2911,7 @@ no_certificate_event!(
         /// - An empty hashmap represents removing the ToS (i.e. `None` in Python)
         ///
         /// We cannot use `Option<Option<HashMap>>` to encode Unset vs None vs HashMap here,
-        /// this is because both Unset and None would be seriaized into the same None type
+        /// this is because both Unset and None would be serialized into the same None type
         /// in msgpack (used to transmit the testbed env customization between client and server).
         tos: Option<HashMap<String, String>>,
     ]

@@ -14,11 +14,13 @@ use super::utils::certificates_ops_factory;
 async fn ok(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
     })
     .await;
@@ -42,17 +44,20 @@ async fn ok(env: &TestbedEnv) {
 async fn content_already_exists(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
     })
     .await;
@@ -81,12 +86,14 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
             builder.new_user("bob");
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
             let timestamp = builder
                 .new_shamir_recovery(
                     "bob",
                     1,
                     [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                    recovery_device_id,
                 )
                 .map(|event| event.timestamp);
 
@@ -94,6 +101,7 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
             );
 
             timestamp
@@ -134,11 +142,13 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
 async fn missing_brief(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
         );
     })
     .await;
@@ -173,11 +183,13 @@ async fn invalid_user_id(env: &TestbedEnv) {
     let bob_user_id = env
         .customize(|builder| {
             let bob_user_id = builder.new_user("bob").map(|u| u.user_id);
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
             builder.new_shamir_recovery(
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
             );
 
             bob_user_id
