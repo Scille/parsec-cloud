@@ -115,6 +115,8 @@ fn entrypoint(py: Python, m: Bound<'_, PyModule>) -> PyResult<()> {
         tm.add_class::<TestbedEventCreateOrUpdateOpaqueVlob>()?;
         tm.add_class::<TestbedEventCreateBlock>()?;
         tm.add_class::<TestbedEventCreateOpaqueBlock>()?;
+        tm.add_class::<TestbedEventFreezeUser>()?;
+        tm.add_class::<TestbedEventUpdateOrganization>()?;
     }
 
     Ok(())

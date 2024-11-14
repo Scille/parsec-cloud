@@ -33,6 +33,12 @@ impl CrcHash for str {
     }
 }
 
+impl CrcHash for String {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        hasher.update(self.as_bytes());
+    }
+}
+
 impl CrcHash for bool {
     fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
         let x = match self {
@@ -543,6 +549,18 @@ impl CrcHash for RealmArchivingConfiguration {
                 hasher.update(b"DeletionPlanned");
                 deletion_date.crc_hash(hasher);
             }
+        }
+    }
+}
+
+impl CrcHash for ActiveUsersLimit {
+    fn crc_hash(&self, hasher: &mut crc32fast::Hasher) {
+        match self {
+            ActiveUsersLimit::LimitedTo(limit) => {
+                hasher.update(b"LimitedTo");
+                limit.crc_hash(hasher);
+            }
+            ActiveUsersLimit::NoLimit => hasher.update(b"NoLimit"),
         }
     }
 }

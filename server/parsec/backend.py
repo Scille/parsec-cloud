@@ -36,7 +36,7 @@ from parsec.components.postgresql import components_factory as postgresql_compon
 from parsec.components.realm import BaseRealmComponent
 from parsec.components.sequester import BaseSequesterComponent
 from parsec.components.shamir import BaseShamirComponent
-from parsec.components.user import BaseUserComponent
+from parsec.components.user import BaseUserComponent, UserInfo
 from parsec.components.vlob import BaseVlobComponent
 from parsec.config import BackendConfig
 from parsec.logging import get_logger
@@ -379,3 +379,22 @@ class Backend:
                         sequester_blob=event.sequestered,
                     )
                     assert outcome is None, outcome
+            elif isinstance(event, testbed.TestbedEventFreezeUser):
+                outcome = await self.user.freeze_user(
+                    organization_id=org_id,
+                    user_id=event.user,
+                    user_email=None,
+                    frozen=True,
+                )
+                assert isinstance(outcome, UserInfo), outcome
+            elif isinstance(event, testbed.TestbedEventUpdateOrganization):
+                outcome = await self.organization.update(
+                    now=event.timestamp,
+                    id=org_id,
+                    is_expired=event.is_expired,
+                    active_users_limit=event.active_users_limit,
+                    user_profile_outsider_allowed=event.user_profile_outsider_allowed,
+                    minimum_archiving_period=event.minimum_archiving_period,
+                    tos=event.tos,
+                )
+                assert outcome is None, outcome

@@ -3,7 +3,7 @@
 use pyo3::{
     exceptions::PyValueError,
     prelude::*,
-    types::{PyBytes, PyDict, PyList, PyString},
+    types::{PyBool, PyBytes, PyDict, PyList, PyNone, PyString},
 };
 use std::collections::HashMap;
 use std::num::NonZeroU64;
@@ -17,6 +17,7 @@ use crate::{
         SequesterServiceCertificate, ShamirRecoveryBriefCertificate,
         ShamirRecoveryShareCertificate, UserCertificate, UserUpdateCertificate,
     },
+    protocol::ActiveUsersLimit,
     BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
     SecretKey, SequesterPrivateKeyDer, SequesterPublicKeyDer, SequesterServiceID,
     SequesterSigningKeyDer, SequesterVerifyKeyDer, SigningKey, UserID, UserProfile, VlobID,
@@ -451,6 +452,39 @@ event_wrapper!(
         Ok(format!(
             "timestamp={:?}, author={:?}, realm={:?}, block={:?}, key_index={:?}",
             x.timestamp.0, x.author.0, x.realm.0, x.block_id.0, x.key_index,
+        ))
+    }
+);
+
+event_wrapper!(
+    TestbedEventFreezeUser,
+    [
+        user: UserID,
+    ],
+    |_py, x: &TestbedEventFreezeUser| -> PyResult<String> {
+        Ok(format!("user={:?}", x.user.0))
+    }
+);
+
+event_wrapper!(
+    TestbedEventUpdateOrganization,
+    [
+        timestamp: DateTime,
+        is_expired: PyObject,
+        active_users_limit: PyObject,
+        user_profile_outsider_allowed: PyObject,
+        minimum_archiving_period: PyObject,
+        tos: PyObject,
+    ],
+    |py, x: &TestbedEventUpdateOrganization| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, is_expired={}, active_users_limit={}, user_profile_outsider_allowed={}, minimum_archiving_period={}, tos={}",
+            x.timestamp.0,
+            x.is_expired.bind(py).repr()?.to_str()?,
+            x.active_users_limit.bind(py).repr()?.to_str()?,
+            x.user_profile_outsider_allowed.bind(py).repr()?.to_str()?,
+            x.minimum_archiving_period.bind(py).repr()?.to_str()?,
+            x.tos.bind(py).repr()?.to_str()?,
         ))
     }
 );
@@ -1033,6 +1067,53 @@ fn event_to_pyobject(
                 key_index: x.key_index,
                 cleartext: PyBytes::new_bound(py, &x.cleartext).into(),
                 encrypted: PyBytes::new_bound(py, &x.encrypted(template)).into(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::FreezeUser(x) => {
+            let obj = TestbedEventFreezeUser {
+                user: x.user.into(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::UpdateOrganization(x) => {
+            let unset_tag = PyModule::import_bound(py, "parsec.types")?.getattr("Unset")?;
+            let obj = TestbedEventUpdateOrganization {
+                timestamp: x.timestamp.into(),
+                is_expired: match x.is_expired {
+                    None => unset_tag.clone().unbind(),
+                    Some(is_expired) => PyBool::new_bound(py, is_expired).into_py(py),
+                },
+                active_users_limit: match x.active_users_limit {
+                    None => unset_tag.clone().unbind(),
+                    Some(active_users_limit) => ActiveUsersLimit(active_users_limit).into_py(py),
+                },
+                user_profile_outsider_allowed: match x.user_profile_outsider_allowed {
+                    None => unset_tag.clone().unbind(),
+                    Some(user_profile_outsider_allowed) => {
+                        user_profile_outsider_allowed.into_py(py)
+                    }
+                },
+                minimum_archiving_period: match x.minimum_archiving_period {
+                    None => unset_tag.clone().unbind(),
+                    Some(minimum_archiving_period) => minimum_archiving_period.into_py(py),
+                },
+                tos: match &x.tos {
+                    None => unset_tag.clone().unbind(),
+                    Some(tos) if tos.is_empty() => PyNone::get_bound(py).into_py(py),
+                    Some(tos) => {
+                        let pyobj = PyDict::new_bound(py);
+                        for (locale, url) in tos {
+                            pyobj.set_item(
+                                PyString::new_bound(py, &locale),
+                                PyString::new_bound(py, &url),
+                            )?;
+                        }
+                        pyobj.unbind().into_any()
+                    }
+                },
             };
             Some(obj.into_py(py))
         }

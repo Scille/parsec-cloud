@@ -302,23 +302,41 @@ pub(super) fn assert_device_exists(
     events: &'_ [TestbedEvent],
     device: DeviceID,
 ) -> &'_ TestbedEvent {
-    let mut creation_event = None;
-    for event in events.iter() {
-        match event {
-            e @ TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
-                first_user_first_device_id: candidate,
-                ..
-            })
-            | e @ TestbedEvent::NewUser(TestbedEventNewUser {
-                first_device_id: candidate,
-                ..
-            }) if *candidate == device => {
-                creation_event = Some(e);
-            }
-            _ => (),
-        }
-    }
-    creation_event.unwrap_or_else(|| panic!("Device {} doesn't exist", device))
+    events
+        .iter()
+        .rev()
+        .find(|e| {
+            matches!(e,
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_first_device_id: candidate,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser {
+                    first_device_id: candidate, ..
+                })
+                | TestbedEvent::NewDevice(TestbedEventNewDevice { device_id: candidate, .. })
+                if *candidate == device
+            )
+        })
+        .unwrap_or_else(|| panic!("Device {} doesn't exist", device))
+}
+
+pub(super) fn assert_user_exists(events: &'_ [TestbedEvent], user: UserID) -> &'_ TestbedEvent {
+    events
+        .iter()
+        .rev()
+        .find(|e| {
+            matches!(e,
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: candidate,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser {
+                    user_id: candidate, ..
+                }) if *candidate == user
+            )
+        })
+        .unwrap_or_else(|| panic!("User {} doesn't exist", user))
 }
 
 pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {

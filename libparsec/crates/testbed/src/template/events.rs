@@ -166,6 +166,8 @@ pub enum TestbedEvent {
     CreateOrUpdateOpaqueVlob(TestbedEventCreateOrUpdateOpaqueVlob),
     CreateBlock(TestbedEventCreateBlock),
     CreateOpaqueBlock(TestbedEventCreateOpaqueBlock),
+    FreezeUser(TestbedEventFreezeUser),
+    UpdateOrganization(TestbedEventUpdateOrganization),
 
     // 3) Client-side only events
     CertificatesStorageFetchCertificates(TestbedEventCertificatesStorageFetchCertificates),
@@ -209,6 +211,8 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::CreateOrUpdateOpaqueVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateBlock(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOpaqueBlock(x) => x.crc_hash(hasher),
+            TestbedEvent::FreezeUser(x) => x.crc_hash(hasher),
+            TestbedEvent::UpdateOrganization(x) => x.crc_hash(hasher),
             TestbedEvent::CertificatesStorageFetchCertificates(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageFetchUserVlob(x) => x.crc_hash(hasher),
             TestbedEvent::UserStorageFetchRealmCheckpoint(x) => x.crc_hash(hasher),
@@ -366,6 +370,8 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
             | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::FreezeUser(_)
+            | TestbedEvent::UpdateOrganization(_)
             | TestbedEvent::CertificatesStorageFetchCertificates(_)
             | TestbedEvent::UserStorageFetchUserVlob(_)
             | TestbedEvent::UserStorageFetchRealmCheckpoint(_)
@@ -404,7 +410,9 @@ impl TestbedEvent {
             | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
             | TestbedEvent::CreateOrUpdateOpaqueVlob(_)
             | TestbedEvent::CreateBlock(_)
-            | TestbedEvent::CreateOpaqueBlock(_) => false,
+            | TestbedEvent::CreateOpaqueBlock(_)
+            | TestbedEvent::FreezeUser(_)
+            | TestbedEvent::UpdateOrganization(_) => false,
 
             TestbedEvent::CertificatesStorageFetchCertificates(_)
             | TestbedEvent::UserStorageFetchUserVlob(_)
@@ -2691,6 +2699,83 @@ impl TestbedEventCreateOpaqueBlock {
             block_id,
             key_index,
             encrypted,
+        }
+    }
+}
+
+/*
+ * TestbedEventFreezeUser
+ */
+
+// Note there is no unfreeze event (or this event doesn't store a frozen boolean).
+// This is because freezing then unfreezing is equivalent to not freezing at all
+// (i.e. it is just a flag set in the database, not a certificate propagated to
+// all clients).
+
+no_certificate_event!(
+    TestbedEventFreezeUser,
+    [
+        user: UserID,
+    ]
+);
+
+impl TestbedEventFreezeUser {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_user_exists(&builder.events, user);
+        }
+
+        // 2) Actual creation
+
+        Self { user }
+    }
+}
+
+/*
+ * TestbedEventUpdateOrganization
+ */
+
+no_certificate_event!(
+    TestbedEventUpdateOrganization,
+    [
+        timestamp: DateTime,
+        /// `None` represents unset (i.e. `Unset` in Python)
+        is_expired: Option<bool>,
+        /// `None` represents unset (i.e. `Unset` in Python)
+        active_users_limit: Option<ActiveUsersLimit>,
+        /// `None` represents unset (i.e. `Unset` in Python)
+        user_profile_outsider_allowed: Option<bool>,
+        /// `None` represents unset (i.e. `Unset` in Python)
+        minimum_archiving_period: Option<u64>,
+        /// - `None` represents unset (i.e. `Unset` in Python)
+        /// - An empty hashmap represents removing the ToS (i.e. `None` in Python)
+        ///
+        /// We cannot use `Option<Option<HashMap>>` to encode Unset vs None vs HashMap here,
+        /// this is because both Unset and None would be seriaized into the same None type
+        /// in msgpack (used to transmit the testbed env customization between client and server).
+        tos: Option<HashMap<String, String>>,
+    ]
+);
+
+impl TestbedEventUpdateOrganization {
+    pub(super) fn from_builder(
+        builder: &mut TestbedTemplateBuilder,
+        is_expired: Option<bool>,
+        active_users_limit: Option<ActiveUsersLimit>,
+        user_profile_outsider_allowed: Option<bool>,
+        minimum_archiving_period: Option<u64>,
+        tos: Option<HashMap<String, String>>,
+    ) -> Self {
+        let timestamp = builder.counters.next_timestamp();
+        Self {
+            timestamp,
+            is_expired,
+            active_users_limit,
+            user_profile_outsider_allowed,
+            minimum_archiving_period,
+            tos,
         }
     }
 }
