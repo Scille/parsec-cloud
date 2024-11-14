@@ -3,8 +3,8 @@
 
 !macro installWinFSP
     File /oname=$PLUGINSDIR\${WINFSP_FILE} ${PROJECT_DIR}\build\${WINFSP_FILE}
-    ; Use /qn to for silent installation
-    ExecWait '"msiexec" /i "$PLUGINSDIR\${WINFSP_FILE}" /qn'
+    ; Use /passive for non-interactive installation, except for elevating the installer
+    ExecWait '"msiexec" /i "$PLUGINSDIR\${WINFSP_FILE}" /passive'
 !macroend
 
 !macro mayInstallWinFSP
