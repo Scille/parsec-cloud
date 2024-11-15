@@ -38,20 +38,29 @@ CUTENESS = [
 # distributed on pypi requires vendoring to comply with manylinux)
 # This is only needed for Linux as other OSs don't provide OpenSSL (and
 # hence it obviously must be vendored anytime we need it).
-MAYBE_FORCE_VENDORED_OPENSSL = ""
+maybe_force_vendored_libs_cargo_flags = maybe_force_vendored_openssl_cargo_flags = ""
 if sys.platform == "linux":
-    if os.environ.get("LIBPARSEC_FORCE_VENDORED_OPENSSL", "false").lower() == "true":
-        MAYBE_FORCE_VENDORED_OPENSSL = "--features vendored-openssl"
+    LIBPARSEC_FORCE_VENDORED_LIBS = os.environ.get("LIBPARSEC_FORCE_VENDORED_LIBS", "false").lower()
+    if (
+        os.environ.get("LIBPARSEC_FORCE_VENDORED_OPENSSL", LIBPARSEC_FORCE_VENDORED_LIBS).lower()
+        == "true"
+    ):
+        maybe_force_vendored_libs_cargo_flags = maybe_force_vendored_openssl_cargo_flags = (
+            "--features vendored-openssl"
+        )
+    if (
+        os.environ.get("LIBPARSEC_FORCE_VENDORED_KEYRING", LIBPARSEC_FORCE_VENDORED_LIBS).lower()
+        == "true"
+    ):
+        maybe_force_vendored_libs_cargo_flags += " --features vendored-keyring"
 
 PYTHON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
+    f"--profile=release --features use-sodiumoxide {maybe_force_vendored_openssl_cargo_flags}"
 )
 PYTHON_DEV_CARGO_FLAGS = "--profile=dev-python --features test-utils"
 PYTHON_CI_CARGO_FLAGS = "--profile=ci-python --features test-utils"
 
-ELECTRON_RELEASE_CARGO_FLAGS = (
-    f"--profile=release --features libparsec/use-sodiumoxide {MAYBE_FORCE_VENDORED_OPENSSL}"
-)
+ELECTRON_RELEASE_CARGO_FLAGS = f"--profile=release --features libparsec/use-sodiumoxide {maybe_force_vendored_libs_cargo_flags}"
 ELECTRON_DEV_CARGO_FLAGS = "--profile=dev --features test-utils"
 ELECTRON_CI_CARGO_FLAGS = "--profile=ci-rust --features test-utils"
 
@@ -68,7 +77,7 @@ WEB_RELEASE_CARGO_FLAGS = "--release"  # Note: on web we use RustCrypto for rele
 WEB_DEV_CARGO_FLAGS = "--dev -- --features test-utils"
 WEB_CI_CARGO_FLAGS = f"{WEB_DEV_CARGO_FLAGS} --profile=ci-rust"
 
-CLI_RELEASE_CARGO_FLAGS = f"--profile=release {MAYBE_FORCE_VENDORED_OPENSSL}"
+CLI_RELEASE_CARGO_FLAGS = f"--profile=release {maybe_force_vendored_libs_cargo_flags}"
 
 # TL;DR: ONLY USE THE REAL ZSTD IN PRODUCTION !!!
 #

@@ -114,7 +114,7 @@ jobs:
           --target=${{ matrix.target }}
           $(python make.py cli-release-cargo-flags --quiet)
         env:
-          LIBPARSEC_FORCE_VENDORED_OPENSSL: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'true' || 'false' }}
+          LIBPARSEC_FORCE_VENDORED_LIBS: ${{ matrix.target == 'x86_64-unknown-linux-musl' && 'true' || 'false' }}
         timeout-minutes: 15
 
       - name: Debug target folder

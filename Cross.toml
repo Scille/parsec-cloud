@@ -7,13 +7,13 @@
 image = "ghcr.io/cross-rs/x86_64-unknown-linux-gnu@sha256:cf091033b6c4b0416a03d181080ad45c418248a262867a623306748a2c02a3c2" # pin ghcr.io/cross-rs/x86_64-unknown-linux-gnu:main
 pre-build = [
     "dpkg --add-architecture $CROSS_DEB_ARCH",
-    "apt-get update && apt-get --assume-yes install libfuse3-dev libssl-dev libunwind-dev liblzma-dev",
+    "apt-get update && apt-get --assume-yes install libfuse3-dev libdbus-1-dev libssl-dev libunwind-dev liblzma-dev",
 ]
 
 [target.x86_64-unknown-linux-musl]
 image = "alpine:3.16"
 pre-build = [
-    "apk add --no-cache fuse3-dev fuse3-static openssl-dev musl-dev build-base perl rustup gcompat",
+    "apk add --no-cache fuse3-dev fuse3-static openssl-dev dbus-dev musl-dev build-base perl rustup gcompat",
     # Install our own rustup toolchain since we prefer to not rely on the host provided one
     "rustup-init -y --default-toolchain stable --profile minimal",
     # Make sure the build user will be able to access the toolchain binaries
@@ -22,6 +22,7 @@ pre-build = [
 
 [target.x86_64-unknown-linux-musl.env]
 passthrough = [
+    "PKG_CONFIG_ALL_STATIC",
     # Modify the PATH to prefer the rust toolchain of the container over the host one.
     "PATH=/root/.rustup/toolchains/stable-x86_64-unknown-linux-musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 ]
