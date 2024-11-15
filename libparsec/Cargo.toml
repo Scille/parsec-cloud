@@ -15,7 +15,7 @@ workspace = true
 # Remember kid: RustCrypto is used if `use-sodiumoxide` is not set !
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
-vendored-keyring = ["libparsec_platform_device_loader/vendored-keyring"]
+vendored-dbus = ["libparsec_platform_device_loader/vendored-dbus"]
 test-utils = [
     "dep:libparsec_testbed",
     "libparsec_platform_device_loader/test-with-testbed",
