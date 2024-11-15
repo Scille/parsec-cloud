@@ -169,6 +169,7 @@ export class ElectronCapacitorApp {
   updateApp(): void {
     if (this.updater && this.updater.isUpdateDownloaded()) {
       this.forceClose = true;
+      this.macOSForceQuit = true;
       this.updater.quitAndInstall();
     } else {
       console.warn('Update app has been called but no update has been downloaded');
