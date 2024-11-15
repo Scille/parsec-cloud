@@ -5,6 +5,19 @@ History
 .. towncrier release notes start
 
 
+Parsec v3.2.0-rc.3 (2024-11-15)
+-------------------------------
+
+Bugfixes
+~~~~~~~~
+
+* Prompt the user for administrator permissions when winfsp is being installed,
+  instead of failing silently if the installer wasn't already running in
+  administrator mode.
+  (`#8934 <https://github.com/Scille/parsec-cloud/issues/8934>`__)
+
+
+
 Parsec v3.2.0-rc.2 (2024-11-14)
 -------------------------------
 

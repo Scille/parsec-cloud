@@ -1,1 +1,0 @@
-Prompt the user for administrator permissions when winfsp is being installed, instead of failing silently if the installer wasn't already running in administrator mode.
