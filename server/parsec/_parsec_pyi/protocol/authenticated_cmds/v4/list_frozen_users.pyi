@@ -33,8 +33,3 @@ class RepAuthorNotAllowed(Rep):
     def __init__(
         self,
     ) -> None: ...
-
-class RepAuthorNotFound(Rep):
-    def __init__(
-        self,
-    ) -> None: ...

@@ -31,7 +31,7 @@ pub async fn list_frozen_users(
     match cmds.send(Req {}).await? {
         Rep::Ok { frozen_users } => Ok(frozen_users),
         Rep::AuthorNotAllowed => Err(ClientListFrozenUsersError::AuthorNotAllowed),
-        bad_rep @ (Rep::UnknownStatus { .. } | Rep::AuthorNotFound) => {
+        bad_rep @ Rep::UnknownStatus { .. } => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
