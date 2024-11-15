@@ -16,6 +16,7 @@ harness = false
 [features]
 use-sodiumoxide = ["libparsec_crypto/use-sodiumoxide"]
 vendored-openssl = ["libparsec_crypto/vendored-openssl"]
+vendored-keyring = ["libparsec/vendored-keyring"]
 testenv = []
 
 [dependencies]

@@ -39,10 +39,12 @@ parts:
       - python3
       - libssl-dev
       - libfuse3-dev
+      - libdbus-1-dev
       - pkg-config
       - patchelf
     stage-packages:
       # libssl3 is provided by core22
+      # libdbus-1 is provided by core22
       - fuse3
     build-snaps:
       - node/18/stable
