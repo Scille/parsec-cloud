@@ -1,13 +1,13 @@
 # Why do we need our own Zstd crate here ?
 
-Zstd is a very efficient compression library, and it C-based implementation works
+Zstd is a very efficient compression library, and its C-based implementation works
 well in Rust thanks to the `zstd` crate.
 
 However compiling the `zstd` crate for WASM can be cumbersome on Windows/MacOS,
 as it requires to install a specific version of llvm with WebAssembly support
 (see https://github.com/gyscos/zstd-rs/issues/93).
 
-Hence this `libparsec_zstd` crates that act as a façade over two implementations:
+Hence this `libparsec_zstd` crate that acts as a façade over two implementations:
 
 - The actual `zstd` crate. This is the implementation used by default.
 - A pure-Rust alternative. It can be enabled by setting the `use_pure_rust_but_dirty_zstd`
@@ -32,7 +32,7 @@ Compiling with Zstd support provided by the pure-Rust dirty implementation (i.e.
 only do that for dev).
 
 ```shell
-RUSTFLAGS='--cfg use_pure_rust_but_dirty_zstd cargo build -p libparsec_whatever
+RUSTFLAGS='--cfg use_pure_rust_but_dirty_zstd' cargo build -p libparsec_whatever
 ```
 
 Notes:
@@ -55,7 +55,7 @@ So using a feature would require more configuration in multiple places, and may
 lead to the wrong implementation being used by mistake while being hard to
 detect (this has already happened when generating test data !).
 
-Finally features cannot be enabled for transitive dependencies, this is an issue
+Finally, features cannot be enabled for transitive dependencies, this is an issue
 when using `wasm-pack test` on `libparsec_platform_storage` (given a feature must
 be passed to `libparsec_zstd`, but only `libparsec_types` depends on it so it
 cannot be done from `libparsec_platform_storage`).
