@@ -2,9 +2,11 @@
 
 use hex_literal::hex;
 use paste::paste;
-use std::collections::HashMap;
-use std::num::NonZeroU64;
-use std::sync::Arc;
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU64,
+    sync::Arc,
+};
 
 use libparsec_types::prelude::*;
 
@@ -801,13 +803,30 @@ impl_event_builder!(
     [
         user: UserID,
         threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
         recovery_device: DeviceID,
     ]
 );
 
 impl<'a> TestbedEventNewShamirRecoveryBuilder<'a> {
     impl_customize_field_meth!(author, DeviceID);
+}
+
+/*
+ * TestbedEventDeleteShamirRecoveryBuilder
+ */
+
+impl_event_builder!(
+    DeleteShamirRecovery,
+    [
+        user: UserID,
+    ]
+);
+
+impl<'a> TestbedEventDeleteShamirRecoveryBuilder<'a> {
+    impl_customize_field_meth!(author, DeviceID);
+    impl_customize_field_meth!(setup_to_delete_timestamp, DateTime);
+    impl_customize_field_meth!(share_recipients, HashSet<UserID>);
 }
 
 /*

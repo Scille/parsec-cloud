@@ -49,7 +49,7 @@ async fn ok(env: &TestbedEnv) {
                 let setup = req.setup.unwrap();
                 let mut certs = new_shamir_certificates.lock().unwrap();
                 certs.push(setup.brief);
-                certs.extend(setup.shares);
+                // Note we ignore share certificates since they are not for our user
                 authenticated_cmds::latest::shamir_recovery_setup::Rep::Ok
             }
         },

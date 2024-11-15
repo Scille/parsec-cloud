@@ -1,0 +1,31 @@
+{
+    "label": "ShamirRecoveryDeletionCertificate",
+    "type": "shamir_recovery_deletion_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            // The timestamp of the shamir recovery this certificate removes.
+            // Given the timestamp are strictly growing, unique identification
+            // can be done with the couple user_id + setup_timestamp.
+            "name": "setup_to_delete_timestamp",
+            "type": "DateTime"
+        },
+        {
+            // User here must be the one owning the device used as author
+            // (i.e. a user can only remove its own Shamir recovery)
+            "name": "setup_to_delete_user_id",
+            "type": "UserID"
+        },
+        {
+            "name": "share_recipients",
+            "type": "Set<UserID>"
+        }
+    ]
+}

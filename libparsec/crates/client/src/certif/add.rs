@@ -1,6 +1,9 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 use libparsec_types::prelude::*;
 
@@ -105,6 +108,41 @@ pub enum InvalidCertificateError {
     },
     #[error("Certificate `{hint}` breaks consistency: user has Outsider profile, and hence cannot have Owner/Manager role in the realm given it is shared with others !")]
     RealmOutsiderCannotBeOwnerOrManager { hint: String },
+    #[error("Certificate `{hint}` breaks consistency: author already has a shamir recovery setup")]
+    ShamirRecoveryAlreadySetup { hint: String },
+    #[error("Certificate `{hint}` breaks consistency: author cannot be among the recipients")]
+    ShamirRecoverySelfAmongRecipients { hint: String },
+    #[error(
+        "Certificate `{hint}` breaks consistency: we were expecting the shamir recovery share certificate for user `{allowed_recipient}` corresponding to `{brief_hint}`"
+    )]
+    ShamirRecoveryMissingShare {
+        hint: String,
+        brief_hint: String,
+        allowed_recipient: UserID,
+    },
+    #[error(
+        "Certificate `{hint}` breaks consistency: we only expect shamir recovery share certificate for user `{allowed_recipient}`, but got one for `{got_recipient}`"
+    )]
+    ShamirRecoveryShareForWrongRecipient {
+        hint: String,
+        allowed_recipient: UserID,
+        got_recipient: UserID,
+    },
+    #[error(
+        "Certificate `{hint}` breaks consistency: it refers to a shamir recovery that doesn't exist or is not the last one"
+    )]
+    ShamirRecoveryDeletionMustReferenceLastSetup { hint: String },
+    #[error(
+        "Certificate `{hint}` breaks consistency: it refers to a shamir recovery with different recipients ({setup_recipients:?})"
+    )]
+    ShamirRecoveryDeletionRecipientsMismatch {
+        hint: String,
+        setup_recipients: HashSet<UserID>,
+    },
+    #[error(
+        "Certificate `{hint}` breaks consistency: it refers to a shamir recovery that has already been deleted on {deleted_on}"
+    )]
+    ShamirRecoveryAlreadyDeleted { hint: String, deleted_on: DateTime },
     #[error(
         "Certificate `{hint}` breaks consistency: no related shamir recovery brief certificate"
     )]
@@ -199,14 +237,75 @@ pub(super) async fn add_certificates_batch(
         }
     }
 
+    enum NextShamirCertifExpect {
+        Anything,
+        Share {
+            brief: Arc<ShamirRecoveryBriefCertificate>,
+        },
+    }
+
+    let mut expect_next_certif = NextShamirCertifExpect::Anything;
     for signed in shamir_recovery_certificates.iter() {
         let cooked = validate_shamir_recovery_certificate(ops, store, signed.to_owned())
             .await
             .map_err(send_event_on_invalid_certificate)?;
 
+        match (&expect_next_certif, &cooked) {
+            (
+                NextShamirCertifExpect::Anything,
+                ShamirRecoveryTopicArcCertificate::ShamirRecoveryBrief(cooked),
+            ) => {
+                if cooked
+                    .per_recipient_shares
+                    .contains_key(&ops.device.user_id)
+                {
+                    // Next certificate must be the shamir recovery share for our user
+                    // (this is because the shamir recovery share has the same timestamp
+                    // than the related shamir recovery brief, and also because only
+                    // the shamir recovery share related to our user are sent to us).
+                    expect_next_certif = NextShamirCertifExpect::Share {
+                        brief: cooked.clone(),
+                    };
+                }
+            }
+            (NextShamirCertifExpect::Anything, _) => (),
+            (
+                NextShamirCertifExpect::Share { .. },
+                ShamirRecoveryTopicArcCertificate::ShamirRecoveryShare(cooked),
+            ) => {
+                // In theory we should only receive shamir recovery share certificates
+                // related to our own user.
+                // Hence a sanity check here given this should have already been
+                // enforced when validating the certificate.
+                assert_eq!(cooked.recipient, ops.device.user_id);
+
+                expect_next_certif = NextShamirCertifExpect::Anything;
+            }
+            (NextShamirCertifExpect::Share { brief }, unexpected_cooked) => {
+                let hint = format!("{:?}", unexpected_cooked);
+                let brief_hint = format!("{:?}", brief);
+                let what = Box::new(InvalidCertificateError::ShamirRecoveryMissingShare {
+                    hint,
+                    brief_hint,
+                    allowed_recipient: ops.device.user_id,
+                });
+                return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+            }
+        }
+
         store
             .add_next_shamir_recovery_certificate(cooked, signed)
             .await?;
+    }
+    if let NextShamirCertifExpect::Share { brief } = expect_next_certif {
+        let hint = "<no more certificates>".to_string();
+        let brief_hint = format!("{:?}", brief);
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryMissingShare {
+            hint,
+            brief_hint,
+            allowed_recipient: ops.device.user_id,
+        });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
     // Detect if we have switched to/from redacted certificates
@@ -604,6 +703,23 @@ async fn validate_shamir_recovery_certificate(
             .await?;
 
             Ok(ShamirRecoveryTopicArcCertificate::ShamirRecoveryShare(
+                cooked,
+            ))
+        }
+        UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(unsecure) => {
+            let (cooked, author_user_id) =
+                verify_certificate_signature!(Device, unsecure, ops, store)?;
+
+            // 3) The certificate is valid, last check is the consistency with other certificates
+            check_shamir_recovery_deletion_certificate_consistency(
+                ops,
+                store,
+                &cooked,
+                author_user_id,
+            )
+            .await?;
+
+            Ok(ShamirRecoveryTopicArcCertificate::ShamirRecoveryDeletion(
                 cooked,
             ))
         }
@@ -1763,6 +1879,49 @@ async fn check_realm_archiving_certificate_consistency(
     Ok(())
 }
 
+enum LastShamirRecovery {
+    NeverSetup,
+    Valid(Arc<ShamirRecoveryBriefCertificate>),
+    Removed(
+        Arc<ShamirRecoveryBriefCertificate>,
+        Arc<ShamirRecoveryDeletionCertificate>,
+    ),
+}
+
+async fn get_last_shamir_recovery_for_author(
+    store: &mut CertificatesStoreWriteGuard<'_>,
+    up_to: UpTo,
+    user_id: UserID,
+) -> Result<LastShamirRecovery, CertifAddCertificatesBatchError> {
+    let last_brief_certif = match store
+        .get_last_shamir_recovery_brief_certificate_for_author(up_to, &user_id)
+        .await?
+    {
+        Some(certif) => certif,
+        // The user never had any shamir recovery configured
+        None => return Ok(LastShamirRecovery::NeverSetup),
+    };
+
+    let last_shamir_recovery = match store
+        .get_last_shamir_recovery_deletion_certificate_for_author(up_to, &user_id)
+        .await?
+    {
+        // The user has never removed any shamir recovery, so the one we have is valid !
+        None => LastShamirRecovery::Valid(last_brief_certif),
+        Some(last_remove_certif) => {
+            if last_remove_certif.setup_to_delete_timestamp == last_brief_certif.timestamp {
+                // The last shamir recovery has been removed, so the user currently has no shamir recovery
+                LastShamirRecovery::Removed(last_brief_certif, last_remove_certif)
+            } else {
+                // The last removal was about an older shamir recovery, we can ignore it
+                LastShamirRecovery::Valid(last_brief_certif)
+            }
+        }
+    };
+
+    Ok(last_shamir_recovery)
+}
+
 async fn check_shamir_recovery_brief_certificate_consistency(
     ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
@@ -1790,7 +1949,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         }
     }
 
-    // 3) Check `user_id` field matches with author
+    // 2) Check `user_id` field matches with author
 
     if cooked.user_id != author_user_id {
         let hint = mk_hint();
@@ -1802,7 +1961,29 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 4) Check author is not revoked
+    // 3) Check author is not part of the recipients
+
+    if cooked.per_recipient_shares.contains_key(&author_user_id) {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoverySelfAmongRecipients { hint });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 4) Make sure there is no shamir recovery already valid for this user
+
+    let last_shamir_recovery = get_last_shamir_recovery_for_author(
+        store,
+        UpTo::Timestamp(cooked.timestamp),
+        author_user_id,
+    )
+    .await?;
+    if let LastShamirRecovery::Valid(_) = last_shamir_recovery {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryAlreadySetup { hint });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 5) Check author is not revoked
 
     check_author_not_revoked_and_profile(
         ops,
@@ -1814,7 +1995,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
     )
     .await?;
 
-    // 5) Make sure all recipients exist and are not revoked
+    // 6) Make sure all recipients exist and are not revoked
 
     for recipient in cooked.per_recipient_shares.keys() {
         check_user_exists(store, cooked.timestamp, *recipient, mk_hint).await?;
@@ -1839,7 +2020,9 @@ async fn check_shamir_recovery_share_certificate_consistency(
 
     let last_stored_timestamp = store.get_last_timestamps().await?.shamir_recovery;
     if let Some(last_stored_timestamp) = last_stored_timestamp {
-        if cooked.timestamp != last_stored_timestamp {
+        if cooked.timestamp < last_stored_timestamp {
+            // We already know more recent certificates, hence this certificate
+            // cannot be added without breaking causality !
             let hint = mk_hint();
             let what = Box::new(InvalidCertificateError::InvalidTimestamp {
                 hint,
@@ -1867,22 +2050,53 @@ async fn check_shamir_recovery_share_certificate_consistency(
         }
     }
 
-    // 3) Check share doesn't already exists
+    // 3) Shamir recovery share should only be provided to its recipient
 
-    let maybe_exist = store
+    if cooked.recipient != ops.device.user_id {
+        let hint = mk_hint();
+        let what = Box::new(
+            InvalidCertificateError::ShamirRecoveryShareForWrongRecipient {
+                hint,
+                allowed_recipient: ops.device.user_id,
+                got_recipient: cooked.recipient,
+            },
+        );
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 4) Check share doesn't already exists
+
+    // With this query, we get the shamir recovery share that is the closest to
+    // `cooked.timestamp`, from there:
+    // a) If there is no share... then there is no share related to our brief !
+    // b) If the timestamp is not exactly `cooked.timestamp`, then this share corresponds
+    //   to a different brief and hence can be ignored.
+    //   This also means there is no share related to our brief.
+    // c) If the share's author is different from ours, then it also means both shares
+    //   are unrelated.
+    //
+    // Also note c) implies b) since we have a single shamir topic in which only
+    // related brief and share certificates are allowed to have the same timestamp.
+    match store
         .get_last_shamir_recovery_share_certificate_for_recipient(
             UpTo::Timestamp(cooked.timestamp),
             author_user_id.to_owned(),
             cooked.recipient,
         )
-        .await?;
-    if maybe_exist.is_some() {
-        let hint = mk_hint();
-        let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
-        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        .await?
+    {
+        Some(other_share)
+            if (other_share.author == cooked.author
+                && other_share.timestamp == cooked.timestamp) =>
+        {
+            let hint = mk_hint();
+            let what = Box::new(InvalidCertificateError::ContentAlreadyExists { hint });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+        _ => (),
     }
 
-    // 3) Check `user_id` field matches with author
+    // 5) Check `user_id` field matches with author
 
     if cooked.user_id != author_user_id {
         let hint = mk_hint();
@@ -1894,9 +2108,113 @@ async fn check_shamir_recovery_share_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 4) Check author is not revoked
+    // 6) Check author is not revoked
     // This should have already been checked during the related brief certificate's
     // validation, but better safe than sorry !
+
+    check_author_not_revoked_and_profile(
+        ops,
+        store,
+        cooked.timestamp,
+        author_user_id,
+        false,
+        mk_hint,
+    )
+    .await?;
+
+    Ok(())
+}
+
+async fn check_shamir_recovery_deletion_certificate_consistency(
+    ops: &CertificateOps,
+    store: &mut CertificatesStoreWriteGuard<'_>,
+    cooked: &ShamirRecoveryDeletionCertificate,
+    author_user_id: UserID,
+) -> Result<(), CertifAddCertificatesBatchError> {
+    let mk_hint = || format!("{:?}", cooked);
+
+    // 1) Certificate must be the newest among the ones in shamir recovery topic.
+
+    let last_stored_timestamp = store.get_last_timestamps().await?.shamir_recovery;
+    if let Some(last_stored_timestamp) = last_stored_timestamp {
+        if cooked.timestamp <= last_stored_timestamp {
+            // We already know more recent certificates, hence this certificate
+            // cannot be added without breaking causality !
+            let hint = mk_hint();
+            let what = Box::new(InvalidCertificateError::InvalidTimestamp {
+                hint,
+                last_certificate_timestamp: last_stored_timestamp,
+            });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+    }
+
+    // Given we now know there is no certificate with a timestamp >= `cooked.timestamp`,
+    // we don't need to have a dedicated check than ensure `cooked.setup_timestamp` < `cooked.timestamp`.
+    // Indeed, in such case there is no certificate corresponding to `cooked.setup_timestamp`
+    // and so we fall into the generic "invalid setup_timestamp" case.
+
+    // 2) Check `user_id` field matches with author
+
+    if cooked.setup_to_delete_user_id != author_user_id {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryNotAboutSelf {
+            hint,
+            user_id: cooked.setup_to_delete_user_id,
+            author_user_id,
+        });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 3) Make sure this certificate refers last last valid shamir recovery
+    // Note there could be at most one non-removed shamir recovery, hence it is
+    // guaranteed that all but the last one has already been removed.
+
+    let last_shamir_recovery = get_last_shamir_recovery_for_author(
+        store,
+        UpTo::Timestamp(cooked.timestamp),
+        author_user_id,
+    )
+    .await?;
+    let setup_recipients = match last_shamir_recovery {
+        LastShamirRecovery::Valid(last_certif)
+            if last_certif.timestamp == cooked.setup_to_delete_timestamp =>
+        {
+            HashSet::from_iter(last_certif.per_recipient_shares.keys().cloned())
+        }
+        LastShamirRecovery::Removed(last_certif, removed_certif)
+            if last_certif.timestamp == cooked.setup_to_delete_timestamp =>
+        {
+            let hint = mk_hint();
+            let what = Box::new(InvalidCertificateError::ShamirRecoveryAlreadyDeleted {
+                hint,
+                deleted_on: removed_certif.timestamp,
+            });
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+        _ => {
+            let hint = mk_hint();
+            let what = Box::new(
+                InvalidCertificateError::ShamirRecoveryDeletionMustReferenceLastSetup { hint },
+            );
+            return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+        }
+    };
+
+    // 4) Check recipients match between setup and deletion certificates.
+
+    if cooked.share_recipients != setup_recipients {
+        let hint = mk_hint();
+        let what = Box::new(
+            InvalidCertificateError::ShamirRecoveryDeletionRecipientsMismatch {
+                hint,
+                setup_recipients,
+            },
+        );
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 5) Check author is not revoked
 
     check_author_not_revoked_and_profile(
         ops,

@@ -340,6 +340,12 @@ class Backend:
                     setup_shares=event.raw_shares_certificates,
                 )
                 assert outcome is None, outcome
+            elif isinstance(event, testbed.TestbedEventDeleteShamirRecovery):
+                outcome = await self.shamir.remove_recovery_setup(
+                    organization_id=org_id,
+                    author=event.certificate.setup_to_delete_user_id,
+                )
+                assert outcome is None, outcome
             elif isinstance(event, testbed.TestbedEventCreateBlock):
                 outcome = await self.block.create(
                     now=event.timestamp,

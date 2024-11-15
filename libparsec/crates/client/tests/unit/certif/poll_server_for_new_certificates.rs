@@ -98,6 +98,9 @@ async fn poll_testbed_certificates(env: &TestbedEnv, device: Arc<LocalDevice>) {
             AnyArcCertificate::ShamirRecoveryShare(c) => {
                 expected_shamir_recovery_after = Some(c.timestamp);
             }
+            AnyArcCertificate::ShamirRecoveryDeletion(c) => {
+                expected_shamir_recovery_after = Some(c.timestamp);
+            }
             AnyArcCertificate::SequesterAuthority(c) => {
                 expected_sequester_after = Some(c.timestamp);
             }

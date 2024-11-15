@@ -1,11 +1,15 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, num::NonZeroU64, sync::Arc};
+use std::{
+    collections::{HashMap, HashSet},
+    num::NonZeroU64,
+    sync::Arc,
+};
 
 use pyo3::{
     exceptions::{PyAttributeError, PyValueError},
     prelude::*,
-    types::{PyBytes, PyDict, PyTuple, PyType},
+    types::{PyBytes, PyDict, PySet, PyTuple, PyType},
     Bound,
 };
 
@@ -1148,6 +1152,107 @@ impl ShamirRecoveryShareCertificate {
     #[getter]
     fn ciphered_share<'py>(&self, py: Python<'py>) -> Bound<'py, PyBytes> {
         PyBytes::new_bound(py, &self.0.ciphered_share)
+    }
+}
+
+crate::binding_utils::gen_py_wrapper_class!(
+    ShamirRecoveryDeletionCertificate,
+    Arc<libparsec_types::ShamirRecoveryDeletionCertificate>,
+    __repr__,
+    __copy__,
+    __deepcopy__,
+    __richcmp__ eq,
+);
+
+#[pymethods]
+impl ShamirRecoveryDeletionCertificate {
+    #[new]
+    #[pyo3(signature = (author, timestamp, setup_to_delete_timestamp, setup_to_delete_user_id, share_recipients))]
+    fn new(
+        author: DeviceID,
+        timestamp: DateTime,
+        setup_to_delete_timestamp: DateTime,
+        setup_to_delete_user_id: UserID,
+        share_recipients: HashSet<UserID>,
+    ) -> PyResult<Self> {
+        Ok(Self(Arc::new(
+            libparsec_types::ShamirRecoveryDeletionCertificate {
+                timestamp: timestamp.0,
+                author: author.0,
+                setup_to_delete_timestamp: setup_to_delete_timestamp.0,
+                setup_to_delete_user_id: setup_to_delete_user_id.0,
+                share_recipients: share_recipients.into_iter().map(|u| u.0).collect(),
+            },
+        )))
+    }
+
+    #[classmethod]
+    fn verify_and_load(
+        _cls: &Bound<'_, PyType>,
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: &DeviceID,
+    ) -> PyResult<Self> {
+        libparsec_types::ShamirRecoveryDeletionCertificate::verify_and_load(
+            signed,
+            &author_verify_key.0,
+            expected_author.0,
+        )
+        .map_err(|e| PyValueError::new_err(e.to_string()))
+        .map(|x| Self(Arc::new(x)))
+    }
+
+    fn dump_and_sign<'py>(
+        &self,
+        author_signkey: &SigningKey,
+        py: Python<'py>,
+    ) -> Bound<'py, PyBytes> {
+        PyBytes::new_bound(py, &self.0.dump_and_sign(&author_signkey.0))
+    }
+
+    #[classmethod]
+    fn unsecure_load(_cls: &Bound<'_, PyType>, signed: &[u8]) -> PyResult<Self> {
+        libparsec_types::ShamirRecoveryDeletionCertificate::unsecure_load(signed.to_vec().into())
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+            .map(|u| u.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage))
+            .map(|x| Self(Arc::new(x)))
+    }
+
+    #[getter]
+    fn author(&self) -> DeviceID {
+        DeviceID(self.0.author)
+    }
+
+    #[getter]
+    fn timestamp(&self) -> DateTime {
+        self.0.timestamp.into()
+    }
+
+    #[getter]
+    fn setup_to_delete_timestamp(&self) -> DateTime {
+        self.0.setup_to_delete_timestamp.into()
+    }
+
+    #[getter]
+    fn setup_to_delete_user_id(&self) -> UserID {
+        self.0.setup_to_delete_user_id.into()
+    }
+
+    #[getter]
+    fn share_recipients<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
+        // PySet::new_bound(
+        //     py,
+        //     self.0
+        //         .share_recipients
+        //         .iter()
+        //         // .map(|user_id| UserID(*user_id)),
+        // )
+
+        let py_recipients = PySet::empty_bound(py)?;
+        for recipient in &self.0.share_recipients {
+            py_recipients.add(UserID(*recipient).into_py(py))?;
+        }
+        Ok(py_recipients)
     }
 }
 

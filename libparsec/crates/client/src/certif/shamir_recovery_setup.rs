@@ -447,8 +447,8 @@ async fn get_latest_shamir_setup_for_author(
         .store
         .for_read(|store| {
             store.get_last_shamir_recovery_brief_certificate_for_author(
-                author_id,
                 UpTo::Timestamp(*timestamp),
+                author_id,
             )
         })
         .await??)

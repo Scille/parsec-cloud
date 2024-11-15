@@ -27,6 +27,7 @@ from parsec._parsec import (
     SequesterSigningKeyDer,
     SequesterVerifyKeyDer,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
     SigningKey,
     UserCertificate,
@@ -213,6 +214,7 @@ class TestbedEventArchiveRealm:
 
 class TestbedEventNewShamirRecovery:
     timestamp: DateTime
+    user_id: UserID
     author: DeviceID
     threshold: int
     per_recipient_shares: dict[UserID, int]
@@ -225,6 +227,16 @@ class TestbedEventNewShamirRecovery:
     raw_brief_certificate: bytes
     shares_certificates: list[ShamirRecoveryShareCertificate]
     raw_shares_certificates: list[bytes]
+
+class TestbedEventDeleteShamirRecovery:
+    timestamp: DateTime
+    author: DeviceID
+    setup_to_delete_timestamp: DateTime
+    setup_to_delete_user_id: UserID
+    share_recipients: set[UserID]
+
+    certificate: ShamirRecoveryDeletionCertificate
+    raw_certificate: bytes
 
 class TestbedEventCreateOrUpdateOpaqueVlob:
     timestamp: DateTime
@@ -279,6 +291,7 @@ TestbedEvent = (
     | TestbedEventRotateKeyRealm
     | TestbedEventArchiveRealm
     | TestbedEventNewShamirRecovery
+    | TestbedEventDeleteShamirRecovery
     | TestbedEventCreateOrUpdateOpaqueVlob
     | TestbedEventCreateOpaqueBlock
     | TestbedEventFreezeUser

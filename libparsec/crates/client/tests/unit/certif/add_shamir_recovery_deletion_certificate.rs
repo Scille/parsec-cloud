@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
@@ -13,7 +13,7 @@ use super::utils::certificates_ops_factory;
 
 fn certifs_from_last_shamir_recovery(env: &TestbedEnv) -> Vec<Bytes> {
     match env.template.events.last().unwrap() {
-        TestbedEvent::NewShamirRecovery(e) => {
+        TestbedEvent::DeleteShamirRecovery(e) => {
             e.certificates(&env.template).map(|c| c.signed).collect()
         }
         _ => unreachable!(),
@@ -26,14 +26,16 @@ async fn ok(env: &TestbedEnv) {
         builder.new_user("bob");
         let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
             recovery_device_id,
         );
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        builder.delete_shamir_recovery("bob");
     })
     .await;
     let alice = env.local_device("alice@dev1");
@@ -50,27 +52,37 @@ async fn ok(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn duplicated(env: &TestbedEnv) {
-    env.customize(|builder| {
-        builder.new_user("bob");
-        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
+async fn already_deleted(env: &TestbedEnv) {
+    let delete_timestamp = env
+        .customize(|builder| {
+            builder.new_user("bob");
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
+            builder.new_shamir_recovery(
+                "bob",
+                1,
+                [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
+            );
+            let (setup_timestamp, delete_timestamp) = builder
+                .delete_shamir_recovery("bob")
+                .map(|e| (e.setup_to_delete_timestamp, e.timestamp));
 
-        builder.new_shamir_recovery(
-            "bob",
-            1,
-            [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            recovery_device_id,
-        );
-    })
-    .await;
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+
+            builder.with_check_consistency_disabled(|builder| {
+                builder
+                    .delete_shamir_recovery("bob")
+                    .with_setup_to_delete_timestamp(setup_timestamp);
+            });
+
+            delete_timestamp
+        })
+        .await;
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let mut shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
-    shamir_recovery_certificates.push(shamir_recovery_certificates[1].clone()); // Duplicate alice share certificate
-    p_assert_eq!(shamir_recovery_certificates.len(), 3); // Sanity check
+    let shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
 
     let err = ops
         .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
@@ -80,47 +92,15 @@ async fn duplicated(env: &TestbedEnv) {
     p_assert_matches!(
         err,
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(*boxed, InvalidCertificateError::ContentAlreadyExists { .. })
+        if matches!(*boxed, InvalidCertificateError::ShamirRecoveryAlreadyDeleted { deleted_on, .. } if deleted_on == delete_timestamp)
     )
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn missing_brief(
-    #[values(
-        "no_brief_exists",
-        "removed_brief_exists",
-        "different_user_brief_exists"
-    )]
-    kind: &str,
-    env: &TestbedEnv,
-) {
+async fn missing_brief(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
         let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
-
-        match kind {
-            "no_brief_exists" => (),
-            "removed_brief_exists" => {
-                builder.new_shamir_recovery(
-                    "bob",
-                    1,
-                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
-                    recovery_device_id,
-                );
-                builder.delete_shamir_recovery("bob");
-            }
-            "different_user_brief_exists" => {
-                builder.new_user("mallory");
-                let recovery_device_id = builder.new_device("mallory").map(|e| e.device_id);
-                builder.new_shamir_recovery(
-                    "mallory",
-                    1,
-                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
-                    recovery_device_id,
-                );
-            }
-            unknown => panic!("Unknown kind: {}", unknown),
-        }
 
         builder.certificates_storage_fetch_certificates("alice@dev1");
 
@@ -130,14 +110,14 @@ async fn missing_brief(
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
             recovery_device_id,
         );
+        builder.delete_shamir_recovery("bob");
     })
     .await;
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let mut shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
-    shamir_recovery_certificates.remove(0); // Remove brief certificate
-    p_assert_eq!(shamir_recovery_certificates.len(), 1); // Sanity check
+    // We get the delete certificate, but not the brief & share
+    let shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
 
     let err = ops
         .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
@@ -149,21 +129,18 @@ async fn missing_brief(
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
         if matches!(
             *boxed,
-            InvalidCertificateError::ShamirRecoveryMissingBriefCertificate { .. }
+            InvalidCertificateError::ShamirRecoveryDeletionMustReferenceLastSetup { .. }
         )
     );
 }
 
 #[parsec_test(testbed = "minimal")]
-async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
+async fn setup_timestamp_mismatch_with_last_valid_brief(env: &TestbedEnv) {
     env.customize(|builder| {
         builder.new_user("bob");
         let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
-        builder.certificates_storage_fetch_certificates("alice@dev1");
-
-        // First shamir, we will use its brief certificate
-        builder
+        let older_shamir_timestamp = builder
             .new_shamir_recovery(
                 "bob",
                 1,
@@ -172,22 +149,26 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
             )
             .map(|event| event.timestamp);
 
-        // Second shamir, we will use its share certificate (so that timestamp differs)
+        builder.delete_shamir_recovery("bob");
+
         builder.new_shamir_recovery(
             "bob",
             1,
             [("alice".parse().unwrap(), 1.try_into().unwrap())],
             recovery_device_id,
         );
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        builder
+            .delete_shamir_recovery("bob")
+            .with_setup_to_delete_timestamp(older_shamir_timestamp);
     })
     .await;
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let mut shamir_recovery_certificates = env.get_shamir_recovery_certificates_signed();
-    shamir_recovery_certificates.remove(2); // Remove second recovery's brief
-    shamir_recovery_certificates.remove(1); // Remove first recovery's alice share
-    p_assert_eq!(shamir_recovery_certificates.len(), 2); // Sanity check: expect first recovery brief + second recovery share
+    let shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
 
     let err = ops
         .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
@@ -199,7 +180,52 @@ async fn timestamp_mismatch_with_brief(env: &TestbedEnv) {
         CertifAddCertificatesBatchError::InvalidCertificate(boxed)
         if matches!(
             *boxed,
-            InvalidCertificateError::ShamirRecoveryMissingBriefCertificate { .. }
+            InvalidCertificateError::ShamirRecoveryDeletionMustReferenceLastSetup {
+                ..
+            }
+        )
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn recipients_mismatch(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.new_user("bob");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
+
+        builder.new_shamir_recovery(
+            "bob",
+            1,
+            [("alice".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
+        );
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        builder
+            .delete_shamir_recovery("bob")
+            .with_share_recipients(HashSet::from_iter(["mallory".parse().unwrap()]));
+    })
+    .await;
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
+
+    let err = ops
+        .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::ShamirRecoveryDeletionRecipientsMismatch {
+                ref setup_recipients,
+                ..
+            } if *setup_recipients == HashSet::from_iter(["alice".parse().unwrap()])
         )
     );
 }
@@ -209,37 +235,22 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let timestamp = env
         .customize(|builder| {
             builder.new_user("bob");
-            let alice_recovery_device_id = builder.new_device("alice").map(|e| e.device_id);
-            builder.new_shamir_recovery(
-                "alice",
-                1,
-                [("bob".parse().unwrap(), 1.try_into().unwrap())],
-                alice_recovery_device_id,
-            );
+            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
-            let bob_recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
-
-            builder.certificates_storage_fetch_certificates("alice@dev1");
-
-            // Good shamir, we will use its brief certificate
             let timestamp = builder
                 .new_shamir_recovery(
                     "bob",
                     1,
                     [("alice".parse().unwrap(), 1.try_into().unwrap())],
-                    bob_recovery_device_id,
+                    recovery_device_id,
                 )
-                .map(|e| e.timestamp);
+                .map(|event| event.timestamp);
 
-            // Bad shamir, we will use its share certificate
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+
             builder
-                .new_shamir_recovery(
-                    "bob",
-                    1,
-                    [("alice".parse().unwrap(), 1.try_into().unwrap())],
-                    bob_recovery_device_id,
-                )
-                .customize(|event| event.timestamp = timestamp.add_us(-1));
+                .delete_shamir_recovery("bob")
+                .customize(|e| e.timestamp = timestamp);
 
             timestamp
         })
@@ -247,18 +258,7 @@ async fn invalid_timestamp(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
-    let mut shamir_recoveries = env.template.events.iter().filter_map(|e| match e {
-        TestbedEvent::NewShamirRecovery(e) => Some(
-            e.certificates(&env.template)
-                .map(|c| c.signed)
-                .collect::<Vec<_>>(),
-        ),
-        _ => None,
-    });
-    shamir_recoveries.next().unwrap(); // Ignore first that has already been fetched
-    let good_brief = shamir_recoveries.next().unwrap()[0].clone(); // Take brief from the good shamir
-    let bad_share = shamir_recoveries.next().unwrap()[1].clone(); // Take share from the bad shamir
-    let shamir_recovery_certificates = vec![good_brief, bad_share];
+    let shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
 
     let err = ops
         .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
@@ -286,14 +286,16 @@ async fn invalid_user_id(env: &TestbedEnv) {
             let bob_user_id = builder.new_user("bob").map(|u| u.user_id);
             let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
 
-            builder.certificates_storage_fetch_certificates("alice@dev1");
-
             builder.new_shamir_recovery(
                 "bob",
                 1,
                 [("alice".parse().unwrap(), 1.try_into().unwrap())],
                 recovery_device_id,
             );
+
+            builder.certificates_storage_fetch_certificates("alice@dev1");
+
+            builder.delete_shamir_recovery("bob");
 
             bob_user_id
         })
@@ -304,21 +306,20 @@ async fn invalid_user_id(env: &TestbedEnv) {
     // Patch the certificate to have an invalid user id
 
     let shamir_recovery_certificates = match env.template.events.last().unwrap() {
-        TestbedEvent::NewShamirRecovery(e) => {
+        TestbedEvent::DeleteShamirRecovery(e) => {
             let mut certifs = e.certificates(&env.template);
-            let brief = certifs.next().unwrap();
-            let share = certifs.next().unwrap();
+            let delete = certifs.next().unwrap();
             assert!(certifs.next().is_none()); // Sanity check
 
-            let share_certificate = match share.certificate {
-                libparsec_types::AnyArcCertificate::ShamirRecoveryShare(mut c) => {
+            let delete_certificate = match delete.certificate {
+                libparsec_types::AnyArcCertificate::ShamirRecoveryDeletion(mut c) => {
                     let c_mut = Arc::make_mut(&mut c);
-                    c_mut.user_id = alice.user_id;
+                    c_mut.setup_to_delete_user_id = alice.user_id;
                     c_mut.dump_and_sign(&alice.signing_key)
                 }
                 _ => unreachable!(),
             };
-            vec![brief.signed, share_certificate.into()]
+            vec![delete_certificate.into()]
         }
         _ => unreachable!(),
     };
