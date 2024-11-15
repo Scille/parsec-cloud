@@ -93,10 +93,10 @@ jobs:
         timeout-minutes: 5
 
       # Install fuse
-      - name: Install fuse
+      - name: Install build dependencies
         shell: bash
         run: |
-          until sudo apt-get -y install fuse3 libfuse3-dev; do
+          until sudo apt-get -y install fuse3 libfuse3-dev libdbus-1-dev; do
             echo "Fail to install APT package retrying ...";
           done
         timeout-minutes: 5

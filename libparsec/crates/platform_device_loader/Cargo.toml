@@ -13,6 +13,7 @@ workspace = true
 
 [features]
 test-with-testbed = ["libparsec_testbed"]
+vendored-keyring = ["keyring/vendored"]
 
 [dependencies]
 libparsec_types = { workspace = true }
@@ -25,7 +26,11 @@ log = { workspace = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 dirs = { workspace = true }
-keyring = { workspace = true, features = ["linux-native", "apple-native", "windows-native"] }
+keyring = { workspace = true, features = [
+    "linux-native-sync-persistent",
+    "apple-native",
+    "windows-native",
+] }
 uuid = { workspace = true }
 tokio = { workspace = true, features = ["fs"] }
 

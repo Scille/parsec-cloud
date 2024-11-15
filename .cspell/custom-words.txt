@@ -278,6 +278,7 @@ libbz
 libcolordprivate
 libcupsprintersupport
 libdb
+libdbus
 libdefaultgeometryloader
 libdrm
 libegl
