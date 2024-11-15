@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::sync::Arc;
 
@@ -1217,6 +1217,72 @@ impl_transparent_data_format_conversion!(
 );
 
 /*
+ * ShamirRecoveryDeletionCertificate
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "ShamirRecoveryDeletionCertificateData",
+    from = "ShamirRecoveryDeletionCertificateData"
+)]
+pub struct ShamirRecoveryDeletionCertificate {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
+
+    /// The timestamp of the shamir recovery this certificate removes.
+    /// Given the timestamp are strictly growing, unique identification
+    /// can be done with the couple user_id + setup_timestamp.
+    pub setup_to_delete_timestamp: DateTime,
+    /// User here must be the one owning the device used as author
+    /// (i.e. a user can only remove its own Shamir recovery)
+    pub setup_to_delete_user_id: UserID,
+    pub share_recipients: HashSet<UserID>,
+}
+
+impl_unsecure_load!(ShamirRecoveryDeletionCertificate -> DeviceID);
+impl_unsecure_dump!(ShamirRecoveryDeletionCertificate);
+impl_dump_and_sign!(ShamirRecoveryDeletionCertificate);
+impl_base_load!(ShamirRecoveryDeletionCertificate);
+
+impl ShamirRecoveryDeletionCertificate {
+    /// This structure represents immutable data (as it is created once, signed, and never updated).
+    /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
+    /// right before serialization) and not exposed publicly.
+    fn check_data_integrity(&self) -> DataResult<()> {
+        Ok(())
+    }
+
+    pub fn verify_and_load(
+        signed: &[u8],
+        author_verify_key: &VerifyKey,
+        expected_author: DeviceID,
+    ) -> DataResult<Self> {
+        let r = Self::base_verify_and_load(signed, author_verify_key)?;
+
+        if r.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: expected_author,
+                got: Some(r.author),
+            });
+        }
+
+        Ok(r)
+    }
+}
+
+parsec_data!("schema/certif/shamir_recovery_deletion_certificate.json5");
+
+impl_transparent_data_format_conversion!(
+    ShamirRecoveryDeletionCertificate,
+    ShamirRecoveryDeletionCertificateData,
+    author,
+    timestamp,
+    setup_to_delete_timestamp,
+    setup_to_delete_user_id,
+    share_recipients,
+);
+
+/*
  * AnyCertificate
  */
 
@@ -1232,6 +1298,7 @@ pub enum AnyArcCertificate {
     RealmKeyRotation(Arc<RealmKeyRotationCertificate>),
     ShamirRecoveryBrief(Arc<ShamirRecoveryBriefCertificate>),
     ShamirRecoveryShare(Arc<ShamirRecoveryShareCertificate>),
+    ShamirRecoveryDeletion(Arc<ShamirRecoveryDeletionCertificate>),
     SequesterAuthority(Arc<SequesterAuthorityCertificate>),
     SequesterService(Arc<SequesterServiceCertificate>),
     SequesterRevokedService(Arc<SequesterRevokedServiceCertificate>),
@@ -1250,6 +1317,7 @@ pub enum AnyCertificate {
     RealmKeyRotation(RealmKeyRotationCertificate),
     ShamirRecoveryBrief(ShamirRecoveryBriefCertificate),
     ShamirRecoveryShare(ShamirRecoveryShareCertificate),
+    ShamirRecoveryDeletion(ShamirRecoveryDeletionCertificate),
     SequesterAuthority(SequesterAuthorityCertificate),
     SequesterService(SequesterServiceCertificate),
     SequesterRevokedService(SequesterRevokedServiceCertificate),
@@ -1267,6 +1335,7 @@ pub enum UnsecureAnyCertificate {
     RealmKeyRotation(UnsecureRealmKeyRotationCertificate),
     ShamirRecoveryBrief(UnsecureShamirRecoveryBriefCertificate),
     ShamirRecoveryShare(UnsecureShamirRecoveryShareCertificate),
+    ShamirRecoveryDeletion(UnsecureShamirRecoveryDeletionCertificate),
     SequesterAuthority(UnsecureSequesterAuthorityCertificate),
 }
 
@@ -1288,6 +1357,7 @@ impl AnyCertificate {
             AnyCertificate::RealmKeyRotation(c) => c.check_data_integrity(),
             AnyCertificate::ShamirRecoveryBrief(c) => c.check_data_integrity(),
             AnyCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
+            AnyCertificate::ShamirRecoveryDeletion(c) => c.check_data_integrity(),
             AnyCertificate::SequesterAuthority(c) => c.check_data_integrity(),
             AnyCertificate::SequesterService(c) => c.check_data_integrity(),
             AnyCertificate::SequesterRevokedService(c) => c.check_data_integrity(),
@@ -1343,6 +1413,11 @@ impl AnyCertificate {
                     UnsecureShamirRecoveryShareCertificate { signed, unsecure },
                 )
             }
+            AnyCertificate::ShamirRecoveryDeletion(unsecure) => {
+                UnsecureAnyCertificate::ShamirRecoveryDeletion(
+                    UnsecureShamirRecoveryDeletionCertificate { signed, unsecure },
+                )
+            }
             AnyCertificate::SequesterAuthority(unsecure) => {
                 UnsecureAnyCertificate::SequesterAuthority(UnsecureSequesterAuthorityCertificate {
                     signed,
@@ -1369,6 +1444,7 @@ impl UnsecureAnyCertificate {
             UnsecureAnyCertificate::RealmKeyRotation(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::ShamirRecoveryBrief(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::ShamirRecoveryShare(unsecure) => unsecure.timestamp(),
+            UnsecureAnyCertificate::ShamirRecoveryDeletion(unsecure) => unsecure.timestamp(),
             UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.timestamp(),
         }
     }
@@ -1385,6 +1461,7 @@ impl UnsecureAnyCertificate {
             UnsecureAnyCertificate::RealmKeyRotation(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::ShamirRecoveryBrief(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::ShamirRecoveryShare(unsecure) => unsecure.hint(),
+            UnsecureAnyCertificate::ShamirRecoveryDeletion(unsecure) => unsecure.hint(),
             UnsecureAnyCertificate::SequesterAuthority(unsecure) => unsecure.hint(),
         }
     }
@@ -1637,6 +1714,7 @@ impl UnsecureRealmTopicCertificate {
 pub enum ShamirRecoveryTopicArcCertificate {
     ShamirRecoveryShare(Arc<ShamirRecoveryShareCertificate>),
     ShamirRecoveryBrief(Arc<ShamirRecoveryBriefCertificate>),
+    ShamirRecoveryDeletion(Arc<ShamirRecoveryDeletionCertificate>),
 }
 
 #[derive(Debug, Deserialize)]
@@ -1644,12 +1722,14 @@ pub enum ShamirRecoveryTopicArcCertificate {
 pub enum ShamirRecoveryTopicCertificate {
     ShamirRecoveryShare(ShamirRecoveryShareCertificate),
     ShamirRecoveryBrief(ShamirRecoveryBriefCertificate),
+    ShamirRecoveryDeletion(ShamirRecoveryDeletionCertificate),
 }
 
 #[derive(Debug)]
 pub enum UnsecureShamirRecoveryTopicCertificate {
     ShamirRecoveryShare(UnsecureShamirRecoveryShareCertificate),
     ShamirRecoveryBrief(UnsecureShamirRecoveryBriefCertificate),
+    ShamirRecoveryDeletion(UnsecureShamirRecoveryDeletionCertificate),
 }
 
 impl_base_load!(ShamirRecoveryTopicCertificate);
@@ -1662,6 +1742,7 @@ impl ShamirRecoveryTopicCertificate {
         match self {
             ShamirRecoveryTopicCertificate::ShamirRecoveryShare(c) => c.check_data_integrity(),
             ShamirRecoveryTopicCertificate::ShamirRecoveryBrief(c) => c.check_data_integrity(),
+            ShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(c) => c.check_data_integrity(),
         }
     }
 
@@ -1680,6 +1761,11 @@ impl ShamirRecoveryTopicCertificate {
                     UnsecureShamirRecoveryBriefCertificate { signed, unsecure },
                 )
             }
+            ShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(unsecure) => {
+                UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(
+                    UnsecureShamirRecoveryDeletionCertificate { signed, unsecure },
+                )
+            }
         })
     }
 }
@@ -1693,6 +1779,9 @@ impl UnsecureShamirRecoveryTopicCertificate {
             UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
                 unsecure.timestamp()
             }
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(unsecure) => {
+                unsecure.timestamp()
+            }
         }
     }
 
@@ -1702,6 +1791,9 @@ impl UnsecureShamirRecoveryTopicCertificate {
                 unsecure.hint()
             }
             UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryBrief(unsecure) => {
+                unsecure.hint()
+            }
+            UnsecureShamirRecoveryTopicCertificate::ShamirRecoveryDeletion(unsecure) => {
                 unsecure.hint()
             }
         }

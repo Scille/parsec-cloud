@@ -90,6 +90,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                         AnyArcCertificate::RealmKeyRotation(c) => c.timestamp,
                         AnyArcCertificate::ShamirRecoveryBrief(c) => c.timestamp,
                         AnyArcCertificate::ShamirRecoveryShare(c) => c.timestamp,
+                        AnyArcCertificate::ShamirRecoveryDeletion(c) => c.timestamp,
                         AnyArcCertificate::SequesterAuthority(c) => c.timestamp,
                         AnyArcCertificate::SequesterService(c) => c.timestamp,
                         AnyArcCertificate::SequesterRevokedService(c) => c.timestamp,
@@ -141,6 +142,10 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                             .await
                             .unwrap(),
                         AnyArcCertificate::ShamirRecoveryShare(certif) => update
+                            .add_certificate(certif.deref(), encrypted)
+                            .await
+                            .unwrap(),
+                        AnyArcCertificate::ShamirRecoveryDeletion(certif) => update
                             .add_certificate(certif.deref(), encrypted)
                             .await
                             .unwrap(),

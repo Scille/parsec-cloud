@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use libparsec_tests_lite::prelude::*;
 
@@ -1850,6 +1850,99 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
             data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
             invariant: "threshold <= total_shares"
         })
+    );
+}
+
+#[rstest]
+fn serde_shamir_recovery_deletion_certificate(alice: &Device) {
+    // Generated from Parsec 3.1.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_deletion_certificate'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   setup_to_delete_timestamp: ext(1, 1546300800000000) i.e. 2019-01-01T01:00:00Z
+    //   setup_to_delete_user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   share_recipients: [ ext(2, 0x808c0010000000000000000000000000), ext(2, 0x3a11031c001000000000000000000000), ]
+    let data = Bytes::from_static(
+        hex!(
+            "a22cecc978cde80c00b96a723b1078b71f00c9b5170fb33fa08a9e534ed71ae80cef7f"
+            "253607760360c33a2c7a8190ec77fc6800e848d8c60d8173d4b0656a070028b52ffd00"
+            "58f50400d2c8212a8055e973e602acfb2188058083150231c796c1f9892ccfde9c1805"
+            "4a7b5b06cc6392e8941bf3c1cbdbcad1c09060535527113629b2ab6fdc776e6737498d"
+            "2a9bd236beb436ca08402c20edb05bb4fa92a38a814ea14250812752aee5a9ed8c422a"
+            "1059200036194e6d39ccdbbd6d6cf35fabe0f61d97dac57fc0776ebc949be4e1f378f5"
+            "4512070037fc6078638c419600d9470fce09c33501a0"
+        )
+        .as_ref(),
+    );
+
+    let expected = ShamirRecoveryDeletionCertificate {
+        author: alice.device_id,
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
+        setup_to_delete_user_id: alice.user_id,
+        setup_to_delete_timestamp: "2019-01-01T00:00:00Z".parse().unwrap(),
+        share_recipients: HashSet::from_iter(["bob".parse().unwrap(), "mallory".parse().unwrap()]),
+    };
+    println!(
+        "***expected: {:?}",
+        expected.dump_and_sign(&alice.signing_key)
+    );
+    let unsecure_certif = ShamirRecoveryDeletionCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(unsecure_certif.author(), alice.device_id);
+    p_assert_eq!(
+        unsecure_certif
+            .verify_signature(&alice.verify_key())
+            .unwrap(),
+        (expected.clone(), data.clone())
+    );
+
+    let unsecure_certif = ShamirRecoveryDeletionCertificate::unsecure_load(data.clone()).unwrap();
+    p_assert_eq!(
+        unsecure_certif.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage),
+        expected
+    );
+
+    let certif = ShamirRecoveryDeletionCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        alice.device_id,
+    )
+    .unwrap();
+    p_assert_eq!(certif, expected);
+
+    // Test bad author
+
+    let err = ShamirRecoveryDeletionCertificate::verify_and_load(
+        &data,
+        &alice.verify_key(),
+        DeviceID::default(),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedAuthor { .. });
+
+    // Also test serialization round trip
+    let data2 = expected.dump_and_sign(&alice.signing_key);
+    // Note we cannot just compare with `data` due to signature and keys order
+    let certif2 = ShamirRecoveryDeletionCertificate::verify_and_load(
+        &data2,
+        &alice.verify_key(),
+        alice.device_id,
+    )
+    .unwrap();
+    p_assert_eq!(certif2, expected);
+
+    // Test invalid data
+    p_assert_matches!(
+        ShamirRecoveryDeletionCertificate::unsecure_load(b"dummy".to_vec().into()),
+        Err(DataError::Signature)
+    );
+    p_assert_matches!(
+        ShamirRecoveryDeletionCertificate::verify_and_load(
+            b"dummy",
+            &alice.verify_key(),
+            alice.device_id,
+        ),
+        Err(DataError::Signature)
     );
 }
 

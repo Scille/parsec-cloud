@@ -506,6 +506,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::RealmArchiving(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
                 | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_)
                 | AnyArcCertificate::SequesterAuthority(_)
                 | AnyArcCertificate::SequesterService(_)
                 | AnyArcCertificate::SequesterRevokedService(_) => None,
@@ -557,6 +558,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::RevokedUser(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
                 | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_)
                 | AnyArcCertificate::SequesterAuthority(_)
                 | AnyArcCertificate::SequesterService(_)
                 | AnyArcCertificate::SequesterRevokedService(_) => (),
@@ -581,6 +583,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::RealmArchiving(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
                 | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_)
                 | AnyArcCertificate::RealmKeyRotation(_) => None,
             })
             .collect()
@@ -591,7 +594,8 @@ impl TestbedEnv {
             .certificates()
             .filter_map(|event| match event.certificate {
                 AnyArcCertificate::ShamirRecoveryBrief(_)
-                | AnyArcCertificate::ShamirRecoveryShare(_) => Some(event.signed.clone()),
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_) => Some(event.signed.clone()),
                 AnyArcCertificate::User(_)
                 | AnyArcCertificate::Device(_)
                 | AnyArcCertificate::UserUpdate(_)
@@ -685,6 +689,7 @@ impl TestbedEnv {
                     | AnyArcCertificate::RevokedUser(_)
                     | AnyArcCertificate::ShamirRecoveryBrief(_)
                     | AnyArcCertificate::ShamirRecoveryShare(_)
+                    | AnyArcCertificate::ShamirRecoveryDeletion(_)
                     | AnyArcCertificate::SequesterAuthority(_)
                     | AnyArcCertificate::SequesterService(_)
                     | AnyArcCertificate::SequesterRevokedService(_) => return None,
@@ -713,6 +718,7 @@ impl TestbedEnv {
                 | AnyArcCertificate::RealmArchiving(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
                 | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_)
                 | AnyArcCertificate::SequesterAuthority(_)
                 | AnyArcCertificate::SequesterService(_)
                 | AnyArcCertificate::SequesterRevokedService(_) => None,
@@ -737,7 +743,8 @@ impl TestbedEnv {
                 | AnyArcCertificate::RealmKeyRotation(_)
                 | AnyArcCertificate::RealmArchiving(_)
                 | AnyArcCertificate::ShamirRecoveryBrief(_)
-                | AnyArcCertificate::ShamirRecoveryShare(_) => None,
+                | AnyArcCertificate::ShamirRecoveryShare(_)
+                | AnyArcCertificate::ShamirRecoveryDeletion(_) => None,
             })
             .unwrap()
     }
@@ -746,12 +753,31 @@ impl TestbedEnv {
         self.template
             .certificates_rev()
             .find_map(|event| {
-                let (candidate, timestamp) = match &event.certificate {
+                match &event.certificate {
                     AnyArcCertificate::ShamirRecoveryBrief(certif) => {
-                        (certif.user_id, certif.timestamp)
+                        if certif.user_id == user_id
+                            || certif.per_recipient_shares.contains_key(&user_id)
+                        {
+                            Some(certif.timestamp)
+                        } else {
+                            None
+                        }
                     }
                     AnyArcCertificate::ShamirRecoveryShare(certif) => {
-                        (certif.user_id, certif.timestamp)
+                        if certif.user_id == user_id {
+                            Some(certif.timestamp)
+                        } else {
+                            None
+                        }
+                    }
+                    AnyArcCertificate::ShamirRecoveryDeletion(certif) => {
+                        if certif.setup_to_delete_user_id == user_id
+                            || certif.share_recipients.contains(&user_id)
+                        {
+                            Some(certif.timestamp)
+                        } else {
+                            None
+                        }
                     }
 
                     // Exhaustive match so that we detect when new certificates are added
@@ -765,12 +791,7 @@ impl TestbedEnv {
                     | AnyArcCertificate::RealmArchiving(_)
                     | AnyArcCertificate::SequesterAuthority(_)
                     | AnyArcCertificate::SequesterService(_)
-                    | AnyArcCertificate::SequesterRevokedService(_) => return None,
-                };
-                if candidate == user_id {
-                    Some(timestamp)
-                } else {
-                    None
+                    | AnyArcCertificate::SequesterRevokedService(_) => None,
                 }
             })
             .unwrap()

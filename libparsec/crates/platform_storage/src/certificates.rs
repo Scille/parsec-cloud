@@ -194,7 +194,11 @@ impl_storable_certificate_topic!(
 
 impl_storable_certificate_topic!(
     ShamirRecoveryTopicArcCertificate,
-    [ShamirRecoveryBrief, ShamirRecoveryShare]
+    [
+        ShamirRecoveryBrief,
+        ShamirRecoveryShare,
+        ShamirRecoveryDeletion
+    ]
 );
 
 impl StorableCertificate for UserCertificate {
@@ -347,6 +351,18 @@ impl StorableCertificate for ShamirRecoveryShareCertificate {
     fn filters(&self) -> (FilterKind, FilterKind) {
         let filter1 = FilterKind::Bytes(self.user_id.as_bytes());
         let filter2 = FilterKind::Bytes(self.recipient.as_bytes());
+        (filter1, filter2)
+    }
+    fn timestamp(&self) -> DateTime {
+        self.timestamp
+    }
+}
+
+impl StorableCertificate for ShamirRecoveryDeletionCertificate {
+    const TYPE: &'static str = "shamir_recovery_deletion_certificate";
+    fn filters(&self) -> (FilterKind, FilterKind) {
+        let filter1 = FilterKind::Bytes(self.setup_to_delete_user_id.as_bytes());
+        let filter2 = FilterKind::Null;
         (filter1, filter2)
     }
     fn timestamp(&self) -> DateTime {
@@ -550,6 +566,13 @@ impl<'a> GetCertificateQuery<'a> {
         }
     }
 
+    /// Get all removed shamir recovery certificates we know about
+    pub fn shamir_recovery_deletion_certificates() -> Self {
+        Self::NoFilter {
+            certificate_type: <ShamirRecoveryDeletionCertificate as StorableCertificate>::TYPE,
+        }
+    }
+
     /// Get all shamir recovery brief certificates for a given user
     pub fn user_shamir_recovery_brief_certificates(user_id: &'a UserID) -> Self {
         Self::Filter1 {
@@ -567,6 +590,14 @@ impl<'a> GetCertificateQuery<'a> {
             certificate_type: <ShamirRecoveryShareCertificate as StorableCertificate>::TYPE,
             filter1: FilterKind::Bytes(user_id.as_bytes()),
             filter2: FilterKind::Bytes(recipient.as_bytes()),
+        }
+    }
+
+    /// Get all removed shamir recovery certificates for a given user
+    pub fn user_shamir_recovery_deletion_certificates(user_id: &'a UserID) -> Self {
+        Self::Filter1 {
+            certificate_type: <ShamirRecoveryDeletionCertificate as StorableCertificate>::TYPE,
+            filter1: FilterKind::Bytes(user_id.as_bytes()),
         }
     }
 

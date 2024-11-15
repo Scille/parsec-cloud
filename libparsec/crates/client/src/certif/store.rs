@@ -1251,12 +1251,11 @@ macro_rules! impl_read_methods {
             Ok(Some(Arc::new(certif)))
         }
 
-
         #[allow(unused)]
         pub async fn get_last_shamir_recovery_brief_certificate_for_author(
             &mut self,
-            author: &UserID,
             up_to: UpTo,
+            author: &UserID,
         ) -> anyhow::Result<Option<Arc<ShamirRecoveryBriefCertificate>>> {
             let query = GetCertificateQuery::user_shamir_recovery_brief_certificates(author);
             // `get_certificate_encrypted` returns the last certificate if multiple are available
@@ -1285,7 +1284,6 @@ macro_rules! impl_read_methods {
 
             Ok(Some(Arc::new(certif)))
         }
-
 
         #[allow(unused)]
         pub async fn get_last_shamir_recovery_share_certificate_for_recipient(
@@ -1316,6 +1314,40 @@ macro_rules! impl_read_methods {
                 .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
 
             let unsecure = ShamirRecoveryShareCertificate::unsecure_load(signed.into())
+                .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
+
+            let certif =
+                unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
+
+            Ok(Some(Arc::new(certif)))
+        }
+
+        #[allow(unused)]
+        pub async fn get_last_shamir_recovery_deletion_certificate_for_author(
+            &mut self,
+            up_to: UpTo,
+            author: &UserID,
+        ) -> anyhow::Result<Option<Arc<ShamirRecoveryDeletionCertificate>>> {
+            let query = GetCertificateQuery::user_shamir_recovery_deletion_certificates(author);
+            // `get_certificate_encrypted` returns the last certificate if multiple are available
+            let outcome = self.storage.get_certificate_encrypted(query, up_to).await;
+            let encrypted = match outcome {
+                Ok((_, encrypted)) => encrypted,
+                Err(
+                    GetCertificateError::NonExisting
+                    | GetCertificateError::ExistButTooRecent { .. },
+                ) => return Ok(None),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            let signed = self
+                .store
+                .device
+                .local_symkey
+                .decrypt(&encrypted)
+                .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
+
+            let unsecure = ShamirRecoveryDeletionCertificate::unsecure_load(signed.into())
                 .map_err(|e| anyhow::anyhow!("Local database contains invalid data: {}", e))?;
 
             let certif =
@@ -1558,6 +1590,10 @@ impl<'a> CertificatesStoreWriteGuard<'a> {
                 certif.timestamp
             }
             ShamirRecoveryTopicArcCertificate::ShamirRecoveryShare(certif) => {
+                self.storage.add_certificate(&*certif, encrypted).await?;
+                certif.timestamp
+            }
+            ShamirRecoveryTopicArcCertificate::ShamirRecoveryDeletion(certif) => {
                 self.storage.add_certificate(&*certif, encrypted).await?;
                 certif.timestamp
             }

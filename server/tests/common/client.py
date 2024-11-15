@@ -526,6 +526,7 @@ def get_last_realm_certificate_timestamp(
                 | tb.TestbedEventUpdateUserProfile()
                 | tb.TestbedEventRevokeUser()
                 | tb.TestbedEventNewShamirRecovery()
+                | tb.TestbedEventDeleteShamirRecovery()
                 | tb.TestbedEventCreateOrUpdateOpaqueVlob()
                 | tb.TestbedEventCreateOpaqueBlock()
                 | tb.TestbedEventFreezeUser()

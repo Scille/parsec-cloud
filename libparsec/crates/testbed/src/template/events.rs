@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::num::NonZeroU64;
 use std::sync::{Arc, Mutex};
 
@@ -156,6 +156,7 @@ pub enum TestbedEvent {
     RotateKeyRealm(TestbedEventRotateKeyRealm),
     ArchiveRealm(TestbedEventArchiveRealm),
     NewShamirRecovery(TestbedEventNewShamirRecovery),
+    DeleteShamirRecovery(TestbedEventDeleteShamirRecovery),
 
     // 2) Client/server interaction events not producing certificates
     NewDeviceInvitation(TestbedEventNewDeviceInvitation),
@@ -205,6 +206,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::RotateKeyRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ArchiveRealm(x) => x.crc_hash(hasher),
             TestbedEvent::NewShamirRecovery(x) => x.crc_hash(hasher),
+            TestbedEvent::DeleteShamirRecovery(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateUserManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFileManifestVlob(x) => x.crc_hash(hasher),
             TestbedEvent::CreateOrUpdateFolderManifestVlob(x) => x.crc_hash(hasher),
@@ -232,7 +234,7 @@ impl CrcHash for TestbedEvent {
     }
 }
 
-pub enum TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M>
+pub enum TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M, N>
 where
     A: Iterator<Item = TestbedTemplateEventCertificate>,
     B: Iterator<Item = TestbedTemplateEventCertificate>,
@@ -247,6 +249,7 @@ where
     K: Iterator<Item = TestbedTemplateEventCertificate>,
     L: Iterator<Item = TestbedTemplateEventCertificate>,
     M: Iterator<Item = TestbedTemplateEventCertificate>,
+    N: Iterator<Item = TestbedTemplateEventCertificate>,
 {
     BootstrapOrganization(A),
     NewSequesterService(B),
@@ -261,11 +264,12 @@ where
     RotateKeyRealm(K),
     ArchiveRealm(L),
     NewShamirRecovery(M),
+    DeleteShamirRecovery(N),
     Other,
 }
 
-impl<A, B, C, D, E, F, G, H, I, J, K, L, M> Iterator
-    for TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M>
+impl<A, B, C, D, E, F, G, H, I, J, K, L, M, N> Iterator
+    for TestbedEventCertificatesIterator<A, B, C, D, E, F, G, H, I, J, K, L, M, N>
 where
     A: Iterator<Item = TestbedTemplateEventCertificate>,
     B: Iterator<Item = TestbedTemplateEventCertificate>,
@@ -280,6 +284,7 @@ where
     K: Iterator<Item = TestbedTemplateEventCertificate>,
     L: Iterator<Item = TestbedTemplateEventCertificate>,
     M: Iterator<Item = TestbedTemplateEventCertificate>,
+    N: Iterator<Item = TestbedTemplateEventCertificate>,
 {
     type Item = TestbedTemplateEventCertificate;
 
@@ -298,6 +303,7 @@ where
             Self::RenameRealm(iter) => iter.next(),
             Self::ArchiveRealm(iter) => iter.next(),
             Self::NewShamirRecovery(iter) => iter.next(),
+            Self::DeleteShamirRecovery(iter) => iter.next(),
             Self::Other => None,
         }
     }
@@ -361,6 +367,10 @@ impl TestbedEvent {
                 let iter = x.certificates(template);
                 TestbedEventCertificatesIterator::NewShamirRecovery(iter)
             }
+            TestbedEvent::DeleteShamirRecovery(x) => {
+                let iter = x.certificates(template);
+                TestbedEventCertificatesIterator::DeleteShamirRecovery(iter)
+            }
 
             TestbedEvent::NewDeviceInvitation(_)
             | TestbedEvent::NewUserInvitation(_)
@@ -405,6 +415,7 @@ impl TestbedEvent {
             | TestbedEvent::RotateKeyRealm(_)
             | TestbedEvent::ArchiveRealm(_)
             | TestbedEvent::NewShamirRecovery(_)
+            | TestbedEvent::DeleteShamirRecovery(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
@@ -1892,8 +1903,11 @@ pub struct TestbedEventNewShamirRecoveryCache {
 pub struct TestbedEventNewShamirRecovery {
     pub timestamp: DateTime,
     pub author: DeviceID,
+    pub user_id: UserID,
     pub threshold: NonZeroU64,
-    pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    // Use Vec to retain order, this is important so that the share certificates
+    // are provided in the same order.
+    pub per_recipient_shares: Vec<(UserID, NonZeroU64)>,
     pub recovery_device: DeviceID,
     pub data_key: SecretKey,
     pub reveal_token: InvitationToken,
@@ -1907,7 +1921,7 @@ impl_event_debug!(
         timestamp: DateTime,
         author: DeviceID,
         threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        per_recipient_shares: Vec<UserID, NonZeroU64>,
         recovery_device: DeviceID,
         data_key: SecretKey,
         reveal_token: InvitationToken,
@@ -1919,7 +1933,7 @@ impl_event_crc_hash!(
         timestamp: DateTime,
         author: DeviceID,
         threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
         recovery_device: DeviceID,
         data_key: SecretKey,
         reveal_token: InvitationToken,
@@ -1931,7 +1945,7 @@ impl TestbedEventNewShamirRecovery {
         builder: &mut TestbedTemplateBuilder,
         user: UserID,
         threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
         recovery_device: DeviceID,
     ) -> Self {
         // 1) Consistency checks
@@ -1968,6 +1982,7 @@ impl TestbedEventNewShamirRecovery {
         Self {
             timestamp: builder.counters.next_timestamp(),
             author,
+            user_id: user,
             threshold,
             per_recipient_shares,
             recovery_device,
@@ -1994,7 +2009,7 @@ impl TestbedEventNewShamirRecovery {
             timestamp: self.timestamp,
             user_id: author_user_id,
             threshold: self.threshold,
-            per_recipient_shares: self.per_recipient_shares.clone(),
+            per_recipient_shares: HashMap::from_iter(self.per_recipient_shares.iter().cloned()),
         };
         let signed: Bytes = certif.dump_and_sign(author_signkey).into();
 
@@ -2007,7 +2022,7 @@ impl TestbedEventNewShamirRecovery {
 
         // Share certificates
 
-        for recipient in self.per_recipient_shares.keys() {
+        for (recipient, _) in &self.per_recipient_shares {
             // TODO: Put a real share here once shamir recovery is implemented
             let ciphered_share = b"".to_vec();
 
@@ -2015,7 +2030,7 @@ impl TestbedEventNewShamirRecovery {
                 author: self.author,
                 timestamp: self.timestamp,
                 user_id: author_user_id,
-                recipient: recipient.to_owned(),
+                recipient: *recipient,
                 ciphered_share,
             };
             let signed: Bytes = certif.dump_and_sign(author_signkey).into();
@@ -2165,6 +2180,99 @@ impl TestbedEventNewShamirRecovery {
 
     pub fn ciphered_data(&self, template: &TestbedTemplate) -> Bytes {
         self.cache(template, |cache| cache.ciphered_data.to_owned())
+    }
+}
+
+/*
+ * TestbedEventDeleteShamirRecovery
+ */
+
+single_certificate_event!(
+    TestbedEventDeleteShamirRecovery,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        setup_to_delete_timestamp: DateTime,
+        setup_to_delete_user_id: UserID,
+        share_recipients: HashSet<UserID>,
+    ],
+    |e: &TestbedEventDeleteShamirRecovery, t: &TestbedTemplate| {
+        let author_signkey = t.device_signing_key(e.author);
+        let certif = ShamirRecoveryDeletionCertificate {
+            author: e.author,
+            timestamp: e.timestamp,
+            setup_to_delete_timestamp: e.setup_to_delete_timestamp,
+            setup_to_delete_user_id: e.setup_to_delete_user_id,
+            share_recipients: e.share_recipients.clone(),
+        };
+        let signed: Bytes = certif.dump_and_sign(author_signkey).into();
+
+        TestbedTemplateEventCertificate {
+            certificate: AnyArcCertificate::ShamirRecoveryDeletion(Arc::new(certif)),
+            signed_redacted: signed.clone(),
+            signed,
+        }
+    },
+    no_hash
+);
+
+impl TestbedEventDeleteShamirRecovery {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, user: UserID) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_user_exists_and_not_revoked(&builder.events, user);
+        }
+
+        let author = match utils::assert_user_exists_and_not_revoked(&builder.events, user) {
+            TestbedEvent::BootstrapOrganization(x) => x.first_user_first_device_id,
+            TestbedEvent::NewUser(x) => x.first_device_id,
+            _ => unreachable!(),
+        };
+
+        let (setup_timestamp, setup_recipients) = builder
+            .events
+            .iter()
+            .rev()
+            .find_map(|e| match e {
+                TestbedEvent::NewShamirRecovery(x) if x.user_id == user => Some((
+                    x.timestamp,
+                    x.per_recipient_shares
+                        .iter()
+                        .map(|(u, _)| *u)
+                        .collect::<HashSet<_>>(),
+                )),
+                TestbedEvent::DeleteShamirRecovery(x)
+                    if x.setup_to_delete_user_id == user && builder.check_consistency =>
+                {
+                    panic!("User `{}`'s last shamir recovery is already deleted", user);
+                }
+                _ => None,
+            })
+            .unwrap_or_else(|| panic!("User `{}` has no shamir recovery", user));
+
+        // 2) Actual creation
+
+        Self {
+            timestamp: builder.counters.next_timestamp(),
+            author,
+            setup_to_delete_timestamp: setup_timestamp,
+            setup_to_delete_user_id: user,
+            share_recipients: setup_recipients,
+            cache: Arc::default(),
+        }
+    }
+}
+
+impl CrcHash for TestbedEventDeleteShamirRecovery {
+    fn crc_hash(&self, state: &mut crc32fast::Hasher) {
+        b"TestbedEventDeleteShamirRecovery".crc_hash(state);
+        self.timestamp.crc_hash(state);
+        self.author.crc_hash(state);
+        self.setup_to_delete_timestamp.crc_hash(state);
+        self.setup_to_delete_user_id.crc_hash(state);
+        self.share_recipients.crc_hash(state);
     }
 }
 

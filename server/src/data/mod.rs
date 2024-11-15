@@ -32,6 +32,7 @@ pub(crate) fn add_mod(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<SequesterRevokedServiceCertificate>()?;
     m.add_class::<ShamirRecoveryBriefCertificate>()?;
     m.add_class::<ShamirRecoveryShareCertificate>()?;
+    m.add_class::<ShamirRecoveryDeletionCertificate>()?;
 
     // Manifest
     m.add_class::<EntryName>()?;
