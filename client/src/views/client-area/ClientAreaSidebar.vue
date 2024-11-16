@@ -433,7 +433,11 @@ async function createOrganization(): Promise<void> {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    // multiple lines for cross-browser compatibility
+    height: 100%;
     height: -webkit-fill-available;
+    height: -moz-available;
+    height: stretch;
   }
 }
 

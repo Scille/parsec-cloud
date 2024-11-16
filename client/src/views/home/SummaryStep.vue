@@ -152,7 +152,11 @@ defineProps<{
   flex: 1;
   position: relative;
   gap: 1rem;
+  // multiple lines for cross-browser compatibility
+  width: 100%;
   width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
 
   &::after {
     content: '';

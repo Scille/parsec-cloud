@@ -23,7 +23,11 @@ ion-title {
   overflow-y: auto;
   padding: 0 2rem;
   margin-bottom: 3rem;
+  // multiple lines for cross-browser compatibility
+  height: 100%;
   height: -webkit-fill-available;
+  height: -moz-available;
+  height: stretch;
 
   .list,
   .users-container-grid,

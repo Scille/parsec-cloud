@@ -427,7 +427,11 @@ async function onRestoreClicked(): Promise<void> {
 }
 
 .folder-container {
+  // multiple lines for cross-browser compatibility
+  height: 100%;
   height: -webkit-fill-available;
+  height: -moz-available;
+  height: stretch;
   margin: 1.5rem 2.5rem;
   background: var(--parsec-color-light-secondary-white);
   border-radius: var(--parsec-radius-12);
