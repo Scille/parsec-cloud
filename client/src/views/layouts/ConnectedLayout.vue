@@ -3,9 +3,7 @@
 <template>
   <!-- Don't load children components before we inject everything -->
   <ion-page v-if="initialized">
-    <ion-content>
-      <ion-router-outlet />
-    </ion-content>
+    <ion-router-outlet />
   </ion-page>
 </template>
 
@@ -16,7 +14,7 @@ import { EventData, EventDistributor, EventDistributorKey, Events } from '@/serv
 import { FileOperationManagerKey } from '@/services/fileOperationManager';
 import { Information, InformationLevel, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { InjectionProvider, InjectionProviderKey, Injections } from '@/services/injectionProvider';
-import { IonContent, IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
+import { IonPage, IonRouterOutlet, modalController } from '@ionic/vue';
 import { inject, onMounted, onUnmounted, provide, Ref, ref } from 'vue';
 import TOSModal from '@/views/organizations/TOSModal.vue';
 import useUploadMenu from '@/services/fileUploadMenu';
