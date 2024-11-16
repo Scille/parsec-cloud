@@ -371,14 +371,26 @@ ion-split-pane {
 
 // -------- main content ------------
 .main-content {
+  // multiple lines for cross-browser compatibility
+  width: 100%;
   width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
   height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 .main-page {
+  // multiple lines for cross-browser compatibility
+  height: 100%;
   height: -webkit-fill-available;
+  height: -moz-available;
+  height: stretch;
+  // multiple lines for cross-browser compatibility
+  width: 100%;
   width: -webkit-fill-available;
+  width: -moz-available;
+  width: stretch;
 }
 </style>

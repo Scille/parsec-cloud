@@ -280,9 +280,13 @@ defineEmits<{
   }
 
   &__button {
+    // multiple lines for cross-browser compatibility
+    height: 100%;
+    height: -webkit-fill-available;
+    height: -moz-available;
+    height: stretch;
     color: var(--parsec-color-light-secondary-text);
     align-self: center;
-    height: --webkit-fill-available;
     margin-left: auto;
   }
 }
