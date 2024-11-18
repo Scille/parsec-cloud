@@ -108,7 +108,7 @@ jobs:
         working-directory: client
 
       # Install syft
-      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
+      - uses: taiki-e/install-action@5d427d86f088a6cedcddb92b3ad038d30721b52f # pin v2.44.71
         with:
           tool: syft@0.84.0, wasm-pack@${{ env.wasm-pack-version }}
 
@@ -162,7 +162,7 @@ jobs:
 
       # In case this step timeout, check the status of snapcraft.io at https://status.snapcraft.io/
       - name: Install snapcraft
-        uses: samuelmeuli/action-snapcraft@d33c176a9b784876d966f80fb1b461808edc0641 # pin v2.1.1
+        uses: samuelmeuli/action-snapcraft@fceeb3c308e76f3487e72ef608618de625fb7fe8 # pin v3.0.1
         timeout-minutes: 15
 
       - name: Setup LXD
@@ -205,7 +205,7 @@ jobs:
           mv -v parsec_*_*.snap Parsec_${{ steps.version.outputs.full }}_linux_$ARCH.snap
 
       # Install syft
-      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
+      - uses: taiki-e/install-action@5d427d86f088a6cedcddb92b3ad038d30721b52f # pin v2.44.71
         with:
           tool: syft@0.84.0
 
@@ -395,7 +395,7 @@ jobs:
         timeout-minutes: 1
 
       # Install syft
-      - uses: taiki-e/install-action@c6dc131d2c4291552cafb840290190a53b2cd937 # pin v2.44.67
+      - uses: taiki-e/install-action@5d427d86f088a6cedcddb92b3ad038d30721b52f # pin v2.44.71
         with:
           tool: syft@0.84.0
 
