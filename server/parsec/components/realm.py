@@ -351,59 +351,87 @@ type RealmExportBatchOffsetMarker = int
 @dataclass(slots=True)
 class RealmExportDoBaseInfo:
     root_verify_key: VerifyKey
-    common_certificates: list[bytes]
-    realm_certificates: list[bytes]
-    vlob_upper_marker: RealmExportBatchOffsetMarker
-    vlobs_total: int
-    block_upper_marker: RealmExportBatchOffsetMarker
-    blocks_total: int
+
+    # Offset marker is basically the internal primary key of the vlob in the PostgreSQL
+    # database:
+    # - The primary key is a serial integer that is strictly growing (i.e. the older
+    #   the row the lower the ID).
+    # - The table contains multiple realms, so the IDs are not growing continuously (also
+    #   the serial type in PostgreSQL give no guarantee on avoiding hole when e.g. a
+    #   transaction is rolled back).
+    #
+    # So the idea here is to use this primary key from PostgreSQL as primary in
+    # our SQLite export. This way we end up with the rows in the correct historical
+    # order, and also easily know if the export is complete (i.e. if the upper
+    # bound is part of the export).
+    vlob_offset_marker_upper_bound: int
+    block_offset_marker_upper_bound: int
+
+    vlob_items: int
+    blocks_items: int
 
 
-class RealmExportDoBaseInfoBadOutcome(BadOutcome):
+class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
 
 
 @dataclass(slots=True)
 class RealmExportCertificates:
-    # List of (<DB primary key>, <realm_role_certificate>)
-    realm_role_certificates: list[tuple[int, bytes]]
-
-    # List of (<DB primary key>, <user_certificate>, <revoked_user_certificate>)
-    user_certificates: list[tuple[int, bytes, bytes | None]]
-
-    # List of (<DB primary key>, <user_update_certificate>)
-    user_update_certificates: list[tuple[int, bytes]]
-
-    # List of (<DB primary key>, <device_certificate>)
-    device_certificates: list[tuple[int, bytes]]
+    common_certificates: list[bytes]
+    sequester_certificates: list[bytes]
+    realm_certificates: list[bytes]
 
 
-class RealmExportDoCertificatesBadOutcome(BadOutcome):
+class RealmExportDoCertificatesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatchItem:
+    realm_vlob_update_index: int
+    vlob_id: VlobID
+    version: int
+    key_index: int
+    blob: bytes
+    size: int
+    author: DeviceID
+    timestamp: DateTime
 
 
 @dataclass(slots=True)
 class RealmExportVlobsBatch:
     batch_offset_marker: RealmExportBatchOffsetMarker
-    # List of (<DB primary key>, <vlob_id>, <version>, <blob>, <author's DB primary key>, <timestamp>)
-    vlobs: list[tuple[int, VlobID, int, bytes, int, DateTime]]
+    items: list[RealmExportVlobsBatchItem]
 
 
-class RealmExportDoVlobsBatchBadOutcome(BadOutcome):
+class RealmExportDoVlobsBatchBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
 
 
 @dataclass(slots=True)
-class RealmExportBlocksBatch:
+class RealmExportBlocksBatchItem:
+    id: int
+    block_id: BlockID
+    author: DeviceID
+    key_index: int
+    size: int
+
+
+@dataclass(slots=True)
+class RealmExportBlocksMetadataBatch:
     batch_offset_marker: RealmExportBatchOffsetMarker
-    # List of (<DB primary key>, <block_id>, <block>, <author's DB primary key>)
-    blocks: list[tuple[int, BlockID, bytes, int]]
+    items: list[RealmExportBlocksBatchItem]
 
 
-class RealmExportDoBlocksBatchBadOutcome(BadOutcome):
+class RealmExportDoBlocksBatchMetadatBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+class RealmExportDoBlocksDataBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
     REALM_NOT_FOUND = auto()
 
@@ -544,18 +572,31 @@ class BaseRealmComponent:
         raise NotImplementedError
 
     async def export_do_certificates(
-        self, organization_id: OrganizationID, realm_id: VlobID
+        self, organization_id: OrganizationID, realm_id: VlobID, snapshot_timestamp: DateTime
     ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
         raise NotImplementedError
 
     async def export_do_vlobs_batch(
-        self, batch_offset_marker: RealmExportBatchOffsetMarker, batch_size: int = 1000
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
     ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
         raise NotImplementedError
 
-    async def export_do_blocks_batch(
-        self, batch_offset_marker: RealmExportBatchOffsetMarker, batch_size: int = 1000
-    ) -> RealmExportBlocksBatch | RealmExportDoBlocksBatchBadOutcome:
+    async def export_do_blocks_metadata_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int = 1000,
+    ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadatBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_blocks_data(
+        self, organization_id: OrganizationID, realm_id: VlobID, block_id: BlockID
+    ) -> bytes | RealmExportDoBlocksDataBadOutcome:
         raise NotImplementedError
 
     #
