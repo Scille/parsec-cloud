@@ -34,6 +34,10 @@ from parsec.components.realm import (
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmDumpRealmsGrantedRolesBadOutcome,
+    RealmExportCertificates,
+    RealmExportDoBaseInfo,
+    RealmExportDoBaseInfoBadOutcome,
+    RealmExportDoCertificatesBadOutcome,
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGetStatsAsUserBadOutcome,
@@ -817,3 +821,122 @@ class MemoryRealmComponent(BaseRealmComponent):
                 )
 
         return granted_roles
+
+    @override
+    async def export_do_base_info(
+        self, organization_id: OrganizationID, realm_id: VlobID
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if not org.is_bootstrapped:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        root_verify_key = org.root_verify_key
+        assert root_verify_key is not None
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+
+        return RealmExportDoBaseInfo(
+            root_verify_key=root_verify_key,
+        )
+
+    @override
+    async def export_do_certificates(
+        self, organization_id: OrganizationID, realm_id: VlobID, snapshot_timestamp: DateTime
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
+
+        # 1) Common certificates (i.e. user/device/revoked/update)
+
+        # Certificates must be returned ordered by timestamp, however there is a trick
+        # for the common certificates: when a new user is created, the corresponding
+        # user and device certificates have the same timestamp, but we must return
+        # the user certificate first (given device references the user).
+        # So to achieve this we use a tuple (timestamp, priority, certificate) where
+        # only the first two field should be used for sorting (the priority field
+        # handling the case where user and device have the same timestamp).
+
+        common_certificates_unordered: list[tuple[DateTime, int, bytes]] = []
+        for user in org.users.values():
+            common_certificates_unordered.append((user.cooked.timestamp, 0, user.user_certificate))
+
+            if user.is_revoked:
+                assert user.cooked_revoked is not None
+                assert user.revoked_user_certificate is not None
+                common_certificates_unordered.append(
+                    (user.cooked_revoked.timestamp, 1, user.revoked_user_certificate)
+                )
+
+            for update in user.profile_updates:
+                common_certificates_unordered.append(
+                    (update.cooked.timestamp, 1, update.user_update_certificate)
+                )
+
+        for device in org.devices.values():
+            common_certificates_unordered.append(
+                (device.cooked.timestamp, 1, device.device_certificate)
+            )
+
+        common_certificates = [
+            c for ts, _, c in sorted(common_certificates_unordered) if ts <= snapshot_timestamp
+        ]
+
+        # 2) Sequester certificates
+
+        sequester_certificates: list[bytes] = []
+        if org.sequester_authority_certificate is not None:
+            assert org.cooked_sequester_authority is not None
+            assert org.sequester_services is not None
+
+            sequester_certificates_unordered: list[tuple[DateTime, bytes]] = []
+            sequester_certificates_unordered.append(
+                (org.cooked_sequester_authority.timestamp, org.sequester_authority_certificate)
+            )
+            sequester_certificates_unordered += [
+                (service.cooked.timestamp, service.sequester_service_certificate)
+                for service in org.sequester_services.values()
+            ]
+
+            sequester_certificates = [
+                c for ts, c in sorted(sequester_certificates_unordered) if ts <= snapshot_timestamp
+            ]
+
+        # 3) Realm certificates
+
+        # Collect all the certificates related to the realm
+        realm_certificates_unordered: list[tuple[DateTime, bytes]] = []
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_role_certificate) for role in realm.roles
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_key_rotation_certificate)
+            for role in realm.key_rotations
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_name_certificate) for role in realm.renames
+        ]
+        # TODO: support archiving here !
+
+        realm_certificates = [
+            c for ts, c in sorted(realm_certificates_unordered) if ts <= snapshot_timestamp
+        ]
+
+        return RealmExportCertificates(
+            common_certificates=common_certificates,
+            sequester_certificates=sequester_certificates,
+            realm_certificates=realm_certificates,
+        )
