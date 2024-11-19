@@ -1,29 +1,27 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div class="pages">
-    <ion-button
-      v-for="page in pages"
-      @click="switchToPage(page)"
-      :disabled="page === currentPage || loading"
-      :key="page"
-    >
-      {{ page }}
-    </ion-button>
-  </div>
-  <ms-spinner v-show="loading" />
-  <div
-    v-show="!loading"
-    class="spreadsheet-content"
-    v-html="htmlContent"
-  />
+  <file-viewer-wrapper>
+    <template #viewer>
+      <ms-spinner v-show="loading" />
+      <div
+        v-show="!loading"
+        class="spreadsheet-content"
+        v-html="htmlContent"
+      />
+    </template>
+    <template #controls>
+      <file-viewer-action-bar :actions="actions" />
+    </template>
+  </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
-import { IonButton } from '@ionic/vue';
-import { MsSpinner } from 'megashark-lib';
-import { onBeforeMount, onMounted, ref } from 'vue';
+import { MsSpinner, I18n, Translatable } from 'megashark-lib';
+import { onBeforeMount, onMounted, Ref, ref } from 'vue';
 import XLSX from 'xlsx';
+import { FileViewerActionBar } from '@/components/viewers';
+import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 
 const props = defineProps<{
@@ -36,11 +34,16 @@ const pages = ref<Array<string>>([]);
 const currentPage = ref('');
 const loading = ref(true);
 let worker: Worker | null = null;
+const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 
 onMounted(async () => {
   workbook = XLSX.read(props.contentInfo.data, { type: 'array' });
   pages.value = workbook.SheetNames;
   await switchToPage(workbook.SheetNames[0]);
+  for (const page of pages.value) {
+    console.log(page);
+    actions.value.push({ text: I18n.valueAsTranslatable(page), handler: () => switchToPage(page) });
+  }
 });
 
 onBeforeMount(async () => {
@@ -78,7 +81,7 @@ async function switchToPage(page: string): Promise<void> {
 <style scoped lang="scss">
 .spreadsheet-content {
   width: 100%;
-  height: 680px;
+  max-height: 100%;
   overflow: auto;
 
   :deep(table) {

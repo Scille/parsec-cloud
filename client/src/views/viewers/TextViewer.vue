@@ -42,6 +42,6 @@ function getLanguage(): string | undefined {
 <style scoped lang="scss">
 .text-container {
   width: 100%;
-  height: 680px;
+  height: 100%;
 }
 </style>

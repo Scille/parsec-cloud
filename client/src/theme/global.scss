@@ -135,23 +135,19 @@ ion-title {
 }
 
 // specific style for the file viewers
-.file-viewer {
-  &-bottombar {
-    .action-bar {
-      .ms-action-bar-button {
-        height: 3em;
-        width: 3em;
-        border-radius: 100%;
-        color: var(--parsec-color-light-primary-600);
-        opacity: 0.6;
-        scale: 1;
-        transition: all 0.2s ease-in-out;
+.file-viewer-action-bar {
+  .ms-action-bar-button {
+    height: 3em;
+    width: fit-content;
+    border-radius: 100%;
+    color: var(--parsec-color-light-primary-600);
+    opacity: 0.6;
+    scale: 1;
+    transition: all 0.2s ease-in-out;
 
-        &:hover {
-          scale: 1.1;
-          opacity: 1;
-        }
-      }
+    &:hover {
+      scale: 1.1;
+      opacity: 1;
     }
   }
 }

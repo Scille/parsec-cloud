@@ -1694,6 +1694,7 @@
         "date": "Preview date:"
     },
     "fileViewers": {
-        "openWithDefault": "Open with default application"
+        "openWithDefault": "Open with default application",
+        "openingFile": "Opening file..."
     }
 }

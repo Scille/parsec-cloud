@@ -1,47 +1,33 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <div
-    class="pdf-container"
-    v-if="pdf"
-  >
-    <div :disabled="loading">
-      <span
-        class="zoom"
-        @click="zoom(-0.2)"
+  <file-viewer-wrapper>
+    <template #viewer>
+      <div
+        class="pdf-container"
+        v-if="pdf"
       >
-        ZOOM-
-      </span>
-      <span
-        class="zoom"
-        @click="zoom(0.2)"
-      >
-        ZOOM+
-      </span>
-      <span
-        class="page"
-        v-for="i in pdf.numPages"
-        :key="i"
-        :class="{ 'page-disabled': i === currentPage }"
-        :disabled="i === currentPage"
-        @click="loadPage(i)"
-      >
-        {{ i }}
-      </span>
-    </div>
-    <ms-spinner v-show="loading" />
-    <canvas
-      v-show="!loading"
-      class="canvas"
-      ref="canvas"
-    />
-  </div>
+        <ms-spinner v-show="loading" />
+        <canvas
+          v-show="!loading"
+          class="canvas"
+          ref="canvas"
+        />
+      </div>
+    </template>
+    <template #controls>
+      <file-viewer-action-bar :actions="actions" />
+    </template>
+  </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
+import { add, remove, resize } from 'ionicons/icons';
 import { inject, onMounted, ref, Ref, shallowRef } from 'vue';
 import { FileContentInfo } from '@/views/viewers/utils';
-import { MsSpinner } from 'megashark-lib';
+import { FileViewerWrapper } from '@/views/viewers';
+import { FileViewerActionBar } from '@/components/viewers';
+import { I18n, MsSpinner, Translatable } from 'megashark-lib';
 import * as pdfjs from 'pdfjs-dist';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 
@@ -51,10 +37,12 @@ const props = defineProps<{
 
 const loading = ref(true);
 const canvas = ref();
-const scale = ref(1.0);
+const defaultScale = 1.0;
+const scale = ref(defaultScale);
 const currentPage = ref(1);
 const pdf: Ref<pdfjs.PDFDocumentProxy | null> = shallowRef(null);
 const informationManager: InformationManager = inject(InformationManagerKey)!;
+const actions: Ref<Array<{ icon?: string; text?: Translatable; handler: () => void }>> = ref([]);
 
 onMounted(async () => {
   loading.value = true;
@@ -62,6 +50,14 @@ onMounted(async () => {
   try {
     pdf.value = await pdfjs.getDocument(props.contentInfo.data).promise;
     await loadPage(1);
+    actions.value = [
+      { icon: remove, handler: zoomOut },
+      { icon: resize, handler: resetZoom },
+      { icon: add, handler: zoomIn },
+    ];
+    for (let i = 1; i <= pdf.value.numPages; i++) {
+      actions.value.push({ text: I18n.valueAsTranslatable(`Page ${i.toString()}`), handler: () => loadPage(i) });
+    }
   } catch (error: any) {
     window.electronAPI.log('error', `Failed to parse PDF: ${error}`);
     informationManager.present(
@@ -78,6 +74,19 @@ onMounted(async () => {
 
 async function zoom(factor: number): Promise<void> {
   scale.value += factor;
+  await loadPage(currentPage.value);
+}
+
+async function zoomIn(): Promise<void> {
+  await zoom(0.2);
+}
+
+async function zoomOut(): Promise<void> {
+  await zoom(-0.2);
+}
+
+async function resetZoom(): Promise<void> {
+  scale.value = defaultScale;
   await loadPage(currentPage.value);
 }
 
@@ -124,24 +133,12 @@ async function loadPage(pageIndex: number): Promise<void> {
 <style scoped lang="scss">
 .pdf-container {
   width: 100%;
-  height: 600px;
-}
+  max-height: 100%;
+  display: flex;
+  justify-content: center;
 
-.page {
-  padding-right: 1em;
-  cursor: pointer;
-  user-select: none;
-  font-weight: bold;
-
-  &-disabled {
-    color: grey;
-    font-weight: normal;
+  & * {
+    transition: all 0.3s ease-in-out;
   }
-}
-
-.zoom {
-  cursor: pointer;
-  user-select: none;
-  font-weight: bold;
 }
 </style>
