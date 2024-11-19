@@ -361,7 +361,7 @@ async function onEntryClicked(entry: WorkspaceHistoryEntryModel): Promise<void> 
       return;
     }
 
-    const modal = await openSpinnerModal('OPENING FILE');
+    const modal = await openSpinnerModal('fileViewers.openingFile');
     const contentType = await detectFileContentType(workspaceInfo.value.handle, entry.path, DateTime.fromJSDate(selectedDateTime.value));
 
     try {

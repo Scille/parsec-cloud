@@ -1211,7 +1211,7 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
     return;
   }
 
-  const modal = await openSpinnerModal('OPENING FILE');
+  const modal = await openSpinnerModal('fileViewers.openingFile');
   const contentType = await detectFileContentType(workspaceHandle, entry.path);
 
   try {

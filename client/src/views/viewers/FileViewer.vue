@@ -32,42 +32,11 @@
             </ion-buttons>
           </div>
 
-          <!-- file-viewer wrapper -->
-          <div class="file-viewer-wrapper">
-            <component
-              :is="viewerComponent"
-              :content-info="contentInfo"
-              :config="viewerConfig"
-            />
-          </div>
-
-          <!-- file-viewer bottombar -->
-          <div class="file-viewer-bottombar">
-            <!-- Here the idea is to put the specific file viewer bottom bar actions -->
-            <ms-action-bar
-              v-if="detectedFileType?.type === FileContentType.Image"
-              class="action-bar"
-            >
-              <ms-action-bar-button
-                id="button-image-zoom-out"
-                v-show="detectedFileType?.type === FileContentType.Image"
-                :icon="remove"
-                @click="zoomOut"
-              />
-              <ms-action-bar-button
-                id="button-image-zoom-reset"
-                v-show="detectedFileType?.type === FileContentType.Image"
-                :icon="resize"
-                @click="resetZoom"
-              />
-              <ms-action-bar-button
-                id="button-image-zoom-in"
-                v-show="detectedFileType?.type === FileContentType.Image"
-                :icon="add"
-                @click="zoomIn"
-              />
-            </ms-action-bar>
-          </div>
+          <!-- file-viewer component -->
+          <component
+            :is="viewerComponent"
+            :content-info="contentInfo"
+          />
         </div>
       </div>
     </ion-content>
@@ -91,14 +60,14 @@ import {
   closeHistoryFile,
 } from '@/parsec';
 import { IonPage, IonContent, IonButton, IonText, IonIcon, IonButtons } from '@ionic/vue';
-import { add, open, remove, resize } from 'ionicons/icons';
-import { Base64, MsSpinner, MsImage, MsActionBar, MsActionBarButton } from 'megashark-lib';
+import { open } from 'ionicons/icons';
+import { Base64, MsSpinner, MsImage } from 'megashark-lib';
 import { ref, Ref, type Component, inject, onMounted, shallowRef } from 'vue';
 import { ImageViewer, VideoViewer, SpreadsheetViewer, DocumentViewer, AudioViewer, TextViewer, PdfViewer } from '@/views/viewers';
 import { Information, InformationLevel, InformationManager, InformationManagerKey, PresentationMode } from '@/services/informationManager';
 import { getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, Routes } from '@/router';
 import { DetectedFileType, FileContentType } from '@/common/fileTypes';
-import { FileContentInfo, ViewerConfig, imageViewerUtils } from '@/views/viewers/utils';
+import { FileContentInfo } from '@/views/viewers/utils';
 import { Env } from '@/services/environment';
 import { DateTime } from 'luxon';
 import { getFileIcon } from '@/common/file';
@@ -110,9 +79,6 @@ const detectedFileType = ref<DetectedFileType | null>(null);
 const loaded = ref(false);
 const READ_CHUNK_SIZE = 512_000;
 const atDateTime: Ref<DateTime | null> = ref(null);
-const viewerConfig: Ref<ViewerConfig> = ref({
-  zoomLevel: 100,
-});
 
 onMounted(async () => {
   loaded.value = false;
@@ -274,18 +240,6 @@ async function onClick(event: MouseEvent): Promise<void> {
     }
   }
 }
-
-function zoomOut(): void {
-  viewerConfig.value = imageViewerUtils.zoomOut(viewerConfig.value);
-}
-
-function resetZoom(): void {
-  viewerConfig.value = imageViewerUtils.resetZoom(viewerConfig.value);
-}
-
-function zoomIn(): void {
-  viewerConfig.value = imageViewerUtils.zoomIn(viewerConfig.value);
-}
 </script>
 
 <style scoped lang="scss">
@@ -355,28 +309,6 @@ function zoomIn(): void {
             margin-right: 0.5rem;
           }
         }
-      }
-    }
-
-    &-wrapper {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-    }
-
-    &-bottombar {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5rem;
-
-      .action-bar {
-        padding: 0.5rem 1rem;
-        width: fit-content;
-        background: var(--parsec-color-light-primary-100);
-        border-radius: 5em;
-        box-shadow: var(--parsec-shadow-light);
       }
     }
   }

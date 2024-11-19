@@ -1,16 +1,21 @@
 <!-- Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS -->
 
 <template>
-  <ms-spinner v-show="loading" />
-  <div
-    v-show="!loading"
-    class="document-content"
-    v-html="htmlContent"
-  />
+  <file-viewer-wrapper>
+    <template #viewer>
+      <ms-spinner v-show="loading" />
+      <div
+        v-show="!loading"
+        class="document-content"
+        v-html="htmlContent"
+      />
+    </template>
+  </file-viewer-wrapper>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { FileViewerWrapper } from '@/views/viewers';
 import { FileContentInfo } from '@/views/viewers/utils';
 import mammoth from 'mammoth';
 import { MsSpinner } from 'megashark-lib';
