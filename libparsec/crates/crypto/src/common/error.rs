@@ -22,8 +22,6 @@ pub enum CryptoError {
     SequesterPrivateKeyDer(String),
     #[error("Invalid SequesterPublicKeyDer {0}")]
     SequesterPublicKeyDer(String),
-    #[error("Cannot recover shamir secret: {0}")]
-    ShamirRecovery(String),
 }
 
 pub type CryptoResult<T> = Result<T, CryptoError>;

@@ -2022,9 +2022,33 @@ impl TestbedEventNewShamirRecovery {
 
         // Share certificates
 
-        for (recipient, _) in &self.per_recipient_shares {
-            // TODO: Put a real share here once shamir recovery is implemented
-            let ciphered_share = b"".to_vec();
+        let total_share_count = self
+            .per_recipient_shares
+            .iter()
+            .map(|(_, shares_count)| shares_count.get() as usize)
+            .sum();
+
+        let mut shark_shares = ShamirRecoverySecret {
+            data_key: self.data_key.clone(),
+            reveal_token: self.reveal_token,
+        }
+        .dump_and_encrypt_into_shares(self.threshold.get() as u8, total_share_count)
+        .into_iter();
+
+        for (recipient, shares_count) in &self.per_recipient_shares {
+            let recipient_pubkey = match utils::assert_user_exists(&template.events, *recipient) {
+                TestbedEvent::BootstrapOrganization(e) => e.first_user_private_key.public_key(),
+                TestbedEvent::NewUser(e) => e.private_key.public_key(),
+                _ => unreachable!(),
+            };
+
+            let mut weighted_share = vec![];
+            for _ in 0..(shares_count.get() as usize) {
+                weighted_share.push(shark_shares.next().unwrap());
+            }
+
+            let ciphered_share =
+                ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(&recipient_pubkey);
 
             let certif = ShamirRecoveryShareCertificate {
                 author: self.author,
@@ -2042,6 +2066,8 @@ impl TestbedEventNewShamirRecovery {
             };
             certificates.push(share_certif);
         }
+
+        assert!(shark_shares.next().is_none()); // Sanity check
 
         certificates
     }
