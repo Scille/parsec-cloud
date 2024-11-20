@@ -15,7 +15,8 @@ use crate::{
         RealmNameCertificate, RealmRoleCertificate, RevokedUserCertificate,
         SequesterAuthorityCertificate, SequesterRevokedServiceCertificate,
         SequesterServiceCertificate, ShamirRecoveryBriefCertificate,
-        ShamirRecoveryShareCertificate, UserCertificate, UserUpdateCertificate,
+        ShamirRecoveryDeletionCertificate, ShamirRecoveryShareCertificate, UserCertificate,
+        UserUpdateCertificate,
     },
     protocol::ActiveUsersLimit,
     BlockID, DateTime, DeviceID, DeviceLabel, HumanHandle, InvitationToken, PrivateKey, RealmRole,
@@ -381,6 +382,7 @@ event_wrapper!(
     [
         timestamp: DateTime,
         author: DeviceID,
+        user_id: UserID,
         threshold: NonZeroU64,
         per_recipient_shares: HashMap<UserID, NonZeroU64>,
         recovery_device: DeviceID,
@@ -389,16 +391,38 @@ event_wrapper!(
         ciphered_data: Py<PyBytes>,
         brief_certificate: ShamirRecoveryBriefCertificate,
         raw_brief_certificate: Py<PyBytes>,
-        share_certificates: Py<PyList>,
-        raw_share_certificates: Py<PyList>,
+        shares_certificates: Py<PyList>,
+        raw_shares_certificates: Py<PyList>,
     ],
     |_py, x: &TestbedEventNewShamirRecovery| -> PyResult<String> {
         Ok(format!(
-            "timestamp={:?}, author={:?}, threshold={:?}, per_recipient_shares={:?}",
+            "timestamp={:?}, author={:?}, user_id={:?}, threshold={:?}, per_recipient_shares={:?}",
             x.timestamp.0,
             x.author.0,
+            x.user_id.0,
             x.threshold,
             x.per_recipient_shares.iter().map(|(k, v)| (k.0.clone(), v)).collect::<HashMap<_, _>>(),
+        ))
+    }
+);
+event_wrapper!(
+    TestbedEventDeleteShamirRecovery,
+    [
+        timestamp: DateTime,
+        author: DeviceID,
+        setup_to_delete_timestamp: DateTime,
+        setup_to_delete_user_id: UserID,
+        share_recipients: Vec<UserID>,
+        certificate: ShamirRecoveryDeletionCertificate,
+        raw_certificate: Py<PyBytes>,
+    ],
+    |_py, x: &TestbedEventDeleteShamirRecovery| -> PyResult<String> {
+        Ok(format!(
+            "timestamp={:?}, author={:?}, setup_to_delete_user_id={:?}, setup_to_delete_timestamp={:?}",
+            x.timestamp.0,
+            x.author.0,
+            x.setup_to_delete_user_id.0,
+            x.setup_to_delete_timestamp.0,
         ))
     }
 );
@@ -907,9 +931,9 @@ fn event_to_pyobject(
                 (brief_certificate, raw_brief_certificate)
             };
 
-            let (share_certificates, raw_share_certificates) = {
-                let share_certificates = PyList::empty_bound(py);
-                let raw_share_certificates = PyList::empty_bound(py);
+            let (shares_certificates, raw_shares_certificates) = {
+                let shares_certificates = PyList::empty_bound(py);
+                let raw_shares_certificates = PyList::empty_bound(py);
                 for certif in certifs {
                     let raw = PyBytes::new_bound(py, &certif.signed);
                     let wrapped_certif =
@@ -919,15 +943,16 @@ fn event_to_pyobject(
                             }
                             _ => unreachable!(),
                         });
-                    share_certificates.append(wrapped_certif.into_py(py))?;
-                    raw_share_certificates.append(raw)?;
+                    shares_certificates.append(wrapped_certif.into_py(py))?;
+                    raw_shares_certificates.append(raw)?;
                 }
-                (share_certificates, raw_share_certificates)
+                (shares_certificates, raw_shares_certificates)
             };
 
             let obj = TestbedEventNewShamirRecovery {
                 timestamp: x.timestamp.into(),
                 author: x.author.into(),
+                user_id: x.user_id.into(),
                 threshold: x.threshold,
                 per_recipient_shares: x
                     .per_recipient_shares
@@ -940,8 +965,24 @@ fn event_to_pyobject(
                 ciphered_data: PyBytes::new_bound(py, &x.ciphered_data(template)).into(),
                 brief_certificate,
                 raw_brief_certificate,
-                share_certificates: share_certificates.unbind(),
-                raw_share_certificates: raw_share_certificates.unbind(),
+                shares_certificates: shares_certificates.unbind(),
+                raw_shares_certificates: raw_shares_certificates.unbind(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::DeleteShamirRecovery(x) => {
+            let (certificate, raw_certificate) =
+                single_certificate!(py, x, template, ShamirRecoveryDeletion);
+
+            let obj = TestbedEventDeleteShamirRecovery {
+                timestamp: x.timestamp.into(),
+                author: x.author.into(),
+                setup_to_delete_timestamp: x.setup_to_delete_timestamp.into(),
+                setup_to_delete_user_id: x.setup_to_delete_user_id.into(),
+                share_recipients: x.share_recipients.iter().map(|u| (*u).into()).collect(),
+                certificate,
+                raw_certificate,
             };
             Some(obj.into_py(py))
         }

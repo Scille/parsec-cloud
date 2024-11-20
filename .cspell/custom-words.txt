@@ -616,6 +616,7 @@ setmonofont
 setsansfont
 setsecurity
 shakeplugin
+shamirorg
 shortid
 SignatureBytes
 signingkey
