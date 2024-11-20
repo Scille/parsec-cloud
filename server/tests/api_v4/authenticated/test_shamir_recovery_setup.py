@@ -14,7 +14,8 @@ from tests.common import (
     Backend,
     CoolorgRpcClients,
     HttpCommonErrorsTester,
-    setup_shamir_for_coolorg,
+    MinimalorgRpcClients,
+    ShamirOrgRpcClients,
 )
 
 
@@ -70,7 +71,7 @@ async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
     brief = ShamirRecoveryBriefCertificate(
         author=coolorg.alice.device_id,
         user_id=coolorg.alice.user_id,
-        timestamp=DateTime.now(),
+        timestamp=share.timestamp.add(microseconds=1),
         threshold=1,
         per_recipient_shares={coolorg.mallory.user_id: 2},
     )
@@ -85,46 +86,47 @@ async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShareInconsistentTimestamp()
 
 
+@pytest.mark.xfail(
+    reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
+)
 async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
+    shamirorg: ShamirOrgRpcClients, with_postgresql: bool
 ) -> None:
     # Setup previous shamir
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
-    (raw_previous_brief, _) = await setup_shamir_for_coolorg(coolorg)
-    previous_brief = ShamirRecoveryBriefCertificate.unsecure_load(raw_previous_brief)
     dt = DateTime.now()
 
     share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
+        author=shamirorg.alice.device_id,
+        user_id=shamirorg.alice.user_id,
         timestamp=dt,
-        recipient=coolorg.mallory.user_id,
+        recipient=shamirorg.mallory.user_id,
         ciphered_share=b"abc",
     )
 
     brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
+        author=shamirorg.alice.device_id,
+        user_id=shamirorg.alice.user_id,
         timestamp=dt,
         threshold=1,
-        per_recipient_shares={coolorg.mallory.user_id: 2},
+        per_recipient_shares={shamirorg.mallory.user_id: 2},
     )
     # attempt to overwrite setup
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"def",
         InvitationToken.new(),
-        brief.dump_and_sign(coolorg.alice.signing_key),
-        [share.dump_and_sign(coolorg.alice.signing_key)],
+        brief.dump_and_sign(shamirorg.alice.signing_key),
+        [share.dump_and_sign(shamirorg.alice.signing_key)],
     )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
+    rep = await shamirorg.alice.shamir_recovery_setup(setup)
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepShamirSetupAlreadyExists(
-        last_shamir_certificate_timestamp=previous_brief.timestamp
+        last_shamir_certificate_timestamp=shamirorg.alice_brief_certificate.timestamp
     )
 
 
 async def test_authenticated_shamir_recovery_setup_brief_invalid_data(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
+    minimalorg: MinimalorgRpcClients, with_postgresql: bool
 ) -> None:
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
@@ -135,7 +137,7 @@ async def test_authenticated_shamir_recovery_setup_brief_invalid_data(
         b"ijk",
         [b"lmn"],
     )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
+    rep = await minimalorg.alice.shamir_recovery_setup(setup)
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepBriefInvalidData()
 
 
@@ -293,89 +295,90 @@ async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepMissingShareForRecipient()
 
 
+@pytest.mark.parametrize("kind", ("from_recipient", "from_author"))
+@pytest.mark.usefixtures("ballpark_always_ok")
 async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
-    coolorg: CoolorgRpcClients, backend: Backend, with_postgresql: bool
+    shamirorg: ShamirOrgRpcClients, with_postgresql: bool, kind: str
 ) -> None:
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
-    older_timestamp = DateTime.now()
 
-    # Set shamir recovery for Alice...
+    match kind:
+        case "from_recipient":
+            # Mike has no shamir, but is recipient of Mallory's shamir
+            author = shamirorg.mike
+            older_timestamp = shamirorg.mallory_brief_certificate.timestamp
+        case "from_author":
+            # Bob's last shamir interaction was to remove its own shamir
+            author = shamirorg.bob
+            older_timestamp = shamirorg.bob_remove_certificate.timestamp
+        case unknown:
+            assert False, unknown
 
-    await setup_shamir_for_coolorg(coolorg)
-
-    # ...then remove it (so that we can set it again at next step)...
-
-    outcome = await backend.shamir.remove_recovery_setup(
-        organization_id=coolorg.organization_id, author=coolorg.alice.user_id
-    )
-    assert outcome is None
-
-    # ...and finally set the shamir again with a clashing timestamp
+    # ...set the shamir again with a clashing timestamp
 
     share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
+        author=author.device_id,
+        user_id=author.user_id,
         timestamp=older_timestamp,
-        recipient=coolorg.mallory.user_id,
+        recipient=shamirorg.alice.user_id,
         ciphered_share=b"abc",
     )
     brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
+        author=author.device_id,
+        user_id=author.user_id,
         timestamp=older_timestamp,
         threshold=1,
-        per_recipient_shares={coolorg.mallory.user_id: 2},
+        per_recipient_shares={shamirorg.alice.user_id: 2},
     )
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
         InvitationToken.new(),
-        brief.dump_and_sign(coolorg.alice.signing_key),
-        [share.dump_and_sign(coolorg.alice.signing_key)],
+        brief.dump_and_sign(author.signing_key),
+        [share.dump_and_sign(author.signing_key)],
     )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
+    rep = await author.shamir_recovery_setup(setup)
     assert isinstance(rep, authenticated_cmds.v4.shamir_recovery_setup.RepRequireGreaterTimestamp)
 
 
 @pytest.mark.xfail(
     reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
 )
+@pytest.mark.usefixtures("ballpark_always_ok")
 async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
+    shamirorg: ShamirOrgRpcClients, with_postgresql: bool
 ) -> None:
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
-    older_timestamp = DateTime.now()
 
-    # Set shamir recovery for Alice...
-
-    await setup_shamir_for_coolorg(coolorg)
-
-    # ...then for Bob, the clashing timestamp is not an issue since each of them is isolated
+    # The chosen timestamp would be invalid for Bob, but should be fine for Alice
+    # since both are isolated from each other.
+    bob_shamir_topic_timestamp = shamirorg.bob_shamir_topic_timestamp
+    assert bob_shamir_topic_timestamp > shamirorg.alice_shamir_topic_timestamp
 
     share = ShamirRecoveryShareCertificate(
-        author=coolorg.bob.device_id,
-        user_id=coolorg.bob.user_id,
-        timestamp=older_timestamp,
-        recipient=coolorg.mallory.user_id,
+        author=shamirorg.alice.device_id,
+        user_id=shamirorg.alice.user_id,
+        timestamp=bob_shamir_topic_timestamp,
+        recipient=shamirorg.mallory.user_id,
         ciphered_share=b"abc",
     )
     brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.bob.device_id,
-        user_id=coolorg.bob.user_id,
-        timestamp=older_timestamp,
+        author=shamirorg.alice.device_id,
+        user_id=shamirorg.alice.user_id,
+        timestamp=bob_shamir_topic_timestamp,
         threshold=1,
-        per_recipient_shares={coolorg.mallory.user_id: 2},
+        per_recipient_shares={shamirorg.mallory.user_id: 2},
     )
 
     setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
         b"abc",
         InvitationToken.new(),
-        brief.dump_and_sign(coolorg.bob.signing_key),
-        [share.dump_and_sign(coolorg.bob.signing_key)],
+        brief.dump_and_sign(shamirorg.alice.signing_key),
+        [share.dump_and_sign(shamirorg.alice.signing_key)],
     )
-    rep = await coolorg.bob.shamir_recovery_setup(setup)
+    rep = await shamirorg.alice.shamir_recovery_setup(setup)
     assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
 
 

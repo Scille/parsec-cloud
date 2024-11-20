@@ -16,6 +16,7 @@ from parsec._parsec import (
     InvitationToken,
     OrganizationID,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
     SigningKey,
     UserID,
@@ -385,44 +386,6 @@ async def coolorg(app: AsgiApp, testbed: TestbedBackend) -> AsyncGenerator[Coolo
         await testbed.drop_organization(organization_id)
 
 
-async def setup_shamir_for_coolorg(
-    coolorg: CoolorgRpcClients,
-    now: DateTime | None = None,
-) -> tuple[bytes, bytes]:
-    """
-    setup a shamir for alice, with mallory as a share recipient
-    returns the associated brief and share as bytes
-    """
-    now = now or DateTime.now()
-    share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=now,
-        recipient=coolorg.mallory.user_id,
-        ciphered_share=b"abc",
-    )
-    brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=now,
-        threshold=1,
-        per_recipient_shares={coolorg.mallory.user_id: 2},
-    )
-
-    raw_brief = brief.dump_and_sign(coolorg.alice.signing_key)
-    raw_share = share.dump_and_sign(coolorg.alice.signing_key)
-
-    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
-        b"abc",
-        InvitationToken.new(),
-        raw_brief,
-        [raw_share],
-    )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
-    return (raw_brief, raw_share)
-
-
 @dataclass(slots=True)
 class MinimalorgRpcClients:
     """
@@ -488,6 +451,204 @@ async def minimalorg(
     async with AsyncClient(app=app) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("minimal")
         yield MinimalorgRpcClients(
+            raw_client=raw_client,
+            organization_id=organization_id,
+            testbed_template=template_content,
+        )
+
+        await testbed.drop_organization(organization_id)
+
+
+@dataclass(slots=True)
+class ShamirOrgRpcClients:
+    """
+    Shamir org contains:
+    - 4 users: `alice` (admin), `bob` (standard), `mallory` (outsider) and `mike` (standard)
+    - Alice has two devices: `alice@dev1` and `alice@dev2`
+    - Bob has two devices: `bob@dev1` and `bob@dev2`
+    - Mallory has two devices: `mallory@dev1` and `mallory@dev2`
+    - Mike only has one device: `mike@dev1`
+    - Alice has a shamir recovery setup (threshold: 2, recipients: Bob with 2 shares,
+      Mallory & mike with 1 share each)
+    - Bob has a deleted shamir recovery (used to be threshold: 1, recipients: Alice & Mallory)
+    - Mallory has a shamir recovery setup (threshold: 1, recipients: only Mike)
+    - devices `alice@dev1`/`bob@dev1`/`mallory@dev1`/`mike@dev1` starts with up-to-date storages
+    - devices `alice@dev2` and `bob@dev2` whose storages are empty
+
+    See `libparsec/crates/testbed/src/templates/shamir.rs` for it actual definition.
+    """
+
+    raw_client: AsyncClient
+    testbed_template: tb.TestbedTemplateContent
+    organization_id: OrganizationID
+    _anonymous: AnonymousRpcClient | None = None
+    _alice: AuthenticatedRpcClient | None = None
+    _bob: AuthenticatedRpcClient | None = None
+    _mallory: AuthenticatedRpcClient | None = None
+    _mike: AuthenticatedRpcClient | None = None
+
+    @property
+    def anonymous(self) -> AnonymousRpcClient:
+        self._anonymous = self._anonymous or AnonymousRpcClient(
+            self.raw_client, self.organization_id
+        )
+        return self._anonymous
+
+    @property
+    def alice(self) -> AuthenticatedRpcClient:
+        if self._alice:
+            return self._alice
+        self._alice = self._init_for("alice")
+        return self._alice
+
+    @property
+    def bob(self) -> AuthenticatedRpcClient:
+        if self._bob:
+            return self._bob
+        self._bob = self._init_for("bob")
+        return self._bob
+
+    @property
+    def mallory(self) -> AuthenticatedRpcClient:
+        if self._mallory:
+            return self._mallory
+        self._mallory = self._init_for("mallory")
+        return self._mallory
+
+    @property
+    def mike(self) -> AuthenticatedRpcClient:
+        if self._mike:
+            return self._mike
+        self._mike = self._init_for("mike")
+        return self._mike
+
+    @property
+    def root_signing_key(self) -> SigningKey:
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventBootstrapOrganization):
+                return event.root_signing_key
+        raise RuntimeError("Organization bootstrap event not found !")
+
+    @property
+    def alice_brief_certificate(self) -> ShamirRecoveryBriefCertificate:
+        return self._brief_certificate_for("alice")
+
+    @property
+    def alice_shares_certificates(self) -> list[ShamirRecoveryShareCertificate]:
+        return self._shares_certificates_for("alice")
+
+    @property
+    def bob_brief_certificate(self) -> ShamirRecoveryBriefCertificate:
+        return self._brief_certificate_for("bob")
+
+    @property
+    def bob_shares_certificates(self) -> list[ShamirRecoveryShareCertificate]:
+        return self._shares_certificates_for("bob")
+
+    @property
+    def bob_remove_certificate(self) -> ShamirRecoveryDeletionCertificate:
+        user_id = UserID.test_from_nickname("bob")
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventDeleteShamirRecovery)
+                and event.setup_to_delete_user_id == user_id
+            ):
+                return event.certificate
+        raise RuntimeError("New shamir recovery event not found for user `bob` !")
+
+    @property
+    def mallory_brief_certificate(self) -> ShamirRecoveryBriefCertificate:
+        return self._brief_certificate_for("mallory")
+
+    @property
+    def mallory_shares_certificates(self) -> list[ShamirRecoveryShareCertificate]:
+        return self._shares_certificates_for("mallory")
+
+    @property
+    def alice_shamir_topic_timestamp(self) -> DateTime:
+        return self._last_shamir_topic_timestamp_for("alice")
+
+    @property
+    def bob_shamir_topic_timestamp(self) -> DateTime:
+        return self._last_shamir_topic_timestamp_for("bob")
+
+    @property
+    def mallory_shamir_topic_timestamp(self) -> DateTime:
+        return self._last_shamir_topic_timestamp_for("mallory")
+
+    @property
+    def mike_shamir_topic_timestamp(self) -> DateTime:
+        return self._last_shamir_topic_timestamp_for("mike")
+
+    def _last_shamir_topic_timestamp_for(self, user: str) -> DateTime:
+        user_id = UserID.test_from_nickname(user)
+        for event in reversed(self.testbed_template.events):
+            match event:
+                case (
+                    tb.TestbedEventNewShamirRecovery() as e
+                ) if e.user_id == user_id or user_id in e.per_recipient_shares:
+                    return e.timestamp
+                case (
+                    tb.TestbedEventDeleteShamirRecovery() as e
+                ) if e.setup_to_delete_user_id == user_id or user_id in e.share_recipients:
+                    return e.timestamp
+                case _:
+                    pass
+        raise RuntimeError(f"No shamir topic is empty for user `{user}` !")
+
+    def _brief_certificate_for(self, user: str) -> ShamirRecoveryBriefCertificate:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
+                return event.brief_certificate
+        raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
+
+    def _shares_certificates_for(self, user: str) -> list[ShamirRecoveryShareCertificate]:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
+                return event.shares_certificates
+        raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
+
+    @property
+    def root_verify_key(self) -> VerifyKey:
+        return self.root_signing_key.verify_key
+
+    def _init_for(self, user: str) -> AuthenticatedRpcClient:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventBootstrapOrganization)
+                and event.first_user_id == user_id
+            ):
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.first_user_id,
+                    device_id=event.first_user_first_device_id,
+                    signing_key=event.first_user_first_device_signing_key,
+                    event=event,
+                )
+            elif isinstance(event, tb.TestbedEventNewUser) and event.user_id == user_id:
+                return AuthenticatedRpcClient(
+                    self.raw_client,
+                    self.organization_id,
+                    user_id=event.user_id,
+                    device_id=event.first_device_id,
+                    signing_key=event.first_device_signing_key,
+                    event=event,
+                )
+        else:
+            raise RuntimeError(f"`{user}` user creation event not found !")
+
+
+@pytest.fixture
+async def shamirorg(
+    app: AsgiApp, testbed: TestbedBackend
+) -> AsyncGenerator[ShamirOrgRpcClients, None]:
+    async with AsyncClient(app=app) as raw_client:
+        organization_id, _, template_content = await testbed.new_organization("shamir")
+        yield ShamirOrgRpcClients(
             raw_client=raw_client,
             organization_id=organization_id,
             testbed_template=template_content,
