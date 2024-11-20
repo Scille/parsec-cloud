@@ -76,6 +76,7 @@ except ImportError:
     raise SystemExit("zstandard not installed. Run `pip install zstandard`")
 try:
     import nacl.exceptions  # type: ignore
+    import nacl.public  # type: ignore
     import nacl.secret  # type: ignore
 except ImportError:
     raise SystemExit("pynacl not installed. Run `pip install pynacl`")
@@ -90,17 +91,30 @@ FAILING_TEST_HEADER_PATTERN = re.compile(r"\W*FAIL \[[ 0-9.]+s\] ([ \w::]+)")
 ##     println!("***expected: {:?}", expected.dump().unwrap());
 TAG_PATTERN = re.compile(r"\W*\*\*\*expected: \[([ 0-9,]*)\]")
 
-KEY_CANDIDATES = [
-    binascii.unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3")
+SECRET_KEY_CANDIDATES = [
+    binascii.unhexlify("b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"),
+]
+PRIVATE_KEY_CANDIDATES = [
+    # Alice fixture privkey
+    binascii.unhexlify("74e860967fd90d063ebd64fb1ba6824c4c010099dd37508b7f2875a5db2ef8c9"),
+    # Bob fixture privkey
+    binascii.unhexlify("16767ec446f2611f971c36f19c2dc11614d853475ac395d6c1d70ba46d07dd49"),
 ]
 
 
 def decode_expected_raw(raw: bytes) -> dict[str, object]:
     def attempt_decrypt(raw: bytes) -> bytes | None:
-        for key in KEY_CANDIDATES:
+        for key in SECRET_KEY_CANDIDATES:
             key = nacl.secret.SecretBox(key)
             try:
                 return key.decrypt(raw)
+            except nacl.exceptions.CryptoError:
+                continue
+
+        for key in PRIVATE_KEY_CANDIDATES:
+            box = nacl.public.SealedBox(nacl.public.PrivateKey(key))
+            try:
+                return box.decrypt(raw)
             except nacl.exceptions.CryptoError:
                 continue
 
