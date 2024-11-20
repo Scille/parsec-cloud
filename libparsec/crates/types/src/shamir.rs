@@ -1,12 +1,14 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::io::{Read, Write};
-
-use flate2::{read::ZlibDecoder, write::ZlibEncoder};
-
-use crate::{self as libparsec_types /*To use parsec_data!*/, InvitationToken};
-use crate::{data_macros::impl_transparent_data_format_conversion, DataError, DataResult};
-use libparsec_crypto::{impl_key_debug, CryptoError, PrivateKey, PublicKey, SecretKey, VerifyKey};
+use crate::{
+    self as libparsec_types, /*To use parsec_data!*/
+    data_macros::impl_transparent_data_format_conversion,
+    serialization::{format_v0_dump, format_vx_load},
+    DataError, DataResult, InvitationToken,
+};
+use libparsec_crypto::{
+    impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey,
+};
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
 use serde_bytes::Bytes;
@@ -28,18 +30,35 @@ impl_transparent_data_format_conversion!(
 );
 
 impl ShamirRecoverySecret {
-    pub fn dump(&self) -> DataResult<Vec<u8>> {
-        ::rmp_serde::to_vec_named(self).map_err(|_| DataError::BadSerialization {
-            format: None,
-            step: "dump shamir recovery secret",
-        })
+    fn load(raw: &[u8]) -> DataResult<Self> {
+        format_vx_load(raw)
     }
 
-    pub fn load(buf: &[u8]) -> DataResult<Self> {
-        ::rmp_serde::from_slice(buf).map_err(|_| DataError::BadSerialization {
-            format: None,
-            step: "load shamir recovery secret",
-        })
+    fn dump(&self) -> Vec<u8> {
+        format_v0_dump(&self)
+    }
+
+    pub fn dump_and_encrypt_into_shares(&self, threshold: u8, shares: usize) -> Vec<ShamirShare> {
+        let secret = self.dump();
+
+        let sharks = sharks::Sharks(threshold);
+        sharks
+            .dealer(&secret)
+            .map(ShamirShare)
+            .take(shares)
+            .collect()
+    }
+
+    pub fn decrypt_and_load_from_shares<'a, T>(threshold: u8, shares: T) -> DataResult<Self>
+    where
+        T: IntoIterator<Item = &'a ShamirShare>,
+        T::IntoIter: Iterator<Item = &'a ShamirShare>,
+    {
+        let sharks = sharks::Sharks(threshold);
+        let shares = shares.into_iter().map(|x| &x.0);
+        let secret = sharks.recover(shares).map_err(|_| DataError::Decryption)?;
+
+        Self::load(&secret)
     }
 }
 
@@ -61,34 +80,23 @@ impl_transparent_data_format_conversion!(
 );
 
 impl ShamirRecoveryShareData {
-    pub fn decrypt_verify_and_load_for(
-        ciphered: &[u8],
+    // Note `ShamirRecoveryShareData` doesn't need to be signed since it is
+    // embedded into a `ShamirRecoveryShareCertificate` which itself is signed.
+
+    pub fn decrypt_and_load_for(
+        encrypted: &[u8],
         recipient_privkey: &PrivateKey,
-        author_verify_key: &VerifyKey,
     ) -> DataResult<ShamirRecoveryShareData> {
-        let signed = recipient_privkey.decrypt_from_self(ciphered)?;
-        let compressed = author_verify_key.verify(&signed)?;
-        let mut serialized = vec![];
-        ZlibDecoder::new(compressed)
-            .read_to_end(&mut serialized)
-            .map_err(|_| DataError::BadSerialization {
-                format: None,
-                step: "compression shamir recovery share data",
-            })?;
-        let data: ShamirRecoveryShareData =
-            rmp_serde::from_slice(&serialized).map_err(|_| DataError::BadSerialization {
-                format: None,
-                step: "shamir recovery share data",
-            })?;
-        Ok(data)
+        let serialized = recipient_privkey
+            .decrypt_from_self(encrypted)
+            .map_err(|_| DataError::Decryption)?;
+        let obj: Self = format_vx_load(&serialized)?;
+        Ok(obj)
     }
 
     pub fn dump_and_encrypt_for(&self, recipient_pubkey: &PublicKey) -> Vec<u8> {
-        let serialized = rmp_serde::to_vec_named(&self).unwrap_or_else(|_| unreachable!());
-        let mut e = ZlibEncoder::new(Vec::new(), flate2::Compression::default());
-        e.write_all(&serialized).unwrap_or_else(|_| unreachable!());
-        let compressed = e.finish().unwrap_or_else(|_| unreachable!());
-        recipient_pubkey.encrypt_for_self(&compressed)
+        let serialized = format_v0_dump(self);
+        recipient_pubkey.encrypt_for_self(&serialized)
     }
 }
 
@@ -101,6 +109,13 @@ impl_key_debug!(ShamirShare);
 impl ShamirShare {
     pub fn dump(&self) -> Vec<u8> {
         Vec::from(&self.0)
+    }
+    pub fn load(raw: &[u8]) -> CryptoResult<Self> {
+        let share = sharks::Share::try_from(raw).map_err(|_| CryptoError::KeySize {
+            expected: 2,
+            got: raw.len(),
+        })?;
+        Ok(Self(share))
     }
 }
 
@@ -115,16 +130,14 @@ impl Eq for ShamirShare {}
 impl TryFrom<&[u8]> for ShamirShare {
     type Error = CryptoError;
     fn try_from(data: &[u8]) -> Result<Self, Self::Error> {
-        Ok(Self(
-            sharks::Share::try_from(data).map_err(|_| CryptoError::DataSize)?,
-        ))
+        Self::load(data)
     }
 }
 
 impl TryFrom<&Bytes> for ShamirShare {
     type Error = CryptoError;
     fn try_from(data: &Bytes) -> Result<Self, Self::Error> {
-        Self::try_from(data.as_ref())
+        Self::load(data.as_ref())
     }
 }
 
@@ -137,23 +150,6 @@ impl Serialize for ShamirShare {
     }
 }
 
-pub fn shamir_make_shares(threshold: u8, secret: &[u8], shares: usize) -> Vec<ShamirShare> {
-    let sharks = sharks::Sharks(threshold);
-    sharks
-        .dealer(secret)
-        .map(ShamirShare)
-        .take(shares)
-        .collect()
-}
-
-pub fn shamir_recover_secret<'a, T>(threshold: u8, shares: T) -> Result<Vec<u8>, CryptoError>
-where
-    T: IntoIterator<Item = &'a ShamirShare>,
-    T::IntoIter: Iterator<Item = &'a ShamirShare>,
-{
-    let sharks = sharks::Sharks(threshold);
-    let it = shares.into_iter().map(|x| &x.0);
-    sharks
-        .recover(it)
-        .map_err(|x| CryptoError::ShamirRecovery(x.to_string()))
-}
+#[cfg(test)]
+#[path = "../tests/unit/shamir.rs"]
+mod tests;

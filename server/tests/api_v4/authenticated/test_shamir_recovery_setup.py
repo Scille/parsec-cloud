@@ -89,12 +89,14 @@ async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
 @pytest.mark.xfail(
     reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
 )
+# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
+@pytest.mark.skipif(
+    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
+)
 async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
-    shamirorg: ShamirOrgRpcClients, with_postgresql: bool
+    shamirorg: ShamirOrgRpcClients,
 ) -> None:
     # Setup previous shamir
-    if with_postgresql:
-        pytest.skip("TODO: postgre not implemented yet")
     dt = DateTime.now()
 
     share = ShamirRecoveryShareCertificate(
@@ -297,12 +299,13 @@ async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(
 
 @pytest.mark.parametrize("kind", ("from_recipient", "from_author"))
 @pytest.mark.usefixtures("ballpark_always_ok")
+# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
+@pytest.mark.skipif(
+    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
+)
 async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
-    shamirorg: ShamirOrgRpcClients, with_postgresql: bool, kind: str
+    shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
-    if with_postgresql:
-        pytest.skip("TODO: postgre not implemented yet")
-
     match kind:
         case "from_recipient":
             # Mike has no shamir, but is recipient of Mallory's shamir
@@ -346,12 +349,13 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
     reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
 )
 @pytest.mark.usefixtures("ballpark_always_ok")
+# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
+@pytest.mark.skipif(
+    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
+)
 async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
-    shamirorg: ShamirOrgRpcClients, with_postgresql: bool
+    shamirorg: ShamirOrgRpcClients,
 ) -> None:
-    if with_postgresql:
-        pytest.skip("TODO: postgre not implemented yet")
-
     # The chosen timestamp would be invalid for Bob, but should be fine for Alice
     # since both are isolated from each other.
     bob_shamir_topic_timestamp = shamirorg.bob_shamir_topic_timestamp

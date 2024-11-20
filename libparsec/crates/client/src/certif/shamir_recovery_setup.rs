@@ -334,29 +334,29 @@ async fn do_shamir_recovery_setup(
 
     let ciphered_data = data_key.encrypt(&recovery_device.dump()).into();
 
-    let shark_shares = shamir_make_shares(
-        threshold,
-        &ShamirRecoverySecret {
-            data_key,
-            reveal_token,
-        }
-        .dump()?,
-        total_share_count.into(),
-    );
-    let mut idx = 0_usize;
-    let mut shares = Vec::new();
-    for (&share_recipient_id, &share_count) in share_recipients {
+    let mut shark_shares = ShamirRecoverySecret {
+        data_key,
+        reveal_token,
+    }
+    .dump_and_encrypt_into_shares(threshold, total_share_count.into())
+    .into_iter();
+
+    let mut shares = Vec::with_capacity(share_recipients.len());
+    for (&share_recipient_id, &shares_count) in share_recipients {
         let pub_key = &certificate_ops
             .store
             .for_read(|store| store.get_user_certificate(UpTo::Current, share_recipient_id))
             .await??
             .public_key;
-        let ciphered_share = ShamirRecoveryShareData {
-            weighted_share: shark_shares[idx..idx + share_count as usize].to_vec(),
-        }
-        .dump_and_encrypt_for(pub_key);
 
-        idx += share_count as usize;
+        let mut weighted_share = vec![];
+        for _ in 0..(shares_count as usize) {
+            weighted_share.push(shark_shares.next().expect("enough share generated"));
+        }
+
+        let ciphered_share =
+            ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(pub_key);
+
         let share = ShamirRecoveryShareCertificate {
             author: author_device_id,
             timestamp,
@@ -368,6 +368,9 @@ async fn do_shamir_recovery_setup(
         .into();
         shares.push(share);
     }
+
+    assert!(shark_shares.next().is_none()); // Sanity check
+
     // 5. Send certificates
 
     let req = Req {
