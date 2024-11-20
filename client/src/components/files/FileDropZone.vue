@@ -34,7 +34,7 @@ import { DocumentImport, MsImage } from 'megashark-lib';
 import { FileImportTuple, getFilesFromDrop } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
 import { IonLabel } from '@ionic/vue';
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineExpose({
   reset,
@@ -59,19 +59,23 @@ const isActive = computed(() => {
 });
 
 onMounted(() => {
-  // Prevent the browser from handling those events itself
-  document.body.addEventListener('dragenter', preventDefaults);
-  document.body.addEventListener('dragover', preventDefaults);
-  document.body.addEventListener('dragleave', preventDefaults);
-  document.body.addEventListener('drop', preventDefaults);
+  if (window.document) {
+    // Prevent the browser from handling those events itself
+    window.document.body.addEventListener('dragenter', preventDefaults);
+    window.document.body.addEventListener('dragover', preventDefaults);
+    window.document.body.addEventListener('dragleave', preventDefaults);
+    window.document.body.addEventListener('drop', preventDefaults);
+  }
 });
 
-onUnmounted(() => {
-  // Restore the browser's event handling
-  document.body.removeEventListener('dragenter', preventDefaults);
-  document.body.removeEventListener('dragover', preventDefaults);
-  document.body.removeEventListener('dragleave', preventDefaults);
-  document.body.removeEventListener('drop', preventDefaults);
+onBeforeUnmount(() => {
+  if (window.document) {
+    // Restore the browser's event handling
+    window.document.body.removeEventListener('dragenter', preventDefaults);
+    window.document.body.removeEventListener('dragover', preventDefaults);
+    window.document.body.removeEventListener('dragleave', preventDefaults);
+    window.document.body.removeEventListener('drop', preventDefaults);
+  }
 });
 
 async function onDrop(event: DragEvent): Promise<void> {

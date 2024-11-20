@@ -43,7 +43,7 @@ enum AppState {
 type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 
 function preventRightClick(): void {
-  document.addEventListener('contextmenu', async (event) => {
+  window.document.addEventListener('contextmenu', async (event) => {
     if (!window.isDev()) {
       event.preventDefault();
       const top = await popoverController.getTop();

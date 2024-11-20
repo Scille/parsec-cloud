@@ -21,7 +21,7 @@
 <script setup lang="ts">
 import { FileImportTuple } from '@/components/files/utils';
 import { FsPath } from '@/parsec';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 defineExpose({
   importFiles,
@@ -44,8 +44,9 @@ onMounted(() => {
   hiddenInputFolder.value.addEventListener('change', onInputChange);
 });
 
-onUnmounted(() => {
-  document.body.removeEventListener('change', onInputChange);
+onBeforeUnmount(() => {
+  hiddenInputFiles.value.removeEventListener('change', onInputChange);
+  hiddenInputFolder.value.removeEventListener('change', onInputChange);
 });
 
 async function onInputChange(event: any): Promise<void> {
