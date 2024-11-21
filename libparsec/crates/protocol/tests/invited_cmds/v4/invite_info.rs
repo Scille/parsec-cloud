@@ -81,11 +81,44 @@ pub fn rep_ok() {
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }),
         ),
+        (
+            // Generated from Parsec 3.1.1-a.0+dev
+            // Content:
+            //   status: 'ok'
+            //   type: 'SHAMIR_RECOVERY'
+            //   recipients: [ { human_handle: [ 'alice@example.com', 'alice', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'bob@example.com', 'bob', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
+            //   threshold: 2
+            &hex!(
+            "84a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259aa7265"
+            "63697069656e74739283ac68756d616e5f68616e646c6592b1616c696365406578616d"
+            "706c652e636f6da5616c696365a673686172657301a7757365725f6964d802109b68ba"
+            "5cdf428ea0017fc6bcc04d4a83ac68756d616e5f68616e646c6592af626f6240657861"
+            "6d706c652e636f6da3626f62a673686172657301a7757365725f6964d802109b68ba5c"
+            "df428ea0017fc6bcc04d4ba97468726573686f6c6402"
+            )[..],
+            invited_cmds::invite_info::Rep::Ok(
+                invited_cmds::invite_info::UserOrDevice::ShamirRecovery {
+                    recipients: vec![
+                        invited_cmds::invite_info::ShamirRecoveryRecipient {
+                            user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
+                            human_handle: HumanHandle::new("alice@example.com", "alice").unwrap(),
+                            shares: 1.try_into().unwrap(),
+                        },
+                        invited_cmds::invite_info::ShamirRecoveryRecipient {
+                            user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4b").unwrap(),
+                            human_handle: HumanHandle::new("bob@example.com", "bob").unwrap(),
+                            shares: 1.try_into().unwrap(),
+                        },
+                    ],
+                    threshold: 2.try_into().unwrap(),
+                },
+            ),
+        ),
     ];
 
     for (raw, expected) in raw_expected {
         let data = invited_cmds::invite_info::Rep::load(raw).unwrap();
-
+        println!("***expected: {:?}", expected.dump().unwrap());
         assert_eq!(data, expected);
 
         // Also test serialization round trip
