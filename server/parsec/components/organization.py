@@ -196,6 +196,7 @@ class OrganizationCreateBadOutcome(BadOutcomeEnum):
 
 class OrganizationGetBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
 
 
 class OrganizationBootstrapStoreBadOutcome(BadOutcomeEnum):

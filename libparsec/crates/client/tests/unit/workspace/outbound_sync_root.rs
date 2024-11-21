@@ -160,7 +160,6 @@ async fn non_placeholder(
                     p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
                     p_assert_eq!(req.version, 2);
-                    assert!(req.sequester_blob.is_none());
                     authenticated_cmds::latest::vlob_update::Rep::Ok {}
                 },
             );
@@ -188,7 +187,6 @@ async fn non_placeholder(
                 move |req: authenticated_cmds::latest::vlob_update::Req| {
                     p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
-                    assert!(req.sequester_blob.is_none());
                     authenticated_cmds::latest::vlob_update::Rep::BadVlobVersion {}
                 },
                 // 3) `vlob_get` to fetch the remote change
@@ -220,7 +218,6 @@ async fn non_placeholder(
                 move |req: authenticated_cmds::latest::vlob_update::Req| {
                     p_assert_eq!(req.key_index, 1);
                     p_assert_eq!(req.vlob_id, wksp1_id);
-                    assert!(req.sequester_blob.is_none());
                     authenticated_cmds::latest::vlob_update::Rep::Ok {}
                 },
             );
@@ -469,7 +466,6 @@ async fn placeholder(#[values(true, false)] is_speculative: bool, env: &TestbedE
         move |req: authenticated_cmds::latest::vlob_create::Req| {
             p_assert_eq!(req.realm_id, wksp1_id);
             p_assert_eq!(req.vlob_id, wksp1_id);
-            assert!(req.sequester_blob.is_none());
             authenticated_cmds::latest::vlob_create::Rep::Ok {}
         },
     );

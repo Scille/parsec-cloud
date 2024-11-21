@@ -10,6 +10,7 @@ from parsec._parsec import (
     RealmKeyRotationCertificate,
     RealmNameCertificate,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     UserProfile,
     VerifyKey,
@@ -29,9 +30,14 @@ from parsec.components.realm import (
     BaseRealmComponent,
     CertificateBasedActionIdempotentOutcome,
     KeysBundle,
+    ParticipantMismatch,
     RealmCreateStoreBadOutcome,
     RealmCreateValidateBadOutcome,
     RealmDumpRealmsGrantedRolesBadOutcome,
+    RealmExportCertificates,
+    RealmExportDoBaseInfo,
+    RealmExportDoBaseInfoBadOutcome,
+    RealmExportDoCertificatesBadOutcome,
     RealmGetCurrentRealmsForUserBadOutcome,
     RealmGetKeysBundleBadOutcome,
     RealmGetStatsAsUserBadOutcome,
@@ -46,17 +52,25 @@ from parsec.components.realm import (
     RealmStats,
     RealmUnshareStoreBadOutcome,
     RealmUnshareValidateBadOutcome,
+    RejectedBySequesterService,
+    SequesterServiceMismatch,
+    SequesterServiceUnavailable,
     realm_create_validate,
     realm_rename_validate,
     realm_rotate_key_validate,
     realm_share_validate,
     realm_unshare_validate,
 )
+from parsec.components.sequester import SequesterServiceType
 from parsec.events import EventRealmCertificate
+from parsec.webhooks import WebhooksComponent
 
 
 class MemoryRealmComponent(BaseRealmComponent):
-    def __init__(self, data: MemoryDatamodel, event_bus: EventBus) -> None:
+    def __init__(
+        self, data: MemoryDatamodel, event_bus: EventBus, webhooks: WebhooksComponent
+    ) -> None:
+        super().__init__(webhooks)
         self._data = data
         self._event_bus = event_bus
 
@@ -506,6 +520,8 @@ class MemoryRealmComponent(BaseRealmComponent):
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -513,6 +529,10 @@ class MemoryRealmComponent(BaseRealmComponent):
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         try:
             org = self._data.organizations[organization_id]
@@ -551,7 +571,10 @@ class MemoryRealmComponent(BaseRealmComponent):
 
             realm_topic = ("realm", certif.realm_id)
 
-            async with org.topics_lock(write=[realm_topic]) as (realm_topic_last_timestamp,):
+            async with org.topics_lock(read=["sequester"], write=[realm_topic]) as (
+                sequester_topic_last_timestamp,
+                realm_topic_last_timestamp,
+            ):
                 if realm.get_current_role_for(author_user_id) != RealmRole.OWNER:
                     return RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED
 
@@ -567,7 +590,57 @@ class MemoryRealmComponent(BaseRealmComponent):
                         participants.add(role.cooked.user_id)
 
                 if per_participant_keys_bundle_access.keys() != participants:
-                    return RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH
+                    return ParticipantMismatch(
+                        last_realm_certificate_timestamp=realm_topic_last_timestamp
+                    )
+
+                if org.is_sequestered:
+                    assert org.sequester_services is not None
+                    if per_sequester_service_keys_bundle_access is None:
+                        return SequesterServiceMismatch(
+                            last_sequester_certificate_timestamp=sequester_topic_last_timestamp
+                        )
+
+                    active_services_ids = {
+                        service.cooked.service_id for service in org.active_sequester_services()
+                    }
+                    provided_services_ids = (
+                        per_sequester_service_keys_bundle_access.keys()
+                        if per_sequester_service_keys_bundle_access
+                        else set()
+                    )
+                    if active_services_ids != provided_services_ids:
+                        return SequesterServiceMismatch(
+                            last_sequester_certificate_timestamp=sequester_topic_last_timestamp
+                        )
+                    for service in org.active_sequester_services():
+                        if service.service_type == SequesterServiceType.WEBHOOK:
+                            assert service.webhook_url is not None
+
+                            keys_bundle_access = per_sequester_service_keys_bundle_access[
+                                service.cooked.service_id
+                            ]
+                            match await self.webhooks.sequester_service_on_realm_rotate_key(
+                                webhook_url=service.webhook_url,
+                                service_id=service.cooked.service_id,
+                                organization_id=organization_id,
+                                keys_bundle=keys_bundle,
+                                keys_bundle_access=keys_bundle_access,
+                                author=certif.author,
+                                timestamp=certif.timestamp,
+                                realm_id=certif.realm_id,
+                                key_index=certif.key_index,
+                                encryption_algorithm=certif.encryption_algorithm,
+                                hash_algorithm=certif.hash_algorithm,
+                                key_canary=certif.key_canary,
+                            ):
+                                case None:
+                                    pass
+                                case error:
+                                    return error
+
+                elif per_sequester_service_keys_bundle_access is not None:
+                    return RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED
 
                 # Ensure we are not breaking causality by adding a newer timestamp.
 
@@ -584,6 +657,7 @@ class MemoryRealmComponent(BaseRealmComponent):
                         cooked=certif,
                         realm_key_rotation_certificate=realm_key_rotation_certificate,
                         per_participant_keys_bundle_access=per_participant_keys_bundle_access,
+                        per_sequester_service_keys_bundle_access=per_sequester_service_keys_bundle_access,
                         keys_bundle=keys_bundle,
                     )
                 )
@@ -747,3 +821,122 @@ class MemoryRealmComponent(BaseRealmComponent):
                 )
 
         return granted_roles
+
+    @override
+    async def export_do_base_info(
+        self, organization_id: OrganizationID, realm_id: VlobID
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        if not org.is_bootstrapped:
+            return RealmExportDoBaseInfoBadOutcome.ORGANIZATION_NOT_FOUND
+
+        root_verify_key = org.root_verify_key
+        assert root_verify_key is not None
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmExportDoBaseInfoBadOutcome.REALM_NOT_FOUND
+
+        return RealmExportDoBaseInfo(
+            root_verify_key=root_verify_key,
+        )
+
+    @override
+    async def export_do_certificates(
+        self, organization_id: OrganizationID, realm_id: VlobID, snapshot_timestamp: DateTime
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return RealmExportDoCertificatesBadOutcome.ORGANIZATION_NOT_FOUND
+
+        try:
+            realm = org.realms[realm_id]
+        except KeyError:
+            return RealmExportDoCertificatesBadOutcome.REALM_NOT_FOUND
+
+        # 1) Common certificates (i.e. user/device/revoked/update)
+
+        # Certificates must be returned ordered by timestamp, however there is a trick
+        # for the common certificates: when a new user is created, the corresponding
+        # user and device certificates have the same timestamp, but we must return
+        # the user certificate first (given device references the user).
+        # So to achieve this we use a tuple (timestamp, priority, certificate) where
+        # only the first two field should be used for sorting (the priority field
+        # handling the case where user and device have the same timestamp).
+
+        common_certificates_unordered: list[tuple[DateTime, int, bytes]] = []
+        for user in org.users.values():
+            common_certificates_unordered.append((user.cooked.timestamp, 0, user.user_certificate))
+
+            if user.is_revoked:
+                assert user.cooked_revoked is not None
+                assert user.revoked_user_certificate is not None
+                common_certificates_unordered.append(
+                    (user.cooked_revoked.timestamp, 1, user.revoked_user_certificate)
+                )
+
+            for update in user.profile_updates:
+                common_certificates_unordered.append(
+                    (update.cooked.timestamp, 1, update.user_update_certificate)
+                )
+
+        for device in org.devices.values():
+            common_certificates_unordered.append(
+                (device.cooked.timestamp, 1, device.device_certificate)
+            )
+
+        common_certificates = [
+            c for ts, _, c in sorted(common_certificates_unordered) if ts <= snapshot_timestamp
+        ]
+
+        # 2) Sequester certificates
+
+        sequester_certificates: list[bytes] = []
+        if org.sequester_authority_certificate is not None:
+            assert org.cooked_sequester_authority is not None
+            assert org.sequester_services is not None
+
+            sequester_certificates_unordered: list[tuple[DateTime, bytes]] = []
+            sequester_certificates_unordered.append(
+                (org.cooked_sequester_authority.timestamp, org.sequester_authority_certificate)
+            )
+            sequester_certificates_unordered += [
+                (service.cooked.timestamp, service.sequester_service_certificate)
+                for service in org.sequester_services.values()
+            ]
+
+            sequester_certificates = [
+                c for ts, c in sorted(sequester_certificates_unordered) if ts <= snapshot_timestamp
+            ]
+
+        # 3) Realm certificates
+
+        # Collect all the certificates related to the realm
+        realm_certificates_unordered: list[tuple[DateTime, bytes]] = []
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_role_certificate) for role in realm.roles
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_key_rotation_certificate)
+            for role in realm.key_rotations
+        ]
+        realm_certificates_unordered += [
+            (role.cooked.timestamp, role.realm_name_certificate) for role in realm.renames
+        ]
+        # TODO: support archiving here !
+
+        realm_certificates = [
+            c for ts, c in sorted(realm_certificates_unordered) if ts <= snapshot_timestamp
+        ]
+
+        return RealmExportCertificates(
+            common_certificates=common_certificates,
+            sequester_certificates=sequester_certificates,
+            realm_certificates=realm_certificates,
+        )

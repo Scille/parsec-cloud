@@ -35,12 +35,6 @@
                 {
                     "name": "blob",
                     "type": "Bytes"
-                },
-                // Field set to `None` if sequester is disabled for the organization
-                // Key is sequester service ID, value is blob encrypted with the service key
-                {
-                    "name": "sequester_blob",
-                    "type": "RequiredOption<Map<SequesterServiceID, Bytes>>"
                 }
             ]
         },
@@ -68,21 +62,9 @@
                 "status": "bad_vlob_version"
             },
             {
-                "status": "organization_not_sequestered"
-            },
-            {
-                "status": "sequester_inconsistency",
-                "fields": [
-                    {
-                        "name": "last_common_certificate_timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                "status": "sequester_service_unavailable"
-            },
-            {
+                // In case of a sequestered organization, sequester services can be
+                // configured to be notified by a webhook on modifications and to
+                // have the ability to reject them.
                 "status": "rejected_by_sequester_service",
                 "fields": [
                     {
@@ -90,8 +72,24 @@
                         "type": "SequesterServiceID"
                     },
                     {
+                        // Optional arbitrary message provided by the sequester service to explain
+                        // why it rejects the modification.
                         "name": "reason",
-                        "type": "String"
+                        "type": "RequiredOption<String>"
+                    }
+                ]
+            },
+            {
+                // In case of a sequestered organization, sequester services can be
+                // configured to be notified on modifications and to have the ability to
+                // reject them.
+                // This status indicate the sequester service is requested to accept the
+                // modification but cannot do so because it is currently unavailable.
+                "status": "sequester_service_unavailable",
+                "fields": [
+                    {
+                        "name": "service_id",
+                        "type": "SequesterServiceID"
                     }
                 ]
             },

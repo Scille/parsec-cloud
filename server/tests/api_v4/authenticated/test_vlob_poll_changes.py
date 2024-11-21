@@ -33,7 +33,6 @@ async def create_vlob(
                 key_index=1,
                 timestamp=dt,
                 blob=v1_blob,
-                sequester_blob=None,
             )
         else:
             outcome = await backend.vlob.update(
@@ -45,7 +44,6 @@ async def create_vlob(
                 timestamp=dt,
                 version=version,
                 blob=v1_blob,
-                sequester_blob=None,
             )
         assert outcome is None, outcome
         dt = dt.add(days=1)

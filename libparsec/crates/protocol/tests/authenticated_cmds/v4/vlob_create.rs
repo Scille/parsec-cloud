@@ -4,8 +4,6 @@
 // https://github.com/rust-lang/rust-clippy/issues/11119
 #![allow(clippy::unwrap_used)]
 
-use std::collections::HashMap;
-
 use libparsec_tests_lite::prelude::*;
 use libparsec_types::prelude::*;
 
@@ -14,85 +12,45 @@ use super::authenticated_cmds;
 // Request
 
 pub fn req() {
-    let raw_expected = [
-        (
-            // Generated from Parsec v3.0.0-b.11+dev
-            // Content:
-            //   timestamp: ext(1, 946774800.0)
-            //   blob: hex!("666f6f626172")
-            //   cmd: "vlob_create"
-            //   key_index: 8
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-            //   sequester_blob: None
-            //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
-            //
-            &hex!(
-                "87a3636d64ab766c6f625f637265617465a87265616c6d5f6964d8021d3353157d7d4e"
-                "95ad2fdea7b3bd19c5a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
-                "a96b65795f696e64657808a974696d657374616d70d70100035d162fa2e400a4626c6f"
-                "62c406666f6f626172ae7365717565737465725f626c6f62c0"
-            )[..],
-            authenticated_cmds::vlob_create::Req {
-                realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                key_index: 8,
-                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
-                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-                blob: b"foobar".as_ref().into(),
-                sequester_blob: None,
-            },
-        ),
-        (
-            // Generated from Parsec v3.0.0-b.11+dev
-            // Content:
-            //   timestamp: ext(1, 946774800.0)
-            //   blob: hex!("666f6f626172")
-            //   cmd: "vlob_create"
-            //   key_index: 8
-            //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
-            //   sequester_blob: {
-            //     ExtType(code=2, data=b'\xb5\xebVSC\xc4B\xb3\xa2k\xe4Es\x81?\xf0'): hex!("666f6f626172")
-            //   }
-            //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
-            //
-            &hex!(
-                "87a3636d64ab766c6f625f637265617465a87265616c6d5f6964d8021d3353157d7d4e"
-                "95ad2fdea7b3bd19c5a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
-                "a96b65795f696e64657808a974696d657374616d70d70100035d162fa2e400a4626c6f"
-                "62c406666f6f626172ae7365717565737465725f626c6f6281d802b5eb565343c442b3"
-                "a26be44573813ff0c406666f6f626172"
-            )[..],
-            authenticated_cmds::vlob_create::Req {
-                realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
-                key_index: 8,
-                vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
-                timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
-                blob: b"foobar".as_ref().into(),
-                sequester_blob: Some(HashMap::from([(
-                    SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
-                    b"foobar".as_ref().into(),
-                )])),
-            },
-        ),
-    ];
+    // Generated from Parsec v3.0.0-b.11+dev
+    // Content:
+    //   timestamp: ext(1, 946774800.0)
+    //   blob: hex!("666f6f626172")
+    //   cmd: "vlob_create"
+    //   key_index: 8
+    //   realm_id: ext(2, hex!("1d3353157d7d4e95ad2fdea7b3bd19c5"))
+    //   vlob_id: ext(2, hex!("2b5f314728134a12863da1ce49c112f6"))
+    let raw: &[u8] = hex!(
+        "87a3636d64ab766c6f625f637265617465a87265616c6d5f6964d8021d3353157d7d4e"
+        "95ad2fdea7b3bd19c5a7766c6f625f6964d8022b5f314728134a12863da1ce49c112f6"
+        "a96b65795f696e64657808a974696d657374616d70d70100035d162fa2e400a4626c6f"
+        "62c406666f6f626172ae7365717565737465725f626c6f62c0"
+    )
+    .as_ref();
+    let expected = authenticated_cmds::vlob_create::Req {
+        realm_id: VlobID::from_hex("1d3353157d7d4e95ad2fdea7b3bd19c5").unwrap(),
+        key_index: 8,
+        vlob_id: VlobID::from_hex("2b5f314728134a12863da1ce49c112f6").unwrap(),
+        timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+        blob: b"foobar".as_ref().into(),
+    };
 
-    for (raw, expected) in raw_expected {
-        let expected = authenticated_cmds::AnyCmdReq::VlobCreate(expected);
+    let expected = authenticated_cmds::AnyCmdReq::VlobCreate(expected);
 
-        let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
+    let data = authenticated_cmds::AnyCmdReq::load(raw).unwrap();
 
-        assert_eq!(data, expected);
+    assert_eq!(data, expected);
 
-        // Also test serialization round trip
-        let authenticated_cmds::AnyCmdReq::VlobCreate(req2) = data else {
-            unreachable!()
-        };
+    // Also test serialization round trip
+    let authenticated_cmds::AnyCmdReq::VlobCreate(req2) = data else {
+        unreachable!()
+    };
 
-        let raw2 = req2.dump().unwrap();
+    let raw2 = req2.dump().unwrap();
 
-        let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
+    let data2 = authenticated_cmds::AnyCmdReq::load(&raw2).unwrap();
 
-        assert_eq!(data2, expected);
-    }
+    assert_eq!(data2, expected);
 }
 
 // Responses
@@ -266,68 +224,22 @@ pub fn rep_timestamp_out_of_ballpark() {
     p_assert_eq!(data2, expected);
 }
 
-pub fn rep_organization_not_sequestered() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
+pub fn rep_sequester_service_unavailable() {
+    // Generated from Parsec 3.1.1-a.0+dev
     // Content:
-    //   status: "organization_not_sequestered"
-    //
-    let raw = hex!("81a6737461747573bc6f7267616e697a6174696f6e5f6e6f745f7365717565737465726564");
+    //   status: 'sequester_service_unavailable'
+    //   service_id: ext(2, 0xb5eb565343c442b3a26be44573813ff0)
+    let raw: &[u8] = hex!(
+        "82a6737461747573bd7365717565737465725f736572766963655f756e617661696c61"
+        "626c65aa736572766963655f6964d802b5eb565343c442b3a26be44573813ff0"
+    )
+    .as_ref();
 
-    let expected = authenticated_cmds::vlob_create::Rep::OrganizationNotSequestered;
-
-    let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_sequester_inconsistency() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   last_common_certificate_timestamp: ext(1, 946774800.0)
-    //   status: "sequester_inconsistency"
-    //
-    let raw = hex!(
-        "82a6737461747573b77365717565737465725f696e636f6e73697374656e6379d9216c"
-        "6173745f636f6d6d6f6e5f63657274696669636174655f74696d657374616d70d70100"
-        "035d162fa2e400"
-    );
-
-    let expected = authenticated_cmds::vlob_create::Rep::SequesterInconsistency {
-        last_common_certificate_timestamp: "2000-1-2T01:00:00Z".parse().unwrap(),
+    let expected = authenticated_cmds::vlob_create::Rep::SequesterServiceUnavailable {
+        service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
     };
 
-    let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
-
-    p_assert_eq!(data, expected);
-
-    // Also test serialization round trip
-    let raw2 = data.dump().unwrap();
-
-    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2).unwrap();
-
-    p_assert_eq!(data2, expected);
-}
-
-pub fn rep_sequester_service_unavailable() {
-    // Generated from Rust implementation (Parsec v3.0.0+dev)
-    // Content:
-    //   status: "sequester_service_unavailable"
-    //
-    let raw = hex!(
-        "81a6737461747573bd7365717565737465725f736572766963655f756e617661696c61626c"
-        "65"
-    );
-
-    let expected = authenticated_cmds::vlob_create::Rep::SequesterServiceUnavailable;
-
-    let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
+    let data = authenticated_cmds::vlob_create::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 
@@ -353,11 +265,41 @@ pub fn rep_rejected_by_sequester_service() {
     );
 
     let expected = authenticated_cmds::vlob_create::Rep::RejectedBySequesterService {
-        reason: "foobar".into(),
+        reason: Some("foobar".to_string()),
         service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
     };
 
     let data = authenticated_cmds::vlob_create::Rep::load(&raw).unwrap();
+
+    p_assert_eq!(data, expected);
+
+    // Also test serialization round trip
+    let raw2 = data.dump().unwrap();
+
+    let data2 = authenticated_cmds::vlob_create::Rep::load(&raw2).unwrap();
+
+    p_assert_eq!(data2, expected);
+
+    // Also test with no provided reason
+
+    // Generated from Parsec 3.1.1-a.0+dev
+    // Content:
+    //   status: 'rejected_by_sequester_service'
+    //   reason: None
+    //   service_id: ext(2, 0xb5eb565343c442b3a26be44573813ff0)
+    let raw: &[u8] = hex!(
+        "83a6737461747573bd72656a65637465645f62795f7365717565737465725f73657276"
+        "696365a6726561736f6ec0aa736572766963655f6964d802b5eb565343c442b3a26be4"
+        "4573813ff0"
+    )
+    .as_ref();
+
+    let expected = authenticated_cmds::vlob_create::Rep::RejectedBySequesterService {
+        reason: None,
+        service_id: SequesterServiceID::from_hex("b5eb565343c442b3a26be44573813ff0").unwrap(),
+    };
+
+    let data = authenticated_cmds::vlob_create::Rep::load(raw).unwrap();
 
     p_assert_eq!(data, expected);
 

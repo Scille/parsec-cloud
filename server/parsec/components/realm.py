@@ -6,6 +6,7 @@ from enum import auto
 from typing import TypeAlias
 
 from parsec._parsec import (
+    BlockID,
     DateTime,
     DeviceID,
     OrganizationID,
@@ -13,6 +14,7 @@ from parsec._parsec import (
     RealmNameCertificate,
     RealmRole,
     RealmRoleCertificate,
+    SequesterServiceID,
     UserID,
     VerifyKey,
     VlobID,
@@ -25,13 +27,25 @@ from parsec.ballpark import (
     timestamps_in_the_ballpark,
 )
 from parsec.client_context import AuthenticatedClientContext
+from parsec.components.sequester import RejectedBySequesterService, SequesterServiceUnavailable
 from parsec.types import BadOutcome, BadOutcomeEnum
+from parsec.webhooks import WebhooksComponent
 
 KeyIndex: TypeAlias = int
 
 
 @dataclass(slots=True)
 class BadKeyIndex(BadOutcome):
+    last_realm_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class SequesterServiceMismatch(BadOutcome):
+    last_sequester_certificate_timestamp: DateTime
+
+
+@dataclass(slots=True)
+class ParticipantMismatch(BadOutcome):
     last_realm_certificate_timestamp: DateTime
 
 
@@ -216,6 +230,7 @@ def realm_rename_validate(
 class RealmRotateKeyValidateBadOutcome(BadOutcomeEnum):
     INVALID_CERTIFICATE = auto()
     TIMESTAMP_MISMATCH = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 def realm_rotate_key_validate(
@@ -293,7 +308,7 @@ class RealmRotateKeyStoreBadOutcome(BadOutcomeEnum):
     AUTHOR_NOT_FOUND = auto()
     AUTHOR_REVOKED = auto()
     AUTHOR_NOT_ALLOWED = auto()
-    PARTICIPANT_MISMATCH = auto()
+    ORGANIZATION_NOT_SEQUESTERED = auto()
 
 
 class RealmGetKeysBundleBadOutcome(BadOutcomeEnum):
@@ -330,7 +345,101 @@ class RealmDumpRealmsGrantedRolesBadOutcome(BadOutcomeEnum):
     ORGANIZATION_NOT_FOUND = auto()
 
 
+type RealmExportBatchOffsetMarker = int
+
+
+@dataclass(slots=True)
+class RealmExportDoBaseInfo:
+    root_verify_key: VerifyKey
+
+    # Offset marker is basically the internal primary key of the vlob in the PostgreSQL
+    # database:
+    # - The primary key is a serial integer that is strictly growing (i.e. the older
+    #   the row the lower the ID).
+    # - The table contains multiple realms, so the IDs are not growing continuously (also
+    #   the serial type in PostgreSQL give no guarantee on avoiding hole when e.g. a
+    #   transaction is rolled back).
+    #
+    # So the idea here is to use this primary key from PostgreSQL as primary in
+    # our SQLite export. This way we end up with the rows in the correct historical
+    # order, and also easily know if the export is complete (i.e. if the upper
+    # bound is part of the export).
+    vlob_offset_marker_upper_bound: int
+    block_offset_marker_upper_bound: int
+
+    vlob_items: int
+    blocks_items: int
+
+
+class RealmExportDoBaseInfoBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportCertificates:
+    common_certificates: list[bytes]
+    sequester_certificates: list[bytes]
+    realm_certificates: list[bytes]
+
+
+class RealmExportDoCertificatesBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatchItem:
+    realm_vlob_update_index: int
+    vlob_id: VlobID
+    version: int
+    key_index: int
+    blob: bytes
+    size: int
+    author: DeviceID
+    timestamp: DateTime
+
+
+@dataclass(slots=True)
+class RealmExportVlobsBatch:
+    batch_offset_marker: RealmExportBatchOffsetMarker
+    items: list[RealmExportVlobsBatchItem]
+
+
+class RealmExportDoVlobsBatchBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+@dataclass(slots=True)
+class RealmExportBlocksBatchItem:
+    id: int
+    block_id: BlockID
+    author: DeviceID
+    key_index: int
+    size: int
+
+
+@dataclass(slots=True)
+class RealmExportBlocksMetadataBatch:
+    batch_offset_marker: RealmExportBatchOffsetMarker
+    items: list[RealmExportBlocksBatchItem]
+
+
+class RealmExportDoBlocksBatchMetadatBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
+class RealmExportDoBlocksDataBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    REALM_NOT_FOUND = auto()
+
+
 class BaseRealmComponent:
+    def __init__(self, webhooks: WebhooksComponent):
+        self.webhooks = webhooks
+
     #
     # Public methods
     #
@@ -417,6 +526,8 @@ class BaseRealmComponent:
         realm_key_rotation_certificate: bytes,
         per_participant_keys_bundle_access: dict[UserID, bytes],
         keys_bundle: bytes,
+        # Sequester is a special case, so gives it a default version to simplify tests
+        per_sequester_service_keys_bundle_access: dict[SequesterServiceID, bytes] | None = None,
     ) -> (
         RealmKeyRotationCertificate
         | BadKeyIndex
@@ -424,6 +535,10 @@ class BaseRealmComponent:
         | TimestampOutOfBallpark
         | RealmRotateKeyStoreBadOutcome
         | RequireGreaterTimestamp
+        | ParticipantMismatch
+        | SequesterServiceMismatch
+        | SequesterServiceUnavailable
+        | RejectedBySequesterService
     ):
         raise NotImplementedError
 
@@ -449,6 +564,39 @@ class BaseRealmComponent:
     async def dump_realms_granted_roles(
         self, organization_id: OrganizationID
     ) -> list[RealmGrantedRole] | RealmDumpRealmsGrantedRolesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_base_info(
+        self, organization_id: OrganizationID, realm_id: VlobID
+    ) -> RealmExportDoBaseInfo | RealmExportDoBaseInfoBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_certificates(
+        self, organization_id: OrganizationID, realm_id: VlobID, snapshot_timestamp: DateTime
+    ) -> RealmExportCertificates | RealmExportDoCertificatesBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_vlobs_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int,
+    ) -> RealmExportVlobsBatch | RealmExportDoVlobsBatchBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_blocks_metadata_batch(
+        self,
+        organization_id: OrganizationID,
+        realm_id: VlobID,
+        batch_offset_marker: RealmExportBatchOffsetMarker,
+        batch_size: int = 1000,
+    ) -> RealmExportBlocksMetadataBatch | RealmExportDoBlocksBatchMetadatBadOutcome:
+        raise NotImplementedError
+
+    async def export_do_blocks_data(
+        self, organization_id: OrganizationID, realm_id: VlobID, block_id: BlockID
+    ) -> bytes | RealmExportDoBlocksDataBadOutcome:
         raise NotImplementedError
 
     #
@@ -667,6 +815,7 @@ class BaseRealmComponent:
             author_verify_key=client_ctx.device_verify_key,
             realm_key_rotation_certificate=req.realm_key_rotation_certificate,
             per_participant_keys_bundle_access=req.per_participant_keys_bundle_access,
+            per_sequester_service_keys_bundle_access=req.per_sequester_service_keys_bundle_access,
             keys_bundle=req.keys_bundle,
         )
         match outcome:
@@ -689,12 +838,28 @@ class BaseRealmComponent:
                 return authenticated_cmds.latest.realm_rotate_key.RepBadKeyIndex(
                     last_realm_certificate_timestamp=error.last_realm_certificate_timestamp,
                 )
-            case RealmRotateKeyStoreBadOutcome.PARTICIPANT_MISMATCH:
-                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch()
+            case ParticipantMismatch() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepParticipantMismatch(
+                    last_realm_certificate_timestamp=error.last_realm_certificate_timestamp
+                )
+            case SequesterServiceMismatch() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceMismatch(
+                    last_sequester_certificate_timestamp=error.last_sequester_certificate_timestamp
+                )
+            case SequesterServiceUnavailable() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepSequesterServiceUnavailable(
+                    service_id=error.service_id
+                )
+            case RejectedBySequesterService() as error:
+                return authenticated_cmds.latest.realm_rotate_key.RepRejectedBySequesterService(
+                    service_id=error.service_id, reason=error.reason
+                )
             case RealmRotateKeyStoreBadOutcome.REALM_NOT_FOUND:
                 return authenticated_cmds.latest.realm_rotate_key.RepRealmNotFound()
             case RealmRotateKeyStoreBadOutcome.AUTHOR_NOT_ALLOWED:
                 return authenticated_cmds.latest.realm_rotate_key.RepAuthorNotAllowed()
+            case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_SEQUESTERED:
+                return authenticated_cmds.latest.realm_rotate_key.RepOrganizationNotSequestered()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_NOT_FOUND:
                 client_ctx.organization_not_found_abort()
             case RealmRotateKeyStoreBadOutcome.ORGANIZATION_EXPIRED:
