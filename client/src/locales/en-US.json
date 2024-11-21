@@ -702,6 +702,7 @@
         "manageOrganization": "Manage my organization",
         "organizationInfo": "Information",
         "goToHome": "My workspaces",
+        "recentDocuments": "Recent documents",
         "back": "Back",
         "trial": {
             "tag": "Trial version",
@@ -1695,6 +1696,7 @@
     },
     "fileViewers": {
         "openWithDefault": "Open with default application",
-        "openingFile": "Opening file..."
+        "openingFile": "Opening file...",
+        "fileTooBig": "File is too big to be opened using a viewer."
     }
 }

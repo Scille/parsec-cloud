@@ -158,19 +158,19 @@
             <!-- list of favorite workspaces -->
             <!-- show only favorites -->
             <ion-list
-              class="list-workspaces favorites"
+              class="list-sidebar favorites"
               v-if="favoritesWorkspaces.length > 0"
             >
               <ion-header
                 lines="none"
-                class="list-workspaces-header menu-default"
+                class="list-sidebar-header menu-default"
               >
-                <div class="list-workspaces-header-favorites">
+                <div class="list-sidebar-header-favorites">
                   <ion-icon
-                    class="list-workspaces-header-favorites__icon"
+                    class="list-sidebar-header-favorites__icon"
                     :icon="star"
                   />
-                  <ion-text class="list-workspaces-header-favorites__text">
+                  <ion-text class="list-sidebar-header-favorites__text">
                     {{ $msTranslate('SideMenu.favorites') }}
                   </ion-text>
                 </div>
@@ -186,28 +186,23 @@
               />
             </ion-list>
 
-            <div
-              class="list-workspaces-divider"
-              v-if="favoritesWorkspaces.length > 0"
-            />
-
             <!-- list of workspaces -->
-            <ion-list class="list-workspaces">
+            <ion-list class="list-sidebar workspaces">
               <ion-header
                 lines="none"
-                class="list-workspaces-header menu-default"
+                class="list-sidebar-header menu-default"
               >
-                <div class="list-workspaces-header-title">
+                <div class="list-sidebar-header-title">
                   <ion-icon
-                    class="list-workspaces-header-title__icon"
+                    class="list-sidebar-header-title__icon"
                     :icon="business"
                   />
-                  <ion-text class="list-workspaces-header-title__text">
+                  <ion-text class="list-sidebar-header-title__text">
                     {{ $msTranslate('SideMenu.workspaces') }}
                   </ion-text>
                 </div>
                 <ion-icon
-                  class="list-workspaces-header__button"
+                  class="list-sidebar-header__button"
                   id="new-workspace"
                   :icon="add"
                   v-show="userInfo && userInfo.currentProfile !== UserProfile.Outsider"
@@ -215,7 +210,7 @@
                 />
               </ion-header>
               <ion-text
-                class="body list-workspaces__no-workspace"
+                class="body list-sidebar__no-workspace"
                 v-if="workspaces.length === 0"
               >
                 {{ $msTranslate('SideMenu.noWorkspace') }}
@@ -231,6 +226,43 @@
               />
             </ion-list>
           </div>
+
+          <div
+            class="list-sidebar-divider"
+            v-if="recentFileManager.getFiles().length > 0"
+          />
+
+          <!-- last opened files -->
+          <div class="file-workspaces">
+            <ion-list
+              class="list-sidebar list-file"
+              v-if="recentFileManager.getFiles().length > 0"
+            >
+              <ion-header
+                lines="none"
+                class="list-sidebar-header menu-default"
+              >
+                <div class="list-sidebar-header-title">
+                  <ion-icon
+                    class="list-sidebar-header-title__icon"
+                    :icon="documentIcon"
+                  />
+                  <ion-text class="llist-sidebar-header-title__text">
+                    {{ $msTranslate('SideMenu.recentDocuments') }}
+                  </ion-text>
+                </div>
+              </ion-header>
+
+              <sidebar-recent-file-item
+                v-for="file in recentFileManager.getFiles()"
+                :file="file"
+                :key="file.entryId"
+                @file-clicked="openRecentFile"
+                @remove-clicked="removeRecentFile"
+              />
+            </ion-list>
+          </div>
+
           <!-- manage organization -->
           <div
             v-show="currentRouteIsOrganizationManagementRoute()"
@@ -339,7 +371,7 @@ import { InformationManager, InformationManagerKey } from '@/services/informatio
 import useSidebarMenu from '@/services/sidebarMenu';
 import { StorageManager, StorageManagerKey } from '@/services/storageManager';
 import { formatExpirationTime, isTrialOrganizationDevice, getDurationBeforeExpiration } from '@/common/organization';
-import { SidebarWorkspaceItem } from '@/components/sidebar';
+import { SidebarWorkspaceItem, SidebarRecentFileItem } from '@/components/sidebar';
 import {
   GestureDetail,
   IonAvatar,
@@ -362,9 +394,24 @@ import {
   menuController,
   popoverController,
 } from '@ionic/vue';
-import { add, home, business, chevronBack, cog, informationCircle, people, pieChart, star, snow, warning } from 'ionicons/icons';
+import {
+  add,
+  home,
+  business,
+  chevronBack,
+  cog,
+  document as documentIcon,
+  informationCircle,
+  people,
+  pieChart,
+  star,
+  snow,
+  warning,
+} from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref, watch } from 'vue';
 import { Duration } from 'luxon';
+import { recentFileManager, RecentFile } from '@/services/recentFiles';
+import { openPath } from '@/services/fileOpener';
 
 const workspaces: Ref<Array<WorkspaceInfo>> = ref([]);
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
@@ -535,6 +582,16 @@ async function openOrganizationChoice(event: Event): Promise<void> {
 async function openPricingLink(): Promise<void> {
   window.open(I18n.translate({ key: 'app.pricingLink' }), '_blank');
 }
+
+async function openRecentFile(file: RecentFile): Promise<void> {
+  const config = await storageManager.retrieveConfig();
+
+  await openPath(file.workspaceHandle, file.path, informationManager, { skipViewers: config.skipViewers });
+}
+
+async function removeRecentFile(file: RecentFile): Promise<void> {
+  recentFileManager.removeFile(file);
+}
 </script>
 
 <style lang="scss" scoped>
@@ -604,11 +661,13 @@ async function openPricingLink(): Promise<void> {
     z-index: 12;
   }
 
-  .organization-workspaces {
+  .organization-workspaces,
+  .file-workspaces {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     padding: 0 0.75rem;
+    margin-bottom: 1rem;
   }
 }
 
@@ -763,11 +822,15 @@ ion-menu {
   user-select: none;
 }
 
-.list-workspaces {
+.list-sidebar {
   display: flex;
   flex-direction: column;
   flex: 1;
   gap: 0.5rem;
+
+  &.list-file {
+    margin: 1rem 0;
+  }
 
   &-header {
     display: flex;
@@ -825,7 +888,7 @@ ion-menu {
   }
 }
 
-.list-workspaces-divider {
+.list-sidebar-divider {
   background: var(--parsec-color-light-primary-30-opacity15);
   display: flex;
   justify-content: center;

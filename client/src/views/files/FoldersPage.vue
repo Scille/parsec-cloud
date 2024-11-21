@@ -217,8 +217,6 @@ import {
   Clipboard,
   asyncComputed,
   MsSpinner,
-  openSpinnerModal,
-  Base64,
 } from 'megashark-lib';
 import * as parsec from '@/parsec';
 
@@ -249,9 +247,6 @@ import {
   EntryStat,
   WorkspaceStatFolderChildrenErrorTag,
   EntryStatFile,
-  getSystemPath,
-  WorkspaceHandle,
-  isDesktop,
   EntryName,
 } from '@/parsec';
 import { Routes, currentRouteIs, getCurrentRouteQuery, getDocumentPath, getWorkspaceHandle, navigateTo, watchRoute } from '@/router';
@@ -276,7 +271,7 @@ import { IonContent, IonPage, IonText, modalController, popoverController } from
 import { arrowRedo, copy, folderOpen, informationCircle, link, pencil, trashBin } from 'ionicons/icons';
 import { Ref, computed, inject, onMounted, onUnmounted, ref } from 'vue';
 import { EntrySyncedData, EventData, EventDistributor, EventDistributorKey, Events } from '@/services/eventDistributor';
-import { detectFileContentType, FileContentType } from '@/common/fileTypes';
+import { openPath } from '@/services/fileOpener';
 
 interface FoldersPageSavedData {
   displayState?: DisplayState;
@@ -330,7 +325,6 @@ const storageManager: StorageManager = inject(StorageManagerKey)!;
 const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 const FOLDERS_PAGE_DATA_KEY = 'FoldersPage';
-const OPEN_FILE_SIZE_LIMIT = 15_000_000;
 
 const sortProperty = ref(SortProperty.Name);
 const sortAsc = ref(true);
@@ -1180,22 +1174,6 @@ async function showHistory(entries: EntryModel[]): Promise<void> {
   });
 }
 
-async function openWithSystem(workspaceHandle: WorkspaceHandle, entry: EntryStatFile): Promise<void> {
-  const result = await getSystemPath(workspaceHandle, entry.path);
-
-  if (!result.ok) {
-    await informationManager.present(
-      new Information({
-        message: 'FoldersPage.open.fileFailed',
-        level: InformationLevel.Error,
-      }),
-      PresentationMode.Modal,
-    );
-  } else {
-    window.electronAPI.openFile(result.value);
-  }
-}
-
 async function openEntries(entries: EntryModel[]): Promise<void> {
   if (entries.length !== 1 || !workspaceInfo.value || !entries[0].isFile()) {
     return;
@@ -1206,37 +1184,7 @@ async function openEntries(entries: EntryModel[]): Promise<void> {
 
   const config = await storageManager.retrieveConfig();
 
-  if (isDesktop() && config.skipViewers) {
-    await openWithSystem(workspaceHandle, entry);
-    return;
-  }
-
-  const modal = await openSpinnerModal('fileViewers.openingFile');
-  const contentType = await detectFileContentType(workspaceHandle, entry.path);
-
-  try {
-    if (!contentType || contentType.type === FileContentType.Unknown) {
-      await openWithSystem(workspaceHandle, entry);
-    } else {
-      if (entry.size > OPEN_FILE_SIZE_LIMIT) {
-        informationManager.present(
-          new Information({
-            message: 'FILE TOO BIG',
-            level: InformationLevel.Warning,
-          }),
-          PresentationMode.Toast,
-        );
-        await openWithSystem(workspaceHandle, entry);
-        return;
-      }
-
-      await navigateTo(Routes.Viewer, {
-        query: { workspaceHandle: workspaceHandle, documentPath: entry.path, fileTypeInfo: Base64.fromObject(contentType) },
-      });
-    }
-  } finally {
-    await modal.dismiss();
-  }
+  await openPath(workspaceHandle, entry.path, informationManager, { skipViewers: config.skipViewers });
 }
 
 async function openGlobalContextMenu(event: Event): Promise<void> {
