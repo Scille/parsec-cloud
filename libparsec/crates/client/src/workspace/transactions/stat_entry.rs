@@ -26,6 +26,7 @@ pub enum EntryStat {
         is_placeholder: bool,
         need_sync: bool,
         size: SizeInt,
+        last_updater: DeviceID,
     },
     // Here Folder can also be the root of the workspace (i.e. WorkspaceManifest)
     Folder {
@@ -40,6 +41,7 @@ pub enum EntryStat {
         base_version: VersionInt,
         is_placeholder: bool,
         need_sync: bool,
+        last_updater: DeviceID,
     },
 }
 
@@ -145,6 +147,7 @@ pub(crate) async fn stat_entry_by_id(
             base_version: manifest.base.version,
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
+            last_updater: manifest.base.author,
         },
         ArcLocalChildManifest::File(manifest) => {
             // If the file may be currently opened with un-flushed modifications.
@@ -174,6 +177,7 @@ pub(crate) async fn stat_entry_by_id(
                 is_placeholder: manifest.base.version == 0,
                 need_sync: manifest.need_sync,
                 size: manifest.size,
+                last_updater: manifest.base.author,
             }
         }
     };
@@ -216,6 +220,7 @@ pub(crate) async fn stat_entry(
             base_version: manifest.base.version,
             is_placeholder: manifest.base.version == 0,
             need_sync: manifest.need_sync,
+            last_updater: manifest.base.author,
         },
         ArcLocalChildManifest::File(manifest) => {
             // If the file may be currently opened with un-flushed modifications.
@@ -245,6 +250,7 @@ pub(crate) async fn stat_entry(
                 is_placeholder: manifest.base.version == 0,
                 need_sync: manifest.need_sync,
                 size: manifest.size,
+                last_updater: manifest.base.author,
             }
         }
     };

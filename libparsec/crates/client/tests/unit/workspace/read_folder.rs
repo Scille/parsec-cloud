@@ -51,6 +51,7 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                     is_placeholder: false,
                     need_sync: false,
                     size: 11,
+                    last_updater: alice.device_id,
                 },
             ),
             (
@@ -64,6 +65,7 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                     base_version: 1,
                     is_placeholder: false,
                     need_sync: false,
+                    last_updater: alice.device_id,
                 },
             ),
         ];
@@ -84,6 +86,7 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                     is_placeholder: false,
                     need_sync: false,
                     size: 0,
+                    last_updater: alice.device_id,
                 },
             ),
             (
@@ -97,6 +100,7 @@ async fn ok_with_local_cache(#[values(true, false)] target_is_root: bool, env: &
                     base_version: 1,
                     is_placeholder: false,
                     need_sync: false,
+                    last_updater: alice.device_id,
                 },
             ),
         ];
@@ -200,6 +204,7 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                     is_placeholder: false,
                     need_sync: false,
                     size: 11,
+                    last_updater: alice.device_id,
                 },
             ),
             (
@@ -213,6 +218,7 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                     base_version: 1,
                     is_placeholder: false,
                     need_sync: false,
+                    last_updater: alice.device_id,
                 },
             ),
         ];
@@ -233,6 +239,7 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                     is_placeholder: false,
                     need_sync: false,
                     size: 0,
+                    last_updater: alice.device_id,
                 },
             ),
             (
@@ -246,6 +253,7 @@ async fn ok_no_local_cache(#[values(true, false)] target_is_root: bool, env: &Te
                     base_version: 1,
                     is_placeholder: false,
                     need_sync: false,
+                    last_updater: alice.device_id,
                 },
             ),
         ];
@@ -435,6 +443,7 @@ async fn read_folder_with_confined_entries(
                 is_placeholder: false,
                 need_sync: false,
                 size: 0,
+                last_updater: alice.device_id,
             },
         ),
         (
@@ -448,6 +457,7 @@ async fn read_folder_with_confined_entries(
                 base_version: 1,
                 is_placeholder: false,
                 need_sync: false,
+                last_updater: alice.device_id,
             },
         ),
     ];
@@ -572,6 +582,7 @@ async fn read_folder_containing_under_modification_file(
                 is_placeholder: false,
                 need_sync: true,
                 size: expected_size,
+                last_updater: alice.device_id,
             },
         ),
         (
@@ -585,6 +596,7 @@ async fn read_folder_containing_under_modification_file(
                 base_version: 1,
                 is_placeholder: false,
                 need_sync: false,
+                last_updater: alice.device_id,
             },
         ),
     ];
