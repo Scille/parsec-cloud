@@ -3,10 +3,10 @@
 import { UserInfo, UserProfile } from '@/parsec';
 
 export enum SortProperty {
-  Name,
-  JoinedDate,
-  Status,
-  Profile,
+  Name = 'sort-name',
+  JoinedDate = 'sort-joined-data',
+  Status = 'sort-status',
+  Profile = 'sort-profile',
 }
 
 export enum InvitationAction {
@@ -55,6 +55,18 @@ export class UserCollection {
       profileStandard: true,
       profileOutsider: true,
     };
+  }
+
+  getFilters(): UserFilterLabels {
+    return this.filters;
+  }
+
+  setFilters(filters: UserFilterLabels): void {
+    this.filters.statusActive = filters.statusActive;
+    this.filters.statusRevoked = filters.statusRevoked;
+    this.filters.profileAdmin = filters.profileAdmin;
+    this.filters.profileStandard = filters.profileStandard;
+    this.filters.profileOutsider = filters.profileOutsider;
   }
 
   hasSelected(): boolean {
