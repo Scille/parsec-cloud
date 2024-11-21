@@ -702,6 +702,7 @@
         "manageOrganization": "Gérer mon organisation",
         "organizationInfo": "Informations",
         "goToHome": "Mes espaces",
+        "recentDocuments": "Documents récents",
         "back": "Retour",
         "trial": {
             "tag": "Version d'essai",
@@ -1695,6 +1696,7 @@
     },
     "fileViewers": {
         "openWithDefault": "Ouvrir avec l'application par défaut",
-        "openingFile": "Ouverture du fichier..."
+        "openingFile": "Ouverture du fichier...",
+        "fileTooBig": "Le fichier est trop large pour être ouvert avec un visualiseur."
     }
 }

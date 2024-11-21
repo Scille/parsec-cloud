@@ -26,6 +26,10 @@ class FIFO<T> {
   length(): number {
     return this.entries.length;
   }
+
+  has(findFunction: (val: T) => boolean): boolean {
+    return this.entries.find(findFunction) !== undefined;
+  }
 }
 
 export { FIFO };
