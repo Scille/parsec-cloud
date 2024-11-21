@@ -649,8 +649,8 @@ async function onFileOperationState(state: FileOperationState, operationData?: F
       fileOperations.value.splice(index, 1);
     }
     const copyData = operationData as CopyData;
-    const dstPathParent = await Path.parent(copyData.dstPath);
-    if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(dstPathParent, currentPath.value)) {
+
+    if (copyData.workspaceHandle === workspaceInfo.value?.handle && Path.areSame(copyData.dstPath, currentPath.value)) {
       await listFolder({ sameFolder: true });
     }
   } else if (state === FileOperationState.FolderCreated) {
