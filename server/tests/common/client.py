@@ -644,7 +644,7 @@ class ShamirOrgRpcClients:
 
 @pytest.fixture
 async def shamirorg(
-    app: AsgiApp, testbed: TestbedBackend
+    app: AsgiApp, testbed: TestbedBackend, skip_if_postgresql: None
 ) -> AsyncGenerator[ShamirOrgRpcClients, None]:
     async with AsyncClient(app=app) as raw_client:
         organization_id, _, template_content = await testbed.new_organization("shamir")
