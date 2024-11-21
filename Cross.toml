@@ -22,6 +22,8 @@ pre-build = [
 
 [target.x86_64-unknown-linux-musl.env]
 passthrough = [
+    # Make the crate pkg-config add `--static` to the `pkg-config` command line
+    # Mainly used to make static build.
     "PKG_CONFIG_ALL_STATIC",
     # Modify the PATH to prefer the rust toolchain of the container over the host one.
     "PATH=/root/.rustup/toolchains/stable-x86_64-unknown-linux-musl/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
