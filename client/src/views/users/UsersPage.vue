@@ -52,12 +52,17 @@
             </ion-text>
           </div>
           <!-- prettier-ignore -->
-          <user-filter :users="(users as UserCollection)" />
+          <user-filter
+            :users="(users as UserCollection)"
+            @change="onFilterUpdated"
+          />
           <ms-sorter
+            :key="`${currentSortProperty}-${currentSortOrder}`"
             :label="'UsersPage.sort.byName'"
             :options="msSorterOptions"
-            :default-option="SortProperty.Profile"
+            :default-option="currentSortProperty"
             :sorter-labels="msSorterLabels"
+            :sort-by-asc="currentSortOrder"
             @change="onSortChange"
           />
           <ms-grid-list-toggle
@@ -120,7 +125,7 @@ import {
   MsSorterChangeEvent,
   Translatable,
 } from 'megashark-lib';
-import { SortProperty, UserCollection, UserFilter, UserModel } from '@/components/users';
+import { SortProperty, UserCollection, UserFilter, UserFilterLabels, UserModel } from '@/components/users';
 import {
   ClientInfo,
   ClientNewUserInvitationErrorTag,
@@ -158,18 +163,50 @@ const eventDistributor: EventDistributor = inject(EventDistributorKey)!;
 
 let hotkeys: HotkeyGroup | null = null;
 const users = ref(new UserCollection());
-const currentSortProperty = ref();
-const currentSortOrder = ref();
+const currentSortProperty: Ref<SortProperty> = ref(SortProperty.Profile);
+const currentSortOrder = ref(true);
 let eventCbId: string | null = null;
 
 const USERS_PAGE_DATA_KEY = 'UsersPage';
 
 interface UsersPageSavedData {
-  displayState?: DisplayState;
+  displayState: DisplayState;
+  filters: UserFilterLabels;
+  sortProperty: SortProperty;
+  sortAscending: boolean;
+}
+
+async function storeComponentData(): Promise<void> {
+  await storageManager.storeComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, {
+    displayState: displayView.value,
+    filters: users.value.getFilters(),
+    sortProperty: currentSortProperty.value,
+    sortAscending: currentSortOrder.value,
+  });
+}
+
+async function restoreComponentData(): Promise<void> {
+  const data: UsersPageSavedData = await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, {
+    displayState: DisplayState.List,
+    filters: {
+      statusActive: true,
+      statusRevoked: true,
+      profileAdmin: true,
+      profileStandard: true,
+      profileOutsider: true,
+    },
+    sortProperty: SortProperty.Profile,
+    sortAscending: true,
+  });
+
+  displayView.value = data.displayState;
+  users.value.setFilters(data.filters);
+  currentSortProperty.value = data.sortProperty;
+  currentSortOrder.value = data.sortAscending;
 }
 
 async function onDisplayStateChange(): Promise<void> {
-  await storageManager.storeComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: displayView.value });
+  await storeComponentData();
 }
 
 const msSorterOptions: MsOptions = new MsOptions([
@@ -184,10 +221,15 @@ const msSorterLabels = {
   desc: 'UsersPage.sort.desc',
 };
 
-function onSortChange(event: MsSorterChangeEvent): void {
+async function onSortChange(event: MsSorterChangeEvent): Promise<void> {
   currentSortProperty.value = event.option.key;
   currentSortOrder.value = event.sortByAsc;
   users.value.sort(currentSortProperty.value, currentSortOrder.value);
+  await storeComponentData();
+}
+
+async function onFilterUpdated(): Promise<void> {
+  await storeComponentData();
 }
 
 async function revokeUser(user: UserInfo): Promise<void> {
@@ -482,9 +524,7 @@ onMounted(async (): Promise<void> => {
       }
     }
   });
-  displayView.value = (
-    await storageManager.retrieveComponentData<UsersPageSavedData>(USERS_PAGE_DATA_KEY, { displayState: DisplayState.List })
-  ).displayState;
+  await restoreComponentData();
 
   hotkeys = hotkeyManager.newHotkeys();
   hotkeys.add(
@@ -496,9 +536,6 @@ onMounted(async (): Promise<void> => {
   hotkeys.add({ key: 'a', modifiers: Modifiers.Ctrl, platforms: Platforms.Desktop, disableIfModal: true, route: Routes.Users }, async () =>
     users.value.selectAll(true),
   );
-
-  currentSortProperty.value = SortProperty.Profile;
-  currentSortOrder.value = true;
 
   const result = await parsecGetClientInfo();
 
