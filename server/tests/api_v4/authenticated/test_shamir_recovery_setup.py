@@ -89,10 +89,6 @@ async def test_authenticated_shamir_recovery_setup_share_inconsistent_timestamp(
 @pytest.mark.xfail(
     reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
 )
-# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
-@pytest.mark.skipif(
-    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
-)
 async def test_authenticated_shamir_recovery_setup_shamir_setup_already_exists(
     shamirorg: ShamirOrgRpcClients,
 ) -> None:
@@ -299,10 +295,6 @@ async def test_authenticated_shamir_recovery_setup_missing_share_for_recipient(
 
 @pytest.mark.parametrize("kind", ("from_recipient", "from_author"))
 @pytest.mark.usefixtures("ballpark_always_ok")
-# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
-@pytest.mark.skipif(
-    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
-)
 async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
     shamirorg: ShamirOrgRpcClients, kind: str
 ) -> None:
@@ -349,10 +341,6 @@ async def test_authenticated_shamir_recovery_setup_require_greater_timestamp(
     reason="TODO: currently there is a unique shamir topic, we should switch to a per-user shamir topic instead"
 )
 @pytest.mark.usefixtures("ballpark_always_ok")
-# Cannot use `with_postgresql` fixture since `shamirorg` init uses fonctions non-implemented in postgresql
-@pytest.mark.skipif(
-    "bool(config.getoption('--postgresql'))", reason="TODO: postgre not implemented yet"
-)
 async def test_authenticated_shamir_recovery_setup_isolated_from_other_users(
     shamirorg: ShamirOrgRpcClients,
 ) -> None:
