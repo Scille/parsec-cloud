@@ -7,9 +7,6 @@ import pytest
 from parsec._parsec import (
     DateTime,
     InvitationStatus,
-    InvitationToken,
-    ShamirRecoveryBriefCertificate,
-    ShamirRecoveryShareCertificate,
     UserID,
     authenticated_cmds,
 )
@@ -19,59 +16,21 @@ from parsec.components.invite import (
     ShamirRecoveryRecipient,
 )
 from parsec.events import EventInvitation
-from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester
-
-
-@pytest.fixture
-async def alice_shamir(backend: Backend, coolorg: CoolorgRpcClients, with_postgresql: bool) -> None:
-    if with_postgresql:
-        pytest.xfail("TODO: postgre not implemented yet")
-    dt = DateTime.now()
-    bob_share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=dt,
-        recipient=coolorg.bob.user_id,
-        ciphered_share=b"abc",
-    )
-    mallory_share = ShamirRecoveryShareCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=dt,
-        recipient=coolorg.mallory.user_id,
-        ciphered_share=b"abc",
-    )
-    brief = ShamirRecoveryBriefCertificate(
-        author=coolorg.alice.device_id,
-        user_id=coolorg.alice.user_id,
-        timestamp=dt,
-        threshold=2,
-        per_recipient_shares={coolorg.bob.user_id: 1, coolorg.mallory.user_id: 1},
-    )
-
-    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
-        b"abc",
-        InvitationToken.new(),
-        brief.dump_and_sign(coolorg.alice.signing_key),
-        [
-            bob_share.dump_and_sign(coolorg.alice.signing_key),
-            mallory_share.dump_and_sign(coolorg.alice.signing_key),
-        ],
-    )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+from tests.common import Backend, CoolorgRpcClients, HttpCommonErrorsTester, ShamirOrgRpcClients
 
 
 @pytest.mark.parametrize("send_email", (False, True))
 async def test_authenticated_invite_new_shamir_recovery_ok_new(
-    send_email: bool, coolorg: CoolorgRpcClients, backend: Backend, alice_shamir: None
+    send_email: bool,
+    shamirorg: ShamirOrgRpcClients,
+    backend: Backend,
 ) -> None:
-    expected_invitations = await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+    expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
-        rep = await coolorg.bob.invite_new_shamir_recovery(
+        rep = await shamirorg.bob.invite_new_shamir_recovery(
             send_email=send_email,
-            claimer_user_id=coolorg.alice.user_id,
+            claimer_user_id=shamirorg.alice.user_id,
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         assert (
@@ -82,68 +41,73 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
 
         await spy.wait_event_occurred(
             EventInvitation(
-                organization_id=coolorg.organization_id,
-                greeter=coolorg.bob.user_id,
+                organization_id=shamirorg.organization_id,
+                greeter=shamirorg.bob.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
-    expected_invitations[coolorg.bob.user_id] = [
+    expected_invitations[shamirorg.bob.user_id] = [
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=coolorg.bob.device_id,
-            created_by_user_id=coolorg.bob.user_id,
-            created_by_human_handle=coolorg.bob.human_handle,
+            created_by_device_id=shamirorg.bob.device_id,
+            created_by_user_id=shamirorg.bob.user_id,
+            created_by_human_handle=shamirorg.bob.human_handle,
             status=InvitationStatus.IDLE,
             threshold=2,
-            claimer_user_id=coolorg.alice.user_id,
+            claimer_user_id=shamirorg.alice.user_id,
             recipients=[
                 ShamirRecoveryRecipient(
-                    user_id=coolorg.bob.user_id,
-                    human_handle=coolorg.bob.human_handle,
+                    user_id=shamirorg.bob.user_id,
+                    human_handle=shamirorg.bob.human_handle,
+                    shares=2,
+                ),
+                ShamirRecoveryRecipient(
+                    user_id=shamirorg.mallory.user_id,
+                    human_handle=shamirorg.mallory.human_handle,
                     shares=1,
                 ),
                 ShamirRecoveryRecipient(
-                    user_id=coolorg.mallory.user_id,
-                    human_handle=coolorg.mallory.human_handle,
+                    user_id=shamirorg.mike.user_id,
+                    human_handle=shamirorg.mike.human_handle,
                     shares=1,
                 ),
             ],
         )
     ]
     assert (
-        await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+        await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
         == expected_invitations
     )
 
 
 @pytest.mark.parametrize("send_email", (False, True))
 async def test_authenticated_invite_new_shamir_recovery_author_not_allowed(
-    send_email: bool, coolorg: CoolorgRpcClients, backend: Backend, alice_shamir: None
+    send_email: bool, shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     # Shamir setup exists but author is not part of the recipients
-    rep = await coolorg.alice.invite_new_shamir_recovery(
+    rep = await shamirorg.alice.invite_new_shamir_recovery(
         send_email=send_email,
-        claimer_user_id=coolorg.alice.user_id,
+        claimer_user_id=shamirorg.alice.user_id,
     )
     assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepAuthorNotAllowed)
 
     # No shamir setup have been created
-    rep = await coolorg.alice.invite_new_shamir_recovery(
+    rep = await shamirorg.alice.invite_new_shamir_recovery(
         send_email=send_email,
-        claimer_user_id=coolorg.bob.user_id,
+        claimer_user_id=shamirorg.bob.user_id,
     )
     assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepAuthorNotAllowed)
 
 
 @pytest.mark.parametrize("send_email", (False, True))
 async def test_authenticated_invite_new_shamir_recovery_user_not_found(
-    send_email: bool, coolorg: CoolorgRpcClients, backend: Backend, alice_shamir: None
+    send_email: bool, shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     # Shamir setup exists but author is not part of the recipients
-    rep = await coolorg.alice.invite_new_shamir_recovery(
+    rep = await shamirorg.alice.invite_new_shamir_recovery(
         send_email=send_email,
         claimer_user_id=UserID.new(),
     )
@@ -151,41 +115,41 @@ async def test_authenticated_invite_new_shamir_recovery_user_not_found(
 
 
 async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
-    coolorg: CoolorgRpcClients, backend: Backend, alice_shamir: None
+    shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
     t1 = DateTime.now()
 
     outcome = await backend.invite.new_for_shamir_recovery(
         now=t1,
-        organization_id=coolorg.organization_id,
-        author=coolorg.bob.device_id,
+        organization_id=shamirorg.organization_id,
+        author=shamirorg.bob.device_id,
         send_email=False,
-        claimer_user_id=coolorg.alice.user_id,
+        claimer_user_id=shamirorg.alice.user_id,
     )
     assert isinstance(outcome, tuple)
     (invitation_token, _) = outcome
 
-    expected_invitations = await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+    expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
-        rep = await coolorg.bob.invite_new_shamir_recovery(
+        rep = await shamirorg.bob.invite_new_shamir_recovery(
             send_email=False,
-            claimer_user_id=coolorg.alice.user_id,
+            claimer_user_id=shamirorg.alice.user_id,
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         assert rep.token == invitation_token
 
         await spy.wait_event_occurred(
             EventInvitation(
-                organization_id=coolorg.organization_id,
-                greeter=coolorg.bob.user_id,
+                organization_id=shamirorg.organization_id,
+                greeter=shamirorg.bob.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
     assert (
-        await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+        await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
         == expected_invitations
     )
 
@@ -199,10 +163,9 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
     ),
 )
 async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
-    coolorg: CoolorgRpcClients,
+    shamirorg: ShamirOrgRpcClients,
     backend: Backend,
     bad_outcome: SendEmailBadOutcome,
-    alice_shamir: None,
     monkeypatch,
 ) -> None:
     async def _mocked_send_email(*args, **kwargs):
@@ -210,11 +173,11 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
 
     monkeypatch.setattr("parsec.components.invite.send_email", _mocked_send_email)
 
-    expected_invitations = await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+    expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
-        rep = await coolorg.bob.invite_new_shamir_recovery(
-            send_email=True, claimer_user_id=coolorg.alice.user_id
+        rep = await shamirorg.bob.invite_new_shamir_recovery(
+            send_email=True, claimer_user_id=shamirorg.alice.user_id
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         invitation_token = rep.token
@@ -230,39 +193,44 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
 
         await spy.wait_event_occurred(
             EventInvitation(
-                organization_id=coolorg.organization_id,
-                greeter=coolorg.bob.user_id,
+                organization_id=shamirorg.organization_id,
+                greeter=shamirorg.bob.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
-    expected_invitations[coolorg.bob.user_id] = [
+    expected_invitations[shamirorg.bob.user_id] = [
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=coolorg.bob.device_id,
-            created_by_user_id=coolorg.bob.user_id,
-            created_by_human_handle=coolorg.bob.human_handle,
+            created_by_device_id=shamirorg.bob.device_id,
+            created_by_user_id=shamirorg.bob.user_id,
+            created_by_human_handle=shamirorg.bob.human_handle,
             status=InvitationStatus.IDLE,
             threshold=2,
-            claimer_user_id=coolorg.alice.user_id,
+            claimer_user_id=shamirorg.alice.user_id,
             recipients=[
                 ShamirRecoveryRecipient(
-                    user_id=coolorg.bob.user_id,
-                    human_handle=coolorg.bob.human_handle,
+                    user_id=shamirorg.bob.user_id,
+                    human_handle=shamirorg.bob.human_handle,
+                    shares=2,
+                ),
+                ShamirRecoveryRecipient(
+                    user_id=shamirorg.mallory.user_id,
+                    human_handle=shamirorg.mallory.human_handle,
                     shares=1,
                 ),
                 ShamirRecoveryRecipient(
-                    user_id=coolorg.mallory.user_id,
-                    human_handle=coolorg.mallory.human_handle,
+                    user_id=shamirorg.mike.user_id,
+                    human_handle=shamirorg.mike.human_handle,
                     shares=1,
                 ),
             ],
         )
     ]
     assert (
-        await backend.invite.test_dump_all_invitations(coolorg.organization_id)
+        await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
         == expected_invitations
     )
 
