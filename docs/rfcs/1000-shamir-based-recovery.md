@@ -830,11 +830,11 @@ The deletion certificate
         // (i.e. a user can only remove its own Shamir recovery)
         {
             "name": "setup_to_delete_user_id",
-            "type": "DateTime"
+            "type": "UserID"
         },
         {
             "name": "share_recipients",
-            "type": "List<UserId>"
+            "type": "List<UserID>"
         }
     ]
 }
