@@ -127,6 +127,7 @@ async fn parent_doesnt_exist(tmp_path: TmpPath, env: &TestbedEnv) {
                                 base_version: 0,
                                 is_placeholder: false,
                                 need_sync: false,
+                                last_updater: "alice@dev1".parse().unwrap(),
                             }))
                         } else {
                             // Fallback to real lookup

@@ -90,6 +90,7 @@ impl FolderReader {
             base_version: self.manifest.base.version,
             is_placeholder: self.manifest.base.version == 0,
             need_sync: self.manifest.need_sync,
+            last_updater: self.manifest.base.author,
         }
     }
 

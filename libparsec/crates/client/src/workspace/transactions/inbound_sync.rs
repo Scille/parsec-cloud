@@ -529,7 +529,7 @@ async fn handle_conflict_and_update_store(
         ),
     };
 
-    // 2) Local changes causing the conflict are transfered to a new manifest
+    // 2) Local changes causing the conflict are transferred to a new manifest
 
     let (original_child_id, conflicting_new_child_manifest) = match local_child_manifest {
         // Most likely case since file content cannot be merged
