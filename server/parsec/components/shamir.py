@@ -40,13 +40,13 @@ class BaseShamirComponent:
             match await self.add_recovery_setup(
                 now=DateTime.now(),
                 organization_id=client_ctx.organization_id,
-                author=client_ctx.user_id,
-                device=client_ctx.device_id,
+                author=client_ctx.device_id,
                 author_verify_key=client_ctx.device_verify_key,
-                setup_ciphered_data=req.setup.ciphered_data,
-                setup_reveal_token=req.setup.reveal_token,
-                setup_brief=req.setup.brief,
-                setup_shares=req.setup.shares,
+                user_id=client_ctx.user_id,
+                ciphered_data=req.setup.ciphered_data,
+                reveal_token=req.setup.reveal_token,
+                brief=req.setup.brief,
+                shares=req.setup.shares,
             ):
                 case None:
                     return authenticated_cmds.latest.shamir_recovery_setup.RepOk()
@@ -113,13 +113,13 @@ class BaseShamirComponent:
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
-        device: DeviceID,
+        author: DeviceID,
         author_verify_key: VerifyKey,
-        setup_ciphered_data: bytes,
-        setup_reveal_token: InvitationToken,
-        setup_brief: bytes,
-        setup_shares: list[bytes],
+        user_id: UserID,
+        ciphered_data: bytes,
+        reveal_token: InvitationToken,
+        brief: bytes,
+        shares: list[bytes],
     ) -> (
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
@@ -165,8 +165,8 @@ def shamir_add_recovery_setup_validate(
     author: DeviceID,
     user_id: UserID,
     author_verify_key: VerifyKey,
-    setup_brief: bytes,
-    setup_shares: list[bytes],
+    brief: bytes,
+    shares: list[bytes],
 ) -> (
     tuple[ShamirRecoveryBriefCertificate, dict[UserID, bytes]]
     | ShamirAddRecoverySetupValidateBadOutcome
@@ -175,7 +175,7 @@ def shamir_add_recovery_setup_validate(
     share_certificates: dict[UserID, bytes] = {}
     try:
         brief_certificate = ShamirRecoveryBriefCertificate.verify_and_load(
-            setup_brief, author_verify_key, expected_author=author
+            brief, author_verify_key, expected_author=author
         )
     except ValueError:
         return ShamirAddRecoverySetupValidateBadOutcome.BRIEF_INVALID_DATA
@@ -185,7 +185,7 @@ def shamir_add_recovery_setup_validate(
             return error
         case _:
             pass
-    for raw_share in setup_shares:
+    for raw_share in shares:
         try:
             share_certificate = ShamirRecoveryShareCertificate.verify_and_load(
                 raw_share, author_verify_key, expected_author=author, expected_recipient=None

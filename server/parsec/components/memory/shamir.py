@@ -72,13 +72,13 @@ class MemoryShamirComponent(BaseShamirComponent):
         self,
         now: DateTime,
         organization_id: OrganizationID,
-        author: UserID,
-        device: DeviceID,
+        author: DeviceID,
         author_verify_key: VerifyKey,
-        setup_ciphered_data: bytes,
-        setup_reveal_token: InvitationToken,
-        setup_brief: bytes,
-        setup_shares: list[bytes],
+        user_id: UserID,
+        ciphered_data: bytes,
+        reveal_token: InvitationToken,
+        brief: bytes,
+        shares: list[bytes],
     ) -> (
         None
         | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
@@ -88,7 +88,7 @@ class MemoryShamirComponent(BaseShamirComponent):
         | ShamirInvalidRecipientBadOutcome
         | RequireGreaterTimestamp
     ):
-        match self.organization_and_user_common_checks(organization_id, author):
+        match self.organization_and_user_common_checks(organization_id, user_id):
             case (org, _):
                 pass
             case error:
@@ -99,15 +99,15 @@ class MemoryShamirComponent(BaseShamirComponent):
             shamir_topic_last_timestamp,
         ):
             match shamir_add_recovery_setup_validate(
-                now, device, author, author_verify_key, setup_brief, setup_shares
+                now, author, user_id, author_verify_key, brief, shares
             ):
-                case (brief, shares):
+                case (cooked_brief, cooked_shares):
                     pass
                 case error:
                     return error
 
             # all recipients exists and not revoked
-            for share_recipient in shares.keys():
+            for share_recipient in cooked_shares.keys():
                 try:
                     recipient_user = org.users[share_recipient]
                 except KeyError:
@@ -123,13 +123,13 @@ class MemoryShamirComponent(BaseShamirComponent):
             # Ensure we are not breaking causality by adding a newer timestamp.
 
             last_certificate = max(common_topic_last_timestamp, shamir_topic_last_timestamp)
-            if last_certificate >= brief.timestamp:
+            if last_certificate >= cooked_brief.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
             # All checks are good, now we do the actual insertion
 
-            org.per_topic_last_timestamp["shamir_recovery"] = brief.timestamp
+            org.per_topic_last_timestamp["shamir_recovery"] = cooked_brief.timestamp
 
-            self._data.organizations[organization_id].shamir_setup[author] = MemoryShamirSetup(
-                setup_ciphered_data, setup_reveal_token, brief, shares, setup_brief
+            self._data.organizations[organization_id].shamir_setup[user_id] = MemoryShamirSetup(
+                ciphered_data, reveal_token, cooked_brief, cooked_shares, brief
             )
