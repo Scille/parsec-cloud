@@ -207,7 +207,7 @@ impl TestbedTemplateBuilderCounters {
     }
     fn next_256bits_key(&mut self) -> &[u8; 32] {
         // 256 keys should be far enough for our needs
-        self.current_256bits_key[31]
+        self.current_256bits_key[31] = self.current_256bits_key[31]
             .checked_add(1)
             .expect("No more items, your template is too big :(");
         &self.current_256bits_key

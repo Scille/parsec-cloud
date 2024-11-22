@@ -308,13 +308,13 @@ async def bob_becomes_admin_and_changes_alice(
             timestamp=t1,
             user_id=coolorg.alice.user_id,
         )
-        raw_certif1 = certif1.dump_and_sign(coolorg.alice.signing_key)
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
 
         outcome = await backend.user.revoke_user(
             now=t1,
             organization_id=coolorg.organization_id,
             author=coolorg.bob.device_id,
-            author_verify_key=coolorg.alice.signing_key.verify_key,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
             revoked_user_certificate=raw_certif1,
         )
         assert isinstance(outcome, RevokedUserCertificate)
@@ -326,13 +326,13 @@ async def bob_becomes_admin_and_changes_alice(
             user_id=coolorg.alice.user_id,
             new_profile=new_alice_profile,
         )
-        raw_certif1 = certif1.dump_and_sign(coolorg.alice.signing_key)
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
 
         outcome = await backend.user.update_user(
             now=t1,
             organization_id=coolorg.organization_id,
             author=coolorg.bob.device_id,
-            author_verify_key=coolorg.alice.signing_key.verify_key,
+            author_verify_key=coolorg.bob.signing_key.verify_key,
             user_update_certificate=raw_certif1,
         )
         assert isinstance(outcome, UserUpdateCertificate)
@@ -362,7 +362,7 @@ async def wksp1_alice_gives_role(
             now=now,
             organization_id=coolorg.organization_id,
             author=coolorg.alice.device_id,
-            author_verify_key=coolorg.bob.signing_key.verify_key,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
             realm_role_certificate=raw_certif,
         )
         assert isinstance(outcome, RealmRoleCertificate)
@@ -381,7 +381,7 @@ async def wksp1_alice_gives_role(
             now=now,
             organization_id=coolorg.organization_id,
             author=coolorg.alice.device_id,
-            author_verify_key=coolorg.bob.signing_key.verify_key,
+            author_verify_key=coolorg.alice.signing_key.verify_key,
             realm_role_certificate=raw_certif,
             key_index=1,
             recipient_keys_bundle_access=b"<dummy key bundle access>",
@@ -428,7 +428,7 @@ async def wksp1_bob_becomes_owner_and_changes_alice(
             role=None,
             user_id=coolorg.alice.user_id,
         )
-        raw_certif1 = certif1.dump_and_sign(coolorg.alice.signing_key)
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
 
         outcome = await backend.realm.unshare(
             now=t1,
@@ -447,7 +447,7 @@ async def wksp1_bob_becomes_owner_and_changes_alice(
             role=new_alice_role,
             user_id=coolorg.alice.user_id,
         )
-        raw_certif1 = certif1.dump_and_sign(coolorg.alice.signing_key)
+        raw_certif1 = certif1.dump_and_sign(coolorg.bob.signing_key)
 
         outcome = await backend.realm.share(
             now=t1,
@@ -529,7 +529,7 @@ async def authenticated_http_common_errors_tester(
                     organization_id=coolorg.organization_id,
                     author=coolorg.bob.device_id,
                     author_verify_key=coolorg.bob.signing_key.verify_key,
-                    revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+                    revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key),
                 )
                 assert isinstance(outcome, RevokedUserCertificate)
 
@@ -647,7 +647,7 @@ async def tos_http_common_errors_tester(
                     organization_id=coolorg.organization_id,
                     author=coolorg.bob.device_id,
                     author_verify_key=coolorg.bob.signing_key.verify_key,
-                    revoked_user_certificate=certif.dump_and_sign(coolorg.alice.signing_key),
+                    revoked_user_certificate=certif.dump_and_sign(coolorg.bob.signing_key),
                 )
                 assert isinstance(outcome, RevokedUserCertificate)
 

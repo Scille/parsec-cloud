@@ -2550,10 +2550,11 @@ impl TestbedEventCreateOrUpdateUserManifestVlob {
     fn cache(&self, template: &TestbedTemplate) -> TestbedEventCreateOrUpdateVlobCache {
         let populate = || {
             let author_signkey = template.device_signing_key(self.manifest.author);
-            let local_symkey = template.device_local_symkey(self.manifest.author);
+            let user_realm_key =
+                template.user_realm_key(template.device_user_id(self.manifest.author));
 
             let signed: Bytes = self.manifest.dump_and_sign(author_signkey).into();
-            let encrypted = local_symkey.encrypt(&signed).into();
+            let encrypted = user_realm_key.encrypt(&signed).into();
             let sequestered = template.sequester_services_public_key().map(|iter| {
                 iter.map(|(id, pubkey)| (id.to_owned(), Bytes::from(pubkey.encrypt(&signed))))
                     .collect()
