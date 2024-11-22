@@ -76,6 +76,7 @@
               <statistics-page
                 v-if="currentPage === ClientAreaPages.Statistics"
                 :organization="currentOrganization"
+                @organization-selected="onOrganizationSelected"
               />
               <invoices-page
                 v-if="currentPage === ClientAreaPages.Invoices"
