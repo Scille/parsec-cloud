@@ -5,7 +5,6 @@ from unittest.mock import ANY
 import pytest
 
 from parsec._parsec import (
-    DateTime,
     InvitationStatus,
     UserID,
     authenticated_cmds,
@@ -28,9 +27,9 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
     expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
-        rep = await shamirorg.bob.invite_new_shamir_recovery(
+        rep = await shamirorg.mike.invite_new_shamir_recovery(
             send_email=send_email,
-            claimer_user_id=shamirorg.alice.user_id,
+            claimer_user_id=shamirorg.mallory.user_id,
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         assert (
@@ -42,34 +41,24 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=shamirorg.organization_id,
-                greeter=shamirorg.bob.user_id,
+                greeter=shamirorg.mike.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
-    expected_invitations[shamirorg.bob.user_id] = [
+    expected_invitations[shamirorg.mike.user_id] = [
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=shamirorg.bob.device_id,
-            created_by_user_id=shamirorg.bob.user_id,
-            created_by_human_handle=shamirorg.bob.human_handle,
+            created_by_device_id=shamirorg.mike.device_id,
+            created_by_user_id=shamirorg.mike.user_id,
+            created_by_human_handle=shamirorg.mike.human_handle,
             status=InvitationStatus.IDLE,
-            threshold=2,
-            claimer_user_id=shamirorg.alice.user_id,
-            claimer_human_handle=shamirorg.alice.human_handle,
+            threshold=1,
+            claimer_user_id=shamirorg.mallory.user_id,
+            claimer_human_handle=shamirorg.mallory.human_handle,
             recipients=[
-                ShamirRecoveryRecipient(
-                    user_id=shamirorg.bob.user_id,
-                    human_handle=shamirorg.bob.human_handle,
-                    shares=2,
-                ),
-                ShamirRecoveryRecipient(
-                    user_id=shamirorg.mallory.user_id,
-                    human_handle=shamirorg.mallory.human_handle,
-                    shares=1,
-                ),
                 ShamirRecoveryRecipient(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,
@@ -98,7 +87,7 @@ async def test_authenticated_invite_new_shamir_recovery_author_not_allowed(
     # No shamir setup have been created
     rep = await shamirorg.alice.invite_new_shamir_recovery(
         send_email=send_email,
-        claimer_user_id=shamirorg.bob.user_id,
+        claimer_user_id=shamirorg.mike.user_id,
     )
     assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepAuthorNotAllowed)
 
@@ -118,18 +107,6 @@ async def test_authenticated_invite_new_shamir_recovery_user_not_found(
 async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
     shamirorg: ShamirOrgRpcClients, backend: Backend
 ) -> None:
-    t1 = DateTime.now()
-
-    outcome = await backend.invite.new_for_shamir_recovery(
-        now=t1,
-        organization_id=shamirorg.organization_id,
-        author=shamirorg.bob.device_id,
-        send_email=False,
-        claimer_user_id=shamirorg.alice.user_id,
-    )
-    assert isinstance(outcome, tuple)
-    (invitation_token, _) = outcome
-
     expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
@@ -138,16 +115,8 @@ async def test_authenticated_invite_new_shamir_recovery_ok_already_exist(
             claimer_user_id=shamirorg.alice.user_id,
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
-        assert rep.token == invitation_token
-
-        await spy.wait_event_occurred(
-            EventInvitation(
-                organization_id=shamirorg.organization_id,
-                greeter=shamirorg.bob.user_id,
-                token=invitation_token,
-                status=InvitationStatus.IDLE,
-            )
-        )
+        assert rep.token == shamirorg.shamir_invited_alice.token
+        assert not spy.events
 
     assert (
         await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
@@ -177,8 +146,8 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
     expected_invitations = await backend.invite.test_dump_all_invitations(shamirorg.organization_id)
 
     with backend.event_bus.spy() as spy:
-        rep = await shamirorg.bob.invite_new_shamir_recovery(
-            send_email=True, claimer_user_id=shamirorg.alice.user_id
+        rep = await shamirorg.mike.invite_new_shamir_recovery(
+            send_email=True, claimer_user_id=shamirorg.mallory.user_id
         )
         assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
         invitation_token = rep.token
@@ -195,34 +164,24 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
         await spy.wait_event_occurred(
             EventInvitation(
                 organization_id=shamirorg.organization_id,
-                greeter=shamirorg.bob.user_id,
+                greeter=shamirorg.mike.user_id,
                 token=invitation_token,
                 status=InvitationStatus.IDLE,
             )
         )
 
-    expected_invitations[shamirorg.bob.user_id] = [
+    expected_invitations[shamirorg.mike.user_id] = [
         ShamirRecoveryInvitation(
             token=invitation_token,
             created_on=ANY,
-            created_by_device_id=shamirorg.bob.device_id,
-            created_by_user_id=shamirorg.bob.user_id,
-            created_by_human_handle=shamirorg.bob.human_handle,
+            created_by_device_id=shamirorg.mike.device_id,
+            created_by_user_id=shamirorg.mike.user_id,
+            created_by_human_handle=shamirorg.mike.human_handle,
             status=InvitationStatus.IDLE,
-            threshold=2,
-            claimer_user_id=shamirorg.alice.user_id,
-            claimer_human_handle=shamirorg.alice.human_handle,
+            threshold=1,
+            claimer_user_id=shamirorg.mallory.user_id,
+            claimer_human_handle=shamirorg.mallory.human_handle,
             recipients=[
-                ShamirRecoveryRecipient(
-                    user_id=shamirorg.bob.user_id,
-                    human_handle=shamirorg.bob.human_handle,
-                    shares=2,
-                ),
-                ShamirRecoveryRecipient(
-                    user_id=shamirorg.mallory.user_id,
-                    human_handle=shamirorg.mallory.human_handle,
-                    shares=1,
-                ),
                 ShamirRecoveryRecipient(
                     user_id=shamirorg.mike.user_id,
                     human_handle=shamirorg.mike.human_handle,

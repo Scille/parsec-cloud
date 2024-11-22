@@ -19,26 +19,14 @@ async def test_authenticated_invite_list_ok_with_shamir_recovery(
     shamirorg: ShamirOrgRpcClients,
     backend: Backend,
 ) -> None:
-    expected_invitations = []
-
-    # Shamir recovery invitation
-    t6 = DateTime(2020, 1, 6)
-    outcome = await backend.invite.new_for_shamir_recovery(
-        now=t6,
-        organization_id=shamirorg.organization_id,
-        author=shamirorg.bob.device_id,
-        claimer_user_id=shamirorg.alice.user_id,
-        send_email=False,
-    )
-    assert isinstance(outcome, tuple)
-    expected_invitations.append(
+    expected_invitations = [
         authenticated_cmds.v4.invite_list.InviteListItemShamirRecovery(
-            created_on=t6,
+            created_on=shamirorg.shamir_invited_alice.event.created_on,
             status=InvitationStatus.IDLE,
             claimer_user_id=shamirorg.alice.user_id,
-            token=outcome[0],
+            token=shamirorg.shamir_invited_alice.token,
         )
-    )
+    ]
 
     rep = await shamirorg.bob.invite_list()
     assert isinstance(rep, authenticated_cmds.v4.invite_list.RepOk)

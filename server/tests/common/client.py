@@ -180,7 +180,9 @@ class InvitedRpcClient(BaseInvitedRpcClient):
         self,
         raw_client: AsyncClient,
         organization_id: OrganizationID,
-        event: tb.TestbedEventNewUserInvitation | tb.TestbedEventNewDeviceInvitation,
+        event: tb.TestbedEventNewUserInvitation
+        | tb.TestbedEventNewDeviceInvitation
+        | tb.TestbedEventNewShamirRecoveryInvitation,
     ):
         self.raw_client = raw_client
         self.organization_id = organization_id
@@ -487,6 +489,7 @@ class ShamirOrgRpcClients:
     _bob: AuthenticatedRpcClient | None = None
     _mallory: AuthenticatedRpcClient | None = None
     _mike: AuthenticatedRpcClient | None = None
+    _shamir_invited_alice: InvitedRpcClient | None = None
 
     @property
     def anonymous(self) -> AnonymousRpcClient:
@@ -524,6 +527,23 @@ class ShamirOrgRpcClients:
         return self._mike
 
     @property
+    def shamir_invited_alice(self) -> InvitedRpcClient:
+        if self._shamir_invited_alice:
+            return self._shamir_invited_alice
+
+        for event in self.testbed_template.events:
+            if (
+                isinstance(event, tb.TestbedEventNewShamirRecoveryInvitation)
+                and event.claimer == self.alice.user_id
+            ):
+                self._shamir_invited_alice = InvitedRpcClient(
+                    self.raw_client, self.organization_id, event=event
+                )
+                return self._shamir_invited_alice
+        else:
+            raise RuntimeError("Zack user invitation event not found !")
+
+    @property
     def root_signing_key(self) -> SigningKey:
         for event in self.testbed_template.events:
             if isinstance(event, tb.TestbedEventBootstrapOrganization):
@@ -555,7 +575,7 @@ class ShamirOrgRpcClients:
                 and event.setup_to_delete_user_id == user_id
             ):
                 return event.certificate
-        raise RuntimeError("New shamir recovery event not found for user `bob` !")
+        raise RuntimeError("Remove shamir recovery event not found for user `bob` !")
 
     @property
     def mallory_brief_certificate(self) -> ShamirRecoveryBriefCertificate:
