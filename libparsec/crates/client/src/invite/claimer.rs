@@ -259,12 +259,14 @@ pub async fn claimer_retrieve_info(
                 ),
             )),
             UserOrDevice::ShamirRecovery {
+                claimer_user_id,
+                claimer_human_handle,
                 recipients,
                 threshold,
             } => {
                 // TODO: https://github.com/Scille/parsec-cloud/issues/8841
                 Err(anyhow::anyhow!(
-                    "Shamir recovery greeting not implemented {recipients:?} {threshold}"
+                    "Shamir recovery greeting not implemented {claimer_user_id:?} {claimer_human_handle:?} {recipients:?} {threshold}"
                 )
                 .into())
             }

@@ -87,6 +87,7 @@ class ShamirRecoveryInvitation:
 
     # Shamir-specific fields
     claimer_user_id: UserID
+    claimer_human_handle: HumanHandle
     threshold: int
     recipients: list[ShamirRecoveryRecipient]
 
@@ -960,6 +961,8 @@ class BaseInviteComponent:
             case ShamirRecoveryInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
                     invited_cmds.latest.invite_info.UserOrDeviceShamirRecovery(
+                        claimer_user_id=invitation.claimer_user_id,
+                        claimer_human_handle=invitation.claimer_human_handle,
                         threshold=invitation.threshold,
                         recipients=invitation.recipients,
                     )

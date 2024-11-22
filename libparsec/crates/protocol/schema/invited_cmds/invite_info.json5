@@ -54,6 +54,14 @@
                         "discriminant_value": "SHAMIR_RECOVERY",
                         "fields": [
                             {
+                                "name": "claimer_user_id",
+                                "type": "UserID"
+                            },
+                            {
+                                "name": "claimer_human_handle",
+                                "type": "HumanHandle"
+                            },
+                            {
                                 "name": "threshold",
                                 "type": "NonZeroInteger"
                             },
