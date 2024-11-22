@@ -1454,9 +1454,9 @@
                 "revoked": "révoqués",
                 "storage": "Stockage utilisé"
             },
-            "admin": "Administrateur | Administrateurs",
-            "standard": "Standard | Standards",
-            "outsider": "Externe | Externes",
+            "admin": "Administrateur | Administrateur | Administrateurs",
+            "standard": "Standard | Standard | Standards",
+            "outsider": "Externe | Externe | Externes",
             "consumptionDetail": "Détail des consommations",
             "nonPaying": "Non payant",
             "paying": "payant",
