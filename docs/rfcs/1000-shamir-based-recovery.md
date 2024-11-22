@@ -314,6 +314,7 @@ The Shamir algorithm is meant to be fed with a serialized dump of a `ShamirRecov
 ```
 
 This secret contains both:
+
 - the secret key used to the encrypt the `ciphered_data` provided in the shamir recovery setup
 - the reveal token to retrieve this `ciphered_data` from the server
 
@@ -806,6 +807,7 @@ Authenticated API:
     }
 ]
 ```
+
 The deletion certificate
 
 ```json5
@@ -935,5 +937,6 @@ Depending on the configuration, if any of the share recipient is deleted a warni
 event if the shamir could still be used.
 
 Two propositions could mitigate that:
+
 - each time a user is deleted, if they were a share recipient a notification could be sent to users on the other end of this shamir setup.
 - at each connection, check if share recipients are still valid.
