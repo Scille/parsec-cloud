@@ -359,7 +359,19 @@
         </div>
       </div>
     </template>
-    <template v-else-if="!querying && !stats && !error">
+    <template v-else-if="!querying && !stats && !error && allOrganizations.length">
+      {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
+
+      <div
+        class="organization-choice"
+        v-for="org in allOrganizations"
+        :key="org.bmsId"
+        @click="onOrganizationSelected(org)"
+      >
+        {{ org.name }}
+      </div>
+    </template>
+    <template v-else-if="!querying && !stats && !error && allOrganizations.length === 0">
       {{ $msTranslate('clientArea.statistics.noStats') }}
     </template>
     <ion-text
@@ -390,12 +402,17 @@ const props = defineProps<{
   organization: BmsOrganization;
 }>();
 
+const emits = defineEmits<{
+  (e: 'organizationSelected', organization: BmsOrganization): void;
+}>();
+
 const stats = ref<OrganizationStatsResultData>();
 const totalData = ref<number>(0);
 const freeSliceSize = ref<number>(0);
 const payingSliceSize = ref<number>(0);
 const querying = ref(true);
 const error = ref('');
+const allOrganizations = ref<Array<BmsOrganization>>([]);
 
 const firstBarData = ref<ProgressBarData>();
 const secondBarData = ref<ProgressBarData>();
@@ -455,6 +472,10 @@ function getThirdBarData(): ProgressBarData | undefined {
 
 onMounted(async () => {
   if (isDefaultOrganization(props.organization)) {
+    const listResponse = await BmsAccessInstance.get().listOrganizations();
+    if (!listResponse.isError && listResponse.data && listResponse.data.type === DataType.ListOrganizations) {
+      allOrganizations.value = listResponse.data.organizations;
+    }
     querying.value = false;
     return;
   }
@@ -475,6 +496,10 @@ onMounted(async () => {
   }
   querying.value = false;
 });
+
+async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
+  emits('organizationSelected', org);
+}
 </script>
 
 <style scoped lang="scss">
@@ -721,6 +746,23 @@ onMounted(async () => {
       width: 2rem;
       height: 1rem;
     }
+  }
+}
+
+.organization-choice {
+  animation: blink 0.3s linear infinite;
+  margin: 1em;
+  min-height: 4em;
+  cursor: pointer;
+}
+
+@keyframes blink {
+  50% {
+    background-color: #00ffff;
+  }
+
+  100% {
+    background-color: #ff00ff;
   }
 }
 </style>
