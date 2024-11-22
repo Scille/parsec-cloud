@@ -41,10 +41,12 @@ async def test_invited_invite_info_ok_with_shamir(shamirorg: ShamirOrgRpcClients
     )
     assert isinstance(rep, authenticated_cmds.v4.invite_new_shamir_recovery.RepOk)
 
-    shamir_invited_bob = InvitedRpcClient(shamirorg.raw_client, shamirorg.organization_id, rep)  # type: ignore
-    rep = await shamir_invited_bob.invite_info()
+    shamir_invited_alice = InvitedRpcClient(shamirorg.raw_client, shamirorg.organization_id, rep)  # type: ignore
+    rep = await shamir_invited_alice.invite_info()
     assert rep == invited_cmds.v4.invite_info.RepOk(
         invited_cmds.v4.invite_info.UserOrDeviceShamirRecovery(
+            claimer_user_id=shamirorg.alice.user_id,
+            claimer_human_handle=shamirorg.alice.human_handle,
             threshold=2,
             recipients=[
                 invited_cmds.latest.invite_info.ShamirRecoveryRecipient(

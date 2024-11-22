@@ -96,6 +96,7 @@ class MemoryInviteComponent(BaseInviteComponent):
         recipients.sort(key=lambda x: x.human_handle.label)
         status = self._get_invitation_status(org.organization_id, invitation)
         created_by_human_handle = org.users[invitation.created_by_user_id].cooked.human_handle
+        claimer_human_handle = org.users[invitation.claimer_user_id].cooked.human_handle
         return ShamirRecoveryInvitation(
             token=invitation.token,
             created_on=invitation.created_on,
@@ -104,6 +105,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             created_by_human_handle=created_by_human_handle,
             status=status,
             claimer_user_id=invitation.claimer_user_id,
+            claimer_human_handle=claimer_human_handle,
             threshold=threshold,
             recipients=recipients,
         )

@@ -58,6 +58,7 @@ async def test_authenticated_invite_new_shamir_recovery_ok_new(
             status=InvitationStatus.IDLE,
             threshold=2,
             claimer_user_id=shamirorg.alice.user_id,
+            claimer_human_handle=shamirorg.alice.human_handle,
             recipients=[
                 ShamirRecoveryRecipient(
                     user_id=shamirorg.bob.user_id,
@@ -210,6 +211,7 @@ async def test_authenticated_invite_new_shamir_recovery_send_email_bad_outcome(
             status=InvitationStatus.IDLE,
             threshold=2,
             claimer_user_id=shamirorg.alice.user_id,
+            claimer_human_handle=shamirorg.alice.human_handle,
             recipients=[
                 ShamirRecoveryRecipient(
                     user_id=shamirorg.bob.user_id,

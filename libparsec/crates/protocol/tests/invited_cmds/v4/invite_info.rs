@@ -86,18 +86,24 @@ pub fn rep_ok() {
             // Content:
             //   status: 'ok'
             //   type: 'SHAMIR_RECOVERY'
+            //   claimer_human_handle: [ 'carl@example.com', 'carl', ]
+            //   claimer_user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4c)
             //   recipients: [ { human_handle: [ 'alice@example.com', 'alice', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4a), }, { human_handle: [ 'bob@example.com', 'bob', ], shares: 1, user_id: ext(2, 0x109b68ba5cdf428ea0017fc6bcc04d4b), }, ]
             //   threshold: 2
             &hex!(
-            "84a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259aa7265"
-            "63697069656e74739283ac68756d616e5f68616e646c6592b1616c696365406578616d"
-            "706c652e636f6da5616c696365a673686172657301a7757365725f6964d802109b68ba"
-            "5cdf428ea0017fc6bcc04d4a83ac68756d616e5f68616e646c6592af626f6240657861"
-            "6d706c652e636f6da3626f62a673686172657301a7757365725f6964d802109b68ba5c"
-            "df428ea0017fc6bcc04d4ba97468726573686f6c6402"
+                "86a6737461747573a26f6ba474797065af5348414d49525f5245434f56455259b4636c"
+                "61696d65725f68756d616e5f68616e646c6592b06361726c406578616d706c652e636f"
+                "6da46361726caf636c61696d65725f757365725f6964d802109b68ba5cdf428ea0017f"
+                "c6bcc04d4caa726563697069656e74739283ac68756d616e5f68616e646c6592b1616c"
+                "696365406578616d706c652e636f6da5616c696365a673686172657301a7757365725f"
+                "6964d802109b68ba5cdf428ea0017fc6bcc04d4a83ac68756d616e5f68616e646c6592"
+                "af626f62406578616d706c652e636f6da3626f62a673686172657301a7757365725f69"
+                "64d802109b68ba5cdf428ea0017fc6bcc04d4ba97468726573686f6c6402"
             )[..],
             invited_cmds::invite_info::Rep::Ok(
                 invited_cmds::invite_info::UserOrDevice::ShamirRecovery {
+                    claimer_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4c").unwrap(),
+                    claimer_human_handle: HumanHandle::new("carl@example.com", "carl").unwrap(),
                     recipients: vec![
                         invited_cmds::invite_info::ShamirRecoveryRecipient {
                             user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
@@ -117,8 +123,8 @@ pub fn rep_ok() {
     ];
 
     for (raw, expected) in raw_expected {
-        let data = invited_cmds::invite_info::Rep::load(raw).unwrap();
         println!("***expected: {:?}", expected.dump().unwrap());
+        let data = invited_cmds::invite_info::Rep::load(raw).unwrap();
         assert_eq!(data, expected);
 
         // Also test serialization round trip
