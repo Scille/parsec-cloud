@@ -346,3 +346,20 @@ pub(super) fn assert_realm_exists(events: &[TestbedEvent], realm: VlobID) {
         .find(|e| matches!(e, TestbedEvent::NewRealm(x) if x.realm_id == realm))
         .unwrap_or_else(|| panic!("Realm {} doesn't exist", realm));
 }
+
+pub(super) fn assert_user_has_non_deleted_shamir_recovery(
+    events: &'_ [TestbedEvent],
+    user: UserID,
+) -> &'_ TestbedEvent {
+    events
+        .iter()
+        .rev()
+        .find(|e| match e {
+            TestbedEvent::NewShamirRecovery(x) if x.user_id == user => true,
+            TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
+                panic!("User {}'s Shamir recovery is deleted !", user)
+            }
+            _ => false,
+        })
+        .unwrap_or_else(|| panic!("User {} doesn't have any Shamir recovery", user))
+}

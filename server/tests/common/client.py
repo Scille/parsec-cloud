@@ -472,6 +472,7 @@ class ShamirOrgRpcClients:
       Mallory & mike with 1 share each)
     - Bob has a deleted shamir recovery (used to be threshold: 1, recipients: Alice & Mallory)
     - Mallory has a shamir recovery setup (threshold: 1, recipients: only Mike)
+    - Bob has invited Alice to do a Shamir recovery
     - devices `alice@dev1`/`bob@dev1`/`mallory@dev1`/`mike@dev1` starts with up-to-date storages
     - devices `alice@dev2` and `bob@dev2` whose storages are empty
 
