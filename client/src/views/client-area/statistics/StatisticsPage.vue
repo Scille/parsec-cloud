@@ -28,7 +28,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate(stats.adminUsersDetail.active > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -46,9 +46,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.standardUsersDetail.active > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -66,9 +64,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.active }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.outsiderUsersDetail.active > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.active }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -99,7 +95,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.adminUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{ $msTranslate(stats.adminUsersDetail.revoked > 1 ? 'clientArea.statistics.admins' : 'clientArea.statistics.admin') }}
+                {{ $msTranslate({ key: 'clientArea.statistics.admin', count: stats.adminUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -117,9 +113,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.standardUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.standardUsersDetail.revoked > 1 ? 'clientArea.statistics.standards' : 'clientArea.statistics.standard')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.standard', count: stats.standardUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
@@ -137,9 +131,7 @@
             <div class="users-cards-list-item-text">
               <ion-text class="users-cards-list-item-text__number title-h1">{{ stats.outsiderUsersDetail.revoked }}</ion-text>
               <ion-text class="users-cards-list-item-text__text subtitles-sm">
-                {{
-                  $msTranslate(stats.outsiderUsersDetail.revoked > 1 ? 'clientArea.statistics.outsiders' : 'clientArea.statistics.outsider')
-                }}
+                {{ $msTranslate({ key: 'clientArea.statistics.outsider', count: stats.outsiderUsersDetail.revoked }) }}
               </ion-text>
             </div>
           </ion-card>
