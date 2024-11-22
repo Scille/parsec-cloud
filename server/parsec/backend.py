@@ -272,6 +272,9 @@ class Backend:
                     force_token=event.token,
                 )
                 assert isinstance(outcome, tuple), outcome
+            elif isinstance(event, testbed.TestbedEventNewShamirRecoveryInvitation):
+                # TODO: Shamir recovery invite not implemented yet !
+                pass
             elif isinstance(event, testbed.TestbedEventNewRealm):
                 outcome = await self.realm.create(
                     now=event.timestamp,

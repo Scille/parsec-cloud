@@ -161,6 +161,7 @@ pub enum TestbedEvent {
     // 2) Client/server interaction events not producing certificates
     NewDeviceInvitation(TestbedEventNewDeviceInvitation),
     NewUserInvitation(TestbedEventNewUserInvitation),
+    NewShamirRecoveryInvitation(TestbedEventNewShamirRecoveryInvitation),
     CreateOrUpdateUserManifestVlob(TestbedEventCreateOrUpdateUserManifestVlob),
     CreateOrUpdateFileManifestVlob(TestbedEventCreateOrUpdateFileManifestVlob),
     CreateOrUpdateFolderManifestVlob(TestbedEventCreateOrUpdateFolderManifestVlob),
@@ -200,6 +201,7 @@ impl CrcHash for TestbedEvent {
             TestbedEvent::RevokeUser(x) => x.crc_hash(hasher),
             TestbedEvent::NewDeviceInvitation(x) => x.crc_hash(hasher),
             TestbedEvent::NewUserInvitation(x) => x.crc_hash(hasher),
+            TestbedEvent::NewShamirRecoveryInvitation(x) => x.crc_hash(hasher),
             TestbedEvent::NewRealm(x) => x.crc_hash(hasher),
             TestbedEvent::ShareRealm(x) => x.crc_hash(hasher),
             TestbedEvent::RenameRealm(x) => x.crc_hash(hasher),
@@ -374,6 +376,7 @@ impl TestbedEvent {
 
             TestbedEvent::NewDeviceInvitation(_)
             | TestbedEvent::NewUserInvitation(_)
+            | TestbedEvent::NewShamirRecoveryInvitation(_)
             | TestbedEvent::CreateOrUpdateUserManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFileManifestVlob(_)
             | TestbedEvent::CreateOrUpdateFolderManifestVlob(_)
@@ -409,6 +412,7 @@ impl TestbedEvent {
             | TestbedEvent::RevokeUser(_)
             | TestbedEvent::NewDeviceInvitation(_)
             | TestbedEvent::NewUserInvitation(_)
+            | TestbedEvent::NewShamirRecoveryInvitation(_)
             | TestbedEvent::NewRealm(_)
             | TestbedEvent::ShareRealm(_)
             | TestbedEvent::RenameRealm(_)
@@ -2367,6 +2371,72 @@ impl TestbedEventNewUserInvitation {
             created_on: builder.counters.next_timestamp(),
             created_by,
             claimer_email,
+            token,
+        }
+    }
+}
+
+/*
+ * TestbedEventNewShamirRecoveryInvitation
+ */
+
+no_certificate_event!(
+    TestbedEventNewShamirRecoveryInvitation,
+    [
+        claimer: UserID,
+        created_by: DeviceID,
+        created_on: DateTime,
+        token: InvitationToken,
+    ]
+);
+
+impl TestbedEventNewShamirRecoveryInvitation {
+    pub(super) fn from_builder(builder: &mut TestbedTemplateBuilder, claimer: UserID) -> Self {
+        // 1) Consistency checks
+
+        if builder.check_consistency {
+            utils::assert_organization_bootstrapped(&builder.events);
+            utils::assert_user_exists_and_not_revoked(&builder.events, claimer);
+        }
+
+        let recipients =
+            match utils::assert_user_has_non_deleted_shamir_recovery(&builder.events, claimer) {
+                TestbedEvent::NewShamirRecovery(x) => {
+                    &x.per_recipient_shares //.iter().map(|(user_id, _)| *user_id).collect::<HashSet<_>>()
+                }
+                _ => unreachable!(),
+            };
+        // It's important to iterate over the recipients (instead of filtering with
+        // the recipients the list of non revoked users).
+        // This is to ensure the chosen creator is selected according to the order
+        // of declaration of the recipients.
+        let created_by = recipients
+            .iter()
+            .find_map(|(recipient, _)| {
+                utils::non_revoked_users_each_devices(&builder.events).find_map(
+                    |(candidate_user_id, candidate_device_id)| {
+                        if candidate_user_id == *recipient {
+                            Some(candidate_device_id)
+                        } else {
+                            None
+                        }
+                    },
+                )
+            })
+            .unwrap_or_else(|| {
+                panic!(
+                    "All recipients ({:?}) appear to be revoked or missing",
+                    recipients
+                )
+            });
+
+        // 2) Actual creation
+
+        let token = builder.counters.next_invitation_token();
+        Self {
+            claimer,
+            created_on: builder.counters.next_timestamp(),
+            created_by,
             token,
         }
     }

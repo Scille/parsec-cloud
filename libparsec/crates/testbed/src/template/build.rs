@@ -591,6 +591,19 @@ impl<'a> TestbedEventNewUserInvitationBuilder<'a> {
 }
 
 /*
+ * TestbedEventNewShamirRecoveryInvitation
+ */
+
+impl_event_builder!(NewShamirRecoveryInvitation, [claimer: UserID]);
+
+impl<'a> TestbedEventNewShamirRecoveryInvitationBuilder<'a> {
+    impl_customize_field_meth!(claimer, UserID);
+    impl_customize_field_meth!(created_by, DeviceID);
+    impl_customize_field_meth!(created_on, DateTime);
+    impl_customize_field_meth!(token, InvitationToken);
+}
+
+/*
  * TestbedEventNewRealmBuilder
  */
 

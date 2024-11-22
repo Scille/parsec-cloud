@@ -270,6 +270,22 @@ event_wrapper!(
 );
 
 event_wrapper!(
+    TestbedEventNewShamirRecoveryInvitation,
+    [
+        claimer: UserID,
+        created_by: DeviceID,
+        created_on: DateTime,
+        token: InvitationToken,
+    ],
+    |_py, x: &TestbedEventNewShamirRecoveryInvitation| -> PyResult<String> {
+        Ok(format!(
+            "claimer={:?}, created_by={:?}, created_on={:?}, token={:?}",
+            x.claimer.0, x.created_by.0, x.created_on.0, x.token.0,
+        ))
+    }
+);
+
+event_wrapper!(
     TestbedEventNewRealm,
     [
         timestamp: DateTime,
@@ -830,6 +846,16 @@ fn event_to_pyobject(
         libparsec_testbed::TestbedEvent::NewUserInvitation(x) => {
             let obj = TestbedEventNewUserInvitation {
                 claimer_email: x.claimer_email.clone(),
+                created_by: x.created_by.clone().into(),
+                created_on: x.created_on.into(),
+                token: x.token.into(),
+            };
+            Some(obj.into_py(py))
+        }
+
+        libparsec_testbed::TestbedEvent::NewShamirRecoveryInvitation(x) => {
+            let obj = TestbedEventNewShamirRecoveryInvitation {
+                claimer: x.claimer.clone().into(),
                 created_by: x.created_by.clone().into(),
                 created_on: x.created_on.into(),
                 token: x.token.into(),
