@@ -16,6 +16,7 @@ use crate::TestbedTemplate;
 ///   Mallory & mike with 1 share each)
 /// - Bob has a deleted shamir recovery (used to be threshold: 1, recipients: Alice & Mallory)
 /// - Mallory has a shamir recovery setup (threshold: 1, recipients: only Mike)
+/// - Bob has invited Alice to do a Shamir recovery
 /// - devices `alice@dev1`/`bob@dev1`/`mallory@dev1`/`mike@dev1` starts with up-to-date storages
 /// - devices `alice@dev2` and `bob@dev2` whose storages are empty
 pub(crate) fn generate() -> Arc<TestbedTemplate> {
@@ -71,6 +72,8 @@ pub(crate) fn generate() -> Arc<TestbedTemplate> {
         [("mike".parse().unwrap(), 1.try_into().unwrap())],
         "mallory@dev2",
     );
+
+    builder.new_shamir_recovery_invitation("alice");
 
     // 3) Initialize client storages for alice@dev1/bob@dev1/mallory@dev1/mike@dev1
 

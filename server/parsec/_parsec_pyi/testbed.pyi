@@ -162,6 +162,12 @@ class TestbedEventNewDeviceInvitation:
     created_on: DateTime
     token: InvitationToken
 
+class TestbedEventNewShamirRecoveryInvitation:
+    claimer: UserID
+    created_by: DeviceID
+    created_on: DateTime
+    token: InvitationToken
+
 class TestbedEventNewRealm:
     timestamp: DateTime
     author: DeviceID
