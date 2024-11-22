@@ -83,7 +83,8 @@ async fn root_signature_timestamp_mismatch(env: &TestbedEnv) {
 
     let mut old_authority_certif = (*authority_certif).clone();
     old_authority_certif.timestamp = DateTime::from_ymd_hms_us(1999, 1, 1, 0, 0, 0, 0).unwrap();
-    let old_authority_signed = Bytes::from(old_authority_certif.dump_and_sign(&alice.signing_key));
+    let old_authority_signed =
+        Bytes::from(old_authority_certif.dump_and_sign(env.template.root_signing_key()));
 
     let err = ops
         .add_certificates_batch(

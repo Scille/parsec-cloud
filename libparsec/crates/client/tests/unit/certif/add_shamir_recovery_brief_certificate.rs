@@ -525,6 +525,7 @@ async fn invalid_user_id(env: &TestbedEnv) {
         })
         .await;
     let alice = env.local_device("alice@dev1");
+    let bob = env.local_device("bob@dev1");
     let ops = certificates_ops_factory(env, &alice).await;
 
     // Patch the certificate to have an invalid user id
@@ -540,7 +541,7 @@ async fn invalid_user_id(env: &TestbedEnv) {
                 libparsec_types::AnyArcCertificate::ShamirRecoveryBrief(mut c) => {
                     let c_mut = Arc::make_mut(&mut c);
                     c_mut.user_id = alice.user_id;
-                    c_mut.dump_and_sign(&alice.signing_key)
+                    c_mut.dump_and_sign(&bob.signing_key)
                 }
                 _ => unreachable!(),
             };

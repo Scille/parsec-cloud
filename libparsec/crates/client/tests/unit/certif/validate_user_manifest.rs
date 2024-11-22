@@ -147,7 +147,7 @@ async fn cleartext_corrupted(env: &TestbedEnv) {
             alice.device_id,
             0,
             now,
-            &alice.local_symkey.encrypt(b"<dummy data>"),
+            &alice.user_realm_key.encrypt(b"<dummy data>"),
         )
         .await
         .unwrap_err();
@@ -193,7 +193,7 @@ async fn corrupted_by_bad_realm_id(env: &TestbedEnv) {
             alice.device_id,
             0,
             timestamp,
-            &alice_manifest.dump_sign_and_encrypt(&alice.signing_key, &ops.device.local_symkey),
+            &alice_manifest.dump_sign_and_encrypt(&alice.signing_key, &ops.device.user_realm_key),
         )
         .await
         .unwrap_err();

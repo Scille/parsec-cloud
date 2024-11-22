@@ -223,6 +223,25 @@ impl TestbedTemplate {
             .expect("Device doesn't exist")
     }
 
+    pub fn user_realm_key(&self, user_id: UserID) -> &SecretKey {
+        self.events
+            .iter()
+            .find_map(|e| match e {
+                TestbedEvent::BootstrapOrganization(TestbedEventBootstrapOrganization {
+                    first_user_id: candidate,
+                    first_user_user_realm_key: user_realm_key,
+                    ..
+                })
+                | TestbedEvent::NewUser(TestbedEventNewUser {
+                    user_id: candidate,
+                    user_realm_key,
+                    ..
+                }) if *candidate == user_id => Some(user_realm_key),
+                _ => None,
+            })
+            .expect("User doesn't exist")
+    }
+
     pub fn user_private_key(&self, user_id: UserID) -> &PrivateKey {
         self.events
             .iter()
