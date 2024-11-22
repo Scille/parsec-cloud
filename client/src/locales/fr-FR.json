@@ -1465,6 +1465,7 @@
             "data": "de données",
             "metadata": "métadonnées",
             "error": "Impossible de récupérer les données de l'organisation.",
+            "multipleOrganizations": "Vous possédez plusieurs organisations. Veuillez en choisir une en utilisant le bouton dans le coin supérieur gauche ou sélectionner-là ci-dessous pour voir ses statistiques.",
             "noStats": "Aucune statistique à afficher.",
             "used": "consommé",
             "remaining": "restant",
