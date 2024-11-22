@@ -360,15 +360,24 @@
       </div>
     </template>
     <template v-else-if="!querying && !stats && !error && allOrganizations.length">
-      {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
+      <ion-text class="organization-choice-title body-lg">
+        {{ $msTranslate('clientArea.statistics.multipleOrganizations') }}
+      </ion-text>
 
-      <div
-        class="organization-choice"
-        v-for="org in allOrganizations"
-        :key="org.bmsId"
-        @click="onOrganizationSelected(org)"
-      >
-        {{ org.name }}
+      <div class="organization-list">
+        <div
+          class="organization-list-item subtitles-normal"
+          v-for="org in allOrganizations"
+          :key="org.bmsId"
+          @click="onOrganizationSelected(org)"
+        >
+          {{ org.name }}
+          <ion-icon
+            :icon="arrowForward"
+            slot="end"
+            class="organization-list-item__icon"
+          />
+        </div>
       </div>
     </template>
     <template v-else-if="!querying && !stats && !error && allOrganizations.length === 0">
@@ -749,20 +758,40 @@ async function onOrganizationSelected(org: BmsOrganization): Promise<void> {
   }
 }
 
-.organization-choice {
-  animation: blink 0.3s linear infinite;
-  margin: 1em;
-  min-height: 4em;
-  cursor: pointer;
+.organization-choice-title {
+  color: var(--parsec-color-light-secondary-soft-text);
 }
 
-@keyframes blink {
-  50% {
-    background-color: #00ffff;
-  }
+.organization-list {
+  min-height: 4em;
+  margin-top: 1.5rem;
+  width: fit-content;
+  display: flex;
+  flex-direction: column;
+  justify-content: left;
+  border-radius: var(--parsec-radius-12);
+  background: var(--parsec-color-light-secondary-background);
+  border: 1px solid var(--parsec-color-light-secondary-premiere);
+  overflow: hidden;
 
-  100% {
-    background-color: #ff00ff;
+  &-item {
+    display: flex;
+    justify-content: space-between;
+    color: var(--parsec-color-light-primary-700);
+    flex: 1;
+    padding: 1em 1rem 1rem 1.5rem;
+    cursor: pointer;
+    min-width: 20rem;
+    width: 100%;
+    transition: background 0.2s;
+
+    &__icon {
+      color: var(--parsec-color-light-secondary-text);
+    }
+
+    &:hover {
+      background: var(--parsec-color-light-secondary-medium);
+    }
   }
 }
 </style>
