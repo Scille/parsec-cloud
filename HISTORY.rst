@@ -5,41 +5,8 @@ History
 .. towncrier release notes start
 
 
-Parsec v3.2.0-rc.3 (2024-11-15)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Prompt the user for administrator permissions when winfsp is being installed,
-  instead of failing silently if the installer wasn't already running in
-  administrator mode.
-  (`#8934 <https://github.com/Scille/parsec-cloud/issues/8934>`__)
-
-
-
-Parsec v3.2.0-rc.2 (2024-11-14)
--------------------------------
-
-Bugfixes
-~~~~~~~~
-
-* Confined files are no longer included in selection and file count
-  (`#8913 <https://github.com/Scille/parsec-cloud/issues/8913>`__)
-
-* No longer opens an empty context menu with right clicking in the list of files
-  (`#8915 <https://github.com/Scille/parsec-cloud/issues/8915>`__)
-
-
-
-Parsec v3.2.0-rc.1 (2024-11-08)
--------------------------------
-
-No significant changes.
-
-
-Parsec v3.2.0-rc.0 (2024-11-07)
--------------------------------
+Parsec v3.2.0 (2024-11-22)
+--------------------------
 
 Features
 ~~~~~~~~
@@ -87,6 +54,16 @@ Bugfixes
   created/modified from the mount point.
   (`#8818 <https://github.com/Scille/parsec-cloud/issues/8818>`__)
 
+* Prompt the user for administrator permissions when winfsp is being installed,
+  instead of failing silently if the installer wasn't already running in
+  administrator mode.
+  (`#8934 <https://github.com/Scille/parsec-cloud/issues/8934>`__)
+
+* Confined files are no longer included in selection and file count
+  (`#8913 <https://github.com/Scille/parsec-cloud/issues/8913>`__)
+
+* No longer opens an empty context menu with right clicking in the list of files
+  (`#8915 <https://github.com/Scille/parsec-cloud/issues/8915>`__)
 
 Miscellaneous internal changes
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
