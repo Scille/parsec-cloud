@@ -1,1 +1,1 @@
-Fixed the list of files not being properly updated after copying a file
+Fixed the file list not being properly updated after copying a file
