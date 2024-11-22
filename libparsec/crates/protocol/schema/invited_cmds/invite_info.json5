@@ -26,13 +26,25 @@
                                 "type": "String"
                             },
                             {
+                                // TODO: merge into `created_by`
                                 "name": "greeter_user_id",
                                 "type": "UserID"
                             },
                             {
+                                // TODO: merge into `created_by`
                                 "name": "greeter_human_handle",
                                 "type": "HumanHandle"
                             }
+                            // TODO: Add a `created_by` field and make it an `InviteInfoCreatedBy` type
+                            // which is a nested variant of either:
+                            // - OrganizationAdministrator<UserID, HumanHandle>
+                            // - ExternalService<String>
+                            //
+                            // TODO: Add an `administrators` field and make it a `List<InviteInfoAdministrator>` type
+                            // which is a nested type with the fields:
+                            // - user_id: UserID
+                            // - human_handle: HumanHandle
+                            // - status: ONLINE | OFFLINE | UNKNOWN
                         ]
                     },
                     {
@@ -40,10 +52,12 @@
                         "discriminant_value": "DEVICE",
                         "fields": [
                             {
+                                // TODO: Rename to `claimer_user_id`
                                 "name": "greeter_user_id",
                                 "type": "UserID"
                             },
                             {
+                                // TODO: Rename to `claimer_human_handle`
                                 "name": "greeter_human_handle",
                                 "type": "HumanHandle"
                             }
