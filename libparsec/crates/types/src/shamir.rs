@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::num::NonZeroU8;
+
 use crate::{
     self as libparsec_types, /*To use parsec_data!*/
     data_macros::impl_transparent_data_format_conversion,
@@ -38,23 +40,30 @@ impl ShamirRecoverySecret {
         format_v0_dump(&self)
     }
 
-    pub fn dump_and_encrypt_into_shares(&self, threshold: u8, shares: usize) -> Vec<ShamirShare> {
+    pub fn dump_and_encrypt_into_shares(
+        &self,
+        threshold: NonZeroU8,
+        shares: NonZeroU8,
+    ) -> Vec<ShamirShare> {
         let secret = self.dump();
 
-        let sharks = sharks::Sharks(threshold);
+        let sharks = sharks::Sharks(threshold.get());
         sharks
             .dealer(&secret)
             .map(ShamirShare)
-            .take(shares)
+            // Note, unlike what Sharks's documentation claims, at most
+            // 255 shares can be generated !
+            // (hence why we use `NonZeroU8` to represent this number)
+            .take(shares.get() as usize)
             .collect()
     }
 
-    pub fn decrypt_and_load_from_shares<'a, T>(threshold: u8, shares: T) -> DataResult<Self>
+    pub fn decrypt_and_load_from_shares<'a, T>(threshold: NonZeroU8, shares: T) -> DataResult<Self>
     where
         T: IntoIterator<Item = &'a ShamirShare>,
         T::IntoIter: Iterator<Item = &'a ShamirShare>,
     {
-        let sharks = sharks::Sharks(threshold);
+        let sharks = sharks::Sharks(threshold.get());
         let shares = shares.into_iter().map(|x| &x.0);
         let secret = sharks.recover(shares).map_err(|_| DataError::Decryption)?;
 
@@ -83,6 +92,17 @@ impl ShamirRecoveryShareData {
     // Note `ShamirRecoveryShareData` doesn't need to be signed since it is
     // embedded into a `ShamirRecoveryShareCertificate` which itself is signed.
 
+    fn check_data_integrity(&self) -> DataResult<()> {
+        if self.weighted_share.len() > 255 {
+            return Err(DataError::DataIntegrity {
+                data_type: std::any::type_name::<Self>(),
+                invariant: "weighted_share <= 255",
+            });
+        }
+
+        Ok(())
+    }
+
     pub fn decrypt_and_load_for(
         encrypted: &[u8],
         recipient_privkey: &PrivateKey,
@@ -91,6 +111,9 @@ impl ShamirRecoveryShareData {
             .decrypt_from_self(encrypted)
             .map_err(|_| DataError::Decryption)?;
         let obj: Self = format_vx_load(&serialized)?;
+
+        obj.check_data_integrity()?;
+
         Ok(obj)
     }
 

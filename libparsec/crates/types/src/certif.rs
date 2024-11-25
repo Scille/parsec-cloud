@@ -1,7 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
 use std::collections::{HashMap, HashSet};
-use std::num::NonZeroU64;
+use std::num::NonZeroU8;
 use std::sync::Arc;
 
 use bytes::Bytes;
@@ -1083,8 +1083,9 @@ pub struct ShamirRecoveryBriefCertificate {
     /// User here must be the one owning the device used as author
     /// (i.e. it is the user to be recovered).
     pub user_id: UserID,
-    pub threshold: NonZeroU64,
-    pub per_recipient_shares: HashMap<UserID, NonZeroU64>,
+    pub threshold: NonZeroU8,
+    /// The total share count across all recipients must be at most 256
+    pub per_recipient_shares: HashMap<UserID, NonZeroU8>,
 }
 
 impl_unsecure_load!(ShamirRecoveryBriefCertificate -> DeviceID);
@@ -1097,14 +1098,19 @@ impl ShamirRecoveryBriefCertificate {
     /// Hence this `check_data_integrity` is only used during deserialization (and also as sanity check
     /// right before serialization) and not exposed publicly.
     fn check_data_integrity(&self) -> DataResult<()> {
-        let total_shares = {
-            let mut total_shares: u64 = 0;
-            for shares in self.per_recipient_shares.values() {
-                total_shares += u64::from(*shares);
-            }
-            total_shares
-        };
-        if u64::from(self.threshold) > total_shares {
+        let total_shares = self
+            .per_recipient_shares
+            .values()
+            .map(|x| x.get() as usize)
+            .sum();
+        if total_shares > 255 {
+            return Err(DataError::DataIntegrity {
+                data_type: std::any::type_name::<Self>(),
+                invariant: "total_shares <= 255",
+            });
+        }
+        // Note this check also ensures that total_shares > 0 since threshold > 0
+        if self.threshold.get() as usize > total_shares {
             return Err(DataError::DataIntegrity {
                 data_type: std::any::type_name::<Self>(),
                 invariant: "threshold <= total_shares",

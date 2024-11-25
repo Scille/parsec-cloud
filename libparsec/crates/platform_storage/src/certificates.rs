@@ -69,6 +69,14 @@ impl PerTopicLastTimestamps {
             shamir_recovery: None,
         }
     }
+    pub fn new_for_shamir(shamir_timestamp: DateTime) -> Self {
+        Self {
+            common: None,
+            sequester: None,
+            realm: HashMap::default(),
+            shamir_recovery: Some(shamir_timestamp),
+        }
+    }
     pub fn new_for_common_and_shamir(
         common_timestamp: DateTime,
         shamir_timestamp: DateTime,

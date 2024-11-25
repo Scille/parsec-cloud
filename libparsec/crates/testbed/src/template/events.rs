@@ -2,7 +2,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
-use std::num::NonZeroU64;
+use std::num::NonZeroU8;
 use std::sync::{Arc, Mutex};
 
 use libparsec_types::prelude::*;
@@ -1908,10 +1908,10 @@ pub struct TestbedEventNewShamirRecovery {
     pub timestamp: DateTime,
     pub author: DeviceID,
     pub user_id: UserID,
-    pub threshold: NonZeroU64,
+    pub threshold: NonZeroU8,
     // Use Vec to retain order, this is important so that the share certificates
     // are provided in the same order.
-    pub per_recipient_shares: Vec<(UserID, NonZeroU64)>,
+    pub per_recipient_shares: Vec<(UserID, NonZeroU8)>,
     pub recovery_device: DeviceID,
     pub data_key: SecretKey,
     pub reveal_token: InvitationToken,
@@ -1924,8 +1924,8 @@ impl_event_debug!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        threshold: NonZeroU64,
-        per_recipient_shares: Vec<UserID, NonZeroU64>,
+        threshold: NonZeroU8,
+        per_recipient_shares: Vec<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
         reveal_token: InvitationToken,
@@ -1936,8 +1936,8 @@ impl_event_crc_hash!(
     [
         timestamp: DateTime,
         author: DeviceID,
-        threshold: NonZeroU64,
-        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
+        threshold: NonZeroU8,
+        per_recipient_shares: Vec<(UserID, NonZeroU8)>,
         recovery_device: DeviceID,
         data_key: SecretKey,
         reveal_token: InvitationToken,
@@ -1948,8 +1948,8 @@ impl TestbedEventNewShamirRecovery {
     pub(super) fn from_builder(
         builder: &mut TestbedTemplateBuilder,
         user: UserID,
-        threshold: NonZeroU64,
-        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
+        threshold: NonZeroU8,
+        per_recipient_shares: Vec<(UserID, NonZeroU8)>,
         recovery_device: DeviceID,
     ) -> Self {
         // 1) Consistency checks
@@ -2026,17 +2026,23 @@ impl TestbedEventNewShamirRecovery {
 
         // Share certificates
 
-        let total_share_count = self
-            .per_recipient_shares
-            .iter()
-            .map(|(_, shares_count)| shares_count.get() as usize)
-            .sum();
+        let total_share_count = {
+            let total_share_count: usize = self
+                .per_recipient_shares
+                .iter()
+                .map(|(_, shares_count)| shares_count.get() as usize)
+                .sum();
+
+            let total_share_count = u8::try_from(total_share_count).expect("Too many shares");
+
+            NonZeroU8::try_from(total_share_count).expect("Share must be > 0")
+        };
 
         let mut shark_shares = ShamirRecoverySecret {
             data_key: self.data_key.clone(),
             reveal_token: self.reveal_token,
         }
-        .dump_and_encrypt_into_shares(self.threshold.get() as u8, total_share_count)
+        .dump_and_encrypt_into_shares(self.threshold, total_share_count)
         .into_iter();
 
         for (recipient, shares_count) in &self.per_recipient_shares {

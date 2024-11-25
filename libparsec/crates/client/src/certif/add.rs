@@ -8,7 +8,7 @@ use std::{
 use libparsec_types::prelude::*;
 
 use super::{
-    store::{CertificatesStoreWriteGuard, GetCertificateError},
+    store::{CertificatesStoreWriteGuard, GetCertificateError, LastShamirRecovery},
     CertificateOps, UpTo,
 };
 use crate::{event_bus::EventInvalidCertificate, EventNewCertificates};
@@ -1879,49 +1879,6 @@ async fn check_realm_archiving_certificate_consistency(
     Ok(())
 }
 
-enum LastShamirRecovery {
-    NeverSetup,
-    Valid(Arc<ShamirRecoveryBriefCertificate>),
-    Removed(
-        Arc<ShamirRecoveryBriefCertificate>,
-        Arc<ShamirRecoveryDeletionCertificate>,
-    ),
-}
-
-async fn get_last_shamir_recovery_for_author(
-    store: &mut CertificatesStoreWriteGuard<'_>,
-    up_to: UpTo,
-    user_id: UserID,
-) -> Result<LastShamirRecovery, CertifAddCertificatesBatchError> {
-    let last_brief_certif = match store
-        .get_last_shamir_recovery_brief_certificate_for_author(up_to, &user_id)
-        .await?
-    {
-        Some(certif) => certif,
-        // The user never had any shamir recovery configured
-        None => return Ok(LastShamirRecovery::NeverSetup),
-    };
-
-    let last_shamir_recovery = match store
-        .get_last_shamir_recovery_deletion_certificate_for_author(up_to, &user_id)
-        .await?
-    {
-        // The user has never removed any shamir recovery, so the one we have is valid !
-        None => LastShamirRecovery::Valid(last_brief_certif),
-        Some(last_remove_certif) => {
-            if last_remove_certif.setup_to_delete_timestamp == last_brief_certif.timestamp {
-                // The last shamir recovery has been removed, so the user currently has no shamir recovery
-                LastShamirRecovery::Removed(last_brief_certif, last_remove_certif)
-            } else {
-                // The last removal was about an older shamir recovery, we can ignore it
-                LastShamirRecovery::Valid(last_brief_certif)
-            }
-        }
-    };
-
-    Ok(last_shamir_recovery)
-}
-
 async fn check_shamir_recovery_brief_certificate_consistency(
     ops: &CertificateOps,
     store: &mut CertificatesStoreWriteGuard<'_>,
@@ -1971,12 +1928,9 @@ async fn check_shamir_recovery_brief_certificate_consistency(
 
     // 4) Make sure there is no shamir recovery already valid for this user
 
-    let last_shamir_recovery = get_last_shamir_recovery_for_author(
-        store,
-        UpTo::Timestamp(cooked.timestamp),
-        author_user_id,
-    )
-    .await?;
+    let last_shamir_recovery = store
+        .get_last_shamir_recovery_for_author(UpTo::Timestamp(cooked.timestamp), author_user_id)
+        .await?;
     if let LastShamirRecovery::Valid(_) = last_shamir_recovery {
         let hint = mk_hint();
         let what = Box::new(InvalidCertificateError::ShamirRecoveryAlreadySetup { hint });
@@ -2170,19 +2124,16 @@ async fn check_shamir_recovery_deletion_certificate_consistency(
     // Note there could be at most one non-removed shamir recovery, hence it is
     // guaranteed that all but the last one has already been removed.
 
-    let last_shamir_recovery = get_last_shamir_recovery_for_author(
-        store,
-        UpTo::Timestamp(cooked.timestamp),
-        author_user_id,
-    )
-    .await?;
+    let last_shamir_recovery = store
+        .get_last_shamir_recovery_for_author(UpTo::Timestamp(cooked.timestamp), author_user_id)
+        .await?;
     let setup_recipients = match last_shamir_recovery {
         LastShamirRecovery::Valid(last_certif)
             if last_certif.timestamp == cooked.setup_to_delete_timestamp =>
         {
             HashSet::from_iter(last_certif.per_recipient_shares.keys().cloned())
         }
-        LastShamirRecovery::Removed(last_certif, removed_certif)
+        LastShamirRecovery::Deleted(last_certif, removed_certif)
             if last_certif.timestamp == cooked.setup_to_delete_timestamp =>
         {
             let hint = mk_hint();

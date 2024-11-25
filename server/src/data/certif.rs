@@ -2,7 +2,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    num::NonZeroU64,
+    num::NonZeroU8,
     sync::Arc,
 };
 
@@ -981,7 +981,7 @@ impl ShamirRecoveryBriefCertificate {
         author: DeviceID,
         timestamp: DateTime,
         user_id: UserID,
-        threshold: NonZeroU64,
+        threshold: NonZeroU8,
         per_recipient_shares: Bound<'_, PyDict>,
     ) -> PyResult<Self> {
         Ok(Self(Arc::new(
@@ -994,7 +994,7 @@ impl ShamirRecoveryBriefCertificate {
                     let mut hash_map = HashMap::with_capacity(per_recipient_shares.len());
                     for (py_key_any, py_value_any) in &per_recipient_shares {
                         let py_key = py_key_any.downcast::<UserID>()?;
-                        let py_value: NonZeroU64 = py_value_any.extract()?;
+                        let py_value: NonZeroU8 = py_value_any.extract()?;
                         hash_map.insert(py_key.borrow().0, py_value);
                     }
                     hash_map
@@ -1051,7 +1051,7 @@ impl ShamirRecoveryBriefCertificate {
     }
 
     #[getter]
-    fn threshold(&self) -> NonZeroU64 {
+    fn threshold(&self) -> NonZeroU8 {
         self.0.threshold
     }
 

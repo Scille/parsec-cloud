@@ -5,7 +5,7 @@
 
 use std::{
     collections::{HashMap, HashSet},
-    num::NonZeroU64,
+    num::{NonZeroU64, NonZeroU8},
     sync::Arc,
 };
 
@@ -141,6 +141,7 @@ impl_crc_hash_for_number!(i32);
 impl_crc_hash_for_number!(i64);
 impl_crc_hash_for_number!(i128);
 impl_crc_hash_for_nonzero_number!(NonZeroU64);
+impl_crc_hash_for_nonzero_number!(NonZeroU8);
 
 macro_rules! impl_crc_hash_for_str_based {
     ($name:ident) => {
