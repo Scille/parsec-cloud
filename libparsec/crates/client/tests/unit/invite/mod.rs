@@ -2,3 +2,4 @@
 
 mod bootstrap_organization;
 mod claimer;
+mod shamir;

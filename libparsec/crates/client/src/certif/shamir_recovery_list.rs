@@ -331,3 +331,40 @@ pub async fn list_shamir_recoveries_for_others(
         })
         .await?
 }
+
+pub async fn get_shamir_recovery_share_data(
+    ops: &CertificateOps,
+    user_id: UserID,
+) -> Result<ShamirRecoveryShareData, CertifListShamirRecoveryError> {
+    ops.store
+        .for_read(|store| async move {
+            // TODO: check that the shamir is actually recoverable
+            let certificate = store
+                .get_last_shamir_recovery_share_certificate_for_recipient(
+                    UpTo::Current,
+                    user_id,
+                    ops.device.user_id,
+                )
+                .await?;
+            let certificate = match certificate {
+                Some(certificate) => Ok(certificate),
+                None => Err(CertifListShamirRecoveryError::Internal(anyhow::anyhow!(
+                    "No share data found for user {}",
+                    user_id
+                ))),
+            }?;
+            let author_verify_key = store
+                .get_device_verify_key(UpTo::Current, certificate.author)
+                .await
+                .map_err(|e| CertifListShamirRecoveryError::Internal(e.into()))?;
+            ShamirRecoveryShareData::decrypt_verify_and_load_for(
+                &certificate.ciphered_share,
+                &ops.device.private_key,
+                &author_verify_key,
+                certificate.author,
+                certificate.timestamp,
+            )
+            .map_err(|e| CertifListShamirRecoveryError::Internal(e.into()))
+        })
+        .await?
+}

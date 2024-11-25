@@ -77,7 +77,7 @@
                             },
                             {
                                 "name": "threshold",
-                                "type": "NonZeroInteger"
+                                "type": "NonZeroU8"
                             },
                             {
                                 "name": "recipients",
@@ -100,7 +100,7 @@
                     },
                     {
                         "name": "shares",
-                        "type": "NonZeroInteger"
+                        "type": "NonZeroU8"
                     }
                 ]
             }

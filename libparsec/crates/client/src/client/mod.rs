@@ -72,7 +72,8 @@ pub use crate::invite::{
     InvitationEmailSentStatus, InviteListItem, ListInvitationsError as ClientListInvitationsError,
     NewDeviceInvitationError as ClientNewDeviceInvitationError,
     NewShamirRecoveryInvitationError as ClientNewShamirRecoveryInvitationError,
-    NewUserInvitationError as ClientNewUserInvitationError, UserGreetInitialCtx,
+    NewUserInvitationError as ClientNewUserInvitationError, ShamirRecoveryGreetInitialCtx,
+    UserGreetInitialCtx,
 };
 pub use crate::workspace::WorkspaceOps;
 pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
@@ -548,6 +549,22 @@ impl Client {
         )
     }
 
+    pub async fn start_shamir_recovery_invitation_greet(
+        &self,
+        token: InvitationToken,
+        claimer: UserID,
+    ) -> Result<ShamirRecoveryGreetInitialCtx, ClientListShamirRecoveryError> {
+        let share_data =
+            shamir_recovery_list::get_shamir_recovery_share_data(self, claimer).await?;
+        Ok(ShamirRecoveryGreetInitialCtx::new(
+            self.device.clone(),
+            self.cmds.clone(),
+            self.event_bus.clone(),
+            token,
+            share_data,
+        ))
+    }
+
     pub async fn get_self_shamir_recovery(
         &self,
     ) -> Result<SelfShamirRecoveryInfo, ClientListShamirRecoveryError> {
@@ -591,4 +608,4 @@ impl Client {
 #[cfg(test)]
 #[path = "../../tests/unit/client/mod.rs"]
 #[allow(clippy::unwrap_used)]
-mod tests;
+pub mod tests;
