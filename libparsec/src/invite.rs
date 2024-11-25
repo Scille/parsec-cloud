@@ -248,6 +248,9 @@ pub async fn claimer_retrieve_info(
                 greeter_human_handle,
             })
         }
+        libparsec_client::UserOrDeviceClaimInitialCtx::ShamirRecovery(ctx) => {
+            todo!("{ctx:?}")
+        }
     }
 }
 
