@@ -9,12 +9,12 @@
         "reps": [
             {
                 "status": "ok",
-                "unit": "UserOrDevice"
+                "unit": "InvitationType"
             }
         ],
         "nested_types": [
             {
-                "name": "UserOrDevice",
+                "name": "InvitationType",
                 "discriminant_field": "type",
                 "variants": [
                     {

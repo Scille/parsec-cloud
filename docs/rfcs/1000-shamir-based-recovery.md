@@ -403,7 +403,7 @@ Authenticated API for creating the invitation:
         ],
         "req": {
             "cmd": "invite_new",
-            "unit": "UserOrDeviceOrShamirRecovery"
+            "unit": "InvitationType"
         },
         "reps": [
             {
@@ -435,7 +435,7 @@ Authenticated API for creating the invitation:
         ],
         "nested_types": [
             {
-                "name": "UserOrDeviceOrShamirRecovery",
+                "name": "InvitationType",
                 "discriminant_field": "type",
                 "variants": [
                     {
@@ -535,12 +535,12 @@ Invited API, we reuse the `invite_info` command:
         "reps": [
             {
                 "status": "ok",
-                "unit": "UserOrDeviceOrShamirRecovery"
+                "unit": "InvitationType"
             }
         ],
         "nested_types": [
             {
-                "name": "UserOrDeviceOrShamirRecovery",
+                "name": "InvitationType",
                 "discriminant_field": "type",
                 "variants": [
                     // <-------------- User variant omitted --------->

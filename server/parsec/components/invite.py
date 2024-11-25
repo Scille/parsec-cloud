@@ -945,7 +945,7 @@ class BaseInviteComponent:
         match outcome:
             case UserInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.UserOrDeviceUser(
+                    invited_cmds.latest.invite_info.InvitationTypeUser(
                         claimer_email=invitation.claimer_email,
                         greeter_user_id=invitation.created_by_user_id,
                         greeter_human_handle=invitation.created_by_human_handle,
@@ -953,14 +953,14 @@ class BaseInviteComponent:
                 )
             case DeviceInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.UserOrDeviceDevice(
+                    invited_cmds.latest.invite_info.InvitationTypeDevice(
                         greeter_user_id=invitation.created_by_user_id,
                         greeter_human_handle=invitation.created_by_human_handle,
                     )
                 )
             case ShamirRecoveryInvitation() as invitation:
                 return invited_cmds.latest.invite_info.RepOk(
-                    invited_cmds.latest.invite_info.UserOrDeviceShamirRecovery(
+                    invited_cmds.latest.invite_info.InvitationTypeShamirRecovery(
                         claimer_user_id=invitation.claimer_user_id,
                         claimer_human_handle=invitation.claimer_human_handle,
                         threshold=invitation.threshold,
