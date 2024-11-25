@@ -24,6 +24,7 @@
             "type": "UserID"
         },
         {
+            // Must correspond to the brief certificate's `per_recipient_shares`.
             "name": "share_recipients",
             "type": "Set<UserID>"
         }
