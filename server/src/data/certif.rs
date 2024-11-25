@@ -982,7 +982,7 @@ impl ShamirRecoveryBriefCertificate {
         timestamp: DateTime,
         user_id: UserID,
         threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        per_recipient_shares: Bound<'_, PyDict>,
     ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec_types::ShamirRecoveryBriefCertificate {
@@ -990,10 +990,15 @@ impl ShamirRecoveryBriefCertificate {
                 author: author.0,
                 user_id: user_id.0,
                 threshold,
-                per_recipient_shares: per_recipient_shares
-                    .into_iter()
-                    .map(|(k, v)| (k.0, v))
-                    .collect(),
+                per_recipient_shares: {
+                    let mut hash_map = HashMap::with_capacity(per_recipient_shares.len());
+                    for (py_key_any, py_value_any) in &per_recipient_shares {
+                        let py_key = py_key_any.downcast::<UserID>()?;
+                        let py_value: NonZeroU64 = py_value_any.extract()?;
+                        hash_map.insert(py_key.borrow().0, py_value);
+                    }
+                    hash_map
+                },
             },
         )))
     }
@@ -1173,7 +1178,7 @@ impl ShamirRecoveryDeletionCertificate {
         timestamp: DateTime,
         setup_to_delete_timestamp: DateTime,
         setup_to_delete_user_id: UserID,
-        share_recipients: HashSet<UserID>,
+        share_recipients: Bound<'_, PySet>,
     ) -> PyResult<Self> {
         Ok(Self(Arc::new(
             libparsec_types::ShamirRecoveryDeletionCertificate {
@@ -1181,7 +1186,14 @@ impl ShamirRecoveryDeletionCertificate {
                 author: author.0,
                 setup_to_delete_timestamp: setup_to_delete_timestamp.0,
                 setup_to_delete_user_id: setup_to_delete_user_id.0,
-                share_recipients: share_recipients.into_iter().map(|u| u.0).collect(),
+                share_recipients: {
+                    let mut hash_set = HashSet::with_capacity(share_recipients.len());
+                    for py_item_any in &share_recipients {
+                        let py_item = py_item_any.downcast::<UserID>()?;
+                        hash_set.insert(py_item.borrow().0);
+                    }
+                    hash_set
+                },
             },
         )))
     }
@@ -1240,14 +1252,6 @@ impl ShamirRecoveryDeletionCertificate {
 
     #[getter]
     fn share_recipients<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PySet>> {
-        // PySet::new_bound(
-        //     py,
-        //     self.0
-        //         .share_recipients
-        //         .iter()
-        //         // .map(|user_id| UserID(*user_id)),
-        // )
-
         let py_recipients = PySet::empty_bound(py)?;
         for recipient in &self.0.share_recipients {
             py_recipients.add(UserID(*recipient).into_py(py))?;

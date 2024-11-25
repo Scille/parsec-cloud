@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from typing import Sequence
-
 from parsec._parsec_pyi.crypto import (
     PublicKey,
     SequesterPublicKeyDer,
@@ -435,7 +433,7 @@ class ShamirRecoveryDeletionCertificate:
         timestamp: DateTime,
         setup_to_delete_timestamp: DateTime,
         setup_to_delete_user_id: UserID,
-        share_recipients: Sequence[UserID],
+        share_recipients: set[UserID],
     ) -> None: ...
     @property
     def author(self) -> DeviceID: ...
@@ -446,19 +444,19 @@ class ShamirRecoveryDeletionCertificate:
     @property
     def setup_to_delete_user_id(self) -> UserID: ...
     @property
-    def share_recipients(self) -> list[UserID]: ...
+    def share_recipients(self) -> set[UserID]: ...
     @classmethod
     def verify_and_load(
         cls,
         signed: bytes,
         author_verify_key: VerifyKey,
         expected_author: DeviceID,
-    ) -> ShamirRecoveryBriefCertificate:
+    ) -> ShamirRecoveryDeletionCertificate:
         """Raise `ValueError` if invalid"""
         ...
     def dump_and_sign(self, author_signkey: SigningKey) -> bytes: ...
     @classmethod
-    def unsecure_load(cls, signed: bytes) -> ShamirRecoveryBriefCertificate:
+    def unsecure_load(cls, signed: bytes) -> ShamirRecoveryDeletionCertificate:
         """Raise `ValueError` if invalid"""
         ...
 
