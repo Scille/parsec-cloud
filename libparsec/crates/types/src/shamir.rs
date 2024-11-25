@@ -3,13 +3,14 @@
 use std::num::NonZeroU8;
 
 use crate::{
-    self as libparsec_types, /*To use parsec_data!*/
+    self as libparsec_types,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DataResult, InvitationToken,
+    DataError, DataResult, DateTime, DeviceID, InvitationToken,
 };
 use libparsec_crypto::{
-    impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey,
+    impl_key_debug, CryptoError, CryptoResult, PrivateKey, PublicKey, SecretKey, SigningKey,
+    VerifyKey,
 };
 use libparsec_serialization_format::parsec_data;
 use serde::{Deserialize, Serialize};
@@ -77,6 +78,8 @@ impl ShamirRecoverySecret {
     from = "ShamirRecoveryShareDataData"
 )]
 pub struct ShamirRecoveryShareData {
+    pub author: DeviceID,
+    pub timestamp: DateTime,
     pub weighted_share: Vec<ShamirShare>,
 }
 
@@ -85,6 +88,8 @@ parsec_data!("schema/shamir/shamir_recovery_share_data.json5");
 impl_transparent_data_format_conversion!(
     ShamirRecoveryShareData,
     ShamirRecoveryShareDataData,
+    author,
+    timestamp,
     weighted_share,
 );
 
@@ -103,23 +108,50 @@ impl ShamirRecoveryShareData {
         Ok(())
     }
 
-    pub fn decrypt_and_load_for(
+    pub fn decrypt_verify_and_load_for(
         encrypted: &[u8],
         recipient_privkey: &PrivateKey,
+        author_verify_key: &VerifyKey,
+        expected_author: DeviceID,
+        expected_timestamp: DateTime,
     ) -> DataResult<ShamirRecoveryShareData> {
-        let serialized = recipient_privkey
+        let signed = recipient_privkey
             .decrypt_from_self(encrypted)
             .map_err(|_| DataError::Decryption)?;
-        let obj: Self = format_vx_load(&serialized)?;
+
+        let serialized = author_verify_key
+            .verify(&signed)
+            .map_err(|_| DataError::Signature)?;
+
+        let obj: Self = format_vx_load(serialized)?;
+
+        if obj.author != expected_author {
+            return Err(DataError::UnexpectedAuthor {
+                expected: expected_author,
+                got: Some(obj.author),
+            });
+        }
+
+        if obj.timestamp != expected_timestamp {
+            return Err(DataError::UnexpectedTimestamp {
+                expected: expected_timestamp,
+                got: obj.timestamp,
+            });
+        }
 
         obj.check_data_integrity()?;
 
         Ok(obj)
     }
 
-    pub fn dump_and_encrypt_for(&self, recipient_pubkey: &PublicKey) -> Vec<u8> {
+    pub fn dump_sign_and_encrypt_for(
+        &self,
+        author_signkey: &SigningKey,
+        recipient_pubkey: &PublicKey,
+    ) -> Vec<u8> {
         let serialized = format_v0_dump(self);
-        recipient_pubkey.encrypt_for_self(&serialized)
+        let signed = author_signkey.sign(&serialized);
+        recipient_pubkey.encrypt_for_self(&signed)
     }
 }
 

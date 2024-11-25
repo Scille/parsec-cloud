@@ -2,6 +2,19 @@
     "label": "ShamirRecoveryShareData",
     "type": "shamir_recovery_share_data",
     "other_fields": [
+        // The share data is signed by the author in order to prevent
+        // attacks where a user puts someone else's share in its own certificate
+        // in order to trick a recipient user into deciphering it.
+        //
+        // Hence the presence of author and timestamp fields here.
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
         {
             // Weighted share to recover the secret key and the reveal token
             // The number of items in the list corresponds to the weight of the share

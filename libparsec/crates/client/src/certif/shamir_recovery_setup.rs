@@ -364,8 +364,12 @@ async fn do_shamir_recovery_setup(
             .map(|_| shark_shares.next().expect("enough share generated"))
             .collect();
 
-        let ciphered_share =
-            ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(recipient_pubkey);
+        let ciphered_share = ShamirRecoveryShareData {
+            author: author_device_id,
+            timestamp,
+            weighted_share,
+        }
+        .dump_sign_and_encrypt_for(&ops.device.signing_key, recipient_pubkey);
 
         let shamir_recovery_share_certificate = ShamirRecoveryShareCertificate {
             author: author_device_id,
