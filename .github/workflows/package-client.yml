@@ -233,30 +233,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cache-rust: [false]
         include:
           - name: 🏁 Windows
-            platform: windows
-            os: windows-2022
-            raw_latest_file: latest.yml
+            artifact_tag: windows-exe
+            cache-rust: false
             extension: exe
             os_alias: win
-            artifact_tag: windows-exe
+            os: windows-2022
+            platform: windows
+            raw_latest_file: latest.yml
           - name: 🍎 macOS
-            platform: macos
-            os: macos-13
-            raw_latest_file: latest-mac.yml
+            artifact_tag: macos-dmg
             cache-rust: true
             extension: "*" # Use wildcard to match dmg and zip extension
             os_alias: mac
-            artifact_tag: macos-dmg
+            os: macos-13
+            platform: macos
+            raw_latest_file: latest-mac.yml
           - name: 🐧 AppImage 4 Linux
-            platform: linux
-            os: ubuntu-22.04
-            raw_latest_file: latest-linux.yml
-            os_alias: linux
-            extension: AppImage
             artifact_tag: linux-appimage
+            cache-rust: false
+            extension: AppImage
+            os_alias: linux
+            os: ubuntu-22.04
+            platform: linux
+            raw_latest_file: latest-linux.yml
     name: "${{matrix.name }}: ⚡ Package electron"
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
