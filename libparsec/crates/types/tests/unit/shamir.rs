@@ -85,35 +85,54 @@ fn serde_shamir_recovery_secret() {
 
 #[rstest]
 fn serde_shamir_recovery_share_data(alice: &Device) {
-    // Generated from Parsec 3.1.1-a.0+dev
+    // Generated from Parsec 3.2.1-a.0+dev
     // Content:
     //   type: 'shamir_recovery_share_data'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
     //   weighted_share: [ 0x3132, 0x6162, ]
     let encrypted: &[u8] = hex!(
-        "ffccff01540b6a1b776f0799e4131c1649cb2fa263cce086bd15fab3a0d03b465febec"
-        "4ed1008ed3de2bdbf53bf9fdcdb4cfc5ce70057c9bef8a014ece7e50f37867c86ea2dd"
-        "ce9fdcfec2869ded44ec0299d9688b85f15d06d35e47eb29754aa51fc6fff018947cf0"
-        "5f4847e6d6e63ab74482"
+        "63aee06749879cab0e65621ac823d9978039dadbce89445336ab3b3d06374b3cd88c7e"
+        "3670d669161d00c73bef9ce8372281a53771477d593525ba3ae5ce48b8d5d020785746"
+        "bf80aa66e13406238840ef577ff443187bfbf0f5d51414bf119629634f66ca0eb4d6c5"
+        "f746d14be78c53db137e76ef06865d891a441cd981d4d3b190a6b8eb3eeceaf983e7ed"
+        "320222a144a52f25ce09a7a05b380375c6f0b1723860a4dec0ec491de08c3a813f7472"
+        "203ac6ac5d9a42e6d9290b889123cf9450ec254e59363c11708d89df3cf73e6a2339ae"
+        "41ef209ce609cb3a044d"
     )
     .as_ref();
 
     let expected = ShamirRecoveryShareData {
+        author: alice.device_id,
+        timestamp: "2020-01-01T00:00:00Z".parse().unwrap(),
         weighted_share: vec![
             ShamirShare::load(b"12").unwrap(),
             ShamirShare::load(b"ab").unwrap(),
         ],
     };
 
-    let data =
-        ShamirRecoveryShareData::decrypt_and_load_for(encrypted, &alice.private_key).unwrap();
+    let data = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        encrypted,
+        &alice.private_key,
+        &alice.verify_key(),
+        alice.device_id,
+        "2020-01-01T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap();
 
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let encrypted2 = data.dump_and_encrypt_for(&alice.public_key());
+    let encrypted2 = data.dump_sign_and_encrypt_for(&alice.signing_key, &alice.public_key());
     // Note we cannot just compare with `data` due to signature and keys order
-    let data2 =
-        ShamirRecoveryShareData::decrypt_and_load_for(&encrypted2, &alice.private_key).unwrap();
+    let data2 = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        &encrypted2,
+        &alice.private_key,
+        &alice.verify_key(),
+        alice.device_id,
+        "2020-01-01T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap();
     p_assert_eq!(data2, expected);
 }
 
@@ -122,16 +141,28 @@ fn serde_shamir_recovery_share_data_weighted_max_value(alice: &Device) {
     // Generated from Parsec 3.2.1-a.0+dev
     // Content:
     //   type: 'shamir_recovery_share_data'
-    //   weighted_share: [ <256 times 0x3132> ]
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   weighted_share: [ <255 times 0x3132> ]
     let raw: &[u8] = hex!(
-        "35b8e9925e37e1c91b08a25f601e225faf82feb8e5ffa744a9b7a59578f5c50bf0c431"
-        "26d5b10b59078a6469861216c5c0cc4bb57edf11c01c6ac2478fd14fb304833a94a3e4"
-        "ce66b4ac432d4948aa681df05149f8f8c0ce7f172c8e100f2d4bb0e2c5ad56420520ab"
-        "bbfddd4b444cd1760c4280fd14"
+    "c0a83b1006f49ccf14259f59a9e36f99940967a4db90ec796beb9a9aff202d5524400d"
+    "4389fd16bc1e801559d4fc620c6a5f24377214a69eebd0855723ebd303c9de7a74c9f5"
+    "df75eb238eb660808c3d8728821290a190865df1f907ec5d5774654e7e3bdb35007710"
+    "5d181a917297275731290df6aa17627f68792bcde642cf2721aecf332a896a89804cbf"
+    "5ff817fa50363b25fb3c0d95f9c9d5052352333f644fc4514f2a8f1de5921720a3a6f4"
+    "5612a5e7da38e85d968cdc69cfcaf558f395d9423bbb440aa38f52b16bdcb0bf4a86fa"
+    "046a79e83a037d77b830c7"
     )
     .as_ref();
 
-    let data = ShamirRecoveryShareData::decrypt_and_load_for(raw, &alice.private_key).unwrap();
+    let data = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        raw,
+        &alice.private_key,
+        &alice.verify_key(),
+        alice.device_id,
+        "2020-01-01T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap();
 
     p_assert_eq!(data.weighted_share.len(), 255)
 }
@@ -141,20 +172,83 @@ fn serde_shamir_recovery_share_data_weighted_share_too_big(alice: &Device) {
     // Generated from Parsec 3.2.1-a.0+dev
     // Content:
     //   type: 'shamir_recovery_share_data'
-    //   weighted_share: [ <257 times 0x3132> ]
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   weighted_share: [ <256 times 0x3132> ]
     let raw: &[u8] = hex!(
-        "40cfe3ab5bd66a3ff24d1d63006846db5d8b731d2efecd56421ace6070ec1e656c3f51"
-        "abb94669363396941bb3940af3cf557851a624972c51f4af11aee50a5e591c58e4625f"
-        "7a0b177e79ee96c5049dc5cc243c045dba40d4dd0326643c308216424cedb555527681"
-        "27320de3459d484e4afedacfa1"
+        "b274036a3b6aa66eba12a68e3084db0027079e8d972ab9143742f1a43bcf7162a58e8a"
+        "0071597bb780f37e0fe5c2b3ae743eea4dbc4a4a9851f55b09427362cbcd230acc4f98"
+        "37a4ca085bdf97672b8920ebef60ce4b30303edf06536f40e69e8110c70ab9cc04590f"
+        "a00560fef8e6fa588b6dac90046c361054da2ce8652dcf73673d73dba02fd7c5a9a3e4"
+        "16ba93909bfe840ab1cb10fa50cf6414be26b4c7dea86cc27cdaa961308e032a7f5204"
+        "971287a1c58f0545e7ebf65bb6fd5467f35c5592d1c0c4029534897f049605da758686"
+        "5fbd3a0cb24de9106de89e"
     )
     .as_ref();
 
-    let err = ShamirRecoveryShareData::decrypt_and_load_for(raw, &alice.private_key).unwrap_err();
+    let err = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        raw,
+        &alice.private_key,
+        &alice.verify_key(),
+        alice.device_id,
+        "2020-01-01T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap_err();
 
     p_assert_matches!(err, DataError::DataIntegrity{
             data_type,
             invariant
         } if data_type == "libparsec_types::shamir::ShamirRecoveryShareData" && invariant == "weighted_share <= 255"
     );
+}
+
+#[rstest]
+fn serde_shamir_recovery_share_data_bad_expected(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_share_data'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   weighted_share: [ 0x3132, 0x6162, ]
+    let raw: &[u8] = hex!(
+        "63aee06749879cab0e65621ac823d9978039dadbce89445336ab3b3d06374b3cd88c7e"
+        "3670d669161d00c73bef9ce8372281a53771477d593525ba3ae5ce48b8d5d020785746"
+        "bf80aa66e13406238840ef577ff443187bfbf0f5d51414bf119629634f66ca0eb4d6c5"
+        "f746d14be78c53db137e76ef06865d891a441cd981d4d3b190a6b8eb3eeceaf983e7ed"
+        "320222a144a52f25ce09a7a05b380375c6f0b1723860a4dec0ec491de08c3a813f7472"
+        "203ac6ac5d9a42e6d9290b889123cf9450ec254e59363c11708d89df3cf73e6a2339ae"
+        "41ef209ce609cb3a044d"
+    )
+    .as_ref();
+
+    // Bad expected author
+
+    let err = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        raw,
+        &alice.private_key,
+        &alice.verify_key(),
+        "bob@dev1".parse().unwrap(),
+        "2020-01-01T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedAuthor {
+        expected,
+        got
+    } if expected == "bob@dev1".parse().unwrap() && got == Some(alice.device_id)
+    );
+
+    // Bad expected timestamp
+
+    let err = ShamirRecoveryShareData::decrypt_verify_and_load_for(
+        raw,
+        &alice.private_key,
+        &alice.verify_key(),
+        alice.device_id,
+        "2020-01-02T00:00:00Z".parse().unwrap(),
+    )
+    .unwrap_err();
+    p_assert_matches!(err, DataError::UnexpectedTimestamp {
+        expected,
+        got,
+    } if expected == "2020-01-02T00:00:00Z".parse().unwrap() && got == "2020-01-01T00:00:00Z".parse().unwrap());
 }

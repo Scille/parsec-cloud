@@ -2057,8 +2057,12 @@ impl TestbedEventNewShamirRecovery {
                 weighted_share.push(shark_shares.next().unwrap());
             }
 
-            let ciphered_share =
-                ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(&recipient_pubkey);
+            let ciphered_share = ShamirRecoveryShareData {
+                author: self.author,
+                timestamp: self.timestamp,
+                weighted_share,
+            }
+            .dump_sign_and_encrypt_for(author_signkey, &recipient_pubkey);
 
             let certif = ShamirRecoveryShareCertificate {
                 author: self.author,
