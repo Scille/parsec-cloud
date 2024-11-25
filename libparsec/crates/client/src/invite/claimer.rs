@@ -222,7 +222,7 @@ pub async fn claimer_retrieve_info(
     addr: ParsecInvitationAddr,
     time_provider: Option<TimeProvider>,
 ) -> Result<UserOrDeviceClaimInitialCtx, ClaimerRetrieveInfoError> {
-    use invited_cmds::latest::invite_info::{Rep, Req, UserOrDevice};
+    use invited_cmds::latest::invite_info::{InvitationType, Rep, Req};
     let time_provider = time_provider.unwrap_or_default();
 
     let cmds = Arc::new(
@@ -234,7 +234,7 @@ pub async fn claimer_retrieve_info(
 
     match rep {
         Rep::Ok(claimer) => match claimer {
-            UserOrDevice::User {
+            InvitationType::User {
                 claimer_email,
                 greeter_user_id,
                 greeter_human_handle,
@@ -246,7 +246,7 @@ pub async fn claimer_retrieve_info(
                 greeter_human_handle,
                 time_provider,
             ))),
-            UserOrDevice::Device {
+            InvitationType::Device {
                 greeter_user_id,
                 greeter_human_handle,
             } => Ok(UserOrDeviceClaimInitialCtx::Device(
@@ -258,7 +258,7 @@ pub async fn claimer_retrieve_info(
                     time_provider,
                 ),
             )),
-            UserOrDevice::ShamirRecovery {
+            InvitationType::ShamirRecovery {
                 claimer_user_id,
                 claimer_human_handle,
                 recipients,

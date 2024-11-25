@@ -6,10 +6,10 @@ from __future__ import annotations
 
 from parsec._parsec import HumanHandle, UserID
 
-class UserOrDevice:
+class InvitationType:
     pass
 
-class UserOrDeviceUser(UserOrDevice):
+class InvitationTypeUser(InvitationType):
     def __init__(
         self, claimer_email: str, greeter_user_id: UserID, greeter_human_handle: HumanHandle
     ) -> None: ...
@@ -20,14 +20,14 @@ class UserOrDeviceUser(UserOrDevice):
     @property
     def greeter_user_id(self) -> UserID: ...
 
-class UserOrDeviceDevice(UserOrDevice):
+class InvitationTypeDevice(InvitationType):
     def __init__(self, greeter_user_id: UserID, greeter_human_handle: HumanHandle) -> None: ...
     @property
     def greeter_human_handle(self) -> HumanHandle: ...
     @property
     def greeter_user_id(self) -> UserID: ...
 
-class UserOrDeviceShamirRecovery(UserOrDevice):
+class InvitationTypeShamirRecovery(InvitationType):
     def __init__(
         self,
         claimer_user_id: UserID,
@@ -72,6 +72,6 @@ class RepUnknownStatus(Rep):
     def reason(self) -> str | None: ...
 
 class RepOk(Rep):
-    def __init__(self, unit: UserOrDevice) -> None: ...
+    def __init__(self, unit: InvitationType) -> None: ...
     @property
-    def unit(self) -> UserOrDevice: ...
+    def unit(self) -> InvitationType: ...

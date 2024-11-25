@@ -58,7 +58,7 @@ pub fn rep_ok() {
                 "6f624064657631a3626f62af677265657465725f757365725f6964d802109b68ba5cdf"
                 "428ea0017fc6bcc04d4a"
             )[..],
-            invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::UserOrDevice::User {
+            invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::User {
                 claimer_email: "alice@dev1".to_owned(),
                 greeter_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
@@ -76,7 +76,7 @@ pub fn rep_ok() {
                 "616e5f68616e646c6592a8626f624064657631a3626f62af677265657465725f757365"
                 "725f6964d802109b68ba5cdf428ea0017fc6bcc04d4a"
             )[..],
-            invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::UserOrDevice::Device {
+            invited_cmds::invite_info::Rep::Ok(invited_cmds::invite_info::InvitationType::Device {
                 greeter_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4a").unwrap(),
                 greeter_human_handle: HumanHandle::new("bob@dev1", "bob").unwrap(),
             }),
@@ -101,7 +101,7 @@ pub fn rep_ok() {
                 "64d802109b68ba5cdf428ea0017fc6bcc04d4ba97468726573686f6c6402"
             )[..],
             invited_cmds::invite_info::Rep::Ok(
-                invited_cmds::invite_info::UserOrDevice::ShamirRecovery {
+                invited_cmds::invite_info::InvitationType::ShamirRecovery {
                     claimer_user_id: UserID::from_hex("109b68ba5cdf428ea0017fc6bcc04d4c").unwrap(),
                     claimer_human_handle: HumanHandle::new("carl@example.com", "carl").unwrap(),
                     recipients: vec![

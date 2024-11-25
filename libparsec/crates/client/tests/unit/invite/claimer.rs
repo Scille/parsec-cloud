@@ -41,7 +41,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         let alice = alice.clone();
         move |_req: protocol::invited_cmds::latest::invite_info::Req| {
             protocol::invited_cmds::latest::invite_info::Rep::Ok(
-                protocol::invited_cmds::latest::invite_info::UserOrDevice::User {
+                protocol::invited_cmds::latest::invite_info::InvitationType::User {
                     claimer_email: "john@example.com".to_owned(),
                     greeter_human_handle: alice.human_handle.clone(),
                     greeter_user_id: alice.user_id.to_owned(),
