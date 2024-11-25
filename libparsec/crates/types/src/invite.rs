@@ -12,7 +12,7 @@ use crate::{
     self as libparsec_types,
     data_macros::impl_transparent_data_format_conversion,
     serialization::{format_v0_dump, format_vx_load},
-    DataError, DeviceID, DeviceLabel, HumanHandle, UserID, UserProfile, VlobID,
+    DataError, DeviceID, DeviceLabel, HumanHandle, ShamirShare, UserID, UserProfile, VlobID,
 };
 
 /*
@@ -334,6 +334,48 @@ impl_transparent_data_format_conversion!(
     user_realm_id,
     user_realm_key,
     root_verify_key,
+);
+
+/*
+ * InviteShamirRecoveryData
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "InviteShamirRecoveryDataData",
+    from = "InviteShamirRecoveryDataData"
+)]
+pub struct InviteShamirRecoveryData;
+
+parsec_data!("schema/invite/invite_shamir_recovery_data.json5");
+
+impl_dump_and_encrypt!(InviteShamirRecoveryData);
+impl_decrypt_and_load!(InviteShamirRecoveryData);
+
+impl_transparent_data_format_conversion!(InviteShamirRecoveryData, InviteShamirRecoveryDataData,);
+
+/*
+ * InviteDeviceConfirmation
+ */
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(
+    into = "InviteShamirRecoveryConfirmationData",
+    from = "InviteShamirRecoveryConfirmationData"
+)]
+pub struct InviteShamirRecoveryConfirmation {
+    pub weighted_share: Vec<ShamirShare>,
+}
+
+parsec_data!("schema/invite/invite_shamir_recovery_confirmation.json5");
+
+impl_dump_and_encrypt!(InviteShamirRecoveryConfirmation);
+impl_decrypt_and_load!(InviteShamirRecoveryConfirmation);
+
+impl_transparent_data_format_conversion!(
+    InviteShamirRecoveryConfirmation,
+    InviteShamirRecoveryConfirmationData,
+    weighted_share,
 );
 
 #[cfg(test)]

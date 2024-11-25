@@ -677,6 +677,44 @@ impl DeviceGreetInitialCtx {
     }
 }
 
+#[derive(Debug)]
+pub struct ShamirRecoveryGreetInitialCtx {
+    base: BaseGreetInitialCtx,
+    share_data: ShamirRecoveryShareData,
+}
+
+impl ShamirRecoveryGreetInitialCtx {
+    pub fn new(
+        device: Arc<LocalDevice>,
+        cmds: Arc<AuthenticatedCmds>,
+        event_bus: EventBus,
+        token: InvitationToken,
+        share_data: ShamirRecoveryShareData,
+    ) -> Self {
+        Self {
+            base: BaseGreetInitialCtx {
+                device,
+                cmds,
+                event_bus,
+                token,
+            },
+            share_data,
+        }
+    }
+
+    pub async fn do_wait_peer(
+        self,
+    ) -> Result<ShamirRecoveryGreetInProgress1Ctx, GreetInProgressError> {
+        self.base
+            .do_wait_peer()
+            .await
+            .map(|base| ShamirRecoveryGreetInProgress1Ctx {
+                base,
+                share_data: self.share_data,
+            })
+    }
+}
+
 // GreetInProgress1Ctx
 
 #[derive(Debug)]
@@ -762,6 +800,37 @@ impl DeviceGreetInProgress1Ctx {
             .do_wait_peer_trust()
             .await
             .map(DeviceGreetInProgress2Ctx)
+    }
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryGreetInProgress1Ctx {
+    base: BaseGreetInProgress1Ctx,
+    share_data: ShamirRecoveryShareData,
+}
+
+impl ShamirRecoveryGreetInProgress1Ctx {
+    pub fn greeter_sas(&self) -> &SASCode {
+        &self.base.greeter_sas
+    }
+
+    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
+        GreetCancellerCtx {
+            greeting_attempt: self.base.greeting_attempt,
+            cmds: self.base.cmds.clone(),
+        }
+    }
+
+    pub async fn do_wait_peer_trust(
+        self,
+    ) -> Result<ShamirRecoveryGreetInProgress2Ctx, GreetInProgressError> {
+        self.base
+            .do_wait_peer_trust()
+            .await
+            .map(|base| ShamirRecoveryGreetInProgress2Ctx {
+                base,
+                share_data: self.share_data,
+            })
     }
 }
 
@@ -871,6 +940,44 @@ impl DeviceGreetInProgress2Ctx {
             .do_signify_trust()
             .await
             .map(DeviceGreetInProgress3Ctx)
+    }
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryGreetInProgress2Ctx {
+    base: BaseGreetInProgress2Ctx,
+    share_data: ShamirRecoveryShareData,
+}
+
+impl ShamirRecoveryGreetInProgress2Ctx {
+    pub fn claimer_sas(&self) -> &SASCode {
+        &self.base.claimer_sas
+    }
+
+    pub fn generate_claimer_sas_choices(&self, size: usize) -> Vec<SASCode> {
+        self.base.generate_claimer_sas_choices(size)
+    }
+
+    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
+        GreetCancellerCtx {
+            greeting_attempt: self.base.greeting_attempt,
+            cmds: self.base.cmds.clone(),
+        }
+    }
+    pub async fn do_deny_trust(self) -> Result<(), GreetInProgressError> {
+        self.base.do_deny_trust().await
+    }
+
+    pub async fn do_signify_trust(
+        self,
+    ) -> Result<ShamirRecoveryGreetInProgress3Ctx, GreetInProgressError> {
+        self.base
+            .do_signify_trust()
+            .await
+            .map(|base| ShamirRecoveryGreetInProgress3Ctx {
+                base,
+                share_data: self.share_data,
+            })
     }
 }
 
@@ -1019,6 +1126,77 @@ impl DeviceGreetInProgress3Ctx {
             cmds: ctx.cmds,
             event_bus: ctx.event_bus,
         })
+    }
+}
+
+#[derive(Debug)]
+pub struct ShamirRecoveryGreetInProgress3Ctx {
+    base: BaseGreetInProgress3Ctx,
+    share_data: ShamirRecoveryShareData,
+}
+
+impl ShamirRecoveryGreetInProgress3Ctx {
+    pub fn canceller_ctx(&self) -> GreetCancellerCtx {
+        GreetCancellerCtx {
+            greeting_attempt: self.base.greeting_attempt,
+            cmds: self.base.cmds.clone(),
+        }
+    }
+
+    pub async fn do_send_share(self) -> Result<(), GreetInProgressError> {
+        // Get claim request
+        let ctx = self.base.do_get_claim_requests().await?;
+        let _data = match InviteShamirRecoveryData::decrypt_and_load(
+            &ctx.payload,
+            &ctx.shared_secret_key,
+        ) {
+            Ok(data) => data,
+            Err(err) => {
+                let reason = match err {
+                    DataError::Decryption => CancelledGreetingAttemptReason::UndecipherablePayload,
+                    DataError::BadSerialization { .. } => {
+                        CancelledGreetingAttemptReason::UndeserializablePayload
+                    }
+                    _ => CancelledGreetingAttemptReason::InconsistentPayload,
+                };
+                cancel_greeting_attempt_and_warn_on_error(&ctx.cmds, ctx.greeting_attempt, reason)
+                    .await;
+                return Err(GreetInProgressError::CorruptedInviteUserData(err));
+            }
+        };
+
+        // Build the confirmation containing the weighted share
+        let greeter_payload = InviteShamirRecoveryConfirmation {
+            weighted_share: self.share_data.weighted_share.clone(),
+        }
+        .dump_and_encrypt(&ctx.shared_secret_key)
+        .into();
+
+        let claimer_step = run_greeter_step_until_ready(
+            &ctx.cmds,
+            ctx.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number7SendPayload { greeter_payload },
+            &ctx.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number7GetPayload => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
+
+        let claimer_step = run_greeter_step_until_ready(
+            &ctx.cmds,
+            ctx.greeting_attempt,
+            invite_greeter_step::GreeterStep::Number8WaitPeerAcknowledgment,
+            &ctx.device.time_provider,
+        )
+        .await?;
+        match claimer_step {
+            invite_greeter_step::ClaimerStep::Number8Acknowledge => {}
+            _ => return Err(anyhow::anyhow!("Unexpected claimer step: {:?}", claimer_step).into()),
+        };
+
+        Ok(())
     }
 }
 

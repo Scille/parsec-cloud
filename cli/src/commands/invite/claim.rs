@@ -69,6 +69,9 @@ pub async fn main(args: Args) -> anyhow::Result<()> {
             let ctx = step4_device(ctx).await?;
             save_device(ctx, save_mode).await
         }
+        UserOrDeviceClaimInitialCtx::ShamirRecovery(_) => {
+            panic!("Shamir recovery invitation is not supported")
+        }
     }
 }
 
