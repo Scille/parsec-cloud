@@ -27,11 +27,11 @@ number of shares.
 A User can have at most one Shamir recovery setup:
 
 - a new User starts with no Shamir recovery setup
-- a Shamir recovery setup always overwrites the previous one
-- an existing Shamir recovery setup can be cleared
+- an existing Shamir recovery setup can be deleted
+- a new Shamir recovery setup cannot be setup if another one already exists
 
-This means that instead of storing all Shamir recovery setups for a given
-User, only the last setup is available. This is sufficient because:
+This means that only a single Shamir recovery setup (at most) is available as
+a given time for a given User. This is sufficient because:
 
 - Shamir recovery can achieve weight-based strategy (e.g. recovery can be
   achieved by 3 normal managers or by a single top ranked one that got
@@ -55,19 +55,19 @@ User, only the last setup is available. This is sufficient because:
 To create the Shamir recovery:
 
 1) Alice wants to create a Shamir recovery with Bob and Adam.
-2) Alice creates a new device `alice@shamir1`, and encrypt its related keys
+2) Alice creates a new device `alice@shamir1`, and encrypts her related keys
    using a symmetric key `SK`: `SK(alice@shamir1)`. `SK` is the secret in the
    Shamir algorithm.
-3) Alice create a `ShamirRecoveryShareCertificate` certificate for Bob
+3) Alice creates a `ShamirRecoveryShareCertificate` certificate for Bob
    (`SRSCBob`) and Adam (`SRSCAdam`). Each certificate contains a part of the
    `SK` secret, signed by Alice and encrypted with Bob/Adam's user key.
-4) Alice send a `shamir_recovery_setup` command to the Parsec server
+4) Alice sends a `shamir_recovery_setup` command to the Parsec server
    containing the `SK(alice@shamir1)`, `SRSCBob`, `SRSCAdam` and the
    Shamir `threshold`.
 
 To use the Shamir recovery:
 
-1) Alice has lost its account access:
+1) Alice has lost her account access:
    1) Alice asks Adam or Bob for a recovery invitation link.
    2) Adam (or Bob) uses the authenticated `invite_new` command to
       create a Shamir recovery invitation link (i.e. a special Parsec URL).
@@ -79,7 +79,7 @@ To use the Shamir recovery:
       recovery they can take part in.
 3) Alice uses the `invite_x_claimer_*` commands to create a secure conduit with
    a recipient. The recipient uses the authenticated `invite_x_greeter_*` commands.
-4) The recipient use `invite_4_greeter_communicate` to send to Alice its secret
+4) The recipient use `invite_4_greeter_communicate` to send to Alice her secret
     share(s). Alice uses the `invite_4_claimer_communicate` command (with an
     empty payload) to receive the secret share (i.e. `SRSCBob` and `SRSCAdam`).
 5) If Alice hasn't reach a quorum (i.e. the number of secret shares obtained are
@@ -101,8 +101,34 @@ Authenticated API:
             "cmd": "shamir_recovery_setup",
             "fields": [
                 {
-                    "name": "setup",
-                    "type": "ShamirRecoverySetup"
+                    // The actual data we want to recover.
+                    // It is encrypted with `data_key` that is itself split into shares.
+                    // This should contain a serialized `LocalDevice`
+                    "name": "ciphered_data",
+                    "type": "Bytes"
+                },
+                {
+                    // The token the claimer should provide to get access to `ciphered_data`.
+                    // This token is split into shares, hence it acts as a proof the claimer
+                    // asking for the `ciphered_data` had its identity confirmed by the recipients.
+                    "name": "reveal_token",
+                    "type": "InvitationToken"
+                },
+                {
+                    // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
+                    // It contains the threshold for the quorum and the shares recipients.
+                    // This field has a certain level of duplication with the "shares" below,
+                    // but they are used for different things (each encrypted share is
+                    // only provided to its recipient, so the shamir recovery author wont't
+                    // get any).
+                    "name": "shamir_recovery_brief_certificate",
+                    "type": "Bytes"
+                },
+                {
+                    // The shares provided as a `ShamirRecoveryShareCertificate` since
+                    // each share is aimed at a specific recipient.
+                    "name": "shamir_recovery_share_certificates",
+                    "type": "List<Bytes>"
                 }
             ]
         },
@@ -111,51 +137,52 @@ Authenticated API:
                 "status": "ok"
             },
             {
-                // Cannot deserialize brief data into the expected certificate
-                "status": "brief_invalid_data"
+                // Deserialization or signature verification error in the brief certificate.
+                "status": "invalid_certificate_brief_corrupted"
             },
             {
-                // Cannot deserialize share data into the expected certificate
-                "status": "share_invalid_data"
+                // Deserialization or signature verification error in a share certificate.
+                "status": "invalid_certificate_share_corrupted"
             },
             {
-                // a recipient is missing, revoked or frozen
-                "status": "invalid_recipient",
+                "status": "invalid_certificate_share_recipient_not_in_brief"
+            },
+            {
+                "status": "invalid_certificate_duplicate_share_for_recipient"
+            },
+            {
+                "status": "invalid_certificate_author_included_as_recipient"
+            },
+            {
+                "status": "invalid_certificate_missing_share_for_recipient"
+            },
+            {
+                "status": "invalid_certificate_share_inconsistent_timestamp"
+            },
+            {
+                "status": "invalid_certificate_user_id_must_be_self"
+            },
+            {
+                "status": "recipient_not_found"
+            },
+            {
+                "status": "revoked_recipient",
                 "fields": [
                     {
-                        "name": "user_id",
-                        "type": "UserID"
+                        "name": "last_common_certificate_timestamp",
+                        "type": "DateTime"
                     }
+
                 ]
             },
             {
-                // A share has a recipient not mentioned in brief
-                "status": "share_recipient_not_in_brief"
-            },
-            {
-                // A recipient has multiple share. Share weight must be used instead
-                "status": "duplicate_share_for_recipient"
-            },
-            {
-                // The author has a share where they are a recipient
-                "status": "author_included_as_recipient"
-            },
-            {
-                // A share has a timestamp different than the brief timestamp.
-                "status": "share_inconsistent_timestamp"
-            },
-            {
-                // A recipient listed in brief has no associated share
-                "status": "missing_share_for_recipient"
-            },
-            {
-                // Shamir recovery has already been setup
-                "status": "shamir_setup_already_exists",
+                "status": "shamir_recovery_already_exists",
                 "fields": [
                     {
                         "name": "last_shamir_certificate_timestamp",
                         "type": "DateTime"
                     }
+
                 ]
             },
             {
@@ -182,49 +209,13 @@ Authenticated API:
                 ]
             },
             {
-                // Returned if another certificate or vlob in the server has a timestamp
+                // Returned if another certificate in the server has a timestamp
                 // posterior or equal to our current one.
                 "status": "require_greater_timestamp",
                 "fields": [
                     {
                         "name": "strictly_greater_than",
                         "type": "DateTime"
-                    }
-                ]
-            }
-        ],
-        "nested_types": [
-            {
-                "name": "ShamirRecoverySetup",
-                "fields": [
-                    {
-                        // The actual data we want to recover.
-                        // It is encrypted with `data_key` that is itself split into shares.
-                        // This should contains a serialized `LocalDevice`
-                        "name": "ciphered_data",
-                        "type": "Bytes"
-                    },
-                    {
-                        // The token the claimer should provide to get access to `ciphered_data`.
-                        // This token is split into shares, hence it acts as a proof the claimer
-                        // asking for the `ciphered_data` had its identity confirmed by the recipients.
-                        "name": "reveal_token",
-                        "type": "InvitationToken"
-                    },
-                    {
-                        // The Shamir recovery setup provided as a `ShamirRecoveryBriefCertificate`.
-                        // It contains the threshold for the quorum and the shares recipients.
-                        // This field has a certain level of duplication with the "shares" below,
-                        // but they are used for different things (we provide the encrypted share
-                        // data only when needed)
-                        "name": "brief",
-                        "type": "Bytes"
-                    },
-                    {
-                        // The shares provided as a `ShamirRecoveryShareCertificate` since
-                        // each share is aimed at a specific recipient.
-                        "name": "shares",
-                        "type": "List<Bytes>"
                     }
                 ]
             }
@@ -244,8 +235,6 @@ Consistency between `brief` and `shares` must be checked by the Parsec server:
 > organization-specific rules (e.g. the number of shares, the recipient's
 > profiles, max number of share per recipient, etc.). See "Bonus" section below.
 
-To update the setup, the previous setup must be deleted first.
-
 And the related certificates:
 
 ```json5
@@ -262,12 +251,19 @@ And the related certificates:
             "type": "DateTime"
         },
         {
+            /// User here must be the one owning the device used as author
+            /// (i.e. it is the user to be recovered).
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
+            /// Recipient is the user that will be able to decrypt the share.
             "name": "recipient",
             "type": "UserID"
         },
         {
-            // The corresponding share as `ShamirRecoveryShareData`
-            // It is signed with the author's user key and ciphered with recipient's user key
+            // The actual share as `ShamirRecoveryShareData`, signed by the author
+            // and ciphered with the recipient's user key.
             "name": "ciphered_share",
             "type": "Bytes"
         }
@@ -282,6 +278,14 @@ Note: The share data is signed by the author in order to prevent attacks where a
     "label": "ShamirRecoveryShareData",
     "type": "shamir_recovery_share_data",
     "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
         {
             // Weighted share to recover the secret key and the reveal token
             // The number of items in the list corresponds to the weight of the share
@@ -332,6 +336,12 @@ This secret contains both:
             "type": "DateTime"
         },
         {
+            /// User here must be the one owning the device used as author
+            /// (i.e. it is the user to be recovered).
+            "name": "user_id",
+            "type": "UserID"
+        },
+        {
             // Minimal number of shares to retrieve to reach the quorum and compute the secret
             "name": "threshold",
             "type": "NonZeroInteger"
@@ -345,13 +355,149 @@ This secret contains both:
 }
 ```
 
-## 2 - Get the Shamir recovery setup
+## 2 - Delete a shamir setup
+
+Authenticated API:
+
+```json5
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "shamir_recovery_delete",
+            "fields": [
+                {
+                    "name": "shamir_recovery_deletion_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Deserialization or signature verification error.
+                "status": "invalid_certificate_corrupted"
+            },
+            {
+                "status": "invalid_certificate_user_id_must_be_self"
+            },
+            {
+                "status": "shamir_recovery_not_found"
+            },
+            {
+                // The deletion certificate refers to a shamir recovery whose recipients
+                // differ (brief certificate's `per_recipient_shares` field vs deletion
+                // certificate's `share_recipients` field).
+                "status": "recipients_mismatch"
+            },
+            {
+                "status": "shamir_recovery_already_deleted",
+                "fields": [
+                    {
+                        "name": "last_shamir_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+
+                ]
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]
+```
+
+And the related certificate:
+
+```json5
+{
+    "label": "ShamirRecoveryDeletionCertificate",
+    "type": "shamir_recovery_deletion_certificate",
+    "other_fields": [
+        {
+            "name": "author",
+            "type": "DeviceID"
+        },
+        {
+            "name": "timestamp",
+            "type": "DateTime"
+        },
+        {
+            // The timestamp of the shamir recovery this certificate removes.
+            // Given the timestamp are strictly growing, unique identification
+            // can be done with the couple user_id + setup_timestamp.
+            "name": "setup_to_delete_timestamp",
+            "type": "DateTime"
+        },
+        {
+            // User here must be the one owning the device used as author
+            // (i.e. a user can only remove its own Shamir recovery)
+            "name": "setup_to_delete_user_id",
+            "type": "UserID"
+        },
+        {
+            // Must correspond to the brief certificate's `per_recipient_shares`.
+            "name": "share_recipients",
+            "type": "Set<UserID>"
+        }
+    ]
+}
+```
+
+The certificate needs to include the previous certificate timestamp in the deletion
+certificate to link both certificates together: the couple user_id + timestamp is
+enough to uniquely identify a shamir recovery setup.
+
+### How to decide if a deletion certificate is valid ?
+
+A setup can be identified by the tuple (author_user_id, timestamp) that we'll call shamir_id.
+To decide if a deletion certificate is valid, the following questions must be asked:
+
+1. Is there a shamir setup with the corresponding shamir id ? No, means `setup_not_found`
+2. Has this shamir id already a corresponding deletion certificate ? Yes, means `setup_already_deleted`
+3. Is the share recipients list the same ? No, means `recipients_mismatch`
+
+## 3 - Get the Shamir recovery certificates
 
 The shamir related certificates are retrieved by the `get_certificates` route, with other certificates depending on the timestamp.
 If the user has authored a shamir setup, they will get the corresponding brief.
 If they are a share recipient, they will get their share and the associated brief.
-
-> TODO: what happens with shamir deletion certificates.
 
 ```json5
 [
@@ -387,12 +533,19 @@ If they are a share recipient, they will get their share and the associated brie
         ]
     }
 ]
-
 ```
 
-## 3 - Use the Shamir recovery
+Who need which certificate ?
 
-### 3.1 - A recipient creates an invitation
+| certificate | author | share recipient |
+|-------------|--------|-----------------|
+| brief       | x      | x               |
+| share       |        | x               |
+| deletion    | x      | x               |
+
+## 4 - Use the Shamir recovery
+
+### 4.1 - A recipient creates an invitation
 
 Authenticated API for creating the invitation:
 
@@ -520,7 +673,7 @@ Authenticated API for listing the invitation:
 ]
 ```
 
-### 3.2 - Claimer connect to the server
+### 4.2 - Claimer connect to the server
 
 Invited API, we reuse the `invite_info` command:
 
@@ -593,7 +746,7 @@ code exchange with all the greeters (this would guarantee `ciphered_data` is
 only provided to the actual User, and not to an attacker that have eavesdropped
 the invitation link).
 
-### 3.3 - Claimer dance for SAS code exchange
+### 4.3 - Claimer dance for SAS code exchange
 
 On claimer side, the `invite_x_claimer_*` API is reused.
 
@@ -643,13 +796,13 @@ However this is no longer possible because in Shamir recovery the claimer will
 talk to multiple different greeters in parallel. The solution is then to use the
 pair "invitation token" + "greeter UserID" as identifier.
 
-### 3.4 - Greeter dance for SAS code exchange
+### 4.4 - Greeter dance for SAS code exchange
 
 On greeter side, the `invite_x_claimer_*` API is reused as-is.
 
 The `invite_list` and `invite_delete` commands can also be used as-is to manage the Shamir recovery invitations.
 
-### 3.5 - Greeter & claimer actual secret share exchange
+### 4.5 - Greeter & claimer actual secret share exchange
 
 This is done with the `invite_4_claimer/greeter_communicate` command.
 This command requires that both claimer and greeter provide a binary payload
@@ -721,145 +874,6 @@ The claimer gets access to `reveal_token` and `data_key`, it can then retrieve `
 
 Then `ciphered_data` can be decrypted with `data_key`. From then on, the recovery works
 just like the recovery device system (see `parsec core import_recovery_device` CLI).
-
-## 4 - Delete a shamir setup
-
-Authenticated API:
-
-```json5
-[
-    {
-        "major_versions": [
-            4
-        ],
-        "req": {
-            "cmd": "shamir_recovery_delete_setup",
-            "fields": [
-                {
-                    "name": "certificate",
-                    // Contains a ShamirRecoveryDeletionCertificate
-                    "type": "bytes"
-                }
-            ]
-        },
-        "reps": [
-            {
-                "status": "ok"
-            },
-            {
-                // Cannot deserialize data into the expected certificate
-                "status": "invalid_data"
-            },
-             {
-                // Share recipients lists are incoherent
-                "status": "incoherent_date"
-            },
-            {
-                // There is already a deletion certificate for the same setup
-                "status": "shamir_setup_already_deleted",
-                "fields": [
-                    {
-                        "name": "last_shamir_deletion_certificate_timestamp",
-                        "type": "DateTime"
-                    }
-
-                ]
-            },
-            {
-                // Nothing to delete, ie no setup was found with the same (author_user_id, timestamp)
-                "status": "shamir_setup_not_found"
-            },
-            {
-                // Returned if the timestamp in the certificate is too far away compared
-                // to server clock.
-                "status": "timestamp_out_of_ballpark",
-                "fields": [
-                    {
-                        "name": "ballpark_client_early_offset",
-                        "type": "Float"
-                    },
-                    {
-                        "name": "ballpark_client_late_offset",
-                        "type": "Float"
-                    },
-                    {
-                        "name": "server_timestamp",
-                        "type": "DateTime"
-                    },
-                    {
-                        "name": "client_timestamp",
-                        "type": "DateTime"
-                    }
-                ]
-            },
-            {
-                // Returned if another certificate or vlob in the server has a timestamp
-                // posterior or equal to our current one.
-                "status": "require_greater_timestamp",
-                "fields": [
-                    {
-                        "name": "strictly_greater_than",
-                        "type": "DateTime"
-                    }
-                ]
-            }
-        ],
-    }
-]
-```
-
-The deletion certificate
-
-```json5
-{
-    "label": "ShamirRecoveryDeletionCertificate",
-    "type": "shamir_recovery_deletion_certificate",
-    "other_fields": [
-        {
-            // certificate author
-            "name": "author",
-            "type": "DeviceID"
-        },
-        {
-            "name": "timestamp",
-            "type": "DateTime"
-        },
-        {
-            "name": "setup_to_delete_timestamp",
-            "type": "DateTime"
-        },
-        // User here must be the one owning the device used as author
-        // (i.e. a user can only remove its own Shamir recovery)
-        {
-            "name": "setup_to_delete_user_id",
-            "type": "UserID"
-        },
-        {
-            "name": "share_recipients",
-            "type": "List<UserID>"
-        }
-    ]
-}
-```
-
-The certificate needs to include the previous certificate timestamp in the deletion certificate to link both certificates together.
-
-Who need witch certificate ?
-
-| certificate | author | share recipient |
-|-------------|--------|-----------------|
-| brief       | x      | x               |
-| share       |        | x               |
-| deletion    | x      | x               |
-
-### How to decide if a deletion certificate is valid ?
-
-A setup can be identified by the tuple (author_user_id, timestamp) that we'll call shamir_id.
-To decide is a deletion certificate is valid, the following questions must be asked
-
-1. Is there a shamir setup with the corresponding shamir id ? No, means `shamir_setup_not_found`
-2. Has this shamir id already a corresponding deletion certificate ? Yes, means `shamir_setup_already_deleted`
-3. Is the share recipients list the same ? No, means `invalid_data`
 
 ## Bonus
 
