@@ -22,6 +22,7 @@ from parsec._parsec import (
     RevokedUserCertificate,
     SecretKeyAlgorithm,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
     ShamirRecoveryShareCertificate,
     SigningKey,
     SigningKeyAlgorithm,
@@ -831,14 +832,14 @@ async def test_authenticated_certificate_get_ok_realm_certificates_no_longer_sha
     assert rep.realm_certificates[coolorg.wksp1_id] == wksp1_certificates
 
 
-async def test_authenticated_certificate_get_ok_shamir(
-    coolorg: CoolorgRpcClients, with_postgresql: bool
+async def test_authenticated_certificate_get_ok_shamir_certificates(
+    backend: Backend, coolorg: CoolorgRpcClients, with_postgresql: bool
 ) -> None:
     if with_postgresql:
         pytest.skip("TODO: postgre not implemented yet")
     a_long_time_ago = DateTime.now()
 
-    # no shamir certificate at first
+    # No shamir certificate at first
     rep = await coolorg.alice.certificate_get(
         common_after=None,
         sequester_after=None,
@@ -848,7 +849,7 @@ async def test_authenticated_certificate_get_ok_shamir(
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
-    # setup usual shamir
+    # 1) Setup usual shamir
 
     now = DateTime.now()
     share = ShamirRecoveryShareCertificate(
@@ -869,45 +870,47 @@ async def test_authenticated_certificate_get_ok_shamir(
     raw_brief = brief.dump_and_sign(coolorg.alice.signing_key)
     raw_share = share.dump_and_sign(coolorg.alice.signing_key)
 
-    setup = authenticated_cmds.v4.shamir_recovery_setup.ShamirRecoverySetup(
-        b"abc",
-        InvitationToken.new(),
-        raw_brief,
-        [raw_share],
+    outcome = await backend.shamir.setup(
+        now=now,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        ciphered_data=b"abc",
+        reveal_token=InvitationToken.new(),
+        shamir_recovery_brief_certificate=raw_brief,
+        shamir_recovery_share_certificates=[raw_share],
     )
-    rep = await coolorg.alice.shamir_recovery_setup(setup)
-    assert rep == authenticated_cmds.v4.shamir_recovery_setup.RepOk()
+    assert isinstance(outcome, ShamirRecoveryBriefCertificate)
 
-    # checks from alice's (=author) point of view
+    # 1.1) Checks from Alice's (=author) point of view
+
     rep1 = await coolorg.alice.certificate_get(
         common_after=None,
         sequester_after=None,
         shamir_recovery_after=None,
         realm_after={},
     )
-
     rep2 = await coolorg.alice.certificate_get(
         common_after=None,
         sequester_after=None,
         shamir_recovery_after=a_long_time_ago,
         realm_after={},
     )
-
     assert rep1 == rep2
     assert isinstance(rep1, authenticated_cmds.v4.certificate_get.RepOk)
     assert rep1.shamir_recovery_certificates == [raw_brief]
 
-    # no new shamir
+    # No new shamir
     rep = await coolorg.alice.certificate_get(
         common_after=None,
         sequester_after=None,
-        shamir_recovery_after=DateTime.now(),
+        shamir_recovery_after=brief.timestamp,
         realm_after={},
     )
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
-    # from mallory's (=share recipient) point of view
+    # 1.2) From Mallory's (=share recipient) point of view
 
     rep = await coolorg.mallory.certificate_get(
         common_after=None,
@@ -915,13 +918,10 @@ async def test_authenticated_certificate_get_ok_shamir(
         shamir_recovery_after=a_long_time_ago,
         realm_after={},
     )
-
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
-    assert set(rep.shamir_recovery_certificates) == set(
-        [raw_brief, raw_share]
-    )  # these have the same timestamp, so order does not matter
+    assert rep.shamir_recovery_certificates == [raw_brief, raw_share]
 
-    # from bob's (=not involved) point of view
+    # 1.3) From Bob's (=not involved) point of view
 
     rep = await coolorg.bob.certificate_get(
         common_after=None,
@@ -929,11 +929,72 @@ async def test_authenticated_certificate_get_ok_shamir(
         shamir_recovery_after=a_long_time_ago,
         realm_after={},
     )
-
     assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
     assert rep.shamir_recovery_certificates == []
 
-    # TODO check coherence after deletion
+    # 2) Now do the deletion
+
+    now = DateTime.now()
+    deletion = ShamirRecoveryDeletionCertificate(
+        author=coolorg.alice.device_id,
+        timestamp=now,
+        setup_to_delete_timestamp=brief.timestamp,
+        setup_to_delete_user_id=brief.user_id,
+        share_recipients=set(brief.per_recipient_shares.keys()),
+    )
+
+    raw_deletion = deletion.dump_and_sign(coolorg.alice.signing_key)
+
+    outcome = await backend.shamir.delete(
+        now=now,
+        organization_id=coolorg.organization_id,
+        author=coolorg.alice.device_id,
+        author_verify_key=coolorg.alice.signing_key.verify_key,
+        shamir_recovery_deletion_certificate=raw_deletion,
+    )
+    assert isinstance(outcome, ShamirRecoveryDeletionCertificate)
+
+    # 2.1) Checks from Alice's (=author) point of view
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.shamir_recovery_certificates == [raw_brief, raw_deletion]
+
+    rep = await coolorg.alice.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=brief.timestamp,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.shamir_recovery_certificates == [raw_deletion]
+
+    # 2.2) From Mallory's (=share recipient) point of view
+
+    rep = await coolorg.mallory.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.shamir_recovery_certificates == [raw_brief, raw_share, raw_deletion]
+
+    # 2.3) From Bob's (=not involved) point of view
+
+    rep = await coolorg.bob.certificate_get(
+        common_after=None,
+        sequester_after=None,
+        shamir_recovery_after=None,
+        realm_after={},
+    )
+    assert isinstance(rep, authenticated_cmds.v4.certificate_get.RepOk)
+    assert rep.shamir_recovery_certificates == []
 
 
 async def test_authenticated_certificate_get_http_common_errors(
