@@ -414,6 +414,22 @@ impl CertificatesStore {
     }
 }
 
+pub(super) enum LastShamirRecovery {
+    NeverSetup,
+    Valid(Arc<ShamirRecoveryBriefCertificate>),
+    Deleted(
+        Arc<ShamirRecoveryBriefCertificate>,
+        Arc<ShamirRecoveryDeletionCertificate>,
+    ),
+}
+
+pub(super) enum LastUserExistAndRevokedInfo {
+    Unknown,
+    Valid(Arc<UserCertificate>),
+    #[allow(dead_code)]
+    Revoked(Arc<UserCertificate>, Arc<RevokedUserCertificate>),
+}
+
 macro_rules! impl_read_methods {
     () => {
         #[allow(unused)]
@@ -760,6 +776,24 @@ macro_rules! impl_read_methods {
                 unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
 
             Ok(Some(Arc::new(certif)))
+        }
+
+        #[allow(unused)]
+        pub async fn get_last_user_exist_and_revoked_info(
+            &mut self,
+            up_to: UpTo,
+            user_id: UserID,
+        ) -> anyhow::Result<LastUserExistAndRevokedInfo> {
+            let user_certificate = match self.get_user_certificate(up_to, user_id).await {
+                Ok(user_certificate) => user_certificate,
+                Err(GetCertificateError::NonExisting | GetCertificateError::ExistButTooRecent { .. }) => return Ok(LastUserExistAndRevokedInfo::Unknown),
+                Err(GetCertificateError::Internal(err)) => return Err(err),
+            };
+
+            match self.get_revoked_user_certificate(up_to, user_id).await? {
+                None => Ok(LastUserExistAndRevokedInfo::Valid(user_certificate)),
+                Some(revoked_certificate) => Ok(LastUserExistAndRevokedInfo::Revoked(user_certificate, revoked_certificate))
+            }
         }
 
         #[allow(unused)]
@@ -1354,6 +1388,41 @@ macro_rules! impl_read_methods {
                 unsecure.skip_validation(UnsecureSkipValidationReason::DataFromLocalStorage);
 
             Ok(Some(Arc::new(certif)))
+        }
+
+        #[allow(unused)]
+        pub async fn get_last_shamir_recovery_for_author(
+            &mut self,
+            up_to: UpTo,
+            user_id: UserID,
+        ) -> anyhow::Result<LastShamirRecovery> {
+            let last_brief_certif = match self
+                .get_last_shamir_recovery_brief_certificate_for_author(up_to, &user_id)
+                .await?
+            {
+                Some(certif) => certif,
+                // The user never had any shamir recovery configured
+                None => return Ok(LastShamirRecovery::NeverSetup),
+            };
+
+            let last_shamir_recovery = match self
+                .get_last_shamir_recovery_deletion_certificate_for_author(up_to, &user_id)
+                .await?
+            {
+                // The user has never deleted any shamir recovery, so the one we have is valid !
+                None => LastShamirRecovery::Valid(last_brief_certif),
+                Some(last_deletion_certif) => {
+                    if last_deletion_certif.setup_to_delete_timestamp == last_brief_certif.timestamp {
+                        // The last shamir recovery has been deleted, so the user currently has no shamir recovery
+                        LastShamirRecovery::Deleted(last_brief_certif, last_deletion_certif)
+                    } else {
+                        // The last removal was about an older shamir recovery, we can ignore it
+                        LastShamirRecovery::Valid(last_brief_certif)
+                    }
+                }
+            };
+
+            Ok(last_shamir_recovery)
         }
 
         #[allow(unused)]

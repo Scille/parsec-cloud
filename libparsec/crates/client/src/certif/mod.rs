@@ -39,12 +39,14 @@ pub use realm_keys_bundle::{
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
-pub use shamir_recovery_setup::CertifShamirError;
+pub use shamir_recovery_setup::{
+    CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
+};
 pub use store::{CertifStoreError, UpTo};
 pub use user_revoke::CertifRevokeUserError;
 pub use workspace_bootstrap::CertifBootstrapWorkspaceError;
 
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, num::NonZeroU8, sync::Arc};
 
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_types::prelude::*;
@@ -603,12 +605,12 @@ impl CertificateOps {
         realm_decrypt_name::decrypt_current_realm_name(self, realm_id).await
     }
 
-    pub async fn shamir_setup_create(
+    pub async fn setup_shamir_recovery(
         &self,
-        share_recipients: HashMap<UserID, u8>,
-        threshold: u8,
-    ) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
-        shamir_recovery_setup::shamir_setup_create(self, share_recipients, threshold).await
+        per_recipient_shares: HashMap<UserID, NonZeroU8>,
+        threshold: NonZeroU8,
+    ) -> Result<ShamirRecoverySetupCertificateTimestamps, CertifSetupShamirRecoveryError> {
+        shamir_recovery_setup::setup_shamir_recovery(self, per_recipient_shares, threshold).await
     }
 }
 

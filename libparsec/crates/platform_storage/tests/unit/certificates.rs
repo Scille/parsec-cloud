@@ -1,6 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{collections::HashMap, num::NonZeroU64};
+use std::collections::HashMap;
 
 use crate::certificates::CertificatesStorageUpdater;
 
@@ -324,7 +324,7 @@ async fn get_last_timestamps(mut timestamps: TimestampGenerator, env: &TestbedEn
                 user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
-                threshold: NonZeroU64::new(1).unwrap(),
+                threshold: 1.try_into().unwrap(),
             },
             b"<encrypted>".to_vec(),
         )
@@ -796,7 +796,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
-                threshold: NonZeroU64::new(1).unwrap(),
+                threshold: 1.try_into().unwrap(),
             },
             b"shamir_recovery_brief1".to_vec(),
         )
@@ -812,7 +812,7 @@ async fn get_certificate(mut timestamps: TimestampGenerator, env: &TestbedEnv) {
                 user_id: other_user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
-                threshold: NonZeroU64::new(1).unwrap(),
+                threshold: 1.try_into().unwrap(),
             },
             b"shamir_recovery_brief2".to_vec(),
         )
@@ -1254,7 +1254,7 @@ async fn forget_all_certificates(mut timestamps: TimestampGenerator, env: &Testb
                 user_id,
                 // Not meaningful for the test
                 per_recipient_shares: HashMap::new(),
-                threshold: NonZeroU64::new(1).unwrap(),
+                threshold: 1.try_into().unwrap(),
             },
             b"<encrypted>".to_vec(),
         )

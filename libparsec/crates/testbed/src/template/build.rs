@@ -4,7 +4,7 @@ use hex_literal::hex;
 use paste::paste;
 use std::{
     collections::{HashMap, HashSet},
-    num::NonZeroU64,
+    num::{NonZeroU64, NonZeroU8},
     sync::Arc,
 };
 
@@ -815,8 +815,8 @@ impl_event_builder!(
     NewShamirRecovery,
     [
         user: UserID,
-        threshold: NonZeroU64,
-        per_recipient_shares: Vec<(UserID, NonZeroU64)>,
+        threshold: NonZeroU8,
+        per_recipient_shares: Vec<(UserID, NonZeroU8)>,
         recovery_device: DeviceID,
     ]
 );
@@ -912,8 +912,7 @@ impl_event_builder!(
 impl<'a> TestbedEventCreateBlockBuilder<'a> {
     pub fn as_block_access(self, offset: SizeInt) -> BlockAccess {
         let event = self.get_event();
-        let size =
-            std::num::NonZeroU64::new(event.cleartext.len() as u64).expect("block is not empty");
+        let size = NonZeroU64::new(event.cleartext.len() as u64).expect("block is not empty");
         BlockAccess {
             id: event.block_id,
             offset,

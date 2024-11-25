@@ -1819,33 +1819,115 @@ fn serde_shamir_recovery_brief_certificate(alice: &Device) {
         ),
         Err(DataError::Signature)
     );
+}
 
-    // Test threshold greater than shares
-    let data = hex!(
-        "d524e93060fbdcd68b0d48903a669742839704df18fd5ba753aaf5ac343a70ca4fae30"
-        "19b36351a50bbc2cfb6fb14bd69a58a593d64a153abd66ecdf54cf50070028b52ffd00"
-        "58c5040082c8202a9045e90f3e85633d86a08cced60feb85ed10043f91a559d250d981"
-        "246ebb5c5b85ff212076030c37910110c1c26653a8b0c954b5a1607321cf0ecad6886f"
-        "dcc789131d2828cfb02f5536a36d7c5949140aa0041c8e369738b9969fb62f7d1440f0"
-        "78326c3205bb7291b77b2b6df35f93be6c68163f41bd73e39d1c9403cca3d510460600"
-        "402e36920b31063416804fc9ac2fd803"
+#[rstest]
+fn serde_shamir_recovery_brief_certificate_total_shares_max_value(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_brief_certificate'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   threshold: 128
+    //   per_recipient_shares: {
+    //     ext(2, 0x808c0010000000000000000000000000): 254,
+    //     ext(2, 0x3a11031c001000000000000000000000): 1,
+    //   }
+    let raw: &[u8] = hex!(
+        "3101edaad749fdc82907d01e088802652414b39117760fd884d867cfe87bfa6e2280d3"
+        "9ed64f7967296f519269fcc294e02889cc94258624ebc3f2a1fb18810e0028b52ffd00"
+        "58a504007248202890391d0fb3e2d92b5ef417093efc362a74988c9a2c6d09a1b2a193"
+        "c42ef7f2d9f5103916817f23198c274030b47965aafab8da6cc8f383d2b5e21bf7b172"
+        "65518282f20c1b536d335ac79715450f1bcb002250c0254eafe5a76d4c1dd53c1127d3"
+        "2653b0ab37793f68a56d3ee4a42f239cc55f50d0d9f14e0fca02e6d16a8923050039dc"
+        "13d1c21a5fc0a764d617ec01"
+    )
+    .as_ref();
 
+    let brief =
+        ShamirRecoveryBriefCertificate::verify_and_load(raw, &alice.verify_key(), alice.device_id)
+            .unwrap();
+
+    p_assert_eq!(
+        brief
+            .per_recipient_shares
+            .values()
+            .map(|x| x.get() as usize)
+            .sum::<usize>(),
+        255
     );
-    let data = Bytes::from(data.as_ref().to_vec());
+}
+
+#[rstest]
+fn serde_shamir_recovery_brief_certificate_total_shares_too_many(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_brief_certificate'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   threshold: 128
+    //   per_recipient_shares: {
+    //     ext(2, 0x808c0010000000000000000000000000): 255,
+    //     ext(2, 0x3a11031c001000000000000000000000): 1,
+    //   }
+    let raw: &[u8] = hex!(
+    "79b73bad748cc0ab03e72312cc9ff218c99f34c90927d78349934afea56515d4d9aa39"
+    "1b7adeca9313a59623680cb158f06ca6a9c4b600df0c1fdf8e5505340b0028b52ffd00"
+    "58cd0400740886a474797065d9217368616d69725f7265636f766572795f6272696566"
+    "5f6365727469666963617465a6617574686f72d802de10a11cec001000a974696d6573"
+    "74616d70d70100059b08c1fa4000a7757365725f6964d8020000a97468726573686f6c"
+    "64cc80b47065697069656e745f73686172657382d802808c000000ccffd8023a11031c"
+    "01050039dc13d1c21a5fc0a764d617ec01"
+    )
+    .as_ref();
 
     p_assert_matches!(
-        ShamirRecoveryBriefCertificate::unsecure_load(data.clone()),
+        ShamirRecoveryBriefCertificate::unsecure_load(raw.into(),),
+        Err(DataError::DataIntegrity {
+            data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
+            invariant: "total_shares <= 255"
+        })
+    );
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::verify_and_load(raw, &alice.verify_key(), alice.device_id,),
+        Err(DataError::DataIntegrity {
+            data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
+            invariant: "total_shares <= 255"
+        })
+    );
+}
+
+#[rstest]
+fn serde_shamir_recovery_brief_certificate_threshold_bigger_total_shares_bigger(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_brief_certificate'
+    //   author: ext(2, 0xde10a11cec0010000000000000000000)
+    //   timestamp: ext(1, 1577836800000000) i.e. 2020-01-01T01:00:00Z
+    //   user_id: ext(2, 0xa11cec00100000000000000000000000)
+    //   threshold: 2
+    //   per_recipient_shares: { ext(2, 0x808c0010000000000000000000000000): 1, }
+    let raw: &[u8] = hex!(
+        "1cec054dcc7c54e08bb482a4eee6c683e04cef138f1ee54f427f3e86f108ae722f6c43"
+        "eda614bb473921cd5e3d17efbeb8a3715236d0112f03f1b9b9b20f9d020028b52ffd00"
+        "583d0400e2c71d26a0291d9fe58816e2b5ccf8d784b11e33748d4812eceee5d880246e"
+        "7b7ff5df2f22852b6f22034d6632126a52f097395e7db8467d9ca8c7001d7f5d4b32d5"
+        "f4e8da7314494286126800b2a9c4c79affb425e92446e0702e6a5ae83a6290376b0a69"
+        "efdb82ae5b58d21e01db77ad3ee678607994fab1080400c2b0800e17f02999f5057b"
+    )
+    .as_ref();
+
+    p_assert_matches!(
+        ShamirRecoveryBriefCertificate::unsecure_load(raw.into(),),
         Err(DataError::DataIntegrity {
             data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
             invariant: "threshold <= total_shares"
         })
     );
     p_assert_matches!(
-        ShamirRecoveryBriefCertificate::verify_and_load(
-            &data,
-            &alice.verify_key(),
-            alice.device_id,
-        ),
+        ShamirRecoveryBriefCertificate::verify_and_load(raw, &alice.verify_key(), alice.device_id,),
         Err(DataError::DataIntegrity {
             data_type: "libparsec_types::certif::ShamirRecoveryBriefCertificate",
             invariant: "threshold <= total_shares"
@@ -1883,10 +1965,7 @@ fn serde_shamir_recovery_deletion_certificate(alice: &Device) {
         setup_to_delete_timestamp: "2019-01-01T00:00:00Z".parse().unwrap(),
         share_recipients: HashSet::from_iter(["bob".parse().unwrap(), "mallory".parse().unwrap()]),
     };
-    println!(
-        "***expected: {:?}",
-        expected.dump_and_sign(&alice.signing_key)
-    );
+
     let unsecure_certif = ShamirRecoveryDeletionCertificate::unsecure_load(data.clone()).unwrap();
     p_assert_eq!(unsecure_certif.author(), alice.device_id);
     p_assert_eq!(

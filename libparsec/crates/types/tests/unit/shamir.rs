@@ -1,5 +1,7 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+use std::num::NonZeroU8;
+
 use libparsec_tests_lite::prelude::*;
 
 use crate::{
@@ -55,7 +57,7 @@ fn serde_shamir_recovery_secret() {
     .map(|raw| ShamirShare::load(raw).unwrap())
     .collect();
 
-    let threshold = 2;
+    let threshold = 2.try_into().unwrap();
     let data_key = SecretKey::from(hex!(
         "b1b52e16c1b46ab133c8bf576e82d26c887f1e9deae1af80043a258c36fcabf3"
     ));
@@ -71,7 +73,10 @@ fn serde_shamir_recovery_secret() {
     p_assert_eq!(data, expected);
 
     // Also test serialization round trip
-    let encrypted2 = data.dump_and_encrypt_into_shares(threshold, encrypted.len());
+    let encrypted2 = data.dump_and_encrypt_into_shares(
+        threshold,
+        NonZeroU8::try_from(u8::try_from(encrypted.len()).unwrap()).unwrap(),
+    );
 
     // Note we cannot just compare with `data` due to signature and keys order
     let data2 = ShamirRecoverySecret::decrypt_and_load_from_shares(threshold, &encrypted2).unwrap();
@@ -110,4 +115,46 @@ fn serde_shamir_recovery_share_data(alice: &Device) {
     let data2 =
         ShamirRecoveryShareData::decrypt_and_load_for(&encrypted2, &alice.private_key).unwrap();
     p_assert_eq!(data2, expected);
+}
+
+#[rstest]
+fn serde_shamir_recovery_share_data_weighted_max_value(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_share_data'
+    //   weighted_share: [ <256 times 0x3132> ]
+    let raw: &[u8] = hex!(
+        "35b8e9925e37e1c91b08a25f601e225faf82feb8e5ffa744a9b7a59578f5c50bf0c431"
+        "26d5b10b59078a6469861216c5c0cc4bb57edf11c01c6ac2478fd14fb304833a94a3e4"
+        "ce66b4ac432d4948aa681df05149f8f8c0ce7f172c8e100f2d4bb0e2c5ad56420520ab"
+        "bbfddd4b444cd1760c4280fd14"
+    )
+    .as_ref();
+
+    let data = ShamirRecoveryShareData::decrypt_and_load_for(raw, &alice.private_key).unwrap();
+
+    p_assert_eq!(data.weighted_share.len(), 255)
+}
+
+#[rstest]
+fn serde_shamir_recovery_share_data_weighted_share_too_big(alice: &Device) {
+    // Generated from Parsec 3.2.1-a.0+dev
+    // Content:
+    //   type: 'shamir_recovery_share_data'
+    //   weighted_share: [ <257 times 0x3132> ]
+    let raw: &[u8] = hex!(
+        "40cfe3ab5bd66a3ff24d1d63006846db5d8b731d2efecd56421ace6070ec1e656c3f51"
+        "abb94669363396941bb3940af3cf557851a624972c51f4af11aee50a5e591c58e4625f"
+        "7a0b177e79ee96c5049dc5cc243c045dba40d4dd0326643c308216424cedb555527681"
+        "27320de3459d484e4afedacfa1"
+    )
+    .as_ref();
+
+    let err = ShamirRecoveryShareData::decrypt_and_load_for(raw, &alice.private_key).unwrap_err();
+
+    p_assert_matches!(err, DataError::DataIntegrity{
+            data_type,
+            invariant
+        } if data_type == "libparsec_types::shamir::ShamirRecoveryShareData" && invariant == "weighted_share <= 255"
+    );
 }

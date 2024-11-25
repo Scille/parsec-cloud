@@ -15,7 +15,9 @@ async fn setup_shamir(tmp_path: TmpPath) {
         "--device",
         &alice.device_id.hex(),
         "--recipients",
-        &dbg!(bob.human_handle.email())
+        &dbg!(bob.human_handle.email()),
+        "--threshold",
+        "1"
     )
     .stdout(predicates::str::contains("Shamir setup has been created"));
     // TODO list shamir setup

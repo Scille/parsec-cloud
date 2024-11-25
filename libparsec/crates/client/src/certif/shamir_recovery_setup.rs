@@ -1,82 +1,37 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    collections::{HashMap, HashSet},
-    num::NonZeroU64,
-    sync::Arc,
-};
+use std::{collections::HashMap, num::NonZeroU8};
 
 use libparsec_client_connection::ConnectionError;
-use libparsec_platform_storage::certificates::{GetCertificateError, UpTo};
-use libparsec_protocol::authenticated_cmds::{
-    latest::shamir_recovery_setup::{Rep, Req},
-    v4::{
-        device_create::{self},
-        shamir_recovery_setup::ShamirRecoverySetup,
-    },
-};
+use libparsec_platform_storage::certificates::{PerTopicLastTimestamps, UpTo};
+use libparsec_protocol::authenticated_cmds;
 use libparsec_types::prelude::*;
 
 use crate::{
-    CertificateBasedActionOutcome, CertificateOps, EventTooMuchDriftWithServerClock,
-    InvalidCertificateError,
+    certif::store::{LastShamirRecovery, LastUserExistAndRevokedInfo},
+    CertificateOps, EventTooMuchDriftWithServerClock, InvalidCertificateError,
 };
 
-use super::{
-    encrypt::CertifEncryptForUserError, greater_timestamp, CertifStoreError, GreaterTimestampOffset,
-};
+use super::{greater_timestamp, CertifPollServerError, CertifStoreError, GreaterTimestampOffset};
 
 #[derive(Debug, thiserror::Error)]
-pub enum CertifShamirSetupError {
+pub enum CertifSetupShamirRecoveryError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Cannot reach the server")]
     Offline,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-}
-
-impl From<ConnectionError> for CertifShamirSetupError {
-    fn from(value: ConnectionError) -> Self {
-        match value {
-            ConnectionError::NoResponse(_) => Self::Offline,
-            // TODO: handle organization expired and user revoked here ?
-            err => Self::Internal(err.into()),
-        }
-    }
-}
-
-impl From<CertifStoreError> for CertifShamirSetupError {
-    fn from(value: CertifStoreError) -> Self {
-        match value {
-            CertifStoreError::Stopped => Self::Stopped,
-            CertifStoreError::Internal(err) => err.into(),
-        }
-    }
-}
-
-#[derive(Debug, thiserror::Error)]
-pub enum CertifShamirError {
-    #[error("Invalid threshold: it must be less that total share count")]
-    InvalidThreshold,
-    #[error("Author included as recipient")]
-    AuthorIncludedAsRecipient,
-    #[error("Shamir setup already exists: {0}")]
-    ShamirSetupAlreadyExist(DateTime),
-    #[error("Component has stopped")]
-    Stopped,
-    #[error("Cannot reach the server")]
-    Offline,
-    #[error(transparent)]
-    Internal(#[from] anyhow::Error),
-    #[error("User {0} is revoked")]
-    UserRevoked(UserID),
-    #[error("Threshold is 0")]
-    ThresholdIsZero,
-    #[error("Share recipient declared in brief has no share certificate")]
-    ShareRecipientHasZeroShares,
-    #[error("User {0} not found.")]
-    MissingUser(UserID),
+    #[error("Threshold cannot be bigger than the total of share count")]
+    ThresholdBiggerThanSumOfShares,
+    #[error("There can be at most 255 shares")]
+    TooManyShares,
+    #[error("Author cannot be among the recipients")]
+    AuthorAmongRecipients,
+    #[error("A recipient user is not found")]
+    RecipientNotFound,
+    #[error("A recipient user is revoked")]
+    RecipientRevoked,
+    #[error("Shamir recovery already exists")]
+    ShamirRecoveryAlreadyExists,
     #[error("Our clock ({client_timestamp}) and the server's one ({server_timestamp}) are too far apart")]
     TimestampOutOfBallpark {
         server_timestamp: DateTime,
@@ -87,14 +42,10 @@ pub enum CertifShamirError {
     #[error(transparent)]
     InvalidCertificate(#[from] Box<InvalidCertificateError>),
     #[error(transparent)]
-    DataError(#[from] libparsec_types::DataError),
-    #[error(transparent)]
-    EncryptionError(#[from] CertifEncryptForUserError),
-    #[error(transparent)]
-    GetCertificateError(#[from] GetCertificateError),
+    Internal(#[from] anyhow::Error),
 }
 
-impl From<CertifStoreError> for CertifShamirError {
+impl From<CertifStoreError> for CertifSetupShamirRecoveryError {
     fn from(value: CertifStoreError) -> Self {
         match value {
             CertifStoreError::Stopped => Self::Stopped,
@@ -103,7 +54,7 @@ impl From<CertifStoreError> for CertifShamirError {
     }
 }
 
-impl From<ConnectionError> for CertifShamirError {
+impl From<ConnectionError> for CertifSetupShamirRecoveryError {
     fn from(value: ConnectionError) -> Self {
         match value {
             ConnectionError::NoResponse(_) => Self::Offline,
@@ -112,22 +63,59 @@ impl From<ConnectionError> for CertifShamirError {
         }
     }
 }
-pub(super) async fn shamir_setup_create(
-    certificate_ops: &CertificateOps,
-    share_recipients: HashMap<UserID, u8>,
-    threshold: u8,
-) -> Result<CertificateBasedActionOutcome, CertifShamirError> {
-    // Keep looping while a RequireGreaterTimestamp is returned
-    let mut recovery_device_timestamp = certificate_ops.device.now();
+
+pub struct ShamirRecoverySetupCertificateTimestamps {
+    pub shamir_recovery_certificate_timestamp: DateTime,
+    pub common_certificate_timestamp: DateTime,
+}
+
+pub(super) async fn setup_shamir_recovery(
+    ops: &CertificateOps,
+    per_recipient_shares: HashMap<UserID, NonZeroU8>,
+    threshold: NonZeroU8,
+) -> Result<ShamirRecoverySetupCertificateTimestamps, CertifSetupShamirRecoveryError> {
+    let author_user_id = ops.device.user_id;
+
+    // 1. Validate `per_recipient_shares` and `threshold` parameters
+
+    let total_share_count = {
+        let mut total_share_count: usize = 0;
+        for (recipient_user_id, recipient_share_count) in per_recipient_shares.iter() {
+            if *recipient_user_id == author_user_id {
+                return Err(CertifSetupShamirRecoveryError::AuthorAmongRecipients);
+            }
+            total_share_count += recipient_share_count.get() as usize;
+        }
+
+        // Note this check also ensures that total_share_count > 0 since threshold > 0
+        if total_share_count < threshold.get() as usize {
+            return Err(CertifSetupShamirRecoveryError::ThresholdBiggerThanSumOfShares);
+        }
+        if total_share_count > 255 {
+            return Err(CertifSetupShamirRecoveryError::TooManyShares);
+        }
+
+        NonZeroU8::try_from(u8::try_from(total_share_count).expect("already checked"))
+            .expect("already checked")
+    };
+
+    // 2. Check the setup is possible according to our local certificates
+
+    let mut recipients_with_share_count_and_pubkey =
+        check_against_local_certificates(ops, &per_recipient_shares).await?;
+
+    // 3. Create the recovery device
+
+    // Keep looping while `RequireGreaterTimestamp` is returned
+    let mut recovery_device_timestamp = ops.device.now();
     let recovery_device = loop {
-        let outcome =
-            create_shamir_recovery_device(certificate_ops, recovery_device_timestamp).await?;
+        let outcome = create_shamir_recovery_device(ops, recovery_device_timestamp).await?;
 
         match outcome {
             CreateShamirRecoveryDeviceOutcome::Done(recovery_device) => break recovery_device,
             CreateShamirRecoveryDeviceOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 recovery_device_timestamp = greater_timestamp(
-                    &certificate_ops.device.time_provider,
+                    &ops.device.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,
                 );
@@ -135,29 +123,103 @@ pub(super) async fn shamir_setup_create(
         }
     };
 
-    // Keep looping while a RequireGreaterTimestamp is returned
-    let mut recovery_setup_timestamp = certificate_ops.device.now();
+    // 4. Do the actual shamir recovery setup
+
+    // Keep looping while `RequireGreaterTimestamp` or `RequirePollingCertificates` is returned
+    let mut recovery_setup_timestamp = ops.device.now();
     loop {
         let outcome = do_shamir_recovery_setup(
-            certificate_ops,
+            ops,
             &recovery_device,
-            &share_recipients,
+            &recipients_with_share_count_and_pubkey,
+            total_share_count,
             threshold,
             recovery_setup_timestamp,
         )
         .await?;
 
         match outcome {
-            DoShamirRecoverySetupOutcome::Done(outcome) => return Ok(outcome),
+            DoShamirRecoverySetupOutcome::Done => break,
             DoShamirRecoverySetupOutcome::RequireGreaterTimestamp(strictly_greater_than) => {
                 recovery_setup_timestamp = greater_timestamp(
-                    &certificate_ops.device.time_provider,
+                    &ops.device.time_provider,
                     GreaterTimestampOffset::User,
                     strictly_greater_than,
                 );
             }
+            DoShamirRecoverySetupOutcome::RequirePollingCertificates(per_topic_last_timestamps) => {
+                ops.poll_server_for_new_certificates(Some(&per_topic_last_timestamps))
+                    .await
+                    .map_err(|e| match e {
+                        CertifPollServerError::Stopped => CertifSetupShamirRecoveryError::Stopped,
+                        CertifPollServerError::Offline => CertifSetupShamirRecoveryError::Offline,
+                        CertifPollServerError::InvalidCertificate(err) => {
+                            CertifSetupShamirRecoveryError::InvalidCertificate(err)
+                        }
+                        CertifPollServerError::Internal(err) => err
+                            .context("Cannot poll server for new certificates")
+                            .into(),
+                    })?;
+
+                // Must redo this check since the certificates have changed on local !
+                recipients_with_share_count_and_pubkey =
+                    check_against_local_certificates(ops, &per_recipient_shares).await?;
+
+                recovery_setup_timestamp = ops.device.time_provider.now();
+            }
         }
     }
+
+    Ok(ShamirRecoverySetupCertificateTimestamps {
+        common_certificate_timestamp: recovery_device_timestamp,
+        shamir_recovery_certificate_timestamp: recovery_setup_timestamp,
+    })
+}
+
+async fn check_against_local_certificates(
+    ops: &CertificateOps,
+    per_recipient_shares: &HashMap<UserID, NonZeroU8>,
+) -> Result<Vec<(UserID, NonZeroU8, PublicKey)>, CertifSetupShamirRecoveryError> {
+    let author_user_id = ops.device.user_id;
+    ops.store
+        .for_read({
+            |store| async move {
+                // 1. Shamir already exists ?
+
+                match store
+                    .get_last_shamir_recovery_for_author(UpTo::Current, author_user_id)
+                    .await?
+                {
+                    LastShamirRecovery::NeverSetup | LastShamirRecovery::Deleted(_, _) => (),
+                    LastShamirRecovery::Valid(_) => {
+                        return Err(CertifSetupShamirRecoveryError::ShamirRecoveryAlreadyExists);
+                    }
+                }
+
+                // 2. Recipients exist ?
+
+                let mut recipients = Vec::with_capacity(per_recipient_shares.len());
+                for (&recipient_user_id, &recipient_share_count) in per_recipient_shares {
+                    let recipient_pubkey = match store
+                        .get_last_user_exist_and_revoked_info(UpTo::Current, recipient_user_id)
+                        .await?
+                    {
+                        LastUserExistAndRevokedInfo::Valid(certif) => certif.public_key.clone(),
+                        LastUserExistAndRevokedInfo::Revoked(_, _) => {
+                            return Err(CertifSetupShamirRecoveryError::RecipientRevoked)
+                        }
+                        LastUserExistAndRevokedInfo::Unknown => {
+                            return Err(CertifSetupShamirRecoveryError::RecipientNotFound)
+                        }
+                    };
+
+                    recipients.push((recipient_user_id, recipient_share_count, recipient_pubkey));
+                }
+
+                Ok(recipients)
+            }
+        })
+        .await?
 }
 
 #[derive(Debug)]
@@ -167,10 +229,10 @@ enum CreateShamirRecoveryDeviceOutcome {
 }
 
 async fn create_shamir_recovery_device(
-    certificate_ops: &CertificateOps,
+    ops: &CertificateOps,
     timestamp: DateTime,
-) -> Result<CreateShamirRecoveryDeviceOutcome, CertifShamirError> {
-    let author = &certificate_ops.device;
+) -> Result<CreateShamirRecoveryDeviceOutcome, CertifSetupShamirRecoveryError> {
+    let author = &ops.device;
 
     let recovery_device = LocalDevice::from_existing_device_for_user(
         &author.clone(),
@@ -197,16 +259,18 @@ async fn create_shamir_recovery_device(
         .dump_and_sign(&author.signing_key)
         .into();
 
-    match certificate_ops
+    use authenticated_cmds::latest::device_create::{Rep, Req};
+
+    match ops
         .cmds
-        .send(device_create::Req {
+        .send(Req {
             device_certificate,
             redacted_device_certificate,
         })
         .await?
     {
-        device_create::Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(recovery_device)),
-        device_create::Rep::RequireGreaterTimestamp {
+        Rep::Ok => Ok(CreateShamirRecoveryDeviceOutcome::Done(recovery_device)),
+        Rep::RequireGreaterTimestamp {
             strictly_greater_than,
         } =>
         // The retry is handled by the caller
@@ -215,7 +279,7 @@ async fn create_shamir_recovery_device(
                 strictly_greater_than,
             ))
         }
-        device_create::Rep::TimestampOutOfBallpark {
+        Rep::TimestampOutOfBallpark {
             server_timestamp,
             client_timestamp,
             ballpark_client_early_offset,
@@ -228,18 +292,18 @@ async fn create_shamir_recovery_device(
                 ballpark_client_late_offset,
                 client_timestamp,
             };
-            certificate_ops.event_bus.send(&event);
+            ops.event_bus.send(&event);
 
-            Err(CertifShamirError::TimestampOutOfBallpark {
+            Err(CertifSetupShamirRecoveryError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
             })
         }
-        bad_rep @ (device_create::Rep::UnknownStatus { .. }
-        | device_create::Rep::InvalidCertificate
-        | device_create::Rep::DeviceAlreadyExists) => {
+        bad_rep @ (Rep::UnknownStatus { .. }
+        | Rep::InvalidCertificate
+        | Rep::DeviceAlreadyExists) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
@@ -247,86 +311,36 @@ async fn create_shamir_recovery_device(
 
 #[derive(Debug)]
 enum DoShamirRecoverySetupOutcome {
-    Done(CertificateBasedActionOutcome),
+    Done,
     RequireGreaterTimestamp(DateTime),
+    RequirePollingCertificates(PerTopicLastTimestamps),
 }
 
 async fn do_shamir_recovery_setup(
-    certificate_ops: &CertificateOps,
+    ops: &CertificateOps,
     recovery_device: &LocalDevice,
-    share_recipients: &HashMap<UserID, u8>,
-    threshold: u8,
+    recipients_with_share_count_and_pubkey: &Vec<(UserID, NonZeroU8, PublicKey)>,
+    total_share_count: NonZeroU8,
+    threshold: NonZeroU8,
     timestamp: DateTime,
-) -> Result<DoShamirRecoverySetupOutcome, CertifShamirError> {
-    let author_device_id = certificate_ops.device.device_id;
-    let author_user_id = certificate_ops.device.user_id;
+) -> Result<DoShamirRecoverySetupOutcome, CertifSetupShamirRecoveryError> {
+    let author_device_id = ops.device.device_id;
+    let author_user_id = ops.device.user_id;
 
-    // 1. Check if share_recipients and threshold are internally coherent
-    let total_share_count: u8 = share_recipients.values().sum();
-    if total_share_count < threshold {
-        return Err(CertifShamirError::InvalidThreshold);
-    }
+    // 1. Generate certificates
 
-    if share_recipients
-        .keys()
-        .any(|&recipient| recipient == author_user_id)
-    {
-        return Err(CertifShamirError::AuthorIncludedAsRecipient);
-    }
-
-    if threshold == 0 {
-        return Err(CertifShamirError::ThresholdIsZero);
-    }
-
-    if share_recipients.values().any(|&v| v == 0) {
-        return Err(CertifShamirError::ShareRecipientHasZeroShares);
-    }
-
-    // 2. Check for previous setup
-    // TODO add option to force shamir creation
-    if let Some(setup) =
-        get_latest_shamir_setup_for_author(certificate_ops, &author_user_id, &timestamp).await?
-    {
-        return Err(CertifShamirError::ShamirSetupAlreadyExist(setup.timestamp));
-    }
-
-    // 3. Check recipients status
-
-    let mut participants_id: HashSet<_> = share_recipients.keys().collect();
-    participants_id.insert(&author_user_id);
-    // TODO implement a get_users method instead of list_user (let the DB do its job)
-    let participants = certificate_ops.list_users(true, None, None).await?;
-    let participants = participants
-        .iter()
-        .filter(|info| participants_id.contains(&info.id));
-
-    // no participant is missing
-    for &&id in &participants_id {
-        if !participants.clone().any(|info| info.id == id) {
-            return Err(CertifShamirError::MissingUser(id));
-        }
-    }
-
-    // no participant is revoked
-    for info in participants {
-        if info.revoked_on.is_some() {
-            return Err(CertifShamirError::UserRevoked(info.id));
-        }
-    }
-
-    // 4. Generate certificates
-
-    let brief: Bytes = ShamirRecoveryBriefCertificate {
+    let shamir_recovery_brief_certificate: Bytes = ShamirRecoveryBriefCertificate {
         author: author_device_id,
         timestamp,
         user_id: author_user_id,
-        threshold: NonZeroU64::new(threshold.into()).expect("shamir threshold is zero"), // checked during the first step
-        per_recipient_shares: share_recipients
-            .iter()
-            .map(|(&k, &v)| (k, NonZeroU64::new(v.into()).expect("Share count is zero")))
-            .collect(),
+        threshold,
+        per_recipient_shares: HashMap::from_iter(
+            recipients_with_share_count_and_pubkey
+                .iter()
+                .map(|(user_id, share_count, _)| (*user_id, *share_count)),
+        ),
     }
-    .dump_and_sign(&certificate_ops.device.signing_key)
+    .dump_and_sign(&ops.device.signing_key)
     .into();
 
     let data_key = SecretKey::generate();
@@ -338,57 +352,49 @@ async fn do_shamir_recovery_setup(
         data_key,
         reveal_token,
     }
-    .dump_and_encrypt_into_shares(threshold, total_share_count.into())
+    .dump_and_encrypt_into_shares(threshold, total_share_count)
     .into_iter();
 
-    let mut shares = Vec::with_capacity(share_recipients.len());
-    for (&share_recipient_id, &shares_count) in share_recipients {
-        let pub_key = &certificate_ops
-            .store
-            .for_read(|store| store.get_user_certificate(UpTo::Current, share_recipient_id))
-            .await??
-            .public_key;
-
-        let mut weighted_share = vec![];
-        for _ in 0..(shares_count as usize) {
-            weighted_share.push(shark_shares.next().expect("enough share generated"));
-        }
+    let mut shamir_recovery_share_certificates =
+        Vec::with_capacity(recipients_with_share_count_and_pubkey.len());
+    for (recipient_user_id, recipient_share_count, recipient_pubkey) in
+        recipients_with_share_count_and_pubkey
+    {
+        let weighted_share: Vec<_> = (0..recipient_share_count.get() as usize)
+            .map(|_| shark_shares.next().expect("enough share generated"))
+            .collect();
 
         let ciphered_share =
-            ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(pub_key);
+            ShamirRecoveryShareData { weighted_share }.dump_and_encrypt_for(recipient_pubkey);
 
-        let share = ShamirRecoveryShareCertificate {
+        let shamir_recovery_share_certificate = ShamirRecoveryShareCertificate {
             author: author_device_id,
             timestamp,
             user_id: author_user_id,
-            recipient: share_recipient_id,
+            recipient: *recipient_user_id,
             ciphered_share,
         }
-        .dump_and_sign(&certificate_ops.device.signing_key)
+        .dump_and_sign(&ops.device.signing_key)
         .into();
-        shares.push(share);
+        shamir_recovery_share_certificates.push(shamir_recovery_share_certificate);
     }
 
     assert!(shark_shares.next().is_none()); // Sanity check
 
-    // 5. Send certificates
+    // 2. Send certificates
+
+    use authenticated_cmds::latest::shamir_recovery_setup::{Rep, Req};
 
     let req = Req {
-        setup: Some(ShamirRecoverySetup {
-            brief,
-            ciphered_data,
-            reveal_token,
-            shares,
-        }),
+        ciphered_data,
+        reveal_token,
+        shamir_recovery_brief_certificate,
+        shamir_recovery_share_certificates,
     };
-    let rep = certificate_ops.cmds.send(req).await?;
+    let rep = ops.cmds.send(req).await?;
 
     match rep {
-        Rep::Ok => Ok(DoShamirRecoverySetupOutcome::Done(
-            CertificateBasedActionOutcome::Uploaded {
-                certificate_timestamp: timestamp,
-            },
-        )),
+        Rep::Ok => Ok(DoShamirRecoverySetupOutcome::Done),
 
         Rep::RequireGreaterTimestamp {
             strictly_greater_than,
@@ -411,48 +417,50 @@ async fn do_shamir_recovery_setup(
                 ballpark_client_late_offset,
                 client_timestamp,
             };
-            certificate_ops.event_bus.send(&event);
+            ops.event_bus.send(&event);
 
-            Err(CertifShamirError::TimestampOutOfBallpark {
+            Err(CertifSetupShamirRecoveryError::TimestampOutOfBallpark {
                 server_timestamp,
                 client_timestamp,
                 ballpark_client_early_offset,
                 ballpark_client_late_offset,
             })
         }
-        Rep::InvalidRecipient { user_id } => Err(CertifShamirError::MissingUser(user_id)),
-        Rep::ShamirSetupAlreadyExists {
+        // If the server complains the shamir already exists or a recipient is
+        // revoked, it means we are missing certificates in local (otherwise
+        // the certificates ops would have informed us in the first place !).
+        //
+        // Hence we must fetch the missing certificates before returning an error
+        // (to avoid weird state where we get an error about a revoked user, but
+        // see it has valid when asking the certificates ops...)
+        //
+        // Finally note that the operation will be retried once the caller is done
+        // with polling the server. This is okay since in practice the operation
+        // will errors out (with the same error we got here) early on when querying
+        // the now up-to-date certificates ops (so no new request is sent to the server).
+        Rep::ShamirRecoveryAlreadyExists {
             last_shamir_certificate_timestamp,
-        } => Err(CertifShamirError::ShamirSetupAlreadyExist(
-            last_shamir_certificate_timestamp,
+        } => Ok(DoShamirRecoverySetupOutcome::RequirePollingCertificates(
+            PerTopicLastTimestamps::new_for_shamir(last_shamir_certificate_timestamp),
         )),
-        bad_rep @ (Rep::BriefInvalidData { .. }
-        | Rep::ShareInvalidData { .. }
-        | Rep::UnknownStatus { .. }
-        | Rep::DuplicateShareForRecipient
-        | Rep::MissingShareForRecipient
-        | Rep::ShareInconsistentTimestamp
-        | Rep::ShareRecipientNotInBrief
-        | Rep::AuthorIncludedAsRecipient) => {
-            //
+        Rep::RevokedRecipient {
+            last_common_certificate_timestamp,
+        } => Ok(DoShamirRecoverySetupOutcome::RequirePollingCertificates(
+            PerTopicLastTimestamps::new_for_common(last_common_certificate_timestamp),
+        )),
+        // Note this error should never occur in practice given we have already
+        // retrieve the user on our side.
+        Rep::RecipientNotFound => Err(CertifSetupShamirRecoveryError::RecipientNotFound),
+        bad_rep @ (Rep::InvalidCertificateBriefCorrupted
+        | Rep::InvalidCertificateShareCorrupted
+        | Rep::InvalidCertificateShareRecipientNotInBrief
+        | Rep::InvalidCertificateDuplicateShareForRecipient
+        | Rep::InvalidCertificateAuthorIncludedAsRecipient
+        | Rep::InvalidCertificateMissingShareForRecipient
+        | Rep::InvalidCertificateShareInconsistentTimestamp
+        | Rep::InvalidCertificateUserIdMustBeSelf
+        | Rep::UnknownStatus { .. }) => {
             Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
         }
     }
-}
-
-/// Takes a for_read lock
-async fn get_latest_shamir_setup_for_author(
-    certificate_ops: &CertificateOps,
-    author_id: &UserID,
-    timestamp: &DateTime,
-) -> Result<Option<Arc<ShamirRecoveryBriefCertificate>>, CertifShamirError> {
-    Ok(certificate_ops
-        .store
-        .for_read(|store| {
-            store.get_last_shamir_recovery_brief_certificate_for_author(
-                UpTo::Timestamp(*timestamp),
-                author_id,
-            )
-        })
-        .await??)
 }

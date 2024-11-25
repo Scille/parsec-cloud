@@ -879,6 +879,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         | FieldType::Size
         | FieldType::Index
         | FieldType::NonZeroInteger
+        | FieldType::NonZeroU8
         | FieldType::IntegerBetween1And100 => {
             quote! { (*#field_path).to_object(py).into_bound(py).into_any() }
         }
@@ -980,6 +981,7 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::Size => quote! { u64},
         FieldType::Index => quote! { u64 },
         FieldType::NonZeroInteger => quote! { u64 },
+        FieldType::NonZeroU8 => quote! { u8 },
         FieldType::IntegerBetween1And100 => quote! { u64 },
         FieldType::PublicKey => quote! { crate::crypto::PublicKey },
         FieldType::SigningKey => quote! { crate::crypto::SigningKey },
@@ -1107,6 +1109,9 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
         }
         FieldType::NonZeroInteger => {
             quote! { ::std::num::NonZeroU64::try_from(#field_name).map_err(PyValueError::new_err)? }
+        }
+        FieldType::NonZeroU8 => {
+            quote! { ::std::num::NonZeroU8::try_from(#field_name).map_err(PyValueError::new_err)? }
         }
         FieldType::Bytes => quote! {
             {

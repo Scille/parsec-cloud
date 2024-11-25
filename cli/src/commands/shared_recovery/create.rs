@@ -1,26 +1,27 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, num::NonZeroU8};
 
 use libparsec::{UserID, UserProfile};
 
 use crate::utils::{load_client, start_spinner};
 
+// TODO: should provide the recipients and their share count as a single parameter
+//       e.g. `--recipients=foo@example.com=2,bar@example.com=3`
 crate::clap_parser_with_shared_opts_builder!(
     #[with = config_dir, device, password_stdin]
     pub struct Args {
         /// Share recipients, if missing organization's admins will be used instead
         /// Author must not be included as recipient.
-        /// User email is expected
-        #[arg(short, long,  num_args = 1..)]
+        /// User email is expected.
+        #[arg(short, long,  num_args = 1..=255)]
         recipients: Option<Vec<String>>,
         /// Share weights. Requires Share recipient list.
         /// Must have the same length as recipients.
         /// Defaults to one per recipient.
-        #[arg(short, long, requires = "recipients",  num_args = 1..)]
-        weights: Option<Vec<u8>>,
+        #[arg(short, long, requires = "recipients",  num_args = 1..=255)]
+        weights: Option<Vec<NonZeroU8>>,
         /// Threshold number of shares required to proceed with recovery.
-        /// Default to sum of weights. Must be lesser or equal to sum of weights.
         #[arg(short, long)]
-        threshold: Option<u8>,
+        threshold: NonZeroU8,
     }
 );
 
@@ -50,9 +51,7 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             .map(|info| (info.human_handle.email().to_owned(), info.id))
             .collect();
         if recipient_info.len() != recipients.len() {
-            handle.stop_with_message("A user is missing".into());
-            client.stop().await;
-            return Ok(());
+            return Err(anyhow::anyhow!("A user is missing"));
         }
         recipients
             .iter()
@@ -68,13 +67,9 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             .collect()
     };
 
-    // TODO check that author is not in recipients
-
-    let shares: HashMap<UserID, u8> = if let Some(weights) = weights {
+    let per_recipient_shares: HashMap<UserID, NonZeroU8> = if let Some(weights) = weights {
         if recipients_ids.len() != weights.len() {
-            handle.stop_with_message("incoherent weights count".into());
-            client.stop().await;
-            return Ok(());
+            return Err(anyhow::anyhow!("incoherent weights count"));
         }
 
         recipients_ids
@@ -82,20 +77,15 @@ pub async fn main(shamir_setup: Args) -> anyhow::Result<()> {
             .zip(weights.into_iter())
             .collect()
     } else {
-        recipients_ids.into_iter().map(|r| (r, 1)).collect()
+        let weight = NonZeroU8::new(1).expect("always valid");
+        recipients_ids
+            .into_iter()
+            .map(|user_id| (user_id, weight))
+            .collect()
     };
 
-    let t = shares.values().sum();
-    if let Some(threshold) = threshold {
-        if threshold > t {
-            handle.stop_with_message("too big threshold".into());
-            client.stop().await;
-            return Ok(());
-        }
-    }
-
     client
-        .shamir_setup_create(shares, threshold.unwrap_or(t))
+        .setup_shamir_recovery(per_recipient_shares, threshold)
         .await?;
 
     handle.stop_with_message("Shamir setup has been created".into());

@@ -17,14 +17,16 @@
             "type": "UserID"
         },
         {
-            // Minimal number of shares to retrieve to reach the quorum and compute the secret
+            // Minimal number of shares to retrieve to reach the quorum and compute the secret.
+            // Must be 0 < threshold < 256.
             "name": "threshold",
-            "type": "NonZeroInteger"
+            "type": "NonZeroU8"
         },
         {
-            // A recipient can have multiple shares (to have a bigger weight than others)
+            // A recipient can have multiple shares (to have a bigger weight than others).
+            // The total sum of shares across all recipients must be at most 255.
             "name": "per_recipient_shares",
-            "type": "Map<UserID, NonZeroInteger>"
+            "type": "Map<UserID, NonZeroU8>"
         }
     ]
 }

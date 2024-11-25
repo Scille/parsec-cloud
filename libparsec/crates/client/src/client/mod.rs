@@ -4,7 +4,7 @@
 
 mod list_frozen_users;
 mod recovery_device;
-mod shamir_setup_create;
+mod shamir_recovery_setup;
 mod tos;
 mod user_revoke;
 mod workspace_bootstrap;
@@ -19,6 +19,7 @@ mod workspace_start;
 use std::{
     collections::HashMap,
     fmt::Debug,
+    num::NonZeroU8,
     sync::{Arc, Mutex},
 };
 
@@ -60,8 +61,9 @@ pub use crate::certif::{
     CertifListUserDevicesError as ClientListUserDevicesError,
     CertifListUsersError as ClientListUsersError,
     CertifListWorkspaceUsersError as ClientListWorkspaceUsersError,
-    CertifRevokeUserError as ClientRevokeUserError, CertifShamirError as ClientShamirError,
-    DeviceInfo, UserInfo, WorkspaceUserAccessInfo,
+    CertifRevokeUserError as ClientRevokeUserError,
+    CertifSetupShamirRecoveryError as ClientSetupShamirRecoveryError, DeviceInfo, UserInfo,
+    WorkspaceUserAccessInfo,
 };
 pub use crate::invite::{
     CancelInvitationError as ClientCancelInvitationError, DeviceGreetInitialCtx,
@@ -540,12 +542,12 @@ impl Client {
         )
     }
 
-    pub async fn shamir_setup_create(
+    pub async fn setup_shamir_recovery(
         &self,
-        share_recipients: HashMap<UserID, u8>,
-        threshold: u8,
-    ) -> Result<(), ClientShamirError> {
-        shamir_setup_create::shamir_setup_create(self, share_recipients, threshold).await
+        per_recipient_shares: HashMap<UserID, NonZeroU8>,
+        threshold: NonZeroU8,
+    ) -> Result<(), ClientSetupShamirRecoveryError> {
+        shamir_recovery_setup::setup_shamir_recovery(self, per_recipient_shares, threshold).await
     }
 
     pub async fn get_tos(&self) -> Result<Tos, ClientGetTosError> {

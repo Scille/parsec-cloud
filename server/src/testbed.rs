@@ -6,7 +6,7 @@ use pyo3::{
     types::{PyBool, PyBytes, PyDict, PyList, PyNone, PyString},
 };
 use std::collections::HashMap;
-use std::num::NonZeroU64;
+use std::num::NonZeroU8;
 use std::sync::Arc;
 
 use crate::{
@@ -399,8 +399,8 @@ event_wrapper!(
         timestamp: DateTime,
         author: DeviceID,
         user_id: UserID,
-        threshold: NonZeroU64,
-        per_recipient_shares: HashMap<UserID, NonZeroU64>,
+        threshold: NonZeroU8,
+        per_recipient_shares: HashMap<UserID, NonZeroU8>,
         recovery_device: DeviceID,
         data_key: SecretKey,
         reveal_token: InvitationToken,
