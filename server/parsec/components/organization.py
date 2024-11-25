@@ -14,6 +14,7 @@ from parsec._parsec import (
     SequesterAuthorityCertificate,
     SequesterVerifyKeyDer,
     UserCertificate,
+    UserID,
     UserProfile,
     VerifyKey,
     VlobID,
@@ -231,7 +232,7 @@ class OrganizationDumpTopics:
     common: DateTime
     realms: dict[VlobID, DateTime]
     sequester: DateTime | None
-    shamir_recovery: DateTime | None
+    shamir_recovery: dict[UserID, DateTime]
 
 
 class BaseOrganizationComponent:

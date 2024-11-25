@@ -35,6 +35,8 @@ from parsec._parsec import (
     SequesterServiceCertificate,
     SequesterServiceID,
     ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
+    ShamirRecoveryShareCertificate,
     UserCertificate,
     UserID,
     UserProfile,
@@ -62,7 +64,7 @@ TopicAndDiscriminant = (
     Literal["common"]
     | Literal["sequester"]
     | tuple[Literal["realm"], VlobID]
-    | Literal["shamir_recovery"]
+    | tuple[Literal["shamir_recovery"], UserID]
     # Not an actual topic, but it is convenient to implement advisory lock this
     # way since in practice it works similarly.
     | tuple[Literal["__advisory_lock"], AdvisoryLock]
@@ -101,11 +103,10 @@ class MemoryOrganization:
     vlobs: dict[VlobID, list[MemoryVlobAtom]] = field(default_factory=dict)
     blocks: dict[BlockID, MemoryBlock] = field(default_factory=dict)
     block_store: dict[BlockID, bytes] = field(default_factory=dict, repr=False)
-    # The user id is the author of the shamir recovery process
-    # TODO after https://github.com/Scille/parsec-cloud/issues/7364
-    # keep previous setups dict[UserID, List[MemoryShamirSetup | MemoryShamirRemoval]]
-    # see https://github.com/Scille/parsec-cloud/pull/7324#discussion_r1616803899
-    shamir_setup: dict[UserID, MemoryShamirSetup] = field(default_factory=dict)
+    # The user id is the author of the shamir recovery
+    shamir_recoveries: dict[UserID, list[MemoryShamirRecovery]] = field(
+        default_factory=lambda: defaultdict(list)
+    )
     per_topic_last_timestamp: dict[TopicAndDiscriminant, DateTime] = field(default_factory=dict)
 
     # Stores topic name and discriminant (or `None`)
@@ -590,7 +591,7 @@ class MemoryBlock:
 
 
 @dataclass(slots=True)
-class MemoryShamirSetup:
+class MemoryShamirRecovery:
     # The actual data we want to recover.
     # It is encrypted with `data_key` that is itself split into shares.
     # This should contains a serialized `LocalDevice`
@@ -604,9 +605,20 @@ class MemoryShamirSetup:
     # This field has a certain level of duplication with the "shares" below,
     # but they are used for different things (we provide the encrypted share
     # data only when needed)
-    brief: ShamirRecoveryBriefCertificate
+    cooked_brief: ShamirRecoveryBriefCertificate
+    shamir_recovery_brief_certificate: bytes
     # The shares provided as a `ShamirRecoveryShareCertificate` since
     # each share is aimed at a specific recipient.
-    shares: dict[UserID, bytes]
-    # keep raw brief
-    brief_bytes: bytes
+    shares: dict[UserID, MemoryShamirShare]
+    cooked_deletion: ShamirRecoveryDeletionCertificate | None = None
+    shamir_recovery_deletion_certificate: bytes | None = None
+
+    @property
+    def is_deleted(self) -> bool:
+        return self.shamir_recovery_deletion_certificate is not None
+
+
+@dataclass(slots=True)
+class MemoryShamirShare:
+    cooked: ShamirRecoveryShareCertificate
+    shamir_recovery_share_certificates: bytes
