@@ -80,11 +80,18 @@ class MemoryInviteComponent(BaseInviteComponent):
         self, org: MemoryOrganization, invitation: MemoryInvitation
     ) -> ShamirRecoveryInvitation | None:
         assert invitation.claimer_user_id is not None
-        shamir_setup = org.shamir_setup.get(invitation.claimer_user_id)
-        if shamir_setup is None:
+
+        claimer_shamir_recoveries = org.shamir_recoveries[invitation.claimer_user_id]
+        try:
+            # All but the last shamir recovery are deleted
+            last_shamir_recovery = claimer_shamir_recoveries[-1]
+        except IndexError:
+            last_shamir_recovery = None
+        if last_shamir_recovery is None or last_shamir_recovery.is_deleted:
             return None
-        threshold = shamir_setup.brief.threshold
-        par_recipient_shares = shamir_setup.brief.per_recipient_shares
+
+        threshold = last_shamir_recovery.cooked_brief.threshold
+        par_recipient_shares = last_shamir_recovery.cooked_brief.per_recipient_shares
         recipients = [
             ShamirRecoveryRecipient(
                 user_id=user_id,
@@ -319,15 +326,20 @@ class MemoryInviteComponent(BaseInviteComponent):
                 return InviteNewForShamirBadOutcome.USER_NOT_FOUND
             claimer_human_handle = claimer.cooked.human_handle
 
-            # Check that a shamir setup exists
-            shamir_setup = org.shamir_setup.get(claimer_user_id)
-            if shamir_setup is None:
+            # Check that a non-deleted shamir setup exists
+            claimer_shamir_recoveries = org.shamir_recoveries[claimer_user_id]
+            try:
+                # All but the last shamir recovery are deleted
+                last_shamir_recovery = claimer_shamir_recoveries[-1]
+            except IndexError:
+                last_shamir_recovery = None
+            if last_shamir_recovery is None or last_shamir_recovery.is_deleted:
                 # Since the author only knows about a shamir recovery if they are part of it,
                 # we don't have a specific error for the case where the shamir setup doesn't exist
                 return InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED
 
             # Author is not part of the recipients
-            if author_user_id not in shamir_setup.shares:
+            if author_user_id not in last_shamir_recovery.shares:
                 return InviteNewForShamirBadOutcome.AUTHOR_NOT_ALLOWED
 
             for invitation in org.invitations.values():
