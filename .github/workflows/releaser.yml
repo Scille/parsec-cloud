@@ -54,7 +54,8 @@ jobs:
 
   package-parsec-client:
     needs: version
-    if: needs.version.result == 'success' && always()
+    # Do not run this job if the event is a pull request from dependabot.
+    if: needs.version.result == 'success' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]') && always()
     uses: ./.github/workflows/package-client.yml
     with:
       version: ${{ needs.version.outputs.full }}

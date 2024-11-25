@@ -135,7 +135,7 @@ jobs:
     needs: version
     runs-on: ubuntu-22.04
     # Always run the job if `version` job is skipped otherwise only if `version` job was successful.
-    if: ${{ inputs.version_patch_run_id != '' && always() || success() }}
+    if: inputs.version_patch_run_id != '' && always() || success()
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pin v4.2.2
         with:
@@ -176,7 +176,9 @@ jobs:
         working-directory: client/electron
 
       # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
+      # Build we only do that is the event is not a PR from dependabot (because it does not have access to secrets, thus failing the build).
       - name: Patch vite config for snap build
+        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
         run: >-
           sed -i
           -e s'/if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN)/if (true)/'
@@ -184,12 +186,16 @@ jobs:
           vite.config.ts
         working-directory: client
 
-      - name: Patch snapcraft file for sentry auth token and vite mode
+      # We only patch snapcraft.yaml is the event is not a PR from dependabot (because it does not have access to secrets, thus failing the build).
+      - name: Patch snapcraft file for sentry auth token
+        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
         run: >-
-          sed -i
-          -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";'
-          -e s'/VITE_MODE: development/VITE_MODE: ${{ steps.version.outputs.type }}/'
-          snap/snapcraft.yaml
+          sed -i -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";' snap/snapcraft.yaml
+        working-directory: client/electron
+
+      - name: Patch snapcraft file for vite mode
+        run: >-
+          sed -i -e s'/VITE_MODE: development/VITE_MODE: ${{ steps.version.outputs.type }}/' snap/snapcraft.yaml
         working-directory: client/electron
 
       - name: Build snap
@@ -344,9 +350,10 @@ jobs:
         working-directory: client
         timeout-minutes: 1
 
+      # Do not prepare codesign if the PR is from dependabot (it does not have access to secrets).
       - name: Prepare codesign
         shell: bash -o pipefail -eux {0}
-        if: matrix.platform == 'macos'
+        if: matrix.platform == 'macos' && !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
         run: |
           printenv MACOS_CERT | base64 --decode > certificate.p12
 
@@ -387,7 +394,9 @@ jobs:
         working-directory: client/electron
         timeout-minutes: 10
 
+      # Do not upload sourcemaps if it's a PR from dependabot because it does not have access to secrets.
       - name: Upload client electron sourcemaps
+        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
         run: npm run sentry:sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
