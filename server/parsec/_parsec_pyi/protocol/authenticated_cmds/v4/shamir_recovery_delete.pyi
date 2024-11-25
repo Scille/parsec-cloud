@@ -4,25 +4,13 @@
 
 from __future__ import annotations
 
-from parsec._parsec import DateTime, InvitationToken
+from parsec._parsec import DateTime
 
 class Req:
-    def __init__(
-        self,
-        ciphered_data: bytes,
-        reveal_token: InvitationToken,
-        shamir_recovery_brief_certificate: bytes,
-        shamir_recovery_share_certificates: list[bytes],
-    ) -> None: ...
+    def __init__(self, shamir_recovery_deletion_certificate: bytes) -> None: ...
     def dump(self) -> bytes: ...
     @property
-    def ciphered_data(self) -> bytes: ...
-    @property
-    def reveal_token(self) -> InvitationToken: ...
-    @property
-    def shamir_recovery_brief_certificate(self) -> bytes: ...
-    @property
-    def shamir_recovery_share_certificates(self) -> list[bytes]: ...
+    def shamir_recovery_deletion_certificate(self) -> bytes: ...
 
 class Rep:
     @staticmethod
@@ -41,37 +29,7 @@ class RepOk(Rep):
         self,
     ) -> None: ...
 
-class RepInvalidCertificateBriefCorrupted(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateShareCorrupted(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateShareRecipientNotInBrief(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateDuplicateShareForRecipient(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateAuthorIncludedAsRecipient(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateMissingShareForRecipient(Rep):
-    def __init__(
-        self,
-    ) -> None: ...
-
-class RepInvalidCertificateShareInconsistentTimestamp(Rep):
+class RepInvalidCertificateCorrupted(Rep):
     def __init__(
         self,
     ) -> None: ...
@@ -81,17 +39,17 @@ class RepInvalidCertificateUserIdMustBeSelf(Rep):
         self,
     ) -> None: ...
 
-class RepRecipientNotFound(Rep):
+class RepShamirRecoveryNotFound(Rep):
     def __init__(
         self,
     ) -> None: ...
 
-class RepRevokedRecipient(Rep):
-    def __init__(self, last_common_certificate_timestamp: DateTime) -> None: ...
-    @property
-    def last_common_certificate_timestamp(self) -> DateTime: ...
+class RepRecipientsMismatch(Rep):
+    def __init__(
+        self,
+    ) -> None: ...
 
-class RepShamirRecoveryAlreadyExists(Rep):
+class RepShamirRecoveryAlreadyDeleted(Rep):
     def __init__(self, last_shamir_certificate_timestamp: DateTime) -> None: ...
     @property
     def last_shamir_certificate_timestamp(self) -> DateTime: ...

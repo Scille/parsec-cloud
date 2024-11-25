@@ -317,10 +317,28 @@ class BaseAuthenticatedRpcClient:
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.realm_unshare.Rep.load(raw_rep)
 
+    async def shamir_recovery_delete(
+        self, shamir_recovery_deletion_certificate: bytes
+    ) -> authenticated_cmds.latest.shamir_recovery_delete.Rep:
+        req = authenticated_cmds.latest.shamir_recovery_delete.Req(
+            shamir_recovery_deletion_certificate=shamir_recovery_deletion_certificate
+        )
+        raw_rep = await self._do_request(req.dump(), "authenticated")
+        return authenticated_cmds.latest.shamir_recovery_delete.Rep.load(raw_rep)
+
     async def shamir_recovery_setup(
-        self, setup: authenticated_cmds.latest.shamir_recovery_setup.ShamirRecoverySetup | None
+        self,
+        ciphered_data: bytes,
+        reveal_token: InvitationToken,
+        shamir_recovery_brief_certificate: bytes,
+        shamir_recovery_share_certificates: list[bytes],
     ) -> authenticated_cmds.latest.shamir_recovery_setup.Rep:
-        req = authenticated_cmds.latest.shamir_recovery_setup.Req(setup=setup)
+        req = authenticated_cmds.latest.shamir_recovery_setup.Req(
+            ciphered_data=ciphered_data,
+            reveal_token=reveal_token,
+            shamir_recovery_brief_certificate=shamir_recovery_brief_certificate,
+            shamir_recovery_share_certificates=shamir_recovery_share_certificates,
+        )
         raw_rep = await self._do_request(req.dump(), "authenticated")
         return authenticated_cmds.latest.shamir_recovery_setup.Rep.load(raw_rep)
 
