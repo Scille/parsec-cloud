@@ -316,19 +316,30 @@ files = [
 
 [[package]]
 name = "padpo"
-version = "0.11.0"
+version = "0.12.0"
 description = "Linter for gettext files"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.9"
 files = [
-    {file = "padpo-0.11.0-py3-none-any.whl", hash = "sha256:68c06f3698682182fe1cfc513ba5ccb972fbc2b24655a0cc1b3bb868884ffbe7"},
-    {file = "padpo-0.11.0.tar.gz", hash = "sha256:431f701bf3188e4f0108f48e21a919b2be49b34d4f24ea6b953c42ed33cfe37f"},
+    {file = "padpo-0.12.0-py3-none-any.whl", hash = "sha256:42cfe24272301ef02a46031ddc4914f1f5ea667a8debb7e6b195d1bdde3440a3"},
+    {file = "padpo-0.12.0.tar.gz", hash = "sha256:304092c3a747a91eda975bac15b39fb8c291a317fa41d387c1db9bbadc14277b"},
 ]
 
 [package.dependencies]
-pygrammalecte = ">=1.3.0,<2.0.0"
-requests = ">=2.20.0,<3.0.0"
+pygrammalecte = ">=1.4"
+requests = ">=2.20.0"
 simplelogging = ">=0.10,<0.12"
+
+[[package]]
+name = "pip"
+version = "24.3.1"
+description = "The PyPA recommended tool for installing Python packages."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "pip-24.3.1-py3-none-any.whl", hash = "sha256:3790624780082365f47549d032f3770eeb2b1e8bd1f7b2e02dace1afa361b4ed"},
+    {file = "pip-24.3.1.tar.gz", hash = "sha256:ebcb60557f2aefabc2e0f918751cd24ea0d56d8ec5445fe1807f1d2109660b99"},
+]
 
 [[package]]
 name = "pogrep"
@@ -411,23 +422,23 @@ simple-term-menu = "*"
 
 [[package]]
 name = "poutils"
-version = "0.15.4"
+version = "0.15.5"
 description = "Gettext related tools: spellcheck, line wrapping etc..."
 optional = false
 python-versions = "*"
 files = [
-    {file = "poutils-0.15.4-py3-none-any.whl", hash = "sha256:639744f02191dc73ff3b990d06744c15f10d39fddfc3f6c703fc6673312b46c8"},
-    {file = "poutils-0.15.4.tar.gz", hash = "sha256:a0f06b445b1d54da24162c58fa9639acbde6214388a0cc9fb099db61e549a971"},
+    {file = "poutils-0.15.5-py3-none-any.whl", hash = "sha256:c73e756ee1805a06fbd872d7715e8ca1f196873240f15a7f47bf43f642120b88"},
+    {file = "poutils-0.15.5.tar.gz", hash = "sha256:db375ead2ef257f7a91cad41d2c8533dd589ca2766886315afc72f72ad00240f"},
 ]
 
 [package.dependencies]
-padpo = "0.11.0"
-pogrep = "0.1.4"
-pomerge = "0.1.4"
-pospell = "1.3"
-potodo = "0.21.3"
-powrap = "1.0.1"
-sphinx-lint = "0.6.8"
+padpo = ">=0.12.0"
+pogrep = ">=0.1.4"
+pomerge = ">=0.1.4"
+pospell = ">=1.3"
+potodo = ">=0.21.3"
+powrap = ">=1.0.1"
+sphinx-lint = ">=1.0.0"
 
 [[package]]
 name = "powrap"
@@ -459,17 +470,18 @@ windows-terminal = ["colorama (>=0.4.6)"]
 
 [[package]]
 name = "pygrammalecte"
-version = "1.3.0"
+version = "1.4.0"
 description = "Grammalecte, le correcteur grammatical en Python"
 optional = false
-python-versions = ">=3.7,<4.0"
+python-versions = ">=3.9"
 files = [
-    {file = "pygrammalecte-1.3.0-py3-none-any.whl", hash = "sha256:11c1f798b39077f88068620b9d7c2954a5bcdd2301ed25f43a6e93f2c250af65"},
-    {file = "pygrammalecte-1.3.0.tar.gz", hash = "sha256:d74bb72aa02c30e8635917b719bc34d1224d64548d4c8c2e0f38383adc3c8f1a"},
+    {file = "pygrammalecte-1.4.0-py3-none-any.whl", hash = "sha256:79d8c9c6490f3773af3195fd00b867762647a0fbfc8d9a2cd95ab4e26bf91dcf"},
+    {file = "pygrammalecte-1.4.0.tar.gz", hash = "sha256:a90660b8592d719d936e8c3ee4302b4d34701ccb94ce9a4a536abbed04bd2b22"},
 ]
 
 [package.dependencies]
-requests = ">=2.20.0,<3.0.0"
+pip = ">=23"
+requests = ">=2.20.0"
 
 [[package]]
 name = "regex"
@@ -719,28 +731,31 @@ test = ["pytest"]
 
 [[package]]
 name = "sphinx-lint"
-version = "0.6.8"
+version = "1.0.0"
 description = "Check for stylistic and formal issues in .rst and .py files included in the documentation."
 optional = false
-python-versions = ">=3.7"
+python-versions = ">=3.8"
 files = [
-    {file = "sphinx-lint-0.6.8.tar.gz", hash = "sha256:8c51ab6f5a959362ddb40c5821206bb00987fe978caf46ef5362869022a4f1a2"},
-    {file = "sphinx_lint-0.6.8-py3-none-any.whl", hash = "sha256:3f65e6d86cd5e1270493fb0d969ecafa409b580f9f2ca53869a77a1f1727db15"},
+    {file = "sphinx_lint-1.0.0-py3-none-any.whl", hash = "sha256:6117a0f340b2dc73eadfc57db7531d4477e0929f92a0c1a2f61e6edbc272f0bc"},
+    {file = "sphinx_lint-1.0.0.tar.gz", hash = "sha256:6eafdb44172ce526f405bf36c713eb246f1340ec2d667e7298e2487ed76decd2"},
 ]
 
 [package.dependencies]
 polib = "*"
 regex = "*"
 
+[package.extras]
+tests = ["pytest", "pytest-cov"]
+
 [[package]]
 name = "sphinx-rtd-theme"
-version = "3.0.1"
+version = "3.0.2"
 description = "Read the Docs theme for Sphinx"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "sphinx_rtd_theme-3.0.1-py2.py3-none-any.whl", hash = "sha256:921c0ece75e90633ee876bd7b148cfaad136b481907ad154ac3669b6fc957916"},
-    {file = "sphinx_rtd_theme-3.0.1.tar.gz", hash = "sha256:a4c5745d1b06dfcb80b7704fe532eb765b44065a8fad9851e4258c8804140703"},
+    {file = "sphinx_rtd_theme-3.0.2-py2.py3-none-any.whl", hash = "sha256:422ccc750c3a3a311de4ae327e82affdaf59eb695ba4936538552f3b00f4ee13"},
+    {file = "sphinx_rtd_theme-3.0.2.tar.gz", hash = "sha256:b7457bc25dda723b20b086a670b9953c859eab60a2a03ee8eb2bb23e176e5f85"},
 ]
 
 [package.dependencies]
@@ -939,4 +954,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12.0"
-content-hash = "e627360055926c50a63307d19d86425148a588c7d6c445dfebe5b4dc10321c34"
+content-hash = "1c07bafad1eecd132460ffa687d14e5ab46cf2239c0f4cd9972d2383a81f1d42"
