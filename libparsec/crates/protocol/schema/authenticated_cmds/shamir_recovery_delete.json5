@@ -1,0 +1,81 @@
+[
+    {
+        "major_versions": [
+            4
+        ],
+        "req": {
+            "cmd": "shamir_recovery_delete",
+            "fields": [
+                {
+                    "name": "shamir_recovery_deletion_certificate",
+                    "type": "Bytes"
+                }
+            ]
+        },
+        "reps": [
+            {
+                "status": "ok"
+            },
+            {
+                // Deserialization or signature verification error.
+                "status": "invalid_certificate_corrupted"
+            },
+            {
+                "status": "invalid_certificate_user_id_must_be_self"
+            },
+            {
+                "status": "shamir_recovery_not_found"
+            },
+            {
+                // The deletion certificate refers to a shamir recovery whose recipients
+                // differ (brief certificate's `per_recipient_shares` field vs deletion
+                // certificate's `share_recipients` field).
+                "status": "recipients_mismatch"
+            },
+            {
+                "status": "shamir_recovery_already_deleted",
+                "fields": [
+                    {
+                        "name": "last_shamir_certificate_timestamp",
+                        "type": "DateTime"
+                    }
+
+                ]
+            },
+            {
+                // Returned if the timestamp in the certificate is too far away compared
+                // to server clock.
+                "status": "timestamp_out_of_ballpark",
+                "fields": [
+                    {
+                        "name": "ballpark_client_early_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "ballpark_client_late_offset",
+                        "type": "Float"
+                    },
+                    {
+                        "name": "server_timestamp",
+                        "type": "DateTime"
+                    },
+                    {
+                        "name": "client_timestamp",
+                        "type": "DateTime"
+                    }
+                ]
+            },
+            {
+                // Returned if another certificate in the server has a timestamp
+                // posterior or equal to our current one.
+                "status": "require_greater_timestamp",
+                "fields": [
+                    {
+                        "name": "strictly_greater_than",
+                        "type": "DateTime"
+                    }
+                ]
+            }
+        ]
+    }
+]
