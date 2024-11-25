@@ -22,7 +22,12 @@
             "type": "UserID"
         },
         {
-            // Share ciphered with recipient's user key
+            // The actual share as `ShamirRecoveryShareData`, signed by the author
+            // then ciphered with the recipient's user key.
+            //
+            // Note: The share data is signed by the author in order to prevent
+            // attacks where a user puts someone else's share in its own certificate
+            // in order to trick a recipient user into deciphering it.
             "name": "ciphered_share",
             "type": "Bytes"
         }
