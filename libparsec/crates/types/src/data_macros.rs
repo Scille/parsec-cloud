@@ -5,6 +5,7 @@ macro_rules! impl_transparent_data_format_conversion {
     ($obj_type:ty, $data_type:ty, $($field:ident),* $(hooks: $($hook:expr),*)? $(,)?) => {
 
         impl From<$data_type> for $obj_type {
+            #[allow(unused_variables)]
             fn from(data: $data_type) -> Self {
                 Self {
                     $($field: data.$field.into()),*
@@ -13,6 +14,7 @@ macro_rules! impl_transparent_data_format_conversion {
         }
 
         impl From<$obj_type> for $data_type {
+            #[allow(unused_variables)]
             fn from(obj: $obj_type) -> Self {
                 Self {
                     ty: Default::default(),
