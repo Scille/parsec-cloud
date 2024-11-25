@@ -471,7 +471,7 @@ class ShamirOrgRpcClients:
     - Mallory has two devices: `mallory@dev1` and `mallory@dev2`
     - Mike only has one device: `mike@dev1`
     - Alice has a shamir recovery setup (threshold: 2, recipients: Bob with 2 shares,
-      Mallory & mike with 1 share each)
+      Mallory & Mike with 1 share each)
     - Bob has a deleted shamir recovery (used to be threshold: 1, recipients: Alice & Mallory)
     - Mallory has a shamir recovery setup (threshold: 1, recipients: only Mike)
     - Bob has invited Alice to do a Shamir recovery
