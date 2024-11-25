@@ -591,32 +591,68 @@ class MemoryUserComponent(BaseUserComponent):
             if realm_certificates:
                 per_realm_certificates[realm.realm_id] = realm_certificates
 
-        # 4) Shamir certificates
+        # 4) Shamir recovery certificates
 
-        shamir_recovery_certificates: list[bytes] = []
+        shamir_certificates_unordered: list[tuple[DateTime, int, bytes]] = []
+        for _, user_shamir_recoveries in org.shamir_recoveries.items():
+            for shamir_recovery in user_shamir_recoveries:
+                if shamir_recovery.cooked_brief.user_id == author_user_id:
+                    # Current user is the author of this shamir recovery
+                    shamir_certificates_unordered.append(
+                        (
+                            shamir_recovery.cooked_brief.timestamp,
+                            0,
+                            shamir_recovery.shamir_recovery_brief_certificate,
+                        )
+                    )
+                    if shamir_recovery.is_deleted:
+                        assert shamir_recovery.cooked_deletion is not None
+                        assert shamir_recovery.shamir_recovery_deletion_certificate is not None
+                        shamir_certificates_unordered.append(
+                            (
+                                shamir_recovery.cooked_deletion.timestamp,
+                                0,
+                                shamir_recovery.shamir_recovery_deletion_certificate,
+                            )
+                        )
+                elif share := shamir_recovery.shares.get(author_user_id):
+                    # Current user is recipient of this shamir recovery
+                    shamir_certificates_unordered.append(
+                        (
+                            shamir_recovery.cooked_brief.timestamp,
+                            0,
+                            shamir_recovery.shamir_recovery_brief_certificate,
+                        )
+                    )
+                    shamir_certificates_unordered.append(
+                        (
+                            shamir_recovery.cooked_brief.timestamp,
+                            # Important: the brief certificate must come first
+                            1,
+                            share.shamir_recovery_share_certificates,
+                        )
+                    )
+                    if shamir_recovery.is_deleted:
+                        assert shamir_recovery.cooked_deletion is not None
+                        assert shamir_recovery.shamir_recovery_deletion_certificate is not None
+                        shamir_certificates_unordered.append(
+                            (
+                                shamir_recovery.cooked_deletion.timestamp,
+                                0,
+                                shamir_recovery.shamir_recovery_deletion_certificate,
+                            )
+                        )
 
-        for user_id, shamir in sorted(org.shamir_setup.items(), key=lambda x: x[1].brief.timestamp):
-            # filter on timestamp
-            if (
-                shamir_recovery_after is not None
-                and shamir.brief.timestamp <= shamir_recovery_after
-            ):
-                continue
-
-            # if it is user's certificate keep brief
-            if user_id == author_user_id:
-                shamir_recovery_certificates.append(shamir.brief_bytes)
-
-            # if user is a share recipient keep share and brief
-            if author_user_id in shamir.shares.keys():
-                # Important: the brief certificate must come first
-                shamir_recovery_certificates.append(shamir.brief_bytes)
-                shamir_recovery_certificates.append(shamir.shares[author_user_id])
+        shamir_certificates = [
+            c
+            for ts, _, c in sorted(shamir_certificates_unordered)
+            if not shamir_recovery_after or shamir_recovery_after < ts
+        ]
 
         return CertificatesBundle(
             common=common_certificates,
             sequester=sequester_certificates,
-            shamir_recovery=shamir_recovery_certificates,
+            shamir_recovery=shamir_certificates,
             realm=per_realm_certificates,
         )
 

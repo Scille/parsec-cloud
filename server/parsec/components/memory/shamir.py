@@ -2,22 +2,34 @@
 
 from typing import override
 
-from parsec._parsec import DateTime, DeviceID, InvitationToken, OrganizationID, UserID, VerifyKey
+from parsec._parsec import (
+    DateTime,
+    DeviceID,
+    InvitationToken,
+    OrganizationID,
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
+    VerifyKey,
+)
 from parsec.ballpark import RequireGreaterTimestamp, TimestampOutOfBallpark
 from parsec.components.events import EventBus
 from parsec.components.memory.datamodel import (
     MemoryDatamodel,
-    MemoryOrganization,
-    MemoryShamirSetup,
-    MemoryUser,
+    MemoryShamirRecovery,
+    MemoryShamirShare,
+    TopicAndDiscriminant,
 )
 from parsec.components.shamir import (
     BaseShamirComponent,
-    ShamirAddOrDeleteRecoverySetupStoreBadOutcome,
-    ShamirAddRecoverySetupValidateBadOutcome,
-    ShamirInvalidRecipientBadOutcome,
+    ShamirDeleteSetupAlreadyDeletedBadOutcome,
+    ShamirDeleteStoreBadOutcome,
+    ShamirDeleteValidateBadOutcome,
     ShamirSetupAlreadyExistsBadOutcome,
-    shamir_add_recovery_setup_validate,
+    ShamirSetupRevokedRecipientBadOutcome,
+    ShamirSetupStoreBadOutcome,
+    ShamirSetupValidateBadOutcome,
+    shamir_delete_validate,
+    shamir_setup_validate,
 )
 
 
@@ -27,109 +39,199 @@ class MemoryShamirComponent(BaseShamirComponent):
         self._data = data
         self._event_bus = event_bus
 
-    def organization_and_user_common_checks(
-        self,
-        organization_id: OrganizationID,
-        author: UserID,
-    ) -> tuple[MemoryOrganization, MemoryUser] | ShamirAddOrDeleteRecoverySetupStoreBadOutcome:
-        # organization exists and not expired
-        try:
-            org = self._data.organizations[organization_id]
-        except KeyError:
-            return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ORGANIZATION_NOT_FOUND
-        if org.is_expired:
-            return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.ORGANIZATION_EXPIRED
-
-        # author exists and not revoked and not frozen
-        try:
-            author_user = org.users[author]
-        except KeyError:
-            return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.AUTHOR_NOT_FOUND
-        if author_user.is_revoked:
-            return ShamirAddOrDeleteRecoverySetupStoreBadOutcome.AUTHOR_REVOKED
-
-        return (org, author_user)
-
     @override
-    async def remove_recovery_setup(
-        self,
-        organization_id: OrganizationID,
-        author: UserID,
-    ) -> None | ShamirAddOrDeleteRecoverySetupStoreBadOutcome:
-        # TODO update after https://github.com/Scille/parsec-cloud/issues/7364
-        match self.organization_and_user_common_checks(organization_id, author):
-            case (org, _):
-                pass
-            case error:
-                return error
-
-        async with org.topics_lock(read=["common"], write=["shamir_recovery"]):
-            self._data.organizations[organization_id].shamir_setup.pop(author)
-            return None
-
-    @override
-    async def add_recovery_setup(
+    async def setup(
         self,
         now: DateTime,
         organization_id: OrganizationID,
         author: DeviceID,
         author_verify_key: VerifyKey,
-        user_id: UserID,
         ciphered_data: bytes,
         reveal_token: InvitationToken,
-        brief: bytes,
-        shares: list[bytes],
+        shamir_recovery_brief_certificate: bytes,
+        shamir_recovery_share_certificates: list[bytes],
     ) -> (
-        None
-        | ShamirAddOrDeleteRecoverySetupStoreBadOutcome
-        | ShamirAddRecoverySetupValidateBadOutcome
+        ShamirRecoveryBriefCertificate
+        | ShamirSetupStoreBadOutcome
+        | ShamirSetupValidateBadOutcome
         | ShamirSetupAlreadyExistsBadOutcome
+        | ShamirSetupRevokedRecipientBadOutcome
         | TimestampOutOfBallpark
-        | ShamirInvalidRecipientBadOutcome
         | RequireGreaterTimestamp
     ):
-        match self.organization_and_user_common_checks(organization_id, user_id):
-            case (org, _):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return ShamirSetupStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return ShamirSetupStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            device = org.devices[author]
+            author_user_id = device.cooked.user_id
+            _ = org.users[author_user_id]
+        except KeyError:
+            return ShamirSetupStoreBadOutcome.AUTHOR_NOT_FOUND
+
+        match shamir_setup_validate(
+            now,
+            author,
+            author_user_id,
+            author_verify_key,
+            shamir_recovery_brief_certificate,
+            shamir_recovery_share_certificates,
+        ):
+            case (cooked_brief, cooked_shares):
                 pass
             case error:
                 return error
 
-        async with org.topics_lock(read=["common"], write=["shamir_recovery"]) as (
-            common_topic_last_timestamp,
-            shamir_topic_last_timestamp,
-        ):
-            match shamir_add_recovery_setup_validate(
-                now, author, user_id, author_verify_key, brief, shares
-            ):
-                case (cooked_brief, cooked_shares):
-                    pass
-                case error:
-                    return error
+        shamir_topics: list[TopicAndDiscriminant] = [
+            ("shamir_recovery", author_user_id),
+            *(("shamir_recovery", recipient) for recipient in cooked_shares.keys()),
+        ]
 
-            # all recipients exists and not revoked
+        async with org.topics_lock(read=["common"], write=shamir_topics) as (
+            common_topic_last_timestamp,
+            author_shamir_topic_last_timestamps,
+            *recipients_shamir_topics_last_timestamps,
+        ):
+            # Ensure all recipients exist and are not revoked
             for share_recipient in cooked_shares.keys():
                 try:
                     recipient_user = org.users[share_recipient]
                 except KeyError:
-                    return ShamirInvalidRecipientBadOutcome(share_recipient)
+                    return ShamirSetupStoreBadOutcome.RECIPIENT_NOT_FOUND
                 if recipient_user.is_revoked:
-                    return ShamirInvalidRecipientBadOutcome(share_recipient)
+                    return ShamirSetupRevokedRecipientBadOutcome(
+                        last_common_certificate_timestamp=common_topic_last_timestamp
+                    )
 
-            if author in self._data.organizations[organization_id].shamir_setup:
-                return ShamirSetupAlreadyExistsBadOutcome(
-                    last_shamir_certificate_timestamp=shamir_topic_last_timestamp
-                )
+            try:
+                previous_shamir_setup = org.shamir_recoveries[author_user_id][-1]
+            except IndexError:
+                # The user never had a shamir recovery
+                previous_shamir_setup = None
+            else:
+                # The user had already setup a shamir recovery... but it might be deleted
+                if not previous_shamir_setup.is_deleted:
+                    return ShamirSetupAlreadyExistsBadOutcome(
+                        last_shamir_certificate_timestamp=author_shamir_topic_last_timestamps
+                    )
 
             # Ensure we are not breaking causality by adding a newer timestamp.
 
-            last_certificate = max(common_topic_last_timestamp, shamir_topic_last_timestamp)
+            last_certificate = max(
+                common_topic_last_timestamp,
+                author_shamir_topic_last_timestamps,
+                *recipients_shamir_topics_last_timestamps,
+            )
             if last_certificate >= cooked_brief.timestamp:
                 return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
 
             # All checks are good, now we do the actual insertion
 
-            org.per_topic_last_timestamp["shamir_recovery"] = cooked_brief.timestamp
+            for shamir_topic in shamir_topics:
+                org.per_topic_last_timestamp[shamir_topic] = cooked_brief.timestamp
 
-            self._data.organizations[organization_id].shamir_setup[user_id] = MemoryShamirSetup(
-                ciphered_data, reveal_token, cooked_brief, cooked_shares, brief
+            org.shamir_recoveries[author_user_id].append(
+                MemoryShamirRecovery(
+                    ciphered_data=ciphered_data,
+                    reveal_token=reveal_token,
+                    cooked_brief=cooked_brief,
+                    shamir_recovery_brief_certificate=shamir_recovery_brief_certificate,
+                    shares={
+                        recipient: MemoryShamirShare(
+                            cooked=cooked,
+                            shamir_recovery_share_certificates=raw,
+                        )
+                        for recipient, (raw, cooked) in cooked_shares.items()
+                    },
+                )
             )
+
+        return cooked_brief
+
+    @override
+    async def delete(
+        self,
+        now: DateTime,
+        organization_id: OrganizationID,
+        author: DeviceID,
+        author_verify_key: VerifyKey,
+        shamir_recovery_deletion_certificate: bytes,
+    ) -> (
+        ShamirRecoveryDeletionCertificate
+        | ShamirDeleteStoreBadOutcome
+        | ShamirDeleteValidateBadOutcome
+        | ShamirDeleteSetupAlreadyDeletedBadOutcome
+        | TimestampOutOfBallpark
+        | RequireGreaterTimestamp
+    ):
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return ShamirDeleteStoreBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return ShamirDeleteStoreBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            device = org.devices[author]
+            author_user_id = device.cooked.user_id
+            _ = org.users[author_user_id]
+        except KeyError:
+            return ShamirDeleteStoreBadOutcome.AUTHOR_NOT_FOUND
+
+        match shamir_delete_validate(
+            now, author, author_user_id, author_verify_key, shamir_recovery_deletion_certificate
+        ):
+            case ShamirRecoveryDeletionCertificate() as cooked_deletion:
+                pass
+            case error:
+                return error
+
+        shamir_topics: list[TopicAndDiscriminant] = [
+            ("shamir_recovery", author_user_id),
+            *(("shamir_recovery", recipient) for recipient in cooked_deletion.share_recipients),
+        ]
+
+        async with org.topics_lock(read=["common"], write=shamir_topics) as (
+            common_topic_last_timestamp,
+            author_shamir_topic_last_timestamps,
+            *recipients_shamir_topics_last_timestamps,
+        ):
+            # Ensure we are not breaking causality by adding a newer timestamp.
+
+            last_certificate = max(
+                common_topic_last_timestamp,
+                author_shamir_topic_last_timestamps,
+                *recipients_shamir_topics_last_timestamps,
+            )
+            if last_certificate >= cooked_deletion.timestamp:
+                return RequireGreaterTimestamp(strictly_greater_than=last_certificate)
+
+            # Find the shamir recovery setup certificate
+
+            for setup in org.shamir_recoveries[author_user_id]:
+                if setup.cooked_brief.timestamp == cooked_deletion.setup_to_delete_timestamp:
+                    break
+            else:
+                return ShamirDeleteStoreBadOutcome.SETUP_NOT_FOUND
+
+            if setup.shares.keys() != cooked_deletion.share_recipients:
+                return ShamirDeleteStoreBadOutcome.RECIPIENTS_MISMATCH
+
+            if setup.is_deleted:
+                return ShamirDeleteSetupAlreadyDeletedBadOutcome(
+                    last_shamir_certificate_timestamp=author_shamir_topic_last_timestamps
+                )
+
+            # All checks are good, now we do the actual insertion
+
+            for shamir_topic in shamir_topics:
+                org.per_topic_last_timestamp[shamir_topic] = cooked_deletion.timestamp
+
+            setup.cooked_deletion = cooked_deletion
+            setup.shamir_recovery_deletion_certificate = shamir_recovery_deletion_certificate
+
+            return cooked_deletion

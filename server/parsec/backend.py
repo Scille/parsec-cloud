@@ -17,6 +17,8 @@ from parsec._parsec import (
     RealmRoleCertificate,
     RevokedUserCertificate,
     SequesterServiceCertificate,
+    ShamirRecoveryBriefCertificate,
+    ShamirRecoveryDeletionCertificate,
     UserUpdateCertificate,
     VerifyKey,
 )
@@ -338,24 +340,26 @@ class Backend:
                 # TODO: Realm archiving not implemented yet !
                 raise NotImplementedError
             elif isinstance(event, testbed.TestbedEventNewShamirRecovery):
-                outcome = await self.shamir.add_recovery_setup(
+                outcome = await self.shamir.setup(
                     now=event.timestamp,
                     organization_id=org_id,
                     author=event.brief_certificate.author,
                     author_verify_key=_get_device_verify_key(event.author),
-                    user_id=event.brief_certificate.user_id,
                     ciphered_data=event.ciphered_data,
                     reveal_token=event.reveal_token,
-                    brief=event.raw_brief_certificate,
-                    shares=event.raw_shares_certificates,
+                    shamir_recovery_brief_certificate=event.raw_brief_certificate,
+                    shamir_recovery_share_certificates=event.raw_shares_certificates,
                 )
-                assert outcome is None, outcome
+                assert isinstance(outcome, ShamirRecoveryBriefCertificate)
             elif isinstance(event, testbed.TestbedEventDeleteShamirRecovery):
-                outcome = await self.shamir.remove_recovery_setup(
+                outcome = await self.shamir.delete(
+                    now=event.timestamp,
                     organization_id=org_id,
-                    author=event.certificate.setup_to_delete_user_id,
+                    author=event.certificate.author,
+                    author_verify_key=_get_device_verify_key(event.author),
+                    shamir_recovery_deletion_certificate=event.raw_certificate,
                 )
-                assert outcome is None, outcome
+                assert isinstance(outcome, ShamirRecoveryDeletionCertificate)
             elif isinstance(event, testbed.TestbedEventCreateBlock):
                 outcome = await self.block.create(
                     now=event.timestamp,
