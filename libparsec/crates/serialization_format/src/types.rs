@@ -215,6 +215,7 @@ generate_field_type_enum!(
     Size => libparsec_types::SizeInt,
     Index => libparsec_types::IndexInt,
     NonZeroInteger => ::std::num::NonZeroU64,
+    NonZeroU8 => ::std::num::NonZeroU8,
     PublicKey => libparsec_types::PublicKey,
     SigningKey => libparsec_types::SigningKey,
     VerifyKey => libparsec_types::VerifyKey,
