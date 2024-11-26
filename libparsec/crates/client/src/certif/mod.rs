@@ -13,6 +13,7 @@ mod realm_keys_bundle;
 mod realm_rename;
 mod realm_share;
 mod realms_needs;
+mod shamir_recovery_delete;
 mod shamir_recovery_setup;
 mod store;
 mod user_revoke;
@@ -39,6 +40,7 @@ pub use realm_keys_bundle::{
 pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
+pub use shamir_recovery_delete::CertifDeleteShamirRecoveryError;
 pub use shamir_recovery_setup::{
     CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
 };
@@ -611,6 +613,12 @@ impl CertificateOps {
         threshold: NonZeroU8,
     ) -> Result<ShamirRecoverySetupCertificateTimestamps, CertifSetupShamirRecoveryError> {
         shamir_recovery_setup::setup_shamir_recovery(self, per_recipient_shares, threshold).await
+    }
+
+    pub async fn delete_shamir_recovery(
+        &self,
+    ) -> Result<CertificateBasedActionOutcome, CertifDeleteShamirRecoveryError> {
+        shamir_recovery_delete::delete_shamir_recovery(self).await
     }
 }
 

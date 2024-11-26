@@ -11,6 +11,7 @@ mod process_workspaces_needs;
 mod recovery;
 mod rename_workspace;
 mod revoke_user;
+mod shamir_recovery_delete;
 mod shamir_recovery_setup;
 mod share_workspace;
 mod start_workspace;
