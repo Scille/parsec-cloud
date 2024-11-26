@@ -4,6 +4,7 @@
 
 mod list_frozen_users;
 mod recovery_device;
+mod shamir_recovery_delete;
 mod shamir_recovery_setup;
 mod tos;
 mod user_revoke;
@@ -73,6 +74,7 @@ pub use crate::invite::{
     NewUserInvitationError as ClientNewUserInvitationError, UserGreetInitialCtx,
 };
 pub use crate::workspace::WorkspaceOps;
+pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -548,6 +550,10 @@ impl Client {
         threshold: NonZeroU8,
     ) -> Result<(), ClientSetupShamirRecoveryError> {
         shamir_recovery_setup::setup_shamir_recovery(self, per_recipient_shares, threshold).await
+    }
+
+    pub async fn delete_shamir_recovery(&self) -> Result<(), ClientDeleteShamirRecoveryError> {
+        shamir_recovery_delete::delete_shamir_recovery(self).await
     }
 
     pub async fn get_tos(&self) -> Result<Tos, ClientGetTosError> {
