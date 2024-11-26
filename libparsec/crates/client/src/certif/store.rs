@@ -1253,6 +1253,56 @@ macro_rules! impl_read_methods {
         }
 
         #[allow(unused)]
+        /// Return all shamir recovery brief certificates.
+        ///
+        /// ⚠️ This method returns *all* certificates, including the ones that have been
+        /// superseded ! (i.e. you should iter from the last to the first certificate to
+        /// get the current role of a given user).
+        ///
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
+        pub async fn get_shamir_recovery_briefs(
+            &mut self,
+            up_to: UpTo,
+        ) -> anyhow::Result<Vec<Arc<ShamirRecoveryBriefCertificate>>> {
+            let query = GetCertificateQuery::shamir_recovery_brief_certificates();
+            let items = self
+                .storage
+                .get_multiple_certificates_encrypted(query, up_to, None, None)
+                .await?;
+            get_multiple_certificates_from_encrypted(
+                &self.store,
+                items,
+                ShamirRecoveryBriefCertificate::unsecure_load,
+                UnsecureShamirRecoveryBriefCertificate::skip_validation,
+            )
+        }
+
+        #[allow(unused)]
+        /// Return all shamir recovery deletion certificates.
+        ///
+        /// ⚠️ This method returns *all* certificates, including the ones that have been
+        /// superseded ! (i.e. you should iter from the last to the first certificate to
+        /// get the current role of a given user).
+        ///
+        /// Certificates are returned ordered by timestamp in increasing order (i.e. oldest first)
+        pub async fn get_shamir_recovery_deletions(
+            &mut self,
+            up_to: UpTo,
+        ) -> anyhow::Result<Vec<Arc<ShamirRecoveryDeletionCertificate>>> {
+            let query = GetCertificateQuery::shamir_recovery_deletion_certificates();
+            let items = self
+                .storage
+                .get_multiple_certificates_encrypted(query, up_to, None, None)
+                .await?;
+            get_multiple_certificates_from_encrypted(
+                &self.store,
+                items,
+                ShamirRecoveryDeletionCertificate::unsecure_load,
+                UnsecureShamirRecoveryDeletionCertificate::skip_validation,
+            )
+        }
+
+        #[allow(unused)]
         pub async fn get_last_shamir_recovery_brief_certificate(
             &mut self,
             up_to: UpTo,

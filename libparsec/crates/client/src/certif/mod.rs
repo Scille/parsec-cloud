@@ -14,6 +14,7 @@ mod realm_rename;
 mod realm_share;
 mod realms_needs;
 mod shamir_recovery_delete;
+mod shamir_recovery_list;
 mod shamir_recovery_setup;
 mod store;
 mod user_revoke;
@@ -41,6 +42,9 @@ pub use realm_rename::CertifRenameRealmError;
 pub use realm_share::CertifShareRealmError;
 pub use realms_needs::{CertifGetRealmNeedsError, RealmNeeds};
 pub use shamir_recovery_delete::CertifDeleteShamirRecoveryError;
+pub use shamir_recovery_list::{
+    CertifListShamirRecoveryError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+};
 pub use shamir_recovery_setup::{
     CertifSetupShamirRecoveryError, ShamirRecoverySetupCertificateTimestamps,
 };
@@ -605,6 +609,18 @@ impl CertificateOps {
         realm_id: VlobID,
     ) -> Result<(EntryName, DateTime), CertifDecryptCurrentRealmNameError> {
         realm_decrypt_name::decrypt_current_realm_name(self, realm_id).await
+    }
+
+    pub async fn get_self_shamir_recovery(
+        &self,
+    ) -> Result<SelfShamirRecoveryInfo, CertifListShamirRecoveryError> {
+        shamir_recovery_list::get_self_shamir_recovery(self).await
+    }
+
+    pub async fn list_shamir_recoveries_for_others(
+        &self,
+    ) -> Result<Vec<OtherShamirRecoveryInfo>, CertifListShamirRecoveryError> {
+        shamir_recovery_list::list_shamir_recoveries_for_others(self).await
     }
 
     pub async fn setup_shamir_recovery(

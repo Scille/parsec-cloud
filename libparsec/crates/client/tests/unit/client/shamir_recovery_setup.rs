@@ -5,7 +5,7 @@ use std::collections::HashMap;
 use libparsec_tests_fixtures::prelude::*;
 use libparsec_types::prelude::*;
 
-use crate::CertifSetupShamirRecoveryError;
+use crate::{CertifSetupShamirRecoveryError, SelfShamirRecoveryInfo};
 
 use super::utils::client_factory;
 
@@ -13,6 +13,12 @@ use super::utils::client_factory;
 async fn ok_first_setup(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
+
+    // Sanity check
+    p_assert_matches!(
+        client.get_self_shamir_recovery().await.unwrap(),
+        SelfShamirRecoveryInfo::NeverSetup
+    );
 
     client
         .setup_shamir_recovery(
@@ -26,7 +32,11 @@ async fn ok_first_setup(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    // TODO: list shamir in local
+    p_assert_matches!(
+        client.get_self_shamir_recovery().await.unwrap(),
+        SelfShamirRecoveryInfo::SetupAllValid{ created_by, .. }
+        if created_by == alice.device_id
+    );
 }
 
 #[parsec_test(testbed = "coolorg", with_server)]
@@ -46,6 +56,12 @@ async fn ok_with_previously_deleted(env: &TestbedEnv) {
     let alice = env.local_device("alice@dev1");
     let client = client_factory(&env.discriminant_dir, alice.clone()).await;
 
+    // Sanity check
+    p_assert_matches!(
+        client.get_self_shamir_recovery().await.unwrap(),
+        SelfShamirRecoveryInfo::Deleted { .. }
+    );
+
     let bob_user_id: UserID = "bob".parse().unwrap();
     let share_recipients = HashMap::from([(bob_user_id, 2.try_into().unwrap())]);
     client
@@ -53,7 +69,11 @@ async fn ok_with_previously_deleted(env: &TestbedEnv) {
         .await
         .unwrap();
 
-    // TODO: list shamir in local
+    p_assert_matches!(
+        client.get_self_shamir_recovery().await.unwrap(),
+        SelfShamirRecoveryInfo::SetupAllValid{ created_by, .. }
+        if created_by == alice.device_id
+    );
 }
 
 #[parsec_test(testbed = "coolorg")]
