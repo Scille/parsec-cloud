@@ -90,8 +90,7 @@ async def serve_parsec_asgi_app(
         server_header=False,
         headers=[("Server", server_header)],
         log_level="info",
-        # TODO: uvicorn's typing is broken here
-        ssl_keyfile=ssl_keyfile,  # type: ignore
+        ssl_keyfile=ssl_keyfile,
         ssl_certfile=ssl_certfile,
         workers=workers,
         # Enable/Disable X-Forwarded-Proto, X-Forwarded-For to populate remote address info.

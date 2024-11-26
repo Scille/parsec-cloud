@@ -975,7 +975,7 @@ def cli(description: str) -> argparse.Namespace:
         name: str,
         fn: Callable[[argparse.Namespace], None],
         help: str,
-        subparser: argparse._SubParsersAction[argparse.ArgumentParser],  # type: ignore[reportPrivateUsage]
+        subparser: argparse._SubParsersAction[argparse.ArgumentParser],
         **parser_kwargs: Any,
     ) -> argparse.ArgumentParser:
         parser = subparser.add_parser(
