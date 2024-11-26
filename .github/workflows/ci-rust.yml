@@ -63,7 +63,7 @@ jobs:
       TESTBED_SERVER: http://localhost:6777
     services:
       parsec-testbed-server:
-        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.1.1-a.0.dev.20052.4a34a64
+        image: ghcr.io/scille/parsec-cloud/parsec-testbed-server:3.2.1-a.0.dev.20053.312b36d
         ports:
           - 6777:6777
     steps:
