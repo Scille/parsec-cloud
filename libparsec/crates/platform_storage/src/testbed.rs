@@ -121,6 +121,11 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                             .add_certificate(certif.deref(), encrypted)
                             .await
                             .unwrap(),
+
+                        // In theory we should skip the certificates related to realm we are not part of,
+                        // but in practice it has no impact since we don't have any operation that crawls
+                        // all the realm in the certificate storage (i.e. we always provide a realm ID when
+                        // querying for realm-related certificates).
                         AnyArcCertificate::RealmRole(certif) => update
                             .add_certificate(certif.deref(), encrypted)
                             .await
@@ -137,6 +142,10 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                             .add_certificate(certif.deref(), encrypted)
                             .await
                             .unwrap(),
+
+                        // Just like for realm, we should in theory skip the shamir certificates not meant to us.
+                        // We do have operations that crawl the whole shamir certificates, but they are aware of
+                        // this shortcoming and deal with them accordingly.
                         AnyArcCertificate::ShamirRecoveryBrief(certif) => update
                             .add_certificate(certif.deref(), encrypted)
                             .await
@@ -149,6 +158,7 @@ pub(crate) async fn maybe_populate_certificate_storage(data_base_dir: &Path, dev
                             .add_certificate(certif.deref(), encrypted)
                             .await
                             .unwrap(),
+
                         AnyArcCertificate::SequesterAuthority(certif) => update
                             .add_certificate(certif.deref(), encrypted)
                             .await
