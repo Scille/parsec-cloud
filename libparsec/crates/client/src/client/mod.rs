@@ -5,6 +5,7 @@
 mod list_frozen_users;
 mod recovery_device;
 mod shamir_recovery_delete;
+mod shamir_recovery_list;
 mod shamir_recovery_setup;
 mod tos;
 mod user_revoke;
@@ -75,6 +76,9 @@ pub use crate::invite::{
 };
 pub use crate::workspace::WorkspaceOps;
 pub use shamir_recovery_delete::ClientDeleteShamirRecoveryError;
+pub use shamir_recovery_list::{
+    ClientListShamirRecoveryError, OtherShamirRecoveryInfo, SelfShamirRecoveryInfo,
+};
 
 // Should not be `Clone` given it manages underlying resources !
 pub struct Client {
@@ -542,6 +546,18 @@ impl Client {
             self.event_bus.clone(),
             token,
         )
+    }
+
+    pub async fn get_self_shamir_recovery(
+        &self,
+    ) -> Result<SelfShamirRecoveryInfo, ClientListShamirRecoveryError> {
+        shamir_recovery_list::get_self_shamir_recovery(self).await
+    }
+
+    pub async fn list_shamir_recoveries_for_others(
+        &self,
+    ) -> Result<Vec<OtherShamirRecoveryInfo>, ClientListShamirRecoveryError> {
+        shamir_recovery_list::list_shamir_recoveries_for_others(self).await
     }
 
     pub async fn setup_shamir_recovery(
