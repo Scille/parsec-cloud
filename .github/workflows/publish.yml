@@ -51,7 +51,7 @@ jobs:
   publish:
     runs-on: ubuntu-24.04
     # We don't want to run this workflow on dependabot PRs because it will not be able to read the secrets
-    if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
+    if: (!(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'))
     permissions:
       contents: read
       id-token: write
