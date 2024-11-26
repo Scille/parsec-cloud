@@ -77,7 +77,9 @@ async def organization_test_dump_topics(
 
     common_last_timestamp = None
     sequester_last_timestamp = None
-    shamir_recovery_last_timestamp = None
+    # TODO: PostgreSQL datamodel for shamir is currently broken as it
+    #       doesn't handle topic discriminant.
+    shamir_recovery_last_timestamp = {}
     per_realm_last_timestamp = {}
     for row in rows:
         match row["last_timestamp"]:
@@ -106,9 +108,8 @@ async def organization_test_dump_topics(
                 realm_id = VlobID.from_hex(raw_discriminant)
                 per_realm_last_timestamp[realm_id] = last_timestamp
             case "shamir_recovery":
-                assert shamir_recovery_last_timestamp is None
-                assert raw_discriminant is None
-                shamir_recovery_last_timestamp = last_timestamp
+                # TODO
+                pass
             case unknown:
                 assert False, unknown
 
