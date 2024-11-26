@@ -455,6 +455,132 @@ msTest('Sort users list', async ({ usersPage }) => {
   );
 });
 
+msTest('Search user list', async ({ usersPage }) => {
+  const searchInput = usersPage.locator('#search-input-users').locator('ion-input');
+  const actionBar = usersPage.locator('#activate-users-ms-action-bar');
+  const usersList = usersPage.locator('#users-page-user-list');
+  const items = usersList.getByRole('listitem');
+  const gridItems = usersPage.locator('.users-container-grid').locator('.user-card-item');
+
+  await expect(actionBar.locator('.counter')).toHaveText('8 users', { useInnerText: true });
+  await expect(items).toHaveCount(8);
+
+  // No matches
+  await fillIonInput(searchInput, 'abc');
+  await expect(actionBar.locator('.counter')).toHaveText('No user', { useInnerText: true });
+  await expect(usersList).toContainText('No users matching your filters');
+  await expect(items).toHaveCount(0);
+
+  // Search on email
+  await fillIonInput(searchInput, 'gmail');
+  await expect(actionBar.locator('.counter')).toHaveText('6 users', { useInnerText: true });
+  await expect(items).toHaveCount(6);
+  for (let i = 0; i < 6; i++) {
+    await expect(items.nth(i).locator('.user-email')).toContainText('gmail');
+  }
+
+  // Search on name
+  await fillIonInput(searchInput, 'he');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
+  // cspell:disable-next-line
+  await expect(items.nth(0).locator('.user-name')).toContainText('Jaheira');
+  await expect(items.nth(1).locator('.user-name')).toContainText('Patches');
+  // cspell:disable-next-line
+  await fillIonInput(searchInput, 'Valygar');
+  await expect(actionBar.locator('.counter')).toHaveText('One user', { useInnerText: true });
+  // cspell:disable-next-line
+  await expect(items.nth(0).locator('.user-name')).toContainText('Valygar');
+
+  // Check that selection resets on filter
+  await fillIonInput(searchInput, '');
+  await usersPage.locator('.user-list-header').locator('ion-checkbox').click();
+  await expect(actionBar.locator('.counter')).toHaveText('4 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, 'he');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, '');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await expect(items).toHaveCount(8);
+  // cspell:disable-next-line
+  await expect(items.nth(1).locator('.user-name')).toContainText('Jaheira');
+  await expect(items.nth(1).locator('ion-checkbox')).toHaveState('checked');
+  await expect(items.nth(4).locator('.user-name')).toContainText('Patches');
+  await expect(items.nth(4).locator('ion-checkbox')).toHaveState('checked');
+
+  // Check that search persists on grid mode
+  await fillIonInput(searchInput, 'he');
+  await expect(items).toHaveCount(2);
+  await actionBar.locator('.ms-grid-list-toggle').locator('#grid-view').click();
+  await expect(gridItems).toHaveCount(2);
+  await fillIonInput(searchInput, 'hei');
+  await expect(gridItems).toHaveCount(1);
+  // cspell:disable-next-line
+  await expect(gridItems.nth(0).locator('.user-card-info__name')).toContainText('Jaheira');
+  await actionBar.locator('.ms-grid-list-toggle').locator('#list-view').click();
+  await expect(items).toHaveCount(1);
+  // cspell:disable-next-line
+  await expect(items.nth(0).locator('.user-name')).toContainText('Jaheira');
+});
+
+msTest('Search user grid', async ({ usersPage }) => {
+  const searchInput = usersPage.locator('#search-input-users').locator('ion-input');
+  const actionBar = usersPage.locator('#activate-users-ms-action-bar');
+  const usersList = usersPage.locator('.users-container-grid');
+  const items = usersList.locator('.user-card-item');
+
+  await usersPage.locator('#activate-users-ms-action-bar').locator('.ms-grid-list-toggle').locator('#grid-view').click();
+
+  await expect(actionBar.locator('.counter')).toHaveText('8 users', { useInnerText: true });
+  await expect(items).toHaveCount(8);
+
+  // No matches
+  await fillIonInput(searchInput, 'abc');
+  await expect(actionBar.locator('.counter')).toHaveText('No user', { useInnerText: true });
+  await expect(usersList).toContainText('No users matching your filters');
+  await expect(items).toHaveCount(0);
+
+  // Search on email
+  await fillIonInput(searchInput, 'gmail');
+  await expect(actionBar.locator('.counter')).toHaveText('6 users', { useInnerText: true });
+  await expect(items).toHaveCount(6);
+  for (let i = 0; i < 6; i++) {
+    await expect(items.nth(i).locator('.user-card-info__email')).toContainText('gmail');
+  }
+
+  // Search on name
+  await fillIonInput(searchInput, 'he');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users', { useInnerText: true });
+  // cspell:disable-next-line
+  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Jaheira');
+  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Patches');
+  // cspell:disable-next-line
+  await fillIonInput(searchInput, 'Valygar');
+  await expect(actionBar.locator('.counter')).toHaveText('One user', { useInnerText: true });
+  // cspell:disable-next-line
+  await expect(items.nth(0).locator('.user-card-info__name')).toContainText('Valygar');
+
+  // Check that selection resets on filter
+  await fillIonInput(searchInput, '');
+  await expect(items).toHaveCount(8);
+  await items.nth(1).hover();
+  await items.nth(1).locator('ion-checkbox').click();
+  await items.nth(3).hover();
+  await items.nth(3).locator('ion-checkbox').click();
+  await items.nth(4).hover();
+  await items.nth(4).locator('ion-checkbox').click();
+  await items.nth(7).hover();
+  await items.nth(7).locator('ion-checkbox').click();
+  await expect(actionBar.locator('.counter')).toHaveText('4 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, 'he');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  await fillIonInput(searchInput, '');
+  await expect(actionBar.locator('.counter')).toHaveText('2 users selected', { useInnerText: true });
+  // cspell:disable-next-line
+  await expect(items.nth(1).locator('.user-card-info__name')).toContainText('Jaheira');
+  await expect(items.nth(1).locator('ion-checkbox')).toHaveState('checked');
+  await expect(items.nth(4).locator('.user-card-info__name')).toContainText('Patches');
+  await expect(items.nth(4).locator('ion-checkbox')).toHaveState('checked');
+});
+
 msTest('Invite new user', async ({ usersPage }) => {
   await usersPage.locator('#activate-users-ms-action-bar').locator('#button-invite-user').click();
   // cspell:disable-next-line
