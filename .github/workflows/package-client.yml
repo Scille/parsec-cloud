@@ -178,7 +178,7 @@ jobs:
       # We need to patch the vite.config.js because we cannot pass the secret to the snap build (either via build-args or env).
       # Build we only do that is the event is not a PR from dependabot (because it does not have access to secrets, thus failing the build).
       - name: Patch vite config for snap build
-        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
+        if: (!(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'))
         run: >-
           sed -i
           -e s'/if (process.env.PARSEC_APP_SENTRY_AUTH_TOKEN)/if (true)/'
@@ -188,7 +188,7 @@ jobs:
 
       # We only patch snapcraft.yaml is the event is not a PR from dependabot (because it does not have access to secrets, thus failing the build).
       - name: Patch snapcraft file for sentry auth token
-        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
+        if: (!(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'))
         run: >-
           sed -i -e s';SENTRY_AUTH_TOKEN: __TOKEN__;SENTRY_AUTH_TOKEN: "${{ secrets.SENTRY_AUTH_TOKEN }}";' snap/snapcraft.yaml
         working-directory: client/electron
@@ -396,7 +396,7 @@ jobs:
 
       # Do not upload sourcemaps if it's a PR from dependabot because it does not have access to secrets.
       - name: Upload client electron sourcemaps
-        if: !(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]')
+        if: (!(github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'))
         run: npm run sentry:sourcemaps
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
