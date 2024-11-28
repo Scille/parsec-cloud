@@ -478,6 +478,13 @@ class BaseInvitedRpcClient:
         raw_rep = await self._do_request(req.dump(), "invited")
         return invited_cmds.latest.invite_info.Rep.load(raw_rep)
 
+    async def invite_shamir_recovery_reveal(
+        self, reveal_token: InvitationToken
+    ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
+        req = invited_cmds.latest.invite_shamir_recovery_reveal.Req(reveal_token=reveal_token)
+        raw_rep = await self._do_request(req.dump(), "invited")
+        return invited_cmds.latest.invite_shamir_recovery_reveal.Rep.load(raw_rep)
+
     async def ping(self, ping: str) -> invited_cmds.latest.ping.Rep:
         req = invited_cmds.latest.ping.Req(ping=ping)
         raw_rep = await self._do_request(req.dump(), "invited")

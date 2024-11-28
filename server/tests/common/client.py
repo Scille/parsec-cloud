@@ -601,6 +601,38 @@ class ShamirOrgRpcClients:
     def mike_shamir_topic_timestamp(self) -> DateTime:
         return self._last_shamir_topic_timestamp_for("mike")
 
+    @property
+    def alice_shamir_reveal_token(self) -> InvitationToken:
+        return self._shamir_reveal_token_for("alice")
+
+    @property
+    def bob_shamir_reveal_token(self) -> InvitationToken:
+        return self._shamir_reveal_token_for("bob")
+
+    @property
+    def mallory_shamir_reveal_token(self) -> InvitationToken:
+        return self._shamir_reveal_token_for("mallory")
+
+    @property
+    def mike_shamir_reveal_token(self) -> InvitationToken:
+        return self._shamir_reveal_token_for("mike")
+
+    @property
+    def alice_shamir_ciphered_data(self) -> bytes:
+        return self._shamir_ciphered_data_for("alice")
+
+    @property
+    def bob_shamir_ciphered_data(self) -> bytes:
+        return self._shamir_ciphered_data_for("bob")
+
+    @property
+    def mallory_shamir_ciphered_data(self) -> bytes:
+        return self._shamir_ciphered_data_for("mallory")
+
+    @property
+    def mike_shamir_ciphered_data(self) -> bytes:
+        return self._shamir_ciphered_data_for("mike")
+
     def _last_shamir_topic_timestamp_for(self, user: str) -> DateTime:
         user_id = UserID.test_from_nickname(user)
         for event in reversed(self.testbed_template.events):
@@ -629,6 +661,20 @@ class ShamirOrgRpcClients:
         for event in self.testbed_template.events:
             if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
                 return event.shares_certificates
+        raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
+
+    def _shamir_reveal_token_for(self, user: str) -> InvitationToken:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
+                return event.reveal_token
+        raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
+
+    def _shamir_ciphered_data_for(self, user: str) -> bytes:
+        user_id = UserID.test_from_nickname(user)
+        for event in self.testbed_template.events:
+            if isinstance(event, tb.TestbedEventNewShamirRecovery) and event.user_id == user_id:
+                return event.ciphered_data
         raise RuntimeError(f"New shamir recovery event not found for user `{user}` !")
 
     @property
