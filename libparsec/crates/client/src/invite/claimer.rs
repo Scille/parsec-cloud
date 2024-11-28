@@ -5,10 +5,12 @@ use std::num::NonZeroU8;
 use std::{path::PathBuf, sync::Arc};
 
 use invited_cmds::latest::invite_claimer_step;
+use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
 use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
+use crate::client::register_new_device;
 use crate::invite::common::{Throttle, WAIT_PEER_MAX_ATTEMPTS};
 use crate::ClientConfig;
 
@@ -413,7 +415,71 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
         self,
         requested_device_label: DeviceLabel,
     ) -> Result<ShamirRecoveryClaimFinalizeCtx, ClaimInProgressError> {
-        panic!("{requested_device_label}")
+        let ciphered_data = {
+            use invited_cmds::latest::invite_shamir_recovery_reveal::{Rep, Req};
+
+            let rep = self
+                .cmds
+                .send(Req {
+                    reveal_token: self.secret.reveal_token,
+                })
+                .await?;
+
+            match rep {
+                Rep::Ok { ciphered_data } => Ok(ciphered_data),
+                // TODO: specialize error
+                Rep::NotFound => Err(ClaimInProgressError::NotFound),
+                Rep::UnknownStatus { .. } => {
+                    Err(anyhow::anyhow!("Unexpected server response: {:?}", rep).into())
+                }
+            }?
+        };
+
+        let mut recovery_device =
+            LocalDevice::decrypt_and_load(&ciphered_data, &self.secret.data_key)
+                .map_err(|e| ClaimInProgressError::Internal(anyhow::Error::msg(e)))?;
+
+        // When using the tested, the recovery device organization address is set to a placeholder address.
+        // This is because the organization address is not known yet when the testbed is initialized.
+        // In this case, we replace the placeholder address with the actual organization address.
+        if cfg!(test)
+            && recovery_device
+                .organization_addr
+                .to_string()
+                .starts_with("parsec3://parsec.invalid/PlaceholderOrg")
+        {
+            recovery_device.organization_addr = ParsecOrganizationAddr::new(
+                self.cmds.addr(),
+                self.cmds.addr().organization_id().clone(),
+                recovery_device.organization_addr.root_verify_key().clone(),
+            );
+        }
+
+        let recovery_device = Arc::new(recovery_device);
+
+        let new_local_device =
+            LocalDevice::from_existing_device_for_user(&recovery_device, requested_device_label);
+
+        let recovery_cmds = AuthenticatedCmds::new(
+            &self.config.config_dir,
+            recovery_device.clone(),
+            self.config.proxy.clone(),
+        )?;
+
+        register_new_device(
+            &recovery_cmds,
+            &new_local_device,
+            DevicePurpose::Standard,
+            &recovery_device,
+        )
+        .await
+        // TODO: specialize error
+        .map_err(|e| ClaimInProgressError::Internal(e.into()))?;
+
+        Ok(ShamirRecoveryClaimFinalizeCtx {
+            config: self.config,
+            new_local_device: Arc::new(new_local_device),
+        })
     }
 }
 

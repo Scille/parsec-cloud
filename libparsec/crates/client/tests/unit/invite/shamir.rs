@@ -213,6 +213,9 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     let available_device = alice_finalize_ctx.save_local_device(&access).await.unwrap();
 
     // Checks
+    let expected_server_url = ParsecAddr::from(bob.organization_addr.clone())
+        .to_http_url(None)
+        .to_string();
     p_assert_eq!(available_device.key_file_path, tmp_path.join("device.keys"));
     p_assert_eq!(
         available_device.organization_id,
@@ -222,14 +225,24 @@ async fn shamir(tmp_path: TmpPath, env: &TestbedEnv) {
     p_assert_eq!(available_device.device_label, device_label);
     p_assert_eq!(available_device.human_handle, alice.human_handle);
     p_assert_eq!(available_device.ty, DeviceFileType::Password);
-    p_assert_eq!(available_device.server_url, "https://noserver.example.com/");
+    p_assert_eq!(
+        available_device.organization_id,
+        bob.organization_id().clone()
+    );
+    p_assert_eq!(available_device.server_url, expected_server_url);
     p_assert_eq!(available_device.user_id, alice.user_id);
     // created_on and protected_on date times not checked
 
     // Check device can be loaded
-    let reloaded_new_local_device =
+    let reloaded_new_alice_device =
         libparsec_platform_device_loader::load_device(&env.discriminant_dir, &access)
             .await
             .unwrap();
-    p_assert_eq!(reloaded_new_local_device, new_local_device);
+    p_assert_eq!(reloaded_new_alice_device, new_local_device);
+
+    let new_alice_client =
+        client_factory(&env.discriminant_dir, reloaded_new_alice_device.clone()).await;
+
+    // Test server connection by deleting the shamir recovery
+    new_alice_client.delete_shamir_recovery().await.unwrap();
 }
