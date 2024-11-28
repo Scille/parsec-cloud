@@ -276,6 +276,14 @@ class InviteAsInvitedInfoBadOutcome(BadOutcomeEnum):
     INVITATION_DELETED = auto()
 
 
+class InviteShamirRecoveryRevealBadOutcome(BadOutcomeEnum):
+    ORGANIZATION_NOT_FOUND = auto()
+    ORGANIZATION_EXPIRED = auto()
+    INVITATION_NOT_FOUND = auto()
+    INVITATION_DELETED = auto()
+    DATA_NOT_FOUND = auto()
+
+
 # New transport definitions
 # TODO: Remove the old ones once fully migrated
 
@@ -1353,4 +1361,39 @@ class BaseInviteComponent:
         author: DeviceID,
         token: InvitationToken,
     ) -> None | InviteCompleteBadOutcome:
+        raise NotImplementedError
+
+    @api
+    async def api_invite_shamir_recovery_reveal(
+        self,
+        client_ctx: InvitedClientContext,
+        req: invited_cmds.latest.invite_shamir_recovery_reveal.Req,
+    ) -> invited_cmds.latest.invite_shamir_recovery_reveal.Rep:
+        outcome = await self.shamir_recovery_reveal(
+            organization_id=client_ctx.organization_id,
+            token=client_ctx.token,
+            reveal_token=req.reveal_token,
+        )
+        match outcome:
+            case Buffer() as ciphered_data:
+                return invited_cmds.latest.invite_shamir_recovery_reveal.RepOk(
+                    ciphered_data=bytes(ciphered_data)
+                )
+            case InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND:
+                return invited_cmds.latest.invite_shamir_recovery_reveal.RepNotFound()
+            case InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND:
+                client_ctx.organization_not_found_abort()
+            case InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED:
+                client_ctx.organization_expired_abort()
+            case InviteShamirRecoveryRevealBadOutcome.INVITATION_NOT_FOUND:
+                return client_ctx.invitation_not_found_abort()
+            case InviteShamirRecoveryRevealBadOutcome.INVITATION_DELETED:
+                return client_ctx.invitation_already_used_or_deleted_abort()
+
+    async def shamir_recovery_reveal(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        reveal_token: InvitationToken,
+    ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
         raise NotImplementedError
