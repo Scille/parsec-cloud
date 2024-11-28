@@ -373,6 +373,7 @@ jobs:
         run: |
           if ${{ matrix.platform == 'macos' }}; then
             # export DEBUG='electron-notarize*'
+            export CSC_FOR_PULL_REQUEST='${{ github.actor == 'FirelightFlagboy' }}'
             export CSC_LINK='${{ secrets.MACOS_CERT }}'
             export CSC_KEY_PASSWORD='${{ secrets.MACOS_CERT_PASSWD }}'
             export CSC_NAME='${{ secrets.MACOS_CERT_COMMON_NAME }}'
