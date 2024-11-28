@@ -2,20 +2,34 @@
 
 // Reexport 3rd parties needed by `parsec_test` macro
 
-pub use env_logger;
+pub use log;
+
 // In theory we'd like to expose rstest internal `#[rstest]` and `#[fixture]`
 // attributes, however we must instead expose the module with it original name
 // (hence shadowing the `#[rstest]` attribute).
 // This is due to how some of rstest features are implemented (e.g. magic conversions).
 pub use rstest;
+
+// Platform modules re-expose specific dependencies that are only available
+// on a single platform, and are used by the `#[parsec_test]` attribute macro.
+//
+// This way when crate X wants to use the `#[parsec_test]` attribute macro, it
+// only has to depend on `libparsec_tests_lite` which always contains the needed
+// dependencies (instead of having to manually declare them in crate X).
+
 #[cfg(not(target_arch = "wasm32"))]
-pub use tokio;
+pub mod platform {
+    pub use env_logger;
+    pub use tokio;
+}
+
 #[cfg(target_arch = "wasm32")]
-pub use wasm_bindgen_test;
-#[cfg(target_arch = "wasm32")]
-// FIXME: Remove me once https://github.com/la10736/rstest/issues/211 is resolved
-pub mod wasm {
+pub mod platform {
+    pub use console_log;
+    // Note `rstest` requires the tester attribute to be called `test`
+    // (see https://github.com/la10736/rstest/issues/211)
     pub use wasm_bindgen_test::wasm_bindgen_test as test;
+    pub use wasm_bindgen_test::wasm_bindgen_test_configure;
 }
 
 // Reexport 3rd parties useful for testing

@@ -26,10 +26,21 @@ blahaj = { workspace = true }
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true }
 libparsec_tests_fixtures = { workspace = true, features = ["default"] }
-proptest = { workspace = true, features = ["default"] }
-proptest-state-machine = { workspace = true }
 libparsec_platform_storage = { workspace = true, features = ["expose-test-methods"] }
 libparsec_client = { workspace = true, features = ["expose-test-methods"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+# Proptest depends on `wait-timeout` which is not available on web.
+proptest = { workspace = true, features = ["default"] }
+proptest-state-machine = { workspace = true }
+
+# Async stateful test currently relies on Tokio runtime, which is not available on web.
+# This is no big deal though, since the tested code is supposed to be platform agnostic.
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+tokio = { workspace = true, features = ["rt"] }
+
+[target.'cfg(target_arch = "wasm32")'.dev-dependencies]
+wasm-bindgen-test = { workspace = true }
 
 [features]
 expose-test-methods = []

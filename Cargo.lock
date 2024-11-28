@@ -1107,9 +1107,9 @@ dependencies = [
 
 [[package]]
 name = "event-listener-strategy"
-version = "0.5.0"
+version = "0.5.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "feedafcaa9b749175d5ac357452a9d41ea2911da598fde46ce1fe02c37751291"
+checksum = "0f214dc438f977e6d4e3500aaa277f5ad94ca83fbbd9b1a15713ce2344ccc5a1"
 dependencies = [
  "event-listener 5.3.1",
  "pin-project-lite",
@@ -2046,6 +2046,8 @@ dependencies = [
  "paste",
  "proptest",
  "proptest-state-machine",
+ "tokio",
+ "wasm-bindgen-test",
 ]
 
 [[package]]
@@ -2069,6 +2071,7 @@ dependencies = [
  "reqwest-eventsource",
  "thiserror",
  "tokio",
+ "wasm-bindgen-test",
 ]
 
 [[package]]
@@ -2111,21 +2114,18 @@ version = "3.2.4-a.0+dev"
 dependencies = [
  "async-broadcast",
  "async-lock",
- "console_log",
  "event-listener 5.3.1",
  "flume",
  "futures",
  "gloo-timers",
  "js-sys",
  "libparsec_tests_lite",
- "log",
- "pin-project-lite",
+ "pin-project",
  "tokio",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "wasm-bindgen-test",
  "web-sys",
- "web-time",
 ]
 
 [[package]]
@@ -2292,15 +2292,14 @@ dependencies = [
 name = "libparsec_tests_lite"
 version = "3.2.4-a.0+dev"
 dependencies = [
+ "console_log",
  "env_logger",
  "hex-literal",
- "lazy_static",
  "libparsec_tests_macros",
  "log",
  "pretty_assertions",
  "rstest",
  "tokio",
- "uuid",
  "wasm-bindgen-test",
 ]
 
@@ -3017,6 +3016,26 @@ dependencies = [
  "once_cell",
  "pest",
  "sha2",
+]
+
+[[package]]
+name = "pin-project"
+version = "1.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "be57f64e946e500c8ee36ef6331845d40a93055567ec57e8fae13efd33759b95"
+dependencies = [
+ "pin-project-internal",
+]
+
+[[package]]
+name = "pin-project-internal"
+version = "1.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c0f5fad0874fc7abcd4d750e76917eaebbecaa2c20bde22e1dbeeba8beb758c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.95",
 ]
 
 [[package]]
@@ -4882,16 +4901,6 @@ name = "web-sys"
 version = "0.3.74"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a98bc3c33f0fe7e59ad7cd041b89034fa82a7c2d4365ca538dda6cdaf513863c"
-dependencies = [
- "js-sys",
- "wasm-bindgen",
-]
-
-[[package]]
-name = "web-time"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",

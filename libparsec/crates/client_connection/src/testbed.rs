@@ -16,6 +16,7 @@ pub use reqwest::{
 };
 use reqwest::{RequestBuilder, Response};
 
+use libparsec_platform_async::pretend_stream_is_send_on_web;
 use libparsec_protocol::API_LATEST_VERSION;
 use libparsec_testbed::{test_get_testbed_component_store, TestbedEnv, TestbedKind};
 use libparsec_types::prelude::*;
@@ -63,7 +64,9 @@ impl ResponseMock {
                 let bytes = bytes.clone();
                 Box::pin(futures::stream::once(async move { Ok(bytes) }))
             }
-            ResponseMock::Real(response) => Box::pin(response.bytes_stream()),
+            ResponseMock::Real(response) => {
+                Box::pin(pretend_stream_is_send_on_web(response.bytes_stream()))
+            }
         }
     }
 }
