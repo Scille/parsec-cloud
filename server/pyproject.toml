@@ -61,7 +61,7 @@ deptry = ">=0.16.1,<0.22.0"
 editorconfig-checker = "3.0.3"
 httpx-sse = ">=0.3.1,<0.5.0"
 maturin = "1.7.5"
-patchelf = { version = "^0.17.2.0", markers = "platform_system=='Linux'" }
+patchelf = { version = "^0.17.2.1", markers = "platform_system=='Linux'" }
 poetry-lock-package = ">=0.4.4,<0.6.0"
 psutil = ">=5.9,<7.0"
 pyright = "^1.1.353"
@@ -186,8 +186,8 @@ reportMissingTypeArgument = true
 requires = [
     "poetry-core>=1.0.0",
     "setuptools",
-    "maturin==1.7.0",
-    "maturin[patchelf]==1.7.0; platform_system=='Linux'",
+    "maturin==1.7.5",
+    "maturin[patchelf]==1.7.5; platform_system=='Linux'",
     "patchelf~=0.17.2.1; platform_system=='Linux'",
 ]
 build-backend = "poetry.core.masonry.api"
