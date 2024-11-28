@@ -1998,6 +1998,7 @@ dependencies = [
  "proptest",
  "proptest-state-machine",
  "sharks",
+ "tokio",
 ]
 
 [[package]]
