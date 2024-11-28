@@ -893,7 +893,96 @@ async fn get_realm_bootstrap_state(env: &TestbedEnv) {
 }
 
 #[parsec_test(testbed = "minimal")]
-#[ignore]
 async fn get_last_timestamps_shamir(env: &TestbedEnv) {
-    // TODO: Shamir not implemented yet !
+    env.customize(|builder| {
+        builder.new_user("bob");
+        builder.new_shamir_recovery(
+            "alice",
+            1,
+            [("bob".parse().unwrap(), 1.try_into().unwrap())],
+            "alice@dev1",
+        );
+    })
+    .await;
+
+    let alice = env.local_device("alice@dev1");
+    let store = certificates_store_factory(env, &alice).await;
+
+    // Retrieve Alice's shamir recovery brief certificate
+    let (certif, signed) = env
+        .template
+        .certificates()
+        .find_map(|event| match &event.certificate {
+            AnyArcCertificate::ShamirRecoveryBrief(certif) => {
+                if certif.user_id == alice.user_id {
+                    Some((certif.clone(), event.signed.clone()))
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        })
+        .unwrap();
+
+    macro_rules! store_get_last_timestamps {
+        ($store:ident) => {
+            $store.for_read(|store| async move { store.get_last_timestamps().await })
+        };
+    }
+
+    let got = store_get_last_timestamps!(store).await.unwrap().unwrap();
+    assert_eq!(
+        got,
+        PerTopicLastTimestamps {
+            common: None,
+            sequester: None,
+            realm: HashMap::default(),
+            shamir_recovery: None,
+        }
+    );
+
+    store
+        .for_write({
+            let certif = certif.clone();
+            |store| async move {
+                store
+                    .add_next_shamir_recovery_certificate(
+                        ShamirRecoveryTopicArcCertificate::ShamirRecoveryBrief(certif),
+                        &signed,
+                    )
+                    .await
+            }
+        })
+        .await
+        .unwrap()
+        .unwrap();
+
+    // Check the timestamps has changed
+
+    let got = store_get_last_timestamps!(store).await.unwrap().unwrap();
+    assert_eq!(
+        got,
+        PerTopicLastTimestamps {
+            common: None,
+            sequester: None,
+            realm: HashMap::default(),
+            shamir_recovery: Some(certif.timestamp),
+        }
+    );
+
+    store.stop().await.unwrap();
+
+    // Ensure we don't rely on a cache but on data in persistent database
+
+    let store = certificates_store_factory(env, &alice).await;
+    let got = store_get_last_timestamps!(store).await.unwrap().unwrap();
+    assert_eq!(
+        got,
+        PerTopicLastTimestamps {
+            common: None,
+            sequester: None,
+            realm: HashMap::default(),
+            shamir_recovery: Some(certif.timestamp),
+        }
+    );
 }
