@@ -9,6 +9,7 @@ from . import (
     invite_claimer_start_greeting_attempt,
     invite_claimer_step,
     invite_info,
+    invite_shamir_recovery_reveal,
     ping,
 )
 
@@ -21,6 +22,7 @@ class AnyCmdReq:
         | invite_claimer_start_greeting_attempt.Req
         | invite_claimer_step.Req
         | invite_info.Req
+        | invite_shamir_recovery_reveal.Req
         | ping.Req
     ): ...
 
@@ -30,5 +32,6 @@ __all__ = [
     "invite_claimer_start_greeting_attempt",
     "invite_claimer_step",
     "invite_info",
+    "invite_shamir_recovery_reveal",
     "ping",
 ]
