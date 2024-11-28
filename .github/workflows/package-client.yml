@@ -233,6 +233,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        cache-rust: [false]
         include:
           - name: 🏁 Windows
             platform: windows
@@ -245,6 +246,7 @@ jobs:
             platform: macos
             os: macos-13
             raw_latest_file: latest-mac.yml
+            cache-rust: true
             extension: "*" # Use wildcard to match dmg and zip extension
             os_alias: mac
             artifact_tag: macos-dmg
@@ -332,6 +334,10 @@ jobs:
         run: npm clean-install
         working-directory: bindings/electron
         timeout-minutes: 1
+
+      - uses: actions-rust-lang/setup-rust-toolchain@11df97af8e8102fd60b60a77dfbf58d40cd843b8 # pin v1.10.1
+        if: matrix.cache-rust || false
+        timeout-minutes: 10
 
       - name: Build Electron bindings
         run: npm run build:release
