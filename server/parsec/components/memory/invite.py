@@ -34,6 +34,7 @@ from parsec.components.invite import (
     InviteNewForDeviceBadOutcome,
     InviteNewForShamirBadOutcome,
     InviteNewForUserBadOutcome,
+    InviteShamirRecoveryRevealBadOutcome,
     NotReady,
     SendEmailBadOutcome,
     ShamirRecoveryInvitation,
@@ -567,6 +568,40 @@ class MemoryInviteComponent(BaseInviteComponent):
                 assert False, unknown
 
     @override
+    async def shamir_recovery_reveal(
+        self,
+        organization_id: OrganizationID,
+        token: InvitationToken,
+        reveal_token: InvitationToken,
+    ) -> bytes | InviteShamirRecoveryRevealBadOutcome:
+        try:
+            org = self._data.organizations[organization_id]
+        except KeyError:
+            return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_NOT_FOUND
+        if org.is_expired:
+            return InviteShamirRecoveryRevealBadOutcome.ORGANIZATION_EXPIRED
+
+        try:
+            invitation = org.invitations[token]
+        except KeyError:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_NOT_FOUND
+        if invitation.is_deleted:
+            return InviteShamirRecoveryRevealBadOutcome.INVITATION_DELETED
+
+        if invitation.claimer_user_id is None:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id, [])
+        if not shamir_recoveries:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        *_, shamir_recovery = shamir_recoveries
+        if shamir_recovery.reveal_token != reveal_token:
+            return InviteShamirRecoveryRevealBadOutcome.DATA_NOT_FOUND
+
+        return shamir_recovery.ciphered_data
+
+    @override
     async def test_dump_all_invitations(
         self, organization_id: OrganizationID
     ) -> dict[UserID, list[Invitation]]:
@@ -629,7 +664,7 @@ class MemoryInviteComponent(BaseInviteComponent):
             shamir_recoveries = org.shamir_recoveries.get(invitation.claimer_user_id)
             if not shamir_recoveries:
                 return False
-            shamir_recovery, *_ = shamir_recoveries
+            *_, shamir_recovery = shamir_recoveries
             return shamir_recovery.shares.get(greeter.cooked.user_id) is not None
         else:
             assert False, invitation.type
