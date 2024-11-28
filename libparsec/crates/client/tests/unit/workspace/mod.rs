@@ -12,7 +12,6 @@ mod fd_flush;
 mod fd_read;
 mod fd_write;
 mod file_operations;
-mod file_operations_stateful;
 mod folder_transactions;
 mod history;
 mod inbound_sync_file;
@@ -35,10 +34,24 @@ mod store;
 mod utils;
 mod watch_entry;
 
-#[cfg(unix)]
+// Stateful requires `proptest` that is not compatible with wasm32
+#[cfg(not(target_arch = "wasm32"))]
+mod file_operations_stateful;
+
+#[cfg(all(
+    // Test uses UNIX filesystem as oracle
+	unix,
+    // Async stateful requires Tokio runtime and `proptest` that are not compatible with wasm32
+	not(target_arch = "wasm32")
+))]
 mod file_transactions_stateful;
 
-#[cfg(unix)]
+#[cfg(all(
+    // So far only UNIX-specific tests use async stateful
+	unix,
+    // Async stateful requires Tokio runtime and `proptest` that are not compatible with wasm32
+    not(target_arch = "wasm32")
+))]
 pub trait AsyncStateMachineTest {
     /// The concrete state, that is the system under test (SUT).
     type SystemUnderTest;
@@ -90,6 +103,12 @@ pub trait AsyncStateMachineTest {
     }
 }
 
+#[cfg(all(
+    // So far only UNIX-specific tests use async stateful
+	unix,
+    // Async stateful requires Tokio runtime and `proptest` that are not compatible with wasm32
+    not(target_arch = "wasm32")
+))]
 #[macro_export]
 macro_rules! impl_async_state_machine {
     ($t:ty) => {

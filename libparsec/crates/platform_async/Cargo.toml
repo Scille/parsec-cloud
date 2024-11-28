@@ -17,31 +17,26 @@ async-broadcast = { workspace = true }
 event-listener = { workspace = true }
 flume = { workspace = true, features = ["async", "select", "eventual-fairness"] }
 futures = { workspace = true, features = ["std", "async-await"] }
+tokio = { workspace = true, features = ["sync"] }
 
 [dev-dependencies]
 libparsec_tests_lite = { workspace = true, features = ["parsec_test_macro"] }
-log = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 wasm-bindgen = { workspace = true, features = ["spans", "std"] }
 wasm-bindgen-futures = { workspace = true }
-# Window feature is require for `Timer`.
-web-sys = { workspace = true, features = ["Window"] }
+# `Window` & `Performance` features are require to call Web API `windows.performance.now()`
+# that is use for our `Instant` impl on web.
+web-sys = { workspace = true, features = ["Window", "Performance"] }
 js-sys = { workspace = true }
 gloo-timers = { workspace = true, features = ["futures"] }
-pin-project-lite = { workspace = true }
-# `std::time::Instant` is not available for wasm32, crate `web-time` provides a
-# fallback based on `window.performance.now()`
-web-time = { workspace = true }
+pin-project = { workspace = true }
 
 [target.'cfg(target_arch = "wasm32")'.dev-dependencies]
 wasm-bindgen-test = { workspace = true }
-# Used for binding `log` with `console.log*`
-console_log = { workspace = true }
+web-sys = { workspace = true, features = ["console"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-tokio = { workspace = true, features = ["rt", "time", "sync"] }
-
-[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
-tokio = { workspace = true, features = ["macros"] }
-# libparsec_tests_fixtures = { workspace = true }
+# `time` feature is not compatible with web (since it depends on a timer
+# API that is not provided by `wasm32-unknown-unknown`).
+tokio = { workspace = true, features = ["time"] }

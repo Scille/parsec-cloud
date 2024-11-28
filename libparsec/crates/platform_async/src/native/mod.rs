@@ -4,20 +4,17 @@ use futures::FutureExt;
 
 pub use tokio::task::{try_id as try_task_id, Id as TaskID};
 
-pub mod oneshot {
-    pub use tokio::sync::oneshot::{
-        channel,
-        error::{RecvError, TryRecvError},
-        Receiver, Sender,
-    };
-}
+pub struct Instant(std::time::Instant);
 
-pub mod watch {
-    pub use tokio::sync::watch::{
-        channel,
-        error::{RecvError, SendError},
-        Receiver, Ref, Sender,
-    };
+impl Instant {
+    #[inline(always)]
+    pub fn now() -> Instant {
+        Instant(std::time::Instant::now())
+    }
+
+    pub fn elapsed(&self) -> std::time::Duration {
+        self.0.elapsed()
+    }
 }
 
 #[inline(always)]
@@ -41,6 +38,10 @@ impl<T> JoinHandle<T> {
     pub fn is_finished(&self) -> bool {
         self.0.is_finished()
     }
+    #[inline(always)]
+    pub fn id(&self) -> TaskID {
+        self.0.id()
+    }
 }
 
 #[derive(Debug)]
@@ -54,6 +55,10 @@ impl AbortHandle {
     #[inline(always)]
     pub fn is_finished(&self) -> bool {
         self.0.is_finished()
+    }
+    #[inline(always)]
+    pub fn id(&self) -> TaskID {
+        self.0.id()
     }
 }
 
@@ -86,9 +91,9 @@ where
 /// On native platform however, we use a multi-threaded tokio runtime.
 ///
 /// The outcome of this is that any async function pointer must be `Send` on native
-/// by `!Send` on web...
+/// but `!Send` on web...
 /// This is "slightly annoying" given it means we would have to basically duplicate
-/// any code involve async function pointer with `#[cfg(target_arch = "wasm32")]`
+/// any code involving async function pointer with `#[cfg(target_arch = "wasm32")]`
 /// to mark `Future` vs `Future + Send + 'static`.
 ///
 /// To add insult to injury, compiler is complaining about our stuff not being `Send`
@@ -105,4 +110,14 @@ pub fn pretend_future_is_send_on_web<'a, O>(
     not_send_future: impl std::future::Future<Output = O> + Send + 'a,
 ) -> impl std::future::Future<Output = O> + Send + 'a {
     not_send_future
+}
+
+/// This function is a noop on non-web platform.
+///
+/// See `pretend_future_is_send_on_web` for the full explanation.
+#[inline(always)]
+pub fn pretend_stream_is_send_on_web<'a, I>(
+    not_send_stream: impl futures::stream::Stream<Item = I> + Send + 'a,
+) -> impl futures::stream::Stream<Item = I> + Send + 'a {
+    not_send_stream
 }

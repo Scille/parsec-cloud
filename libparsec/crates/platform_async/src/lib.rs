@@ -1,5 +1,23 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
+// What is this crate even for ? Can't we just use tokio anywhere and call it a day ?
+//
+// Currently, Tokio supports wasm32 but not web.
+//
+// What its means is Tokio compiles fine on `wasm32-*` platform, but runtime
+// errors will occur if the wrong feature is used.
+//
+// Indeed, from WebAssembly's point of view the web platform is not standardized
+// (i.e. WASI is not supported on web platform), hence the fact the compilation
+// platform for web is `wasm32-unknown-unknown`.
+// In practice this means things such as timer or network are not available from
+// Tokio point of view (and also from the Rust std lib), so we have to rely on
+// 3rd party crates to access them (mostly `web_sys`).
+//
+// On top of that we got additional fun with Send+Sync futures given Tokio runtime
+// is designed around a multi-threaded work-stealing runtime, while on web the runtime
+// is single threaded (and hence the `web_sys` APIs are !Send).
+
 pub mod prelude {
     pub use super::*;
 }
@@ -23,6 +41,9 @@ pub use flume as channel;
 pub use futures::future;
 pub use futures::pin_mut;
 pub use futures::stream;
+pub use tokio::sync::oneshot;
+pub use tokio::sync::watch;
+
 // We don't expose `futures::select` macro & co for the moment: let's try to use only our
 // custom `select2_biased` macro and `futures::future::select` instead.
 
@@ -107,8 +128,8 @@ macro_rules! select3_biased {
 // Platform specific stuff
 
 pub use platform::{
-    oneshot, pretend_future_is_send_on_web, sleep, spawn, try_task_id, watch, AbortHandle,
-    JoinHandle, TaskID,
+    pretend_future_is_send_on_web, pretend_stream_is_send_on_web, sleep, spawn, try_task_id,
+    AbortHandle, Instant, JoinHandle, TaskID,
 };
 pub use std::time::Duration; // Re-exposed to simplify use of `sleep`
 

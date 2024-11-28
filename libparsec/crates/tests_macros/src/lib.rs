@@ -1,7 +1,6 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use proc_macro::TokenStream;
-use proc_macro2::Span;
+use proc_macro2::{Span, TokenStream};
 use quote::{quote, quote_spanned};
 use syn::{
     parse_macro_input, punctuated::Pair, spanned::Spanned, FnArg, ItemFn, LitInt, LitStr, Pat,
@@ -9,7 +8,10 @@ use syn::{
 };
 
 #[proc_macro_attribute]
-pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn parsec_test(
+    attr: proc_macro::TokenStream,
+    item: proc_macro::TokenStream,
+) -> proc_macro::TokenStream {
     let parsec_test_item = parse_macro_input!(item as ItemFn);
     let mut attributes = Attributes::default();
     let parsec_test_parser = syn::meta::parser(|meta| attributes.parse(meta));
@@ -21,7 +23,7 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
     let quote_block = if let Some(testbed) = attributes.testbed {
         // If `testbed` is found, `env: &TestbedEnv` must be set as the last argument.
         if let Err(value) = validate_testbed_argument(&mut sig) {
-            return value;
+            return value.into();
         }
 
         if attributes.with_server {
@@ -45,6 +47,8 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { #block }
     };
 
+    let attrs = parsec_test_item.attrs;
+
     // By default Tokio uses a single threaded runtime, which is fine for most of our
     // tests (as on web our application will run in a single threaded environment anyway !).
     //
@@ -58,25 +62,30 @@ pub fn parsec_test(attr: TokenStream, item: TokenStream) -> TokenStream {
         Some(tokio_worker_threads) => quote!(, worker_threads = #tokio_worker_threads),
         None => quote!(),
     };
-    let tokio_decorator = sig
+    let native_attr = sig
         .asyncness
         .map(|_| quote! {
-            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_lite::tokio::test(crate = "::libparsec_tests_lite::tokio" #tokio_flavor #tokio_worker_threads))]
+            #[cfg_attr(not(target_arch = "wasm32"), ::libparsec_tests_lite::platform::tokio::test(crate = "::libparsec_tests_lite::platform::tokio" #tokio_flavor #tokio_worker_threads))]
         })
         .into_iter();
-    let attrs = parsec_test_item.attrs;
 
-    TokenStream::from(quote! {
+    quote! {
         #[::libparsec_tests_lite::rstest::rstest]
         #(#attrs)*
-        #(#tokio_decorator)*
-        // FIXME: Workaround for rstest until https://github.com/la10736/rstest/issues/211 is resolved
-        #[cfg_attr(target_arch = "wasm32", ::libparsec_tests_lite::wasm::test)]
+        #(#native_attr)*
+        #[cfg_attr(
+            target_arch = "wasm32",
+            // FIXME: Workaround for rstest until https://github.com/la10736/rstest/issues/211 is resolved
+            ::libparsec_tests_lite::platform::test
+        )]
         #sig {
-            let _ = ::libparsec_tests_lite::env_logger::builder().is_test(true).try_init();
+            #[cfg(not(target_arch = "wasm32"))]
+            let _ = ::libparsec_tests_lite::platform::env_logger::builder().is_test(true).try_init();
+            #[cfg(target_arch = "wasm32")]
+            let _ = ::libparsec_tests_lite::platform::console_log::init_with_level(::libparsec_tests_lite::log::Level::Trace);
             #quote_block
         }
-    })
+    }.into()
 }
 
 fn validate_testbed_argument(sig: &mut syn::Signature) -> Result<(), TokenStream> {
@@ -158,6 +167,6 @@ impl Attributes {
     }
 }
 
-fn generate_compile_error(span: Span, msg: &str) -> proc_macro::TokenStream {
-    quote_spanned! { span => compile_error!(#msg); }.into()
+fn generate_compile_error(span: Span, msg: &str) -> TokenStream {
+    quote_spanned! { span => compile_error!(#msg); }
 }

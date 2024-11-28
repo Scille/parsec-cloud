@@ -96,3 +96,10 @@ fn user_agent_without_trailing_whitespace() {
     let parts: Vec<_> = CLIENT_USER_AGENT.split_whitespace().collect();
     p_assert_eq!(parts.len(), 2, "{:?}", CLIENT_USER_AGENT);
 }
+
+// Testing on web requires this macro configuration to be present anywhere in
+// the crate.
+// In most cases, we put it in `tests/unit/mod.rs` and call it a day. However
+// this crate doesn't have such file, so we put it here instead...
+#[cfg(all(test, target_arch = "wasm32"))]
+libparsec_tests_lite::platform::wasm_bindgen_test_configure!(run_in_browser);

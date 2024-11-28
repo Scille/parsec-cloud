@@ -1,19 +1,21 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use libparsec_tests_lite::parsec_test;
+use libparsec_tests_lite::prelude::*;
+
+use crate::{event::Event, future::select, pin_mut, sleep, spawn, try_task_id, Duration, Instant};
 
 #[parsec_test]
-pub async fn sleep() {
-    use crate::{sleep, Duration};
+pub async fn sleep_simple() {
+    let now = Instant::now();
 
-    let ret = sleep(Duration::from_secs(0)).await;
-    assert!(matches!(ret, ()));
+    let ret = sleep(Duration::from_millis(3)).await;
+    p_assert_eq!(ret, ());
+
+    assert!(now.elapsed().as_millis() >= 3);
 }
 
 #[parsec_test]
 pub async fn concurrency() {
-    use crate::{future::select, pin_mut, sleep, Duration};
-
     let f1 = async {
         sleep(Duration::from_secs(0)).await;
         1
@@ -31,64 +33,121 @@ pub async fn concurrency() {
 
     // Given both futures resolve after a single yield, `or` has preference on
     // the first one
-    assert_eq!(res1, 1);
+    p_assert_eq!(res1, 1);
 
     let res2 = f2.await;
-    assert_eq!(res2, 2);
+    p_assert_eq!(res2, 2);
 }
 
 #[parsec_test]
-pub async fn select2_biased() {
-    use crate::{future::pending, select2_biased, sleep, Duration};
-
-    let ret = select2_biased!(
-        _ = sleep(Duration::from_secs(0)) => 1,
-        _ = pending::<()>() => unreachable!(),
-    );
-    assert_eq!(ret, 1);
-
-    let ret = select2_biased!(
-        _ = pending::<()>() => unreachable!(),
-        _ = sleep(Duration::from_secs(0)) => 2,
-    );
-    assert_eq!(ret, 2);
-}
-
-#[parsec_test]
-pub async fn select2_biased_with_bind() {
-    use crate::{future::pending, select2_biased, sleep, Duration};
-
-    let ret = select2_biased!(
-        a = async { sleep(Duration::from_secs(0)).await; 1 } => {
-            a + 1
-        },
-        _ = pending::<()>() => unreachable!(),
-    );
-    assert_eq!(ret, 2);
-}
-
-#[parsec_test]
-pub async fn select3_biased() {
-    use crate::{future::pending, select3_biased, sleep, Duration};
-
-    let ret = select3_biased!(
-        _ = sleep(Duration::from_secs(0)) => 1,
-        _ = pending::<()>() => unreachable!(),
-        _ = pending::<()>() => unreachable!(),
-    );
-    assert_eq!(ret, 1);
-}
-
-// TODO: spawn is not implemented for web
-#[cfg(not(target_arch = "wasm32"))]
-#[parsec_test]
-pub async fn spawn() {
-    use crate::{sleep, spawn, Duration};
-
-    let fut = spawn(async {
+pub async fn simple() {
+    let handle = spawn(async {
         sleep(Duration::from_secs(0)).await;
         1
     });
-    let ret = fut.await.unwrap();
-    assert_eq!(ret, 1);
+    let ret = handle.await.unwrap();
+    p_assert_eq!(ret, 1);
+}
+
+#[parsec_test]
+pub async fn task_id() {
+    // Not running from a task returns `None`
+    p_assert_matches!(try_task_id(), None);
+
+    let handle = spawn(async {
+        let task_id = try_task_id();
+        let nested_task_id = spawn(async { try_task_id() }).await.unwrap();
+
+        (task_id, nested_task_id)
+    });
+    let (task_id, nested_task_id) = handle.await.unwrap();
+    p_assert_matches!(task_id, Some(_));
+    p_assert_matches!(nested_task_id, Some(_));
+    p_assert_ne!(task_id, nested_task_id);
+}
+
+#[parsec_test]
+pub async fn ensure_non_blocking() {
+    let event = Event::new();
+    let event_listen = event.listen();
+
+    let handle1 = spawn(async {
+        let nested = spawn(async move {
+            event.notify(1);
+            1
+        });
+
+        nested.await.unwrap()
+    });
+
+    let handle2 = spawn(async {
+        event_listen.await;
+        2
+    });
+
+    let ret = handle2.await.unwrap();
+    p_assert_eq!(ret, 2);
+
+    let ret = handle1.await.unwrap();
+    p_assert_eq!(ret, 1);
+}
+
+#[parsec_test]
+#[cfg_attr(
+    target_arch = "wasm32",
+    ignore = "TODO: wasm-pack test doesn't seem compatible with panic unwind..."
+)]
+pub async fn panicking() {
+    let handle = spawn(async {
+        sleep(Duration::from_secs(0)).await;
+        panic!("D'oh!")
+    });
+
+    let err = handle.await.unwrap_err();
+    assert!(err.is_panic());
+    let err_as_str = format!("{}", err);
+    assert!(
+        err_as_str.ends_with("panicked with message \"D'oh!\""),
+        "{}",
+        err_as_str
+    );
+}
+
+#[parsec_test]
+pub async fn aborted_by_handle() {
+    let handle = spawn(async {
+        sleep(Duration::MAX).await;
+    });
+
+    pin_mut!(handle);
+
+    p_assert_eq!(handle.is_finished(), false);
+    handle.abort();
+
+    let err = handle.as_mut().await.unwrap_err();
+    assert!(err.is_cancelled());
+
+    let err_as_str = format!("{}", err);
+    assert!(err_as_str.ends_with("cancelled"), "{}", err_as_str);
+
+    p_assert_eq!(handle.is_finished(), true);
+}
+
+#[parsec_test]
+pub async fn aborted_by_aborter() {
+    let handle = spawn(async {
+        sleep(Duration::MAX).await;
+    });
+
+    p_assert_eq!(handle.is_finished(), false);
+
+    let aborter = handle.abort_handle();
+    p_assert_eq!(aborter.is_finished(), false);
+
+    aborter.abort();
+
+    let err = handle.await.unwrap_err();
+    assert!(err.is_cancelled());
+
+    p_assert_eq!(aborter.is_finished(), true);
 }
