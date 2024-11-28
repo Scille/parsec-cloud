@@ -175,7 +175,7 @@ impl From<SaveDeviceError> for ImportRecoveryDeviceError {
     }
 }
 
-async fn register_new_device(
+pub async fn register_new_device(
     cmds: &AuthenticatedCmds,
     new_device: &LocalDevice,
     new_device_purpose: DevicePurpose,
@@ -242,7 +242,7 @@ pub(crate) fn generate_new_device_certificates(
 }
 
 #[derive(Debug, thiserror::Error)]
-enum RegisterNewDeviceError {
+pub enum RegisterNewDeviceError {
     #[error("Component has stopped")]
     Stopped,
     #[error("Cannot reach the server")]
