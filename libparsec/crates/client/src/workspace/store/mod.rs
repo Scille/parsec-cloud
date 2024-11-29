@@ -130,7 +130,7 @@ impl WorkspaceStore {
         certificates_ops: Arc<CertificateOps>,
         cache_size: u64,
         realm_id: VlobID,
-        pattern: &PreventSyncPattern,
+        prevent_sync_pattern: &PreventSyncPattern,
     ) -> Result<Self, anyhow::Error> {
         // 1) Open the database
 
@@ -179,7 +179,7 @@ impl WorkspaceStore {
         prevent_sync_pattern::ensure_prevent_sync_pattern_applied_to_wksp(
             &mut storage,
             device.clone(),
-            pattern,
+            prevent_sync_pattern,
         )
         .await?;
 
@@ -192,7 +192,7 @@ impl WorkspaceStore {
             certificates_ops,
             current_view_cache: Mutex::new(CurrentViewCache::new(Arc::new(root_manifest.into()))),
             storage: AsyncMutex::new(Some(storage)),
-            prevent_sync_pattern: pattern.clone(),
+            prevent_sync_pattern: prevent_sync_pattern.clone(),
         })
     }
 
