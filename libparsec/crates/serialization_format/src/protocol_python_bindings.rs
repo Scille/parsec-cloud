@@ -879,8 +879,7 @@ fn quote_type_as_fn_getter_conversion(field_path: &TokenStream, ty: &FieldType) 
         | FieldType::Size
         | FieldType::Index
         | FieldType::NonZeroInteger
-        | FieldType::NonZeroU8
-        | FieldType::IntegerBetween1And100 => {
+        | FieldType::NonZeroU8 => {
             quote! { (*#field_path).to_object(py).into_bound(py).into_any() }
         }
         FieldType::PublicKey => quote_rs_to_py_class!(crate::crypto::PublicKey),
@@ -982,7 +981,6 @@ fn quote_type_as_fn_new_param(ty: &FieldType) -> TokenStream {
         FieldType::Index => quote! { u64 },
         FieldType::NonZeroInteger => quote! { u64 },
         FieldType::NonZeroU8 => quote! { u8 },
-        FieldType::IntegerBetween1And100 => quote! { u64 },
         FieldType::PublicKey => quote! { crate::crypto::PublicKey },
         FieldType::SigningKey => quote! { crate::crypto::SigningKey },
         FieldType::VerifyKey => quote! { crate::crypto::VerifyKey },
@@ -1103,9 +1101,6 @@ fn internal_quote_field_as_fn_new_conversion(field_name: &Ident, ty: &FieldType)
                     (#(#xs_conversions),*)
                 }
             }
-        }
-        FieldType::IntegerBetween1And100 => {
-            quote! { libparsec_types::IntegerBetween1And100::try_from(#field_name).map_err(PyValueError::new_err)? }
         }
         FieldType::NonZeroInteger => {
             quote! { ::std::num::NonZeroU64::try_from(#field_name).map_err(PyValueError::new_err)? }
