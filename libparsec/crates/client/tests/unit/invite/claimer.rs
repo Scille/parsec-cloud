@@ -30,7 +30,7 @@ async fn claimer(tmp_path: TmpPath, env: &TestbedEnv) {
         proxy: ProxyConfig::default(),
         mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         with_monitors: false,
-        prevent_sync_pattern: PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap(),
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
     });
 
     let alice = env.local_device("alice@dev1");

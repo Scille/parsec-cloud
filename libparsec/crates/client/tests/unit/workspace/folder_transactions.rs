@@ -466,7 +466,7 @@ async fn bootstrap_env(env: &TestbedEnv, root_level: bool) -> Env {
 
     let (base_path, parent_id) = env
         .customize(|builder| {
-            let prevent_sync_pattern = PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap();
+            let prevent_sync_pattern = PreventSyncPattern::from_regex(r"\.tmp$").unwrap();
             let res = if root_level {
                 // Remove all children from the workspace
                 builder

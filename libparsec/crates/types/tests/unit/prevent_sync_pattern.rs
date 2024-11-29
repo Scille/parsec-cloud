@@ -1,92 +1,123 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    io::{BufReader, Cursor},
-    path::Path,
-};
-
 use libparsec_tests_lite::prelude::*;
 
-use crate::prevent_sync_pattern::PreventSyncPattern;
+use crate::{prevent_sync_pattern::PreventSyncPattern, PreventSyncPatternError};
 
 #[rstest]
-#[case::base("*.rs\n*.py", "base.tmp")]
-#[case::trim_whitespace("  *.rs\n   *.py   ", "trim_whitespace.tmp")]
-#[case::empty_lines("*.rs\n\n\n*.py", "empty_lines.tmp")]
-#[case::trim_whitespace_and_empty_lines(
-    "   *.rs\n\n  \n\n*.py  ",
-    "trim_whitespace_and_empty_lines.tmp"
-)]
-#[case::ignore_comment(
-    "# This contains patterns\n## yes\n   *.rs\n\n  \n\n*.py  ",
-    "ignore_comment.tmp"
-)]
-fn from_pattern_file_content(#[case] file_content: &str, #[case] filename: &str) {
-    let reader = Cursor::new(file_content.to_string());
-    let regex = PreventSyncPattern::from_glob_reader(filename, BufReader::new(reader))
-        .expect("Regex should be valid");
+#[case::base("*.rs\n*.py")]
+#[case::trim_whitespace("  *.rs\n   *.py   ")]
+#[case::empty_lines("*.rs\n\n\n*.py")]
+#[case::trim_whitespace_and_empty_lines("   *.rs\n\n  \n\n*.py  ")]
+#[case::ignore_comment("# This contains patterns\n## yes\n   *.rs\n\n  \n\n*.py  ")]
+fn from_glob_ignore_file(#[case] file_content: &str) {
+    let pattern = PreventSyncPattern::from_glob_ignore_file(file_content).unwrap();
 
-    assert!(regex.is_match("file.py"));
-    assert!(regex.is_match("file.rs"));
-    assert!(!regex.is_match("stories.txt"));
+    assert!(pattern.is_match("file.py"));
+    assert!(pattern.is_match("file.rs"));
+    assert!(!pattern.is_match("stories.txt"));
 }
 
 #[test]
 fn load_default_pattern_file() {
-    let regex = PreventSyncPattern::from_file(Path::new("src/default_pattern.ignore"))
-        .expect("Load default pattern file failed");
+    let pattern = PreventSyncPattern::default();
 
-    for pattern in &[
+    for candidate in &[
         "file.swp",
         "file~",
+        "~$file.docx",
         "$RECYCLE.BIN",
         "desktop.ini",
         "shortcut.lnk",
     ] {
-        assert!(regex.is_match(pattern), "Pattern {} should match", pattern);
+        assert!(pattern.is_match(candidate), "{:?} should match", candidate);
     }
 
-    for pattern in &["secrets.txt", "a.docx", "picture.png"] {
+    for candidate in &["secrets.txt", "a.docx", "picture.png"] {
         assert!(
-            !regex.is_match(pattern),
-            "Pattern {} should not match",
-            pattern
+            !pattern.is_match(candidate),
+            "{:?} should not match",
+            candidate
         );
     }
 }
 
 #[rstest]
-#[case("*.rs", "foo.rs", "bar.py", "bar.rs")]
-#[case("*bar*", "foobar.rs", "dummy", "foobarrrrr.py")]
-#[case("$myf$le.*", "$myf$le.txt", "bar", "$myf$le.rs")]
-fn wildcard_pattern(
-    #[case] pattern_str: &str,
-    #[case] valid_case: &str,
-    #[case] bad_base: &str,
-    #[case] other_case: &str,
-) {
-    let regex = PreventSyncPattern::from_glob_pattern(pattern_str).expect("Should be valid");
-    assert!(regex.is_match(valid_case));
-    assert!(!regex.is_match(bad_base));
-    assert!(regex.is_match(other_case));
-}
-
-#[rstest]
-#[case(r"fooo?$", "foo", "fo", "fooo")]
-fn regex_pattern(
-    #[case] regex_str: &str,
-    #[case] valid_case: &str,
-    #[case] bad_base: &str,
-    #[case] other_case: &str,
-) {
-    let regex = PreventSyncPattern::from_regex_str(regex_str).expect("Should be valid");
-    assert!(regex.is_match(valid_case));
-    assert!(!regex.is_match(bad_base));
-    assert!(regex.is_match(other_case));
+#[case::match_wildcard("*.rs", "foo.rs", true)]
+#[case::no_match_wildcard_differs("*.rs", "foo.py", false)]
+#[case::match_wildcard_literal("*.rs", "*.rs", true)]
+#[case::no_match_sub_extension("*.rs", "foo.rs.py", false)]
+#[case::match_sub_extension("*.tar.gz", "foo.tar.gz", true)]
+#[case::no_match_missing_wildcard(".py", "foo.py", false)]
+#[case::match_with_wildcard_empty("*.rs", ".rs", true)]
+#[case::match_multi_wildcard("*bar*", "foobar.rs", true)]
+#[case::match_multi_wildcard_empty("*bar*", "bar", true)]
+#[case::match_multi_wildcard_suffix("*bar*", "foo.bar", true)]
+#[case::no_match_multi_wildcard("*bar*", "dummy", false)]
+#[case::match_question("fo?bar", "foobar", true)]
+#[case::match_question_literal("fo?bar", "fo?bar", true)]
+#[case::no_match_question_missing("fo?bar", "fobar", false)] // cspell:disable-line
+#[case::match_caret("^foo.bar^", "^foo.bar^", true)]
+#[case::no_match_caret("^foo", "foo", false)]
+#[case::match_dollar("$foo.bar$", "$foo.bar$", true)]
+#[case::no_match_dollar("foo$", "foo", false)]
+#[case::no_match_empty("", "foo", false)]
+#[case::match_empty("", "", true)]
+fn glob_pattern(#[case] glob: &str, #[case] candidate: &str, #[case] expected_match: bool) {
+    let pattern = PreventSyncPattern::from_glob(glob).unwrap();
+    p_assert_eq!(pattern.is_match(candidate), expected_match);
 }
 
 #[test]
-fn bad_regex_str_creation() {
-    let r = crate::prevent_sync_pattern::PreventSyncPattern::from_regex_str(r"fooo][?");
-    assert!(r.is_err());
+fn from_multiple_globs() {
+    let pattern =
+        PreventSyncPattern::from_multiple_globs(["", "foo", "*.bar"].into_iter()).unwrap();
+
+    assert!(pattern.is_match(""));
+    assert!(pattern.is_match("foo"));
+    assert!(pattern.is_match("foo.bar"));
+
+    assert!(!pattern.is_match(".foo"));
+}
+
+#[rstest]
+#[case::match_simple(r"fooo?$", "foo", true)]
+#[case::match_complex(r"^spam.*fooo?$", "spambarfoo", true)] // cspell:disable-line
+#[case::no_match_simple(r"fooo?$", "fo", false)]
+fn regex_pattern(#[case] regex: &str, #[case] candidate: &str, #[case] expected_match: bool) {
+    let pattern = PreventSyncPattern::from_regex(regex).unwrap();
+    p_assert_eq!(pattern.is_match(candidate), expected_match);
+}
+
+#[test]
+fn bad_regex() {
+    p_assert_matches!(
+        PreventSyncPattern::from_regex(r"fooo][?"),
+        Err(PreventSyncPatternError::BadRegex { .. })
+    );
+}
+
+#[test]
+fn bad_glob() {
+    p_assert_matches!(
+        PreventSyncPattern::from_glob(r"fooo][?"),
+        Err(PreventSyncPatternError::BadGlob { .. })
+    );
+}
+
+#[test]
+fn bad_multiple_globs() {
+    p_assert_matches!(
+        PreventSyncPattern::from_multiple_globs(["", "fooo][?"].into_iter()),
+        Err(PreventSyncPatternError::BadGlob { .. })
+    );
+}
+
+#[test]
+fn display() {
+    let pattern = PreventSyncPattern::from_multiple_globs(["foo.*", "bar?"].into_iter()).unwrap();
+    p_assert_eq!(
+        format!("{:?}", pattern),
+        r#"PreventSyncPattern([Regex("^foo\\..*$"), Regex("^bar[^/]$")])"#
+    );
 }

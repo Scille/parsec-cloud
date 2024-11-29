@@ -8,21 +8,6 @@ use libparsec_crypto::CryptoError;
 
 use crate::{DateTime, DeviceFileType, DeviceID, HumanHandle, UserID, VlobID};
 
-#[derive(Error, Debug)]
-pub enum PreventSyncPatternError {
-    #[error("Regex parsing err: {err}")]
-    ParseError { err: regex::Error },
-    #[error("Failed to convert glob pattern into regex: {err}")]
-    GlobPatternError { err: fnmatch_regex::error::Error },
-    #[error("IO error on pattern file `{file_path}`: {err}")]
-    PatternFileIOError {
-        file_path: std::path::PathBuf,
-        err: std::io::Error,
-    },
-}
-
-pub type PreventSyncPatternResult<T> = Result<T, PreventSyncPatternError>;
-
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum DataError {
     #[error("Invalid encryption")]

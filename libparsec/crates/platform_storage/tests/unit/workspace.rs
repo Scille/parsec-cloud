@@ -1109,7 +1109,7 @@ async fn check_prevent_sync_pattern_initialized_with_empty_pattern(env: &Testbed
 
     p_assert_eq!(
         regex,
-        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
+        PreventSyncPattern::from_regex(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap()
     );
     assert!(!bool);
 }
@@ -1118,8 +1118,7 @@ async fn check_prevent_sync_pattern_initialized_with_empty_pattern(env: &Testbed
 async fn mark_empty_pattern_as_fully_applied(env: &TestbedEnv) {
     let mut workspace = start_workspace(env).await;
 
-    let empty_pattern =
-        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
+    let empty_pattern = PreventSyncPattern::from_regex(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
@@ -1134,8 +1133,7 @@ async fn check_set_pattern_is_idempotent(env: &TestbedEnv) {
     let mut workspace = start_workspace(env).await;
 
     // 1st, mark the empty pattern as fully applied.
-    let empty_pattern =
-        PreventSyncPattern::from_regex_str(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
+    let empty_pattern = PreventSyncPattern::from_regex(PREVENT_SYNC_PATTERN_EMPTY_PATTERN).unwrap();
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&empty_pattern)
@@ -1156,7 +1154,7 @@ async fn check_set_pattern_is_idempotent(env: &TestbedEnv) {
 async fn set_prevent_sync_pattern(env: &TestbedEnv) {
     let mut workspace = start_workspace(env).await;
 
-    let regex = PreventSyncPattern::from_regex_str(r".*\.tmp$").unwrap();
+    let regex = PreventSyncPattern::from_regex(r".*\.tmp$").unwrap();
 
     let res = workspace.set_prevent_sync_pattern(&regex).await.unwrap();
 
@@ -1171,7 +1169,7 @@ async fn set_prevent_sync_pattern(env: &TestbedEnv) {
 async fn nop_mark_prevent_sync_pattern_with_different_pat(env: &TestbedEnv) {
     let mut workspace = start_workspace(env).await;
 
-    let regex = PreventSyncPattern::from_regex_str(r".*\.tmp$").unwrap();
+    let regex = PreventSyncPattern::from_regex(r".*\.tmp$").unwrap();
 
     let res = workspace
         .mark_prevent_sync_pattern_fully_applied(&regex)

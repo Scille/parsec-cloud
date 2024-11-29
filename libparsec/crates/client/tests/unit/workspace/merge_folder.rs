@@ -20,7 +20,7 @@ async fn no_remote_change(
     kind: &str,
     env: &TestbedEnv,
 ) {
-    let prevent_sync_pattern = PreventSyncPattern::from_glob_pattern("*.tmp").unwrap();
+    let prevent_sync_pattern = PreventSyncPattern::from_glob("*.tmp").unwrap();
     let local_author = "alice@dev1".parse().unwrap();
     let timestamp = "2021-01-10T00:00:00Z".parse().unwrap();
     let vlob_id = VlobID::from_hex("87c6b5fd3b454c94bab51d6af1c6930b").unwrap();
@@ -175,7 +175,7 @@ async fn no_remote_change_but_local_uses_outdated_prevent_sync_pattern(
         unknown => panic!("Unknown kind: {}", unknown),
     }
 
-    let new_prevent_sync_pattern = PreventSyncPattern::from_glob_pattern("*.tmp").unwrap();
+    let new_prevent_sync_pattern = PreventSyncPattern::from_glob("*.tmp").unwrap();
     let outcome = merge_local_folder_manifest(
         local_author,
         timestamp,
@@ -263,7 +263,7 @@ async fn remote_only_change(
         speculative: false,
     };
 
-    let prevent_sync_pattern = PreventSyncPattern::from_glob_pattern("*.tmp").unwrap();
+    let prevent_sync_pattern = PreventSyncPattern::from_glob("*.tmp").unwrap();
     let child_id = VlobID::from_hex("1040c4845fd1451b9c243c93991d9a5e").unwrap();
     let confined_id = VlobID::from_hex("9100fa0bfca94e4d96077dd274a243c0").unwrap();
     match kind {
@@ -658,7 +658,7 @@ async fn local_and_remote_changes(
         speculative: false,
     };
 
-    let prevent_sync_pattern = PreventSyncPattern::from_glob_pattern("*.tmp").unwrap();
+    let prevent_sync_pattern = PreventSyncPattern::from_glob("*.tmp").unwrap();
     match kind {
         "only_updated_field_modified" => {
             // Since only `updated` has been modified on local, then
