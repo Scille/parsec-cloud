@@ -13,16 +13,16 @@ from parsec.components.memory.user import MemoryUserComponent
 from parsec.components.memory.vlob import MemoryVlobComponent
 
 __all__ = [
+    "MemoryBlockComponent",
+    "MemoryBlockStoreComponent",
+    "MemoryEventBus",
+    "MemoryEventsComponent",
+    "MemoryInviteComponent",
     "MemoryOrganizationComponent",
     "MemoryPingComponent",
-    "MemoryUserComponent",
-    "MemoryInviteComponent",
-    "MemoryRealmComponent",
-    "MemoryVlobComponent",
-    "MemoryEventsComponent",
-    "MemoryEventBus",
-    "MemoryBlockComponent",
     "MemoryPkiEnrollmentComponent",
-    "MemoryBlockStoreComponent",
+    "MemoryRealmComponent",
+    "MemoryUserComponent",
+    "MemoryVlobComponent",
     "components_factory",
 ]
