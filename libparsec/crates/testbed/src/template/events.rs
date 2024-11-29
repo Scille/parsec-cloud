@@ -1956,6 +1956,19 @@ impl TestbedEventNewShamirRecovery {
 
         let user_created_event = if builder.check_consistency {
             utils::assert_organization_bootstrapped(&builder.events);
+
+            for event in builder.events.iter().rev() {
+                match event {
+                    TestbedEvent::NewShamirRecovery(x) if x.user_id == user => {
+                        panic!("User `{}` already has a shamir recovery", user);
+                    }
+                    TestbedEvent::DeleteShamirRecovery(x) if x.setup_to_delete_user_id == user => {
+                        break
+                    }
+                    _ => (),
+                }
+            }
+
             let recovery_device_user_id =
                 match utils::assert_device_exists_and_not_revoked(&builder.events, recovery_device)
                 {
