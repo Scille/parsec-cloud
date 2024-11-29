@@ -98,7 +98,6 @@ def cook_field_type(
         ("Size", "int"),
         ("Index", "int"),
         ("NonZeroInteger", "int"),
-        ("IntegerBetween1And100", "int"),
     ]:
         if raw_type == candidate:
             return py_type_name

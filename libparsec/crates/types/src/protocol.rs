@@ -1,30 +1,8 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{cmp::Ordering, fmt::Display, num::NonZeroU8};
+use std::{cmp::Ordering, fmt::Display};
 
 use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-pub struct IntegerBetween1And100(NonZeroU8);
-
-impl TryFrom<u64> for IntegerBetween1And100 {
-    type Error = &'static str;
-    fn try_from(data: u64) -> Result<Self, Self::Error> {
-        if data == 0 || data > 100 {
-            return Err("Invalid IntegerBetween1And100 value");
-        }
-
-        Ok(Self(
-            NonZeroU8::new(data as u8).expect("The value is in the boundary of an u8"),
-        ))
-    }
-}
-
-impl From<IntegerBetween1And100> for u64 {
-    fn from(data: IntegerBetween1And100) -> Self {
-        u8::from(data.0) as u64
-    }
-}
 
 /*
  * ApiVersion
