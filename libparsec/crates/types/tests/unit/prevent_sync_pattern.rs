@@ -7,7 +7,7 @@ use std::{
 
 use libparsec_tests_lite::prelude::*;
 
-use crate::regex::Regex;
+use crate::prevent_sync_pattern::Regex;
 
 #[rstest]
 #[case::base("*.rs\n*.py", "base.tmp")]
@@ -87,6 +87,6 @@ fn regex_pattern(
 
 #[test]
 fn bad_regex_str_creation() {
-    let r = crate::regex::Regex::from_regex_str(r"fooo][?");
+    let r = crate::prevent_sync_pattern::Regex::from_regex_str(r"fooo][?");
     assert!(r.is_err());
 }

@@ -131,5 +131,5 @@ impl Display for Regex {
 }
 
 #[cfg(test)]
-#[path = "../tests/unit/regex.rs"]
+#[path = "../tests/unit/prevent_sync_pattern.rs"]
 mod tests;
