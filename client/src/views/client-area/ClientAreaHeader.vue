@@ -2,19 +2,6 @@
 
 <template>
   <div class="header-content">
-    <ion-button
-      v-if="!isMobile()"
-      slot="icon-only"
-      id="trigger-toggle-menu-button"
-      class="topbar-button__item menu-button"
-      fill="clear"
-      @click="isSidebarMenuVisible() ? hideSidebarMenu() : resetSidebarMenu()"
-    >
-      <ion-icon
-        slot="icon-only"
-        :icon="menu"
-      />
-    </ion-button>
     <ion-title class="header-title title-h1">{{ $msTranslate(title) }}</ion-title>
 
     <div class="header-right">
@@ -46,17 +33,13 @@
 
 <script setup lang="ts">
 import { BmsAccessInstance, PersonalInformationResultData } from '@/services/bms';
-import { IonText, IonTitle, IonIcon, IonButton } from '@ionic/vue';
+import { IonText, IonTitle, IonIcon } from '@ionic/vue';
 import { Translatable } from 'megashark-lib';
 import { onMounted, ref } from 'vue';
-import { cog, menu } from 'ionicons/icons';
+import { cog } from 'ionicons/icons';
 import UserAvatarName from '@/components/users/UserAvatarName.vue';
-import { isMobile } from '@/parsec';
-import useSidebarMenu from '@/services/sidebarMenu';
 import { ClientAreaPages } from '@/views/client-area/types';
 import { openSettingsModal } from '@/views/settings';
-
-const { isVisible: isSidebarMenuVisible, reset: resetSidebarMenu, hide: hideSidebarMenu } = useSidebarMenu();
 
 defineProps<{
   title: Translatable;
@@ -111,9 +94,5 @@ function getUserName(): string {
   display: flex;
   align-items: center;
   gap: 1rem;
-}
-
-.menu-button {
-  margin-right: 1rem;
 }
 </style>
