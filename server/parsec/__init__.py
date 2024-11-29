@@ -18,17 +18,17 @@ from parsec.config import (
 )
 
 __all__ = (
-    "__version__",
+    "ActiveUsersLimit",
     "Backend",
-    "backend_factory",
     "BackendConfig",
-    "S3BlockStoreConfig",
+    "MockedBlockStoreConfig",
+    "MockedEmailConfig",
     "RAID0BlockStoreConfig",
     "RAID1BlockStoreConfig",
     "RAID5BlockStoreConfig",
-    "MockedBlockStoreConfig",
+    "S3BlockStoreConfig",
     "SmtpEmailConfig",
-    "MockedEmailConfig",
-    "ActiveUsersLimit",
+    "__version__",
     "app",
+    "backend_factory",
 )

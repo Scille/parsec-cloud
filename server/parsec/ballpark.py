@@ -7,7 +7,7 @@ from parsec._parsec import DateTime
 from parsec.logging import get_logger
 from parsec.types import BadOutcome
 
-__all__ = ("timestamps_in_the_ballpark", "TimestampOutOfBallpark")
+__all__ = ("TimestampOutOfBallpark", "timestamps_in_the_ballpark")
 
 
 logger = get_logger()

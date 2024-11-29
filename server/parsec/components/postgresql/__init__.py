@@ -31,15 +31,15 @@ from parsec.components.postgresql.user import PGUserComponent
 from parsec.components.postgresql.vlob import PGVlobComponent
 
 __all__ = [
-    "retrieve_migrations",
-    "apply_migrations",
     "MigrationItem",
     "MigrationResult",
     "PGOrganizationComponent",
     "PGPingComponent",
-    "PGUserComponent",
-    "PGRealmComponent",
-    "PGVlobComponent",
     "PGPkiEnrollmentComponent",
+    "PGRealmComponent",
+    "PGUserComponent",
+    "PGVlobComponent",
+    "apply_migrations",
     "components_factory",
+    "retrieve_migrations",
 ]
