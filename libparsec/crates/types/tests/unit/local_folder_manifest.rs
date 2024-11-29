@@ -276,7 +276,7 @@ fn new_root(#[values(true, false)] speculative: bool, timestamp: DateTime) {
         ("file1.png".parse().unwrap(), VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap())
     ]),
     0,
-    ".mp4",
+    r"\.mp4$",
 ))]
 fn from_remote(
     timestamp: DateTime,
@@ -376,7 +376,7 @@ fn from_remote(
     // The pattern doesn't match the one used in the local manifest, hence the need_sync
     // is set to true (the previously confined data must now be synchronized !) and there
     // is no local confinement points anymore
-    ".tmp~",
+    r"\.tmp~$",
 )]
 // Note there is no `remote_children_confined_with_outdated_pattern` test given the
 // remote confinement points are just ignored by `LocalFolderManifest::from_remote_with_restored_local_confinement_points`
@@ -862,7 +862,7 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
                 VlobID::from_hex("B0C37F14927244FA8550EDAECEA09E96").unwrap(),
             ),
         ]),
-        // Current prevent sync pattern is `.tmp`
+        // Current prevent sync pattern is `\.tmp$`
         local_confinement_points: HashSet::from_iter([VlobID::from_hex(
             "B0C37F14927244FA8550EDAECEA09E96",
         )
@@ -874,7 +874,7 @@ fn apply_prevent_sync_pattern_stability_with_confined() {
         speculative: false,
     };
 
-    // We re-apply the same `.tmp` prevent sync pattern, so nothing should change
+    // We re-apply the same `\.tmp$` prevent sync pattern, so nothing should change
     let current_prevent_sync_pattern = Regex::from_regex_str(PREVENT_SYNC_PATTERN_TMP).unwrap();
     let lfm2 = lfm.apply_prevent_sync_pattern(&current_prevent_sync_pattern, t3);
 
@@ -899,8 +899,8 @@ fn apply_prevent_sync_pattern_with_non_confined_local_children_matching_future_p
     };
 
     // Create a local folder manifest without any confinement points (the local children
-    // have names ending `.tmp`, but we can consider the current prevent sync pattern is
-    // something else for now).
+    // have names ending in `.tmp`, but we can consider the current prevent sync pattern
+    // is something else for now).
     let lfm = LocalFolderManifest {
         base: fm.clone(),
         parent: fm.parent,
@@ -957,8 +957,8 @@ fn apply_prevent_sync_pattern_with_non_confined_remote_children_matching_future_
     let t3 = "2000-01-03T00:00:00Z".parse().unwrap();
 
     // Create a local folder manifest without any confinement points (the local children
-    // have names ending `.tmp`, but we can consider the current prevent sync pattern is
-    // something else for now).
+    // have names ending in `.tmp`, but we can consider the current prevent sync pattern
+    // is something else for now).
 
     let fm = FolderManifest {
         author: DeviceID::default(),
@@ -1060,7 +1060,7 @@ fn apply_prevent_sync_pattern_with_confined_local_children_turning_non_confined(
                 VlobID::from_hex("936DA01F9ABD4d9d80C702AF85C822A8").unwrap(),
             ),
         ]),
-        // Current prevent sync pattern is `.tmp`
+        // Current prevent sync pattern is `\.tmp$`
         local_confinement_points: HashSet::from_iter([VlobID::from_hex(
             "3DF3AC53967C43D889860AE2F459F42B",
         )
@@ -1071,7 +1071,7 @@ fn apply_prevent_sync_pattern_with_confined_local_children_turning_non_confined(
 
     // The new prevent sync pattern doesn't match any entry, hence `fileA.tmp` is
     // no longer confined, hence manifest's `updated` field should also get updated.
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp~").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1149,7 +1149,7 @@ fn apply_prevent_sync_pattern_with_local_changes_and_confined_remote_children_tu
     // Manifest is still need sync due to the removal of `file2.txt`, however the
     // `updated` shouldn't has changed since the change in confinement is on
     // an entry that is already in remote manifest !
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp~").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1218,7 +1218,7 @@ fn apply_prevent_sync_pattern_with_only_confined_remote_children_turning_non_con
     // The new prevent sync pattern doesn't match any entry, hence `file3.tmp` is
     // no longer confined, but manifest doesn't need to be sync since this
     // entry is already in remote manifest !
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp~").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t2);
 
     p_assert_eq!(lfm.remote_confinement_points, HashSet::new());
@@ -1292,7 +1292,7 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
                 VlobID::from_hex("B0C37F14927244FA8550EDAECEA09E96").unwrap(),
             ),
         ]),
-        // Current prevent sync pattern is `.tmp`
+        // Current prevent sync pattern is `\.tmp$`
         local_confinement_points: HashSet::from_iter([VlobID::from_hex(
             "B0C37F14927244FA8550EDAECEA09E96",
         )
@@ -1304,7 +1304,7 @@ fn apply_prevent_sync_pattern_with_broader_prevent_sync_pattern() {
         speculative: false,
     };
 
-    // `.+` is a superset of the previous `.tmp` pattern, all entries should
+    // `.+` is a superset of the previous `\.tmp$` pattern, all entries should
     // be confined now
     let new_prevent_sync_pattern = Regex::from_regex_str(".+").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
@@ -1433,7 +1433,7 @@ fn apply_prevent_sync_pattern_on_renamed_entry(
     };
 
     // Now apply the new prevent sync pattern...
-    let new_prevent_sync_pattern = Regex::from_regex_str(".tmp~").unwrap();
+    let new_prevent_sync_pattern = Regex::from_regex_str(r"\.tmp~$").unwrap();
     let lfm = lfm.apply_prevent_sync_pattern(&new_prevent_sync_pattern, t3);
 
     p_assert_eq!(
