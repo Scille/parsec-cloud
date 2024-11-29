@@ -120,14 +120,8 @@ pub enum InvalidCertificateError {
         brief_hint: String,
         allowed_recipient: UserID,
     },
-    #[error(
-        "Certificate `{hint}` breaks consistency: we only expect shamir recovery share certificate for user `{allowed_recipient}`, but got one for `{got_recipient}`"
-    )]
-    ShamirRecoveryShareForWrongRecipient {
-        hint: String,
-        allowed_recipient: UserID,
-        got_recipient: UserID,
-    },
+    #[error("Certificate `{hint}` breaks consistency: it shouldn't be provided to us as we are neither its author or among its recipients")]
+    ShamirRecoveryUnrelatedToUs { hint: String },
     #[error(
         "Certificate `{hint}` breaks consistency: it refers to a shamir recovery that doesn't exist or is not the last one"
     )]
@@ -1926,7 +1920,19 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 4) Make sure there is no shamir recovery already valid for this user
+    // 4) Check we are related to this shamir recovery
+
+    if cooked.user_id != ops.device.user_id
+        && !cooked
+            .per_recipient_shares
+            .contains_key(&ops.device.user_id)
+    {
+        let hint = mk_hint();
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryUnrelatedToUs { hint });
+        return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
+    }
+
+    // 5) Make sure there is no shamir recovery already valid for this user
 
     let last_shamir_recovery = store
         .get_last_shamir_recovery_for_author(UpTo::Timestamp(cooked.timestamp), author_user_id)
@@ -1937,7 +1943,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 5) Check author is not revoked
+    // 6) Check author is not revoked
 
     check_author_not_revoked_and_profile(
         ops,
@@ -1949,7 +1955,7 @@ async fn check_shamir_recovery_brief_certificate_consistency(
     )
     .await?;
 
-    // 6) Make sure all recipients exist and are not revoked
+    // 7) Make sure all recipients exist and are not revoked
 
     for recipient in cooked.per_recipient_shares.keys() {
         check_user_exists(store, cooked.timestamp, *recipient, mk_hint).await?;
@@ -2008,13 +2014,7 @@ async fn check_shamir_recovery_share_certificate_consistency(
 
     if cooked.recipient != ops.device.user_id {
         let hint = mk_hint();
-        let what = Box::new(
-            InvalidCertificateError::ShamirRecoveryShareForWrongRecipient {
-                hint,
-                allowed_recipient: ops.device.user_id,
-                got_recipient: cooked.recipient,
-            },
-        );
+        let what = Box::new(InvalidCertificateError::ShamirRecoveryUnrelatedToUs { hint });
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
@@ -2120,7 +2120,7 @@ async fn check_shamir_recovery_deletion_certificate_consistency(
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
 
-    // 3) Make sure this certificate refers last last valid shamir recovery
+    // 3) Make sure this certificate refers to the last valid shamir recovery
     // Note there could be at most one non-removed shamir recovery, hence it is
     // guaranteed that all but the last one has already been removed.
 
@@ -2164,6 +2164,15 @@ async fn check_shamir_recovery_deletion_certificate_consistency(
         );
         return Err(CertifAddCertificatesBatchError::InvalidCertificate(what));
     }
+
+    // Since at this point we have made sure the deletion certificate matches
+    // with a brief we know about, it means we have already checked we are
+    // related to the shamir recovery (as it has been done when the brief
+    // certificate was added).
+    assert!(
+        cooked.setup_to_delete_user_id == ops.device.user_id
+            || cooked.share_recipients.contains(&ops.device.user_id)
+    );
 
     // 5) Check author is not revoked
 

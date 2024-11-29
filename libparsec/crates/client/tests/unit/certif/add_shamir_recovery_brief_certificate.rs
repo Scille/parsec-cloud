@@ -154,12 +154,14 @@ async fn already_setup(env: &TestbedEnv) {
 
         builder.certificates_storage_fetch_certificates("alice@dev1");
 
-        builder.new_shamir_recovery(
-            "bob",
-            1,
-            [("alice".parse().unwrap(), 1.try_into().unwrap())],
-            recovery_device_id,
-        );
+        builder.with_check_consistency_disabled(|builder| {
+            builder.new_shamir_recovery(
+                "bob",
+                1,
+                [("alice".parse().unwrap(), 1.try_into().unwrap())],
+                recovery_device_id,
+            );
+        })
     })
     .await;
     let alice = env.local_device("alice@dev1");
@@ -224,57 +226,6 @@ async fn as_recipient_with_missing_related_share(env: &TestbedEnv) {
             if hint == "<no more certificates>" && brief_hint.starts_with("ShamirRecoveryBriefCertificate") && *allowed_recipient == alice.user_id
         )
     )
-}
-
-#[parsec_test(testbed = "minimal")]
-async fn as_recipient_with_unrelated_share(env: &TestbedEnv) {
-    let mallory_user_id = env
-        .customize(|builder| {
-            builder.new_user("bob");
-            let mallory_user_id = builder.new_user("mallory").map(|e| e.user_id);
-            let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
-
-            builder.certificates_storage_fetch_certificates("alice@dev1");
-
-            builder.new_shamir_recovery(
-                "bob",
-                3,
-                [
-                    ("alice".parse().unwrap(), 2.try_into().unwrap()),
-                    ("mallory".parse().unwrap(), 1.try_into().unwrap()),
-                ],
-                recovery_device_id,
-            );
-
-            mallory_user_id
-        })
-        .await;
-    let alice = env.local_device("alice@dev1");
-    let ops = certificates_ops_factory(env, &alice).await;
-
-    let mut shamir_recovery_certificates: Vec<_> = certifs_from_last_shamir_recovery(env);
-    // Keep Mallory share instead of our own
-    shamir_recovery_certificates.remove(1);
-    p_assert_eq!(shamir_recovery_certificates.len(), 2); // Sanity check: expect brief + Mallory's share
-
-    let err = ops
-        .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
-        .await
-        .unwrap_err();
-
-    p_assert_matches!(
-        err,
-        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
-        if matches!(
-            *boxed,
-            InvalidCertificateError::ShamirRecoveryShareForWrongRecipient {
-                allowed_recipient,
-                got_recipient,
-                ..
-            }
-            if allowed_recipient == alice.user_id && got_recipient == mallory_user_id
-        )
-    );
 }
 
 #[parsec_test(testbed = "minimal")]
@@ -562,6 +513,47 @@ async fn invalid_user_id(env: &TestbedEnv) {
             *boxed,
             InvalidCertificateError::ShamirRecoveryNotAboutSelf { user_id, author_user_id, .. }
             if user_id == alice.user_id && author_user_id == bob_user_id
+        )
+    );
+}
+
+#[parsec_test(testbed = "minimal")]
+async fn brief_not_for_us(env: &TestbedEnv) {
+    env.customize(|builder| {
+        builder.new_user("bob");
+        builder.new_user("mallory");
+        let recovery_device_id = builder.new_device("bob").map(|e| e.device_id);
+
+        builder.certificates_storage_fetch_certificates("alice@dev1");
+
+        // Alice is not related to this shamir recovery, hence she shouldn't receive it
+        builder.new_shamir_recovery(
+            "bob",
+            1,
+            [("mallory".parse().unwrap(), 1.try_into().unwrap())],
+            recovery_device_id,
+        );
+    })
+    .await;
+    let alice = env.local_device("alice@dev1");
+    let ops = certificates_ops_factory(env, &alice).await;
+
+    let mut shamir_recovery_certificates = certifs_from_last_shamir_recovery(env);
+    // Certificates are [<brief>, <share for Mallory>]
+    shamir_recovery_certificates.pop(); // Remove Mallory share
+    p_assert_eq!(shamir_recovery_certificates.len(), 1); // Sanity check
+
+    let err = ops
+        .add_certificates_batch(&[], &[], &shamir_recovery_certificates, &Default::default())
+        .await
+        .unwrap_err();
+
+    p_assert_matches!(
+        err,
+        CertifAddCertificatesBatchError::InvalidCertificate(boxed)
+        if matches!(
+            *boxed,
+            InvalidCertificateError::ShamirRecoveryUnrelatedToUs { .. }
         )
     );
 }
