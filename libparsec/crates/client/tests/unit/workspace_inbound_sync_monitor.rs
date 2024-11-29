@@ -188,7 +188,7 @@ async fn real_io_provides_a_starting_event(env: &TestbedEnv) {
         workspace_storage_cache_size: WorkspaceStorageCacheSize::Default,
         proxy: ProxyConfig::default(),
         with_monitors: false,
-        prevent_sync_pattern: PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap(),
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
     });
     let event_bus = EventBus::default();
     let cmds = Arc::new(

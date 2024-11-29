@@ -55,11 +55,17 @@ impl From<ClientConfig> for libparsec_client::ClientConfig {
             proxy: ProxyConfig::default(),
             with_monitors: config.with_monitors,
             prevent_sync_pattern: match config.prevent_sync_pattern {
-                Some(pattern) => PreventSyncPattern::from_glob_reader(
-                    "client_prevent_sync_pattern",
-                    std::io::Cursor::new(pattern),
+                Some(custom_glob_ignore) => PreventSyncPattern::from_glob_ignore_file(
+                    &custom_glob_ignore,
                 )
-                .expect("Cannot process provided prevent sync pattern file"),
+                .unwrap_or_else(|err| {
+                    // Fall back to default pattern if the custom pattern is invalid
+                    log::warn!(
+                        "Invalid custom prevent sync pattern, falling back to default: {}",
+                        err
+                    );
+                    PreventSyncPattern::default()
+                }),
                 None => PreventSyncPattern::default(),
             },
         }

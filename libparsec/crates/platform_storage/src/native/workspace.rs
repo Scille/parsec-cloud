@@ -443,7 +443,7 @@ impl PlatformWorkspaceStorage {
         db_get_prevent_sync_pattern(&mut self.conn)
             .await
             .and_then(|(pattern, fully_applied)| {
-                PreventSyncPattern::from_regex_str(&pattern)
+                PreventSyncPattern::from_regex(&pattern)
                     .map(|re| (re, fully_applied))
                     .map_err(anyhow::Error::from)
             })

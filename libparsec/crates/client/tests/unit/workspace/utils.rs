@@ -20,7 +20,7 @@ pub(crate) async fn workspace_ops_factory(
         discriminant_dir,
         device,
         realm_id,
-        PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap(),
+        PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
     )
     .await
 }

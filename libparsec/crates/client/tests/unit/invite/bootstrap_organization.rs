@@ -27,7 +27,7 @@ fn make_config(env: &TestbedEnv) -> Arc<ClientConfig> {
         proxy: ProxyConfig::default(),
         mountpoint_mount_strategy: MountpointMountStrategy::Disabled,
         with_monitors: false,
-        prevent_sync_pattern: PreventSyncPattern::from_regex_str(r"\.tmp$").unwrap(),
+        prevent_sync_pattern: PreventSyncPattern::from_regex(r"\.tmp$").unwrap(),
     })
 }
 

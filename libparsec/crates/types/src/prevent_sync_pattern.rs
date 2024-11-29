@@ -1,14 +1,17 @@
 // Parsec Cloud (https://parsec.cloud) Copyright (c) BUSL-1.1 2016-present Scille SAS
 
-use std::{
-    collections::HashSet,
-    fmt::Display,
-    fs,
-    io::{BufRead, BufReader},
-    path::Path,
-};
+use std::{collections::HashSet, fmt::Display};
+use thiserror::Error;
 
-use crate::{PreventSyncPatternError, PreventSyncPatternResult};
+#[derive(Error, Debug)]
+pub enum PreventSyncPatternError {
+    #[error("Regex parsing error: {0}")]
+    BadRegex(regex::Error),
+    #[error("Glob parsing error: {0}")]
+    BadGlob(fnmatch_regex::error::Error),
+}
+
+pub type PreventSyncPatternResult<T> = Result<T, PreventSyncPatternError>;
 
 #[derive(Clone, Debug)]
 pub struct PreventSyncPattern(pub Vec<regex::Regex>);
@@ -17,95 +20,75 @@ const DEFAULT_PREVENT_SYNC_PATTERN: &str = std::include_str!("default_pattern.ig
 
 impl Default for PreventSyncPattern {
     fn default() -> Self {
-        Self::from_glob_reader(
-            stringify!(DEFAULT_PREVENT_SYNC_PATTERN),
-            std::io::Cursor::new(DEFAULT_PREVENT_SYNC_PATTERN),
-        )
-        .expect("Cannot parse default prevent sync pattern")
+        Self::from_glob_ignore_file(DEFAULT_PREVENT_SYNC_PATTERN)
+            .expect("Cannot parse default prevent sync pattern")
     }
-}
-
-/// The fnmatch_regex crate does not escape the character '$'. It is a problem
-/// for us. Since we need to match strings like `$RECYCLE.BIN` we need to escape
-/// it anyway.
-fn escape_globing_pattern(string: &str) -> String {
-    str::replace(string, "$", "\\$")
 }
 
 impl PreventSyncPattern {
-    /// Returns a regex which is built from a file that contains shell like patterns
-    pub fn from_file(file_path: &Path) -> PreventSyncPatternResult<Self> {
-        let reader = fs::File::open(file_path).map(BufReader::new).map_err(|e| {
-            PreventSyncPatternError::PatternFileIOError {
-                file_path: file_path.to_path_buf(),
-                err: e,
-            }
-        })?;
-
-        Self::from_glob_reader(file_path, reader)
-    }
-
-    pub fn from_glob_reader<P: AsRef<Path>, R: BufRead>(
-        path: P,
-        reader: R,
-    ) -> PreventSyncPatternResult<Self> {
-        reader
+    /// Glob ignore file format is simply:
+    /// - Each line contains either a glob pattern of a comment
+    /// - Each line is first trimmed of leading/trailing whitespaces
+    /// - Comment lines start with a `#` character
+    ///
+    /// Example:
+    /// ```raw
+    /// # Ignore C stuff
+    /// *.{so,o}
+    ///
+    /// # Ignore Python stuff
+    /// *.pyc
+    /// ```
+    ///
+    /// (see `default_pattern.ignore` for a more complex example)
+    pub fn from_glob_ignore_file(file_content: &str) -> PreventSyncPatternResult<Self> {
+        let regexes = file_content
             .lines()
-            .filter_map(|line| match line {
-                Ok(line) => {
-                    let l = line.trim();
-
-                    if l != "\n" && !l.starts_with('#') {
-                        Some(from_glob_pattern(l))
-                    } else {
-                        None
-                    }
+            .filter_map(|line| {
+                let line = line.trim();
+                if line.is_empty() || line.starts_with('#') {
+                    None
+                } else {
+                    Some(regex_from_glob_pattern(line))
                 }
-                Err(e) => Some(Err(PreventSyncPatternError::PatternFileIOError {
-                    file_path: path.as_ref().to_path_buf(),
-                    err: e,
-                })),
             })
-            .collect::<PreventSyncPatternResult<Vec<regex::Regex>>>()
-            .map(Self)
+            .collect::<Result<_, _>>()?;
+        Ok(Self(regexes))
     }
 
-    /// Returns a regex which is an union of all regexes from `raw_regexes` slice parameter
-    pub fn from_raw_regexes(raw_regexes: &[&str]) -> PreventSyncPatternResult<Self> {
-        Ok(Self(
-            raw_regexes
-                .iter()
-                .map(|l| {
-                    regex::Regex::new(l).map_err(|err| PreventSyncPatternError::ParseError { err })
-                })
-                .collect::<Result<Vec<regex::Regex>, PreventSyncPatternError>>()?,
-        ))
+    /// Create a prevent sync pattern from a regex (regular expression, e.g. `^.*\.(txt|md)$`)
+    pub fn from_regex(regex: &str) -> PreventSyncPatternResult<Self> {
+        let regex = regex::Regex::new(regex).map_err(PreventSyncPatternError::BadRegex)?;
+        Ok(Self(vec![regex]))
     }
 
-    /// Returns a regex from a glob pattern
-    pub fn from_glob_pattern(pattern: &str) -> PreventSyncPatternResult<Self> {
-        from_glob_pattern(pattern).map(|re| Self(vec![re]))
+    /// Create a prevent sync pattern from a glob pattern (e.g. `*.{txt,md}`)
+    pub fn from_glob(pattern: &str) -> PreventSyncPatternResult<Self> {
+        regex_from_glob_pattern(pattern).map(|re| Self(vec![re]))
     }
 
-    pub fn from_regex_str(regex_str: &str) -> PreventSyncPatternResult<Self> {
-        Self::from_raw_regexes(&[regex_str])
+    pub fn from_multiple_globs<'a>(
+        patterns: impl Iterator<Item = &'a str>,
+    ) -> PreventSyncPatternResult<Self> {
+        let regexes = patterns
+            .map(regex_from_glob_pattern)
+            .collect::<Result<_, _>>()?;
+        Ok(Self(regexes))
     }
 
     pub fn is_match(&self, string: &str) -> bool {
         self.0.iter().any(|r| r.is_match(string))
     }
 
-    /// Create an empty regex, that regex will never match anything
+    /// Create an empty prevent sync pattern that will never match anything
     pub const fn empty() -> Self {
         Self(Vec::new())
     }
 }
 
 /// Parse a glob pattern like `*.rs` and convert it to an regex.
-fn from_glob_pattern(pattern: &str) -> PreventSyncPatternResult<regex::Regex> {
-    let escaped_str = escape_globing_pattern(pattern);
-    fnmatch_regex::glob_to_regex(&escaped_str)
-        .map_err(|err| PreventSyncPatternError::GlobPatternError { err })
+fn regex_from_glob_pattern(pattern: &str) -> PreventSyncPatternResult<regex::Regex> {
+    fnmatch_regex::glob_to_regex(pattern).map_err(PreventSyncPatternError::BadGlob)
 }
 
 impl PartialEq for PreventSyncPattern {
