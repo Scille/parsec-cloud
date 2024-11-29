@@ -1430,8 +1430,19 @@ impl AnyCertificate {
                     unsecure,
                 })
             }
+            // Sequester service & revoked service certificates are signed by the sequester
+            // authority, this implies two things:
+            // - We *always* know the author of the signature, and hence don't need
+            //   `unsecure_load` (since it goal is to peek inside the certificate before
+            //   it is properly validated in order to get the author).
+            // - Those certificates are signed in a different way than the other certificates,
+            //   so we can only end up here by (bad) luck if the two signature algorithms
+            //   happened to have a similar layout.
+            //
+            // In any way, we should never end up here, and if we do then it's a
+            // "bullshit-in, bullshit-out" case...
             AnyCertificate::SequesterService(_) | AnyCertificate::SequesterRevokedService(_) => {
-                unreachable!()
+                panic!("signed by sequester authority");
             }
         })
     }
