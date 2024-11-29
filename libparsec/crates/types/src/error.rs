@@ -9,7 +9,7 @@ use libparsec_crypto::CryptoError;
 use crate::{DateTime, DeviceFileType, DeviceID, HumanHandle, UserID, VlobID};
 
 #[derive(Error, Debug)]
-pub enum RegexError {
+pub enum PreventSyncPatternError {
     #[error("Regex parsing err: {err}")]
     ParseError { err: regex::Error },
     #[error("Failed to convert glob pattern into regex: {err}")]
@@ -21,7 +21,7 @@ pub enum RegexError {
     },
 }
 
-pub type RegexResult<T> = Result<T, RegexError>;
+pub type PreventSyncPatternResult<T> = Result<T, PreventSyncPatternError>;
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum DataError {
