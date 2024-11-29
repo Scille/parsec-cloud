@@ -573,14 +573,14 @@ impl<'a> PlatformCertificatesStorageForUpdateGuard<'a> {
                 DateTime::from_timestamp_micros(raw_dt)
             };
             let type_ = row.try_get::<&str, _>(1)?;
-            let filter1 = row.try_get::<&str, _>(2)?;
-            let filter2 = row.try_get::<&str, _>(3)?;
+            let filter1 = row.try_get::<&[u8], _>(2)?;
+            let filter2 = row.try_get::<&[u8], _>(3)?;
             output += &format!(
                 "{{\n\
                 \ttimestamp: {timestamp:?}\n\
                 \ttype: {type_:?}\n\
-                \tfilter1: {filter1}\n\
-                \tfilter2: {filter2}\n\
+                \tfilter1: {filter1:?}\n\
+                \tfilter2: {filter2:?}\n\
             }},\n",
             );
         }
