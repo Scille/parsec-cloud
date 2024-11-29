@@ -7,6 +7,7 @@ use std::{path::PathBuf, sync::Arc};
 use invited_cmds::latest::invite_claimer_step;
 use libparsec_client_connection::AuthenticatedCmds;
 use libparsec_client_connection::{protocol::invited_cmds, ConnectionError, InvitedCmds};
+use libparsec_protocol::authenticated_cmds;
 use libparsec_protocol::invited_cmds::v4::invite_info::ShamirRecoveryRecipient;
 use libparsec_types::prelude::*;
 
@@ -479,6 +480,7 @@ impl ShamirRecoveryClaimRecoverDeviceCtx {
         Ok(ShamirRecoveryClaimFinalizeCtx {
             config: self.config,
             new_local_device: Arc::new(new_local_device),
+            token: self.cmds.addr().token(),
         })
     }
 }
@@ -1426,6 +1428,7 @@ impl DeviceClaimFinalizeCtx {
 pub struct ShamirRecoveryClaimFinalizeCtx {
     pub config: Arc<ClientConfig>,
     pub new_local_device: Arc<LocalDevice>,
+    pub token: InvitationToken,
 }
 
 impl ShamirRecoveryClaimFinalizeCtx {
@@ -1440,12 +1443,35 @@ impl ShamirRecoveryClaimFinalizeCtx {
         self,
         access: &DeviceAccessStrategy,
     ) -> Result<AvailableDevice, anyhow::Error> {
-        libparsec_platform_device_loader::save_device(
+        let available_device = libparsec_platform_device_loader::save_device(
             &self.config.config_dir,
             access,
             &self.new_local_device,
         )
         .await
-        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))
+        .map_err(|e| anyhow::anyhow!("Error while saving the device file: {e}"))?;
+
+        {
+            use authenticated_cmds::latest::invite_complete::{Rep, Req};
+
+            let cmds = AuthenticatedCmds::new(
+                &self.config.config_dir,
+                self.new_local_device.clone(),
+                self.config.proxy.clone(),
+            )?;
+            let rep = cmds.send(Req { token: self.token }).await?;
+
+            match rep {
+                Rep::Ok => Ok(()),
+                Rep::InvitationAlreadyCompleted => Err(ClaimInProgressError::AlreadyUsed),
+                Rep::InvitationCancelled => Err(ClaimInProgressError::AlreadyUsed),
+                Rep::InvitationNotFound => Err(ClaimInProgressError::NotFound),
+                bad_rep @ (Rep::UnknownStatus { .. } | Rep::AuthorNotAllowed) => {
+                    Err(anyhow::anyhow!("Unexpected server response: {:?}", bad_rep).into())
+                }
+            }?
+        };
+
+        Ok(available_device)
     }
 }
